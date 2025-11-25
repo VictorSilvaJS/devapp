@@ -18,10 +18,11 @@ export const spacing = {
 };
 
 export const typography = {
-  fontTitle: 24,
-  fontSubtitle: 18,
-  fontBody: 14,
-  fontCaption: 12,
+  // Ajustes finos de tipografia para mobile
+  fontTitle: 28,       // títulos principais
+  fontSubtitle: 20,    // subtítulos e estatísticas
+  fontBody: 16,        // texto padrão do app
+  fontCaption: 12,     // legendas e textos pequenos
   weightBold: '700',
   weightSemibold: '600',
   weightRegular: '400'

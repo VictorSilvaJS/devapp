@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import Header from '../components/Header';
 import { Produtor, Visita, CadernoCampo } from '../api/mock';
 import { colors, typography, spacing } from '../theme';
+import StatCard from '../components/StatCard';
 
 export default function DashboardScreen() {
   const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: 0 });
@@ -23,12 +24,12 @@ export default function DashboardScreen() {
       <Header title="Dashboard" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.cardRow}>
-          <View style={styles.statCard}><Text style={styles.statValue}>{stats.produtores}</Text><Text style={styles.statLabel}>Produtores</Text></View>
-          <View style={styles.statCard}><Text style={styles.statValue}>{stats.areaTotal}</Text><Text style={styles.statLabel}>Área (ha)</Text></View>
+          <StatCard label="Total de Produtores" value={stats.produtores} />
+          <StatCard label="Área Total (ha)" value={stats.areaTotal} />
         </View>
         <View style={styles.cardRow}>
-          <View style={styles.statCard}><Text style={styles.statValue}>{stats.visitas}</Text><Text style={styles.statLabel}>Visitas</Text></View>
-          <View style={styles.statCard}><Text style={styles.statValue}>{stats.registros}</Text><Text style={styles.statLabel}>Registros</Text></View>
+          <StatCard label="Visitas Realizadas" value={stats.visitas} />
+          <StatCard label="Registros no Campo" value={stats.registros} />
         </View>
       </ScrollView>
     </View>

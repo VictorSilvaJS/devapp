@@ -1,0 +1,41 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useAuth } from '../auth/AuthContext';
+import { colors, typography, spacing } from '../theme';
+
+export default function LoginScreen({ navigation }) {
+  const { login, loading } = useAuth();
+
+  const handleLogin = async (key) => {
+    try {
+      await login(key);
+      navigation.replace('Main');
+    } catch (err) {
+      alert('Erro ao autenticar');
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Tchê Agro</Text>
+      <Text style={styles.subtitle}>Faça login como</Text>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={() => handleLogin('admin')} disabled={loading}>
+        <Text style={styles.btnText}>Admin</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.secondary }]} onPress={() => handleLogin('colaborador')} disabled={loading}>
+        <Text style={styles.btnText}>Colaborador</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.btn, { backgroundColor: '#0ea5a0' }]} onPress={() => handleLogin('cliente')} disabled={loading}>
+        <Text style={styles.btnText}>Cliente</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex:1, alignItems:'center', justifyContent:'center', backgroundColor: colors.background, padding: spacing.screen },
+  title: { fontSize: typography.fontTitle, fontWeight: typography.weightBold, color: colors.text, marginBottom: 8 },
+  subtitle: { fontSize: typography.fontBody, color: colors.muted, marginBottom: 16 },
+  btn: { width: '80%', padding: 12, borderRadius: 10, alignItems:'center', marginVertical:6 },
+  btnText: { color: '#fff', fontWeight: typography.weightSemibold }
+});
