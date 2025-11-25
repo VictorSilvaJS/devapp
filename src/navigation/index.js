@@ -104,6 +104,7 @@ export default function Navigation() {
           } />
           <Stack.Screen name="ProdutorDetail" component={ProdutorScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
+          <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />
         </>
       )}
     </Stack.Navigator>

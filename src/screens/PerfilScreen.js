@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, ToastAndroid, Alert } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { colors, typography, spacing } from '../theme';
+import { useNavigation } from '@react-navigation/native';
+
 
 export default function PerfilScreen({ navigation }) {
   const { user, logout } = useAuth();
@@ -11,6 +13,12 @@ export default function PerfilScreen({ navigation }) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     try {
       await logout();
+      // mostrar toast/alert de confirmação
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Logout realizado', ToastAndroid.SHORT);
+      } else {
+        Alert.alert('Logout', 'Logout realizado');
+      }
       navigation.replace('Login');
     } catch (err) {
       console.error('Logout error', err);
@@ -27,6 +35,10 @@ export default function PerfilScreen({ navigation }) {
       </View>
 
       <View style={{ marginTop: 20 }}>
+        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate('EditProfile')}>
+          <Text style={styles.logoutText}>Editar Perfil</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.logoutBtn} onPress={() => setShowLogout(true)}>
           <Text style={styles.logoutText}>Sair da Conta</Text>
         </TouchableOpacity>

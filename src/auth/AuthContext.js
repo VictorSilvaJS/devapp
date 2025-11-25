@@ -28,8 +28,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateProfile = async (updates) => {
+    // simula atualização remota
+    setLoading(true);
+    try {
+      const newUser = { ...user, ...updates };
+      // aqui você chamaria API real
+      setUser(newUser);
+      return newUser;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
