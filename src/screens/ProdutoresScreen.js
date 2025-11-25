@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Header from '../components/Header';
 import ProdutorCard from '../components/ProdutorCard';
 import { Produtor } from '../api/mock';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing } from '../theme';
+
+// enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function ProdutoresScreen() {
   const [produtores, setProdutores] = useState([]);
@@ -13,6 +18,8 @@ export default function ProdutoresScreen() {
   useEffect(() => { load(); }, []);
   const load = async () => {
     const data = await Produtor.list();
+    // animação local ao atualizar lista
+    try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
     setProdutores(data);
   };
 

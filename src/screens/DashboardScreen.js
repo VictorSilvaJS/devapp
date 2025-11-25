@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Header from '../components/Header';
 import { Produtor, Visita, CadernoCampo } from '../api/mock';
 import { colors, typography, spacing } from '../theme';
 import StatCard from '../components/StatCard';
+
+// enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function DashboardScreen() {
   const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: 0 });
@@ -14,6 +19,7 @@ export default function DashboardScreen() {
       const visitas = await Visita.list();
       const registros = await CadernoCampo.list();
       const area = produtores.reduce((s, p) => s + (p.area_total || 0), 0);
+      try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch (e) {}
       setStats({ produtores: produtores.length, visitas: visitas.length, registros: registros.length, areaTotal: area });
     };
     load();

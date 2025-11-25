@@ -46,4 +46,9 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.muted
   }
+  ,
+  logoutBtn: {
+    marginLeft: 12,
+    padding: 6
+  }
 });

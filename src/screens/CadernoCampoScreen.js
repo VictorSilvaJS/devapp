@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Header from '../components/Header';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing } from '../theme';
+
+// enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function CadernoCampoScreen() {
   const [registros, setRegistros] = useState([]);
@@ -12,6 +17,7 @@ export default function CadernoCampoScreen() {
   const load = async () => {
     const r = await CadernoCampo.list();
     const p = await Produtor.list();
+    try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
     setRegistros(r);
     setProdutores(p);
   };

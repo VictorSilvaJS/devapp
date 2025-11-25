@@ -7,6 +7,7 @@ import ProdutorScreen from '../screens/ProdutorScreen';
 import CadernoCampoScreen from '../screens/CadernoCampoScreen';
 import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import LoginScreen from '../screens/LoginScreen';
+import PerfilScreen from '../screens/PerfilScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
 
@@ -19,22 +20,22 @@ function AdminTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
-          let name = 'home';
-          if (route.name === 'Produtores') name = 'people';
-          if (route.name === 'Visitas') name = 'calendar';
-          if (route.name === 'Caderno') name = 'book';
-          if (route.name === 'Perfil') name = 'person';
+          let name = 'home-outline';
+          if (route.name === 'Produtores') name = 'people-outline';
+          if (route.name === 'Visitas') name = 'calendar-outline';
+          if (route.name === 'Caderno') name = 'book-outline';
+          if (route.name === 'Perfil') name = 'person-outline';
           return <Ionicons name={name} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#10B981',
         tabBarInactiveTintColor: '#6B7280'
       })}
     >
-      <Tab.Screen name="Home" component={DashboardScreen} />
-      <Tab.Screen name="Produtores" component={ProdutoresScreen} />
-      <Tab.Screen name="Visitas" component={CadernoCampoScreen} />
-      <Tab.Screen name="Caderno" component={CadernoCampoScreen} />
-      <Tab.Screen name="Perfil" component={ProdutorScreen} />
+      <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
+      <Tab.Screen name="Produtores" component={ProdutoresScreen} options={{ title: 'Produtores' }} />
+      <Tab.Screen name="Visitas" component={CadernoCampoScreen} options={{ title: 'Visitas' }} />
+      <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
+      <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
 }
@@ -45,22 +46,22 @@ function ColaboradorTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
-          let name = 'home';
-          if (route.name === 'Meus Produtores') name = 'people';
-          if (route.name === 'Minhas Visitas') name = 'calendar';
-          if (route.name === 'Caderno') name = 'book';
-          if (route.name === 'Perfil') name = 'person';
+          let name = 'home-outline';
+          if (route.name === 'Meus Produtores') name = 'people-outline';
+          if (route.name === 'Minhas Visitas') name = 'calendar-outline';
+          if (route.name === 'Caderno') name = 'book-outline';
+          if (route.name === 'Perfil') name = 'person-outline';
           return <Ionicons name={name} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#10B981',
         tabBarInactiveTintColor: '#6B7280'
       })}
     >
-      <Tab.Screen name="Home" component={DashboardScreen} />
-      <Tab.Screen name="Meus Produtores" component={ProdutoresScreen} />
-      <Tab.Screen name="Minhas Visitas" component={CadernoCampoScreen} />
-      <Tab.Screen name="Caderno" component={CadernoCampoScreen} />
-      <Tab.Screen name="Perfil" component={ProdutorScreen} />
+      <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
+      <Tab.Screen name="Meus Produtores" component={ProdutoresScreen} options={{ title: 'Produtores' }} />
+      <Tab.Screen name="Minhas Visitas" component={CadernoCampoScreen} options={{ title: 'Visitas' }} />
+      <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
+      <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
 }
@@ -71,18 +72,18 @@ function ClienteTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
-          let name = 'home';
-          if (route.name === 'Histórico') name = 'calendar';
-          if (route.name === 'Perfil') name = 'person';
+          let name = 'home-outline';
+          if (route.name === 'Histórico') name = 'calendar-outline';
+          if (route.name === 'Perfil') name = 'person-outline';
           return <Ionicons name={name} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#10B981',
         tabBarInactiveTintColor: '#6B7280'
       })}
     >
-      <Tab.Screen name="Minha Propriedade" component={DashboardScreen} />
-      <Tab.Screen name="Histórico" component={CadernoCampoScreen} />
-      <Tab.Screen name="Perfil" component={ProdutorScreen} />
+      <Tab.Screen name="Minha Propriedade" component={DashboardScreen} options={{ title: 'Propriedade' }} />
+      <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Histórico' }} />
+      <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
 }
@@ -91,7 +92,7 @@ export default function Navigation() {
   const { user } = useAuth();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
       {!user ? (
         // rota pública: Login
         <Stack.Screen name="Login" component={LoginScreen} />

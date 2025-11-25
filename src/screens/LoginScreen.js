@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { colors, typography, spacing } from '../theme';
 
@@ -19,15 +19,25 @@ export default function LoginScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Tchê Agro</Text>
       <Text style={styles.subtitle}>Faça login como</Text>
-      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={() => handleLogin('admin')} disabled={loading}>
-        <Text style={styles.btnText}>Admin</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.btn, { backgroundColor: colors.secondary }]} onPress={() => handleLogin('colaborador')} disabled={loading}>
-        <Text style={styles.btnText}>Colaborador</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.btn, { backgroundColor: '#0ea5a0' }]} onPress={() => handleLogin('cliente')} disabled={loading}>
-        <Text style={styles.btnText}>Cliente</Text>
-      </TouchableOpacity>
+
+      {loading ? (
+        <View style={{ marginTop: 12 }}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={{ marginTop: 8, color: colors.muted }}>Aguarde...</Text>
+        </View>
+      ) : (
+        <>
+          <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={() => handleLogin('admin')} disabled={loading}>
+            <Text style={styles.btnText}>Admin</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, { backgroundColor: colors.secondary }]} onPress={() => handleLogin('colaborador')} disabled={loading}>
+            <Text style={styles.btnText}>Colaborador</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btn, { backgroundColor: '#0ea5a0' }]} onPress={() => handleLogin('cliente')} disabled={loading}>
+            <Text style={styles.btnText}>Cliente</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
