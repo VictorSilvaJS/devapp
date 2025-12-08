@@ -1,0 +1,77 @@
+{
+  "name": "CadernoCampo",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "ID único do registro"
+    },
+    "produtor_id": {
+      "type": "string",
+      "description": "ID do produtor"
+    },
+    "colaborador_responsavel": {
+      "type": "string",
+      "description": "Nome do colaborador responsável"
+    },
+    "data_atividade": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da atividade"
+    },
+    "tipo_atividade": {
+      "type": "string",
+      "enum": ["plantio", "adubacao", "aplicacao", "colheita", "analise_solo", "vistoria", "outro"],
+      "description": "Tipo de atividade realizada"
+    },
+    "talhao": {
+      "type": "string",
+      "description": "Talhão onde foi realizada a atividade"
+    },
+    "produtos_utilizados": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Produtos utilizados na atividade"
+    },
+    "dosagem": {
+      "type": "string",
+      "description": "Dosagem dos produtos"
+    },
+    "area_aplicada": {
+      "type": "number",
+      "description": "Área em hectares onde foi aplicado"
+    },
+    "condicoes_clima": {
+      "type": "string",
+      "description": "Condições climáticas durante a atividade"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observações gerais"
+    },
+    "recomendacoes": {
+      "type": "string",
+      "description": "Recomendações técnicas"
+    },
+    "fotos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs das fotos"
+    },
+    "visivel_para_cliente": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o registro é visível para o cliente"
+    },
+    "data_criacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de criação do registro"
+    }
+  },
+  "required": ["produtor_id", "colaborador_responsavel", "data_atividade", "tipo_atividade"]
+}

@@ -1,0 +1,79 @@
+{
+  "name": "Mapa",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "ID único do mapa"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "Título do mapa"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": ["fertilidade", "correcao", "indice_vegetacao", "colheita", "plantio"],
+      "description": "Categoria do mapa"
+    },
+    "produtor_id": {
+      "type": "string",
+      "description": "ID do produtor associado"
+    },
+    "talhao": {
+      "type": "string",
+      "description": "Nome do talhão"
+    },
+    "data_criacao": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de criação do mapa"
+    },
+    "safra": {
+      "type": "string",
+      "description": "Safra referente ao mapa"
+    },
+    "arquivo_url": {
+      "type": "string",
+      "description": "URL do arquivo do mapa"
+    },
+    "arquivo_panorama_url": {
+      "type": "string",
+      "description": "URL do arquivo panorama"
+    },
+    "coordenadas": {
+      "type": "object",
+      "properties": {
+        "latitude": {
+          "type": "number",
+          "description": "Latitude do ponto central"
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Longitude do ponto central"
+        },
+        "poligono": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lng": { "type": "number" }
+            }
+          },
+          "description": "Coordenadas do polígono do mapa"
+        }
+      },
+      "description": "Coordenadas geográficas do mapa"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observações sobre o mapa"
+    },
+    "disponivel_para_download": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o mapa pode ser baixado pelo cliente"
+    }
+  },
+  "required": ["titulo", "categoria", "produtor_id", "talhao"]
+}

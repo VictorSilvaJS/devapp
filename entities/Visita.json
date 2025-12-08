@@ -1,0 +1,59 @@
+{
+  "name": "Visita",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "ID único da visita"
+    },
+    "produtor_id": {
+      "type": "string",
+      "description": "ID do produtor visitado"
+    },
+    "tecnico_responsavel": {
+      "type": "string",
+      "description": "Nome do técnico responsável"
+    },
+    "data_visita": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data da visita"
+    },
+    "objetivo": {
+      "type": "string",
+      "enum": ["consultoria", "coleta_solo", "avaliacao_cultivo", "entrega_material", "outro"],
+      "description": "Objetivo da visita"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observações da visita"
+    },
+    "recomendacoes": {
+      "type": "string",
+      "description": "Recomendações técnicas"
+    },
+    "fotos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs das fotos tiradas na visita"
+    },
+    "clima": {
+      "type": "string",
+      "description": "Condições climáticas durante a visita"
+    },
+    "proximaVisita": {
+      "type": "string",
+      "format": "date",
+      "description": "Data sugerida para próxima visita"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["agendada", "realizada", "cancelada"],
+      "default": "agendada",
+      "description": "Status da visita"
+    }
+  },
+  "required": ["produtor_id", "tecnico_responsavel", "data_visita", "objetivo"]
+}
