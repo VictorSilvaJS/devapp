@@ -1,15 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthActions } from '../auth/AuthContext';
 import { colors, typography, spacing } from '../theme';
 
 export default function LoginScreen({ navigation }) {
-  const { login, loading } = useAuth();
+  const { login, loading } = useAuthActions();
 
   const handleLogin = async (key) => {
     try {
       await login(key);
-      navigation.replace('Main');
     } catch (err) {
       alert('Erro ao autenticar');
     }

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { colors, typography, spacing } from '../theme';
 
 export default function EditProfileScreen({ navigation }) {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuthState();
+  const { updateProfile } = useAuthActions();
   const [form, setForm] = useState({ full_name: user?.full_name || '', regiao: user?.regiao || '', produtor_id: user?.produtor_id || '' });
 
   const handleSave = async () => {

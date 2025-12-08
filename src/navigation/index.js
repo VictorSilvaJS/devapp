@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -9,28 +10,30 @@ import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthState } from '../auth/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function AdminTabs() {
+// opções de tab estáveis para evitar recriação em cada render
+function tabScreenOptions({ route }) {
+  return {
+    headerShown: false,
+    tabBarIcon: ({ color, size }) => {
+      let name = 'home-outline';
+      if (route.name === 'Produtores' || route.name === 'Meus Produtores') name = 'people-outline';
+      if (route.name === 'Visitas' || route.name === 'Histórico' || route.name === 'Minhas Visitas') name = 'calendar-outline';
+      if (route.name === 'Caderno') name = 'book-outline';
+      if (route.name === 'Perfil') name = 'person-outline';
+      return <Ionicons name={name} size={size} color={color} />;
+    },
+    tabBarActiveTintColor: '#10B981',
+    tabBarInactiveTintColor: '#6B7280'
+  };
+}
+const AdminTabs = React.memo(function AdminTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ color, size }) => {
-          let name = 'home-outline';
-          if (route.name === 'Produtores') name = 'people-outline';
-          if (route.name === 'Visitas') name = 'calendar-outline';
-          if (route.name === 'Caderno') name = 'book-outline';
-          if (route.name === 'Perfil') name = 'person-outline';
-          return <Ionicons name={name} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#6B7280'
-      })}
-    >
+    <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="Produtores" component={ProdutoresScreen} options={{ title: 'Produtores' }} />
       <Tab.Screen name="Visitas" component={CadernoCampoScreen} options={{ title: 'Visitas' }} />
@@ -38,25 +41,11 @@ function AdminTabs() {
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
-}
+});
 
-function ColaboradorTabs() {
+const ColaboradorTabs = React.memo(function ColaboradorTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ color, size }) => {
-          let name = 'home-outline';
-          if (route.name === 'Meus Produtores') name = 'people-outline';
-          if (route.name === 'Minhas Visitas') name = 'calendar-outline';
-          if (route.name === 'Caderno') name = 'book-outline';
-          if (route.name === 'Perfil') name = 'person-outline';
-          return <Ionicons name={name} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#6B7280'
-      })}
-    >
+    <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="Meus Produtores" component={ProdutoresScreen} options={{ title: 'Produtores' }} />
       <Tab.Screen name="Minhas Visitas" component={CadernoCampoScreen} options={{ title: 'Visitas' }} />
@@ -64,32 +53,39 @@ function ColaboradorTabs() {
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
-}
+});
 
-function ClienteTabs() {
+const ClienteTabs = React.memo(function ClienteTabs() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ color, size }) => {
-          let name = 'home-outline';
-          if (route.name === 'Histórico') name = 'calendar-outline';
-          if (route.name === 'Perfil') name = 'person-outline';
-          return <Ionicons name={name} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#10B981',
-        tabBarInactiveTintColor: '#6B7280'
-      })}
-    >
+    <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Minha Propriedade" component={DashboardScreen} options={{ title: 'Propriedade' }} />
       <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Histórico' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
+});
+function MainTabsComponent() {
+  const { user } = useAuthState();
+  const perfil = user?.perfil;
+  console.log('[Navigation] MainTabsComponent render perfil=', perfil);
+  if (perfil === 'admin') return <AdminTabs />;
+  if (perfil === 'colaborador') return <ColaboradorTabs />;
+  return <ClienteTabs />;
 }
 
+const MemoMainTabs = React.memo(MainTabsComponent);
+
 export default function Navigation() {
-  const { user } = useAuth();
+  const { user, isReady } = useAuthState();
+
+  if (!isReady) {
+    // ainda carregando usuário salvo — renderiza splash/loading simples para evitar remounts
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
@@ -99,9 +95,7 @@ export default function Navigation() {
       ) : (
         // after login, show tabs according to perfil
         <>
-          <Stack.Screen name="Main" component={
-            user.perfil === 'admin' ? AdminTabs : (user.perfil === 'colaborador' ? ColaboradorTabs : ClienteTabs)
-          } />
+          <Stack.Screen name="Main" component={MemoMainTabs} />
           <Stack.Screen name="ProdutorDetail" component={ProdutorScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
           <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />

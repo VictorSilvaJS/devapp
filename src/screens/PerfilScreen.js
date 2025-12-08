@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, ToastAndroid, Alert } from 'react-native';
-import { useAuth } from '../auth/AuthContext';
+import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { colors, typography, spacing } from '../theme';
 import { useNavigation } from '@react-navigation/native';
 
 
 export default function PerfilScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuthState();
+  const { logout } = useAuthActions();
   const [showLogout, setShowLogout] = useState(false);
+
+  useEffect(() => {
+    console.log('[PerfilScreen] mounted');
+    return () => console.log('[PerfilScreen] unmounted');
+  }, []);
 
   const handleLogoutConfirm = async () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

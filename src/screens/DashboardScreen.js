@@ -11,6 +11,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function DashboardScreen() {
+  useEffect(() => {
+    console.log('[DashboardScreen] mounted');
+    return () => console.log('[DashboardScreen] unmounted');
+  }, []);
   const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: 0 });
 
   useEffect(() => {
