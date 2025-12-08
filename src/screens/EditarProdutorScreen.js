@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import Header from '../components/Header';
 import { Produtor } from '../api/mock';
 import { colors, typography, spacing } from '../theme';
 
-export default function NovoProdutorScreen({ navigation }) {
+export default function EditarProdutorScreen({ route, navigation }) {
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     nome: '',
@@ -25,10 +26,42 @@ export default function NovoProdutorScreen({ navigation }) {
     status: 'ativo'
   });
 
+  useEffect(() => {
+    const loadProdutor = async () => {
+      const id = route?.params?.id;
+      if (!id) {
+        Alert.alert('Erro', 'ID do produtor não fornecido');
+        navigation.goBack();
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const produtor = await Produtor.get(id);
+        setForm({
+          nome: produtor.nome || '',
+          fazenda: produtor.fazenda || '',
+          area_total: String(produtor.area_total || ''),
+          cultura_atual: produtor.cultura_atual || '',
+          cidade: produtor.cidade || '',
+          estado: produtor.estado || '',
+          status: produtor.status || 'ativo'
+        });
+      } catch (error) {
+        Alert.alert('Erro', 'Não foi possível carregar os dados do produtor');
+        navigation.goBack();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProdutor();
+  }, [route?.params?.id]);
+
   const handleSave = async () => {
-    // Validações
+    // Validações básicas
     if (!form.nome.trim()) {
-      Alert.alert('Atenção', 'O nome do produtor é obrigatório');
+      Alert.alert('Atenção', 'O nome é obrigatório');
       return;
     }
     if (!form.fazenda.trim()) {
@@ -36,24 +69,23 @@ export default function NovoProdutorScreen({ navigation }) {
       return;
     }
     if (!form.area_total || isNaN(parseFloat(form.area_total))) {
-      Alert.alert('Atenção', 'Informe uma área total válida');
+      Alert.alert('Atenção', 'Informe uma área válida');
       return;
     }
 
     try {
       setSaving(true);
-      const dataToSave = {
+      // Simular atualização (adicionar método update na API mock posteriormente)
+      await Produtor.update(route.params.id, {
         ...form,
         area_total: parseFloat(form.area_total)
-      };
-      await Produtor.create(dataToSave);
+      });
       
-      Alert.alert('Sucesso', 'Produtor cadastrado com sucesso!', [
-        { text: 'OK', onPress: () => navigation.navigate('Produtores') }
+      Alert.alert('Sucesso', 'Produtor atualizado com sucesso', [
+        { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível cadastrar o produtor. Tente novamente.');
-      console.error(error);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações');
     } finally {
       setSaving(false);
     }
@@ -61,8 +93,8 @@ export default function NovoProdutorScreen({ navigation }) {
 
   const handleCancel = () => {
     Alert.alert(
-      'Cancelar Cadastro',
-      'Deseja descartar as informações?',
+      'Cancelar Edição',
+      'Deseja descartar as alterações?',
       [
         { text: 'Não', style: 'cancel' },
         { text: 'Sim', onPress: () => navigation.goBack() }
@@ -70,14 +102,22 @@ export default function NovoProdutorScreen({ navigation }) {
     );
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Header title="Editar Produtor" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Carregando...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Header title="Novo Produtor" />
+      <Header title="Editar Produtor" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.description}>
-          Adicione um novo produtor ao sistema preenchendo as informações abaixo.
-        </Text>
-
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dados Básicos</Text>
           
@@ -90,12 +130,12 @@ export default function NovoProdutorScreen({ navigation }) {
             placeholderTextColor={colors.mutedLight}
           />
 
-          <Text style={styles.label}>Nome da Fazenda *</Text>
+          <Text style={styles.label}>Fazenda *</Text>
           <TextInput
             style={styles.input}
             value={form.fazenda}
             onChangeText={(text) => setForm(s => ({ ...s, fazenda: text }))}
-            placeholder="Nome da propriedade"
+            placeholder="Nome da fazenda"
             placeholderTextColor={colors.mutedLight}
           />
 
@@ -109,12 +149,12 @@ export default function NovoProdutorScreen({ navigation }) {
             placeholderTextColor={colors.mutedLight}
           />
 
-          <Text style={styles.label}>Cultura Principal</Text>
+          <Text style={styles.label}>Cultura Atual</Text>
           <TextInput
             style={styles.input}
             value={form.cultura_atual}
             onChangeText={(text) => setForm(s => ({ ...s, cultura_atual: text }))}
-            placeholder="Ex: Soja, Milho, Trigo"
+            placeholder="Ex: Soja"
             placeholderTextColor={colors.mutedLight}
           />
         </View>
@@ -143,8 +183,40 @@ export default function NovoProdutorScreen({ navigation }) {
           />
         </View>
 
-        <View style={styles.requiredNote}>
-          <Text style={styles.requiredText}>* Campos obrigatórios</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Status</Text>
+          
+          <View style={styles.statusContainer}>
+            <TouchableOpacity
+              style={[
+                styles.statusButton,
+                form.status === 'ativo' && styles.statusButtonActive
+              ]}
+              onPress={() => setForm(s => ({ ...s, status: 'ativo' }))}
+            >
+              <Text style={[
+                styles.statusButtonText,
+                form.status === 'ativo' && styles.statusButtonTextActive
+              ]}>
+                Ativo
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.statusButton,
+                form.status === 'pendente' && styles.statusButtonActive
+              ]}
+              onPress={() => setForm(s => ({ ...s, status: 'pendente' }))}
+            >
+              <Text style={[
+                styles.statusButtonText,
+                form.status === 'pendente' && styles.statusButtonTextActive
+              ]}>
+                Pendente
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.buttonContainer}>
@@ -164,7 +236,7 @@ export default function NovoProdutorScreen({ navigation }) {
             {saving ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.buttonPrimaryText}>💾 Salvar Produtor</Text>
+              <Text style={styles.buttonPrimaryText}>Salvar Alterações</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -182,11 +254,15 @@ const styles = StyleSheet.create({
     padding: spacing.screen,
     paddingBottom: 32
   },
-  description: {
-    fontSize: typography.fontBody,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  loadingText: {
+    marginTop: 12,
     color: colors.muted,
-    marginBottom: 24,
-    lineHeight: 22
+    fontSize: typography.fontBody
   },
   section: {
     marginBottom: 24
@@ -213,21 +289,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight
   },
-  requiredNote: {
-    backgroundColor: colors.accentDark,
+  statusContainer: {
+    flexDirection: 'row',
+    gap: 12
+  },
+  statusButton: {
+    flex: 1,
     padding: 12,
     borderRadius: spacing.radiusSm,
-    marginBottom: 16
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    alignItems: 'center'
   },
-  requiredText: {
-    fontSize: typography.fontCaption,
-    color: colors.textLight,
-    fontWeight: typography.weightSemibold
+  statusButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary
+  },
+  statusButtonText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted
+  },
+  statusButtonTextActive: {
+    color: '#fff'
   },
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 8
+    marginTop: 24
   },
   button: {
     flex: 1,

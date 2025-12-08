@@ -69,6 +69,28 @@ export const Produtor = {
     const novo = { id, ...data };
     produtores.unshift(novo);
     return new Promise((res) => setTimeout(() => res(novo), 200));
+  },
+  update: async (id, data) => {
+    return new Promise((res, rej) => setTimeout(() => {
+      const index = produtores.findIndex(p => p.id === id);
+      if (index === -1) {
+        rej(new Error('Produtor não encontrado'));
+      } else {
+        produtores[index] = { ...produtores[index], ...data, id };
+        res(produtores[index]);
+      }
+    }, 300));
+  },
+  delete: async (id) => {
+    return new Promise((res, rej) => setTimeout(() => {
+      const index = produtores.findIndex(p => p.id === id);
+      if (index === -1) {
+        rej(new Error('Produtor não encontrado'));
+      } else {
+        produtores.splice(index, 1);
+        res({ success: true });
+      }
+    }, 200));
   }
 };
 

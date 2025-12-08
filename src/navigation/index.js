@@ -6,6 +6,7 @@ import ProdutoresScreen from '../screens/ProdutoresScreen';
 import ProdutorScreen from '../screens/ProdutorScreen';
 import CadernoCampoScreen from '../screens/CadernoCampoScreen';
 import NovoProdutorScreen from '../screens/NovoProdutorScreen';
+import EditarProdutorScreen from '../screens/EditarProdutorScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 import LoadingScreen from '../components/LoadingScreen';
@@ -108,6 +109,7 @@ export default function Navigation() {
           <Stack.Screen name="Main" component={MemoMainTabs} />
           <Stack.Screen name="ProdutorDetail" component={ProdutorScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
+          <Stack.Screen name="EditarProdutor" component={EditarProdutorScreen} />
           <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />
         </>
       )}
