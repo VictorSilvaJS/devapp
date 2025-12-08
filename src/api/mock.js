@@ -37,12 +37,67 @@ const cadernos = [
   {
     id: 'c1',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Carlos',
+    colaborador_responsavel: 'Carlos Silva',
     data_atividade: new Date().toISOString(),
     tipo_atividade: 'adubacao',
     talhao: 'Talhão A',
     area_aplicada: 50,
-    visivel_para_cliente: true
+    observacoes: 'Aplicação de NPK 10-20-20 com boa distribuição. Solo em boas condições de umidade.',
+    recomendacoes: 'Monitorar crescimento nas próximas 2 semanas. Recomenda-se irrigação leve em caso de seca.',
+    visivel_para_cliente: true,
+    fotos: ['foto1.jpg', 'foto2.jpg']
+  },
+  {
+    id: 'c2',
+    produtor_id: 'p2',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 dias atrás
+    tipo_atividade: 'plantio',
+    talhao: 'Talhão B',
+    area_aplicada: 30,
+    observacoes: 'Plantio realizado com sementes selecionadas. Espaçamento adequado mantido.',
+    recomendacoes: 'Aplicar herbicida pré-emergente em 3-5 dias.',
+    visivel_para_cliente: true,
+    fotos: ['foto3.jpg']
+  },
+  {
+    id: 'c3',
+    produtor_id: 'p1',
+    colaborador_responsavel: 'Carlos Silva',
+    data_atividade: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 dias atrás
+    tipo_atividade: 'vistoria',
+    talhao: 'Talhão C',
+    area_aplicada: null,
+    observacoes: 'Vistoria de rotina. Identificada presença leve de lagarta.',
+    recomendacoes: 'Programar aplicação de inseticida biológico na próxima semana.',
+    visivel_para_cliente: false,
+    fotos: []
+  },
+  {
+    id: 'c4',
+    produtor_id: 'p2',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 dias atrás
+    tipo_atividade: 'analise_solo',
+    talhao: 'Talhão A',
+    area_aplicada: null,
+    observacoes: 'Coleta de amostras para análise completa de solo. 10 pontos coletados.',
+    recomendacoes: 'Aguardar resultado laboratorial para definir plano de correção.',
+    visivel_para_cliente: true,
+    fotos: ['foto4.jpg', 'foto5.jpg', 'foto6.jpg']
+  },
+  {
+    id: 'c5',
+    produtor_id: 'p1',
+    colaborador_responsavel: 'Carlos Silva',
+    data_atividade: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 dias atrás
+    tipo_atividade: 'aplicacao',
+    talhao: 'Talhão D',
+    area_aplicada: 75,
+    observacoes: 'Aplicação de fungicida preventivo. Condições climáticas favoráveis.',
+    recomendacoes: 'Reaplicar em 15 dias ou após chuvas fortes.',
+    visivel_para_cliente: true,
+    fotos: []
   }
 ];
 
