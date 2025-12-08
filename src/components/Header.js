@@ -1,54 +1,63 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, typography, spacing, border } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuthState } from '../auth/AuthContext';
+import UserProfile from './UserProfile';
 
-const LOGO = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/68b1f9ae8626205b99d179cc/4fe51b90f_Imagem1.png';
+const LOGO = require('../assets/images/logo.png');
 
-export default function Header({ title }) {
+export default function Header({ title, showUser = true }) {
   const { user } = useAuthState();
   return (
     <View style={styles.container}>
-      <Image source={{ uri: LOGO }} style={styles.logo} />
-      <Text style={styles.title} numberOfLines={1}>{title}</Text>
-      <View style={styles.userContainer}>
-        <Text style={styles.userName} numberOfLines={1}>{user?.full_name || ''}</Text>
-      </View>
+      <LinearGradient
+        colors={['#FFFFFF', colors.backgroundAlt]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.gradient}
+      >
+        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+        <View style={styles.titleContainer}>
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        </View>
+        {showUser && (
+          <View style={styles.userContainer}>
+            <UserProfile user={user} size="small" showDetails={false} />
+          </View>
+        )}
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
+    ...shadows.sm
+  },
+  gradient: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.card,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e6f0e6'
+    paddingVertical: spacing.card + 4
   },
   logo: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     marginRight: 12,
     borderRadius: border.radius * 0.5
   },
+  titleContainer: {
+    flex: 1
+  },
   title: {
-    fontSize: typography.fontTitle,
+    fontSize: typography.fontTitle - 4,
     fontWeight: typography.weightBold,
     color: colors.text
-  }
-  ,
-  userContainer: {
-    marginLeft: 'auto'
   },
-  userName: {
-    fontSize: typography.fontBody,
-    color: colors.muted
-  }
-  ,
-  logoutBtn: {
-    marginLeft: 12,
-    padding: 6
+  userContainer: {
+    marginLeft: 8
   }
 });

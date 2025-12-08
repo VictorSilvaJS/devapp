@@ -1,10 +1,31 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthActions } from '../auth/AuthContext';
-import { colors, typography, spacing } from '../theme';
+import { colors, typography, spacing, shadows } from '../theme';
+
+const LOGO = require('../assets/images/logo.png');
 
 export default function LoginScreen({ navigation }) {
   const { login, loading } = useAuthActions();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(50)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        speed: 12,
+        bounciness: 8,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
 
   const handleLogin = async (key) => {
     try {
@@ -15,36 +36,136 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tchê Agro</Text>
-      <Text style={styles.subtitle}>Faça login como</Text>
+    <LinearGradient
+      colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+      style={styles.container}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+        <Text style={styles.title}>Tchê Agro</Text>
+        <Text style={styles.subtitle}>Faça login como</Text>
 
-      {loading ? (
-        <View style={{ marginTop: 12 }}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ marginTop: 8, color: colors.muted }}>Aguarde...</Text>
-        </View>
-      ) : (
-        <>
-          <TouchableOpacity style={[styles.btn, { backgroundColor: colors.primary }]} onPress={() => handleLogin('admin')} disabled={loading}>
-            <Text style={styles.btnText}>Admin</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, { backgroundColor: colors.secondary }]} onPress={() => handleLogin('colaborador')} disabled={loading}>
-            <Text style={styles.btnText}>Colaborador</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.btn, { backgroundColor: '#0ea5a0' }]} onPress={() => handleLogin('cliente')} disabled={loading}>
-            <Text style={styles.btnText}>Cliente</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Aguarde...</Text>
+          </View>
+        ) : (
+          <View style={styles.buttonsContainer}>
+            <TouchableOpacity 
+              style={[styles.btn, styles.btnAdmin]} 
+              onPress={() => handleLogin('admin')} 
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[colors.primary, colors.primaryDark]}
+                style={styles.btnGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.btnText}>👨‍💼 Admin</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.btn, styles.btnColaborador]} 
+              onPress={() => handleLogin('colaborador')} 
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[colors.secondary, colors.secondaryLight]}
+                style={styles.btnGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.btnText}>👷 Colaborador</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.btn, styles.btnCliente]} 
+              onPress={() => handleLogin('cliente')} 
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={[colors.success, colors.successLight]}
+                style={styles.btnGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.btnText}>🌾 Cliente</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+      </Animated.View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, alignItems:'center', justifyContent:'center', backgroundColor: colors.background, padding: spacing.screen },
-  title: { fontSize: typography.fontTitle, fontWeight: typography.weightBold, color: colors.text, marginBottom: 8 },
-  subtitle: { fontSize: typography.fontBody, color: colors.muted, marginBottom: 16 },
-  btn: { width: '80%', padding: 12, borderRadius: 10, alignItems:'center', marginVertical:6 },
-  btnText: { color: '#fff', fontWeight: typography.weightSemibold }
+  container: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: spacing.screen * 2
+  },
+  content: {
+    alignItems: 'center',
+    width: '100%'
+  },
+  logo: {
+    width: 140,
+    height: 140,
+    marginBottom: spacing.gap * 2
+  },
+  title: { 
+    fontSize: typography.fontTitle + 4, 
+    fontWeight: typography.weightBold, 
+    color: colors.text, 
+    marginBottom: 8 
+  },
+  subtitle: { 
+    fontSize: typography.fontBody + 2, 
+    color: colors.textLight, 
+    marginBottom: spacing.gap * 3,
+    fontWeight: typography.weightSemibold
+  },
+  loadingContainer: {
+    marginTop: spacing.gap * 2,
+    alignItems: 'center'
+  },
+  loadingText: {
+    marginTop: spacing.gap,
+    color: colors.muted,
+    fontSize: typography.fontBody
+  },
+  buttonsContainer: {
+    width: '100%',
+    gap: spacing.gap + 4
+  },
+  btn: { 
+    width: '100%', 
+    borderRadius: 14,
+    overflow: 'hidden',
+    ...shadows.md
+  },
+  btnGradient: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  btnAdmin: {},
+  btnColaborador: {},
+  btnCliente: {},
+  btnText: { 
+    color: '#fff', 
+    fontWeight: typography.weightBold,
+    fontSize: typography.fontBody + 2
+  }
 });

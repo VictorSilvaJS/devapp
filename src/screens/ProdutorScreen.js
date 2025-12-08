@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Header from '../components/Header';
-import { Produtor, Mapa, Visita } from '../api/mock';
+import { Produtor, Visita } from '../api/mock';
 import { colors, typography, spacing } from '../theme';
 
 // Enable LayoutAnimation on Android
@@ -65,17 +65,6 @@ const styles = StyleSheet.create({
   body: { fontSize: typography.fontBody, color: colors.text, marginTop: 8 },
   meta: { color: colors.muted },
   sectionTitle: { fontSize: typography.fontBody + 2, fontWeight: typography.weightSemibold, marginBottom: 8, color: colors.text },
-  cardSmall: { backgroundColor: colors.card, padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: '#f0f7f0' ,}
-  ,
-  logoutBtn: { backgroundColor: colors.error, padding: 12, borderRadius: 10, alignItems: 'center' },
-  logoutText: { color: '#fff', fontWeight: typography.weightSemibold },
-  modalOverlay: { flex:1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems:'center', justifyContent:'center' },
-  modalContent: { width: '80%', backgroundColor: colors.card, padding: 16, borderRadius: 12 },
-  modalTitle: { fontSize: typography.fontSubtitle, fontWeight: typography.weightBold, color: colors.text },
-  modalBody: { marginTop:8, color: colors.muted },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16, gap: 8 },
-  modalBtnCancel: { padding: 10, borderRadius: 8, marginRight: 8 },
-  modalBtnConfirm: { padding: 10, borderRadius: 8, backgroundColor: colors.error },
-  modalCancelText: { color: colors.muted },
-  modalConfirmText: { color: '#fff', fontWeight: typography.weightSemibold }
+  cardSmall: { backgroundColor: colors.card, padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: '#f0f7f0' },
+  cardTitle: { fontSize: typography.fontBody + 1, fontWeight: typography.weightBold, color: colors.text }
 });

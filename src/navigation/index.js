@@ -1,5 +1,4 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -9,8 +8,10 @@ import CadernoCampoScreen from '../screens/CadernoCampoScreen';
 import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
+import LoadingScreen from '../components/LoadingScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthState } from '../auth/AuthContext';
+import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -27,8 +28,20 @@ function tabScreenOptions({ route }) {
       if (route.name === 'Perfil') name = 'person-outline';
       return <Ionicons name={name} size={size} color={color} />;
     },
-    tabBarActiveTintColor: '#10B981',
-    tabBarInactiveTintColor: '#6B7280'
+    tabBarActiveTintColor: colors.primary,
+    tabBarInactiveTintColor: colors.muted,
+    tabBarStyle: {
+      backgroundColor: colors.card,
+      borderTopWidth: 2,
+      borderTopColor: colors.border,
+      paddingBottom: 8,
+      paddingTop: 8,
+      height: 60
+    },
+    tabBarLabelStyle: {
+      fontSize: 11,
+      fontWeight: '600'
+    }
   };
 }
 const AdminTabs = React.memo(function AdminTabs() {
@@ -64,6 +77,7 @@ const ClienteTabs = React.memo(function ClienteTabs() {
     </Tab.Navigator>
   );
 });
+
 function MainTabsComponent() {
   const { user } = useAuthState();
   const perfil = user?.perfil;
@@ -80,11 +94,7 @@ export default function Navigation() {
 
   if (!isReady) {
     // ainda carregando usuário salvo — renderiza splash/loading simples para evitar remounts
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#10B981" />
-      </View>
-    );
+    return <LoadingScreen message="Inicializando..." />;
   }
 
   return (

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, ToastAndroid, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, ToastAndroid, Alert, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
-import { colors, typography, spacing } from '../theme';
-import { useNavigation } from '@react-navigation/native';
-
+import { colors, typography, spacing, shadows } from '../theme';
+import UserProfile from '../components/UserProfile';
 
 export default function PerfilScreen({ navigation }) {
   const { user } = useAuthState();
@@ -19,7 +19,6 @@ export default function PerfilScreen({ navigation }) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     try {
       await logout();
-      // mostrar toast/alert de confirmação
       if (Platform.OS === 'android') {
         ToastAndroid.show('Logout realizado', ToastAndroid.SHORT);
       } else {
@@ -33,22 +32,56 @@ export default function PerfilScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.name}>{user?.full_name || 'Usuário'}</Text>
-        <Text style={styles.meta}>Perfil: {user?.perfil || '-'}</Text>
-        {user?.regiao && <Text style={styles.meta}>Região: {user.regiao}</Text>}
-        {user?.produtor_id && <Text style={styles.meta}>Produtor vinculado: {user.produtor_id}</Text>}
-      </View>
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.profileSection}>
+            <UserProfile user={user} size="large" showDetails={true} />
+          </View>
 
-      <View style={{ marginTop: 20 }}>
-        <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate('EditProfile')}>
-          <Text style={styles.logoutText}>Editar Perfil</Text>
-        </TouchableOpacity>
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>Informações</Text>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Perfil:</Text>
+              <Text style={styles.infoValue}>{user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : '-'}</Text>
+            </View>
+            {user?.regiao && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Região:</Text>
+                <Text style={styles.infoValue}>{user.regiao}</Text>
+              </View>
+            )}
+            {user?.produtor_id && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Produtor vinculado:</Text>
+                <Text style={styles.infoValue}>{user.produtor_id}</Text>
+              </View>
+            )}
+          </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => setShowLogout(true)}>
-          <Text style={styles.logoutText}>Sair da Conta</Text>
-        </TouchableOpacity>
-      </View>
+          <View style={styles.actionsSection}>
+            <TouchableOpacity 
+              style={[styles.actionBtn, styles.editBtn]} 
+              onPress={() => navigation.navigate('EditProfile')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.actionBtnText}>Editar Perfil</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.actionBtn, styles.logoutBtn]} 
+              onPress={() => setShowLogout(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.actionBtnText, styles.logoutText]}>Sair da Conta</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </LinearGradient>
 
       <Modal visible={showLogout} transparent animationType="fade" onRequestClose={() => setShowLogout(false)}>
         <View style={styles.modalOverlay}>
@@ -71,19 +104,128 @@ export default function PerfilScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor: colors.background, padding: spacing.screen },
-  card: { backgroundColor: colors.card, padding: spacing.card, borderRadius: 12 },
-  name: { fontSize: typography.fontSubtitle, fontWeight: typography.weightBold, color: colors.text },
-  meta: { color: colors.muted, marginTop: 6 },
-  logoutBtn: { backgroundColor: colors.error, padding: 12, borderRadius: 10, alignItems: 'center' },
-  logoutText: { color: '#fff', fontWeight: typography.weightSemibold },
-  modalOverlay: { flex:1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems:'center', justifyContent:'center' },
-  modalContent: { width: '80%', backgroundColor: colors.card, padding: 16, borderRadius: 12 },
-  modalTitle: { fontSize: typography.fontSubtitle, fontWeight: typography.weightBold, color: colors.text },
-  modalBody: { marginTop:8, color: colors.muted },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 },
-  modalBtnCancel: { padding: 10, borderRadius: 8, marginRight: 8 },
-  modalBtnConfirm: { padding: 10, borderRadius: 8, backgroundColor: colors.error },
-  modalCancelText: { color: colors.muted },
-  modalConfirmText: { color: '#fff', fontWeight: typography.weightSemibold }
+  container: { 
+    flex: 1 
+  },
+  gradient: {
+    flex: 1
+  },
+  content: { 
+    padding: spacing.screen 
+  },
+  profileSection: {
+    backgroundColor: colors.card,
+    padding: spacing.card * 1.5,
+    borderRadius: 16,
+    marginBottom: spacing.gap * 1.5,
+    alignItems: 'center',
+    ...shadows.md
+  },
+  infoCard: {
+    backgroundColor: colors.card,
+    padding: spacing.card * 1.5,
+    borderRadius: 16,
+    marginBottom: spacing.gap * 1.5,
+    ...shadows.sm
+  },
+  sectionTitle: {
+    fontSize: typography.fontBody + 2,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: spacing.gap
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight
+  },
+  infoLabel: {
+    fontSize: typography.fontBody,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold
+  },
+  infoValue: {
+    fontSize: typography.fontBody,
+    color: colors.text,
+    fontWeight: typography.weightBold
+  },
+  actionsSection: {
+    gap: spacing.gap
+  },
+  actionBtn: {
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    ...shadows.sm
+  },
+  editBtn: {
+    backgroundColor: colors.primary
+  },
+  logoutBtn: { 
+    backgroundColor: colors.error
+  },
+  actionBtnText: {
+    color: '#fff',
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold
+  },
+  logoutText: { 
+    color: '#fff' 
+  },
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    padding: spacing.screen
+  },
+  modalContent: { 
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.card, 
+    padding: spacing.card * 1.5, 
+    borderRadius: 16,
+    ...shadows.lg
+  },
+  modalTitle: { 
+    fontSize: typography.fontSubtitle, 
+    fontWeight: typography.weightBold, 
+    color: colors.text,
+    marginBottom: 8
+  },
+  modalBody: { 
+    fontSize: typography.fontBody,
+    color: colors.textLight,
+    lineHeight: 22
+  },
+  modalActions: { 
+    flexDirection: 'row', 
+    justifyContent: 'flex-end', 
+    marginTop: 20,
+    gap: 10
+  },
+  modalBtnCancel: { 
+    padding: 12, 
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: colors.backgroundAlt
+  },
+  modalBtnConfirm: { 
+    padding: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10, 
+    backgroundColor: colors.error
+  },
+  modalCancelText: { 
+    color: colors.text,
+    fontWeight: typography.weightSemibold,
+    fontSize: typography.fontBody
+  },
+  modalConfirmText: { 
+    color: '#fff', 
+    fontWeight: typography.weightBold,
+    fontSize: typography.fontBody
+  }
 });
