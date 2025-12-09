@@ -12,8 +12,26 @@
     },
     "categoria": {
       "type": "string",
-      "enum": ["fertilidade", "correcao", "indice_vegetacao", "colheita", "plantio"],
+      "enum": ["fertilidade", "correcao", "indice_vegetacao", "colheita", "plantio", "panorama"],
       "description": "Categoria do mapa"
+    },
+    "subcategoria": {
+      "type": "string",
+      "description": "Subcategoria específica do mapa (ex: NDVI, NDRE, pH, P, K)"
+    },
+    "formato_arquivo": {
+      "type": "string",
+      "enum": ["pdf", "dwg", "shp", "kml", "geotiff", "png", "jpg"],
+      "description": "Formato do arquivo do mapa"
+    },
+    "tamanho_arquivo": {
+      "type": "number",
+      "description": "Tamanho do arquivo em bytes"
+    },
+    "disponivel_download": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o mapa está disponível para download pelo cliente"
     },
     "produtor_id": {
       "type": "string",

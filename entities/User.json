@@ -27,7 +27,14 @@
     },
     "regiao": {
       "type": "string",
-      "description": "Região de trabalho (para colaboradores)"
+      "description": "Região de trabalho (para colaboradores) - ex: Sul, Centro-Oeste, Goiás"
+    },
+    "regioes_acesso": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Lista de regiões que o usuário tem acesso (para admins)"
     },
     "produtor_id": {
       "type": "string",

@@ -43,6 +43,14 @@
       "type": "string",
       "description": "Estado"
     },
+    "regiao": {
+      "type": "string",
+      "description": "Região administrativa (ex: Sul, Centro-Oeste, Norte, MT, SP, PE)"
+    },
+    "microregiao": {
+      "type": "string",
+      "description": "Microrregião específica dentro da região"
+    },
     "cep": {
       "type": "string",
       "description": "CEP"

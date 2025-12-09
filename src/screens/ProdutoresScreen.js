@@ -8,6 +8,8 @@ import { Produtor } from '../api/mock';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing, shadows } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../auth/AuthContext';
+import { filtrarProdutoresPorAcesso, podeCriarProdutor, getRegioesDisponiveis } from '../utils/acessoControle';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -19,15 +21,19 @@ export default function ProdutoresScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [regiaoSelecionada, setRegiaoSelecionada] = useState('todas');
   const navigation = useNavigation();
+  const { user } = useAuth();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user]);
   
   const load = async () => {
     const data = await Produtor.list();
+    // Filtrar por acesso do usuário
+    const produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
     // animação local ao atualizar lista
     try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
-    setProdutores(data);
+    setProdutores(produtoresFiltrados);
   };
 
   const onRefresh = async () => {
@@ -36,7 +42,11 @@ export default function ProdutoresScreen() {
     setRefreshing(false);
   };
 
-  // Filtrar produtores por busca e status
+  // Obter regiões disponíveis para o usuário
+  const regioes = getRegioesDisponiveis(user, produtores);
+  const mostrarFiltroRegiao = user?.perfil === 'admin' && regioes.length > 0;
+
+  // Filtrar produtores por busca, status e região
   const produtoresFiltrados = produtores.filter(produtor => {
     const matchBusca = !busca || 
       produtor.nome.toLowerCase().includes(busca.toLowerCase()) ||
@@ -45,7 +55,11 @@ export default function ProdutoresScreen() {
     
     const matchStatus = filtroStatus === 'todos' || produtor.status === filtroStatus;
     
-    return matchBusca && matchStatus;
+    const matchRegiao = !mostrarFiltroRegiao || 
+      regiaoSelecionada === 'todas' || 
+      produtor.regiao === regiaoSelecionada;
+    
+    return matchBusca && matchStatus && matchRegiao;
   });
 
   // Calcular estatísticas
@@ -76,12 +90,13 @@ export default function ProdutoresScreen() {
           />
         }
       >
-        {/* Botão Novo Produtor */}
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => navigation.navigate('NovoProdutor')}
-          activeOpacity={0.8}
-        >
+        {/* Botão Novo Produtor (apenas para admin e colaborador) */}
+        {podeCriarProdutor(user) && (
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => navigation.navigate('NovoProdutor')}
+            activeOpacity={0.8}
+          >
           <LinearGradient
             colors={[colors.primary, colors.primaryDark]}
             style={styles.buttonGradient}
@@ -91,6 +106,7 @@ export default function ProdutoresScreen() {
             <Text style={styles.buttonText}>+ Novo Produtor</Text>
           </LinearGradient>
         </TouchableOpacity>
+        )}
 
         {/* Barra de Busca */}
         <View style={styles.searchContainer}>
@@ -108,6 +124,54 @@ export default function ProdutoresScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Filtro de Região (apenas para admin) */}
+        {mostrarFiltroRegiao && (
+          <View style={styles.regiaoContainer}>
+            <Text style={styles.regiaoLabel}>
+              <Ionicons name="location-outline" size={16} color={colors.text} /> Região:
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.regiaoScroll}>
+              <TouchableOpacity
+                style={[
+                  styles.regiaoChip,
+                  regiaoSelecionada === 'todas' && styles.regiaoChipActive
+                ]}
+                onPress={() => {
+                  try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
+                  setRegiaoSelecionada('todas');
+                }}
+              >
+                <Text style={[
+                  styles.regiaoChipText,
+                  regiaoSelecionada === 'todas' && styles.regiaoChipTextActive
+                ]}>
+                  Todas
+                </Text>
+              </TouchableOpacity>
+              {regioes.map((regiao) => (
+                <TouchableOpacity
+                  key={regiao}
+                  style={[
+                    styles.regiaoChip,
+                    regiaoSelecionada === regiao && styles.regiaoChipActive
+                  ]}
+                  onPress={() => {
+                    try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
+                    setRegiaoSelecionada(regiao);
+                  }}
+                >
+                  <Text style={[
+                    styles.regiaoChipText,
+                    regiaoSelecionada === regiao && styles.regiaoChipTextActive
+                  ]}>
+                    {regiao}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Filtros de Status */}
         <View style={styles.filtrosContainer}>
@@ -272,6 +336,46 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: colors.muted,
     fontWeight: typography.weightBold
+  },
+
+  // Região (admin)
+  regiaoContainer: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: 12,
+    ...shadows.sm,
+  },
+  regiaoLabel: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  regiaoScroll: {
+    flexGrow: 0,
+  },
+  regiaoChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.background,
+    borderRadius: 20,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  regiaoChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  regiaoChipText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  regiaoChipTextActive: {
+    color: colors.white,
+    fontWeight: '600',
   },
 
   // Filtros

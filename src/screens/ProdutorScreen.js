@@ -302,14 +302,25 @@ export default function ProdutorScreen({ route, navigation }) {
 
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Mapas da Lavoura</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Mapas da Lavoura</Text>
+              <TouchableOpacity 
+                style={styles.verTodosButton}
+                onPress={() => navigation.navigate('Mapas', { produtorId: produtor.id })}
+              >
+                <Text style={styles.verTodosText}>Ver Todos</Text>
+                <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+            
             {mapas.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyIcon}>🗺️</Text>
                 <Text style={styles.emptyText}>Nenhum mapa cadastrado</Text>
               </View>
             ) : (
-              mapas.map(mapa => (
+              <>
+                {mapas.slice(0, 3).map(mapa => (
                 <View key={mapa.id} style={styles.mapaCard}>
                   <View style={styles.mapaHeader}>
                     <View style={styles.mapaIconContainer}>
@@ -342,7 +353,19 @@ export default function ProdutorScreen({ route, navigation }) {
                     </TouchableOpacity>
                   )}
                 </View>
-              ))
+              ))}
+              {mapas.length > 3 && (
+                <TouchableOpacity 
+                  style={styles.verMaisButton}
+                  onPress={() => navigation.navigate('Mapas', { produtorId: produtor.id })}
+                >
+                  <Text style={styles.verMaisText}>
+                    Ver mais {mapas.length - 3} mapas
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              )}
+            </>
             )}
           </View>
         )}
@@ -786,6 +809,37 @@ const styles = StyleSheet.create({
   emptyIcon: {
     fontSize: 56,
     marginBottom: 16
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  verTodosButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  verTodosText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  verMaisButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    marginTop: spacing.md,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 8,
+    gap: spacing.xs,
+  },
+  verMaisText: {
+    fontSize: typography.sizes.md,
+    color: colors.primary,
+    fontWeight: '600',
   },
   emptyTitle: {
     fontSize: typography.fontSubtitle - 2,

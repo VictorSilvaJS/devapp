@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/DashboardScreen';
 import ProdutoresScreen from '../screens/ProdutoresScreen';
 import ProdutorScreen from '../screens/ProdutorScreen';
+import MapasScreen from '../screens/MapasScreen';
 import CadernoCampoScreen from '../screens/CadernoCampoScreen';
 import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import EditarProdutorScreen from '../screens/EditarProdutorScreen';
@@ -78,7 +79,7 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
 const ClienteTabs = React.memo(function ClienteTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
-      <Tab.Screen name="Minha Propriedade" component={DashboardScreen} options={{ title: 'Propriedade' }} />
+      <Tab.Screen name="Minha Propriedade" component={require('../screens/ClienteDashboardScreen').default} options={{ title: 'Propriedade' }} />
       <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Histórico' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
@@ -114,6 +115,7 @@ export default function Navigation() {
         <>
           <Stack.Screen name="Main" component={MemoMainTabs} />
           <Stack.Screen name="ProdutorDetail" component={ProdutorScreen} />
+          <Stack.Screen name="Mapas" component={MapasScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
           <Stack.Screen name="EditarProdutor" component={EditarProdutorScreen} />
           <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />
