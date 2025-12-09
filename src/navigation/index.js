@@ -35,13 +35,19 @@ function tabScreenOptions({ route }) {
       backgroundColor: colors.card,
       borderTopWidth: 2,
       borderTopColor: colors.border,
-      paddingBottom: 8,
+      paddingBottom: 4,
       paddingTop: 8,
-      height: 60
+      height: 65,
+      elevation: 8,
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8
     },
     tabBarLabelStyle: {
       fontSize: 11,
-      fontWeight: '600'
+      fontWeight: '600',
+      marginBottom: 4
     }
   };
 }

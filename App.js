@@ -13,7 +13,7 @@ export default function App() {
           <Navigation />
         </NavigationContainer>
       </AuthProvider>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" backgroundColor="#F8FBF8" />
     </SafeAreaProvider>
   );
 }

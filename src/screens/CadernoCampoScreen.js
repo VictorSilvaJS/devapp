@@ -292,7 +292,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8
   },
   content: { 
-    padding: spacing.screen 
+    padding: spacing.screen,
+    paddingBottom: spacing.screen + 80
   },
   loadingContainer: {
     alignItems: 'center',

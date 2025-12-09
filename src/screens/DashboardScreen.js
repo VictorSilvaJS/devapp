@@ -325,7 +325,8 @@ const styles = StyleSheet.create({
     color: colors.textLight,
   },
   content: { 
-    padding: spacing.screen 
+    padding: spacing.screen,
+    paddingBottom: spacing.screen + 80
   },
   headerSection: {
     marginBottom: spacing.gap * 2,

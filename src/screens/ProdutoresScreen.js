@@ -210,7 +210,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background 
   },
   content: { 
-    padding: spacing.screen 
+    padding: spacing.screen,
+    paddingBottom: spacing.screen + 80
   },
   button: { 
     borderRadius: 14, 

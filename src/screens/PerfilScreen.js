@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, ToastAndroid, Alert, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
@@ -9,6 +10,7 @@ export default function PerfilScreen({ navigation }) {
   const { user } = useAuthState();
   const { logout } = useAuthActions();
   const [showLogout, setShowLogout] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     console.log('[PerfilScreen] mounted');
@@ -38,7 +40,7 @@ export default function PerfilScreen({ navigation }) {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingTop: spacing.screen + insets.top }]}>
           <View style={styles.profileSection}>
             <UserProfile user={user} size="large" showDetails={true} />
           </View>
@@ -111,7 +113,8 @@ const styles = StyleSheet.create({
     flex: 1
   },
   content: { 
-    padding: spacing.screen 
+    padding: spacing.screen,
+    paddingBottom: spacing.screen * 2 + 65 // padding extra para não ficar atrás da tab bar
   },
   profileSection: {
     backgroundColor: colors.card,

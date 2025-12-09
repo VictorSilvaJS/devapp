@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, Platform, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuthState } from '../auth/AuthContext';
 import UserProfile from './UserProfile';
@@ -9,8 +10,10 @@ const LOGO = require('../assets/images/logo.png');
 
 export default function Header({ title, showUser = true }) {
   const { user } = useAuthState();
+  const insets = useSafeAreaInsets();
+  
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={['#FFFFFF', colors.backgroundAlt]}
         start={{ x: 0, y: 0 }}
