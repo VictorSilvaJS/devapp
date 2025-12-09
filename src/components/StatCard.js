@@ -4,6 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, border, shadows } from '../theme';
 
 export default function StatCard({ label, value, accent, icon }) {
+  // Ajusta o tamanho da fonte baseado no comprimento do valor
+  const getValueFontSize = () => {
+    const valueStr = String(value);
+    if (valueStr.length > 10) return typography.fontBody + 2;
+    if (valueStr.length > 6) return typography.fontSubtitle;
+    return typography.fontSubtitle + 4;
+  };
+
   return (
     <View style={styles.cardWrapper}>
       <LinearGradient
@@ -13,8 +21,19 @@ export default function StatCard({ label, value, accent, icon }) {
         style={styles.card}
       >
         <View style={styles.content}>
-          <Text style={[styles.value, accent?.color && { color: accent.color }]}>{value}</Text>
-          <Text style={styles.label}>{label}</Text>
+          <Text 
+            style={[
+              styles.value, 
+              { fontSize: getValueFontSize() },
+              accent?.color && { color: accent.color }
+            ]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {value}
+          </Text>
+          <Text style={styles.label} numberOfLines={2}>{label}</Text>
         </View>
         {icon && (
           <View style={[styles.iconContainer, accent?.bgColor && { backgroundColor: accent.bgColor }]}>
@@ -44,18 +63,20 @@ const styles = StyleSheet.create({
     minHeight: 100
   },
   content: {
-    flex: 1
+    flex: 1,
+    marginRight: 8
   },
   value: {
-    fontSize: typography.fontSubtitle + 4,
     fontWeight: typography.weightBold,
     color: colors.primary,
-    marginBottom: 4
+    marginBottom: 4,
+    flexShrink: 1
   },
   label: {
     fontSize: typography.fontBody - 1,
     color: colors.textLight,
-    fontWeight: typography.weightSemibold
+    fontWeight: typography.weightSemibold,
+    flexWrap: 'wrap'
   },
   iconContainer: {
     width: 48,

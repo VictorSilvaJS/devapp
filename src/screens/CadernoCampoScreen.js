@@ -48,16 +48,22 @@ export default function CadernoCampoScreen() {
         ]);
       } else if (user?.perfil === 'colaborador') {
         // Colaborador vê apenas seus registros e produtores da sua região
-        [registrosData, produtoresData] = await Promise.all([
-          CadernoCampo.filter({ colaborador_responsavel: user.full_name }),
-          Produtor.filter({ regiao: user.regiao || '' })
+        const [todosRegistros, todosProdutores] = await Promise.all([
+          CadernoCampo.list(),
+          Produtor.list()
         ]);
+        registrosData = todosRegistros.filter(r => r.colaborador_responsavel === user.full_name);
+        produtoresData = todosProdutores.filter(p => p.regiao === user.regiao);
       } else if (user?.perfil === 'cliente') {
         // Cliente vê apenas registros visíveis do seu produtor
-        [registrosData, produtoresData] = await Promise.all([
-          CadernoCampo.filter({ produtor_id: user.produtor_id, visivel_para_cliente: true }),
-          Produtor.filter({ id: user.produtor_id })
+        const [todosRegistros, todosProdutores] = await Promise.all([
+          CadernoCampo.list(),
+          Produtor.list()
         ]);
+        registrosData = todosRegistros.filter(r => 
+          r.produtor_id === user.produtor_id && r.visivel_para_cliente === true
+        );
+        produtoresData = todosProdutores.filter(p => p.id === user.produtor_id);
       } else {
         // Sem usuário, carrega tudo (fallback)
         [registrosData, produtoresData] = await Promise.all([

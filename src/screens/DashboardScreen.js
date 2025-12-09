@@ -61,8 +61,15 @@ export default function DashboardScreen() {
             produtores = [produtor];
             setCidade(`${produtor.cidade || 'Cidade'}, ${produtor.estado || 'Estado'}`);
             
-            visitas = await Visita.list(); // filtrar por produtor_id
-            registros = await CadernoCampo.list(); // filtrar por produtor_id e visível para cliente
+            // Filtrar visitas do produtor do cliente
+            const todasVisitas = await Visita.list();
+            visitas = todasVisitas.filter(v => v.produtor_id === user.produtor_id);
+            
+            // Filtrar registros do produtor que são visíveis para o cliente
+            const todosRegistros = await CadernoCampo.list();
+            registros = todosRegistros.filter(r => 
+              r.produtor_id === user.produtor_id && r.visivel_para_cliente === true
+            );
           } catch (error) {
             console.error('Erro ao carregar dados do produtor:', error);
             setCidade('Propriedade não encontrada');
@@ -75,12 +82,20 @@ export default function DashboardScreen() {
 
       const areaTotal = produtores.reduce((sum, p) => sum + (p.area_total || 0), 0);
       
+      // Formata área para exibição compacta
+      const formatarArea = (area) => {
+        if (area >= 1000) {
+          return `${(area / 1000).toFixed(1)}k ha`;
+        }
+        return `${area.toFixed(1)} ha`;
+      };
+      
       try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch (e) {}
       setStats({
         produtores: produtores.length,
         visitas: visitas.length,
         registros: registros.length,
-        areaTotal: areaTotal.toFixed(1),
+        areaTotal: formatarArea(areaTotal),
       });
     } catch (error) {
       console.error('Erro ao carregar dados do Dashboard:', error);
@@ -109,7 +124,7 @@ export default function DashboardScreen() {
           },
         },
         {
-          label: 'Área Total (ha)',
+          label: 'Área Total',
           value: stats.areaTotal,
           icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
@@ -152,7 +167,7 @@ export default function DashboardScreen() {
           },
         },
         {
-          label: 'Área Gerenciada (ha)',
+          label: 'Área Gerenciada',
           value: stats.areaTotal,
           icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
@@ -186,7 +201,7 @@ export default function DashboardScreen() {
       // Cliente
       return [
         {
-          label: 'Minha Área (ha)',
+          label: 'Minha Área',
           value: stats.areaTotal,
           icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
@@ -278,19 +293,23 @@ export default function DashboardScreen() {
 
           {/* Grade de cards dinâmica por perfil */}
           <View style={styles.statsGrid}>
-            {getCardsPrincipais.map((card, index) => (
-              <View 
-                key={card.label} 
-                style={[
-                  styles.statCardWrapper,
-                  user?.perfil === 'cliente' && getCardsPrincipais.length === 3
-                    ? styles.statCardThreeColumns
-                    : styles.statCardTwoColumns
-                ]}
-              >
-                <StatCard {...card} />
-              </View>
-            ))}
+            {getCardsPrincipais.map((card, index) => {
+              // Para cliente: 2 cards na primeira linha, 1 na segunda (centralizado)
+              const isCliente = user?.perfil === 'cliente';
+              const isLastCardForCliente = isCliente && index === 2;
+              
+              return (
+                <View 
+                  key={card.label} 
+                  style={[
+                    styles.statCardWrapper,
+                    isLastCardForCliente ? styles.statCardFullWidth : styles.statCardTwoColumns
+                  ]}
+                >
+                  <StatCard {...card} />
+                </View>
+              );
+            })}
           </View>
 
           {/* Mensagem para clientes sem produtor vinculado */}
@@ -391,8 +410,9 @@ const styles = StyleSheet.create({
   statCardTwoColumns: {
     width: '50%',
   },
-  statCardThreeColumns: {
-    width: '33.333%',
+  statCardFullWidth: {
+    width: '100%',
+    paddingHorizontal: '25%',
   },
   warningCard: {
     backgroundColor: colors.warningLight + '30',

@@ -54,6 +54,14 @@ export default function ProdutoresScreen() {
   const areaTotal = produtores.reduce((sum, p) => sum + (p.area_total || 0), 0);
   const produtoresPendentes = produtores.filter(p => p.status === 'pendente').length;
 
+  // Formata área para exibição compacta
+  const formatarArea = (area) => {
+    if (area >= 1000) {
+      return `${(area / 1000).toFixed(1)}k ha`;
+    }
+    return `${area.toFixed(1)} ha`;
+  };
+
   return (
     <View style={styles.container}>
       <Header title="Produtores" />
@@ -159,7 +167,7 @@ export default function ProdutoresScreen() {
               <View style={styles.statItem}>
                 <StatCard 
                   label="Área Total"
-                  value={`${areaTotal.toLocaleString('pt-BR')} ha`}
+                  value={formatarArea(areaTotal)}
                   accent={{
                     color: '#8B6244',
                     bgColor: '#f5f3f0',
