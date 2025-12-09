@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../components/Header';
-import { Produtor, Visita } from '../api/mock';
-import { colors, typography, spacing } from '../theme';
+import { Produtor, Visita, Mapa } from '../api/mock';
+import { colors, typography, spacing, border, shadows } from '../theme';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -12,15 +13,30 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function ProdutorScreen({ route, navigation }) {
   const [produtor, setProdutor] = useState(null);
   const [visitas, setVisitas] = useState([]);
+  const [mapas, setMapas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('resumo');
 
   const loadData = async (id) => {
     if (id) {
-      const p = await Produtor.get(id);
-      const v = await Visita.filter({ produtor_id: id });
-      // animar mudanças locais
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setProdutor(p);
-      setVisitas(v);
+      try {
+        setLoading(true);
+        const [p, v, m] = await Promise.all([
+          Produtor.get(id),
+          Visita.filter({ produtor_id: id }),
+          Mapa.filter({ produtor_id: id })
+        ]);
+        // animar mudanças locais
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setProdutor(p);
+        setVisitas(v);
+        setMapas(m);
+      } catch (error) {
+        Alert.alert('Erro', 'Não foi possível carregar os dados do produtor');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -67,85 +83,732 @@ export default function ProdutorScreen({ route, navigation }) {
     );
   };
 
-  if (!produtor) return (
-    <View style={{flex:1}}><Header title="Produtor" /><Text style={{padding:16}}>Selecione um produtor</Text></View>
-  );
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Header title="Produtor" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Carregando perfil...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!produtor) {
+    return (
+      <View style={styles.container}>
+        <Header title="Produtor" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.body}>Produtor não encontrado.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Header title={produtor.nome} />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{produtor.fazenda}</Text>
-              <Text style={styles.meta}>{produtor.cidade}, {produtor.estado}</Text>
-              <Text style={styles.body}>Área: {produtor.area_total} ha</Text>
-              {produtor.cultura_atual && (
-                <Text style={styles.body}>Cultura: {produtor.cultura_atual}</Text>
-              )}
-            </View>
+        {/* Cabeçalho com Avatar e Informações Básicas */}
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarContainer}>
+            <Text style={styles.avatarText}>
+              {produtor.nome.charAt(0).toUpperCase()}
+            </Text>
           </View>
-          
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-              <Text style={styles.editButtonText}>✏️ Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-              <Text style={styles.deleteButtonText}>🗑️ Excluir</Text>
-            </TouchableOpacity>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{produtor.nome}</Text>
+            <Text style={styles.profileLocation}>
+              📍 {produtor.fazenda} - {produtor.cidade}, {produtor.estado}
+            </Text>
           </View>
         </View>
 
-        <View style={{marginTop:12}}>
-          <Text style={styles.sectionTitle}>Histórico de Visitas</Text>
-          {visitas.length === 0 && <Text style={styles.body}>Nenhuma visita registrada.</Text>}
-          {visitas.map(v => (
-            <View key={v.id} style={styles.cardSmall}>
-              <Text style={styles.cardTitle}>{v.objetivo}</Text>
-              <Text style={styles.meta}>{new Date(v.data_visita).toLocaleDateString()}</Text>
-            </View>
-          ))}
+        {/* Botões de Ação */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+            <Text style={styles.editButtonText}>✏️ Editar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Text style={styles.deleteButtonText}>🗑️ Excluir</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Cards de Estatísticas - Grid 2x2 */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsRow}>
+            <View style={styles.statCardWrapper}>
+              <LinearGradient
+                colors={['#d9f0d9', '#FFFFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.statCard, { borderColor: '#b6d7a8' }]}
+              >
+                <View style={styles.statContent}>
+                  <Text style={[styles.statValue, { color: colors.primary }]}>
+                    {produtor.area_total} ha
+                  </Text>
+                  <Text style={styles.statLabel}>Área Total</Text>
+                </View>
+                <View style={[styles.statIconContainer, { backgroundColor: '#d9f0d9' }]}>
+                  <Text style={styles.statIcon}>🌾</Text>
+                </View>
+              </LinearGradient>
+            </View>
+
+            <View style={styles.statCardWrapper}>
+              <LinearGradient
+                colors={['#dbeafe', '#FFFFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.statCard, { borderColor: '#bfdbfe' }]}
+              >
+                <View style={styles.statContent}>
+                  <Text style={[styles.statValue, { color: '#2563eb' }]}>
+                    {produtor.cultura_atual || 'N/A'}
+                  </Text>
+                  <Text style={styles.statLabel}>Cultura Atual</Text>
+                </View>
+                <View style={[styles.statIconContainer, { backgroundColor: '#dbeafe' }]}>
+                  <Text style={styles.statIcon}>🌱</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statCardWrapper}>
+              <LinearGradient
+                colors={['#ede9fe', '#FFFFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.statCard, { borderColor: '#ddd6fe' }]}
+              >
+                <View style={styles.statContent}>
+                  <Text style={[styles.statValue, { color: '#7c3aed' }]}>
+                    {visitas.length}
+                  </Text>
+                  <Text style={styles.statLabel}>Visitas</Text>
+                </View>
+                <View style={[styles.statIconContainer, { backgroundColor: '#ede9fe' }]}>
+                  <Text style={styles.statIcon}>📅</Text>
+                </View>
+              </LinearGradient>
+            </View>
+
+            <View style={styles.statCardWrapper}>
+              <LinearGradient
+                colors={['#fef3c7', '#FFFFFF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.statCard, { borderColor: '#fde68a' }]}
+              >
+                <View style={styles.statContent}>
+                  <Text style={[styles.statValue, { color: '#d97706' }]}>
+                    {mapas.length}
+                  </Text>
+                  <Text style={styles.statLabel}>Mapas</Text>
+                </View>
+                <View style={[styles.statIconContainer, { backgroundColor: '#fef3c7' }]}>
+                  <Text style={styles.statIcon}>🗺️</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+        </View>
+
+        {/* Tabs de Navegação */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'resumo' && styles.tabActive]}
+            onPress={() => setActiveTab('resumo')}
+          >
+            <Text style={[styles.tabText, activeTab === 'resumo' && styles.tabTextActive]}>
+              📊 Resumo
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'lavoura' && styles.tabActive]}
+            onPress={() => setActiveTab('lavoura')}
+          >
+            <Text style={[styles.tabText, activeTab === 'lavoura' && styles.tabTextActive]}>
+              🗺️ Lavoura
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'visitas' && styles.tabActive]}
+            onPress={() => setActiveTab('visitas')}
+          >
+            <Text style={[styles.tabText, activeTab === 'visitas' && styles.tabTextActive]}>
+              📅 Visitas
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Conteúdo das Tabs */}
+        {activeTab === 'resumo' && (
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Informações Gerais</Text>
+            
+            <View style={styles.infoSection}>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>👤 Nome Completo</Text>
+                <Text style={styles.infoValue}>{produtor.nome}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>🏡 Fazenda</Text>
+                <Text style={styles.infoValue}>{produtor.fazenda}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>📍 Localização</Text>
+                <Text style={styles.infoValue}>{produtor.cidade}, {produtor.estado}</Text>
+              </View>
+              {produtor.telefone && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>📞 Telefone</Text>
+                  <Text style={styles.infoValue}>{produtor.telefone}</Text>
+                </View>
+              )}
+              {produtor.email && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>✉️ Email</Text>
+                  <Text style={styles.infoValue}>{produtor.email}</Text>
+                </View>
+              )}
+            </View>
+
+            {produtor.ultima_analise && (
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>📊 Última Análise</Text>
+                  <Text style={styles.infoValue}>
+                    {new Date(produtor.ultima_analise).toLocaleDateString('pt-BR')}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.statusContainer}>
+              <Text style={styles.statusLabel}>Status da Conta:</Text>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>
+                  {produtor.status === 'ativo' ? '🟢 Ativo' : '🟡 Pendente'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {activeTab === 'lavoura' && (
+          <View style={styles.tabContent}>
+            <Text style={styles.sectionTitle}>Mapas da Lavoura</Text>
+            {mapas.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>🗺️</Text>
+                <Text style={styles.emptyText}>Nenhum mapa cadastrado</Text>
+              </View>
+            ) : (
+              mapas.map(mapa => (
+                <View key={mapa.id} style={styles.mapaCard}>
+                  <View style={styles.mapaHeader}>
+                    <View style={styles.mapaIconContainer}>
+                      <Text style={styles.mapaIcon}>
+                        {mapa.categoria === 'fertilidade' ? '🌿' : 
+                         mapa.categoria === 'indice_vegetacao' ? '📊' : 
+                         mapa.categoria === 'correcao' ? '⚗️' : '🗺️'}
+                      </Text>
+                    </View>
+                    <View style={styles.mapaInfo}>
+                      <Text style={styles.mapaTitle}>{mapa.titulo}</Text>
+                      <Text style={styles.mapaSubtitle}>
+                        {mapa.talhao} • Safra {mapa.safra}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.mapaDetails}>
+                    <Text style={styles.mapaDetailItem}>
+                      📅 {new Date(mapa.data_criacao).toLocaleDateString('pt-BR')}
+                    </Text>
+                    {mapa.observacoes && (
+                      <Text style={styles.mapaObservacoes} numberOfLines={2}>
+                        {mapa.observacoes}
+                      </Text>
+                    )}
+                  </View>
+                  {mapa.disponivel_para_download && (
+                    <TouchableOpacity style={styles.mapaButton}>
+                      <Text style={styles.mapaButtonText}>📥 Visualizar Mapa</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+        )}
+
+        {activeTab === 'visitas' && (
+          <View style={styles.tabContent}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Histórico de Visitas</Text>
+              <View style={styles.countBadge}>
+                <Text style={styles.countBadgeText}>{visitas.length}</Text>
+              </View>
+            </View>
+
+            {visitas.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>📅</Text>
+                <Text style={styles.emptyText}>Nenhuma visita registrada</Text>
+                <Text style={styles.emptySubtext}>
+                  As visitas técnicas aparecerão aqui
+                </Text>
+              </View>
+            ) : (
+              visitas.map((v, index) => (
+                <View key={v.id} style={styles.visitCard}>
+                  <View style={styles.visitNumber}>
+                    <Text style={styles.visitNumberText}>#{visitas.length - index}</Text>
+                  </View>
+                  <View style={styles.visitContent}>
+                    <View style={styles.visitHeader}>
+                      <Text style={styles.visitDate}>
+                        📅 {new Date(v.data_visita).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </Text>
+                    </View>
+                    <View style={styles.visitTecnicoContainer}>
+                      <Text style={styles.visitTecnicoLabel}>Técnico Responsável:</Text>
+                      <Text style={styles.visitTecnico}>👨‍🌾 {v.tecnico_responsavel}</Text>
+                    </View>
+                    <View style={styles.visitDetailRow}>
+                      <Text style={styles.visitLabel}>🎯 Objetivo:</Text>
+                      <Text style={styles.visitObjetivo}>{v.objetivo}</Text>
+                    </View>
+                    {v.observacoes && (
+                      <View style={styles.visitDetailRow}>
+                        <Text style={styles.visitLabel}>📝 Observações:</Text>
+                        <Text style={styles.visitObservacoes}>{v.observacoes}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor: colors.background },
-  content: { padding: spacing.screen },
-  card: { backgroundColor: colors.card, padding: spacing.card, borderRadius: 12 },
-  cardHeader: { flexDirection: 'row', marginBottom: 12 },
-  title: { fontSize: typography.fontSubtitle, fontWeight: typography.weightBold, color: colors.text },
-  body: { fontSize: typography.fontBody, color: colors.text, marginTop: 8 },
-  meta: { color: colors.muted, marginTop: 4 },
-  sectionTitle: { fontSize: typography.fontBody + 2, fontWeight: typography.weightSemibold, marginBottom: 8, color: colors.text },
-  cardSmall: { backgroundColor: colors.card, padding: 12, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: '#f0f7f0' },
-  cardTitle: { fontSize: typography.fontBody + 1, fontWeight: typography.weightBold, color: colors.text },
-  actionButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  editButton: { 
-    flex: 1, 
-    backgroundColor: colors.primary, 
-    padding: 12, 
-    borderRadius: spacing.radiusSm, 
-    alignItems: 'center' 
+  container: {
+    flex: 1,
+    backgroundColor: colors.background
   },
-  editButtonText: { 
-    color: '#fff', 
-    fontWeight: typography.weightBold, 
-    fontSize: typography.fontBody 
+  content: {
+    padding: spacing.screen,
+    paddingBottom: 32
   },
-  deleteButton: { 
-    flex: 1, 
-    backgroundColor: colors.error, 
-    padding: 12, 
-    borderRadius: spacing.radiusSm, 
-    alignItems: 'center' 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  deleteButtonText: { 
-    color: '#fff', 
-    fontWeight: typography.weightBold, 
-    fontSize: typography.fontBody 
+  loadingText: {
+    marginTop: 12,
+    color: colors.muted,
+    fontSize: typography.fontBody
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: colors.card,
+    padding: spacing.card,
+    borderRadius: spacing.radius,
+    borderWidth: 2,
+    borderColor: colors.border
+  },
+  avatarContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  avatarText: {
+    fontSize: 28,
+    fontWeight: typography.weightBold,
+    color: '#fff'
+  },
+  profileInfo: {
+    flex: 1
+  },
+  profileName: {
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 4
+  },
+  profileLocation: {
+    fontSize: typography.fontBody - 1,
+    color: colors.muted,
+    lineHeight: 20
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20
+  },
+  editButton: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: spacing.radiusSm,
+    alignItems: 'center'
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: typography.weightBold,
+    fontSize: typography.fontBody
+  },
+  deleteButton: {
+    flex: 1,
+    backgroundColor: colors.error,
+    padding: 12,
+    borderRadius: spacing.radiusSm,
+    alignItems: 'center'
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontWeight: typography.weightBold,
+    fontSize: typography.fontBody
+  },
+  statsSection: {
+    marginBottom: 20
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12
+  },
+  statCardWrapper: {
+    flex: 1,
+    ...shadows.md
+  },
+  statCard: {
+    flex: 1,
+    padding: spacing.card + 4,
+    borderRadius: border.radiusLg,
+    borderWidth: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 100
+  },
+  statContent: {
+    flex: 1,
+    marginRight: 8
+  },
+  statValue: {
+    fontSize: typography.fontSubtitle + 4,
+    fontWeight: typography.weightBold,
+    marginBottom: 4,
+    flexShrink: 1
+  },
+  statLabel: {
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
+    flexWrap: 'wrap'
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8
+  },
+  statIcon: {
+    fontSize: 24
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.accentDark,
+    borderRadius: spacing.radius,
+    padding: 4,
+    marginBottom: 16
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: spacing.radiusSm,
+    alignItems: 'center'
+  },
+  tabActive: {
+    backgroundColor: colors.card
+  },
+  tabText: {
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted
+  },
+  tabTextActive: {
+    color: colors.primary,
+    fontWeight: typography.weightBold
+  },
+  tabContent: {
+    backgroundColor: colors.card,
+    borderRadius: spacing.radius,
+    padding: spacing.card,
+    borderWidth: 2,
+    borderColor: colors.border
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16
+  },
+  sectionTitle: {
+    fontSize: typography.fontSubtitle - 2,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 16
+  },
+  countBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    minWidth: 32,
+    alignItems: 'center'
+  },
+  countBadgeText: {
+    color: '#fff',
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold
+  },
+  infoSection: {
+    backgroundColor: colors.backgroundAlt,
+    padding: 12,
+    borderRadius: spacing.radiusSm,
+    marginBottom: 16
+  },
+  infoRow: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight
+  },
+  infoLabel: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold,
+    marginBottom: 4
+  },
+  infoValue: {
+    fontSize: typography.fontBody,
+    color: colors.text,
+    fontWeight: typography.weightSemibold
+  },
+
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.backgroundAlt,
+    padding: 12,
+    borderRadius: spacing.radiusSm,
+    marginTop: 8
+  },
+  statusLabel: {
+    fontSize: typography.fontBody,
+    color: colors.text,
+    fontWeight: typography.weightSemibold
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: colors.accent
+  },
+  statusText: {
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
+    color: colors.text
+  },
+  mapaCard: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radius,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight
+  },
+  mapaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12
+  },
+  mapaIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  mapaIcon: {
+    fontSize: 24
+  },
+  mapaInfo: {
+    flex: 1
+  },
+  mapaTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 2
+  },
+  mapaSubtitle: {
+    fontSize: typography.fontCaption,
+    color: colors.muted
+  },
+  mapaDetails: {
+    marginBottom: 12
+  },
+  mapaDetailItem: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    marginBottom: 4
+  },
+  mapaObservacoes: {
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 20,
+    marginTop: 4
+  },
+  mapaButton: {
+    backgroundColor: colors.primary,
+    padding: 10,
+    borderRadius: spacing.radiusSm,
+    alignItems: 'center'
+  },
+  mapaButtonText: {
+    color: '#fff',
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold
+  },
+  visitCard: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radius,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
+    overflow: 'hidden',
+    flexDirection: 'row'
+  },
+  visitNumber: {
+    width: 48,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  visitNumberText: {
+    color: '#fff',
+    fontSize: typography.fontBody + 2,
+    fontWeight: typography.weightBold
+  },
+  visitContent: {
+    flex: 1,
+    padding: 12
+  },
+  visitHeader: {
+    marginBottom: 8
+  },
+  visitDate: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text
+  },
+  visitTecnicoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 6
+  },
+  visitTecnicoLabel: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold
+  },
+  visitTecnico: {
+    fontSize: typography.fontBody - 1,
+    color: colors.text,
+    fontWeight: typography.weightSemibold
+  },
+  visitDetailRow: {
+    marginBottom: 8
+  },
+  visitLabel: {
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
+    color: colors.muted,
+    marginBottom: 2
+  },
+  visitObjetivo: {
+    fontSize: typography.fontBody - 1,
+    color: colors.text,
+    lineHeight: 20
+  },
+  visitObservacoes: {
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 20,
+    fontStyle: 'italic'
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 24
+  },
+  emptyIcon: {
+    fontSize: 56,
+    marginBottom: 16
+  },
+  emptyTitle: {
+    fontSize: typography.fontSubtitle - 2,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center'
+  },
+  emptyText: {
+    fontSize: typography.fontBody,
+    color: colors.muted,
+    textAlign: 'center',
+    lineHeight: 22,
+    fontWeight: typography.weightSemibold,
+    marginBottom: 4
+  },
+  emptySubtext: {
+    fontSize: typography.fontCaption,
+    color: colors.mutedLight,
+    textAlign: 'center'
+  },
+  body: {
+    fontSize: typography.fontBody,
+    color: colors.text
   }
 });

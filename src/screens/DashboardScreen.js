@@ -315,7 +315,7 @@ export default function DashboardScreen() {
           {/* Mensagem para clientes sem produtor vinculado */}
           {user?.perfil === 'cliente' && !user?.produtor_id && (
             <View style={styles.warningCard}>
-              <Ionicons name="information-circle" size={32} color={colors.warning} />
+              <Ionicons name="alert-circle-outline" size={48} color={colors.warning} />
               <Text style={styles.warningTitle}>Aguardando Vinculação</Text>
               <Text style={styles.warningText}>
                 Sua conta está sendo configurada. Em breve você terá acesso aos dados da sua propriedade.

@@ -104,7 +104,7 @@ export default function ProdutoresScreen() {
           />
           {busca.length > 0 && (
             <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
-              <Ionicons name="close-circle" size={20} color={colors.muted} />
+              <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
