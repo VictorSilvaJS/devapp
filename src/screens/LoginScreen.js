@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthActions } from '../auth/AuthContext';
 import { colors, typography, spacing, shadows } from '../theme';
 
@@ -66,7 +67,8 @@ export default function LoginScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.btnText}>👨‍💼 Admin</Text>
+                <Ionicons name="briefcase-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+                <Text style={styles.btnText}>Admin</Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -82,7 +84,8 @@ export default function LoginScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.btnText}>👷 Colaborador</Text>
+                <Ionicons name="hammer-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+                <Text style={styles.btnText}>Colaborador</Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -98,7 +101,8 @@ export default function LoginScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.btnText}>🌾 Cliente</Text>
+                <Ionicons name="leaf-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+                <Text style={styles.btnText}>Cliente</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -157,8 +161,13 @@ const styles = StyleSheet.create({
   },
   btnGradient: {
     padding: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    gap: 10
+  },
+  btnIcon: {
+    marginRight: 2
   },
   btnAdmin: {},
   btnColaborador: {},

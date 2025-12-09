@@ -20,7 +20,9 @@ export default function Header({ title, showUser = true }) {
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+        <View style={styles.logoContainer}>
+          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+        </View>
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
         </View>
@@ -46,11 +48,19 @@ const styles = StyleSheet.create({
     padding: spacing.card,
     paddingVertical: spacing.card + 4
   },
-  logo: {
-    width: 40,
-    height: 40,
+  logoContainer: {
+    width: 50,
+    height: 50,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
-    borderRadius: border.radius * 0.5
+    ...shadows.sm
+  },
+  logo: {
+    width: 42,
+    height: 42
   },
   titleContainer: {
     flex: 1

@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ActivityIndicator
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -123,7 +124,7 @@ export default function CadernoCampoScreen() {
       {/* Barra de busca */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={18} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por produtor, atividade ou talhão..."
@@ -132,8 +133,8 @@ export default function CadernoCampoScreen() {
             onChangeText={setBusca}
           />
           {busca.length > 0 && (
-            <TouchableOpacity onPress={() => setBusca('')}>
-              <Text style={styles.clearButton}>✕</Text>
+            <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
@@ -157,7 +158,12 @@ export default function CadernoCampoScreen() {
           </View>
         ) : registrosFiltrados.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>📋</Text>
+            <Ionicons 
+              name={busca ? 'search-outline' : 'document-text-outline'} 
+              size={64} 
+              color={colors.muted} 
+              style={styles.emptyIcon} 
+            />
             <Text style={styles.emptyText}>
               {busca ? 'Nenhum registro encontrado' : 'Nenhum registro ainda'}
             </Text>
@@ -178,7 +184,7 @@ export default function CadernoCampoScreen() {
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
                     <View style={[styles.cardIcon, { backgroundColor: tipoColor + '20' }]}>
-                      <Text style={styles.cardIconText}>📖</Text>
+                      <Ionicons name="book-outline" size={22} color={tipoColor} />
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>
@@ -199,18 +205,18 @@ export default function CadernoCampoScreen() {
                 {/* Informações */}
                 <View style={styles.cardInfo}>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoIcon}>📅</Text>
+                    <Ionicons name="calendar-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                     <Text style={styles.infoText}>{formatarData(reg.data_atividade)}</Text>
                   </View>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoIcon}>👤</Text>
+                    <Ionicons name="person-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                     <Text style={styles.infoText} numberOfLines={1}>
                       {reg.colaborador_responsavel}
                     </Text>
                   </View>
                   {reg.area_aplicada && (
                     <View style={styles.infoRow}>
-                      <Text style={styles.infoIcon}>📍</Text>
+                      <Ionicons name="location-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                       <Text style={styles.infoText}>{reg.area_aplicada} ha</Text>
                     </View>
                   )}
@@ -238,7 +244,7 @@ export default function CadernoCampoScreen() {
                 {/* Fotos */}
                 {reg.fotos && reg.fotos.length > 0 && (
                   <View style={styles.fotosBox}>
-                    <Text style={styles.fotosIcon}>📷</Text>
+                    <Ionicons name="images-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
                     <Text style={styles.fotosText}>
                       {reg.fotos.length} foto(s) anexada(s)
                     </Text>
@@ -276,7 +282,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   searchIcon: {
-    fontSize: 16,
     marginRight: 8
   },
   searchInput: {
@@ -287,8 +292,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   clearButton: {
-    fontSize: 18,
-    color: colors.muted,
     paddingHorizontal: 8
   },
   content: { 
@@ -334,9 +337,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.gap
   },
-  cardIconText: {
-    fontSize: 20
-  },
   cardHeaderInfo: {
     flex: 1
   },
@@ -371,7 +371,6 @@ const styles = StyleSheet.create({
     marginBottom: 6
   },
   infoIcon: {
-    fontSize: 14,
     marginRight: 8,
     width: 18
   },
@@ -418,10 +417,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.borderLight
   },
-  fotosIcon: {
-    fontSize: 14,
-    marginRight: 6
-  },
   fotosText: {
     fontSize: typography.fontCaption + 1,
     color: colors.muted
@@ -433,7 +428,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screen * 2
   },
   emptyIcon: {
-    fontSize: 48,
     marginBottom: spacing.gap
   },
   emptyText: {

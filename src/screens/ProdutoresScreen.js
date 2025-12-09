@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager, RefreshControl, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import ProdutorCard from '../components/ProdutorCard';
 import StatCard from '../components/StatCard';
@@ -85,7 +86,7 @@ export default function ProdutoresScreen() {
 
         {/* Barra de Busca */}
         <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por nome, fazenda ou cidade..."
@@ -95,7 +96,7 @@ export default function ProdutoresScreen() {
           />
           {busca.length > 0 && (
             <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <Ionicons name="close-circle" size={20} color={colors.muted} />
             </TouchableOpacity>
           )}
         </View>
@@ -138,7 +139,7 @@ export default function ProdutoresScreen() {
                     bgColor: '#e8f5e8',
                     gradient: ['#e8f5e8', '#FFFFFF']
                   }}
-                  icon={<Text style={styles.statEmoji}>👥</Text>}
+                  icon={<Ionicons name="people-outline" size={24} color={colors.primary} />}
                 />
               </View>
               <View style={styles.statItem}>
@@ -150,7 +151,7 @@ export default function ProdutoresScreen() {
                     bgColor: '#d1fae5',
                     gradient: ['#d1fae5', '#FFFFFF']
                   }}
-                  icon={<Text style={styles.statEmoji}>✅</Text>}
+                  icon={<Ionicons name="checkmark-circle-outline" size={24} color={colors.success} />}
                 />
               </View>
             </View>
@@ -164,7 +165,7 @@ export default function ProdutoresScreen() {
                     bgColor: '#f5f3f0',
                     gradient: ['#f5f3f0', '#FFFFFF']
                   }}
-                  icon={<Text style={styles.statEmoji}>🌾</Text>}
+                  icon={<Ionicons name="leaf-outline" size={24} color="#8B6244" />}
                 />
               </View>
               <View style={styles.statItem}>
@@ -176,7 +177,7 @@ export default function ProdutoresScreen() {
                     bgColor: '#fef3c7',
                     gradient: ['#fef3c7', '#FFFFFF']
                   }}
-                  icon={<Text style={styles.statEmoji}>⏳</Text>}
+                  icon={<Ionicons name="time-outline" size={24} color={colors.warning} />}
                 />
               </View>
             </View>
@@ -186,12 +187,17 @@ export default function ProdutoresScreen() {
         {/* Lista de Produtores */}
         {produtoresFiltrados.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>{busca ? '🔍' : '👤'}</Text>
+            <Ionicons 
+              name={busca ? 'search-outline' : 'person-add-outline'} 
+              size={64} 
+              color={colors.muted} 
+              style={styles.emptyIcon} 
+            />
             <Text style={styles.emptyText}>
               {busca ? 'Nenhum produtor encontrado' : 'Nenhum produtor cadastrado'}
             </Text>
             <Text style={styles.emptySubtext}>
-              {busca ? 'Tente ajustar os filtros de busca' : 'Comece adicionando seu primeiro produtor'}
+              {busca ? 'Tente ajustar os filtros de busca' : 'Começe adicionando seu primeiro produtor'}
             </Text>
           </View>
         ) : (
@@ -307,9 +313,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 4
   },
-  statEmoji: {
-    fontSize: 20
-  },
 
   // Empty State
   emptyContainer: {
@@ -319,7 +322,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screen
   },
   emptyIcon: {
-    fontSize: 64,
     marginBottom: spacing.gap
   },
   emptyText: {

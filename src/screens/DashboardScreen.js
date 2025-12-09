@@ -101,41 +101,41 @@ export default function DashboardScreen() {
         {
           label: 'Total de Produtores',
           value: stats.produtores,
-          icon: <Ionicons name="people" size={24} color={colors.primary} />,
+          icon: <Ionicons name="people-outline" size={24} color={colors.primary} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.primary,
-            bgColor: colors.accentDark,
+            bgColor: '#e8f5e8',
+            gradient: ['#e8f5e8', '#FFFFFF']
           },
         },
         {
           label: 'Área Total (ha)',
           value: stats.areaTotal,
-          icon: <Ionicons name="leaf" size={24} color={colors.secondary} />,
+          icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
-            color: colors.secondary,
-            bgColor: colors.secondaryLight,
+            color: '#8B6244',
+            bgColor: '#f5f3f0',
+            gradient: ['#f5f3f0', '#FFFFFF']
           },
         },
         {
           label: 'Visitas Realizadas',
           value: stats.visitas,
-          icon: <Ionicons name="calendar" size={24} color={colors.success} />,
+          icon: <Ionicons name="calendar-outline" size={24} color={colors.success} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.success,
-            bgColor: colors.successLight,
+            bgColor: '#d1fae5',
+            gradient: ['#d1fae5', '#FFFFFF']
           },
         },
         {
           label: 'Registros no Campo',
           value: stats.registros,
-          icon: <Ionicons name="book" size={24} color={colors.warning} />,
+          icon: <Ionicons name="book-outline" size={24} color={colors.warning} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.warning,
-            bgColor: colors.warningLight,
+            bgColor: '#fef3c7',
+            gradient: ['#fef3c7', '#FFFFFF']
           },
         },
       ];
@@ -144,41 +144,41 @@ export default function DashboardScreen() {
         {
           label: 'Meus Produtores',
           value: stats.produtores,
-          icon: <Ionicons name="people" size={24} color={colors.primary} />,
+          icon: <Ionicons name="people-outline" size={24} color={colors.primary} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.primary,
-            bgColor: colors.accentDark,
+            bgColor: '#e8f5e8',
+            gradient: ['#e8f5e8', '#FFFFFF']
           },
         },
         {
           label: 'Área Gerenciada (ha)',
           value: stats.areaTotal,
-          icon: <Ionicons name="leaf" size={24} color={colors.secondary} />,
+          icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
-            color: colors.secondary,
-            bgColor: colors.secondaryLight,
+            color: '#8B6244',
+            bgColor: '#f5f3f0',
+            gradient: ['#f5f3f0', '#FFFFFF']
           },
         },
         {
           label: 'Minhas Visitas',
           value: stats.visitas,
-          icon: <Ionicons name="calendar" size={24} color={colors.success} />,
+          icon: <Ionicons name="calendar-outline" size={24} color={colors.success} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.success,
-            bgColor: colors.successLight,
+            bgColor: '#d1fae5',
+            gradient: ['#d1fae5', '#FFFFFF']
           },
         },
         {
           label: 'Meus Registros',
           value: stats.registros,
-          icon: <Ionicons name="book" size={24} color={colors.warning} />,
+          icon: <Ionicons name="book-outline" size={24} color={colors.warning} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.warning,
-            bgColor: colors.warningLight,
+            bgColor: '#fef3c7',
+            gradient: ['#fef3c7', '#FFFFFF']
           },
         },
       ];
@@ -188,31 +188,31 @@ export default function DashboardScreen() {
         {
           label: 'Minha Área (ha)',
           value: stats.areaTotal,
-          icon: <Ionicons name="leaf" size={24} color={colors.primary} />,
+          icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
-            color: colors.primary,
-            bgColor: colors.accentDark,
+            color: '#8B6244',
+            bgColor: '#f5f3f0',
+            gradient: ['#f5f3f0', '#FFFFFF']
           },
         },
         {
           label: 'Visitas Técnicas',
           value: stats.visitas,
-          icon: <Ionicons name="calendar" size={24} color={colors.secondary} />,
+          icon: <Ionicons name="calendar-outline" size={24} color={colors.success} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
-            color: colors.secondary,
-            bgColor: colors.secondaryLight,
+            color: colors.success,
+            bgColor: '#d1fae5',
+            gradient: ['#d1fae5', '#FFFFFF']
           },
         },
         {
           label: 'Registros Disponíveis',
           value: stats.registros,
-          icon: <Ionicons name="book" size={24} color={colors.warning} />,
+          icon: <Ionicons name="book-outline" size={24} color={colors.warning} />,
           accent: {
-            gradient: ['#FFFFFF', colors.accent],
             color: colors.warning,
-            bgColor: colors.warningLight,
+            bgColor: '#fef3c7',
+            gradient: ['#fef3c7', '#FFFFFF']
           },
         },
       ];
@@ -242,21 +242,22 @@ export default function DashboardScreen() {
         >
           {/* Cabeçalho */}
           <View style={styles.headerSection}>
-            <View>
+            <View style={styles.welcomeContainer}>
               <Text style={styles.welcomeText} numberOfLines={1}>
-                Olá, {user?.full_name?.split(' ')[0] || 'Usuário'}! 👋
+                Olá, {user?.full_name?.split(' ')[0] || 'Usuário'}!
               </Text>
-              <Text style={styles.subtitle} numberOfLines={2}>
-                {user?.perfil === 'admin' && 'Painel de Administração Geral'}
-                {user?.perfil === 'colaborador' && 'Painel de Consultoria'}
-                {user?.perfil === 'cliente' && 'Visão Geral da sua Propriedade'}
-              </Text>
+              <Ionicons name="hand-left-outline" size={22} color={colors.primary} style={styles.waveIcon} />
             </View>
+            <Text style={styles.subtitle} numberOfLines={2}>
+              {user?.perfil === 'admin' && 'Painel de Administração Geral'}
+              {user?.perfil === 'colaborador' && 'Painel de Consultoria'}
+              {user?.perfil === 'cliente' && 'Visão Geral da sua Propriedade'}
+            </Text>
 
             {/* Cards de informação */}
             <View style={styles.infoCardsRow}>
               <View style={styles.infoCard}>
-                <Ionicons name="location" size={18} color={colors.primary} />
+                <Ionicons name="location-outline" size={18} color={colors.primary} />
                 <View style={styles.infoCardText}>
                   <Text style={styles.infoCardLabel}>Localização</Text>
                   <Text style={styles.infoCardValue} numberOfLines={2}>{cidade}</Text>
@@ -264,7 +265,7 @@ export default function DashboardScreen() {
               </View>
 
               <View style={styles.infoCard}>
-                <Ionicons name="cloud" size={18} color={colors.secondary} />
+                <Ionicons name="partly-sunny-outline" size={18} color={colors.secondary} />
                 <View style={styles.infoCardText}>
                   <Text style={styles.infoCardLabel}>Clima</Text>
                   <Text style={styles.infoCardValue} numberOfLines={1}>
@@ -331,11 +332,19 @@ const styles = StyleSheet.create({
   headerSection: {
     marginBottom: spacing.gap * 2,
   },
+  welcomeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   welcomeText: {
     fontSize: typography.fontTitle - 2,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginBottom: 4,
+  },
+  waveIcon: {
+    marginLeft: 6,
+    marginTop: 2,
   },
   subtitle: {
     fontSize: typography.fontBody,
