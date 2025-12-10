@@ -169,21 +169,29 @@ export default function ProdutoresScreen() {
 
         {/* Filtros de Status */}
         <View style={styles.filtrosContainer}>
-          {['todos', 'ativo', 'inativo', 'pendente'].map((status) => (
+          {[
+            { key: 'todos', label: 'Todos' },
+            { key: 'ativo', label: 'Ativo' },
+            { key: 'inativo', label: 'Inativo' },
+            { key: 'pendente', label: 'Pend.' }
+          ].map((item) => (
             <TouchableOpacity
-              key={status}
+              key={item.key}
               style={[
                 styles.filtroButton,
-                filtroStatus === status && styles.filtroButtonActive
+                filtroStatus === item.key && styles.filtroButtonActive
               ]}
-              onPress={() => setFiltroStatus(status)}
+              onPress={() => setFiltroStatus(item.key)}
               activeOpacity={0.7}
             >
-              <Text style={[
-                styles.filtroText,
-                filtroStatus === status && styles.filtroTextActive
-              ]}>
-                {status === 'todos' ? 'Todos' : status.charAt(0).toUpperCase() + status.slice(1)}
+              <Text 
+                style={[
+                  styles.filtroText,
+                  filtroStatus === item.key && styles.filtroTextActive
+                ]}
+                numberOfLines={1}
+              >
+                {item.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -207,20 +215,6 @@ export default function ProdutoresScreen() {
               </View>
               <View style={styles.statItem}>
                 <StatCard 
-                  label="Ativos"
-                  value={produtoresAtivos}
-                  accent={{
-                    color: colors.success,
-                    bgColor: '#d1fae5',
-                    gradient: ['#d1fae5', '#FFFFFF']
-                  }}
-                  icon={<Ionicons name="checkmark-circle-outline" size={24} color={colors.success} />}
-                />
-              </View>
-            </View>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <StatCard 
                   label="Área Total"
                   value={formatarArea(areaTotal)}
                   accent={{
@@ -229,6 +223,20 @@ export default function ProdutoresScreen() {
                     gradient: ['#f5f3f0', '#FFFFFF']
                   }}
                   icon={<Ionicons name="leaf-outline" size={24} color="#8B6244" />}
+                />
+              </View>
+            </View>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <StatCard 
+                  label="Ativos"
+                  value={produtoresAtivos}
+                  accent={{
+                    color: colors.success,
+                    bgColor: '#d1fae5',
+                    gradient: ['#d1fae5', '#FFFFFF']
+                  }}
+                  icon={<Ionicons name="checkmark-circle-outline" size={24} color={colors.success} />}
                 />
               </View>
               <View style={styles.statItem}>
@@ -356,8 +364,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   regiaoChipActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFFFFF',
     borderColor: colors.primary,
+    borderWidth: 2,
   },
   regiaoChipText: {
     fontSize: typography.sizes.sm,
@@ -365,7 +374,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   regiaoChipTextActive: {
-    color: colors.white,
+    color: colors.primary,
     fontWeight: '600',
   },
 

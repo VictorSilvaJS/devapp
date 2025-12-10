@@ -261,7 +261,6 @@ export default function DashboardScreen() {
               <Text style={styles.welcomeText} numberOfLines={1}>
                 Olá, {user?.full_name?.split(' ')[0] || 'Usuário'}!
               </Text>
-              <Ionicons name="hand-left-outline" size={24} color={colors.primary} style={styles.waveIcon} />
             </View>
             <Text style={styles.subtitle} numberOfLines={2}>
               {user?.perfil === 'admin' && 'Painel de Administração Geral'}
