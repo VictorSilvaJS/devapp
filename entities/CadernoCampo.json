@@ -51,10 +51,6 @@
       "type": "string",
       "description": "Observações gerais"
     },
-    "recomendacoes": {
-      "type": "string",
-      "description": "Recomendações técnicas"
-    },
     "fotos": {
       "type": "array",
       "items": {

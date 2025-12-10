@@ -205,9 +205,11 @@ const cadernos = [
     data_atividade: new Date().toISOString(),
     tipo_atividade: 'adubacao',
     talhao: 'Talhão A',
+    produtos_utilizados: ['NPK 10-20-20', 'Ureia'],
+    dosagem: '300 kg/ha',
     area_aplicada: 50,
-    observacoes: 'Aplicação de NPK 10-20-20 com boa distribuição. Solo em boas condições de umidade.',
-    recomendacoes: 'Monitorar crescimento nas próximas 2 semanas. Recomenda-se irrigação leve em caso de seca.',
+    condicoes_clima: 'Ensolarado, 22°C',
+    observacoes: 'Aplicação realizada com boa distribuição. Solo em boas condições de umidade.',
     visivel_para_cliente: true,
     fotos: ['foto1.jpg', 'foto2.jpg']
   },
@@ -218,9 +220,11 @@ const cadernos = [
     data_atividade: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 dias atrás
     tipo_atividade: 'plantio',
     talhao: 'Talhão B',
+    produtos_utilizados: ['Semente Híbrida AG9045'],
+    dosagem: '60.000 sementes/ha',
     area_aplicada: 30,
-    observacoes: 'Plantio realizado com sementes selecionadas. Espaçamento adequado mantido.',
-    recomendacoes: 'Aplicar herbicida pré-emergente em 3-5 dias.',
+    condicoes_clima: 'Parcialmente nublado, 20°C',
+    observacoes: 'Plantio realizado com sementes selecionadas. Espaçamento de 50cm entre linhas.',
     visivel_para_cliente: true,
     fotos: ['foto3.jpg']
   },
@@ -231,9 +235,10 @@ const cadernos = [
     data_atividade: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 dias atrás
     tipo_atividade: 'vistoria',
     talhao: 'Talhão C',
+    produtos_utilizados: [],
     area_aplicada: null,
-    observacoes: 'Vistoria de rotina. Identificada presença leve de lagarta.',
-    recomendacoes: 'Programar aplicação de inseticida biológico na próxima semana.',
+    condicoes_clima: 'Ensolarado, 28°C',
+    observacoes: 'Vistoria de rotina. Identificada presença leve de lagarta do cartucho. População abaixo do nível de controle.',
     visivel_para_cliente: false,
     fotos: []
   },
@@ -244,9 +249,10 @@ const cadernos = [
     data_atividade: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 dias atrás
     tipo_atividade: 'analise_solo',
     talhao: 'Talhão A',
+    produtos_utilizados: [],
     area_aplicada: null,
-    observacoes: 'Coleta de amostras para análise completa de solo. 10 pontos coletados.',
-    recomendacoes: 'Aguardar resultado laboratorial para definir plano de correção.',
+    condicoes_clima: 'Nublado, 18°C',
+    observacoes: 'Coleta de amostras para análise completa de solo. 10 pontos coletados em zigue-zague.',
     visivel_para_cliente: true,
     fotos: ['foto4.jpg', 'foto5.jpg', 'foto6.jpg']
   },
@@ -257,11 +263,27 @@ const cadernos = [
     data_atividade: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 dias atrás
     tipo_atividade: 'aplicacao',
     talhao: 'Talhão D',
+    produtos_utilizados: ['Fungicida Azoxistrobina', 'Adjuvante'],
+    dosagem: '0,3 L/ha + 0,5% v/v',
     area_aplicada: 75,
-    observacoes: 'Aplicação de fungicida preventivo. Condições climáticas favoráveis.',
-    recomendacoes: 'Reaplicar em 15 dias ou após chuvas fortes.',
+    condicoes_clima: 'Ensolarado, sem vento, 24°C',
+    observacoes: 'Aplicação de fungicida preventivo. Condições climáticas favoráveis para aplicação.',
     visivel_para_cliente: true,
     fotos: []
+  },
+  {
+    id: 'c6',
+    produtor_id: 'p3',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 dias atrás
+    tipo_atividade: 'colheita',
+    talhao: 'Talhão Principal',
+    produtos_utilizados: [],
+    area_aplicada: 120,
+    condicoes_clima: 'Seco, 26°C',
+    observacoes: 'Colheita iniciada. Produtividade estimada em 4.800 kg/ha. Grãos com boa qualidade.',
+    visivel_para_cliente: true,
+    fotos: ['colheita1.jpg']
   }
 ];
 

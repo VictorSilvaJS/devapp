@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
-import { CadernoCampo, Produtor } from '../api/mock';
+import { Visita, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 
@@ -23,8 +23,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function CadernoCampoScreen() {
-  const [registros, setRegistros] = useState([]);
+export default function VisitasScreen() {
+  const [visitas, setVisitas] = useState([]);
   const [produtores, setProdutores] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -37,43 +37,41 @@ export default function CadernoCampoScreen() {
     setLoading(true);
     try {
       // Simula lógica de permissões por perfil
-      let registrosData = [];
+      let visitasData = [];
       let produtoresData = [];
 
       if (user?.perfil === 'admin') {
         // Admin vê tudo
-        [registrosData, produtoresData] = await Promise.all([
-          CadernoCampo.list(),
+        [visitasData, produtoresData] = await Promise.all([
+          Visita.list(),
           Produtor.list()
         ]);
       } else if (user?.perfil === 'colaborador') {
-        // Colaborador vê apenas seus registros e produtores da sua região
-        const [todosRegistros, todosProdutores] = await Promise.all([
-          CadernoCampo.list(),
+        // Colaborador vê apenas suas visitas e produtores da sua região
+        const [todasVisitas, todosProdutores] = await Promise.all([
+          Visita.list(),
           Produtor.list()
         ]);
-        registrosData = todosRegistros.filter(r => r.colaborador_responsavel === user.full_name);
+        visitasData = todasVisitas.filter(v => v.tecnico_responsavel === user.full_name);
         produtoresData = todosProdutores.filter(p => p.regiao === user.regiao);
       } else if (user?.perfil === 'cliente') {
-        // Cliente vê apenas registros visíveis do seu produtor
-        const [todosRegistros, todosProdutores] = await Promise.all([
-          CadernoCampo.list(),
+        // Cliente vê apenas visitas do seu produtor
+        const [todasVisitas, todosProdutores] = await Promise.all([
+          Visita.list(),
           Produtor.list()
         ]);
-        registrosData = todosRegistros.filter(r => 
-          r.produtor_id === user.produtor_id && r.visivel_para_cliente === true
-        );
+        visitasData = todasVisitas.filter(v => v.produtor_id === user.produtor_id);
         produtoresData = todosProdutores.filter(p => p.id === user.produtor_id);
       } else {
         // Sem usuário, carrega tudo (fallback)
-        [registrosData, produtoresData] = await Promise.all([
-          CadernoCampo.list(),
+        [visitasData, produtoresData] = await Promise.all([
+          Visita.list(),
           Produtor.list()
         ]);
       }
 
       try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
-      setRegistros(registrosData);
+      setVisitas(visitasData);
       setProdutores(produtoresData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -91,30 +89,50 @@ export default function CadernoCampoScreen() {
   const getProd = (id) => produtores.find(x => x.id === id) || {};
 
   // Filtro de busca
-  const registrosFiltrados = registros.filter(registro => {
+  const visitasFiltradas = visitas.filter(visita => {
     if (!busca) return true;
-    const produtor = getProd(registro.produtor_id);
+    const produtor = getProd(visita.produtor_id);
     const buscaLower = busca.toLowerCase();
     return (
       produtor.nome?.toLowerCase().includes(buscaLower) ||
-      registro.tipo_atividade?.toLowerCase().includes(buscaLower) ||
-      registro.talhao?.toLowerCase().includes(buscaLower) ||
-      registro.colaborador_responsavel?.toLowerCase().includes(buscaLower)
+      visita.objetivo?.toLowerCase().includes(buscaLower) ||
+      visita.tecnico_responsavel?.toLowerCase().includes(buscaLower) ||
+      visita.status?.toLowerCase().includes(buscaLower)
     );
   });
 
-  // Cores para tipos de atividade
-  const getTipoColor = (tipo) => {
+  // Cores para objetivos
+  const getObjetivoColor = (objetivo) => {
     const cores = {
-      plantio: colors.success,
-      adubacao: '#3B82F6',
-      aplicacao: '#A855F7',
-      colheita: '#F59E0B',
-      analise_solo: '#F97316',
-      vistoria: '#06B6D4',
+      consultoria: colors.primary,
+      coleta_solo: '#3B82F6',
+      avaliacao_cultivo: '#10B981',
+      entrega_material: '#F59E0B',
       outro: colors.muted
     };
-    return cores[tipo] || colors.muted;
+    return cores[objetivo] || colors.muted;
+  };
+
+  // Cores para status
+  const getStatusColor = (status) => {
+    const cores = {
+      agendada: '#3B82F6',
+      realizada: colors.success,
+      cancelada: colors.danger
+    };
+    return cores[status] || colors.muted;
+  };
+
+  // Ícones para objetivos
+  const getObjetivoIcon = (objetivo) => {
+    const icones = {
+      consultoria: 'people-outline',
+      coleta_solo: 'flask-outline',
+      avaliacao_cultivo: 'leaf-outline',
+      entrega_material: 'cube-outline',
+      outro: 'ellipsis-horizontal-outline'
+    };
+    return icones[objetivo] || 'calendar-outline';
   };
 
   // Formata data
@@ -125,7 +143,7 @@ export default function CadernoCampoScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Caderno de Campo" />
+      <Header title="Visitas Técnicas" />
       
       {/* Barra de busca */}
       <View style={styles.searchContainer}>
@@ -133,7 +151,7 @@ export default function CadernoCampoScreen() {
           <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por produtor, atividade ou talhão..."
+            placeholder="Buscar por produtor, objetivo ou técnico..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -160,110 +178,117 @@ export default function CadernoCampoScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Carregando registros...</Text>
+            <Text style={styles.loadingText}>Carregando visitas...</Text>
           </View>
-        ) : registrosFiltrados.length === 0 ? (
+        ) : visitasFiltradas.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons 
-              name={busca ? 'search-outline' : 'document-text-outline'} 
+              name={busca ? 'search-outline' : 'calendar-outline'} 
               size={64} 
               color={colors.muted} 
               style={styles.emptyIcon} 
             />
             <Text style={styles.emptyText}>
-              {busca ? 'Nenhum registro encontrado' : 'Nenhum registro ainda'}
+              {busca ? 'Nenhuma visita encontrada' : 'Nenhuma visita agendada'}
             </Text>
             <Text style={styles.emptySubtext}>
               {busca 
                 ? 'Tente ajustar os filtros de busca' 
-                : 'Os registros de campo aparecerão aqui'}
+                : 'As visitas técnicas aparecerão aqui'}
             </Text>
           </View>
         ) : (
-          registrosFiltrados.map(reg => {
-            const produtor = getProd(reg.produtor_id);
-            const tipoColor = getTipoColor(reg.tipo_atividade);
+          visitasFiltradas.map(visita => {
+            const produtor = getProd(visita.produtor_id);
+            const objetivoColor = getObjetivoColor(visita.objetivo);
+            const statusColor = getStatusColor(visita.status);
+            const objetivoIcon = getObjetivoIcon(visita.objetivo);
             
             return (
-              <View key={reg.id} style={styles.card}>
+              <View key={visita.id} style={styles.card}>
                 {/* Cabeçalho do Card */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
-                    <View style={[styles.cardIcon, { backgroundColor: tipoColor + '20' }]}>
-                      <Ionicons name="book-outline" size={24} color={tipoColor} />
+                    <View style={[styles.cardIcon, { backgroundColor: objetivoColor + '20' }]}>
+                      <Ionicons name={objetivoIcon} size={24} color={objetivoColor} />
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>
                         {produtor.nome || 'Produtor não encontrado'}
                       </Text>
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
-                        {reg.talhao}
+                        {produtor.fazenda}
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.badge, { backgroundColor: tipoColor + '20' }]}>
-                    <Text style={[styles.badgeText, { color: tipoColor }]}>
-                      {reg.tipo_atividade.replace(/_/g, ' ')}
+                  <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
+                    <Text style={[styles.badgeText, { color: statusColor }]}>
+                      {visita.status}
                     </Text>
                   </View>
+                </View>
+
+                {/* Tipo de Visita */}
+                <View style={[styles.objetivoBox, { backgroundColor: objetivoColor + '10' }]}>
+                  <Text style={[styles.objetivoText, { color: objetivoColor }]}>
+                    {visita.objetivo.replace(/_/g, ' ').toUpperCase()}
+                  </Text>
                 </View>
 
                 {/* Informações */}
                 <View style={styles.cardInfo}>
                   <View style={styles.infoRow}>
                     <Ionicons name="calendar-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                    <Text style={styles.infoText}>{formatarData(reg.data_atividade)}</Text>
+                    <Text style={styles.infoText}>{formatarData(visita.data_visita)}</Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Ionicons name="person-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                     <Text style={styles.infoText} numberOfLines={1}>
-                      {reg.colaborador_responsavel}
+                      {visita.tecnico_responsavel}
                     </Text>
                   </View>
-                  {reg.area_aplicada && (
+                  {visita.clima && (
                     <View style={styles.infoRow}>
-                      <Ionicons name="location-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                      <Text style={styles.infoText}>{reg.area_aplicada} ha</Text>
+                      <Ionicons name="cloudy-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
+                      <Text style={styles.infoText}>{visita.clima}</Text>
+                    </View>
+                  )}
+                  {visita.proximaVisita && (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="time-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
+                      <Text style={styles.infoText}>
+                        Próxima: {formatarData(visita.proximaVisita)}
+                      </Text>
                     </View>
                   )}
                 </View>
 
-                {/* Produtos e Dosagem */}
-                {(reg.produtos_utilizados && reg.produtos_utilizados.length > 0) && (
-                  <View style={styles.produtosBox}>
-                    <Text style={styles.produtosLabel}>Produtos:</Text>
-                    <Text style={styles.produtosText} numberOfLines={2}>
-                      {reg.produtos_utilizados.join(', ')}
-                    </Text>
-                    {reg.dosagem && (
-                      <Text style={styles.dosagemText}>Dosagem: {reg.dosagem}</Text>
-                    )}
-                  </View>
-                )}
-
-                {/* Condições Climáticas */}
-                {reg.condicoes_clima && (
-                  <View style={styles.climaBox}>
-                    <Ionicons name="cloudy-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                    <Text style={styles.climaText}>{reg.condicoes_clima}</Text>
-                  </View>
-                )}
-
                 {/* Observações */}
-                {reg.observacoes && (
+                {visita.observacoes && (
                   <View style={styles.observacoesBox}>
+                    <Text style={styles.observacoesLabel}>Observações:</Text>
                     <Text style={styles.observacoesText} numberOfLines={2}>
-                      {reg.observacoes}
+                      {visita.observacoes}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Recomendações */}
+                {visita.recomendacoes && (
+                  <View style={styles.recomendacoesBox}>
+                    <Text style={styles.recomendacoesLabel}>Recomendações:</Text>
+                    <Text style={styles.recomendacoesText} numberOfLines={2}>
+                      {visita.recomendacoes}
                     </Text>
                   </View>
                 )}
 
                 {/* Fotos */}
-                {reg.fotos && reg.fotos.length > 0 && (
+                {visita.fotos && visita.fotos.length > 0 && (
                   <View style={styles.fotosBox}>
                     <Ionicons name="images-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
                     <Text style={styles.fotosText}>
-                      {reg.fotos.length} foto(s) anexada(s)
+                      {visita.fotos.length} foto(s) anexada(s)
                     </Text>
                   </View>
                 )}
@@ -379,6 +404,18 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     textTransform: 'capitalize'
   },
+  objetivoBox: {
+    paddingHorizontal: spacing.gap,
+    paddingVertical: 6,
+    borderRadius: spacing.radiusSm,
+    marginBottom: spacing.gap,
+    alignSelf: 'flex-start'
+  },
+  objetivoText: {
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    letterSpacing: 0.5
+  },
   cardInfo: {
     marginTop: spacing.gap - 2
   },
@@ -396,7 +433,24 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     flex: 1
   },
-  produtosBox: {
+  observacoesBox: {
+    backgroundColor: colors.background,
+    padding: spacing.gap,
+    borderRadius: spacing.radiusSm,
+    marginTop: spacing.gap
+  },
+  observacoesLabel: {
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    color: colors.textLight,
+    marginBottom: 4
+  },
+  observacoesText: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    lineHeight: 18
+  },
+  recomendacoesBox: {
     backgroundColor: colors.accent,
     padding: spacing.gap,
     borderRadius: spacing.radiusSm,
@@ -404,44 +458,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.accentDark
   },
-  produtosLabel: {
+  recomendacoesLabel: {
     fontSize: typography.fontCaption,
     fontWeight: typography.weightSemibold,
     color: colors.primaryDark,
     marginBottom: 4
   },
-  produtosText: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.text,
-    lineHeight: 18
-  },
-  dosagemText: {
-    fontSize: typography.fontCaption,
-    color: colors.textLight,
-    marginTop: 4,
-    fontStyle: 'italic'
-  },
-  climaBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.gap,
-    paddingHorizontal: spacing.gap,
-    paddingVertical: 6,
-    backgroundColor: colors.background,
-    borderRadius: spacing.radiusSm
-  },
-  climaText: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.textLight,
-    flex: 1
-  },
-  observacoesBox: {
-    backgroundColor: colors.background,
-    padding: spacing.gap,
-    borderRadius: spacing.radiusSm,
-    marginTop: spacing.gap
-  },
-  observacoesText: {
+  recomendacoesText: {
     fontSize: typography.fontCaption + 1,
     color: colors.text,
     lineHeight: 18
