@@ -122,8 +122,8 @@ export default function MapasScreen({ route, navigation }) {
         <View style={styles.mapaIconContainer}>
           <Ionicons 
             name={getIconeFormato(mapa.formato_arquivo)} 
-            size={24} 
-            color={colors.primary} 
+            size={28} 
+            color={colors.white} 
           />
         </View>
         <View style={styles.mapaInfo}>
@@ -133,11 +133,11 @@ export default function MapasScreen({ route, navigation }) {
           )}
           <View style={styles.mapaDetalhes}>
             <Text style={styles.mapaDetalhe}>
-              <Ionicons name="calendar-outline" size={16} color={colors.muted} /> {formatarData(mapa.data_criacao)}
+              <Ionicons name="calendar-outline" size={16} color={colors.secondary} /> {formatarData(mapa.data_criacao)}
             </Text>
             {mapa.talhao && (
               <Text style={styles.mapaDetalhe}>
-                <Ionicons name="location-outline" size={16} color={colors.muted} /> {mapa.talhao}
+                <Ionicons name="location-outline" size={16} color={colors.secondary} /> {mapa.talhao}
               </Text>
             )}
           </View>
@@ -304,17 +304,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: 20,
     backgroundColor: colors.background,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.primary,
     marginRight: spacing.sm,
     gap: spacing.xs,
+    ...shadows.sm,
   },
   categoriaChipAtiva: {
     backgroundColor: colors.primary,
   },
   categoriaTexto: {
-    fontSize: typography.sizes.sm,
-    fontWeight: '600',
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
     color: colors.primary,
   },
   categoriaTextoAtiva: {
@@ -331,16 +332,19 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   statNumero: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: typography.fontTitle,
+    fontWeight: typography.weightBold,
     color: colors.primary,
   },
   statLabel: {
-    fontSize: typography.sizes.xs,
-    color: colors.muted,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightMedium,
+    color: colors.text,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -358,8 +362,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   categoriaTitulo: {
-    fontSize: typography.sizes.lg,
-    fontWeight: 'bold',
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
     color: colors.text,
   },
   categoriaBadge: {
@@ -371,8 +375,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   categoriaBadgeTexto: {
-    fontSize: typography.sizes.xs,
-    fontWeight: 'bold',
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
     color: colors.white,
   },
   mapaCard: {
@@ -380,34 +384,37 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    ...shadows.sm,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    ...shadows.md,
   },
   mapaHeader: {
     flexDirection: 'row',
     marginBottom: spacing.sm,
   },
   mapaIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primaryLight,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
+    ...shadows.sm,
   },
   mapaInfo: {
     flex: 1,
   },
   mapaTitulo: {
-    fontSize: typography.sizes.md,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: typography.fontSubtitle + 2,
+    fontWeight: typography.weightBold,
+    color: '#1a1a1a',
     marginBottom: 4,
   },
   mapaSubcategoria: {
-    fontSize: typography.sizes.sm,
-    color: colors.primary,
-    fontWeight: '500',
+    fontSize: typography.fontBody + 1,
+    color: '#2e7d32',
+    fontWeight: typography.weightSemibold,
     marginBottom: 4,
   },
   mapaDetalhes: {
@@ -416,14 +423,16 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   mapaDetalhe: {
-    fontSize: typography.sizes.xs,
-    color: colors.muted,
+    fontSize: typography.fontCaption + 1,
+    color: '#424242',
+    fontWeight: typography.weightMedium,
   },
   mapaObservacao: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
+    fontSize: typography.fontBody,
+    color: '#333333',
     marginBottom: spacing.sm,
-    lineHeight: 18,
+    lineHeight: 20,
+    fontWeight: typography.weightMedium,
   },
   mapaFooter: {
     flexDirection: 'row',
@@ -434,19 +443,22 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   mapaFormatoTag: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#e8f5e9',
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#4caf50',
   },
   mapaFormatoTexto: {
-    fontSize: typography.sizes.xs,
-    fontWeight: 'bold',
-    color: colors.primary,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+    color: '#2e7d32',
   },
   mapaTamanho: {
-    fontSize: typography.sizes.xs,
-    color: colors.muted,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightMedium,
+    color: '#616161',
   },
   downloadIndicator: {
     flexDirection: 'row',
@@ -454,9 +466,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   downloadTexto: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.fontCaption,
     color: colors.success,
-    fontWeight: '500',
+    fontWeight: typography.weightSemibold,
   },
   emptyContainer: {
     flex: 1,
@@ -465,15 +477,16 @@ const styles = StyleSheet.create({
     padding: spacing.xl * 2,
   },
   emptyText: {
-    fontSize: typography.sizes.lg,
-    fontWeight: '600',
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
     color: colors.text,
     marginTop: spacing.md,
     textAlign: 'center',
   },
   emptySubtext: {
-    fontSize: typography.sizes.sm,
-    color: colors.muted,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightMedium,
+    color: colors.textLight,
     marginTop: spacing.sm,
     textAlign: 'center',
   },

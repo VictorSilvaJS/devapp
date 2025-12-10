@@ -9,9 +9,10 @@ import {
   RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../components/Header';
 import { Produtor, Mapa, Visita, CadernoCampo } from '../api/mock';
-import { colors, typography, spacing, shadows } from '../theme';
+import { colors, typography, spacing, shadows, border } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -168,34 +169,61 @@ export default function ClienteDashboardScreen() {
 
         {/* Resumo de Informações */}
         <View style={styles.resumoContainer}>
-          <View style={styles.resumoCard}>
-            <View style={styles.resumoIconContainer}>
-              <Ionicons name="map-outline" size={28} color={colors.primary} />
-            </View>
-            <View style={styles.resumoInfo}>
-              <Text style={styles.resumoValor}>{mapas.length}</Text>
-              <Text style={styles.resumoLabel}>Mapas Disponíveis</Text>
-            </View>
+          <View style={styles.resumoCardWrapper}>
+            <LinearGradient
+              colors={['#fef3c7', '#FFFFFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.resumoCard, { borderColor: '#fde68a' }]}
+            >
+              <View style={styles.resumoContent}>
+                <Text style={[styles.resumoValor, { color: '#d97706' }]}>
+                  {mapas.length}
+                </Text>
+                <Text style={styles.resumoLabel}>Mapas Disponíveis</Text>
+              </View>
+              <View style={[styles.resumoIconContainer, { backgroundColor: '#fef3c7' }]}>
+                <Ionicons name="map-outline" size={24} color="#d97706" />
+              </View>
+            </LinearGradient>
           </View>
 
-          <View style={styles.resumoCard}>
-            <View style={styles.resumoIconContainer}>
-              <Ionicons name="calendar-outline" size={28} color={colors.success} />
-            </View>
-            <View style={styles.resumoInfo}>
-              <Text style={styles.resumoValor}>{visitas.length}</Text>
-              <Text style={styles.resumoLabel}>Visitas Registradas</Text>
-            </View>
+          <View style={styles.resumoCardWrapper}>
+            <LinearGradient
+              colors={['#d1fae5', '#FFFFFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.resumoCard, { borderColor: '#a7f3d0' }]}
+            >
+              <View style={styles.resumoContent}>
+                <Text style={[styles.resumoValor, { color: colors.success }]}>
+                  {visitas.length}
+                </Text>
+                <Text style={styles.resumoLabel}>Visitas Registradas</Text>
+              </View>
+              <View style={[styles.resumoIconContainer, { backgroundColor: '#d1fae5' }]}>
+                <Ionicons name="calendar-outline" size={24} color={colors.success} />
+              </View>
+            </LinearGradient>
           </View>
 
-          <View style={styles.resumoCard}>
-            <View style={styles.resumoIconContainer}>
-              <Ionicons name="document-text-outline" size={28} color={colors.warning} />
-            </View>
-            <View style={styles.resumoInfo}>
-              <Text style={styles.resumoValor}>{historico.length}</Text>
-              <Text style={styles.resumoLabel}>Atividades</Text>
-            </View>
+          <View style={styles.resumoCardWrapper}>
+            <LinearGradient
+              colors={['#dbeafe', '#FFFFFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.resumoCard, { borderColor: '#bfdbfe' }]}
+            >
+              <View style={styles.resumoContent}>
+                <Text style={[styles.resumoValor, { color: '#2563eb' }]}>
+                  {historico.length}
+                </Text>
+                <Text style={styles.resumoLabel}>Atividades</Text>
+              </View>
+              <View style={[styles.resumoIconContainer, { backgroundColor: '#dbeafe' }]}>
+                <Ionicons name="document-text-outline" size={24} color="#2563eb" />
+              </View>
+            </LinearGradient>
           </View>
         </View>
 
@@ -322,8 +350,9 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.muted,
+    fontSize: typography.fontBody,
+    color: colors.textLight,
+    fontWeight: typography.weightMedium,
   },
   emptyContainer: {
     flex: 1,
@@ -333,15 +362,17 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     marginTop: spacing.md,
-    fontSize: typography.sizes.lg,
-    color: colors.muted,
-    fontWeight: '600',
+    fontSize: typography.fontSubtitle,
+    color: colors.text,
+    fontWeight: typography.weightBold,
   },
   propriedadeCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
     padding: spacing.lg,
     marginBottom: spacing.lg,
+    borderWidth: 2,
+    borderColor: colors.primary,
     ...shadows.md,
   },
   propriedadeHeader: {
@@ -354,14 +385,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   propriedadeNome: {
-    fontSize: typography.sizes.xl,
-    fontWeight: 'bold',
+    fontSize: typography.fontTitle - 4,
+    fontWeight: typography.weightBold,
     color: colors.text,
     marginBottom: 4,
   },
   propriedadeLocalização: {
-    fontSize: typography.sizes.md,
-    color: colors.muted,
+    fontSize: typography.fontBody,
+    color: colors.textLight,
+    fontWeight: typography.weightMedium,
   },
   propriedadeStats: {
     flexDirection: 'row',
@@ -381,50 +413,54 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   statValue: {
-    fontSize: typography.sizes.lg,
-    fontWeight: 'bold',
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
     color: colors.text,
     marginTop: spacing.xs,
   },
   statLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.muted,
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
     marginTop: 4,
+    fontWeight: typography.weightSemibold,
   },
   resumoContainer: {
-    flexDirection: 'row',
     gap: spacing.md,
     marginBottom: spacing.lg,
   },
+  resumoCardWrapper: {
+    ...shadows.md,
+  },
   resumoCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: spacing.md,
+    borderRadius: border.radiusLg,
+    padding: spacing.card + 4,
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.sm,
+    justifyContent: 'space-between',
+    borderWidth: 2,
+    minHeight: 100,
+  },
+  resumoContent: {
+    flex: 1,
+    marginRight: 8,
   },
   resumoIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.sm,
-  },
-  resumoInfo: {
-    flex: 1,
+    marginLeft: 8,
   },
   resumoValor: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
+    fontSize: typography.fontSubtitle + 4,
+    fontWeight: typography.weightBold,
+    marginBottom: 4,
   },
   resumoLabel: {
-    fontSize: typography.sizes.xs,
-    color: colors.muted,
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
   },
   secao: {
     marginBottom: spacing.xl,
@@ -436,98 +472,110 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   secaoTitulo: {
-    fontSize: typography.sizes.lg,
-    fontWeight: 'bold',
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
     color: colors.text,
   },
   verTodosLink: {
-    fontSize: typography.sizes.sm,
+    fontSize: typography.fontBody,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: typography.weightBold,
   },
   emptySecao: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: spacing.xl,
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
     ...shadows.sm,
   },
   emptySecaoText: {
-    marginTop: spacing.sm,
-    fontSize: typography.sizes.sm,
-    color: colors.muted,
+    marginTop: spacing.md,
+    fontSize: typography.fontBody,
+    color: colors.textLight,
+    fontWeight: typography.weightMedium,
   },
   mapasHorizontal: {
     flexGrow: 0,
   },
   categoriaCard: {
-    width: 120,
+    width: 140,
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: spacing.md,
     marginRight: spacing.md,
     alignItems: 'center',
-    ...shadows.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    ...shadows.md,
   },
   categoriaIconContainer: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
   categoriaNome: {
-    fontSize: typography.sizes.sm,
-    fontWeight: '600',
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
     color: colors.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   categoriaQtd: {
-    fontSize: typography.sizes.xs,
-    color: colors.muted,
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
   },
   visitaCard: {
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    padding: spacing.card,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   visitaHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   visitaData: {
-    fontSize: typography.sizes.md,
-    fontWeight: '600',
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
     color: colors.text,
     marginLeft: spacing.xs,
   },
   visitaTecnico: {
-    fontSize: typography.sizes.sm,
-    color: colors.muted,
+    fontSize: typography.fontBody,
+    color: colors.textLight,
     marginBottom: spacing.xs,
+    fontWeight: typography.weightMedium,
   },
   visitaObservacao: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 20,
   },
   atividadeCard: {
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    padding: spacing.card,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   atividadeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   atividadeIconContainer: {
     marginRight: spacing.sm,
@@ -536,19 +584,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   atividadeTipo: {
-    fontSize: typography.sizes.md,
-    fontWeight: '600',
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
     color: colors.text,
     textTransform: 'capitalize',
   },
   atividadeData: {
-    fontSize: typography.sizes.sm,
-    color: colors.muted,
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    fontWeight: typography.weightMedium,
   },
   atividadeObservacao: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 20,
     marginTop: spacing.xs,
   },
 });
