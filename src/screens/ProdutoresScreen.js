@@ -31,8 +31,6 @@ export default function ProdutoresScreen() {
     const data = await Produtor.list();
     // Filtrar por acesso do usuário
     const produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
-    // animação local ao atualizar lista
-    try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
     setProdutores(produtoresFiltrados);
   };
 
@@ -137,10 +135,8 @@ export default function ProdutoresScreen() {
                   styles.regiaoChip,
                   regiaoSelecionada === 'todas' && styles.regiaoChipActive
                 ]}
-                onPress={() => {
-                  try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
-                  setRegiaoSelecionada('todas');
-                }}
+                onPress={() => setRegiaoSelecionada('todas')}
+                activeOpacity={0.7}
               >
                 <Text style={[
                   styles.regiaoChipText,
@@ -156,10 +152,8 @@ export default function ProdutoresScreen() {
                     styles.regiaoChip,
                     regiaoSelecionada === regiao && styles.regiaoChipActive
                   ]}
-                  onPress={() => {
-                    try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
-                    setRegiaoSelecionada(regiao);
-                  }}
+                  onPress={() => setRegiaoSelecionada(regiao)}
+                  activeOpacity={0.7}
                 >
                   <Text style={[
                     styles.regiaoChipText,
@@ -182,10 +176,7 @@ export default function ProdutoresScreen() {
                 styles.filtroButton,
                 filtroStatus === status && styles.filtroButtonActive
               ]}
-              onPress={() => {
-                try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
-                setFiltroStatus(status);
-              }}
+              onPress={() => setFiltroStatus(status)}
               activeOpacity={0.7}
             >
               <Text style={[
