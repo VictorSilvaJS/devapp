@@ -130,7 +130,7 @@ export default function CadernoCampoScreen() {
       {/* Barra de busca */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color={colors.muted} style={styles.searchIcon} />
+          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por produtor, atividade ou talhão..."
@@ -190,7 +190,7 @@ export default function CadernoCampoScreen() {
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
                     <View style={[styles.cardIcon, { backgroundColor: tipoColor + '20' }]}>
-                      <Ionicons name="book-outline" size={22} color={tipoColor} />
+                      <Ionicons name="book-outline" size={24} color={tipoColor} />
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>

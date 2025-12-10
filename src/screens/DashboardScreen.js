@@ -261,7 +261,7 @@ export default function DashboardScreen() {
               <Text style={styles.welcomeText} numberOfLines={1}>
                 Olá, {user?.full_name?.split(' ')[0] || 'Usuário'}!
               </Text>
-              <Ionicons name="hand-left-outline" size={22} color={colors.primary} style={styles.waveIcon} />
+              <Ionicons name="hand-left-outline" size={24} color={colors.primary} style={styles.waveIcon} />
             </View>
             <Text style={styles.subtitle} numberOfLines={2}>
               {user?.perfil === 'admin' && 'Painel de Administração Geral'}
@@ -272,7 +272,7 @@ export default function DashboardScreen() {
             {/* Cards de informação */}
             <View style={styles.infoCardsRow}>
               <View style={styles.infoCard}>
-                <Ionicons name="location-outline" size={18} color={colors.primary} />
+                <Ionicons name="location-outline" size={16} color={colors.primary} />
                 <View style={styles.infoCardText}>
                   <Text style={styles.infoCardLabel}>Localização</Text>
                   <Text style={styles.infoCardValue} numberOfLines={2}>{cidade}</Text>
@@ -280,7 +280,7 @@ export default function DashboardScreen() {
               </View>
 
               <View style={styles.infoCard}>
-                <Ionicons name="partly-sunny-outline" size={18} color={colors.secondary} />
+                <Ionicons name="partly-sunny-outline" size={16} color={colors.secondary} />
                 <View style={styles.infoCardText}>
                   <Text style={styles.infoCardLabel}>Clima</Text>
                   <Text style={styles.infoCardValue} numberOfLines={1}>

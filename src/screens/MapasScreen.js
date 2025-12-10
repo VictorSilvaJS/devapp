@@ -133,11 +133,11 @@ export default function MapasScreen({ route, navigation }) {
           )}
           <View style={styles.mapaDetalhes}>
             <Text style={styles.mapaDetalhe}>
-              <Ionicons name="calendar-outline" size={12} color={colors.muted} /> {formatarData(mapa.data_criacao)}
+              <Ionicons name="calendar-outline" size={16} color={colors.muted} /> {formatarData(mapa.data_criacao)}
             </Text>
             {mapa.talhao && (
               <Text style={styles.mapaDetalhe}>
-                <Ionicons name="location-outline" size={12} color={colors.muted} /> {mapa.talhao}
+                <Ionicons name="location-outline" size={16} color={colors.muted} /> {mapa.talhao}
               </Text>
             )}
           </View>
@@ -247,7 +247,7 @@ export default function MapasScreen({ route, navigation }) {
               mapasPorCategoria.map(cat => (
                 <View key={cat.id} style={styles.categoriaSecao}>
                   <View style={styles.categoriaHeader}>
-                    <Ionicons name={cat.icon} size={20} color={colors.primary} />
+                    <Ionicons name={cat.icon} size={32} color={colors.primary} />
                     <Text style={styles.categoriaTitulo}>{cat.nome}</Text>
                     <View style={styles.categoriaBadge}>
                       <Text style={styles.categoriaBadgeTexto}>{cat.mapas.length}</Text>

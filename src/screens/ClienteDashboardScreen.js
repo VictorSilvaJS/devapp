@@ -142,7 +142,7 @@ export default function ClienteDashboardScreen() {
         {/* Card da Propriedade */}
         <View style={styles.propriedadeCard}>
           <View style={styles.propriedadeHeader}>
-            <Ionicons name="home" size={40} color={colors.primary} />
+            <Ionicons name="home-outline" size={40} color={colors.primary} />
             <View style={styles.propriedadeInfo}>
               <Text style={styles.propriedadeNome}>{propriedade.fazenda}</Text>
               <Text style={styles.propriedadeLocalização}>
@@ -255,7 +255,7 @@ export default function ClienteDashboardScreen() {
             visitas.slice(0, 3).map((visita, index) => (
               <View key={index} style={styles.visitaCard}>
                 <View style={styles.visitaHeader}>
-                  <Ionicons name="calendar" size={20} color={colors.primary} />
+                  <Ionicons name="calendar-outline" size={20} color={colors.primary} />
                   <Text style={styles.visitaData}>{formatarData(visita.data_visita)}</Text>
                 </View>
                 <Text style={styles.visitaTecnico}>Técnico: {visita.tecnico_responsavel}</Text>
@@ -285,7 +285,7 @@ export default function ClienteDashboardScreen() {
               <View key={index} style={styles.atividadeCard}>
                 <View style={styles.atividadeHeader}>
                   <View style={styles.atividadeIconContainer}>
-                    <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                    <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
                   </View>
                   <View style={styles.atividadeInfo}>
                     <Text style={styles.atividadeTipo}>{atividade.tipo_atividade}</Text>

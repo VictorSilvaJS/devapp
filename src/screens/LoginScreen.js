@@ -45,7 +45,7 @@ export default function LoginScreen({ navigation }) {
     >
       <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.title}>Tchê Agro</Text>
+        {/* <Text style={styles.title}>Tchê Agro</Text> */}
         <Text style={styles.subtitle}>Faça login como</Text>
 
         {loading ? (
@@ -67,7 +67,7 @@ export default function LoginScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="briefcase-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+                <Ionicons name="briefcase-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
                 <Text style={styles.btnText}>Admin</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -84,7 +84,7 @@ export default function LoginScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="hammer-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+                <Ionicons name="people-circle-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
                 <Text style={styles.btnText}>Colaborador</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -101,7 +101,7 @@ export default function LoginScreen({ navigation }) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons name="leaf-outline" size={22} color="#FFFFFF" style={styles.btnIcon} />
+                <Ionicons name="leaf-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
                 <Text style={styles.btnText}>Cliente</Text>
               </LinearGradient>
             </TouchableOpacity>

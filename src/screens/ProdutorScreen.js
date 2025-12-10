@@ -129,10 +129,10 @@ export default function ProdutorScreen({ route, navigation }) {
         {/* Botões de Ação */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-            <Text style={styles.editButtonText}>✏️ Editar</Text>
+            <Text style={styles.editButtonText}>Editar</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>🗑️ Excluir</Text>
+            <Text style={styles.deleteButtonText}>Excluir</Text>
           </TouchableOpacity>
         </View>
 
@@ -153,7 +153,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.statLabel}>Área Total</Text>
                 </View>
                 <View style={[styles.statIconContainer, { backgroundColor: '#d9f0d9' }]}>
-                  <Text style={styles.statIcon}>🌾</Text>
+                  <Ionicons name="resize-outline" size={24} color={colors.primary} />
                 </View>
               </LinearGradient>
             </View>
@@ -172,7 +172,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.statLabel}>Cultura Atual</Text>
                 </View>
                 <View style={[styles.statIconContainer, { backgroundColor: '#dbeafe' }]}>
-                  <Text style={styles.statIcon}>🌱</Text>
+                  <Ionicons name="leaf-outline" size={24} color="#2563eb" />
                 </View>
               </LinearGradient>
             </View>
@@ -193,7 +193,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.statLabel}>Visitas</Text>
                 </View>
                 <View style={[styles.statIconContainer, { backgroundColor: '#ede9fe' }]}>
-                  <Text style={styles.statIcon}>📅</Text>
+                  <Ionicons name="calendar-outline" size={24} color="#7c3aed" />
                 </View>
               </LinearGradient>
             </View>
@@ -212,7 +212,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.statLabel}>Mapas</Text>
                 </View>
                 <View style={[styles.statIconContainer, { backgroundColor: '#fef3c7' }]}>
-                  <Text style={styles.statIcon}>🗺️</Text>
+                  <Ionicons name="map-outline" size={24} color="#d97706" />
                 </View>
               </LinearGradient>
             </View>
@@ -225,24 +225,42 @@ export default function ProdutorScreen({ route, navigation }) {
             style={[styles.tab, activeTab === 'resumo' && styles.tabActive]}
             onPress={() => setActiveTab('resumo')}
           >
+            <Ionicons 
+              name="stats-chart-outline" 
+              size={20} 
+              color={activeTab === 'resumo' ? colors.primary : colors.muted} 
+              style={styles.tabIcon}
+            />
             <Text style={[styles.tabText, activeTab === 'resumo' && styles.tabTextActive]}>
-              📊 Resumo
+              Resumo
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'lavoura' && styles.tabActive]}
             onPress={() => setActiveTab('lavoura')}
           >
+            <Ionicons 
+              name="map-outline" 
+              size={20} 
+              color={activeTab === 'lavoura' ? colors.primary : colors.muted} 
+              style={styles.tabIcon}
+            />
             <Text style={[styles.tabText, activeTab === 'lavoura' && styles.tabTextActive]}>
-              🗺️ Lavoura
+              Lavoura
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'visitas' && styles.tabActive]}
             onPress={() => setActiveTab('visitas')}
           >
+            <Ionicons 
+              name="calendar-outline" 
+              size={20} 
+              color={activeTab === 'visitas' ? colors.primary : colors.muted} 
+              style={styles.tabIcon}
+            />
             <Text style={[styles.tabText, activeTab === 'visitas' && styles.tabTextActive]}>
-              📅 Visitas
+              Visitas
             </Text>
           </TouchableOpacity>
         </View>
@@ -310,13 +328,13 @@ export default function ProdutorScreen({ route, navigation }) {
                 onPress={() => navigation.navigate('Mapas', { produtorId: produtor.id })}
               >
                 <Text style={styles.verTodosText}>Ver Todos</Text>
-                <Ionicons name="arrow-forward" size={16} color={colors.primary} />
+                <Ionicons name="chevron-forward-outline" size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>
             
             {mapas.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>🗺️</Text>
+                <Ionicons name="map-outline" size={48} color={colors.muted} />
                 <Text style={styles.emptyText}>Nenhum mapa cadastrado</Text>
               </View>
             ) : (
@@ -325,11 +343,15 @@ export default function ProdutorScreen({ route, navigation }) {
                 <View key={mapa.id} style={styles.mapaCard}>
                   <View style={styles.mapaHeader}>
                     <View style={styles.mapaIconContainer}>
-                      <Text style={styles.mapaIcon}>
-                        {mapa.categoria === 'fertilidade' ? '🌿' : 
-                         mapa.categoria === 'indice_vegetacao' ? '📊' : 
-                         mapa.categoria === 'correcao' ? '⚗️' : '🗺️'}
-                      </Text>
+                      <Ionicons 
+                        name={
+                          mapa.categoria === 'fertilidade' ? 'leaf-outline' : 
+                          mapa.categoria === 'indice_vegetacao' ? 'git-network-outline' : 
+                          mapa.categoria === 'correcao' ? 'flask-outline' : 'map-outline'
+                        }
+                        size={24}
+                        color={colors.primary}
+                      />
                     </View>
                     <View style={styles.mapaInfo}>
                       <Text style={styles.mapaTitle}>{mapa.titulo}</Text>
@@ -339,9 +361,12 @@ export default function ProdutorScreen({ route, navigation }) {
                     </View>
                   </View>
                   <View style={styles.mapaDetails}>
-                    <Text style={styles.mapaDetailItem}>
-                      📅 {new Date(mapa.data_criacao).toLocaleDateString('pt-BR')}
-                    </Text>
+                    <View style={styles.mapaDetailRow}>
+                      <Ionicons name="calendar-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
+                      <Text style={styles.mapaDetailItem}>
+                        {new Date(mapa.data_criacao).toLocaleDateString('pt-BR')}
+                      </Text>
+                    </View>
                     {mapa.observacoes && (
                       <Text style={styles.mapaObservacoes} numberOfLines={2}>
                         {mapa.observacoes}
@@ -350,7 +375,8 @@ export default function ProdutorScreen({ route, navigation }) {
                   </View>
                   {mapa.disponivel_para_download && (
                     <TouchableOpacity style={styles.mapaButton}>
-                      <Text style={styles.mapaButtonText}>📥 Visualizar Mapa</Text>
+                      <Ionicons name="download-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Text style={styles.mapaButtonText}>Visualizar Mapa</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -363,7 +389,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.verMaisText}>
                     Ver mais {mapas.length - 3} mapas
                   </Text>
-                  <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                  <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
                 </TouchableOpacity>
               )}
             </>
@@ -382,7 +408,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
             {visitas.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>📅</Text>
+                <Ionicons name="calendar-outline" size={48} color={colors.muted} />
                 <Text style={styles.emptyText}>Nenhuma visita registrada</Text>
                 <Text style={styles.emptySubtext}>
                   As visitas técnicas aparecerão aqui
@@ -396,25 +422,37 @@ export default function ProdutorScreen({ route, navigation }) {
                   </View>
                   <View style={styles.visitContent}>
                     <View style={styles.visitHeader}>
-                      <Text style={styles.visitDate}>
-                        📅 {new Date(v.data_visita).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </Text>
+                      <View style={styles.visitDateContainer}>
+                        <Ionicons name="calendar-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                        <Text style={styles.visitDate}>
+                          {new Date(v.data_visita).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </Text>
+                      </View>
                     </View>
                     <View style={styles.visitTecnicoContainer}>
                       <Text style={styles.visitTecnicoLabel}>Técnico Responsável:</Text>
-                      <Text style={styles.visitTecnico}>👨‍🌾 {v.tecnico_responsavel}</Text>
+                      <View style={styles.visitTecnicoRow}>
+                        <Ionicons name="person-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
+                        <Text style={styles.visitTecnico}>{v.tecnico_responsavel}</Text>
+                      </View>
                     </View>
                     <View style={styles.visitDetailRow}>
-                      <Text style={styles.visitLabel}>🎯 Objetivo:</Text>
+                      <View style={styles.visitLabelContainer}>
+                        <Ionicons name="flag-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
+                        <Text style={styles.visitLabel}>Objetivo:</Text>
+                      </View>
                       <Text style={styles.visitObjetivo}>{v.objetivo}</Text>
                     </View>
                     {v.observacoes && (
                       <View style={styles.visitDetailRow}>
-                        <Text style={styles.visitLabel}>📝 Observações:</Text>
+                        <View style={styles.visitLabelContainer}>
+                          <Ionicons name="document-text-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
+                          <Text style={styles.visitLabel}>Observações:</Text>
+                        </View>
                         <Text style={styles.visitObservacoes}>{v.observacoes}</Text>
                       </View>
                     )}
@@ -573,13 +611,18 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderRadius: spacing.radiusSm,
-    alignItems: 'center'
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   tabActive: {
     backgroundColor: colors.card
+  },
+  tabIcon: {
+    marginRight: 6
   },
   tabText: {
     fontSize: typography.fontBody - 1,
@@ -711,10 +754,14 @@ const styles = StyleSheet.create({
   mapaDetails: {
     marginBottom: 12
   },
+  mapaDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4
+  },
   mapaDetailItem: {
     fontSize: typography.fontCaption,
-    color: colors.muted,
-    marginBottom: 4
+    color: colors.muted
   },
   mapaObservacoes: {
     fontSize: typography.fontBody - 1,
@@ -760,21 +807,27 @@ const styles = StyleSheet.create({
   visitHeader: {
     marginBottom: 8
   },
+  visitDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
   visitDate: {
     fontSize: typography.fontBody,
     fontWeight: typography.weightBold,
     color: colors.text
   },
   visitTecnicoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 6
+    marginBottom: 8
   },
   visitTecnicoLabel: {
     fontSize: typography.fontCaption,
     color: colors.muted,
-    fontWeight: typography.weightSemibold
+    fontWeight: typography.weightSemibold,
+    marginBottom: 4
+  },
+  visitTecnicoRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   visitTecnico: {
     fontSize: typography.fontBody - 1,
@@ -784,11 +837,15 @@ const styles = StyleSheet.create({
   visitDetailRow: {
     marginBottom: 8
   },
+  visitLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4
+  },
   visitLabel: {
     fontSize: typography.fontCaption,
     fontWeight: typography.weightBold,
-    color: colors.muted,
-    marginBottom: 2
+    color: colors.muted
   },
   visitObjetivo: {
     fontSize: typography.fontBody - 1,
