@@ -123,7 +123,7 @@ export default function MapasScreen({ route, navigation }) {
           <Ionicons 
             name={getIconeFormato(mapa.formato_arquivo)} 
             size={28} 
-            color={colors.white} 
+            color={colors.primary} 
           />
         </View>
         <View style={styles.mapaInfo}>
@@ -247,7 +247,7 @@ export default function MapasScreen({ route, navigation }) {
               mapasPorCategoria.map(cat => (
                 <View key={cat.id} style={styles.categoriaSecao}>
                   <View style={styles.categoriaHeader}>
-                    <Ionicons name={cat.icon} size={32} color={colors.primary} />
+                    <Ionicons name={cat.icon} size={28} color={colors.primary} />
                     <Text style={styles.categoriaTitulo}>{cat.nome}</Text>
                     <View style={styles.categoriaBadge}>
                       <Text style={styles.categoriaBadgeTexto}>{cat.mapas.length}</Text>
@@ -337,14 +337,14 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   statNumero: {
-    fontSize: typography.fontTitle,
+    fontSize: typography.fontSubtitle + 2,
     fontWeight: typography.weightBold,
     color: colors.primary,
   },
   statLabel: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightMedium,
-    color: colors.text,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightSemibold,
+    color: colors.textLight,
     marginTop: 4,
     textAlign: 'center',
   },
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   categoriaTitulo: {
-    fontSize: typography.fontSubtitle,
+    fontSize: typography.fontSubtitle - 2,
     fontWeight: typography.weightBold,
     color: colors.text,
   },
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.border,
     ...shadows.md,
   },
   mapaHeader: {
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
@@ -406,14 +406,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mapaTitulo: {
-    fontSize: typography.fontSubtitle + 2,
+    fontSize: typography.fontSubtitle,
     fontWeight: typography.weightBold,
-    color: '#1a1a1a',
+    color: colors.text,
     marginBottom: 4,
   },
   mapaSubcategoria: {
-    fontSize: typography.fontBody + 1,
-    color: '#2e7d32',
+    fontSize: typography.fontBody,
+    color: colors.primary,
     fontWeight: typography.weightSemibold,
     marginBottom: 4,
   },
@@ -423,15 +423,15 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   mapaDetalhe: {
-    fontSize: typography.fontCaption + 1,
-    color: '#424242',
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
     fontWeight: typography.weightMedium,
   },
   mapaObservacao: {
-    fontSize: typography.fontBody,
-    color: '#333333',
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
     marginBottom: spacing.sm,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: typography.weightMedium,
   },
   mapaFooter: {
@@ -443,22 +443,20 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   mapaFormatoTag: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: colors.primary,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
     borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#4caf50',
   },
   mapaFormatoTexto: {
-    fontSize: typography.fontCaption + 1,
+    fontSize: typography.fontCaption,
     fontWeight: typography.weightBold,
-    color: '#2e7d32',
+    color: colors.white,
   },
   mapaTamanho: {
-    fontSize: typography.fontCaption + 1,
+    fontSize: typography.fontCaption,
     fontWeight: typography.weightMedium,
-    color: '#616161',
+    color: colors.textLight,
   },
   downloadIndicator: {
     flexDirection: 'row',

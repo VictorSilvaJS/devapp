@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../components/Header';
+import StatCard from '../components/StatCard';
 import { Produtor, Mapa, Visita, CadernoCampo } from '../api/mock';
 import { colors, typography, spacing, shadows, border } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -151,79 +152,65 @@ export default function ClienteDashboardScreen() {
               </Text>
             </View>
           </View>
-
-          <View style={styles.propriedadeStats}>
-            <View style={styles.statItem}>
-              <Ionicons name="resize-outline" size={24} color={colors.success} />
-              <Text style={styles.statValue}>{propriedade.area_total} ha</Text>
-              <Text style={styles.statLabel}>Área Total</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Ionicons name="leaf-outline" size={24} color={colors.primary} />
-              <Text style={styles.statValue}>{propriedade.cultura_atual || 'N/A'}</Text>
-              <Text style={styles.statLabel}>Cultura</Text>
-            </View>
-          </View>
         </View>
 
         {/* Resumo de Informações */}
-        <View style={styles.resumoContainer}>
-          <View style={styles.resumoCardWrapper}>
-            <LinearGradient
-              colors={['#fef3c7', '#FFFFFF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.resumoCard, { borderColor: '#fde68a' }]}
-            >
-              <View style={styles.resumoContent}>
-                <Text style={[styles.resumoValor, { color: '#d97706' }]}>
-                  {mapas.length}
-                </Text>
-                <Text style={styles.resumoLabel}>Mapas Disponíveis</Text>
-              </View>
-              <View style={[styles.resumoIconContainer, { backgroundColor: '#fef3c7' }]}>
-                <Ionicons name="map-outline" size={24} color="#d97706" />
-              </View>
-            </LinearGradient>
+        <View style={styles.statsGrid}>
+          <View style={styles.statsRow}>
+            <StatCard
+              label="Área Total"
+              value={`${propriedade.area_total} ha`}
+              icon={<Ionicons name="resize-outline" size={24} color="#8B6244" />}
+              accent={{
+                color: '#8B6244',
+                bgColor: '#f5f3f0',
+                gradient: ['#f5f3f0', '#FFFFFF']
+              }}
+            />
+            <StatCard
+              label="Cultura"
+              value={propriedade.cultura_atual || 'N/A'}
+              icon={<Ionicons name="leaf-outline" size={24} color={colors.primary} />}
+              accent={{
+                color: colors.primary,
+                bgColor: '#e8f5e8',
+                gradient: ['#e8f5e8', '#FFFFFF']
+              }}
+            />
           </View>
-
-          <View style={styles.resumoCardWrapper}>
-            <LinearGradient
-              colors={['#d1fae5', '#FFFFFF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.resumoCard, { borderColor: '#a7f3d0' }]}
-            >
-              <View style={styles.resumoContent}>
-                <Text style={[styles.resumoValor, { color: colors.success }]}>
-                  {visitas.length}
-                </Text>
-                <Text style={styles.resumoLabel}>Visitas Registradas</Text>
-              </View>
-              <View style={[styles.resumoIconContainer, { backgroundColor: '#d1fae5' }]}>
-                <Ionicons name="calendar-outline" size={24} color={colors.success} />
-              </View>
-            </LinearGradient>
+          <View style={styles.statsRow}>
+            <StatCard
+              label="Mapas Disponíveis"
+              value={mapas.length}
+              icon={<Ionicons name="map-outline" size={24} color="#d97706" />}
+              accent={{
+                color: '#d97706',
+                bgColor: '#fef3c7',
+                gradient: ['#fef3c7', '#FFFFFF']
+              }}
+            />
+            <StatCard
+              label="Visitas Registradas"
+              value={visitas.length}
+              icon={<Ionicons name="calendar-outline" size={24} color={colors.success} />}
+              accent={{
+                color: colors.success,
+                bgColor: '#d1fae5',
+                gradient: ['#d1fae5', '#FFFFFF']
+              }}
+            />
           </View>
-
-          <View style={styles.resumoCardWrapper}>
-            <LinearGradient
-              colors={['#dbeafe', '#FFFFFF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.resumoCard, { borderColor: '#bfdbfe' }]}
-            >
-              <View style={styles.resumoContent}>
-                <Text style={[styles.resumoValor, { color: '#2563eb' }]}>
-                  {historico.length}
-                </Text>
-                <Text style={styles.resumoLabel}>Atividades</Text>
-              </View>
-              <View style={[styles.resumoIconContainer, { backgroundColor: '#dbeafe' }]}>
-                <Ionicons name="document-text-outline" size={24} color="#2563eb" />
-              </View>
-            </LinearGradient>
+          <View style={styles.statsRow}>
+            <StatCard
+              label="Atividades"
+              value={historico.length}
+              icon={<Ionicons name="document-text-outline" size={24} color="#2563eb" />}
+              accent={{
+                color: '#2563eb',
+                bgColor: '#dbeafe',
+                gradient: ['#dbeafe', '#FFFFFF']
+              }}
+            />
           </View>
         </View>
 
@@ -395,72 +382,13 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontWeight: typography.weightMedium,
   },
-  propriedadeStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: colors.border,
-  },
-  statValue: {
-    fontSize: typography.fontSubtitle,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-    marginTop: spacing.xs,
-  },
-  statLabel: {
-    fontSize: typography.fontCaption,
-    color: colors.textLight,
-    marginTop: 4,
-    fontWeight: typography.weightSemibold,
-  },
-  resumoContainer: {
-    gap: spacing.md,
+  statsGrid: {
     marginBottom: spacing.lg,
+    gap: spacing.md,
   },
-  resumoCardWrapper: {
-    ...shadows.md,
-  },
-  resumoCard: {
-    borderRadius: border.radiusLg,
-    padding: spacing.card + 4,
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 2,
-    minHeight: 100,
-  },
-  resumoContent: {
-    flex: 1,
-    marginRight: 8,
-  },
-  resumoIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  resumoValor: {
-    fontSize: typography.fontSubtitle + 4,
-    fontWeight: typography.weightBold,
-    marginBottom: 4,
-  },
-  resumoLabel: {
-    fontSize: typography.fontBody - 1,
-    color: colors.textLight,
-    fontWeight: typography.weightSemibold,
+    gap: spacing.md,
   },
   secao: {
     marginBottom: spacing.xl,
