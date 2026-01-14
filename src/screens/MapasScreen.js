@@ -24,6 +24,7 @@ export default function MapasScreen({ route, navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
+  const [ordenacao, setOrdenacao] = useState('recente'); // recente, titulo, tamanho
   const { user } = useAuth();
   const produtorId = route?.params?.produtorId;
 
@@ -67,6 +68,16 @@ export default function MapasScreen({ route, navigation }) {
       m.talhao?.toLowerCase().includes(busca.toLowerCase()) ||
       m.observacoes?.toLowerCase().includes(busca.toLowerCase());
     return matchCategoria && matchBusca;
+  }).sort((a, b) => {
+    // Aplicar ordenação
+    if (ordenacao === 'recente') {
+      return new Date(b.data_geracao || 0) - new Date(a.data_geracao || 0);
+    } else if (ordenacao === 'titulo') {
+      return (a.titulo || '').localeCompare(b.titulo || '');
+    } else if (ordenacao === 'tamanho') {
+      return (b.tamanho_arquivo || 0) - (a.tamanho_arquivo || 0);
+    }
+    return 0;
   });
 
   const mapasPorCategoria = categorias
@@ -213,6 +224,42 @@ export default function MapasScreen({ route, navigation }) {
               <Ionicons name="close-circle" size={20} color={colors.muted} />
             </TouchableOpacity>
           )}
+        </View>
+      </View>
+
+      {/* Ordenação */}
+      <View style={styles.ordenacaoContainer}>
+        <Text style={styles.ordenacaoLabel}>
+          <Ionicons name="swap-vertical-outline" size={16} color={colors.text} /> Ordenar:
+        </Text>
+        <View style={styles.ordenacaoButtons}>
+          {[
+            { key: 'recente', label: 'Recente', icon: 'time-outline' },
+            { key: 'titulo', label: 'Título', icon: 'text-outline' },
+            { key: 'tamanho', label: 'Tamanho', icon: 'document-outline' }
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.key}
+              style={[
+                styles.ordenacaoChip,
+                ordenacao === item.key && styles.ordenacaoChipActive
+              ]}
+              onPress={() => setOrdenacao(item.key)}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name={item.icon} 
+                size={14} 
+                color={ordenacao === item.key ? colors.white : colors.primary} 
+              />
+              <Text style={[
+                styles.ordenacaoChipText,
+                ordenacao === item.key && styles.ordenacaoChipTextActive
+              ]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
@@ -452,6 +499,47 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     gap: spacing.sm,
   },
+  
+  // Ordenação
+  ordenacaoContainer: {
+    marginHorizontal: spacing.screen,
+    marginBottom: spacing.screen,
+  },
+  ordenacaoLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  ordenacaoButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  ordenacaoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  ordenacaoChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  ordenacaoChipText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  ordenacaoChipTextActive: {
+    color: colors.white,
+    fontWeight: '600',
+  },
+  
   categoriaTitulo: {
     fontSize: typography.fontSubtitle - 2,
     fontWeight: typography.weightBold,

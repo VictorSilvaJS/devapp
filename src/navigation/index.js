@@ -11,6 +11,7 @@ import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import EditarProdutorScreen from '../screens/EditarProdutorScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
+import NotificacoesScreen from '../screens/NotificacoesScreen';
 import LoadingScreen from '../components/LoadingScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthState } from '../auth/AuthContext';
@@ -119,6 +120,7 @@ export default function Navigation() {
           <Stack.Screen name="Mapas" component={MapasScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
           <Stack.Screen name="EditarProdutor" component={EditarProdutorScreen} />
+          <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />
           <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />
         </>
       )}

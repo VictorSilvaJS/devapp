@@ -31,6 +31,7 @@ export default function VisitasScreen() {
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [filtroData, setFiltroData] = useState('todos'); // todos, hoje, semana, mes
+  const [ordenacao, setOrdenacao] = useState('data'); // data, produtor, status
   const { user } = useAuth();
 
   useEffect(() => { load(); }, []);
@@ -136,6 +137,19 @@ export default function VisitasScreen() {
     const matchData = filtrarPorData(visita);
     
     return matchBusca && matchStatus && matchData;
+  }).sort((a, b) => {
+    // Aplicar ordenação
+    if (ordenacao === 'data') {
+      return new Date(b.data_visita) - new Date(a.data_visita);
+    } else if (ordenacao === 'produtor') {
+      const prodA = getProd(a.produtor_id);
+      const prodB = getProd(b.produtor_id);
+      return (prodA.nome || '').localeCompare(prodB.nome || '');
+    } else if (ordenacao === 'status') {
+      const statusOrder = { agendada: 0, realizada: 1, cancelada: 2 };
+      return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
+    }
+    return 0;
   });
 
   // Cores para objetivos
@@ -198,6 +212,42 @@ export default function VisitasScreen() {
               <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
             </TouchableOpacity>
           )}
+        </View>
+      </View>
+
+      {/* Ordenação */}
+      <View style={styles.ordenacaoContainer}>
+        <Text style={styles.ordenacaoLabel}>
+          <Ionicons name="swap-vertical-outline" size={16} color={colors.text} /> Ordenar:
+        </Text>
+        <View style={styles.ordenacaoButtons}>
+          {[
+            { key: 'data', label: 'Data', icon: 'calendar-outline' },
+            { key: 'produtor', label: 'Produtor', icon: 'person-outline' },
+            { key: 'status', label: 'Status', icon: 'flag-outline' }
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.key}
+              style={[
+                styles.ordenacaoChip,
+                ordenacao === item.key && styles.ordenacaoChipActive
+              ]}
+              onPress={() => setOrdenacao(item.key)}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name={item.icon} 
+                size={14} 
+                color={ordenacao === item.key ? colors.white : colors.primary} 
+              />
+              <Text style={[
+                styles.ordenacaoChipText,
+                ordenacao === item.key && styles.ordenacaoChipTextActive
+              ]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
@@ -500,6 +550,47 @@ const styles = StyleSheet.create({
   filtroTextActive: {
     color: colors.white,
   },
+  
+  // Ordenação
+  ordenacaoContainer: {
+    marginHorizontal: spacing.screen,
+    marginBottom: spacing.screen,
+  },
+  ordenacaoLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  ordenacaoButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  ordenacaoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  ordenacaoChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  ordenacaoChipText: {
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  ordenacaoChipTextActive: {
+    color: colors.white,
+    fontWeight: '600',
+  },
+  
   content: { 
     padding: spacing.screen,
     paddingBottom: spacing.screen + 80
