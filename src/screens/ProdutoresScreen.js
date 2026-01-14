@@ -121,23 +121,31 @@ export default function ProdutoresScreen() {
       <Header title="Produtores" />
       
       {/* Barra de Busca Compacta */}
-      <View style={styles.topBar}>
+      <LinearGradient
+        colors={['#FFFFFF', '#F8FAFB']}
+        style={styles.topBar}
+      >
         {mostrarBusca ? (
           <View style={styles.searchContainerExpanded}>
-            <Ionicons name="search-outline" size={20} color={colors.muted} />
+            <View style={styles.searchIconContainer}>
+              <Ionicons name="search" size={20} color={colors.primary} />
+            </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Buscar produtor..."
+              placeholder="Buscar por nome, fazenda..."
               placeholderTextColor={colors.muted}
               value={busca}
               onChangeText={setBusca}
               autoFocus
             />
-            <TouchableOpacity onPress={() => {
-              setBusca('');
-              setMostrarBusca(false);
-            }}>
-              <Ionicons name="close" size={22} color={colors.text} />
+            <TouchableOpacity 
+              onPress={() => {
+                setBusca('');
+                setMostrarBusca(false);
+              }}
+              style={styles.closeSearchButton}
+            >
+              <Ionicons name="close-circle" size={24} color={colors.muted} />
             </TouchableOpacity>
           </View>
         ) : (
@@ -145,25 +153,44 @@ export default function ProdutoresScreen() {
             <TouchableOpacity 
               style={styles.searchButton}
               onPress={() => setMostrarBusca(true)}
+              activeOpacity={0.7}
             >
-              <Ionicons name="search-outline" size={22} color={colors.text} />
+              <LinearGradient
+                colors={['#FFFFFF', '#F9FAFB']}
+                style={styles.searchButtonGradient}
+              >
+                <Ionicons name="search" size={20} color={colors.primary} />
+              </LinearGradient>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.filterButton}
               onPress={() => setModalFiltrosVisivel(true)}
+              activeOpacity={0.7}
             >
-              <Ionicons name="options-outline" size={22} color={colors.text} />
-              <Text style={styles.filterButtonText}>Filtros</Text>
-              {numFiltrosAtivos > 0 && (
-                <View style={styles.filterBadgeContainer}>
-                  <Text style={styles.filterBadgeText}>{numFiltrosAtivos}</Text>
-                </View>
-              )}
+              <LinearGradient
+                colors={numFiltrosAtivos > 0 ? [colors.primary, colors.primaryDark] : ['#FFFFFF', '#F9FAFB']}
+                style={styles.filterButtonGradient}
+              >
+                <Ionicons 
+                  name="options" 
+                  size={20} 
+                  color={numFiltrosAtivos > 0 ? '#FFFFFF' : colors.primary} 
+                />
+                <Text style={[
+                  styles.filterButtonText,
+                  numFiltrosAtivos > 0 && { color: '#FFFFFF' }
+                ]}>Filtros</Text>
+                {numFiltrosAtivos > 0 && (
+                  <View style={styles.filterBadgeContainer}>
+                    <Text style={styles.filterBadgeText}>{numFiltrosAtivos}</Text>
+                  </View>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
           </>
         )}
-      </View>
+      </LinearGradient>
 
       <ScrollView 
         contentContainerStyle={styles.content}
@@ -180,24 +207,43 @@ export default function ProdutoresScreen() {
         {/* Chips de Filtros Ativos */}
         {filtrosAtivos.length > 0 && (
           <View style={styles.activeFiltrosContainer}>
+            <View style={styles.activeFiltrosHeader}>
+              <Ionicons name="funnel" size={14} color={colors.textLight} />
+              <Text style={styles.activeFiltrosTitle}>Filtros Ativos:</Text>
+            </View>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.activeFiltrosContent}
             >
-              {filtrosAtivos.map((filtro, index) => (
-                <View key={index} style={styles.activeFilterChip}>
-                  <Ionicons 
-                    name={filtro.tipo === 'status' ? 'checkmark-circle' : filtro.tipo === 'regiao' ? 'location' : 'swap-vertical'} 
-                    size={14} 
-                    color={colors.primary} 
-                  />
-                  <Text style={styles.activeFilterText}>{filtro.label}</Text>
-                  <TouchableOpacity onPress={filtro.remover} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="close-circle" size={16} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              ))}
+              {filtrosAtivos.map((filtro, index) => {
+                const iconeConfig = {
+                  status: { name: 'checkmark-circle', color: colors.success },
+                  regiao: { name: 'location', color: '#FF6B6B' },
+                  ordenacao: { name: 'swap-vertical', color: '#4ECDC4' }
+                };
+                const config = iconeConfig[filtro.tipo];
+                
+                return (
+                  <LinearGradient
+                    key={index}
+                    colors={['#FFFFFF', '#F9FAFB']}
+                    style={styles.activeFilterChip}
+                  >
+                    <View style={[styles.chipIconContainer, { backgroundColor: config.color + '20' }]}>
+                      <Ionicons name={config.name} size={16} color={config.color} />
+                    </View>
+                    <Text style={styles.activeFilterText}>{filtro.label}</Text>
+                    <TouchableOpacity 
+                      onPress={filtro.remover} 
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={styles.removeFilterButton}
+                    >
+                      <Ionicons name="close" size={16} color={colors.textLight} />
+                    </TouchableOpacity>
+                  </LinearGradient>
+                );
+              })}
               <TouchableOpacity 
                 style={styles.clearAllFiltersChip}
                 onPress={() => {
@@ -205,9 +251,15 @@ export default function ProdutoresScreen() {
                   setRegiaoSelecionada('todas');
                   setOrdenacao('nome');
                 }}
+                activeOpacity={0.7}
               >
-                <Ionicons name="close" size={14} color={colors.error} />
-                <Text style={styles.clearAllFiltersText}>Limpar Tudo</Text>
+                <LinearGradient
+                  colors={['#FFF5F5', '#FFE5E5']}
+                  style={styles.clearAllFiltersGradient}
+                >
+                  <Ionicons name="refresh" size={16} color={colors.error} />
+                  <Text style={styles.clearAllFiltersText}>Limpar</Text>
+                </LinearGradient>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -284,19 +336,22 @@ export default function ProdutoresScreen() {
         <TouchableOpacity 
           style={styles.fab}
           onPress={() => navigation.navigate('NovoProdutor')}
-          activeOpacity={0.9}
+          activeOpacity={0.85}
         >
           <LinearGradient
-            colors={[colors.primary, colors.primaryDark]}
+            colors={['#4CAF50', '#45a049', '#2d7a2d']}
             style={styles.fabGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.fabContent}>
-              <Ionicons name="add-circle" size={24} color="#fff" />
+              <View style={styles.fabIconContainer}>
+                <Ionicons name="add" size={26} color="#fff" />
+              </View>
               <Text style={styles.fabText}>Novo Produtor</Text>
             </View>
           </LinearGradient>
+          <View style={styles.fabPulse} />
         </TouchableOpacity>
       )}
 
@@ -312,13 +367,30 @@ export default function ProdutoresScreen() {
           onPress={() => setModalFiltrosVisivel(false)}
         >
           <Pressable style={styles.bottomSheet} onPress={(e) => e.stopPropagation()}>
+            {/* Indicador de arraste */}
+            <View style={styles.sheetHandle} />
+            
             {/* Header do Bottom Sheet */}
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Filtros e Ordenação</Text>
-              <TouchableOpacity onPress={() => setModalFiltrosVisivel(false)}>
-                <Ionicons name="close" size={28} color={colors.text} />
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFB']}
+              style={styles.sheetHeader}
+            >
+              <View style={styles.sheetTitleContainer}>
+                <View style={styles.sheetIconContainer}>
+                  <Ionicons name="options" size={24} color={colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.sheetTitle}>Filtros e Ordenação</Text>
+                  <Text style={styles.sheetSubtitle}>Personalize sua visualização</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setModalFiltrosVisivel(false)}
+                style={styles.closeSheetButton}
+              >
+                <Ionicons name="close-circle" size={32} color={colors.muted} />
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
 
             <ScrollView style={styles.sheetContent} showsVerticalScrollIndicator={false}>
               {/* Status */}
@@ -479,49 +551,63 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.screen,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.card,
+    paddingVertical: spacing.md + 2,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: '#E8EEF2',
     gap: spacing.md,
   },
   searchButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.background,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  searchButtonGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: '#E8EEF2',
   },
   filterButton: {
     flex: 1,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  filterButtonGradient: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.background,
-    borderRadius: 22,
+    paddingHorizontal: spacing.md + 2,
     gap: spacing.sm,
-    ...shadows.sm,
+    borderWidth: 1,
+    borderColor: '#E8EEF2',
   },
   filterButtonText: {
     fontSize: typography.fontBody,
-    fontWeight: '600',
-    color: colors.text,
+    fontWeight: '700',
+    color: colors.primary,
     flex: 1,
+    letterSpacing: 0.2,
   },
   filterBadgeContainer: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   filterBadgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: typography.weightBold,
     color: colors.white,
   },
@@ -529,62 +615,110 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 44,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.background,
-    borderRadius: 22,
+    height: 48,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
     gap: spacing.sm,
-    ...shadows.sm,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    ...shadows.md,
+  },
+  searchIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchInput: {
     flex: 1,
     fontSize: typography.fontBody,
     color: colors.text,
     paddingVertical: 0,
+    fontWeight: '500',
+  },
+  closeSearchButton: {
+    padding: 4,
   },
 
   // Chips de Filtros Ativos
   activeFiltrosContainer: {
-    marginBottom: spacing.md,
-    marginHorizontal: -spacing.screen,
+    marginBottom: spacing.md + 4,
+    marginTop: spacing.sm,
+  },
+  activeFiltrosHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.screen,
+    marginBottom: spacing.sm,
+  },
+  activeFiltrosTitle: {
+    fontSize: typography.sizes.xs,
+    fontWeight: '600',
+    color: colors.textLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   activeFiltrosContent: {
     paddingHorizontal: spacing.screen,
-    gap: spacing.sm,
+    gap: spacing.sm + 2,
   },
   activeFilterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    gap: 8,
+    paddingVertical: 10,
+    paddingLeft: 8,
+    paddingRight: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E8EEF2',
     ...shadows.sm,
+  },
+  chipIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activeFilterText: {
     fontSize: typography.sizes.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: colors.text,
+    letterSpacing: 0.1,
+  },
+  removeFilterButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F7FA',
   },
   clearAllFiltersChip: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  clearAllFiltersGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.error,
-    ...shadows.sm,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#FFD6D6',
   },
   clearAllFiltersText: {
     fontSize: typography.sizes.sm,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.error,
+    letterSpacing: 0.2,
   },
 
   // Métricas Compactas
@@ -629,53 +763,112 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.screen,
     bottom: spacing.screen + 20,
-    borderRadius: 28,
-    ...shadows.lg,
-    elevation: 8,
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#2d7a2d',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
   },
   fabGradient: {
-    borderRadius: 28,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    borderRadius: 32,
+    paddingHorizontal: spacing.lg + 4,
+    paddingVertical: spacing.md + 2,
   },
   fabContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.sm + 2,
+  },
+  fabIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fabText: {
-    fontSize: typography.fontBody + 1,
-    fontWeight: typography.weightBold,
-    color: colors.white,
-    letterSpacing: 0.3,
+    fontSize: typography.fontBody + 2,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  fabPulse: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+    backgroundColor: 'transparent',
   },
 
   // Bottom Sheet
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   bottomSheet: {
     backgroundColor: colors.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     maxHeight: '85%',
-    ...shadows.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 20,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 4,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: '#E8EEF2',
+  },
+  sheetTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+  },
+  sheetIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sheetTitle: {
     fontSize: typography.fontTitle,
-    fontWeight: typography.weightBold,
+    fontWeight: '800',
     color: colors.text,
+    letterSpacing: 0.3,
+  },
+  sheetSubtitle: {
+    fontSize: typography.sizes.sm,
+    color: colors.textLight,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  closeSheetButton: {
+    padding: 4,
   },
   sheetContent: {
     paddingHorizontal: spacing.lg,
