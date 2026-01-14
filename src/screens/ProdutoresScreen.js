@@ -260,16 +260,27 @@ export default function ProdutoresScreen() {
           <View style={styles.emptyContainer}>
             <Ionicons 
               name={busca ? 'search-outline' : 'person-add-outline'} 
-              size={64} 
+              size={80} 
               color={colors.muted} 
-              style={styles.emptyIcon} 
             />
             <Text style={styles.emptyText}>
               {busca ? 'Nenhum produtor encontrado' : 'Nenhum produtor cadastrado'}
             </Text>
             <Text style={styles.emptySubtext}>
-              {busca ? 'Tente ajustar os filtros de busca' : 'Começe adicionando seu primeiro produtor'}
+              {busca 
+                ? 'Tente ajustar os filtros de busca ou limpar os filtros' 
+                : 'Comece adicionando seu primeiro produtor ao sistema'}
             </Text>
+            {!busca && podeCriarProdutor(user) && (
+              <TouchableOpacity 
+                style={styles.emptyActionButton}
+                onPress={() => navigation.navigate('NovoProdutor')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-circle" size={24} color={colors.white} />
+                <Text style={styles.emptyActionText}>Adicionar Produtor</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           produtoresFiltrados.map(p => (
@@ -431,21 +442,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.screen * 2,
-    paddingHorizontal: spacing.screen
-  },
-  emptyIcon: {
-    marginBottom: spacing.gap
+    paddingHorizontal: spacing.screen,
+    minHeight: 350,
   },
   emptyText: {
-    fontSize: typography.fontBody + 2,
+    fontSize: typography.fontSubtitle,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center'
+    marginTop: spacing.lg,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: typography.fontBody,
-    color: colors.muted,
-    textAlign: 'center'
-  }
+    color: colors.textLight,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    lineHeight: 22,
+  },
+  emptyActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+    ...shadows.md,
+  },
+  emptyActionText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.white,
+  },
 });

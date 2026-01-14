@@ -2,19 +2,28 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   Alert,
   ScrollView,
   ActivityIndicator
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import InputField from '../components/InputField';
 import { Produtor } from '../api/mock';
-import { colors, typography, spacing } from '../theme';
+import { colors, typography, spacing, shadows } from '../theme';
+import { 
+  validarNome, 
+  validarArea, 
+  validarUF, 
+  validarObrigatorio,
+  getMensagemErro
+} from '../utils/validacoes';
 
 export default function NovoProdutorScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState({});
   const [form, setForm] = useState({
     nome: '',
     fazenda: '',
@@ -25,18 +34,46 @@ export default function NovoProdutorScreen({ navigation }) {
     status: 'ativo'
   });
 
+  // Validações em tempo real
+  const erros = {
+    nome: touched.nome && !validarNome(form.nome) ? getMensagemErro('Nome', 'minimo') : '',
+    fazenda: touched.fazenda && !validarObrigatorio(form.fazenda) ? getMensagemErro('Fazenda', 'obrigatorio') : '',
+    area_total: touched.area_total && !validarArea(form.area_total) ? getMensagemErro('Área', 'area') : '',
+    estado: touched.estado && form.estado && !validarUF(form.estado) ? getMensagemErro('UF', 'uf') : '',
+  };
+
+  const handleBlur = (campo) => {
+    setTouched(prev => ({ ...prev, [campo]: true }));
+  };
+
+  const updateForm = (campo, valor) => {
+    setForm(prev => ({ ...prev, [campo]: valor }));
+  };
+
   const handleSave = async () => {
+    // Marca todos os campos como touched
+    setTouched({
+      nome: true,
+      fazenda: true,
+      area_total: true,
+      estado: form.estado ? true : false,
+    });
+
     // Validações
-    if (!form.nome.trim()) {
-      Alert.alert('Atenção', 'O nome do produtor é obrigatório');
+    if (!validarNome(form.nome)) {
+      Alert.alert('Atenção', 'O nome do produtor deve ter pelo menos 3 caracteres');
       return;
     }
-    if (!form.fazenda.trim()) {
+    if (!validarObrigatorio(form.fazenda)) {
       Alert.alert('Atenção', 'O nome da fazenda é obrigatório');
       return;
     }
-    if (!form.area_total || isNaN(parseFloat(form.area_total))) {
+    if (!validarArea(form.area_total)) {
       Alert.alert('Atenção', 'Informe uma área total válida');
+      return;
+    }
+    if (form.estado && !validarUF(form.estado)) {
+      Alert.alert('Atenção', 'UF inválida. Use a sigla do estado (Ex: RS, SP, GO)');
       return;
     }
 
@@ -74,76 +111,89 @@ export default function NovoProdutorScreen({ navigation }) {
     <View style={styles.container}>
       <Header title="Novo Produtor" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.description}>
-          Adicione um novo produtor ao sistema preenchendo as informações abaixo.
-        </Text>
+        <View style={styles.headerBox}>
+          <Ionicons name="person-add" size={32} color={colors.primary} />
+          <Text style={styles.description}>
+            Adicione um novo produtor ao sistema preenchendo as informações abaixo.
+          </Text>
+        </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dados Básicos</Text>
+          <Text style={styles.sectionTitle}>📝 Dados Básicos</Text>
           
-          <Text style={styles.label}>Nome do Produtor *</Text>
-          <TextInput
-            style={styles.input}
+          <InputField
+            label="Nome do Produtor"
             value={form.nome}
-            onChangeText={(text) => setForm(s => ({ ...s, nome: text }))}
+            onChangeText={(text) => updateForm('nome', text)}
+            onBlur={() => handleBlur('nome')}
             placeholder="Nome completo"
-            placeholderTextColor={colors.mutedLight}
+            required
+            icon="person-outline"
+            error={erros.nome}
+            valid={touched.nome && !erros.nome && form.nome.length > 0}
           />
 
-          <Text style={styles.label}>Nome da Fazenda *</Text>
-          <TextInput
-            style={styles.input}
+          <InputField
+            label="Nome da Fazenda"
             value={form.fazenda}
-            onChangeText={(text) => setForm(s => ({ ...s, fazenda: text }))}
+            onChangeText={(text) => updateForm('fazenda', text)}
+            onBlur={() => handleBlur('fazenda')}
             placeholder="Nome da propriedade"
-            placeholderTextColor={colors.mutedLight}
+            required
+            icon="home-outline"
+            error={erros.fazenda}
+            valid={touched.fazenda && !erros.fazenda && form.fazenda.length > 0}
           />
 
-          <Text style={styles.label}>Área Total (ha) *</Text>
-          <TextInput
-            style={styles.input}
+          <InputField
+            label="Área Total (hectares)"
             value={form.area_total}
-            onChangeText={(text) => setForm(s => ({ ...s, area_total: text }))}
+            onChangeText={(text) => updateForm('area_total', text)}
+            onBlur={() => handleBlur('area_total')}
             placeholder="Ex: 850"
             keyboardType="numeric"
-            placeholderTextColor={colors.mutedLight}
+            required
+            icon="resize-outline"
+            error={erros.area_total}
+            valid={touched.area_total && !erros.area_total && form.area_total.length > 0}
           />
 
-          <Text style={styles.label}>Cultura Principal</Text>
-          <TextInput
-            style={styles.input}
+          <InputField
+            label="Cultura Principal"
             value={form.cultura_atual}
-            onChangeText={(text) => setForm(s => ({ ...s, cultura_atual: text }))}
+            onChangeText={(text) => updateForm('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
-            placeholderTextColor={colors.mutedLight}
+            icon="leaf-outline"
           />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Localização</Text>
+          <Text style={styles.sectionTitle}>📍 Localização</Text>
           
-          <Text style={styles.label}>Cidade</Text>
-          <TextInput
-            style={styles.input}
+          <InputField
+            label="Cidade"
             value={form.cidade}
-            onChangeText={(text) => setForm(s => ({ ...s, cidade: text }))}
+            onChangeText={(text) => updateForm('cidade', text)}
             placeholder="Nome da cidade"
-            placeholderTextColor={colors.mutedLight}
+            icon="location-outline"
           />
 
-          <Text style={styles.label}>Estado</Text>
-          <TextInput
-            style={styles.input}
+          <InputField
+            label="Estado (UF)"
             value={form.estado}
-            onChangeText={(text) => setForm(s => ({ ...s, estado: text.toUpperCase() }))}
-            placeholder="UF (Ex: RS)"
+            onChangeText={(text) => updateForm('estado', text.toUpperCase())}
+            onBlur={() => handleBlur('estado')}
+            placeholder="Ex: RS, SP, GO"
             maxLength={2}
             autoCapitalize="characters"
-            placeholderTextColor={colors.mutedLight}
+            icon="map-outline"
+            error={erros.estado}
+            valid={touched.estado && !erros.estado && form.estado.length === 2}
           />
         </View>
 
         <View style={styles.requiredNote}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
           <Text style={styles.requiredText}>* Campos obrigatórios</Text>
         </View>
 
@@ -176,85 +226,84 @@ export default function NovoProdutorScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background
+    backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.screen,
-    paddingBottom: 32
+    padding: spacing.md,
+    paddingBottom: 40,
+  },
+  headerBox: {
+    alignItems: 'center',
+    backgroundColor: colors.accent + '20',
+    padding: spacing.lg,
+    borderRadius: 12,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   description: {
     fontSize: typography.fontBody,
-    color: colors.muted,
-    marginBottom: 24,
-    lineHeight: 22
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   section: {
-    marginBottom: 24
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: typography.fontSubtitle,
+    fontSize: typography.fontSubtitle - 2,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginBottom: 16
-  },
-  label: {
-    color: colors.muted,
-    fontSize: typography.fontBody,
-    marginTop: 12,
-    marginBottom: 6,
-    fontWeight: typography.weightSemibold
-  },
-  input: {
-    backgroundColor: colors.card,
-    padding: 12,
-    borderRadius: spacing.radiusSm,
-    fontSize: typography.fontBody,
-    color: colors.text,
-    borderWidth: 1,
-    borderColor: colors.borderLight
+    marginBottom: spacing.md,
   },
   requiredNote: {
-    backgroundColor: colors.accentDark,
-    padding: 12,
-    borderRadius: spacing.radiusSm,
-    marginBottom: 16
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent,
+    padding: spacing.md,
+    borderRadius: 10,
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.accentDark,
   },
   requiredText: {
-    fontSize: typography.fontCaption,
-    color: colors.textLight,
-    fontWeight: typography.weightSemibold
+    fontSize: typography.fontCaption + 1,
+    color: colors.primaryDark,
+    fontWeight: typography.weightSemibold,
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 8
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   button: {
     flex: 1,
-    padding: 14,
-    borderRadius: spacing.radius,
+    padding: spacing.md,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    minHeight: 50,
   },
   buttonPrimary: {
-    backgroundColor: colors.primary
+    backgroundColor: colors.primary,
+    ...shadows.md,
   },
   buttonSecondary: {
     backgroundColor: colors.card,
     borderWidth: 2,
-    borderColor: colors.border
+    borderColor: colors.border,
   },
   buttonDisabled: {
-    opacity: 0.6
+    opacity: 0.6,
   },
   buttonPrimaryText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.fontBody,
-    fontWeight: typography.weightBold
+    fontWeight: typography.weightBold,
   },
   buttonSecondaryText: {
     color: colors.text,
     fontSize: typography.fontBody,
-    fontWeight: typography.weightBold
-  }
+    fontWeight: typography.weightBold,
+  },
 });

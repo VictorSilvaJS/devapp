@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Linking
+  Linking,
+  TextInput,
+  RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -19,7 +21,9 @@ import { useAuth } from '../auth/AuthContext';
 export default function MapasScreen({ route, navigation }) {
   const [mapas, setMapas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
+  const [busca, setBusca] = useState('');
   const { user } = useAuth();
   const produtorId = route?.params?.produtorId;
 
@@ -40,6 +44,12 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadMapas();
+    setRefreshing(false);
+  };
+
   const categorias = [
     { id: 'todos', nome: 'Todos', icon: 'grid-outline' },
     { id: 'fertilidade', nome: 'Fertilidade', icon: 'leaf-outline' },
@@ -49,9 +59,15 @@ export default function MapasScreen({ route, navigation }) {
     { id: 'plantio', nome: 'Plantio', icon: 'git-network-outline' },
   ];
 
-  const mapasFiltrados = categoriaAtiva === 'todos' 
-    ? mapas 
-    : mapas.filter(m => m.categoria === categoriaAtiva);
+  const mapasFiltrados = mapas.filter(m => {
+    const matchCategoria = categoriaAtiva === 'todos' || m.categoria === categoriaAtiva;
+    const matchBusca = !busca || 
+      m.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
+      m.subcategoria?.toLowerCase().includes(busca.toLowerCase()) ||
+      m.talhao?.toLowerCase().includes(busca.toLowerCase()) ||
+      m.observacoes?.toLowerCase().includes(busca.toLowerCase());
+    return matchCategoria && matchBusca;
+  });
 
   const mapasPorCategoria = categorias
     .filter(cat => cat.id !== 'todos')
@@ -181,7 +197,36 @@ export default function MapasScreen({ route, navigation }) {
     <View style={styles.container}>
       <Header title="Mapas" showBack onBack={() => navigation.goBack()} />
       
-      <ScrollView style={styles.content}>
+      {/* Barra de Busca */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar mapas..."
+            placeholderTextColor={colors.muted}
+            value={busca}
+            onChangeText={setBusca}
+          />
+          {busca.length > 0 && (
+            <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color={colors.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      <ScrollView 
+        style={styles.content}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
         {/* Filtros de Categoria */}
         <ScrollView 
           horizontal 
@@ -232,13 +277,29 @@ export default function MapasScreen({ route, navigation }) {
         {/* Lista de Mapas */}
         {mapasFiltrados.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="map-outline" size={64} color={colors.muted} />
-            <Text style={styles.emptyText}>Nenhum mapa encontrado</Text>
-            <Text style={styles.emptySubtext}>
-              {categoriaAtiva === 'todos' 
-                ? 'Ainda não há mapas cadastrados para este produtor.'
-                : 'Não há mapas nesta categoria.'}
+            <Ionicons 
+              name={busca ? 'search-outline' : 'map-outline'} 
+              size={80} 
+              color={colors.muted} 
+            />
+            <Text style={styles.emptyText}>
+              {busca ? 'Nenhum mapa encontrado' : 'Nenhum mapa disponível'}
             </Text>
+            <Text style={styles.emptySubtext}>
+              {busca 
+                ? 'Tente ajustar sua busca ou categoria'
+                : categoriaAtiva === 'todos' 
+                  ? 'Ainda não há mapas cadastrados para este produtor.'
+                  : 'Não há mapas nesta categoria no momento.'}
+            </Text>
+            {!busca && (
+              <View style={styles.emptyTipBox}>
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+                <Text style={styles.emptyTipText}>
+                  Os mapas técnicos serão adicionados pelo time de consultoria
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.mapasLista}>
@@ -271,6 +332,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  searchContainer: {
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    ...shadows.sm,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  searchIcon: {
+    marginRight: spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    fontSize: typography.sizes.md,
+    color: colors.text,
+    paddingVertical: spacing.xs,
+  },
+  clearButton: {
+    padding: spacing.xs,
   },
   content: {
     flex: 1,
@@ -473,12 +564,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl * 2,
+    minHeight: 400,
   },
   emptyText: {
     fontSize: typography.fontSubtitle,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
     textAlign: 'center',
   },
   emptySubtext: {
@@ -487,5 +579,23 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: spacing.sm,
     textAlign: 'center',
+    lineHeight: 22,
+  },
+  emptyTipBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.accent + '20',
+    padding: spacing.md,
+    borderRadius: 12,
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+    maxWidth: 320,
+  },
+  emptyTipText: {
+    flex: 1,
+    fontSize: typography.fontCaption + 1,
+    color: colors.primary,
+    fontWeight: typography.weightMedium,
+    lineHeight: 18,
   },
 });

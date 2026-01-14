@@ -29,6 +29,8 @@ export default function VisitasScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [filtroData, setFiltroData] = useState('todos'); // todos, hoje, semana, mes
   const { user } = useAuth();
 
   useEffect(() => { load(); }, []);
@@ -88,17 +90,52 @@ export default function VisitasScreen() {
 
   const getProd = (id) => produtores.find(x => x.id === id) || {};
 
-  // Filtro de busca
+  // Função para filtrar por data
+  const filtrarPorData = (visita) => {
+    if (filtroData === 'todos') return true;
+    
+    const dataVisita = new Date(visita.data_visita);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    if (filtroData === 'hoje') {
+      const visitaDay = new Date(dataVisita);
+      visitaDay.setHours(0, 0, 0, 0);
+      return visitaDay.getTime() === hoje.getTime();
+    }
+    
+    if (filtroData === 'semana') {
+      const umaSemanaAtras = new Date(hoje);
+      umaSemanaAtras.setDate(hoje.getDate() - 7);
+      const umaSemanaFrente = new Date(hoje);
+      umaSemanaFrente.setDate(hoje.getDate() + 7);
+      return dataVisita >= umaSemanaAtras && dataVisita <= umaSemanaFrente;
+    }
+    
+    if (filtroData === 'mes') {
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      return dataVisita.getMonth() === mesAtual && dataVisita.getFullYear() === anoAtual;
+    }
+    
+    return true;
+  };
+
+  // Filtro de busca e filtros combinados
   const visitasFiltradas = visitas.filter(visita => {
-    if (!busca) return true;
     const produtor = getProd(visita.produtor_id);
     const buscaLower = busca.toLowerCase();
-    return (
+    
+    const matchBusca = !busca || 
       produtor.nome?.toLowerCase().includes(buscaLower) ||
       visita.objetivo?.toLowerCase().includes(buscaLower) ||
       visita.tecnico_responsavel?.toLowerCase().includes(buscaLower) ||
-      visita.status?.toLowerCase().includes(buscaLower)
-    );
+      visita.status?.toLowerCase().includes(buscaLower);
+    
+    const matchStatus = filtroStatus === 'todos' || visita.status === filtroStatus;
+    const matchData = filtrarPorData(visita);
+    
+    return matchBusca && matchStatus && matchData;
   });
 
   // Cores para objetivos
@@ -164,6 +201,82 @@ export default function VisitasScreen() {
         </View>
       </View>
 
+      {/* Filtros */}
+      <View style={styles.filtrosContainer}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filtrosContent}
+        >
+          {/* Filtro de Status */}
+          <View style={styles.filtroGroup}>
+            {[
+              { key: 'todos', label: 'Todos', icon: 'apps-outline' },
+              { key: 'agendada', label: 'Agendadas', icon: 'calendar-outline' },
+              { key: 'realizada', label: 'Realizadas', icon: 'checkmark-circle-outline' },
+              { key: 'cancelada', label: 'Canceladas', icon: 'close-circle-outline' }
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.key}
+                style={[
+                  styles.filtroChip,
+                  filtroStatus === item.key && styles.filtroChipActive
+                ]}
+                onPress={() => setFiltroStatus(item.key)}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={item.icon} 
+                  size={16} 
+                  color={filtroStatus === item.key ? colors.white : colors.primary} 
+                />
+                <Text style={[
+                  styles.filtroText,
+                  filtroStatus === item.key && styles.filtroTextActive
+                ]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Divisor */}
+          <View style={styles.divisor} />
+
+          {/* Filtro de Data */}
+          <View style={styles.filtroGroup}>
+            {[
+              { key: 'todos', label: 'Todas', icon: 'infinite-outline' },
+              { key: 'hoje', label: 'Hoje', icon: 'today-outline' },
+              { key: 'semana', label: 'Esta Semana', icon: 'calendar-outline' },
+              { key: 'mes', label: 'Este Mês', icon: 'calendar-outline' }
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.key}
+                style={[
+                  styles.filtroChip,
+                  filtroData === item.key && styles.filtroChipActive
+                ]}
+                onPress={() => setFiltroData(item.key)}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={item.icon} 
+                  size={16} 
+                  color={filtroData === item.key ? colors.white : colors.primary} 
+                />
+                <Text style={[
+                  styles.filtroText,
+                  filtroData === item.key && styles.filtroTextActive
+                ]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.content}
         refreshControl={
@@ -184,18 +297,27 @@ export default function VisitasScreen() {
           <View style={styles.emptyContainer}>
             <Ionicons 
               name={busca ? 'search-outline' : 'calendar-outline'} 
-              size={64} 
+              size={80} 
               color={colors.muted} 
-              style={styles.emptyIcon} 
             />
             <Text style={styles.emptyText}>
               {busca ? 'Nenhuma visita encontrada' : 'Nenhuma visita agendada'}
             </Text>
             <Text style={styles.emptySubtext}>
               {busca 
-                ? 'Tente ajustar os filtros de busca' 
-                : 'As visitas técnicas aparecerão aqui'}
+                ? 'Tente ajustar sua busca ou aguarde novas visitas' 
+                : 'As visitas técnicas agendadas aparecerão aqui'}
             </Text>
+            {!busca && (
+              <View style={styles.emptyTipBox}>
+                <Ionicons name="bulb-outline" size={22} color={colors.primary} />
+                <Text style={styles.emptyTipText}>
+                  {user?.perfil === 'admin' || user?.perfil === 'colaborador'
+                    ? 'Agende visitas para acompanhamento técnico das propriedades'
+                    : 'Aguarde o agendamento de visitas técnicas pela equipe'}
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
           visitasFiltradas.map(visita => {
@@ -335,6 +457,48 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     paddingHorizontal: 8
+  },
+  filtrosContainer: {
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingVertical: spacing.sm,
+    ...shadows.sm,
+  },
+  filtrosContent: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  filtroGroup: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  divisor: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.sm,
+  },
+  filtroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    gap: 4,
+  },
+  filtroChipActive: {
+    backgroundColor: colors.primary,
+  },
+  filtroText: {
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  filtroTextActive: {
+    color: colors.white,
   },
   content: { 
     padding: spacing.screen,
@@ -485,22 +649,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.screen * 3,
-    paddingHorizontal: spacing.screen * 2
-  },
-  emptyIcon: {
-    marginBottom: spacing.gap
+    paddingHorizontal: spacing.screen * 2,
+    minHeight: 400,
   },
   emptyText: {
-    fontSize: typography.fontBody + 2,
+    fontSize: typography.fontSubtitle,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center'
+    marginTop: spacing.lg,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: typography.fontBody,
-    color: colors.muted,
+    color: colors.textLight,
     textAlign: 'center',
-    lineHeight: 22
-  }
+    lineHeight: 22,
+    marginTop: spacing.sm,
+  },
+  emptyTipBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.accent + '20',
+    padding: spacing.md,
+    borderRadius: 12,
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+    maxWidth: 340,
+  },
+  emptyTipText: {
+    flex: 1,
+    fontSize: typography.fontCaption + 1,
+    color: colors.primary,
+    fontWeight: typography.weightMedium,
+    lineHeight: 18,
+  },
 });
