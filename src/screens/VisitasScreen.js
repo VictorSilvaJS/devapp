@@ -10,13 +10,17 @@ import {
   RefreshControl,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
+  Pressable
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../components/Header';
 import { Visita, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -24,6 +28,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function VisitasScreen() {
+  const navigation = useNavigation();
   const [visitas, setVisitas] = useState([]);
   const [produtores, setProdutores] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,9 +37,18 @@ export default function VisitasScreen() {
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [filtroData, setFiltroData] = useState('todos'); // todos, hoje, semana, mes
   const [ordenacao, setOrdenacao] = useState('data'); // data, produtor, status
+  const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
+  const [mostrarBusca, setMostrarBusca] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => { load(); }, []);
+  
+  // Recarrega quando retorna para a tela
+  useFocusEffect(
+    React.useCallback(() => {
+      load();
+    }, [])
+  );
   
   const load = async () => {
     setLoading(true);
@@ -192,140 +206,111 @@ export default function VisitasScreen() {
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  // Contar filtros ativos
+  const contarFiltrosAtivos = () => {
+    let count = 0;
+    if (filtroStatus !== 'todos') count++;
+    if (filtroData !== 'todos') count++;
+    if (ordenacao !== 'data') count++;
+    return count;
+  };
+
+  // Obter labels dos filtros ativos
+  const getFiltrosAtivos = () => {
+    const filtros = [];
+    if (filtroStatus !== 'todos') {
+      const statusLabels = { agendada: 'Agendadas', realizada: 'Realizadas', cancelada: 'Canceladas' };
+      filtros.push({ tipo: 'status', label: statusLabels[filtroStatus], remover: () => setFiltroStatus('todos') });
+    }
+    if (filtroData !== 'todos') {
+      const dataLabels = { hoje: 'Hoje', semana: 'Esta Semana', mes: 'Este Mês' };
+      filtros.push({ tipo: 'data', label: dataLabels[filtroData], remover: () => setFiltroData('todos') });
+    }
+    if (ordenacao !== 'data') {
+      const ordenacaoLabels = { produtor: 'Por Produtor', status: 'Por Status' };
+      filtros.push({ tipo: 'ordenacao', label: ordenacaoLabels[ordenacao], remover: () => setOrdenacao('data') });
+    }
+    return filtros;
+  };
+
+  const filtrosAtivos = getFiltrosAtivos();
+  const numFiltrosAtivos = contarFiltrosAtivos();
+
   return (
     <View style={styles.container}>
       <Header title="Visitas Técnicas" />
       
-      {/* Barra de busca */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por produtor, objetivo ou técnico..."
-            placeholderTextColor={colors.muted}
-            value={busca}
-            onChangeText={setBusca}
-          />
-          {busca.length > 0 && (
-            <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
-              <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
+      {/* Top Bar com Busca e Filtros */}
+      <LinearGradient
+        colors={['#FFFFFF', '#F8FBF8']}
+        style={styles.topBar}
+      >
+        {mostrarBusca ? (
+          <View style={styles.searchContainerExpanded}>
+            <View style={styles.searchIconContainer}>
+              <Ionicons name="search" size={20} color={colors.primary} />
+            </View>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar por produtor, objetivo ou técnico..."
+              placeholderTextColor={colors.muted}
+              value={busca}
+              onChangeText={setBusca}
+              autoFocus
+            />
+            <TouchableOpacity 
+              onPress={() => {
+                setBusca('');
+                setMostrarBusca(false);
+              }}
+              style={styles.closeSearchButton}
+            >
+              <Ionicons name="close-circle" size={24} color={colors.muted} />
             </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Ordenação */}
-      <View style={styles.ordenacaoContainer}>
-        <Text style={styles.ordenacaoLabel}>
-          <Ionicons name="swap-vertical-outline" size={16} color={colors.text} /> Ordenar:
-        </Text>
-        <View style={styles.ordenacaoButtons}>
-          {[
-            { key: 'data', label: 'Data', icon: 'calendar-outline' },
-            { key: 'produtor', label: 'Produtor', icon: 'person-outline' },
-            { key: 'status', label: 'Status', icon: 'flag-outline' }
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.key}
-              style={[
-                styles.ordenacaoChip,
-                ordenacao === item.key && styles.ordenacaoChipActive
-              ]}
-              onPress={() => setOrdenacao(item.key)}
+          </View>
+        ) : (
+          <>
+            <TouchableOpacity 
+              style={styles.searchButton}
+              onPress={() => setMostrarBusca(true)}
               activeOpacity={0.7}
             >
-              <Ionicons 
-                name={item.icon} 
-                size={14} 
-                color={ordenacao === item.key ? colors.white : colors.primary} 
-              />
-              <Text style={[
-                styles.ordenacaoChipText,
-                ordenacao === item.key && styles.ordenacaoChipTextActive
-              ]}>
-                {item.label}
-              </Text>
+              <LinearGradient
+                colors={['#FFFFFF', '#F9FAFB']}
+                style={styles.searchButtonGradient}
+              >
+                <Ionicons name="search" size={20} color={colors.primary} />
+              </LinearGradient>
             </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Filtros */}
-      <View style={styles.filtrosContainer}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtrosContent}
-        >
-          {/* Filtro de Status */}
-          <View style={styles.filtroGroup}>
-            {[
-              { key: 'todos', label: 'Todos', icon: 'apps-outline' },
-              { key: 'agendada', label: 'Agendadas', icon: 'calendar-outline' },
-              { key: 'realizada', label: 'Realizadas', icon: 'checkmark-circle-outline' },
-              { key: 'cancelada', label: 'Canceladas', icon: 'close-circle-outline' }
-            ].map((item) => (
-              <TouchableOpacity
-                key={item.key}
-                style={[
-                  styles.filtroChip,
-                  filtroStatus === item.key && styles.filtroChipActive
-                ]}
-                onPress={() => setFiltroStatus(item.key)}
-                activeOpacity={0.7}
+            
+            <TouchableOpacity 
+              style={styles.filterButton}
+              onPress={() => setModalFiltrosVisivel(true)}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={numFiltrosAtivos > 0 ? [colors.primary, colors.primaryDark] : ['#FFFFFF', '#F9FAFB']}
+                style={styles.filterButtonGradient}
               >
                 <Ionicons 
-                  name={item.icon} 
-                  size={16} 
-                  color={filtroStatus === item.key ? colors.white : colors.primary} 
+                  name="options" 
+                  size={20} 
+                  color={numFiltrosAtivos > 0 ? '#FFFFFF' : colors.primary} 
                 />
                 <Text style={[
-                  styles.filtroText,
-                  filtroStatus === item.key && styles.filtroTextActive
-                ]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Divisor */}
-          <View style={styles.divisor} />
-
-          {/* Filtro de Data */}
-          <View style={styles.filtroGroup}>
-            {[
-              { key: 'todos', label: 'Todas', icon: 'infinite-outline' },
-              { key: 'hoje', label: 'Hoje', icon: 'today-outline' },
-              { key: 'semana', label: 'Esta Semana', icon: 'calendar-outline' },
-              { key: 'mes', label: 'Este Mês', icon: 'calendar-outline' }
-            ].map((item) => (
-              <TouchableOpacity
-                key={item.key}
-                style={[
-                  styles.filtroChip,
-                  filtroData === item.key && styles.filtroChipActive
-                ]}
-                onPress={() => setFiltroData(item.key)}
-                activeOpacity={0.7}
-              >
-                <Ionicons 
-                  name={item.icon} 
-                  size={16} 
-                  color={filtroData === item.key ? colors.white : colors.primary} 
-                />
-                <Text style={[
-                  styles.filtroText,
-                  filtroData === item.key && styles.filtroTextActive
-                ]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-      </View>
+                  styles.filterButtonText,
+                  numFiltrosAtivos > 0 && { color: '#FFFFFF' }
+                ]}>Filtros</Text>
+                {numFiltrosAtivos > 0 && (
+                  <View style={styles.filterBadgeContainer}>
+                    <Text style={styles.filterBadgeText}>{numFiltrosAtivos}</Text>
+                  </View>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </>
+        )}
+      </LinearGradient>
 
       <ScrollView 
         contentContainerStyle={styles.content}
@@ -337,7 +322,69 @@ export default function VisitasScreen() {
             tintColor={colors.primary}
           />
         }
+        showsVerticalScrollIndicator={false}
       >
+        {/* Chips de Filtros Ativos */}
+        {filtrosAtivos.length > 0 && (
+          <View style={styles.activeFiltrosContainer}>
+            <View style={styles.activeFiltrosHeader}>
+              <Ionicons name="funnel" size={14} color={colors.textLight} />
+              <Text style={styles.activeFiltrosTitle}>Filtros Ativos:</Text>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.activeFiltrosContent}
+            >
+              {filtrosAtivos.map((filtro, index) => {
+                const iconeConfig = {
+                  status: { name: 'checkmark-circle', color: colors.success },
+                  data: { name: 'calendar', color: '#FF6B6B' },
+                  ordenacao: { name: 'swap-vertical', color: '#4ECDC4' }
+                };
+                const config = iconeConfig[filtro.tipo];
+                
+                return (
+                  <LinearGradient
+                    key={index}
+                    colors={['#FFFFFF', '#F9FAFB']}
+                    style={styles.activeFilterChip}
+                  >
+                    <View style={[styles.chipIconContainer, { backgroundColor: config.color + '20' }]}>
+                      <Ionicons name={config.name} size={16} color={config.color} />
+                    </View>
+                    <Text style={styles.activeFilterText}>{filtro.label}</Text>
+                    <TouchableOpacity 
+                      onPress={filtro.remover} 
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={styles.removeFilterButton}
+                    >
+                      <Ionicons name="close" size={16} color={colors.textLight} />
+                    </TouchableOpacity>
+                  </LinearGradient>
+                );
+              })}
+              <TouchableOpacity 
+                style={styles.clearAllFiltersChip}
+                onPress={() => {
+                  setFiltroStatus('todos');
+                  setFiltroData('todos');
+                  setOrdenacao('data');
+                }}
+                activeOpacity={0.7}
+              >
+                <LinearGradient
+                  colors={['#FFF5F5', '#FFE5E5']}
+                  style={styles.clearAllFiltersGradient}
+                >
+                  <Ionicons name="refresh" size={16} color={colors.error} />
+                  <Text style={styles.clearAllFiltersText}>Limpar</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        )}
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -377,7 +424,12 @@ export default function VisitasScreen() {
             const objetivoIcon = getObjetivoIcon(visita.objetivo);
             
             return (
-              <View key={visita.id} style={styles.card}>
+              <TouchableOpacity 
+                key={visita.id} 
+                style={styles.card}
+                onPress={() => navigation.navigate('VisitaDetail', { visitaId: visita.id })}
+                activeOpacity={0.7}
+              >
                 {/* Cabeçalho do Card */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
@@ -464,11 +516,200 @@ export default function VisitasScreen() {
                     </Text>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             );
           })
         )}
       </ScrollView>
+
+      {/* Botão FAB - Nova Visita */}
+      {(user?.perfil === 'admin' || user?.perfil === 'colaborador') && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('NovaVisita')}
+          activeOpacity={0.85}
+        >
+          <LinearGradient
+            colors={['#4CAF50', '#45a049', '#2d7a2d']}
+            style={styles.fabGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.fabContent}>
+              <View style={styles.fabIconContainer}>
+                <Ionicons name="add" size={26} color="#fff" />
+              </View>
+              <Text style={styles.fabText}>Nova Visita</Text>
+            </View>
+          </LinearGradient>
+          <View style={styles.fabPulse} />
+        </TouchableOpacity>
+      )}
+
+      {/* Modal de Filtros */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalFiltrosVisivel}
+        onRequestClose={() => setModalFiltrosVisivel(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setModalFiltrosVisivel(false)}
+        >
+          <Pressable style={styles.bottomSheet} onPress={(e) => e.stopPropagation()}>
+            {/* Indicador de arraste */}
+            <View style={styles.sheetHandle} />
+            
+            {/* Header do Bottom Sheet */}
+            <LinearGradient
+              colors={['#FFFFFF', '#F8FAFB']}
+              style={styles.sheetHeader}
+            >
+              <View style={styles.sheetTitleContainer}>
+                <View style={styles.sheetIconContainer}>
+                  <Ionicons name="options" size={24} color={colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.sheetTitle}>Filtros e Ordenação</Text>
+                  <Text style={styles.sheetSubtitle}>Personalize sua visualização</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setModalFiltrosVisivel(false)}
+                style={styles.closeSheetButton}
+              >
+                <Ionicons name="close-circle" size={32} color={colors.muted} />
+              </TouchableOpacity>
+            </LinearGradient>
+
+            <ScrollView style={styles.sheetContent} showsVerticalScrollIndicator={false}>
+              {/* Status */}
+              <Text style={styles.sectionTitle}>Status</Text>
+              <View style={styles.chipsContainer}>
+                {[
+                  { key: 'todos', label: 'Todos', icon: 'apps-outline' },
+                  { key: 'agendada', label: 'Agendadas', icon: 'calendar-outline' },
+                  { key: 'realizada', label: 'Realizadas', icon: 'checkmark-circle-outline' },
+                  { key: 'cancelada', label: 'Canceladas', icon: 'close-circle-outline' }
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.key}
+                    style={[
+                      styles.chip,
+                      filtroStatus === item.key && styles.chipActive
+                    ]}
+                    onPress={() => setFiltroStatus(item.key)}
+                  >
+                    <Ionicons 
+                      name={item.icon} 
+                      size={18} 
+                      color={filtroStatus === item.key ? '#FFFFFF' : colors.primary} 
+                    />
+                    <Text style={[
+                      styles.chipText,
+                      filtroStatus === item.key && styles.chipTextActive
+                    ]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Período */}
+              <Text style={styles.sectionTitle}>Período</Text>
+              <View style={styles.chipsContainer}>
+                {[
+                  { key: 'todos', label: 'Todas', icon: 'infinite-outline' },
+                  { key: 'hoje', label: 'Hoje', icon: 'today-outline' },
+                  { key: 'semana', label: 'Esta Semana', icon: 'calendar-outline' },
+                  { key: 'mes', label: 'Este Mês', icon: 'calendar-outline' }
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.key}
+                    style={[
+                      styles.chip,
+                      filtroData === item.key && styles.chipActive
+                    ]}
+                    onPress={() => setFiltroData(item.key)}
+                  >
+                    <Ionicons 
+                      name={item.icon} 
+                      size={18} 
+                      color={filtroData === item.key ? '#FFFFFF' : colors.primary} 
+                    />
+                    <Text style={[
+                      styles.chipText,
+                      filtroData === item.key && styles.chipTextActive
+                    ]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Ordenação */}
+              <Text style={styles.sectionTitle}>Ordenar por</Text>
+              <View style={styles.chipsContainer}>
+                {[
+                  { key: 'data', label: 'Data', icon: 'calendar-outline' },
+                  { key: 'produtor', label: 'Produtor', icon: 'person-outline' },
+                  { key: 'status', label: 'Status', icon: 'flag-outline' }
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.key}
+                    style={[
+                      styles.chip,
+                      ordenacao === item.key && styles.chipActive
+                    ]}
+                    onPress={() => setOrdenacao(item.key)}
+                  >
+                    <Ionicons 
+                      name={item.icon} 
+                      size={18} 
+                      color={ordenacao === item.key ? '#FFFFFF' : colors.primary} 
+                    />
+                    <Text style={[
+                      styles.chipText,
+                      ordenacao === item.key && styles.chipTextActive
+                    ]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Botão Limpar Filtros */}
+              <TouchableOpacity 
+                style={styles.clearFiltersButton}
+                onPress={() => {
+                  setFiltroStatus('todos');
+                  setFiltroData('todos');
+                  setOrdenacao('data');
+                }}
+              >
+                <Ionicons name="refresh-outline" size={20} color={colors.primary} />
+                <Text style={styles.clearFiltersText}>Limpar Filtros</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* Botão Aplicar */}
+            <TouchableOpacity 
+              style={styles.applyButton}
+              onPress={() => setModalFiltrosVisivel(false)}
+            >
+              <LinearGradient
+                colors={[colors.primary, colors.primaryDark]}
+                style={styles.applyButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -771,7 +1012,362 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.fontCaption + 1,
     color: colors.primary,
-    fontWeight: typography.weightMedium,
+    fontWeight: typography.weightSemibold,
     lineHeight: 18,
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.screen,
+    bottom: spacing.screen + 20,
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#2d7a2d',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  fabGradient: {
+    borderRadius: 32,
+    paddingHorizontal: spacing.lg + 4,
+    paddingVertical: spacing.md + 2,
+  },
+  fabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+  },
+  fabIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabText: {
+    fontSize: typography.fontBody + 2,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  fabPulse: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+    backgroundColor: 'transparent',
+  },
+  
+  // Top Bar Styles
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.screen,
+    paddingVertical: spacing.md + 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EEF2',
+    gap: spacing.md,
+  },
+  searchButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  searchButtonGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E8EEF2',
+  },
+  filterButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  filterButtonGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md + 2,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E8EEF2',
+  },
+  filterButtonText: {
+    fontSize: typography.fontBody,
+    fontWeight: '700',
+    color: colors.primary,
+    flex: 1,
+    letterSpacing: 0.2,
+  },
+  filterBadgeContainer: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  filterBadgeText: {
+    fontSize: 12,
+    fontWeight: typography.weightBold,
+    color: colors.white,
+  },
+  searchContainerExpanded: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    gap: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    ...shadows.md,
+  },
+  searchIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: typography.fontBody,
+    color: colors.text,
+    paddingVertical: 0,
+    fontWeight: '500',
+  },
+  closeSearchButton: {
+    padding: 4,
+  },
+  
+  // Active Filters Chips
+  activeFiltrosContainer: {
+    marginBottom: spacing.md + 4,
+    marginTop: spacing.sm,
+  },
+  activeFiltrosHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.screen,
+    marginBottom: spacing.sm,
+  },
+  activeFiltrosTitle: {
+    fontSize: typography.sizes.xs,
+    fontWeight: '600',
+    color: colors.textLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  activeFiltrosContent: {
+    paddingHorizontal: spacing.screen,
+    gap: spacing.sm + 2,
+  },
+  activeFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingLeft: 8,
+    paddingRight: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E8EEF2',
+    ...shadows.sm,
+  },
+  chipIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeFilterText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '600',
+    color: colors.text,
+    letterSpacing: 0.1,
+  },
+  removeFilterButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  clearAllFiltersChip: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
+  clearAllFiltersGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#FFD6D6',
+  },
+  clearAllFiltersText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: '700',
+    color: colors.error,
+    letterSpacing: 0.2,
+  },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    ...shadows.lg,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  sheetTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+  },
+  sheetIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetTitle: {
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  sheetSubtitle: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  closeSheetButton: {
+    padding: spacing.xs,
+  },
+  sheetContent: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
+    color: colors.text,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 20,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    gap: 6,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primaryDark,
+  },
+  chipText: {
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+  },
+  clearFiltersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    gap: spacing.xs,
+  },
+  clearFiltersText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
+    color: colors.primary,
+  },
+  applyButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.md,
+    ...shadows.md,
+  },
+  applyButtonGradient: {
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyButtonText: {
+    fontSize: typography.fontBody + 1,
+    fontWeight: typography.weightBold,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });

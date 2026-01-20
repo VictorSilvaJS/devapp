@@ -12,7 +12,7 @@ import NotificationBadge from './NotificationBadge';
 
 const LOGO = require('../assets/images/logo.png');
 
-export default function Header({ title, showUser = true, showNotifications = true }) {
+export default function Header({ title, showUser = true, showNotifications = true, showBack = false, onActionPress, actionIcon, actionLabel }) {
   const { user } = useAuthState();
   const { contarNaoLidas } = useNotificacao();
   const navigation = useNavigation();
@@ -29,11 +29,29 @@ export default function Header({ title, showUser = true, showNotifications = tru
         style={styles.gradient}
       >
         <View style={styles.logoContainer}>
-          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+          {showBack ? (
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
+            </TouchableOpacity>
+          ) : (
+            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+          )}
         </View>
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
         </View>
+        {onActionPress && (
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={onActionPress}
+          >
+            <Ionicons name={actionIcon || "add"} size={24} color={colors.primary} />
+            {actionLabel && <Text style={styles.actionLabel}>{actionLabel}</Text>}
+          </TouchableOpacity>
+        )}
         {showNotifications && (
           <TouchableOpacity 
             style={styles.notificationButton}
@@ -84,6 +102,10 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1
   },
+  backButton: {
+    padding: spacing.sm,
+    marginLeft: -spacing.sm,
+  },
   title: {
     fontSize: typography.fontTitle - 4,
     fontWeight: typography.weightBold,
@@ -96,6 +118,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 4,
     position: 'relative'
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.accent,
+    borderRadius: spacing.radiusSm,
+    marginRight: spacing.sm,
+    gap: spacing.xs,
+  },
+  actionLabel: {
+    fontSize: typography.fontSmall,
+    fontWeight: '600',
+    color: colors.primary,
   },
   userContainer: {
     marginLeft: 8

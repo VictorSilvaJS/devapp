@@ -9,6 +9,9 @@ import CadernoCampoScreen from '../screens/CadernoCampoScreen';
 import VisitasScreen from '../screens/VisitasScreen';
 import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import EditarProdutorScreen from '../screens/EditarProdutorScreen';
+import NovaVisitaScreen from '../screens/NovaVisitaScreen';
+import VisitaDetailScreen from '../screens/VisitaDetailScreen';
+import EditarVisitaScreen from '../screens/EditarVisitaScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 import NotificacoesScreen from '../screens/NotificacoesScreen';
@@ -120,6 +123,9 @@ export default function Navigation() {
           <Stack.Screen name="Mapas" component={MapasScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
           <Stack.Screen name="EditarProdutor" component={EditarProdutorScreen} />
+          <Stack.Screen name="NovaVisita" component={NovaVisitaScreen} />
+          <Stack.Screen name="VisitaDetail" component={VisitaDetailScreen} />
+          <Stack.Screen name="EditarVisita" component={EditarVisitaScreen} />
           <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />
           <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />
         </>
