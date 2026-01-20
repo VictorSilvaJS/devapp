@@ -21,6 +21,7 @@ import { Visita, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFiltros } from '../contexts/FiltroContext';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -40,14 +41,15 @@ export default function VisitasScreen() {
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const { user } = useAuth();
+  const { getProdutorIdsFiltrados, filtros } = useFiltros();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [filtros]);
   
   // Recarrega quando retorna para a tela
   useFocusEffect(
     React.useCallback(() => {
       load();
-    }, [])
+    }, [filtros])
   );
   
   const load = async () => {
@@ -58,11 +60,16 @@ export default function VisitasScreen() {
       let produtoresData = [];
 
       if (user?.perfil === 'admin') {
-        // Admin vê tudo
-        [visitasData, produtoresData] = await Promise.all([
+        // Admin vê tudo com filtros aplicados
+        const [todasVisitas, todosProdutores] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
+        
+        // Aplicar filtros regionais
+        const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
+        visitasData = todasVisitas.filter(v => produtorIdsFiltrados.includes(v.produtor_id));
+        produtoresData = todosProdutores.filter(p => produtorIdsFiltrados.includes(p.id));
       } else if (user?.perfil === 'colaborador') {
         // Colaborador vê apenas suas visitas e produtores da sua região
         const [todasVisitas, todosProdutores] = await Promise.all([

@@ -12,6 +12,7 @@ export const colors = {
   cardHover: '#f0f7f0',
   text: '#1C3D1C',
   textLight: '#4a5c4a',
+  textSecondary: '#6B7280',
   muted: '#6B7280',
   mutedLight: '#9ca3af',
   success: '#10B981',
@@ -94,4 +95,12 @@ export const shadows = {
     shadowRadius: 12,
     elevation: 6
   }
+};
+
+export default {
+  colors,
+  spacing,
+  typography,
+  border,
+  shadows
 };

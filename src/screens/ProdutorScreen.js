@@ -120,104 +120,89 @@ export default function ProdutorScreen({ route, navigation }) {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{produtor.nome}</Text>
-            <Text style={styles.profileLocation}>
-              📍 {produtor.fazenda} - {produtor.cidade}, {produtor.estado}
-            </Text>
+            <View style={styles.locationContainer}>
+              <Ionicons name="location" size={14} color={colors.muted} />
+              <Text style={styles.profileLocation}>
+                {produtor.fazenda} - {produtor.cidade}, {produtor.estado}
+              </Text>
+            </View>
           </View>
         </View>
 
         {/* Botões de Ação */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
-            <Text style={styles.editButtonText}>Editar</Text>
+          <TouchableOpacity 
+            style={styles.editButton} 
+            onPress={handleEdit}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#4CAF50', '#45a049']}
+              style={styles.editButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Text style={styles.editButtonText}>Editar Produtor</Text>
+            </LinearGradient>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Text style={styles.deleteButtonText}>Excluir</Text>
+          
+          <TouchableOpacity 
+            style={styles.deleteButton} 
+            onPress={handleDelete}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#EF4444', '#DC2626']}
+              style={styles.deleteButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Ionicons name="trash-outline" size={20} color="#fff" />
+              <Text style={styles.deleteButtonText}>Excluir</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        {/* Cards de Estatísticas - Grid 2x2 */}
-        <View style={styles.statsSection}>
-          <View style={styles.statsRow}>
-            <View style={styles.statCardWrapper}>
-              <LinearGradient
-                colors={['#d9f0d9', '#FFFFFF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.statCard, { borderColor: '#b6d7a8' }]}
-              >
-                <View style={styles.statContent}>
-                  <Text style={[styles.statValue, { color: colors.primary }]}>
-                    {produtor.area_total} ha
-                  </Text>
-                  <Text style={styles.statLabel}>Área Total</Text>
-                </View>
-                <View style={[styles.statIconContainer, { backgroundColor: '#d9f0d9' }]}>
-                  <Ionicons name="resize-outline" size={24} color={colors.primary} />
-                </View>
-              </LinearGradient>
+        {/* Cards de Estatísticas Compactos */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.statsCarousel}
+          contentContainerStyle={styles.statsContent}
+        >
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: '#e8f5e8' }]}>
+              <Ionicons name="resize-outline" size={20} color={colors.primary} />
             </View>
-
-            <View style={styles.statCardWrapper}>
-              <LinearGradient
-                colors={['#dbeafe', '#FFFFFF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.statCard, { borderColor: '#bfdbfe' }]}
-              >
-                <View style={styles.statContent}>
-                  <Text style={[styles.statValue, { color: '#2563eb' }]}>
-                    {produtor.cultura_atual || 'N/A'}
-                  </Text>
-                  <Text style={styles.statLabel}>Cultura Atual</Text>
-                </View>
-                <View style={[styles.statIconContainer, { backgroundColor: '#dbeafe' }]}>
-                  <Ionicons name="leaf-outline" size={24} color="#2563eb" />
-                </View>
-              </LinearGradient>
-            </View>
+            <Text style={styles.statValueCompact}>{produtor.area_total} ha</Text>
+            <Text style={styles.statLabelCompact}>Área Total</Text>
           </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statCardWrapper}>
-              <LinearGradient
-                colors={['#ede9fe', '#FFFFFF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.statCard, { borderColor: '#ddd6fe' }]}
-              >
-                <View style={styles.statContent}>
-                  <Text style={[styles.statValue, { color: '#7c3aed' }]}>
-                    {visitas.length}
-                  </Text>
-                  <Text style={styles.statLabel}>Visitas</Text>
-                </View>
-                <View style={[styles.statIconContainer, { backgroundColor: '#ede9fe' }]}>
-                  <Ionicons name="calendar-outline" size={24} color="#7c3aed" />
-                </View>
-              </LinearGradient>
+          
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: '#f5f3f0' }]}>
+              <Ionicons name="leaf-outline" size={20} color="#8B6244" />
             </View>
-
-            <View style={styles.statCardWrapper}>
-              <LinearGradient
-                colors={['#fef3c7', '#FFFFFF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.statCard, { borderColor: '#fde68a' }]}
-              >
-                <View style={styles.statContent}>
-                  <Text style={[styles.statValue, { color: '#d97706' }]}>
-                    {mapas.length}
-                  </Text>
-                  <Text style={styles.statLabel}>Mapas</Text>
-                </View>
-                <View style={[styles.statIconContainer, { backgroundColor: '#fef3c7' }]}>
-                  <Ionicons name="map-outline" size={24} color="#d97706" />
-                </View>
-              </LinearGradient>
-            </View>
+            <Text style={styles.statValueCompact}>{produtor.cultura_atual || 'N/A'}</Text>
+            <Text style={styles.statLabelCompact}>Cultura</Text>
           </View>
-        </View>
+          
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: '#e0f2fe' }]}>
+              <Ionicons name="calendar-outline" size={20} color="#0284c7" />
+            </View>
+            <Text style={styles.statValueCompact}>{visitas.length}</Text>
+            <Text style={styles.statLabelCompact}>Visitas</Text>
+          </View>
+          
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: '#fef3c7' }]}>
+              <Ionicons name="map-outline" size={20} color="#d97706" />
+            </View>
+            <Text style={styles.statValueCompact}>{mapas.length}</Text>
+            <Text style={styles.statLabelCompact}>Mapas</Text>
+          </View>
+        </ScrollView>
 
         {/* Tabs de Navegação */}
         <View style={styles.tabsContainer}>
@@ -268,54 +253,101 @@ export default function ProdutorScreen({ route, navigation }) {
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Informações Gerais</Text>
+            <Text style={styles.sectionTitle}>Informações do Produtor</Text>
             
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>👤 Nome Completo</Text>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="person" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Nome Completo</Text>
+                </View>
                 <Text style={styles.infoValue}>{produtor.nome}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>🏡 Fazenda</Text>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="home" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Fazenda</Text>
+                </View>
                 <Text style={styles.infoValue}>{produtor.fazenda}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>📍 Localização</Text>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="resize-outline" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Área Total</Text>
+                </View>
+                <Text style={styles.infoValue}>{produtor.area_total} hectares</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="leaf-outline" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Cultura Principal</Text>
+                </View>
+                <Text style={styles.infoValue}>{produtor.cultura_atual || 'Não informado'}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="location" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Localização</Text>
+                </View>
                 <Text style={styles.infoValue}>{produtor.cidade}, {produtor.estado}</Text>
               </View>
-              {produtor.telefone && (
+              {produtor.contato && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>📞 Telefone</Text>
-                  <Text style={styles.infoValue}>{produtor.telefone}</Text>
+                  <View style={styles.infoLabelContainer}>
+                    <Ionicons name="call" size={16} color={colors.primary} />
+                    <Text style={styles.infoLabel}>Contato</Text>
+                  </View>
+                  <Text style={styles.infoValue}>{produtor.contato}</Text>
                 </View>
               )}
               {produtor.email && (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>✉️ Email</Text>
+                  <View style={styles.infoLabelContainer}>
+                    <Ionicons name="mail" size={16} color={colors.primary} />
+                    <Text style={styles.infoLabel}>Email</Text>
+                  </View>
                   <Text style={styles.infoValue}>{produtor.email}</Text>
                 </View>
               )}
             </View>
 
-            {produtor.ultima_analise && (
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>📊 Última Análise</Text>
-                  <Text style={styles.infoValue}>
-                    {new Date(produtor.ultima_analise).toLocaleDateString('pt-BR')}
+            <Text style={styles.sectionTitle}>Estatísticas</Text>
+            <View style={styles.infoSection}>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="calendar" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Total de Visitas</Text>
+                </View>
+                <Text style={styles.infoValue}>{visitas.length} visita{visitas.length !== 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="map" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Total de Mapas</Text>
+                </View>
+                <Text style={styles.infoValue}>{mapas.length} mapa{mapas.length !== 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="checkmark-circle" size={16} color={produtor.status === 'ativo' ? colors.success : colors.warning} />
+                  <Text style={styles.infoLabel}>Status</Text>
+                </View>
+                <View style={[styles.statusBadgeInline, { backgroundColor: produtor.status === 'ativo' ? colors.success + '20' : colors.warning + '20' }]}>
+                  <Text style={[styles.statusTextInline, { color: produtor.status === 'ativo' ? colors.success : colors.warning }]}>
+                    {produtor.status === 'ativo' ? 'Ativo' : 'Pendente'}
                   </Text>
                 </View>
               </View>
-            )}
-
-            <View style={styles.statusContainer}>
-              <Text style={styles.statusLabel}>Status da Conta:</Text>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>
-                  {produtor.status === 'ativo' ? '🟢 Ativo' : '🟡 Pendente'}
-                </Text>
-              </View>
             </View>
+
+            {produtor.observacoes && (
+              <>
+                <Text style={styles.sectionTitle}>Observações</Text>
+                <View style={styles.infoSection}>
+                  <Text style={styles.observacoesText}>{produtor.observacoes}</Text>
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -517,90 +549,98 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSubtitle,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginBottom: 4
+    marginBottom: 6
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   profileLocation: {
+    flex: 1,
     fontSize: typography.fontBody - 1,
     color: colors.muted,
-    lineHeight: 20
+    lineHeight: 18
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20
+    gap: spacing.md,
+    marginBottom: spacing.lg
   },
   editButton: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderRadius: spacing.radiusSm,
-    alignItems: 'center'
+    flex: 2,
+    borderRadius: spacing.radius,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  editButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md + 2,
   },
   editButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontWeight: typography.weightBold,
-    fontSize: typography.fontBody
+    fontSize: typography.fontBody,
+    letterSpacing: 0.3,
   },
   deleteButton: {
     flex: 1,
-    backgroundColor: colors.error,
-    padding: 12,
-    borderRadius: spacing.radiusSm,
-    alignItems: 'center'
+    borderRadius: spacing.radius,
+    overflow: 'hidden',
+    ...shadows.md,
   },
-  deleteButtonText: {
-    color: '#fff',
-    fontWeight: typography.weightBold,
-    fontSize: typography.fontBody
-  },
-  statsSection: {
-    marginBottom: 20
-  },
-  statsRow: {
+  deleteButtonGradient: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12
-  },
-  statCardWrapper: {
-    flex: 1,
-    ...shadows.md
-  },
-  statCard: {
-    flex: 1,
-    padding: spacing.card + 4,
-    borderRadius: border.radiusLg,
-    borderWidth: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 100
-  },
-  statContent: {
-    flex: 1,
-    marginRight: 8
-  },
-  statValue: {
-    fontSize: typography.fontSubtitle + 4,
-    fontWeight: typography.weightBold,
-    marginBottom: 4,
-    flexShrink: 1
-  },
-  statLabel: {
-    fontSize: typography.fontBody - 1,
-    color: colors.textLight,
-    fontWeight: typography.weightSemibold,
-    flexWrap: 'wrap'
-  },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8
+    gap: spacing.sm,
+    paddingVertical: spacing.md + 2,
   },
-  statIcon: {
-    fontSize: 24
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontWeight: typography.weightBold,
+    fontSize: typography.fontBody,
+    letterSpacing: 0.3,
+  },
+  statsCarousel: {
+    marginBottom: 20,
+  },
+  statsContent: {
+    paddingHorizontal: spacing.md,
+    gap: 12,
+  },
+  statCardCompact: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    minWidth: 110,
+    borderWidth: 2,
+    borderColor: colors.border,
+    ...shadows.sm,
+  },
+  statIconCompact: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValueCompact: {
+    fontSize: 18,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  statLabelCompact: {
+    fontSize: 12,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
+    textAlign: 'center',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -672,20 +712,28 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   infoRow: {
-    paddingVertical: 8,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight
   },
+  infoLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
   infoLabel: {
-    fontSize: typography.fontCaption,
-    color: colors.muted,
-    fontWeight: typography.weightSemibold,
-    marginBottom: 4
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    fontWeight: typography.weightBold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: typography.fontBody,
     color: colors.text,
-    fontWeight: typography.weightSemibold
+    fontWeight: typography.weightSemibold,
+    lineHeight: 22,
   },
 
   statusContainer: {
@@ -712,6 +760,20 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody - 1,
     fontWeight: typography.weightBold,
     color: colors.text
+  },
+  statusBadgeInline: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusTextInline: {
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+  },
+  observacoesText: {
+    fontSize: typography.fontBody,
+    color: colors.text,
+    lineHeight: 22,
   },
   mapaCard: {
     backgroundColor: colors.backgroundAlt,

@@ -14,9 +14,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
-import { Mapa } from '../api/mock';
+import { Mapa, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
+import { useFiltros } from '../contexts/FiltroContext';
 
 export default function MapasScreen({ route, navigation }) {
   const [mapas, setMapas] = useState([]);
@@ -26,17 +27,34 @@ export default function MapasScreen({ route, navigation }) {
   const [busca, setBusca] = useState('');
   const [ordenacao, setOrdenacao] = useState('recente'); // recente, titulo, tamanho
   const { user } = useAuth();
+  const { getProdutorIdsFiltrados, filtros } = useFiltros();
   const produtorId = route?.params?.produtorId;
 
   useEffect(() => {
     loadMapas();
-  }, [produtorId]);
+  }, [produtorId, filtros]);
 
   const loadMapas = async () => {
     setLoading(true);
     try {
       const todosMapas = await Mapa.list();
-      const mapasFiltrados = todosMapas.filter(m => m.produtor_id === produtorId);
+      let mapasFiltrados;
+      
+      // Se vier de um produtor específico, usa esse ID
+      if (produtorId) {
+        mapasFiltrados = todosMapas.filter(m => m.produtor_id === produtorId);
+      } 
+      // Senão, para admin, aplica filtros regionais
+      else if (user?.perfil === 'admin') {
+        const todosProdutores = await Produtor.list();
+        const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
+        mapasFiltrados = todosMapas.filter(m => produtorIdsFiltrados.includes(m.produtor_id));
+      }
+      // Outros perfis veem apenas seus mapas
+      else {
+        mapasFiltrados = todosMapas.filter(m => m.produtor_id === produtorId);
+      }
+      
       setMapas(mapasFiltrados);
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível carregar os mapas');

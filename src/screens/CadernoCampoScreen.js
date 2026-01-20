@@ -17,6 +17,7 @@ import Header from '../components/Header';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
+import { useFiltros } from '../contexts/FiltroContext';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -30,8 +31,9 @@ export default function CadernoCampoScreen() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const { user } = useAuth();
+  const { getProdutorIdsFiltrados, filtros } = useFiltros();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [filtros]);
   
   const load = async () => {
     setLoading(true);
@@ -41,11 +43,16 @@ export default function CadernoCampoScreen() {
       let produtoresData = [];
 
       if (user?.perfil === 'admin') {
-        // Admin vê tudo
-        [registrosData, produtoresData] = await Promise.all([
+        // Admin vê tudo com filtros aplicados
+        const [todosRegistros, todosProdutores] = await Promise.all([
           CadernoCampo.list(),
           Produtor.list()
         ]);
+        
+        // Aplicar filtros regionais
+        const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
+        registrosData = todosRegistros.filter(r => produtorIdsFiltrados.includes(r.produtor_id));
+        produtoresData = todosProdutores.filter(p => produtorIdsFiltrados.includes(p.id));
       } else if (user?.perfil === 'colaborador') {
         // Colaborador vê apenas seus registros e produtores da sua região
         const [todosRegistros, todosProdutores] = await Promise.all([

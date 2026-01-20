@@ -1,19 +1,40 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, border, shadows } from '../theme';
 
 export default function ProdutorCard({ produtor, onPress }) {
-  const getStatusColor = () => {
+  const getStatusInfo = () => {
     switch (produtor.status) {
       case 'ativo':
-        return colors.success;
+        return { 
+          color: colors.success, 
+          label: 'Ativo',
+          icon: 'checkmark-circle'
+        };
       case 'pendente':
-        return colors.warning;
+        return { 
+          color: colors.warning, 
+          label: 'Pendente',
+          icon: 'time'
+        };
+      case 'inativo':
+        return { 
+          color: colors.muted, 
+          label: 'Inativo',
+          icon: 'close-circle'
+        };
       default:
-        return colors.muted;
+        return { 
+          color: colors.muted, 
+          label: 'N/A',
+          icon: 'help-circle'
+        };
     }
   };
+
+  const statusInfo = getStatusInfo();
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.cardWrapper} activeOpacity={0.7}>
@@ -29,12 +50,30 @@ export default function ProdutorCard({ produtor, onPress }) {
         <View style={styles.info}>
           <View style={styles.header}>
             <Text style={styles.nome} numberOfLines={1}>{produtor.nome}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
-              <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
+            <View style={[styles.statusBadge, { 
+              backgroundColor: statusInfo.color + '15',
+              borderColor: statusInfo.color + '40'
+            }]}>
+              <Ionicons name={statusInfo.icon} size={12} color={statusInfo.color} />
+              <Text style={[styles.statusText, { color: statusInfo.color }]}>
+                {statusInfo.label}
+              </Text>
             </View>
           </View>
           <Text style={styles.fazenda} numberOfLines={1}>{produtor.fazenda}</Text>
-          <Text style={styles.meta} numberOfLines={1}>{produtor.cidade}, {produtor.estado} • {produtor.area_total} ha</Text>
+          <View style={styles.metaContainer}>
+            <View style={styles.metaItem}>
+              <Ionicons name="location" size={13} color={colors.muted} />
+              <Text style={styles.meta} numberOfLines={1}>
+                {produtor.cidade}, {produtor.estado}
+              </Text>
+            </View>
+            <View style={styles.metaDivider} />
+            <View style={styles.metaItem}>
+              <Ionicons name="resize" size={13} color={colors.muted} />
+              <Text style={styles.meta}>{produtor.area_total} ha</Text>
+            </View>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -85,25 +124,46 @@ const styles = StyleSheet.create({
     color: colors.text 
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 8
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginLeft: 8,
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4
+  statusText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weightBold,
+    letterSpacing: 0.3,
   },
   fazenda: { 
     color: colors.textLight,
     fontSize: typography.fontBody - 1,
     fontWeight: typography.weightSemibold,
-    marginBottom: 2
+    marginBottom: 6
+  },
+  metaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaDivider: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.muted,
+    marginHorizontal: 8,
   },
   meta: { 
     color: colors.muted, 
     fontSize: typography.fontCaption + 1,
-    marginTop: 2
+    fontWeight: '500',
   }
 });

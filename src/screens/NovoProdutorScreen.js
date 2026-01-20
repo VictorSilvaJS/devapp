@@ -6,24 +6,23 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
-import InputField from '../components/InputField';
 import { Produtor } from '../api/mock';
-import { colors, typography, spacing, shadows } from '../theme';
+import theme from '../theme';
 import { 
   validarNome, 
   validarArea, 
   validarUF, 
-  validarObrigatorio,
-  getMensagemErro
+  validarObrigatorio
 } from '../utils/validacoes';
 
 export default function NovoProdutorScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
-  const [touched, setTouched] = useState({});
+  const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     nome: '',
     fazenda: '',
@@ -34,46 +33,37 @@ export default function NovoProdutorScreen({ navigation }) {
     status: 'ativo'
   });
 
-  // Validações em tempo real
-  const erros = {
-    nome: touched.nome && !validarNome(form.nome) ? getMensagemErro('Nome', 'minimo') : '',
-    fazenda: touched.fazenda && !validarObrigatorio(form.fazenda) ? getMensagemErro('Fazenda', 'obrigatorio') : '',
-    area_total: touched.area_total && !validarArea(form.area_total) ? getMensagemErro('Área', 'area') : '',
-    estado: touched.estado && form.estado && !validarUF(form.estado) ? getMensagemErro('UF', 'uf') : '',
-  };
-
-  const handleBlur = (campo) => {
-    setTouched(prev => ({ ...prev, [campo]: true }));
-  };
-
-  const updateForm = (campo, valor) => {
+  const handleChange = (campo, valor) => {
     setForm(prev => ({ ...prev, [campo]: valor }));
+    // Limpar erro ao digitar
+    if (errors[campo]) {
+      setErrors(prev => ({ ...prev, [campo]: null }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!validarNome(form.nome)) {
+      newErrors.nome = 'Nome deve ter pelo menos 3 caracteres';
+    }
+    if (!validarObrigatorio(form.fazenda)) {
+      newErrors.fazenda = 'Fazenda é obrigatória';
+    }
+    if (!validarArea(form.area_total)) {
+      newErrors.area_total = 'Informe uma área válida';
+    }
+    if (form.estado && !validarUF(form.estado)) {
+      newErrors.estado = 'UF inválida (Ex: RS, SP)';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSave = async () => {
-    // Marca todos os campos como touched
-    setTouched({
-      nome: true,
-      fazenda: true,
-      area_total: true,
-      estado: form.estado ? true : false,
-    });
-
-    // Validações
-    if (!validarNome(form.nome)) {
-      Alert.alert('Atenção', 'O nome do produtor deve ter pelo menos 3 caracteres');
-      return;
-    }
-    if (!validarObrigatorio(form.fazenda)) {
-      Alert.alert('Atenção', 'O nome da fazenda é obrigatório');
-      return;
-    }
-    if (!validarArea(form.area_total)) {
-      Alert.alert('Atenção', 'Informe uma área total válida');
-      return;
-    }
-    if (form.estado && !validarUF(form.estado)) {
-      Alert.alert('Atenção', 'UF inválida. Use a sigla do estado (Ex: RS, SP, GO)');
+    if (!validateForm()) {
+      Alert.alert('Atenção', 'Preencha todos os campos obrigatórios corretamente');
       return;
     }
 
@@ -86,7 +76,7 @@ export default function NovoProdutorScreen({ navigation }) {
       await Produtor.create(dataToSave);
       
       Alert.alert('Sucesso', 'Produtor cadastrado com sucesso!', [
-        { text: 'OK', onPress: () => navigation.navigate('Produtores') }
+        { text: 'OK', onPress: () => navigation.goBack() }
       ]);
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível cadastrar o produtor. Tente novamente.');
@@ -96,129 +86,134 @@ export default function NovoProdutorScreen({ navigation }) {
     }
   };
 
-  const handleCancel = () => {
-    Alert.alert(
-      'Cancelar Cadastro',
-      'Deseja descartar as informações?',
-      [
-        { text: 'Não', style: 'cancel' },
-        { text: 'Sim', onPress: () => navigation.goBack() }
-      ]
-    );
-  };
-
   return (
     <View style={styles.container}>
-      <Header title="Novo Produtor" />
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.headerBox}>
-          <Ionicons name="person-add" size={32} color={colors.primary} />
-          <Text style={styles.description}>
-            Adicione um novo produtor ao sistema preenchendo as informações abaixo.
+      <Header title="Novo Produtor" showBackButton />
+      
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Info Box */}
+        <View style={styles.infoBox}>
+          <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
+          <Text style={styles.infoText}>
+            Preencha os dados do novo produtor
           </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📝 Dados Básicos</Text>
-          
-          <InputField
-            label="Nome do Produtor"
+        {/* Nome */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Nome do Produtor *</Text>
+          <TextInput
+            style={[styles.input, errors.nome && styles.inputError]}
             value={form.nome}
-            onChangeText={(text) => updateForm('nome', text)}
-            onBlur={() => handleBlur('nome')}
-            placeholder="Nome completo"
-            required
-            icon="person-outline"
-            error={erros.nome}
-            valid={touched.nome && !erros.nome && form.nome.length > 0}
+            onChangeText={(text) => handleChange('nome', text)}
+            placeholder="Digite o nome completo"
+            placeholderTextColor={theme.colors.textSecondary}
           />
+          {errors.nome && (
+            <Text style={styles.errorText}>{errors.nome}</Text>
+          )}
+        </View>
 
-          <InputField
-            label="Nome da Fazenda"
+        {/* Fazenda */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Fazenda *</Text>
+          <TextInput
+            style={[styles.input, errors.fazenda && styles.inputError]}
             value={form.fazenda}
-            onChangeText={(text) => updateForm('fazenda', text)}
-            onBlur={() => handleBlur('fazenda')}
-            placeholder="Nome da propriedade"
-            required
-            icon="home-outline"
-            error={erros.fazenda}
-            valid={touched.fazenda && !erros.fazenda && form.fazenda.length > 0}
+            onChangeText={(text) => handleChange('fazenda', text)}
+            placeholder="Nome da fazenda"
+            placeholderTextColor={theme.colors.textSecondary}
           />
+          {errors.fazenda && (
+            <Text style={styles.errorText}>{errors.fazenda}</Text>
+          )}
+        </View>
 
-          <InputField
-            label="Área Total (hectares)"
+        {/* Área Total */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Área Total (ha) *</Text>
+          <TextInput
+            style={[styles.input, errors.area_total && styles.inputError]}
             value={form.area_total}
-            onChangeText={(text) => updateForm('area_total', text)}
-            onBlur={() => handleBlur('area_total')}
-            placeholder="Ex: 850"
+            onChangeText={(text) => handleChange('area_total', text)}
+            placeholder="Ex: 500"
             keyboardType="numeric"
-            required
-            icon="resize-outline"
-            error={erros.area_total}
-            valid={touched.area_total && !erros.area_total && form.area_total.length > 0}
+            placeholderTextColor={theme.colors.textSecondary}
           />
+          {errors.area_total && (
+            <Text style={styles.errorText}>{errors.area_total}</Text>
+          )}
+        </View>
 
-          <InputField
-            label="Cultura Principal"
+        {/* Cultura Atual */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Cultura Principal</Text>
+          <TextInput
+            style={styles.input}
             value={form.cultura_atual}
-            onChangeText={(text) => updateForm('cultura_atual', text)}
+            onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
-            icon="leaf-outline"
+            placeholderTextColor={theme.colors.textSecondary}
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📍 Localização</Text>
-          
-          <InputField
-            label="Cidade"
+        {/* Cidade */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Cidade</Text>
+          <TextInput
+            style={styles.input}
             value={form.cidade}
-            onChangeText={(text) => updateForm('cidade', text)}
+            onChangeText={(text) => handleChange('cidade', text)}
             placeholder="Nome da cidade"
-            icon="location-outline"
+            placeholderTextColor={theme.colors.textSecondary}
           />
+        </View>
 
-          <InputField
-            label="Estado (UF)"
+        {/* Estado */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Estado (UF)</Text>
+          <TextInput
+            style={[styles.input, errors.estado && styles.inputError]}
             value={form.estado}
-            onChangeText={(text) => updateForm('estado', text.toUpperCase())}
-            onBlur={() => handleBlur('estado')}
+            onChangeText={(text) => handleChange('estado', text.toUpperCase())}
             placeholder="Ex: RS, SP, GO"
             maxLength={2}
             autoCapitalize="characters"
-            icon="map-outline"
-            error={erros.estado}
-            valid={touched.estado && !erros.estado && form.estado.length === 2}
+            placeholderTextColor={theme.colors.textSecondary}
           />
+          {errors.estado && (
+            <Text style={styles.errorText}>{errors.estado}</Text>
+          )}
         </View>
 
-        <View style={styles.requiredNote}>
-          <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-          <Text style={styles.requiredText}>* Campos obrigatórios</Text>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.button, styles.buttonSecondary]}
-            onPress={handleCancel}
-            disabled={saving}
-          >
-            <Text style={styles.buttonSecondaryText}>Cancelar</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.buttonPrimary, saving && styles.buttonDisabled]}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonPrimaryText}>💾 Salvar Produtor</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Footer com botões */}
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.cancelButton}
+          onPress={() => navigation.goBack()}
+          disabled={saving}
+        >
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <>
+              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              <Text style={styles.saveButtonText}>Salvar</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -226,84 +221,99 @@ export default function NovoProdutorScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.colors.background,
   },
   content: {
-    padding: spacing.md,
-    paddingBottom: 40,
-  },
-  headerBox: {
-    alignItems: 'center',
-    backgroundColor: colors.accent + '20',
-    padding: spacing.lg,
-    borderRadius: 12,
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
-  },
-  description: {
-    fontSize: typography.fontBody,
-    color: colors.text,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  section: {
-    marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: typography.fontSubtitle - 2,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  requiredNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    padding: spacing.md,
-    borderRadius: 10,
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.accentDark,
-  },
-  requiredText: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.primaryDark,
-    fontWeight: typography.weightSemibold,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  button: {
     flex: 1,
-    padding: spacing.md,
+    padding: theme.spacing.md,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.primary + '15',
+    padding: theme.spacing.md,
     borderRadius: 12,
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.sm,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: theme.typography.fontBody,
+    color: theme.colors.text,
+    lineHeight: 20,
+  },
+  field: {
+    marginBottom: theme.spacing.lg,
+  },
+  label: {
+    fontSize: theme.typography.fontBody,
+    fontWeight: theme.typography.weightSemibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  input: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    padding: theme.spacing.md,
+    fontSize: theme.typography.fontBody,
+    color: theme.colors.text,
+  },
+  inputError: {
+    borderColor: theme.colors.error,
+    borderWidth: 2,
+  },
+  errorText: {
+    fontSize: theme.typography.fontCaption,
+    color: theme.colors.error,
+    marginTop: theme.spacing.xs,
+  },
+  footer: {
+    flexDirection: 'row',
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.card,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    ...theme.shadows.sm,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 50,
   },
-  buttonPrimary: {
-    backgroundColor: colors.primary,
-    ...shadows.md,
+  cancelButtonText: {
+    fontSize: theme.typography.fontBody,
+    fontWeight: theme.typography.weightSemibold,
+    color: theme.colors.text,
   },
-  buttonSecondary: {
-    backgroundColor: colors.card,
-    borderWidth: 2,
-    borderColor: colors.border,
+  saveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.md,
   },
-  buttonDisabled: {
+  saveButtonDisabled: {
     opacity: 0.6,
   },
-  buttonPrimaryText: {
-    color: colors.white,
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-  },
-  buttonSecondaryText: {
-    color: colors.text,
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
+  saveButtonText: {
+    fontSize: theme.typography.fontBody,
+    fontWeight: theme.typography.weightBold,
+    color: '#FFFFFF',
   },
 });

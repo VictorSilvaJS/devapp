@@ -6,6 +6,8 @@ import { Produtor, Visita, CadernoCampo } from '../api/mock';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import StatCard from '../components/StatCard';
 import { useAuthState } from '../auth/AuthContext';
+import { useFiltros } from '../contexts/FiltroContext';
+import FiltroRegional from '../components/FiltroRegional';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -14,6 +16,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function DashboardScreen() {
   const { user } = useAuthState();
+  const { filtrarProdutores, getProdutorIdsFiltrados, getFiltroAtivo } = useFiltros();
   const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: 0 });
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +31,14 @@ export default function DashboardScreen() {
     return () => console.log('[DashboardScreen] unmounted');
   }, [user]);
 
+  // Recarregar dados quando filtros mudarem (apenas para admin)
+  const { filtros } = useFiltros();
+  useEffect(() => {
+    if (user?.perfil === 'admin' && !isLoading) {
+      loadData();
+    }
+  }, [filtros, user?.perfil]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
@@ -35,12 +46,24 @@ export default function DashboardScreen() {
       let visitas = [];
       let registros = [];
 
-      // ADMIN - Acesso total
+      // ADMIN - Acesso total com filtros
       if (user?.perfil === 'admin') {
-        produtores = await Produtor.list();
-        visitas = await Visita.list();
-        registros = await CadernoCampo.list();
-        setCidade('Todas as Regiões');
+        const todosProdutores = await Produtor.list();
+        const todasVisitas = await Visita.list();
+        const todosRegistros = await CadernoCampo.list();
+        
+        // Aplicar filtros de região/fazenda
+        produtores = filtrarProdutores(todosProdutores);
+        
+        // Obter IDs dos produtores filtrados
+        const produtorIdsFiltrados = produtores.map(p => p.id);
+        
+        // Filtrar visitas e registros baseado nos produtores filtrados
+        visitas = todasVisitas.filter(v => produtorIdsFiltrados.includes(v.produtor_id));
+        registros = todosRegistros.filter(r => produtorIdsFiltrados.includes(r.produtor_id));
+        
+        // Atualizar texto de localização
+        setCidade(getFiltroAtivo());
       } 
       // COLABORADOR - Acesso à sua região
       else if (user?.perfil === 'colaborador') {
@@ -268,6 +291,13 @@ export default function DashboardScreen() {
               {user?.perfil === 'cliente' && 'Visão Geral da sua Propriedade'}
             </Text>
 
+            {/* Filtros Regionais - apenas para Admin */}
+            {user?.perfil === 'admin' && (
+              <View style={styles.filtrosContainer}>
+                <FiltroRegional />
+              </View>
+            )}
+
             {/* Cards de informação */}
             <View style={styles.infoCardsRow}>
               <View style={styles.infoCard}>
@@ -367,7 +397,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.fontBody,
     color: colors.textLight,
-    marginBottom: spacing.gap * 1.5,
+    marginBottom: spacing.gap * 0.5,
+  },
+  filtrosContainer: {
+    marginVertical: spacing.gap,
+    marginHorizontal: -spacing.screen,
   },
   infoCardsRow: {
     flexDirection: 'row',

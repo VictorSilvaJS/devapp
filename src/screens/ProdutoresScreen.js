@@ -10,6 +10,7 @@ import { colors, typography, spacing, shadows } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../auth/AuthContext';
 import { filtrarProdutoresPorAcesso, podeCriarProdutor, getRegioesDisponiveis } from '../utils/acessoControle';
+import { useFiltros } from '../contexts/FiltroContext';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -27,13 +28,20 @@ export default function ProdutoresScreen() {
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const navigation = useNavigation();
   const { user } = useAuth();
+  const { filtrarProdutores: filtrarProdutoresPorRegiao, filtros } = useFiltros();
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => { load(); }, [user, filtros]);
   
   const load = async () => {
     const data = await Produtor.list();
     // Filtrar por acesso do usuário
-    const produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
+    let produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
+    
+    // Para admin, aplicar filtros regionais globais
+    if (user?.perfil === 'admin') {
+      produtoresFiltrados = filtrarProdutoresPorRegiao(produtoresFiltrados);
+    }
+    
     setProdutores(produtoresFiltrados);
   };
 
@@ -310,19 +318,41 @@ export default function ProdutoresScreen() {
         {/* Lista de Produtores */}
         {produtoresFiltrados.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons 
-              name={busca ? 'search-outline' : 'person-add-outline'} 
-              size={80} 
-              color={colors.muted} 
-            />
+            <LinearGradient
+              colors={[colors.primary + '15', colors.primary + '05']}
+              style={styles.emptyIconContainer}
+            >
+              <Ionicons 
+                name={busca ? 'search' : 'person-add'} 
+                size={64} 
+                color={colors.primary} 
+              />
+            </LinearGradient>
             <Text style={styles.emptyText}>
               {busca ? 'Nenhum produtor encontrado' : 'Nenhum produtor cadastrado'}
             </Text>
             <Text style={styles.emptySubtext}>
               {busca 
-                ? 'Tente ajustar os filtros de busca' 
-                : 'Comece adicionando seu primeiro produtor'}
+                ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados' 
+                : 'Comece adicionando seu primeiro produtor ao sistema'}
             </Text>
+            {!busca && podeCriarProdutor(user) && (
+              <TouchableOpacity 
+                style={styles.emptyActionButton}
+                onPress={() => navigation.navigate('NovoProdutor')}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryDark]}
+                  style={styles.emptyActionGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="add-circle" size={22} color="#fff" />
+                  <Text style={styles.emptyActionText}>Adicionar Primeiro Produtor</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           produtoresFiltrados.map(p => (
@@ -945,22 +975,52 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.screen * 2,
-    paddingHorizontal: spacing.screen,
-    minHeight: 300,
+    paddingVertical: spacing.screen * 3,
+    paddingHorizontal: spacing.lg,
+    minHeight: 350,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+    ...shadows.md,
   },
   emptyText: {
-    fontSize: typography.fontSubtitle,
+    fontSize: typography.fontSubtitle + 2,
     fontWeight: typography.weightBold,
     color: colors.text,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   emptySubtext: {
     fontSize: typography.fontBody,
     color: colors.textLight,
     textAlign: 'center',
-    marginTop: spacing.sm,
-    lineHeight: 22,
+    marginTop: spacing.md,
+    lineHeight: 24,
+    maxWidth: 280,
+  },
+  emptyActionButton: {
+    marginTop: spacing.lg + 4,
+    borderRadius: spacing.radius,
+    overflow: 'hidden',
+    ...shadows.lg,
+  },
+  emptyActionGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg + 4,
+    paddingVertical: spacing.md + 2,
+  },
+  emptyActionText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 });
