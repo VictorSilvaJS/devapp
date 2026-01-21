@@ -4,6 +4,13 @@
     "slug": "tche-agro-mobile",
     "version": "1.0.0",
     "sdkVersion": "48.0.0",
-    "platforms": ["ios","android","web"]
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "android": {
+      "package": "com.anonymous.tcheagromobile"
+    }
   }
 }
