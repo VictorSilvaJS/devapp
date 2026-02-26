@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Animated, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthActions } from '../auth/AuthContext';
@@ -8,9 +8,14 @@ import { colors, typography, spacing, shadows } from '../theme';
 const LOGO = require('../assets/images/logo.png');
 
 export default function LoginScreen({ navigation }) {
-  const { login, loading } = useAuthActions();
+  const { login, loginRapido, loading } = useAuthActions();
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const slideAnim = React.useRef(new Animated.Value(50)).current;
+  const [email, setEmail] = React.useState('');
+  const [senha, setSenha] = React.useState('');
+  const [mostrarSenha, setMostrarSenha] = React.useState(false);
+  const [erro, setErro] = React.useState('');
+  const [modoDevLogin, setModoDevLogin] = React.useState(false);
 
   React.useEffect(() => {
     Animated.parallel([
@@ -28,11 +33,32 @@ export default function LoginScreen({ navigation }) {
     ]).start();
   }, []);
 
-  const handleLogin = async (key) => {
+  const handleLogin = async () => {
+    setErro('');
+    if (!email.trim()) {
+      setErro('Informe seu email');
+      return;
+    }
+    if (!senha.trim()) {
+      setErro('Informe sua senha');
+      return;
+    }
     try {
-      await login(key);
+      await login(email.trim(), senha.trim());
+      // Direcionamento automático - sem escolha de perfil
+      // O próprio navigation cuida de redirecionar baseado no user.perfil
     } catch (err) {
-      alert('Erro ao autenticar');
+      setErro('Email ou senha incorretos');
+    }
+  };
+
+  // Login rápido para desenvolvimento
+  const handleDevLogin = async (key) => {
+    setErro('');
+    try {
+      await loginRapido(key);
+    } catch (err) {
+      setErro('Erro ao autenticar');
     }
   };
 
@@ -43,71 +69,135 @@ export default function LoginScreen({ navigation }) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-        <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-        {/* <Text style={styles.title}>Tchê Agro</Text> */}
-        <Text style={styles.subtitle}>Faça login como</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        style={{ flex: 1, width: '100%' }}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.subtitle}>Acesse sua conta</Text>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Aguarde...</Text>
-          </View>
-        ) : (
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity 
-              style={[styles.btn, styles.btnAdmin]} 
-              onPress={() => handleLogin('admin')} 
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={[colors.primary, colors.primaryDark]}
-                style={styles.btnGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="briefcase-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
-                <Text style={styles.btnText}>Admin</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.loadingText}>Aguarde...</Text>
+              </View>
+            ) : (
+              <View style={styles.formContainer}>
+                {/* Campo Email */}
+                <View style={styles.inputContainer}>
+                  <Ionicons name="mail-outline" size={20} color={colors.primary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor={colors.muted}
+                    value={email}
+                    onChangeText={(t) => { setEmail(t); setErro(''); }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
 
-            <TouchableOpacity 
-              style={[styles.btn, styles.btnColaborador]} 
-              onPress={() => handleLogin('colaborador')} 
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={[colors.secondary, colors.secondaryLight]}
-                style={styles.btnGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="people-circle-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
-                <Text style={styles.btnText}>Colaborador</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                {/* Campo Senha */}
+                <View style={styles.inputContainer}>
+                  <Ionicons name="lock-closed-outline" size={20} color={colors.primary} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="Senha"
+                    placeholderTextColor={colors.muted}
+                    value={senha}
+                    onChangeText={(t) => { setSenha(t); setErro(''); }}
+                    secureTextEntry={!mostrarSenha}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)} style={styles.eyeButton}>
+                    <Ionicons name={mostrarSenha ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.muted} />
+                  </TouchableOpacity>
+                </View>
 
-            <TouchableOpacity 
-              style={[styles.btn, styles.btnCliente]} 
-              onPress={() => handleLogin('cliente')} 
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={[colors.success, colors.successLight]}
-                style={styles.btnGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons name="leaf-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
-                <Text style={styles.btnText}>Cliente</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        )}
-      </Animated.View>
+                {/* Mensagem de erro */}
+                {erro ? (
+                  <View style={styles.erroContainer}>
+                    <Ionicons name="alert-circle-outline" size={16} color={colors.error || '#E74C3C'} />
+                    <Text style={styles.erroText}>{erro}</Text>
+                  </View>
+                ) : null}
+
+                {/* Botão Entrar */}
+                <TouchableOpacity 
+                  style={styles.btn} 
+                  onPress={handleLogin} 
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={[colors.primary, colors.primaryDark]}
+                    style={styles.btnGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Ionicons name="log-in-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
+                    <Text style={styles.btnText}>Entrar</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* Separador - Acesso Rápido (DEV) */}
+                <TouchableOpacity 
+                  onPress={() => setModoDevLogin(!modoDevLogin)}
+                  style={styles.devToggle}
+                >
+                  <View style={styles.separador}>
+                    <View style={styles.separadorLinha} />
+                    <Text style={styles.separadorTexto}>
+                      {modoDevLogin ? 'Ocultar acesso rápido' : 'Acesso rápido (dev)'}
+                    </Text>
+                    <View style={styles.separadorLinha} />
+                  </View>
+                </TouchableOpacity>
+
+                {modoDevLogin && (
+                  <View style={styles.devButtonsContainer}>
+                    <TouchableOpacity 
+                      style={[styles.devBtn]} 
+                      onPress={() => handleDevLogin('admin')} 
+                      disabled={loading}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
+                      <Text style={styles.devBtnText}>Admin (Bruna)</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.devBtn]} 
+                      onPress={() => handleDevLogin('colaborador')} 
+                      disabled={loading}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="people-outline" size={18} color={colors.secondary} />
+                      <Text style={styles.devBtnText}>Colab. (Carlos)</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[styles.devBtn]} 
+                      onPress={() => handleDevLogin('produtor')} 
+                      disabled={loading}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="leaf-outline" size={18} color={colors.success} />
+                      <Text style={styles.devBtnText}>Produtor (João)</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 }
@@ -117,7 +207,12 @@ const styles = StyleSheet.create({
     flex: 1, 
     alignItems: 'center', 
     justifyContent: 'center', 
-    padding: spacing.screen * 2
+  },
+  scrollContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.screen * 2,
   },
   content: {
     alignItems: 'center',
@@ -127,12 +222,6 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     marginBottom: spacing.gap * 2
-  },
-  title: { 
-    fontSize: typography.fontTitle + 4, 
-    fontWeight: typography.weightBold, 
-    color: colors.text, 
-    marginBottom: 8 
   },
   subtitle: { 
     fontSize: typography.fontBody + 2, 
@@ -149,14 +238,47 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.fontBody
   },
-  buttonsContainer: {
+  formContainer: {
     width: '100%',
-    gap: spacing.gap + 4
+    gap: spacing.gap + 2,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    borderWidth: 2,
+    borderColor: colors.border || '#E5E7EB',
+    ...shadows.sm,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: typography.fontBody,
+    color: colors.text,
+  },
+  eyeButton: {
+    padding: 8,
+  },
+  erroContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 4,
+  },
+  erroText: {
+    color: colors.error || '#E74C3C',
+    fontSize: typography.fontBody - 1,
   },
   btn: { 
     width: '100%', 
     borderRadius: 14,
     overflow: 'hidden',
+    marginTop: 4,
     ...shadows.md
   },
   btnGradient: {
@@ -169,12 +291,49 @@ const styles = StyleSheet.create({
   btnIcon: {
     marginRight: 2
   },
-  btnAdmin: {},
-  btnColaborador: {},
-  btnCliente: {},
   btnText: { 
     color: '#fff', 
     fontWeight: typography.weightBold,
     fontSize: typography.fontBody + 2
-  }
+  },
+  devToggle: {
+    marginTop: 8,
+  },
+  separador: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  separadorLinha: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border || '#E5E7EB',
+  },
+  separadorTexto: {
+    fontSize: typography.fontBody - 2,
+    color: colors.muted,
+  },
+  devButtonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  devBtn: {
+    flex: 1,
+    minWidth: 90,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border || '#E5E7EB',
+  },
+  devBtnText: {
+    fontSize: typography.fontBody - 2,
+    color: colors.text,
+    fontWeight: typography.weightSemibold,
+  },
 });

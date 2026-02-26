@@ -289,7 +289,7 @@ Ficha técnica para colaboradores, visível também para clientes
   dosagem: "250 kg/ha",
   area_aplicada: 50,
   observacoes: "Aplicação uniforme...",
-  visivel_para_cliente: true,  // Cliente pode ver?
+  visivel_para_produtor: true,  // Cliente pode ver?
   fotos: ["foto1.jpg"]
 }
 ```

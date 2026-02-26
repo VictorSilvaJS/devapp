@@ -238,7 +238,7 @@ npm start
 2. ✅ **Verificar:**
    - Até 3 atividades mais recentes
    - Tipo, Data, Observações
-   - **Apenas atividades com `visivel_para_cliente: true`**
+   - **Apenas atividades com `visivel_para_produtor: true`**
 
 ---
 
@@ -270,7 +270,7 @@ npm start
 1. Login como **Cliente**
 2. Ir para **"Histórico"**
 3. ✅ **Verificar:**
-   - Aparecem apenas registros com `visivel_para_cliente: true`
+   - Aparecem apenas registros com `visivel_para_produtor: true`
    - Registros da sua propriedade
 
 #### Teste 7.2 - Colaborador vê registros da região

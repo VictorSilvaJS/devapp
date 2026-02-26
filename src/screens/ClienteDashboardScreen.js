@@ -18,15 +18,18 @@ import { useAuth } from '../auth/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 /**
- * Tela específica para clientes - Dashboard da propriedade do cliente
+ * Tela específica para produtores/proprietários - Dashboard das propriedades
+ * Produtor = Cliente = Proprietário (dono da fazenda)
+ * Um proprietário pode ter VÁRIAS fazendas
  */
 export default function ClienteDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [propriedade, setPropriedade] = useState(null);
+  const [propriedades, setPropriedades] = useState([]);
   const [mapas, setMapas] = useState([]);
   const [visitas, setVisitas] = useState([]);
   const [historico, setHistorico] = useState([]);
+  const [filtroFazenda, setFiltroFazenda] = useState('geral');
   const { user } = useAuth();
   const navigation = useNavigation();
 
@@ -38,28 +41,34 @@ export default function ClienteDashboardScreen() {
     setLoading(true);
     try {
       if (user?.produtor_id) {
-        const [prop, todosMapas, todasVisitas, todosCadernos] = await Promise.all([
-          Produtor.get(user.produtor_id),
+        const [todosProdutores, todosMapas, todasVisitas, todosCadernos] = await Promise.all([
+          Produtor.list(),
           Mapa.list(),
           Visita.list(),
           CadernoCampo.list()
         ]);
 
-        setPropriedade(prop);
+        // Buscar TODAS as fazendas deste proprietário (relação 1:N)
+        const minhasFazendas = todosProdutores.filter(p => 
+          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
+        );
+        setPropriedades(minhasFazendas);
         
-        // Filtrar apenas mapas disponíveis para download
+        const meusIds = minhasFazendas.map(p => p.id);
+        
+        // Filtrar apenas mapas disponíveis para download das minhas fazendas
         const mapasDisponiveis = todosMapas.filter(m => 
-          m.produtor_id === user.produtor_id && m.disponivel_download
+          meusIds.includes(m.produtor_id) && m.disponivel_download
         );
         setMapas(mapasDisponiveis);
 
-        // Filtrar visitas do produtor
-        const visitasProdutor = todasVisitas.filter(v => v.produtor_id === user.produtor_id);
+        // Filtrar visitas das minhas fazendas
+        const visitasProdutor = todasVisitas.filter(v => meusIds.includes(v.produtor_id));
         setVisitas(visitasProdutor);
 
-        // Filtrar histórico visível para cliente
+        // Filtrar histórico visível para proprietário
         const historicoCliente = todosCadernos.filter(c => 
-          c.produtor_id === user.produtor_id && c.visivel_para_cliente
+          meusIds.includes(c.produtor_id) && c.visivel_para_produtor
         );
         setHistorico(historicoCliente);
       }
@@ -82,7 +91,7 @@ export default function ClienteDashboardScreen() {
     return d.toLocaleDateString('pt-BR');
   };
 
-  const agruparMapasPorCategoria = () => {
+  const agruparMapasPorCategoria = (listaMapas) => {
     const categorias = {
       fertilidade: { nome: 'Fertilidade', icon: 'leaf-outline', mapas: [] },
       correcao: { nome: 'Correção', icon: 'construct-outline', mapas: [] },
@@ -91,7 +100,7 @@ export default function ClienteDashboardScreen() {
       plantio: { nome: 'Plantio', icon: 'git-network-outline', mapas: [] },
     };
 
-    mapas.forEach(mapa => {
+    (listaMapas || mapas).forEach(mapa => {
       if (categorias[mapa.categoria]) {
         categorias[mapa.categoria].mapas.push(mapa);
       }
@@ -103,7 +112,7 @@ export default function ClienteDashboardScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Minha Propriedade" />
+        <Header title="Minhas Fazendas" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Carregando informações...</Text>
@@ -112,23 +121,64 @@ export default function ClienteDashboardScreen() {
     );
   }
 
-  if (!propriedade) {
+  if (!propriedades || propriedades.length === 0) {
     return (
       <View style={styles.container}>
-        <Header title="Minha Propriedade" />
+        <Header title="Minhas Fazendas" />
         <View style={styles.emptyContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.muted} />
-          <Text style={styles.emptyText}>Propriedade não encontrada</Text>
+          <Text style={styles.emptyText}>Nenhuma propriedade vinculada</Text>
         </View>
       </View>
     );
   }
 
-  const mapasCategorizados = agruparMapasPorCategoria();
+  // Dados filtrados conforme fazenda selecionada
+  const propriedadesExibidas = filtroFazenda === 'geral'
+    ? propriedades
+    : propriedades.filter(p => p.id === filtroFazenda);
+  const idsFiltrados = propriedadesExibidas.map(p => p.id);
+  const mapasFiltrados = mapas.filter(m => idsFiltrados.includes(m.produtor_id));
+  const visitasFiltradas = visitas.filter(v => idsFiltrados.includes(v.produtor_id));
+  const historicoFiltrado = historico.filter(h => idsFiltrados.includes(h.produtor_id));
+
+  const areaTotal = propriedadesExibidas.reduce((sum, p) => sum + (p.area_total || 0), 0);
+  const culturas = [...new Set(propriedadesExibidas.map(p => p.cultura_atual).filter(Boolean))];
+  const mapasCategorizados = agruparMapasPorCategoria(mapasFiltrados);
+  const primeiraFazenda = propriedadesExibidas[0] || propriedades[0];
 
   return (
     <View style={styles.container}>
-      <Header title="Minha Propriedade" />
+      <Header title="Minhas Fazendas" />
+
+      {/* Filtro por fazenda */}
+      {propriedades.length > 1 && (
+        <View style={styles.filtroFazendaContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtroFazendaScroll}>
+            <TouchableOpacity
+              style={[styles.filtroFazendaChip, filtroFazenda === 'geral' && styles.filtroFazendaChipAtivo]}
+              onPress={() => setFiltroFazenda('geral')}
+            >
+              <Ionicons name="globe-outline" size={16} color={filtroFazenda === 'geral' ? '#FFF' : colors.text} style={{ marginRight: 4 }} />
+              <Text style={[styles.filtroFazendaChipText, filtroFazenda === 'geral' && styles.filtroFazendaChipTextAtivo]}>
+                Geral ({propriedades.length} fazendas)
+              </Text>
+            </TouchableOpacity>
+            {propriedades.map(prop => (
+              <TouchableOpacity
+                key={prop.id}
+                style={[styles.filtroFazendaChip, filtroFazenda === prop.id && styles.filtroFazendaChipAtivo]}
+                onPress={() => setFiltroFazenda(prop.id)}
+              >
+                <Ionicons name="home-outline" size={16} color={filtroFazenda === prop.id ? '#FFF' : colors.text} style={{ marginRight: 4 }} />
+                <Text style={[styles.filtroFazendaChipText, filtroFazenda === prop.id && styles.filtroFazendaChipTextAtivo]} numberOfLines={1}>
+                  {prop.fazenda}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
       
       <ScrollView 
         style={styles.content}
@@ -141,25 +191,40 @@ export default function ClienteDashboardScreen() {
           />
         }
       >
-        {/* Card da Propriedade */}
-        <View style={styles.propriedadeCard}>
-          <View style={styles.propriedadeHeader}>
-            <Ionicons name="home-outline" size={40} color={colors.primary} />
-            <View style={styles.propriedadeInfo}>
-              <Text style={styles.propriedadeNome}>{propriedade.fazenda}</Text>
-              <Text style={styles.propriedadeLocalização}>
-                {propriedade.cidade}, {propriedade.estado}
-              </Text>
+        {/* Cards das Fazendas (filtradas) */}
+        {propriedadesExibidas.map((prop, idx) => (
+          <View key={prop.id} style={styles.propriedadeCard}>
+            <View style={styles.propriedadeHeader}>
+              <Ionicons name="home-outline" size={40} color={colors.primary} />
+              <View style={styles.propriedadeInfo}>
+                <Text style={styles.propriedadeNome}>{prop.fazenda}</Text>
+                <Text style={styles.propriedadeLocalização}>
+                  {prop.cidade}, {prop.estado}
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
+                  {prop.area_total} ha • {prop.cultura_atual || 'N/A'}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
+        ))}
 
         {/* Resumo de Informações */}
         <View style={styles.statsGrid}>
           <View style={styles.statsRow}>
             <StatCard
+              label="Fazendas"
+              value={propriedadesExibidas.length}
+              icon={<Ionicons name="business-outline" size={24} color={colors.primary} />}
+              accent={{
+                color: colors.primary,
+                bgColor: '#e8f5e8',
+                gradient: ['#e8f5e8', '#FFFFFF']
+              }}
+            />
+            <StatCard
               label="Área Total"
-              value={`${propriedade.area_total} ha`}
+              value={`${areaTotal} ha`}
               icon={<Ionicons name="resize-outline" size={24} color="#8B6244" />}
               accent={{
                 color: '#8B6244',
@@ -167,9 +232,11 @@ export default function ClienteDashboardScreen() {
                 gradient: ['#f5f3f0', '#FFFFFF']
               }}
             />
+          </View>
+          <View style={styles.statsRow}>
             <StatCard
-              label="Cultura"
-              value={propriedade.cultura_atual || 'N/A'}
+              label="Culturas"
+              value={culturas.join(', ') || 'N/A'}
               icon={<Ionicons name="leaf-outline" size={24} color={colors.primary} />}
               accent={{
                 color: colors.primary,
@@ -181,7 +248,7 @@ export default function ClienteDashboardScreen() {
           <View style={styles.statsRow}>
             <StatCard
               label="Mapas Disponíveis"
-              value={mapas.length}
+              value={mapasFiltrados.length}
               icon={<Ionicons name="map-outline" size={24} color="#d97706" />}
               accent={{
                 color: '#d97706',
@@ -191,7 +258,7 @@ export default function ClienteDashboardScreen() {
             />
             <StatCard
               label="Visitas Registradas"
-              value={visitas.length}
+              value={visitasFiltradas.length}
               icon={<Ionicons name="calendar-outline" size={24} color={colors.success} />}
               accent={{
                 color: colors.success,
@@ -203,7 +270,7 @@ export default function ClienteDashboardScreen() {
           <View style={styles.statsRow}>
             <StatCard
               label="Atividades"
-              value={historico.length}
+              value={historicoFiltrado.length}
               icon={<Ionicons name="document-text-outline" size={24} color="#2563eb" />}
               accent={{
                 color: '#2563eb',
@@ -220,14 +287,14 @@ export default function ClienteDashboardScreen() {
             <Text style={styles.secaoTitulo}>Mapas da Propriedade</Text>
             {mapas.length > 0 && (
               <TouchableOpacity 
-                onPress={() => navigation.navigate('Mapas', { produtorId: propriedade.id })}
+                onPress={() => navigation.navigate('Mapas', { produtorId: primeiraFazenda.id })}
               >
                 <Text style={styles.verTodosLink}>Ver todos</Text>
               </TouchableOpacity>
             )}
           </View>
 
-          {mapas.length === 0 ? (
+          {mapasFiltrados.length === 0 ? (
             <View style={styles.emptySecao}>
               <Ionicons name="map-outline" size={40} color={colors.muted} />
               <Text style={styles.emptySecaoText}>Nenhum mapa disponível</Text>
@@ -242,7 +309,7 @@ export default function ClienteDashboardScreen() {
                 <TouchableOpacity
                   key={index}
                   style={styles.categoriaCard}
-                  onPress={() => navigation.navigate('Mapas', { produtorId: propriedade.id })}
+                  onPress={() => navigation.navigate('Mapas', { produtorId: primeiraFazenda.id })}
                 >
                   <View style={styles.categoriaIconContainer}>
                     <Ionicons name={cat.icon} size={32} color={colors.primary} />
@@ -261,13 +328,13 @@ export default function ClienteDashboardScreen() {
             <Text style={styles.secaoTitulo}>Últimas Visitas</Text>
           </View>
 
-          {visitas.length === 0 ? (
+          {visitasFiltradas.length === 0 ? (
             <View style={styles.emptySecao}>
               <Ionicons name="calendar-outline" size={40} color={colors.muted} />
               <Text style={styles.emptySecaoText}>Nenhuma visita registrada</Text>
             </View>
           ) : (
-            visitas.slice(0, 3).map((visita, index) => (
+            visitasFiltradas.slice(0, 5).map((visita, index) => (
               <View key={index} style={styles.visitaCard}>
                 <View style={styles.visitaHeader}>
                   <Ionicons name="calendar-outline" size={20} color={colors.primary} />
@@ -290,13 +357,13 @@ export default function ClienteDashboardScreen() {
             <Text style={styles.secaoTitulo}>Atividades Recentes</Text>
           </View>
 
-          {historico.length === 0 ? (
+          {historicoFiltrado.length === 0 ? (
             <View style={styles.emptySecao}>
               <Ionicons name="document-text-outline" size={40} color={colors.muted} />
               <Text style={styles.emptySecaoText}>Nenhuma atividade registrada</Text>
             </View>
           ) : (
-            historico.slice(0, 3).map((atividade, index) => (
+            historicoFiltrado.slice(0, 5).map((atividade, index) => (
               <View key={index} style={styles.atividadeCard}>
                 <View style={styles.atividadeHeader}>
                   <View style={styles.atividadeIconContainer}>
@@ -325,6 +392,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  filtroFazendaContainer: {
+    backgroundColor: '#F8FBF8',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  filtroFazendaScroll: {
+    paddingHorizontal: spacing.md,
+    gap: 8,
+  },
+  filtroFazendaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  filtroFazendaChipAtivo: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filtroFazendaChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    maxWidth: 140,
+  },
+  filtroFazendaChipTextAtivo: {
+    color: '#FFFFFF',
   },
   content: {
     flex: 1,

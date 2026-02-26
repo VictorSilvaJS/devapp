@@ -21,24 +21,29 @@
     },
     "perfil": {
       "type": "string",
-      "enum": ["admin", "colaborador", "cliente"],
-      "default": "cliente",
-      "description": "Perfil de acesso do usuário"
+      "enum": ["admin", "colaborador", "produtor"],
+      "default": "produtor",
+      "description": "Perfil de acesso: admin (Bruna/César - acesso total Brasil), colaborador (acesso regional, mesmas funções do admin), produtor (= cliente = proprietário - dono da fazenda, apenas visualização/download + caderno de campo)"
     },
     "regiao": {
       "type": "string",
-      "description": "Região de trabalho (para colaboradores) - ex: Sul, Centro-Oeste, Goiás"
+      "description": "Região principal do colaborador - ex: Goiás, Mato Grosso, Sul"
+    },
+    "sub_regioes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Sub-regiões do colaborador - ex: Goiás 1, Goiás 2, Goiânia, Rio Verde"
     },
     "regioes_acesso": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "Lista de regiões que o usuário tem acesso (para admins)"
+      "description": "Lista de regiões que o admin tem acesso (normalmente ['Brasil'])"
     },
     "produtor_id": {
       "type": "string",
-      "description": "ID do produtor vinculado (para clientes)"
+      "description": "ID do proprietário vinculado (para perfil produtor). Um proprietário pode ter várias fazendas. Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo proprietário."
     },
     "telefone": {
       "type": "string",

@@ -23,7 +23,7 @@ export {
 } from './validators';
 
 // Exportar constantes úteis
-export const PERFIS_USUARIO = ['admin', 'colaborador', 'cliente'];
+export const PERFIS_USUARIO = ['admin', 'colaborador', 'produtor'];
 export const STATUS_PRODUTOR = ['ativo', 'inativo', 'pendente'];
 export const STATUS_VISITA = ['agendada', 'realizada', 'cancelada'];
 export const OBJETIVOS_VISITA = ['consultoria', 'coleta_solo', 'avaliacao_cultivo', 'entrega_material', 'outro'];

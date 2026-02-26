@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   TextInput,
   Platform,
+  Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -32,6 +34,7 @@ export default function NovaVisitaScreen() {
   const [recomendacoes, setRecomendacoes] = useState('');
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
+  const [fotos, setFotos] = useState([]);
 
   // Estados de controle
   const [loading, setLoading] = useState(false);
@@ -54,9 +57,19 @@ export default function NovaVisitaScreen() {
       // Filtrar por perfil
       let filtrados = data;
       if (user?.perfil === 'colaborador') {
-        filtrados = data.filter(p => p.microregiao === user.regiao);
-      } else if (user?.perfil === 'cliente') {
-        filtrados = data.filter(p => p.id === user.produtor_id);
+        // Colaborador: produtores da sua região/sub-regiões
+        filtrados = data.filter(p => {
+          if (p.regiao === user.regiao) return true;
+          if (user.sub_regioes && p.microregiao) {
+            return user.sub_regioes.includes(p.microregiao);
+          }
+          return false;
+        });
+      } else if (user?.perfil === 'produtor') {
+        // Produtor (proprietário) - buscar suas fazendas
+        filtrados = data.filter(p => 
+          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
+        );
         if (filtrados.length > 0) {
           setProdutorId(filtrados[0].id);
         }
@@ -117,7 +130,7 @@ export default function NovaVisitaScreen() {
         clima,
         proximaVisita: proximaVisita?.toISOString().split('T')[0],
         status: 'agendada',
-        fotos: [],
+        fotos: fotos,
       };
 
       await Visita.create(novaVisita);
@@ -149,6 +162,34 @@ export default function NovaVisitaScreen() {
     return prod ? `${prod.nome} - ${prod.fazenda}` : 'Selecione um produtor';
   };
 
+  const adicionarFotoSimulada = (tipo) => {
+    const timestamp = Date.now();
+    const novaFoto = {
+      id: `foto_${timestamp}`,
+      uri: tipo === 'camera' 
+        ? `https://picsum.photos/400/300?random=${timestamp}` 
+        : `https://picsum.photos/400/300?random=${timestamp + 1}`,
+      tipo: tipo,
+      dataCaptura: new Date().toISOString(),
+    };
+    setFotos(prev => [...prev, novaFoto]);
+    toast.showSuccess(`Foto ${tipo === 'camera' ? 'capturada' : 'selecionada'} com sucesso!`);
+  };
+
+  const removerFoto = (fotoId) => {
+    Alert.alert(
+      'Remover Foto',
+      'Deseja remover esta foto?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Remover', style: 'destructive', onPress: () => {
+          setFotos(prev => prev.filter(f => f.id !== fotoId));
+          toast.showSuccess('Foto removida');
+        }}
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Header title="Nova Visita" showBack />
@@ -166,7 +207,7 @@ export default function NovaVisitaScreen() {
           <TouchableOpacity
             style={[styles.picker, errors.produtorId && styles.inputError]}
             onPress={() => setShowProdutorPicker(!showProdutorPicker)}
-            disabled={user?.perfil === 'cliente'}
+            disabled={user?.perfil === 'produtor'}
           >
             <Text style={[styles.pickerText, !produtorId && styles.placeholder]}>
               {loadingProdutores ? 'Carregando...' : getProdutorNome(produtorId)}
@@ -327,6 +368,45 @@ export default function NovaVisitaScreen() {
           minimumDate={dataVisita || new Date()}
           mode="date"
         />
+
+        {/* Fotos */}
+        <View style={styles.field}>
+          <Text style={styles.label}>Fotos da Visita</Text>
+          <View style={styles.fotoBotoesContainer}>
+            <TouchableOpacity 
+              style={styles.fotoBotao}
+              onPress={() => adicionarFotoSimulada('camera')}
+            >
+              <Ionicons name="camera-outline" size={24} color={colors.primary} />
+              <Text style={styles.fotoBotaoText}>Câmera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.fotoBotao}
+              onPress={() => adicionarFotoSimulada('galeria')}
+            >
+              <Ionicons name="images-outline" size={24} color={colors.primary} />
+              <Text style={styles.fotoBotaoText}>Galeria</Text>
+            </TouchableOpacity>
+          </View>
+          {fotos.length > 0 && (
+            <View style={styles.fotosGrid}>
+              {fotos.map((foto) => (
+                <View key={foto.id} style={styles.fotoContainer}>
+                  <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
+                  <TouchableOpacity 
+                    style={styles.fotoRemover}
+                    onPress={() => removerFoto(foto.id)}
+                  >
+                    <Ionicons name="close-circle" size={22} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+          {fotos.length > 0 && (
+            <Text style={styles.fotosCount}>{fotos.length} foto(s) anexada(s)</Text>
+          )}
+        </View>
 
         {/* Informações */}
         <View style={styles.infoBox}>
@@ -523,6 +603,62 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSmall,
     color: colors.textLight,
     lineHeight: 18,
+  },
+  fotoBotoesContainer: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  fotoBotao: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+    backgroundColor: colors.accent,
+  },
+  fotoBotaoText: {
+    fontSize: typography.fontBody,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  fotosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: spacing.sm,
+  },
+  fotoContainer: {
+    position: 'relative',
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fotoPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  fotoRemover: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: '#FFFFFFCC',
+    borderRadius: 11,
+  },
+  fotosCount: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSmall,
+    color: colors.textLight,
+    fontWeight: '500',
   },
   footer: {
     flexDirection: 'row',

@@ -29,7 +29,7 @@ function tabScreenOptions({ route }) {
     headerShown: false,
     tabBarIcon: ({ color, size }) => {
       let name = 'home-outline';
-      if (route.name === 'Produtores' || route.name === 'Meus Produtores') name = 'people-outline';
+      if (route.name === 'Produtores' || route.name === 'Meus Produtores' || route.name === 'Minhas Fazendas') name = 'people-outline';
       if (route.name === 'Visitas' || route.name === 'Histórico' || route.name === 'Minhas Visitas') name = 'calendar-outline';
       if (route.name === 'Caderno') name = 'book-outline';
       if (route.name === 'Perfil') name = 'person-outline';
@@ -84,8 +84,8 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
 const ClienteTabs = React.memo(function ClienteTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
-      <Tab.Screen name="Minha Propriedade" component={require('../screens/ClienteDashboardScreen').default} options={{ title: 'Propriedade' }} />
-      <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Histórico' }} />
+      <Tab.Screen name="Minhas Fazendas" component={require('../screens/ClienteDashboardScreen').default} options={{ title: 'Propriedade' }} />
+      <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );
@@ -97,6 +97,7 @@ function MainTabsComponent() {
   console.log('[Navigation] MainTabsComponent render perfil=', perfil);
   if (perfil === 'admin') return <AdminTabs />;
   if (perfil === 'colaborador') return <ColaboradorTabs />;
+  // produtor = cliente = proprietário
   return <ClienteTabs />;
 }
 

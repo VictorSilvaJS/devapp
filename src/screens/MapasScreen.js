@@ -50,9 +50,31 @@ export default function MapasScreen({ route, navigation }) {
         const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
         mapasFiltrados = todosMapas.filter(m => produtorIdsFiltrados.includes(m.produtor_id));
       }
-      // Outros perfis veem apenas seus mapas
+      // Colaborador: mapas dos produtores da sua região
+      else if (user?.perfil === 'colaborador') {
+        const todosProdutores = await Produtor.list();
+        const produtoresRegiao = todosProdutores.filter(p => {
+          if (user.regiao === p.regiao) return true;
+          if (user.sub_regioes && p.microregiao) return user.sub_regioes.includes(p.microregiao);
+          return false;
+        });
+        const idsRegiao = produtoresRegiao.map(p => p.id);
+        mapasFiltrados = todosMapas.filter(m => idsRegiao.includes(m.produtor_id));
+      }
+      // Produtor/proprietário: apenas mapas disponíveis das suas fazendas
+      else if (user?.perfil === 'produtor') {
+        const todosProdutores = await Produtor.list();
+        const minhasFazendas = todosProdutores.filter(p => 
+          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
+        );
+        const meusIds = minhasFazendas.map(p => p.id);
+        mapasFiltrados = todosMapas.filter(m => 
+          meusIds.includes(m.produtor_id) && m.disponivel_download
+        );
+      }
+      // Fallback
       else {
-        mapasFiltrados = todosMapas.filter(m => m.produtor_id === produtorId);
+        mapasFiltrados = todosMapas;
       }
       
       setMapas(mapasFiltrados);

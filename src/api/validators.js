@@ -32,14 +32,14 @@ export const validateUser = (data) => {
     throw new Error('User.email: Email inválido');
   }
   
-  validateEnum(data.perfil, ['admin', 'colaborador', 'cliente'], 'perfil', 'User');
+  validateEnum(data.perfil, ['admin', 'colaborador', 'produtor'], 'perfil', 'User');
   
   if (data.perfil === 'colaborador' && !data.regiao) {
     console.warn('User: Colaborador sem região definida');
   }
   
-  if (data.perfil === 'cliente' && !data.produtor_id) {
-    console.warn('User: Cliente sem produtor vinculado');
+  if (data.perfil === 'produtor' && !data.produtor_id) {
+    console.warn('User: Produtor/Proprietário sem produtor_id vinculado');
   }
   
   return true;

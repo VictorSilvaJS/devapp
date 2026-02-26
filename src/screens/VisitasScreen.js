@@ -40,10 +40,11 @@ export default function VisitasScreen() {
   const [ordenacao, setOrdenacao] = useState('data'); // data, produtor, status
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const [mostrarBusca, setMostrarBusca] = useState(false);
+  const [filtroSubRegiao, setFiltroSubRegiao] = useState('todas'); // para colaboradores
   const { user } = useAuth();
   const { getProdutorIdsFiltrados, filtros } = useFiltros();
 
-  useEffect(() => { load(); }, [filtros]);
+  useEffect(() => { load(); }, [filtros, filtroSubRegiao]);
   
   // Recarrega quando retorna para a tela
   useFocusEffect(
@@ -71,21 +72,38 @@ export default function VisitasScreen() {
         visitasData = todasVisitas.filter(v => produtorIdsFiltrados.includes(v.produtor_id));
         produtoresData = todosProdutores.filter(p => produtorIdsFiltrados.includes(p.id));
       } else if (user?.perfil === 'colaborador') {
-        // Colaborador vê apenas suas visitas e produtores da sua região
+        // Colaborador vê visitas dos produtores da sua região/sub-regiões
         const [todasVisitas, todosProdutores] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
-        visitasData = todasVisitas.filter(v => v.tecnico_responsavel === user.full_name);
-        produtoresData = todosProdutores.filter(p => p.regiao === user.regiao);
-      } else if (user?.perfil === 'cliente') {
-        // Cliente vê apenas visitas do seu produtor
+        // Filtrar produtores por região principal OU microregião nas sub_regiões
+        produtoresData = todosProdutores.filter(p => {
+          if (p.regiao === user.regiao) return true;
+          if (user.sub_regioes && p.microregiao) {
+            return user.sub_regioes.includes(p.microregiao);
+          }
+          return false;
+        });
+        // Aplicar sub-filtro de microregião se selecionado
+        if (filtroSubRegiao !== 'todas') {
+          produtoresData = produtoresData.filter(p => p.microregiao === filtroSubRegiao);
+        }
+        const idsRegiao = produtoresData.map(p => p.id);
+        visitasData = todasVisitas.filter(v => idsRegiao.includes(v.produtor_id));
+      } else if (user?.perfil === 'produtor') {
+        // Produtor/Proprietário vê apenas visitas das suas fazendas (somente visualização)
         const [todasVisitas, todosProdutores] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
-        visitasData = todasVisitas.filter(v => v.produtor_id === user.produtor_id);
-        produtoresData = todosProdutores.filter(p => p.id === user.produtor_id);
+        // Buscar todas as fazendas do proprietário
+        const minhasFazendas = todosProdutores.filter(p => 
+          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
+        );
+        const meusIds = minhasFazendas.map(p => p.id);
+        visitasData = todasVisitas.filter(v => meusIds.includes(v.produtor_id));
+        produtoresData = minhasFazendas;
       } else {
         // Sem usuário, carrega tudo (fallback)
         [visitasData, produtoresData] = await Promise.all([
@@ -318,6 +336,33 @@ export default function VisitasScreen() {
           </>
         )}
       </LinearGradient>
+
+      {/* Filtro de Sub-região para colaboradores */}
+      {user?.perfil === 'colaborador' && user.sub_regioes && user.sub_regioes.length > 0 && (
+        <View style={styles.subRegiaoContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subRegiaoScroll}>
+            <TouchableOpacity
+              style={[styles.subRegiaoChip, filtroSubRegiao === 'todas' && styles.subRegiaoChipAtivo]}
+              onPress={() => setFiltroSubRegiao('todas')}
+            >
+              <Text style={[styles.subRegiaoChipText, filtroSubRegiao === 'todas' && styles.subRegiaoChipTextAtivo]}>
+                Todas ({user.regiao})
+              </Text>
+            </TouchableOpacity>
+            {user.sub_regioes.map(sr => (
+              <TouchableOpacity
+                key={sr}
+                style={[styles.subRegiaoChip, filtroSubRegiao === sr && styles.subRegiaoChipAtivo]}
+                onPress={() => setFiltroSubRegiao(sr)}
+              >
+                <Text style={[styles.subRegiaoChipText, filtroSubRegiao === sr && styles.subRegiaoChipTextAtivo]}>
+                  {sr}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <ScrollView 
         contentContainerStyle={styles.content}
@@ -725,6 +770,36 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: colors.background 
+  },
+  subRegiaoContainer: {
+    backgroundColor: '#F8FBF8',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  subRegiaoScroll: {
+    paddingHorizontal: spacing.md,
+    gap: 8,
+  },
+  subRegiaoChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  subRegiaoChipAtivo: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  subRegiaoChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  subRegiaoChipTextAtivo: {
+    color: '#FFFFFF',
   },
   searchContainer: {
     backgroundColor: colors.card,

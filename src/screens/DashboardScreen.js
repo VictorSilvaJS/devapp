@@ -65,40 +65,65 @@ export default function DashboardScreen() {
         // Atualizar texto de localização
         setCidade(getFiltroAtivo());
       } 
-      // COLABORADOR - Acesso à sua região
+      // COLABORADOR - Acesso à sua região/sub-regiões
       else if (user?.perfil === 'colaborador') {
         if (user.regiao) {
-          produtores = await Produtor.list(); // filtrar por região na implementação real
-          visitas = await Visita.list(); // filtrar por técnico responsável
-          registros = await CadernoCampo.list(); // filtrar por colaborador
+          const todosProdutores = await Produtor.list();
+          // Filtrar produtores por região principal OU microregião nas sub_regiões
+          produtores = todosProdutores.filter(p => {
+            if (p.regiao === user.regiao) return true;
+            if (user.sub_regioes && p.microregiao) {
+              return user.sub_regioes.includes(p.microregiao);
+            }
+            return false;
+          });
+          const idsRegiao = produtores.map(p => p.id);
+          
+          const todasVisitas = await Visita.list();
+          visitas = todasVisitas.filter(v => idsRegiao.includes(v.produtor_id));
+          
+          const todosRegistros = await CadernoCampo.list();
+          registros = todosRegistros.filter(r => idsRegiao.includes(r.produtor_id));
+          
           setCidade(user.regiao || 'Região não definida');
         } else {
           setCidade('Região não definida');
         }
       } 
-      // CLIENTE - Acesso apenas à sua propriedade
-      else if (user?.perfil === 'cliente') {
+      // CLIENTE/PRODUTOR/PROPRIETÁRIO - Acesso apenas à sua propriedade
+      else if (user?.perfil === 'produtor') {
         if (user.produtor_id) {
           try {
-            const produtor = await Produtor.get(user.produtor_id);
-            produtores = [produtor];
-            setCidade(`${produtor.cidade || 'Cidade'}, ${produtor.estado || 'Estado'}`);
+            // Buscar todas as fazendas do proprietário (relação 1:N)
+            const todosProdutores = await Produtor.list();
+            produtores = todosProdutores.filter(p => 
+              p.proprietario_id === user.produtor_id || p.id === user.produtor_id
+            );
+            if (produtores.length > 0) {
+              const primeiraProp = produtores[0];
+              setCidade(`${primeiraProp.cidade || 'Cidade'}, ${primeiraProp.estado || 'Estado'}`);
+            } else {
+              setCidade('Propriedade não encontrada');
+            }
             
-            // Filtrar visitas do produtor do cliente
+            // IDs de todas as fazendas do proprietário
+            const meusIds = produtores.map(p => p.id);
+            
+            // Filtrar visitas das fazendas do proprietário
             const todasVisitas = await Visita.list();
-            visitas = todasVisitas.filter(v => v.produtor_id === user.produtor_id);
+            visitas = todasVisitas.filter(v => meusIds.includes(v.produtor_id));
             
-            // Filtrar registros do produtor que são visíveis para o cliente
+            // Filtrar registros que são visíveis para o proprietário
             const todosRegistros = await CadernoCampo.list();
             registros = todosRegistros.filter(r => 
-              r.produtor_id === user.produtor_id && r.visivel_para_cliente === true
+              meusIds.includes(r.produtor_id) && r.visivel_para_produtor === true
             );
           } catch (error) {
             console.error('Erro ao carregar dados do produtor:', error);
             setCidade('Propriedade não encontrada');
           }
         } else {
-          console.warn('Cliente sem produtor_id associado');
+          console.warn('Produtor sem produtor_id associado');
           setCidade('Aguardando vinculação');
         }
       }
@@ -221,10 +246,20 @@ export default function DashboardScreen() {
         },
       ];
     } else {
-      // Cliente
+      // Produtor / Proprietário
       return [
         {
-          label: 'Minha Área',
+          label: 'Minhas Fazendas',
+          value: stats.produtores,
+          icon: <Ionicons name="business-outline" size={24} color={colors.primary} />,
+          accent: {
+            color: colors.primary,
+            bgColor: '#e8f5e8',
+            gradient: ['#e8f5e8', '#FFFFFF']
+          },
+        },
+        {
+          label: 'Minha Área Total',
           value: stats.areaTotal,
           icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
           accent: {
@@ -257,6 +292,9 @@ export default function DashboardScreen() {
     }
   }, [user?.perfil, stats]);
 
+  // Determinar se é proprietário/produtor
+  const isProdutorPerfil = user?.perfil === 'produtor';
+
   return (
     <View style={styles.container}>
       <Header title="Dashboard" />
@@ -288,7 +326,7 @@ export default function DashboardScreen() {
             <Text style={styles.subtitle} numberOfLines={2}>
               {user?.perfil === 'admin' && 'Painel de Administração Geral'}
               {user?.perfil === 'colaborador' && 'Painel de Consultoria'}
-              {user?.perfil === 'cliente' && 'Visão Geral da sua Propriedade'}
+              {user?.perfil === 'produtor' && 'Visão Geral das suas Propriedades'}
             </Text>
 
             {/* Filtros Regionais - apenas para Admin */}
@@ -323,16 +361,16 @@ export default function DashboardScreen() {
           {/* Grade de cards dinâmica por perfil */}
           <View style={styles.statsGrid}>
             {getCardsPrincipais.map((card, index) => {
-              // Para cliente: 2 cards na primeira linha, 1 na segunda (centralizado)
-              const isCliente = user?.perfil === 'cliente';
-              const isLastCardForCliente = isCliente && index === 2;
+              // Para produtor/proprietário: layout especial
+              const isProdutor = user?.perfil === 'produtor';
+              const isLastCardForProdutor = isProdutor && index === getCardsPrincipais.length - 1 && getCardsPrincipais.length % 2 !== 0;
               
               return (
                 <View 
                   key={card.label} 
                   style={[
                     styles.statCardWrapper,
-                    isLastCardForCliente ? styles.statCardFullWidth : styles.statCardTwoColumns
+                    isLastCardForProdutor ? styles.statCardFullWidth : styles.statCardTwoColumns
                   ]}
                 >
                   <StatCard {...card} />
@@ -341,8 +379,8 @@ export default function DashboardScreen() {
             })}
           </View>
 
-          {/* Mensagem para clientes sem produtor vinculado */}
-          {user?.perfil === 'cliente' && !user?.produtor_id && (
+          {/* Mensagem para produtores sem produtor vinculado */}
+          {user?.perfil === 'produtor' && !user?.produtor_id && (
             <View style={styles.warningCard}>
               <Ionicons name="alert-circle-outline" size={48} color={colors.warning} />
               <Text style={styles.warningTitle}>Aguardando Vinculação</Text>

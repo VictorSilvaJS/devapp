@@ -22,7 +22,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
   };
 
   const getPerfilColor = () => {
-    const perfil = user?.perfil || 'cliente';
+    const perfil = user?.perfil || 'produtor';
     switch (perfil) {
       case 'admin':
         return [colors.primary, colors.primaryDark];
@@ -60,7 +60,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
           </Text>
           <View style={styles.badge}>
             <Text style={styles.perfil}>
-              {user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : 'Cliente'}
+              {user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : 'Produtor'}
             </Text>
           </View>
         </View>

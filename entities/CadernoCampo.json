@@ -58,7 +58,7 @@
       },
       "description": "URLs das fotos"
     },
-    "visivel_para_cliente": {
+    "visivel_para_produtor": {
       "type": "boolean",
       "default": true,
       "description": "Se o registro é visível para o cliente"

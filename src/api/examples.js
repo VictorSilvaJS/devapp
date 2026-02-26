@@ -35,16 +35,16 @@ export const exemplosCriarUsuario = async () => {
     });
     console.log('Colaborador criado:', colaborador);
 
-    // Criar um cliente vinculado a produtor
-    const cliente = await User.create({
-      nome: 'Novo Cliente',
-      email: 'cliente@email.com',
+    // Criar um produtor/proprietário vinculado
+    const proprietario = await User.create({
+      nome: 'Novo Proprietário',
+      email: 'proprietario@email.com',
       senha: 'hash456',
-      perfil: 'cliente',
+      perfil: 'produtor',
       produtor_id: 'p1',
       telefone: '(51) 98888-8888'
     });
-    console.log('Cliente criado:', cliente);
+    console.log('Proprietário criado:', proprietario);
 
   } catch (error) {
     console.error('Erro ao criar usuário:', error.message);
@@ -190,7 +190,7 @@ export const exemplosCriarCadernoCampo = async () => {
       observacoes: 'Aplicação realizada conforme recomendação técnica.',
       recomendacoes: 'Monitorar desenvolvimento nas próximas 2 semanas.',
       fotos: ['aplicacao1.jpg'],
-      visivel_para_cliente: true
+      visivel_para_produtor: true
     });
     console.log('Registro criado:', registro);
 
@@ -209,7 +209,7 @@ export const exemplosFiltrarCadernoCampo = async () => {
   console.log('Registros de plantio:', plantios.length);
 
   // Registros visíveis para cliente
-  const visiveis = await CadernoCampo.filter({ visivel_para_cliente: true });
+  const visiveis = await CadernoCampo.filter({ visivel_para_produtor: true });
   console.log('Registros visíveis:', visiveis.length);
 
   // Registros por colaborador
@@ -330,17 +330,17 @@ export const exemploFluxoCompleto = async () => {
     });
     console.log(`✓ Produtor criado: ${produtor.nome} (${produtor.id})\n`);
 
-    // 2. Criar usuário cliente vinculado ao produtor
-    console.log('2. Criando usuário cliente...');
-    const cliente = await User.create({
+    // 2. Criar usuário proprietário vinculado ao produtor
+    console.log('2. Criando usuário proprietário...');
+    const proprietario = await User.create({
       nome: 'Fernando Alves',
       email: 'fernando@fazenda.com',
       senha: 'hash123',
-      perfil: 'cliente',
+      perfil: 'produtor',
       produtor_id: produtor.id,
       telefone: '(55) 98765-4321'
     });
-    console.log(`✓ Cliente criado: ${cliente.nome}\n`);
+    console.log(`✓ Proprietário criado: ${proprietario.nome}\n`);
 
     // 3. Agendar visita técnica
     console.log('3. Agendando visita técnica...');
@@ -363,7 +363,7 @@ export const exemploFluxoCompleto = async () => {
       talhao: 'Talhão Principal',
       observacoes: 'Primeira vistoria técnica. Propriedade em boas condições.',
       recomendacoes: 'Realizar análise de solo completa.',
-      visivel_para_cliente: true
+      visivel_para_produtor: true
     });
     console.log(`✓ Atividade registrada: ${atividade.tipo_atividade}\n`);
 

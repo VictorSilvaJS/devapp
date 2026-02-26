@@ -3,56 +3,161 @@
 import { validateUser, validateProdutor, validateVisita, validateCadernoCampo, validateMapa } from './validators';
 
 // Usuários do sistema
+// NOTA: "produtor" = "cliente" = "proprietário" - mesma pessoa (dono da fazenda)
+// Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo proprietário
 const users = [
+  // ADMINISTRADORES - Acesso total ao Brasil
   {
     id: 'u1',
-    nome: 'Admin Sistema',
-    email: 'admin@agro.com',
-    senha: 'hash123',
+    nome: 'Bruna Administradora',
+    email: 'bruna@agrotche.com',
+    senha: 'admin123',
     perfil: 'admin',
     telefone: '(51) 99999-9999',
+    regioes_acesso: ['Brasil'],
     ativo: true,
     data_cadastro: new Date('2024-01-01').toISOString()
   },
   {
+    id: 'u1b',
+    nome: 'César Administrador',
+    email: 'cesar@agrotche.com',
+    senha: 'admin123',
+    perfil: 'admin',
+    telefone: '(51) 99998-9998',
+    regioes_acesso: ['Brasil'],
+    ativo: true,
+    data_cadastro: new Date('2024-01-01').toISOString()
+  },
+  // COLABORADORES - Mesmas funções do admin, LIMITADO à região
+  {
     id: 'u2',
     nome: 'Carlos Silva',
-    email: 'carlos@agro.com',
-    senha: 'hash456',
+    email: 'carlos@agrotche.com',
+    senha: 'colab123',
     perfil: 'colaborador',
-    regiao: 'RS - Norte',
-    telefone: '(51) 98888-8888',
+    regiao: 'Goiás',
+    sub_regioes: ['Goiás 1', 'Rio Verde', 'Jataí'],
+    telefone: '(62) 98888-8888',
     ativo: true,
     data_cadastro: new Date('2024-02-15').toISOString()
   },
   {
     id: 'u3',
     nome: 'Ana Santos',
-    email: 'ana@agro.com',
-    senha: 'hash789',
+    email: 'ana@agrotche.com',
+    senha: 'colab123',
     perfil: 'colaborador',
-    regiao: 'RS - Sul',
+    regiao: 'Sul',
+    sub_regioes: ['RS - Norte', 'RS - Centro', 'RS - Sul'],
     telefone: '(51) 97777-7777',
     ativo: true,
     data_cadastro: new Date('2024-03-10').toISOString()
   },
   {
-    id: 'u4',
+    id: 'u5',
+    nome: 'Marcos Ferreira',
+    email: 'marcos@agrotche.com',
+    senha: 'colab123',
+    perfil: 'colaborador',
+    regiao: 'Mato Grosso',
+    sub_regioes: ['MT - Norte', 'Sorriso', 'Lucas do Rio Verde'],
+    telefone: '(65) 97776-7776',
+    ativo: true,
+    data_cadastro: new Date('2024-04-01').toISOString()
+  },
+  {
+    id: 'u6',
+    nome: 'Patrícia Lima',
+    email: 'patricia@agrotche.com',
+    senha: 'colab123',
+    perfil: 'colaborador',
+    regiao: 'Goiás',
+    sub_regioes: ['Goiás 2', 'Goiânia', 'Anápolis'],
+    telefone: '(62) 97775-7775',
+    ativo: true,
+    data_cadastro: new Date('2024-04-10').toISOString()
+  },
+  // PRODUTORES / CLIENTES / PROPRIETÁRIOS - Donos de fazenda
+  // Produtor = Cliente = Proprietário (dono da fazenda)
+  // Um proprietário pode ter VÁRIAS fazendas (relação 1:N via proprietario_id)
+  {
+    id: 'u7',
     nome: 'João Silva',
     email: 'joao.silva@email.com',
-    senha: 'hash321',
-    perfil: 'cliente',
-    produtor_id: 'p1',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop1', // proprietário - várias fazendas vinculadas
     telefone: '(51) 96666-6666',
     ativo: true,
     data_cadastro: new Date('2024-04-20').toISOString()
+  },
+  {
+    id: 'u8',
+    nome: 'Maria Silva', // Esposa do João - mesmo proprietário
+    email: 'maria.silva@email.com',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop1', // MESMO proprietário que o João
+    telefone: '(51) 96665-6665',
+    ativo: true,
+    data_cadastro: new Date('2024-04-20').toISOString()
+  },
+  {
+    id: 'u9',
+    nome: 'Roberto Oliveira',
+    email: 'roberto@email.com',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop2',
+    telefone: '(62) 93333-3333',
+    ativo: true,
+    data_cadastro: new Date('2024-03-15').toISOString()
+  },
+  {
+    id: 'u10',
+    nome: 'Fernanda Costa',
+    email: 'fernanda@email.com',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop3',
+    telefone: '(65) 92222-2222',
+    ativo: true,
+    data_cadastro: new Date('2024-02-01').toISOString()
+  },
+  {
+    id: 'u11',
+    nome: 'Pedro Santos',
+    email: 'pedro.santos@email.com',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop_pedro',
+    telefone: '(54) 94444-4444',
+    ativo: true,
+    data_cadastro: new Date('2024-06-01').toISOString()
+  },
+  {
+    id: 'u12',
+    nome: 'Maria Pereira',
+    email: 'maria.pereira@email.com',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop_maria',
+    telefone: '(55) 95555-5555',
+    ativo: true,
+    data_cadastro: new Date('2024-05-10').toISOString()
   }
 ];
 
-// Produtores
+// Produtores / Fazendas
+// IMPORTANTE: Produtor = Cliente = Proprietário (dono da fazenda)
+// Um proprietário pode ter VÁRIAS fazendas (relação 1:N)
+// proprietario_id vincula a fazenda ao dono
 const produtores = [
+  // ─── Fazendas do proprietário "prop1" (João Silva) ───
   {
     id: 'p1',
+    proprietario_id: 'prop1', // João e Maria Silva (mesma família)
     nome: 'João Silva',
     fazenda: 'Fazenda Boa Vista',
     area_total: 850,
@@ -70,7 +175,28 @@ const produtores = [
     data_cadastro: new Date('2024-04-20').toISOString()
   },
   {
+    id: 'p1b',
+    proprietario_id: 'prop1', // Segunda fazenda do João Silva
+    nome: 'João Silva',
+    fazenda: 'Fazenda Horizonte',
+    area_total: 420,
+    cultura_atual: 'Milho',
+    telefone: '(51) 96666-6666',
+    email: 'joao.silva@email.com',
+    endereco: 'Estrada Rural, Km 20',
+    cidade: 'Cruz Alta',
+    estado: 'RS',
+    regiao: 'Sul',
+    microregiao: 'RS - Norte',
+    cep: '98100-000',
+    ultima_analise: new Date('2024-11-01').toISOString(),
+    status: 'ativo',
+    data_cadastro: new Date('2024-06-15').toISOString()
+  },
+  // ─── Outras fazendas ───
+  {
     id: 'p2',
+    proprietario_id: 'prop_maria', // Proprietária: Maria Pereira
     nome: 'Maria Pereira',
     fazenda: 'Sítio Esperança',
     area_total: 120,
@@ -89,6 +215,7 @@ const produtores = [
   },
   {
     id: 'p3',
+    proprietario_id: 'prop_pedro', // Proprietário: Pedro Santos
     nome: 'Pedro Santos',
     fazenda: 'Estância Santa Clara',
     area_total: 500,
@@ -104,8 +231,10 @@ const produtores = [
     status: 'ativo',
     data_cadastro: new Date('2024-06-01').toISOString()
   },
+  // ─── Fazendas do proprietário "prop2" (Roberto Oliveira) ───
   {
     id: 'p4',
+    proprietario_id: 'prop2', // Roberto Oliveira
     nome: 'Roberto Oliveira',
     fazenda: 'Fazenda Planalto',
     area_total: 1200,
@@ -116,14 +245,35 @@ const produtores = [
     cidade: 'Rio Verde',
     estado: 'GO',
     regiao: 'Goiás',
-    microregiao: 'GO - Sul',
+    microregiao: 'Rio Verde',
     cep: '75900-000',
     ultima_analise: new Date('2024-11-01').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-03-15').toISOString()
   },
   {
+    id: 'p4b',
+    proprietario_id: 'prop2', // Segunda fazenda do Roberto
+    nome: 'Roberto Oliveira',
+    fazenda: 'Fazenda Cerrado Alto',
+    area_total: 800,
+    cultura_atual: 'Milho',
+    telefone: '(62) 93333-3333',
+    email: 'roberto.oliveira@email.com',
+    endereco: 'GO-060, Km 150',
+    cidade: 'Jataí',
+    estado: 'GO',
+    regiao: 'Goiás',
+    microregiao: 'Jataí',
+    cep: '75800-000',
+    ultima_analise: new Date('2024-10-20').toISOString(),
+    status: 'ativo',
+    data_cadastro: new Date('2024-05-20').toISOString()
+  },
+  // ─── Fazendas do proprietário "prop3" (Fernanda Costa) ───
+  {
     id: 'p5',
+    proprietario_id: 'prop3', // Fernanda Costa
     nome: 'Fernanda Costa',
     fazenda: 'Agrícola Cerrado Verde',
     area_total: 2500,
@@ -134,11 +284,30 @@ const produtores = [
     cidade: 'Sorriso',
     estado: 'MT',
     regiao: 'Mato Grosso',
-    microregiao: 'MT - Norte',
+    microregiao: 'Sorriso',
     cep: '78890-000',
     ultima_analise: new Date('2024-10-25').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-02-01').toISOString()
+  },
+  {
+    id: 'p5b',
+    proprietario_id: 'prop3', // Segunda fazenda da Fernanda
+    nome: 'Fernanda Costa',
+    fazenda: 'Fazenda Ouro Verde',
+    area_total: 1800,
+    cultura_atual: 'Soja',
+    telefone: '(65) 92222-2222',
+    email: 'fernanda.costa@email.com',
+    endereco: 'MT-242, Km 30',
+    cidade: 'Lucas do Rio Verde',
+    estado: 'MT',
+    regiao: 'Mato Grosso',
+    microregiao: 'Lucas do Rio Verde',
+    cep: '78455-000',
+    ultima_analise: new Date('2024-11-10').toISOString(),
+    status: 'ativo',
+    data_cadastro: new Date('2024-03-01').toISOString()
   }
 ];
 
@@ -194,6 +363,70 @@ const visitas = [
     clima: 'Chuvoso',
     proximaVisita: new Date(Date.now() + 86400000 * 60).toISOString(),
     status: 'realizada'
+  },
+  // ─── Visitas em Goiás (Carlos e Patrícia) ───
+  {
+    id: 'v5',
+    produtor_id: 'p4', // Fazenda Planalto - Rio Verde (Carlos)
+    tecnico_responsavel: 'Carlos Silva',
+    data_visita: new Date(Date.now() - 86400000 * 3).toISOString(),
+    objetivo: 'consultoria',
+    observacoes: 'Avaliação geral da lavoura de soja. Desenvolvimento dentro do esperado para o estágio V6.',
+    recomendacoes: 'Aplicar fungicida preventivo nos próximos 10 dias.',
+    fotos: ['visita5_foto1.jpg', 'visita5_foto2.jpg'],
+    clima: 'Ensolarado, 32°C',
+    proximaVisita: new Date(Date.now() + 86400000 * 20).toISOString(),
+    status: 'realizada'
+  },
+  {
+    id: 'v6',
+    produtor_id: 'p4b', // Fazenda Cerrado Alto - Jataí (Carlos)
+    tecnico_responsavel: 'Carlos Silva',
+    data_visita: new Date(Date.now() + 86400000 * 5).toISOString(),
+    objetivo: 'coleta_solo',
+    observacoes: '',
+    recomendacoes: '',
+    fotos: [],
+    clima: '',
+    status: 'agendada'
+  },
+  {
+    id: 'v7',
+    produtor_id: 'p4', // Fazenda Planalto - Rio Verde (Carlos)
+    tecnico_responsavel: 'Carlos Silva',
+    data_visita: new Date(Date.now() - 86400000 * 20).toISOString(),
+    objetivo: 'avaliacao_cultivo',
+    observacoes: 'Primeira visita da safra. Lavoura recém-plantada.',
+    recomendacoes: 'Monitorar germinação e stand de plantas.',
+    fotos: ['visita7_foto1.jpg'],
+    clima: 'Parcialmente nublado, 28°C',
+    status: 'realizada'
+  },
+  // ─── Visitas em Mato Grosso (Marcos) ───
+  {
+    id: 'v8',
+    produtor_id: 'p5', // Agrícola Cerrado Verde - Sorriso (Marcos)
+    tecnico_responsavel: 'Marcos Ferreira',
+    data_visita: new Date(Date.now() - 86400000 * 2).toISOString(),
+    objetivo: 'consultoria',
+    observacoes: 'Avaliação de algodão em estágio avançado. Excelente desenvolvimento.',
+    recomendacoes: 'Programar colheita para as próximas 3 semanas.',
+    fotos: ['visita8_foto1.jpg', 'visita8_foto2.jpg', 'visita8_foto3.jpg'],
+    clima: 'Ensolarado, 35°C',
+    proximaVisita: new Date(Date.now() + 86400000 * 15).toISOString(),
+    status: 'realizada'
+  },
+  {
+    id: 'v9',
+    produtor_id: 'p5b', // Fazenda Ouro Verde - Lucas do Rio Verde (Marcos)
+    tecnico_responsavel: 'Marcos Ferreira',
+    data_visita: new Date(Date.now() + 86400000 * 10).toISOString(),
+    objetivo: 'coleta_solo',
+    observacoes: '',
+    recomendacoes: '',
+    fotos: [],
+    clima: '',
+    status: 'agendada'
   }
 ];
 
@@ -210,7 +443,7 @@ const cadernos = [
     area_aplicada: 50,
     condicoes_clima: 'Ensolarado, 22°C',
     observacoes: 'Aplicação realizada com boa distribuição. Solo em boas condições de umidade.',
-    visivel_para_cliente: true,
+    visivel_para_produtor: true,
     fotos: ['foto1.jpg', 'foto2.jpg']
   },
   {
@@ -225,7 +458,7 @@ const cadernos = [
     area_aplicada: 30,
     condicoes_clima: 'Parcialmente nublado, 20°C',
     observacoes: 'Plantio realizado com sementes selecionadas. Espaçamento de 50cm entre linhas.',
-    visivel_para_cliente: true,
+    visivel_para_produtor: true,
     fotos: ['foto3.jpg']
   },
   {
@@ -239,7 +472,7 @@ const cadernos = [
     area_aplicada: null,
     condicoes_clima: 'Ensolarado, 28°C',
     observacoes: 'Vistoria de rotina. Identificada presença leve de lagarta do cartucho. População abaixo do nível de controle.',
-    visivel_para_cliente: false,
+    visivel_para_produtor: false,
     fotos: []
   },
   {
@@ -253,7 +486,7 @@ const cadernos = [
     area_aplicada: null,
     condicoes_clima: 'Nublado, 18°C',
     observacoes: 'Coleta de amostras para análise completa de solo. 10 pontos coletados em zigue-zague.',
-    visivel_para_cliente: true,
+    visivel_para_produtor: true,
     fotos: ['foto4.jpg', 'foto5.jpg', 'foto6.jpg']
   },
   {
@@ -268,7 +501,7 @@ const cadernos = [
     area_aplicada: 75,
     condicoes_clima: 'Ensolarado, sem vento, 24°C',
     observacoes: 'Aplicação de fungicida preventivo. Condições climáticas favoráveis para aplicação.',
-    visivel_para_cliente: true,
+    visivel_para_produtor: true,
     fotos: []
   },
   {
@@ -282,8 +515,69 @@ const cadernos = [
     area_aplicada: 120,
     condicoes_clima: 'Seco, 26°C',
     observacoes: 'Colheita iniciada. Produtividade estimada em 4.800 kg/ha. Grãos com boa qualidade.',
-    visivel_para_cliente: true,
+    visivel_para_produtor: true,
     fotos: ['colheita1.jpg']
+  },
+  // ─── Cadernos em Goiás (Carlos) ───
+  {
+    id: 'c7',
+    produtor_id: 'p4', // Fazenda Planalto - Rio Verde
+    colaborador_responsavel: 'Carlos Silva',
+    data_atividade: new Date(Date.now() - 86400000 * 1).toISOString(),
+    tipo_atividade: 'adubacao',
+    talhao: 'Pivô Central',
+    produtos_utilizados: ['MAP', 'KCl'],
+    dosagem: '250 kg/ha',
+    area_aplicada: 200,
+    condicoes_clima: 'Ensolarado, 30°C',
+    observacoes: 'Adubação de cobertura realizada com sucesso.',
+    visivel_para_produtor: true,
+    fotos: ['caderno7_foto1.jpg']
+  },
+  {
+    id: 'c8',
+    produtor_id: 'p4b', // Fazenda Cerrado Alto - Jataí
+    colaborador_responsavel: 'Carlos Silva',
+    data_atividade: new Date(Date.now() - 86400000 * 4).toISOString(),
+    tipo_atividade: 'aplicacao',
+    talhao: 'Área 2',
+    produtos_utilizados: ['Herbicida Glifosato'],
+    dosagem: '2,5 L/ha',
+    area_aplicada: 150,
+    condicoes_clima: 'Nublado, 27°C',
+    observacoes: 'Aplicação de dessecação pré-plantio.',
+    visivel_para_produtor: true,
+    fotos: []
+  },
+  // ─── Cadernos em Mato Grosso (Marcos) ───
+  {
+    id: 'c9',
+    produtor_id: 'p5', // Agrícola Cerrado Verde - Sorriso
+    colaborador_responsavel: 'Marcos Ferreira',
+    data_atividade: new Date(Date.now() - 86400000 * 2).toISOString(),
+    tipo_atividade: 'vistoria',
+    talhao: 'Talhão B3',
+    produtos_utilizados: [],
+    area_aplicada: null,
+    condicoes_clima: 'Ensolarado, 34°C',
+    observacoes: 'Vistoria de acompanhamento do ciclo do algodão. Sem pragas detectadas.',
+    visivel_para_produtor: true,
+    fotos: ['caderno9_foto1.jpg', 'caderno9_foto2.jpg']
+  },
+  {
+    id: 'c10',
+    produtor_id: 'p5b', // Fazenda Ouro Verde - Lucas do Rio Verde
+    colaborador_responsavel: 'Marcos Ferreira',
+    data_atividade: new Date(Date.now() - 86400000 * 6).toISOString(),
+    tipo_atividade: 'plantio',
+    talhao: 'Área Norte',
+    produtos_utilizados: ['Semente Soja TMG 2381'],
+    dosagem: '14 sementes/m',
+    area_aplicada: 300,
+    condicoes_clima: 'Parcialmente nublado, 31°C',
+    observacoes: 'Plantio de soja safrinha concluído. Solo com boa umidade.',
+    visivel_para_produtor: true,
+    fotos: ['caderno10_foto1.jpg']
   }
 ];
 
@@ -310,7 +604,7 @@ const mapas = [
       ]
     },
     observacoes: 'Mapa gerado a partir de análise de solo detalhada.',
-    disponivel_para_download: true
+    disponivel_download: true
   },
   {
     id: 'm2',
@@ -326,7 +620,7 @@ const mapas = [
       longitude: -53.6065
     },
     observacoes: 'NDVI obtido via imagem de satélite.',
-    disponivel_para_download: true
+    disponivel_download: true
   },
   {
     id: 'm3',
@@ -342,7 +636,7 @@ const mapas = [
       longitude: -53.8069
     },
     observacoes: 'Recomendações de calcário e gesso.',
-    disponivel_para_download: false
+    disponivel_download: false
   },
   {
     id: 'm4',
@@ -486,6 +780,69 @@ const mapas = [
     disponivel_download: true,
     coordenadas: { latitude: -17.7832, longitude: -50.9154 },
     observacoes: 'Distribuição de matéria orgânica no solo - Goiás.'
+  },
+  // ─── Mapas para Goiás (p4 e p4b) ───
+  {
+    id: 'm13',
+    titulo: 'NDVI - Fazenda Planalto',
+    categoria: 'indice_vegetacao',
+    subcategoria: 'NDVI',
+    produtor_id: 'p4',
+    talhao: 'Pivô Central',
+    data_criacao: new Date('2024-11-25').toISOString(),
+    safra: '2024/2025',
+    arquivo_url: 'mapas/ndvi_p4_pivo.jpg',
+    formato_arquivo: 'jpg',
+    tamanho_arquivo: 3500000,
+    disponivel_download: true,
+    coordenadas: { latitude: -17.7832, longitude: -50.9154 },
+    observacoes: 'Índice de vegetação da lavoura de soja - Rio Verde.'
+  },
+  {
+    id: 'm14',
+    titulo: 'Mapa de Fertilidade - Cerrado Alto',
+    categoria: 'fertilidade',
+    produtor_id: 'p4b',
+    talhao: 'Área 2',
+    data_criacao: new Date('2024-10-28').toISOString(),
+    safra: '2024/2025',
+    arquivo_url: 'mapas/fertilidade_p4b_area2.pdf',
+    formato_arquivo: 'pdf',
+    tamanho_arquivo: 2100000,
+    disponivel_download: true,
+    coordenadas: { latitude: -17.8821, longitude: -51.7149 },
+    observacoes: 'Análise de fertilidade do solo - Jataí.'
+  },
+  // ─── Mapas para Mato Grosso (p5 e p5b) ───
+  {
+    id: 'm15',
+    titulo: 'Panorama - Agrícola Cerrado Verde',
+    categoria: 'panorama',
+    produtor_id: 'p5',
+    talhao: 'Completo',
+    data_criacao: new Date('2024-11-20').toISOString(),
+    safra: '2024/2025',
+    arquivo_url: 'mapas/panorama_p5_completo.jpg',
+    formato_arquivo: 'jpg',
+    tamanho_arquivo: 5600000,
+    disponivel_download: true,
+    coordenadas: { latitude: -12.5496, longitude: -55.7148 },
+    observacoes: 'Vista aérea da propriedade em Sorriso - MT.'
+  },
+  {
+    id: 'm16',
+    titulo: 'Mapa de Correção - Fazenda Ouro Verde',
+    categoria: 'correcao',
+    produtor_id: 'p5b',
+    talhao: 'Área Norte',
+    data_criacao: new Date('2024-10-15').toISOString(),
+    safra: '2024/2025',
+    arquivo_url: 'mapas/correcao_p5b_norte.pdf',
+    formato_arquivo: 'pdf',
+    tamanho_arquivo: 1890000,
+    disponivel_download: true,
+    coordenadas: { latitude: -13.0497, longitude: -55.9064 },
+    observacoes: 'Recomendação de calcário e gesso - Lucas do Rio Verde.'
   }
 ];
 
@@ -701,7 +1058,7 @@ export const CadernoCampo = {
         const novo = { 
           id, 
           ...data,
-          visivel_para_cliente: data.visivel_para_cliente !== undefined ? data.visivel_para_cliente : true,
+          visivel_para_produtor: data.visivel_para_produtor !== undefined ? data.visivel_para_produtor : true,
           fotos: data.fotos || [],
           data_criacao: new Date().toISOString()
         };
@@ -763,7 +1120,7 @@ export const Mapa = {
           id, 
           ...data,
           data_criacao: new Date().toISOString(),
-          disponivel_para_download: data.disponivel_para_download !== undefined ? data.disponivel_para_download : true
+          disponivel_download: data.disponivel_download !== undefined ? data.disponivel_download : true
         };
         mapas.unshift(novo);
         res(novo);

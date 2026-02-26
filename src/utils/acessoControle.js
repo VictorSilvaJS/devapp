@@ -1,99 +1,154 @@
 /**
  * Utilitários para controle de acesso baseado em perfil e região
+ * 
+ * PERFIS:
+ * - admin: Bruna/César - acesso TOTAL ao Brasil
+ * - colaborador: Mesmas funcionalidades do admin, mas LIMITADO à sua região/sub-regiões
+ * - produtor: (= cliente = proprietário) - Dono da fazenda
+ *   - Apenas visualização e download
+ *   - Pode incluir dados apenas no caderno de campo
+ *   - NÃO pode editar ou incluir outros dados
+ *   - Um produtor pode ter VÁRIAS fazendas (1:N)
+ *   - Várias pessoas podem ter login vinculado ao mesmo proprietário
  */
 
+// ────────────────────────────────────────────────────────────────
+// HELPERS DE PERFIL
+// ────────────────────────────────────────────────────────────────
+
 /**
- * Verifica se um usuário tem acesso a um produtor
- * @param {Object} user - Usuário logado
- * @param {Object} produtor - Produtor a ser verificado
- * @returns {boolean}
+ * Verifica se o usuário é administrador
+ */
+export const isAdmin = (user) => user?.perfil === 'admin';
+
+/**
+ * Verifica se o usuário é colaborador
+ */
+export const isColaborador = (user) => user?.perfil === 'colaborador';
+
+/**
+ * Verifica se o usuário é produtor/cliente/proprietário
+ * Todos os termos se referem à mesma pessoa: o dono da fazenda
+ */
+export const isProdutor = (user) => user?.perfil === 'produtor';
+
+/**
+ * Verifica se o usuário pode gerenciar dados (admin ou colaborador)
+ * Colaboradores têm as MESMAS funcionalidades do admin, limitadas à região
+ */
+export const podeGerenciar = (user) => isAdmin(user) || isColaborador(user);
+
+/**
+ * Verifica se o produtor/fazenda pertence à região do colaborador
+ * Considera tanto a região principal quanto as sub-regiões
+ * Ex: Goiás 1, Goiás 2, Goiânia, Rio Verde
+ */
+export const produtorNaRegiao = (user, produtor) => {
+  if (!user || !produtor) return false;
+  if (isAdmin(user)) return true;
+  if (!isColaborador(user)) return false;
+
+  // Verificar região principal
+  if (user.regiao === produtor.regiao) return true;
+  
+  // Verificar sub-regiões do colaborador contra microregiao do produtor
+  if (user.sub_regioes && produtor.microregiao) {
+    return user.sub_regioes.includes(produtor.microregiao);
+  }
+
+  return false;
+};
+
+// ────────────────────────────────────────────────────────────────
+// ACESSO A PRODUTORES (PROPRIETÁRIOS / FAZENDAS)
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * Verifica se um usuário tem acesso a um produtor/proprietário
+ * Produtor = Cliente = Proprietário (é o dono da fazenda)
+ * Um proprietário pode ter VÁRIAS fazendas
  */
 export const temAcessoProdutor = (user, produtor) => {
   if (!user || !produtor) return false;
 
-  // Administrador tem acesso a tudo
-  if (user.perfil === 'admin') return true;
+  // Admin: acesso total
+  if (isAdmin(user)) return true;
 
-  // Cliente só acessa seu próprio produtor
-  if (user.perfil === 'cliente') {
-    return user.produtor_id === produtor.id;
+  // Produtor/Cliente: acessa apenas suas próprias fazendas (pelo produtor_id = proprietário)
+  if (isProdutor(user)) {
+    return user.produtor_id === produtor.proprietario_id || user.produtor_id === produtor.id;
   }
 
-  // Colaborador só acessa produtores da sua região
-  if (user.perfil === 'colaborador') {
-    return user.regiao === produtor.regiao;
+  // Colaborador: acessa produtores da sua região/sub-regiões
+  if (isColaborador(user)) {
+    return produtorNaRegiao(user, produtor);
   }
 
   return false;
 };
 
 /**
- * Filtra lista de produtores de acordo com permissões do usuário
- * @param {Array} produtores - Lista de produtores
- * @param {Object} user - Usuário logado
- * @returns {Array}
+ * Filtra lista de produtores/fazendas de acordo com permissões
  */
 export const filtrarProdutoresPorAcesso = (produtores, user) => {
   if (!user || !produtores) return [];
 
-  // Administrador vê todos
-  if (user.perfil === 'admin') return produtores;
+  if (isAdmin(user)) return produtores;
 
-  // Cliente vê apenas o seu
-  if (user.perfil === 'cliente') {
-    return produtores.filter(p => p.id === user.produtor_id);
+  if (isProdutor(user)) {
+    return produtores.filter(p => 
+      p.proprietario_id === user.produtor_id || p.id === user.produtor_id
+    );
   }
 
-  // Colaborador vê apenas da sua região
-  if (user.perfil === 'colaborador') {
-    return produtores.filter(p => p.regiao === user.regiao);
+  if (isColaborador(user)) {
+    return produtores.filter(p => produtorNaRegiao(user, p));
   }
 
   return [];
 };
 
+// ────────────────────────────────────────────────────────────────
+// ACESSO A MAPAS
+// ────────────────────────────────────────────────────────────────
+
 /**
  * Verifica se um usuário tem acesso a um mapa
- * @param {Object} user - Usuário logado
- * @param {Object} mapa - Mapa a ser verificado
- * @param {Object} produtor - Produtor dono do mapa
- * @returns {boolean}
  */
 export const temAcessoMapa = (user, mapa, produtor) => {
   if (!user || !mapa) return false;
 
-  // Cliente: acessa apenas mapas disponíveis do seu produtor
-  if (user.perfil === 'cliente') {
-    return mapa.produtor_id === user.produtor_id && mapa.disponivel_download;
+  // Produtor: acessa apenas mapas disponíveis para download das suas fazendas
+  if (isProdutor(user)) {
+    const pertence = mapa.produtor_id === user.produtor_id || 
+      (produtor && (produtor.proprietario_id === user.produtor_id));
+    return pertence && mapa.disponivel_download;
   }
 
-  // Administrador e colaborador: usam a mesma regra de acesso ao produtor
+  // Admin e colaborador: usam regra de acesso ao produtor
   return temAcessoProdutor(user, produtor);
 };
 
 /**
  * Filtra mapas de acordo com permissões do usuário
- * @param {Array} mapas - Lista de mapas
- * @param {Object} user - Usuário logado
- * @param {Array} produtores - Lista de produtores (para verificar região)
- * @returns {Array}
  */
 export const filtrarMapasPorAcesso = (mapas, user, produtores = []) => {
   if (!user || !mapas) return [];
 
-  // Administrador vê todos
-  if (user.perfil === 'admin') return mapas;
+  if (isAdmin(user)) return mapas;
 
-  // Cliente vê apenas mapas disponíveis do seu produtor
-  if (user.perfil === 'cliente') {
+  if (isProdutor(user)) {
+    // Produtor vê apenas mapas disponíveis das suas fazendas
+    const meusProdutorIds = produtores
+      .filter(p => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
+      .map(p => p.id);
     return mapas.filter(m => 
-      m.produtor_id === user.produtor_id && m.disponivel_download
+      meusProdutorIds.includes(m.produtor_id) && m.disponivel_download
     );
   }
 
-  // Colaborador vê mapas de produtores da sua região
-  if (user.perfil === 'colaborador') {
-    const produtoresRegiao = produtores.filter(p => p.regiao === user.regiao);
+  if (isColaborador(user)) {
+    const produtoresRegiao = produtores.filter(p => produtorNaRegiao(user, p));
     const idsRegiao = produtoresRegiao.map(p => p.id);
     return mapas.filter(m => idsRegiao.includes(m.produtor_id));
   }
@@ -101,30 +156,28 @@ export const filtrarMapasPorAcesso = (mapas, user, produtores = []) => {
   return [];
 };
 
+// ────────────────────────────────────────────────────────────────
+// ACESSO A CADERNO DE CAMPO
+// ────────────────────────────────────────────────────────────────
+
 /**
  * Verifica se um usuário tem acesso a um registro de caderno de campo
- * @param {Object} user - Usuário logado
- * @param {Object} registro - Registro do caderno
- * @param {Object} produtor - Produtor relacionado
- * @returns {boolean}
+ * NOTA: Produtor PODE incluir dados no caderno de campo (única exceção de edição)
  */
 export const temAcessoCaderno = (user, registro, produtor) => {
   if (!user || !registro) return false;
 
-  // Administrador vê todos
-  if (user.perfil === 'admin') return true;
+  if (isAdmin(user)) return true;
 
-  // Cliente vê apenas registros visíveis do seu produtor
-  if (user.perfil === 'cliente') {
-    return (
-      registro.produtor_id === user.produtor_id && 
-      registro.visivel_para_cliente === true
-    );
+  // Produtor: vê registros visíveis das suas fazendas
+  if (isProdutor(user)) {
+    const pertence = registro.produtor_id === user.produtor_id ||
+      (produtor && produtor.proprietario_id === user.produtor_id);
+    return pertence && registro.visivel_para_produtor === true;
   }
 
-  // Colaborador vê registros de produtores da sua região
-  if (user.perfil === 'colaborador') {
-    return produtor && produtor.regiao === user.regiao;
+  if (isColaborador(user)) {
+    return produtor && produtorNaRegiao(user, produtor);
   }
 
   return false;
@@ -132,27 +185,23 @@ export const temAcessoCaderno = (user, registro, produtor) => {
 
 /**
  * Filtra registros de caderno de campo por acesso
- * @param {Array} registros - Lista de registros
- * @param {Object} user - Usuário logado
- * @param {Array} produtores - Lista de produtores
- * @returns {Array}
  */
 export const filtrarCadernosPorAcesso = (registros, user, produtores = []) => {
   if (!user || !registros) return [];
 
-  // Administrador vê todos
-  if (user.perfil === 'admin') return registros;
+  if (isAdmin(user)) return registros;
 
-  // Cliente vê apenas registros visíveis do seu produtor
-  if (user.perfil === 'cliente') {
+  if (isProdutor(user)) {
+    const meusProdutorIds = produtores
+      .filter(p => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
+      .map(p => p.id);
     return registros.filter(r => 
-      r.produtor_id === user.produtor_id && r.visivel_para_cliente === true
+      meusProdutorIds.includes(r.produtor_id) && r.visivel_para_produtor === true
     );
   }
 
-  // Colaborador vê registros de produtores da sua região
-  if (user.perfil === 'colaborador') {
-    const produtoresRegiao = produtores.filter(p => p.regiao === user.regiao);
+  if (isColaborador(user)) {
+    const produtoresRegiao = produtores.filter(p => produtorNaRegiao(user, p));
     const idsRegiao = produtoresRegiao.map(p => p.id);
     return registros.filter(r => idsRegiao.includes(r.produtor_id));
   }
@@ -160,27 +209,26 @@ export const filtrarCadernosPorAcesso = (registros, user, produtores = []) => {
   return [];
 };
 
+// ────────────────────────────────────────────────────────────────
+// ACESSO A VISITAS
+// ────────────────────────────────────────────────────────────────
+
 /**
  * Verifica se um usuário tem acesso a uma visita
- * @param {Object} user - Usuário logado
- * @param {Object} visita - Visita a ser verificada
- * @param {Object} produtor - Produtor relacionado
- * @returns {boolean}
  */
 export const temAcessoVisita = (user, visita, produtor) => {
   if (!user || !visita) return false;
 
-  // Administrador vê todas
-  if (user.perfil === 'admin') return true;
+  if (isAdmin(user)) return true;
 
-  // Cliente vê visitas do seu produtor
-  if (user.perfil === 'cliente') {
-    return visita.produtor_id === user.produtor_id;
+  // Produtor: vê visitas das suas fazendas (apenas visualização)
+  if (isProdutor(user)) {
+    return visita.produtor_id === user.produtor_id ||
+      (produtor && produtor.proprietario_id === user.produtor_id);
   }
 
-  // Colaborador vê visitas de produtores da sua região
-  if (user.perfil === 'colaborador') {
-    return produtor && produtor.regiao === user.regiao;
+  if (isColaborador(user)) {
+    return produtor && produtorNaRegiao(user, produtor);
   }
 
   return false;
@@ -188,25 +236,21 @@ export const temAcessoVisita = (user, visita, produtor) => {
 
 /**
  * Filtra visitas por acesso
- * @param {Array} visitas - Lista de visitas
- * @param {Object} user - Usuário logado
- * @param {Array} produtores - Lista de produtores
- * @returns {Array}
  */
 export const filtrarVisitasPorAcesso = (visitas, user, produtores = []) => {
   if (!user || !visitas) return [];
 
-  // Administrador vê todas
-  if (user.perfil === 'admin') return visitas;
+  if (isAdmin(user)) return visitas;
 
-  // Cliente vê apenas do seu produtor
-  if (user.perfil === 'cliente') {
-    return visitas.filter(v => v.produtor_id === user.produtor_id);
+  if (isProdutor(user)) {
+    const meusProdutorIds = produtores
+      .filter(p => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
+      .map(p => p.id);
+    return visitas.filter(v => meusProdutorIds.includes(v.produtor_id));
   }
 
-  // Colaborador vê visitas de produtores da sua região
-  if (user.perfil === 'colaborador') {
-    const produtoresRegiao = produtores.filter(p => p.regiao === user.regiao);
+  if (isColaborador(user)) {
+    const produtoresRegiao = produtores.filter(p => produtorNaRegiao(user, p));
     const idsRegiao = produtoresRegiao.map(p => p.id);
     return visitas.filter(v => idsRegiao.includes(v.produtor_id));
   }
@@ -214,86 +258,150 @@ export const filtrarVisitasPorAcesso = (visitas, user, produtores = []) => {
   return [];
 };
 
+// ────────────────────────────────────────────────────────────────
+// REGIÕES E SUB-REGIÕES
+// ────────────────────────────────────────────────────────────────
+
 /**
  * Obtém as regiões disponíveis para um usuário
- * @param {Object} user - Usuário logado
- * @param {Array} produtores - Lista de todos os produtores
- * @returns {Array}
+ * Sub-regiões: Goiás 1, Goiás 2, Goiânia, Rio Verde, etc.
  */
 export const getRegioesDisponiveis = (user, produtores = []) => {
   if (!user) return [];
 
-  // Administrador vê todas as regiões
-  if (user.perfil === 'admin') {
+  if (isAdmin(user)) {
     const regioes = [...new Set(produtores.map(p => p.regiao).filter(Boolean))];
     return regioes.sort();
   }
 
-  // Colaborador vê apenas sua região
-  if (user.perfil === 'colaborador' && user.regiao) {
-    return [user.regiao];
+  if (isColaborador(user)) {
+    // Retorna região principal e sub-regiões
+    const regioes = [user.regiao];
+    if (user.sub_regioes) {
+      regioes.push(...user.sub_regioes);
+    }
+    return [...new Set(regioes)];
   }
 
-  // Cliente não precisa ver regiões
   return [];
 };
 
 /**
- * Verifica se usuário pode editar um produtor
- * @param {Object} user - Usuário logado
- * @param {Object} produtor - Produtor a ser editado
- * @returns {boolean}
+ * Obtém as sub-regiões de um colaborador
+ */
+export const getSubRegioes = (user) => {
+  if (!user || !isColaborador(user)) return [];
+  return user.sub_regioes || [];
+};
+
+// ────────────────────────────────────────────────────────────────
+// PERMISSÕES DE EDIÇÃO/CRIAÇÃO
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * Verifica se usuário pode editar um produtor/fazenda
+ * Produtor (proprietário) NÃO pode editar - apenas visualizar
  */
 export const podeEditarProdutor = (user, produtor) => {
   if (!user || !produtor) return false;
 
-  // Apenas admin e colaborador podem editar
-  if (user.perfil === 'admin') return true;
+  if (isAdmin(user)) return true;
   
-  if (user.perfil === 'colaborador') {
-    return user.regiao === produtor.regiao;
+  if (isColaborador(user)) {
+    return produtorNaRegiao(user, produtor);
+  }
+
+  // Produtor NÃO pode editar dados de produtor
+  return false;
+};
+
+/**
+ * Verifica se usuário pode criar novo produtor/fazenda
+ * Produtor (proprietário) NÃO pode criar
+ */
+export const podeCriarProdutor = (user) => {
+  if (!user) return false;
+  return podeGerenciar(user); // admin ou colaborador
+};
+
+/**
+ * Verifica se usuário pode criar visitas
+ * Produtor NÃO pode criar visitas
+ */
+export const podeCriarVisita = (user) => {
+  if (!user) return false;
+  return podeGerenciar(user);
+};
+
+/**
+ * Verifica se usuário pode editar visitas
+ * Produtor NÃO pode editar visitas
+ */
+export const podeEditarVisita = (user, visita, produtor) => {
+  if (!user || !visita) return false;
+
+  if (isAdmin(user)) return true;
+  
+  if (isColaborador(user)) {
+    return produtor && produtorNaRegiao(user, produtor);
   }
 
   return false;
 };
 
 /**
- * Verifica se usuário pode criar novo produtor
- * @param {Object} user - Usuário logado
- * @returns {boolean}
+ * Verifica se usuário pode incluir registros no caderno de campo
+ * EXCEÇÃO: Produtor PODE incluir dados no caderno de campo
  */
-export const podeCriarProdutor = (user) => {
+export const podeIncluirCaderno = (user) => {
   if (!user) return false;
-  // Apenas admin e colaborador podem criar produtores
-  return user.perfil === 'admin' || user.perfil === 'colaborador';
+  // Todos podem incluir no caderno: admin, colaborador E produtor
+  return true;
+};
+
+/**
+ * Verifica se usuário pode editar registros do caderno (edição completa)
+ * Produtor pode incluir MAS não pode editar registros existentes de outros
+ */
+export const podeEditarCaderno = (user, registro) => {
+  if (!user || !registro) return false;
+
+  if (isAdmin(user)) return true;
+  if (isColaborador(user)) return true;
+
+  // Produtor pode editar apenas seus próprios registros do caderno
+  if (isProdutor(user) && registro.criado_por === user.id) {
+    return true;
+  }
+
+  return false;
 };
 
 /**
  * Verifica se usuário pode fazer download de um mapa
- * @param {Object} user - Usuário logado
- * @param {Object} mapa - Mapa a ser baixado
- * @returns {boolean}
  */
 export const podeBaixarMapa = (user, mapa) => {
   if (!user || !mapa) return false;
 
-  // Verifica se o mapa está disponível para download
   if (!mapa.disponivel_download) {
-    // Apenas admin pode baixar mapas não disponíveis
-    return user.perfil === 'admin';
+    return isAdmin(user);
   }
 
-  // Se está disponível, verifica acesso normal
-  return user.perfil === 'admin' || 
-         user.perfil === 'colaborador' ||
-         (user.perfil === 'cliente' && mapa.produtor_id === user.produtor_id);
+  if (isAdmin(user) || isColaborador(user)) return true;
+  
+  if (isProdutor(user)) {
+    return mapa.produtor_id === user.produtor_id;
+  }
+
+  return false;
 };
+
+// ────────────────────────────────────────────────────────────────
+// TÍTULOS E LABELS POR PERFIL
+// ────────────────────────────────────────────────────────────────
 
 /**
  * Obtém título da tela de acordo com o perfil
- * @param {Object} user - Usuário logado
- * @param {string} tela - Nome da tela
- * @returns {string}
  */
 export const getTituloTela = (user, tela) => {
   if (!user) return tela;
@@ -311,13 +419,27 @@ export const getTituloTela = (user, tela) => {
       caderno: 'Caderno de Campo',
       dashboard: 'Meu Dashboard',
     },
-    cliente: {
-      produtores: 'Minha Propriedade',
+    produtor: {
+      produtores: 'Minhas Fazendas',
       visitas: 'Visitas Recebidas',
-      caderno: 'Histórico de Atividades',
+      caderno: 'Caderno de Campo',
       dashboard: 'Minha Propriedade',
     },
   };
 
   return titulos[user.perfil]?.[tela.toLowerCase()] || tela;
+};
+
+/**
+ * Obtém label do perfil para exibição
+ * Nota: "Colaborador" NÃO deve aparecer na tela de login
+ */
+export const getLabelPerfil = (user) => {
+  if (!user) return '';
+  const labels = {
+    admin: 'Administrador',
+    colaborador: 'Consultor Regional',
+    produtor: 'Proprietário',
+  };
+  return labels[user.perfil] || user.perfil;
 };

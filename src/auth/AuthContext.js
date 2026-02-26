@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
-import { authLogin, authLogout } from './authMock';
+import { authLogin, authLoginByProfile, authLogout } from './authMock';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthStateContext = createContext();
@@ -32,11 +32,25 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  const login = useCallback(async (profileKey) => {
+  const login = useCallback(async (email, senha) => {
     setLoading(true);
     try {
-      const u = await authLogin(profileKey);
+      const u = await authLogin(email, senha);
       console.log('[AuthContext] login -> setUser', u);
+      setUser(u);
+      try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(u)); } catch(e) { console.warn('Não foi possível salvar usuário', e); }
+      return u;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Login rápido por perfil (para testes/dev)
+  const loginRapido = useCallback(async (profileKey) => {
+    setLoading(true);
+    try {
+      const u = await authLoginByProfile(profileKey);
+      console.log('[AuthContext] loginRapido -> setUser', u);
       setUser(u);
       try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(u)); } catch(e) { console.warn('Não foi possível salvar usuário', e); }
       return u;
@@ -75,7 +89,7 @@ export function AuthProvider({ children }) {
   // state value (memoized) - only changes when user or isReady change
   const stateValue = useMemo(() => ({ user, isReady }), [user, isReady]);
   // actions value (memoized) - stable function refs, but includes loading
-  const actionsValue = useMemo(() => ({ login, logout, updateProfile, loading }), [login, logout, updateProfile, loading]);
+  const actionsValue = useMemo(() => ({ login, loginRapido, logout, updateProfile, loading }), [login, loginRapido, logout, updateProfile, loading]);
 
   return (
     <AuthStateContext.Provider value={stateValue}>

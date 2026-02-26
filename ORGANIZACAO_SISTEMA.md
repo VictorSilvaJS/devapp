@@ -336,7 +336,7 @@ Stack Screens:
   condicoes_clima: "Ensolarado, 25°C",
   observacoes: "Aplicação uniforme...",
   recomendacoes: "Monitorar crescimento...",
-  visivel_para_cliente: true,  // Cliente pode ver?
+  visivel_para_produtor: true,  // Cliente pode ver?
   fotos: ["foto1.jpg", "foto2.jpg"]
 }
 ```
@@ -345,7 +345,7 @@ Stack Screens:
 
 - **Administrador:** Vê todos os registros
 - **Colaborador:** Vê registros da sua região
-- **Cliente:** Vê apenas registros com `visivel_para_cliente: true`
+- **Cliente:** Vê apenas registros com `visivel_para_produtor: true`
 
 ---
 

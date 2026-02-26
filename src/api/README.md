@@ -126,7 +126,7 @@ const atividadesProdutor = await CadernoCampo.filter({ produtor_id: 'p1' });
 const plantios = await CadernoCampo.filter({ tipo_atividade: 'plantio' });
 
 // Filtrar registros visíveis para cliente
-const visiveisCliente = await CadernoCampo.filter({ visivel_para_cliente: true });
+const visiveisCliente = await CadernoCampo.filter({ visivel_para_produtor: true });
 
 // Criar novo registro
 const novoRegistro = await CadernoCampo.create({
@@ -137,7 +137,7 @@ const novoRegistro = await CadernoCampo.create({
   talhao: 'Talhão A',
   area_aplicada: 50,
   observacoes: 'Aplicação realizada com sucesso',
-  visivel_para_cliente: true
+  visivel_para_produtor: true
 });
 ```
 
