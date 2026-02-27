@@ -327,7 +327,7 @@ export default function VisitaDetailScreen() {
               {visita.fotos.map((foto, index) => (
                 <Image
                   key={index}
-                  source={{ uri: foto }}
+                  source={{ uri: typeof foto === 'string' ? foto : foto.uri }}
                   style={styles.photo}
                   resizeMode="cover"
                 />

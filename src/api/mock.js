@@ -308,6 +308,45 @@ const produtores = [
     ultima_analise: new Date('2024-11-10').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-03-01').toISOString()
+  },
+  // ─── Fazendas na região de Patrícia Lima (Goiânia/Anápolis) ───
+  {
+    id: 'p6',
+    proprietario_id: 'prop5',
+    nome: 'Antônio Ferreira',
+    fazenda: 'Fazenda Ouro Branco',
+    area_total: 600,
+    cultura_atual: 'Soja',
+    telefone: '(62) 97777-7777',
+    email: 'antonio.ferreira@email.com',
+    endereco: 'GO-060, Km 45',
+    cidade: 'Goiânia',
+    estado: 'GO',
+    regiao: 'Goiás',
+    microregiao: 'Goiânia',
+    cep: '74000-000',
+    ultima_analise: new Date('2024-10-20').toISOString(),
+    status: 'ativo',
+    data_cadastro: new Date('2024-04-01').toISOString()
+  },
+  {
+    id: 'p6b',
+    proprietario_id: 'prop5',
+    nome: 'Antônio Ferreira',
+    fazenda: 'Fazenda Santa Helena',
+    area_total: 480,
+    cultura_atual: 'Milho',
+    telefone: '(62) 97777-7777',
+    email: 'antonio.ferreira@email.com',
+    endereco: 'BR-153, Km 80',
+    cidade: 'Anápolis',
+    estado: 'GO',
+    regiao: 'Goiás',
+    microregiao: 'Anápolis',
+    cep: '75000-000',
+    ultima_analise: new Date('2024-11-05').toISOString(),
+    status: 'ativo',
+    data_cadastro: new Date('2024-05-15').toISOString()
   }
 ];
 
@@ -316,12 +355,12 @@ const visitas = [
   {
     id: 'v1',
     produtor_id: 'p1',
-    tecnico_responsavel: 'Carlos Silva',
+    tecnico_responsavel: 'Ana Santos',
     data_visita: new Date().toISOString(),
     objetivo: 'consultoria',
     observacoes: 'Boa presença de plantas. Desenvolvimento adequado da cultura.',
     recomendacoes: 'Monitorar pragas nas próximas semanas.',
-    fotos: ['visita1_foto1.jpg', 'visita1_foto2.jpg'],
+    fotos: ['https://picsum.photos/400/300?random=101', 'https://picsum.photos/400/300?random=102'],
     clima: 'Ensolarado, 25°C',
     proximaVisita: new Date(Date.now() + 86400000 * 30).toISOString(),
     status: 'realizada'
@@ -334,7 +373,7 @@ const visitas = [
     objetivo: 'coleta_solo',
     observacoes: 'Coleta de amostras em 8 pontos diferentes da propriedade.',
     recomendacoes: 'Aguardar análise laboratorial para recomendações de correção.',
-    fotos: ['visita2_foto1.jpg'],
+    fotos: ['https://picsum.photos/400/300?random=103'],
     clima: 'Parcialmente nublado',
     proximaVisita: new Date(Date.now() + 86400000 * 45).toISOString(),
     status: 'realizada'
@@ -342,7 +381,7 @@ const visitas = [
   {
     id: 'v3',
     produtor_id: 'p1',
-    tecnico_responsavel: 'Carlos Silva',
+    tecnico_responsavel: 'Ana Santos',
     data_visita: new Date(Date.now() + 86400000 * 7).toISOString(),
     objetivo: 'avaliacao_cultivo',
     observacoes: '',
@@ -373,7 +412,7 @@ const visitas = [
     objetivo: 'consultoria',
     observacoes: 'Avaliação geral da lavoura de soja. Desenvolvimento dentro do esperado para o estágio V6.',
     recomendacoes: 'Aplicar fungicida preventivo nos próximos 10 dias.',
-    fotos: ['visita5_foto1.jpg', 'visita5_foto2.jpg'],
+    fotos: ['https://picsum.photos/400/300?random=105', 'https://picsum.photos/400/300?random=106'],
     clima: 'Ensolarado, 32°C',
     proximaVisita: new Date(Date.now() + 86400000 * 20).toISOString(),
     status: 'realizada'
@@ -398,7 +437,7 @@ const visitas = [
     objetivo: 'avaliacao_cultivo',
     observacoes: 'Primeira visita da safra. Lavoura recém-plantada.',
     recomendacoes: 'Monitorar germinação e stand de plantas.',
-    fotos: ['visita7_foto1.jpg'],
+    fotos: ['https://picsum.photos/400/300?random=107'],
     clima: 'Parcialmente nublado, 28°C',
     status: 'realizada'
   },
@@ -411,7 +450,7 @@ const visitas = [
     objetivo: 'consultoria',
     observacoes: 'Avaliação de algodão em estágio avançado. Excelente desenvolvimento.',
     recomendacoes: 'Programar colheita para as próximas 3 semanas.',
-    fotos: ['visita8_foto1.jpg', 'visita8_foto2.jpg', 'visita8_foto3.jpg'],
+    fotos: ['https://picsum.photos/400/300?random=108', 'https://picsum.photos/400/300?random=109', 'https://picsum.photos/400/300?random=110'],
     clima: 'Ensolarado, 35°C',
     proximaVisita: new Date(Date.now() + 86400000 * 15).toISOString(),
     status: 'realizada'
@@ -427,6 +466,44 @@ const visitas = [
     fotos: [],
     clima: '',
     status: 'agendada'
+  },
+  // ─── Visitas em Goiás - Patrícia Lima (Goiânia/Anápolis) ───
+  {
+    id: 'v10',
+    produtor_id: 'p6', // Fazenda Ouro Branco - Goiânia
+    tecnico_responsavel: 'Patrícia Lima',
+    data_visita: new Date(Date.now() - 86400000 * 4).toISOString(),
+    objetivo: 'consultoria',
+    observacoes: 'Avaliação de soja em estágio R1. Bom desenvolvimento vegetativo.',
+    recomendacoes: 'Monitorar ferrugem asiática e aplicar fungicida preventivo.',
+    fotos: ['https://picsum.photos/400/300?random=111', 'https://picsum.photos/400/300?random=112'],
+    clima: 'Parcialmente nublado, 29°C',
+    proximaVisita: new Date(Date.now() + 86400000 * 14).toISOString(),
+    status: 'realizada'
+  },
+  {
+    id: 'v11',
+    produtor_id: 'p6b', // Fazenda Santa Helena - Anápolis
+    tecnico_responsavel: 'Patrícia Lima',
+    data_visita: new Date(Date.now() + 86400000 * 3).toISOString(),
+    objetivo: 'coleta_solo',
+    observacoes: '',
+    recomendacoes: '',
+    fotos: [],
+    clima: '',
+    status: 'agendada'
+  },
+  {
+    id: 'v12',
+    produtor_id: 'p6', // Fazenda Ouro Branco - Goiânia
+    tecnico_responsavel: 'Patrícia Lima',
+    data_visita: new Date(Date.now() - 86400000 * 18).toISOString(),
+    objetivo: 'avaliacao_cultivo',
+    observacoes: 'Primeira vistoria da safra. Plantio recém-emergido com stand uniforme.',
+    recomendacoes: 'Manter controle de plantas daninhas.',
+    fotos: ['https://picsum.photos/400/300?random=113'],
+    clima: 'Ensolarado, 31°C',
+    status: 'realizada'
   }
 ];
 
@@ -434,7 +511,7 @@ const cadernos = [
   {
     id: 'c1',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Carlos Silva',
+    colaborador_responsavel: 'Ana Santos',
     data_atividade: new Date().toISOString(),
     tipo_atividade: 'adubacao',
     talhao: 'Talhão A',
@@ -444,7 +521,7 @@ const cadernos = [
     condicoes_clima: 'Ensolarado, 22°C',
     observacoes: 'Aplicação realizada com boa distribuição. Solo em boas condições de umidade.',
     visivel_para_produtor: true,
-    fotos: ['foto1.jpg', 'foto2.jpg']
+    fotos: ['https://picsum.photos/400/300?random=201', 'https://picsum.photos/400/300?random=202']
   },
   {
     id: 'c2',
@@ -459,12 +536,12 @@ const cadernos = [
     condicoes_clima: 'Parcialmente nublado, 20°C',
     observacoes: 'Plantio realizado com sementes selecionadas. Espaçamento de 50cm entre linhas.',
     visivel_para_produtor: true,
-    fotos: ['foto3.jpg']
+    fotos: ['https://picsum.photos/400/300?random=203']
   },
   {
     id: 'c3',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Carlos Silva',
+    colaborador_responsavel: 'Ana Santos',
     data_atividade: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 dias atrás
     tipo_atividade: 'vistoria',
     talhao: 'Talhão C',
@@ -487,12 +564,12 @@ const cadernos = [
     condicoes_clima: 'Nublado, 18°C',
     observacoes: 'Coleta de amostras para análise completa de solo. 10 pontos coletados em zigue-zague.',
     visivel_para_produtor: true,
-    fotos: ['foto4.jpg', 'foto5.jpg', 'foto6.jpg']
+    fotos: ['https://picsum.photos/400/300?random=204', 'https://picsum.photos/400/300?random=205', 'https://picsum.photos/400/300?random=206']
   },
   {
     id: 'c5',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Carlos Silva',
+    colaborador_responsavel: 'Ana Santos',
     data_atividade: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 dias atrás
     tipo_atividade: 'aplicacao',
     talhao: 'Talhão D',
@@ -516,7 +593,7 @@ const cadernos = [
     condicoes_clima: 'Seco, 26°C',
     observacoes: 'Colheita iniciada. Produtividade estimada em 4.800 kg/ha. Grãos com boa qualidade.',
     visivel_para_produtor: true,
-    fotos: ['colheita1.jpg']
+    fotos: ['https://picsum.photos/400/300?random=207']
   },
   // ─── Cadernos em Goiás (Carlos) ───
   {
@@ -532,7 +609,7 @@ const cadernos = [
     condicoes_clima: 'Ensolarado, 30°C',
     observacoes: 'Adubação de cobertura realizada com sucesso.',
     visivel_para_produtor: true,
-    fotos: ['caderno7_foto1.jpg']
+    fotos: ['https://picsum.photos/400/300?random=208']
   },
   {
     id: 'c8',
@@ -562,7 +639,7 @@ const cadernos = [
     condicoes_clima: 'Ensolarado, 34°C',
     observacoes: 'Vistoria de acompanhamento do ciclo do algodão. Sem pragas detectadas.',
     visivel_para_produtor: true,
-    fotos: ['caderno9_foto1.jpg', 'caderno9_foto2.jpg']
+    fotos: ['https://picsum.photos/400/300?random=209', 'https://picsum.photos/400/300?random=210']
   },
   {
     id: 'c10',
@@ -577,7 +654,37 @@ const cadernos = [
     condicoes_clima: 'Parcialmente nublado, 31°C',
     observacoes: 'Plantio de soja safrinha concluído. Solo com boa umidade.',
     visivel_para_produtor: true,
-    fotos: ['caderno10_foto1.jpg']
+    fotos: ['https://picsum.photos/400/300?random=211']
+  },
+  // ─── Cadernos em Goiás - Patrícia Lima (Goiânia/Anápolis) ───
+  {
+    id: 'c11',
+    produtor_id: 'p6', // Fazenda Ouro Branco - Goiânia
+    colaborador_responsavel: 'Patrícia Lima',
+    data_atividade: new Date(Date.now() - 86400000 * 3).toISOString(),
+    tipo_atividade: 'adubacao',
+    talhao: 'Talhão Sul',
+    produtos_utilizados: ['NPK 5-25-25', 'KCl'],
+    dosagem: '280 kg/ha',
+    area_aplicada: 180,
+    condicoes_clima: 'Ensolarado, 30°C',
+    observacoes: 'Adubação de base pré-plantio. Solo com boa umidade.',
+    visivel_para_produtor: true,
+    fotos: ['https://picsum.photos/400/300?random=212']
+  },
+  {
+    id: 'c12',
+    produtor_id: 'p6b', // Fazenda Santa Helena - Anápolis
+    colaborador_responsavel: 'Patrícia Lima',
+    data_atividade: new Date(Date.now() - 86400000 * 7).toISOString(),
+    tipo_atividade: 'vistoria',
+    talhao: 'Área Central',
+    produtos_utilizados: [],
+    area_aplicada: null,
+    condicoes_clima: 'Parcialmente nublado, 28°C',
+    observacoes: 'Vistoria de acompanhamento. Milho em estágio V4, desenvolvimento uniforme.',
+    visivel_para_produtor: true,
+    fotos: ['https://picsum.photos/400/300?random=213', 'https://picsum.photos/400/300?random=214']
   }
 ];
 
@@ -843,6 +950,37 @@ const mapas = [
     disponivel_download: true,
     coordenadas: { latitude: -13.0497, longitude: -55.9064 },
     observacoes: 'Recomendação de calcário e gesso - Lucas do Rio Verde.'
+  },
+  // ─── Mapas Goiás - Patrícia Lima (Goiânia/Anápolis) ───
+  {
+    id: 'm17',
+    titulo: 'NDVI - Fazenda Ouro Branco',
+    categoria: 'indice_vegetacao',
+    produtor_id: 'p6',
+    talhao: 'Talhão Sul',
+    data_criacao: new Date('2024-11-10').toISOString(),
+    safra: '2024/2025',
+    arquivo_url: 'mapas/ndvi_p6_sul.png',
+    formato_arquivo: 'png',
+    tamanho_arquivo: 3100000,
+    disponivel_download: true,
+    coordenadas: { latitude: -16.6869, longitude: -49.2648 },
+    observacoes: 'Índice de vegetação da lavoura de soja - Goiânia.'
+  },
+  {
+    id: 'm18',
+    titulo: 'Mapa de Fertilidade - Fazenda Santa Helena',
+    categoria: 'fertilidade',
+    produtor_id: 'p6b',
+    talhao: 'Área Central',
+    data_criacao: new Date('2024-10-25').toISOString(),
+    safra: '2024/2025',
+    arquivo_url: 'mapas/fertilidade_p6b_central.pdf',
+    formato_arquivo: 'pdf',
+    tamanho_arquivo: 2200000,
+    disponivel_download: true,
+    coordenadas: { latitude: -16.3269, longitude: -48.9539 },
+    observacoes: 'Análise de fertilidade do solo - Anápolis.'
   }
 ];
 

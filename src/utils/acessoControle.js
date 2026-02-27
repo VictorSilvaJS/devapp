@@ -39,18 +39,15 @@ export const isProdutor = (user) => user?.perfil === 'produtor';
 export const podeGerenciar = (user) => isAdmin(user) || isColaborador(user);
 
 /**
- * Verifica se o produtor/fazenda pertence à região do colaborador
- * Considera tanto a região principal quanto as sub-regiões
- * Ex: Goiás 1, Goiás 2, Goiânia, Rio Verde
+ * Verifica se o produtor/fazenda pertence às sub-regiões do colaborador
+ * Usa APENAS sub_regioes para evitar sobreposição entre colaboradores da mesma região
+ * Ex: Carlos (sub_regioes: ['Goiás 1', 'Rio Verde', 'Jataí']) não vê produtores de Patrícia (sub_regioes: ['Goiás 2', 'Goiânia', 'Anápolis'])
  */
 export const produtorNaRegiao = (user, produtor) => {
   if (!user || !produtor) return false;
   if (isAdmin(user)) return true;
   if (!isColaborador(user)) return false;
 
-  // Verificar região principal
-  if (user.regiao === produtor.regiao) return true;
-  
   // Verificar sub-regiões do colaborador contra microregiao do produtor
   if (user.sub_regioes && produtor.microregiao) {
     return user.sub_regioes.includes(produtor.microregiao);

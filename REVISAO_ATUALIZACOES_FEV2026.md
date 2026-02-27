@@ -290,10 +290,10 @@ Como `expo-image-picker` não está instalado no projeto, as fotos usam URLs ale
 ## Checklist de Verificação
 
 - [ x] Pedro Santos/Maria Pereira conseguem logar
-- [ ] Colaborador (Carlos) vê visitas da região Centro-Oeste/Goiás
-- [ ] Colaborador (Marcos) vê visitas da região Centro-Oeste/MT
-- [ ] Chips de sub-região aparecem para colaboradores em Visitas
-- [ ] Chips de sub-região aparecem para colaboradores em Caderno de Campo
+- [x ] Colaborador (Carlos) vê visitas da região Centro-Oeste/Goiás
+- [ x] Colaborador (Marcos) vê visitas da região Centro-Oeste/MT
+- [ x] Chips de sub-região aparecem para colaboradores em Visitas
+- [ x] Chips de sub-região aparecem para colaboradores em Caderno de Campo
 - [ ] Dashboard do colaborador mostra stats filtrados por região
 - [ ] NovaVisita/EditarVisita mostram produtores da região do colaborador
 - [ ] Produtor com múltiplas fazendas vê filtro por fazenda
@@ -302,4 +302,4 @@ Como `expo-image-picker` não está instalado no projeto, as fotos usam URLs ale
 - [ ] Botões de foto aparecem em Nova Visita
 - [ ] Botões de foto aparecem em Editar Visita
 - [ ] Fotos podem ser adicionadas e removidas
-- [ ] Campo `disponivel_download` está padronizado (sem `disponivel_para_download`)
+- [x ] Campo `disponivel_download` está padronizado (sem `disponivel_para_download`)

@@ -30,11 +30,10 @@ export default function CadernoCampoScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
-  const [filtroSubRegiao, setFiltroSubRegiao] = useState('todas');
   const { user } = useAuth();
-  const { getProdutorIdsFiltrados, filtros } = useFiltros();
+  const { getProdutorIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
 
-  useEffect(() => { load(); }, [filtros, filtroSubRegiao]);
+  useEffect(() => { load(); }, [filtros]);
   
   const load = async () => {
     setLoading(true);
@@ -55,25 +54,22 @@ export default function CadernoCampoScreen() {
         registrosData = todosRegistros.filter(r => produtorIdsFiltrados.includes(r.produtor_id));
         produtoresData = todosProdutores.filter(p => produtorIdsFiltrados.includes(p.id));
       } else if (user?.perfil === 'colaborador') {
-        // Colaborador vê registros dos produtores da sua região/sub-regiões
+        // Colaborador vê registros dos produtores das suas sub-regiões
         const [todosRegistros, todosProdutores] = await Promise.all([
           CadernoCampo.list(),
           Produtor.list()
         ]);
-        // Filtrar produtores por região principal OU microregião nas sub_regiões
-        produtoresData = todosProdutores.filter(p => {
-          if (p.regiao === user.regiao) return true;
+        // Pré-filtrar por sub_regiões do colaborador (escopo)
+        const produtoresDoColaborador = todosProdutores.filter(p => {
           if (user.sub_regioes && p.microregiao) {
             return user.sub_regioes.includes(p.microregiao);
           }
           return false;
         });
-        // Aplicar sub-filtro por microregião se selecionado
-        if (filtroSubRegiao !== 'todas') {
-          produtoresData = produtoresData.filter(p => p.microregiao === filtroSubRegiao);
-        }
-        const idsRegiao = produtoresData.map(p => p.id);
-        registrosData = todosRegistros.filter(r => idsRegiao.includes(r.produtor_id));
+        // Aplicar filtros de contexto (microregião, fazenda)
+        produtoresData = filtrarProdutores(produtoresDoColaborador);
+        const idsFiltrados = produtoresData.map(p => p.id);
+        registrosData = todosRegistros.filter(r => idsFiltrados.includes(r.produtor_id));
       } else if (user?.perfil === 'produtor') {
         // Produtor/Proprietário vê registros visíveis das suas fazendas
         // PODE incluir novos registros no caderno de campo
@@ -171,32 +167,6 @@ export default function CadernoCampoScreen() {
           )}
         </View>
       </View>
-
-      {user?.perfil === 'colaborador' && user.sub_regioes && user.sub_regioes.length > 0 && (
-        <View style={styles.subRegiaoContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subRegiaoScroll}>
-            <TouchableOpacity
-              style={[styles.subRegiaoChip, filtroSubRegiao === 'todas' && styles.subRegiaoChipAtivo]}
-              onPress={() => setFiltroSubRegiao('todas')}
-            >
-              <Text style={[styles.subRegiaoChipText, filtroSubRegiao === 'todas' && styles.subRegiaoChipTextAtivo]}>
-                Todas ({user.regiao})
-              </Text>
-            </TouchableOpacity>
-            {user.sub_regioes.map(sr => (
-              <TouchableOpacity
-                key={sr}
-                style={[styles.subRegiaoChip, filtroSubRegiao === sr && styles.subRegiaoChipAtivo]}
-                onPress={() => setFiltroSubRegiao(sr)}
-              >
-                <Text style={[styles.subRegiaoChipText, filtroSubRegiao === sr && styles.subRegiaoChipTextAtivo]}>
-                  {sr}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
 
       <ScrollView 
         contentContainerStyle={styles.content}
@@ -332,36 +302,6 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: colors.background 
-  },
-  subRegiaoContainer: {
-    backgroundColor: '#F8FBF8',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  subRegiaoScroll: {
-    paddingHorizontal: spacing.md,
-    gap: 8,
-  },
-  subRegiaoChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  subRegiaoChipAtivo: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  subRegiaoChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  subRegiaoChipTextAtivo: {
-    color: '#FFFFFF',
   },
   searchContainer: {
     backgroundColor: colors.card,

@@ -4,12 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFiltros } from '../contexts/FiltroContext';
 import { colors, typography, spacing, shadows } from '../theme';
 
-export default function FiltroRegional() {
+/**
+ * FiltroRegional - Componente de filtro regional
+ * @param {string} fixedRegiao - Região fixa (para colaborador, não pode alterar)
+ * @param {string[]} microregiaoOptions - Opções de micro-região (para colaborador: sub_regioes)
+ */
+export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
   const {
     filtros,
     regioes,
+    microregioes: contextMicroregioes,
     fazendas,
     setRegiao,
+    setMicroregiao,
     setFazenda,
     limparFiltros,
     getFiltroAtivo,
@@ -17,9 +24,14 @@ export default function FiltroRegional() {
   } = useFiltros();
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [tipoModal, setTipoModal] = useState(null); // 'regiao' ou 'fazenda'
+  const [tipoModal, setTipoModal] = useState(null); // 'regiao', 'microregiao' ou 'fazenda'
+
+  // Se microregiaoOptions prop fornecida (colaborador), usar ela; senão, usar do contexto
+  const microregioesDisponiveis = microregiaoOptions || contextMicroregioes;
 
   const abrirModal = (tipo) => {
+    // Se região é fixa (colaborador), não abre o modal de região
+    if (tipo === 'regiao' && fixedRegiao) return;
     setTipoModal(tipo);
     setModalVisible(true);
   };
@@ -34,6 +46,11 @@ export default function FiltroRegional() {
     fecharModal();
   };
 
+  const selecionarMicroregiao = (microregiao) => {
+    setMicroregiao(microregiao);
+    fecharModal();
+  };
+
   const selecionarFazenda = (fazenda) => {
     if (fazenda === 'todas') {
       setFazenda('todas', null);
@@ -44,8 +61,14 @@ export default function FiltroRegional() {
   };
 
   const getTextoRegiao = () => {
+    if (fixedRegiao) return fixedRegiao;
     if (filtros.regiao === 'todas') return 'Todas as Regiões';
     return filtros.regiao;
+  };
+
+  const getTextoMicroregiao = () => {
+    if (filtros.microregiao === 'todas') return 'Todas Micro-regiões';
+    return filtros.microregiao;
   };
 
   const getTextoFazenda = () => {
@@ -53,46 +76,94 @@ export default function FiltroRegional() {
     return filtros.fazenda;
   };
 
+  const getTituloModal = () => {
+    if (tipoModal === 'regiao') return 'Selecionar Região';
+    if (tipoModal === 'microregiao') return 'Selecionar Micro-região';
+    return 'Selecionar Fazenda';
+  };
+
   return (
     <View style={styles.container}>
       {/* Título */}
       <View style={styles.tituloContainer}>
         <Ionicons name="filter" size={16} color={colors.textLight} />
-        <Text style={styles.titulo}>Selecione a Região e/ou Fazenda</Text>
+        <Text style={styles.titulo}>
+          {fixedRegiao ? 'Filtrar por Micro-região e/ou Fazenda' : 'Selecione a Região e/ou Fazenda'}
+        </Text>
       </View>
 
-      {/* Filtros */}
+      {/* Filtros - Primeira linha: Região + Micro-região */}
       <View style={styles.filtrosRow}>
         {/* Filtro Região */}
         <TouchableOpacity 
           style={[
             styles.filtroButton, 
-            filtros.regiao !== 'todas' && styles.filtroButtonAtivo
+            (filtros.regiao !== 'todas' || fixedRegiao) && styles.filtroButtonAtivo,
+            fixedRegiao && styles.filtroButtonFixo,
           ]}
           onPress={() => abrirModal('regiao')}
-          activeOpacity={0.7}
+          activeOpacity={fixedRegiao ? 1 : 0.7}
+          disabled={!!fixedRegiao}
         >
           <Ionicons 
             name="location-outline" 
             size={18} 
-            color={filtros.regiao !== 'todas' ? colors.white : colors.primary} 
+            color={(filtros.regiao !== 'todas' || fixedRegiao) ? colors.white : colors.primary} 
           />
           <Text 
             style={[
               styles.filtroText,
-              filtros.regiao !== 'todas' && styles.filtroTextAtivo
+              (filtros.regiao !== 'todas' || fixedRegiao) && styles.filtroTextAtivo
             ]}
             numberOfLines={1}
           >
             {getTextoRegiao()}
           </Text>
+          {!fixedRegiao && (
+            <Ionicons 
+              name="chevron-down" 
+              size={16} 
+              color={filtros.regiao !== 'todas' ? colors.white : colors.primary} 
+            />
+          )}
+          {fixedRegiao && (
+            <Ionicons name="lock-closed" size={14} color="rgba(255,255,255,0.7)" />
+          )}
+        </TouchableOpacity>
+
+        {/* Filtro Micro-região */}
+        <TouchableOpacity 
+          style={[
+            styles.filtroButton, 
+            filtros.microregiao !== 'todas' && styles.filtroButtonAtivo
+          ]}
+          onPress={() => abrirModal('microregiao')}
+          activeOpacity={0.7}
+        >
+          <Ionicons 
+            name="map-outline" 
+            size={18} 
+            color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
+          />
+          <Text 
+            style={[
+              styles.filtroText,
+              filtros.microregiao !== 'todas' && styles.filtroTextAtivo
+            ]}
+            numberOfLines={1}
+          >
+            {getTextoMicroregiao()}
+          </Text>
           <Ionicons 
             name="chevron-down" 
             size={16} 
-            color={filtros.regiao !== 'todas' ? colors.white : colors.primary} 
+            color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
           />
         </TouchableOpacity>
+      </View>
 
+      {/* Filtros - Segunda linha: Fazenda + Limpar */}
+      <View style={[styles.filtrosRow, { marginTop: spacing.xs }]}>
         {/* Filtro Fazenda */}
         <TouchableOpacity 
           style={[
@@ -127,7 +198,13 @@ export default function FiltroRegional() {
         {temFiltroAtivo() && (
           <TouchableOpacity 
             style={styles.limparButton}
-            onPress={limparFiltros}
+            onPress={() => {
+              limparFiltros();
+              // Para colaborador, re-setar região fixa após limpar
+              if (fixedRegiao) {
+                setTimeout(() => setRegiao(fixedRegiao), 50);
+              }
+            }}
             activeOpacity={0.7}
           >
             <Ionicons name="close-circle" size={22} color={colors.error} />
@@ -170,7 +247,7 @@ export default function FiltroRegional() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {tipoModal === 'regiao' ? 'Selecionar Região' : 'Selecionar Fazenda'}
+                {getTituloModal()}
               </Text>
               <TouchableOpacity onPress={fecharModal}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -178,6 +255,7 @@ export default function FiltroRegional() {
             </View>
 
             <ScrollView style={styles.modalList}>
+              {/* === MODAL REGIÃO === */}
               {tipoModal === 'regiao' && (
                 <>
                   {/* Opção "Todas" */}
@@ -233,6 +311,72 @@ export default function FiltroRegional() {
                 </>
               )}
 
+              {/* === MODAL MICRO-REGIÃO === */}
+              {tipoModal === 'microregiao' && (
+                <>
+                  {/* Opção "Todas" */}
+                  <TouchableOpacity
+                    style={[
+                      styles.modalItem,
+                      filtros.microregiao === 'todas' && styles.modalItemSelecionado
+                    ]}
+                    onPress={() => selecionarMicroregiao('todas')}
+                  >
+                    <Ionicons 
+                      name="globe-outline" 
+                      size={20} 
+                      color={filtros.microregiao === 'todas' ? colors.white : colors.textLight} 
+                    />
+                    <Text style={[
+                      styles.modalItemText,
+                      filtros.microregiao === 'todas' && styles.modalItemTextSelecionado
+                    ]}>
+                      Todas as Micro-regiões
+                    </Text>
+                    {filtros.microregiao === 'todas' && (
+                      <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Lista de Micro-regiões */}
+                  {microregioesDisponiveis.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Ionicons name="alert-circle-outline" size={32} color={colors.textLight} />
+                      <Text style={styles.emptyText}>
+                        Nenhuma micro-região disponível
+                      </Text>
+                    </View>
+                  ) : (
+                    microregioesDisponiveis.map((micro) => (
+                      <TouchableOpacity
+                        key={micro}
+                        style={[
+                          styles.modalItem,
+                          filtros.microregiao === micro && styles.modalItemSelecionado
+                        ]}
+                        onPress={() => selecionarMicroregiao(micro)}
+                      >
+                        <Ionicons 
+                          name="map" 
+                          size={20} 
+                          color={filtros.microregiao === micro ? colors.white : colors.textLight} 
+                        />
+                        <Text style={[
+                          styles.modalItemText,
+                          filtros.microregiao === micro && styles.modalItemTextSelecionado
+                        ]}>
+                          {micro}
+                        </Text>
+                        {filtros.microregiao === micro && (
+                          <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                        )}
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </>
+              )}
+
+              {/* === MODAL FAZENDA === */}
               {tipoModal === 'fazenda' && (
                 <>
                   {/* Opção "Todas" */}
@@ -360,6 +504,11 @@ const styles = StyleSheet.create({
   filtroButtonAtivo: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+  },
+  filtroButtonFixo: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    opacity: 0.85,
   },
   filtroText: {
     fontSize: 13,

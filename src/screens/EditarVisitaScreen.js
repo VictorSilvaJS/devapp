@@ -92,9 +92,8 @@ export default function EditarVisitaScreen() {
       // Filtrar produtores por perfil
       let filtrados = produtoresData;
       if (user?.perfil === 'colaborador') {
-        // Colaborador: produtores da sua região/sub-regiões
+        // Colaborador: produtores das suas sub-regiões
         filtrados = produtoresData.filter(p => {
-          if (p.regiao === user.regiao) return true;
           if (user.sub_regioes && p.microregiao) {
             return user.sub_regioes.includes(p.microregiao);
           }

@@ -37,8 +37,8 @@ export default function ProdutoresScreen() {
     // Filtrar por acesso do usuário
     let produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
     
-    // Para admin, aplicar filtros regionais globais
-    if (user?.perfil === 'admin') {
+    // Para admin e colaborador, aplicar filtros regionais globais
+    if (user?.perfil === 'admin' || user?.perfil === 'colaborador') {
       produtoresFiltrados = filtrarProdutoresPorRegiao(produtoresFiltrados);
     }
     

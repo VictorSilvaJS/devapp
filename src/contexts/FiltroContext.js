@@ -6,12 +6,14 @@ const FiltroContext = createContext();
 export function FiltroProvider({ children }) {
   const [filtros, setFiltros] = useState({
     regiao: 'todas',
+    microregiao: 'todas',
     fazenda: 'todas',
     produtorId: null,
     cidade: 'todas',
   });
 
   const [regioes, setRegioes] = useState([]);
+  const [microregioes, setMicroregioes] = useState([]);
   const [fazendas, setFazendas] = useState([]);
   const [cidades, setCidades] = useState([]);
 
@@ -20,10 +22,15 @@ export function FiltroProvider({ children }) {
     loadOpcoesDisponiveis();
   }, []);
 
-  // Atualizar fazendas disponíveis quando região mudar
+  // Atualizar microregiões e fazendas quando região mudar
+  useEffect(() => {
+    loadMicroregioes();
+  }, [filtros.regiao]);
+
+  // Atualizar fazendas disponíveis quando região ou microregião mudar
   useEffect(() => {
     loadFazendas();
-  }, [filtros.regiao]);
+  }, [filtros.regiao, filtros.microregiao]);
 
   const loadOpcoesDisponiveis = async () => {
     try {
@@ -37,8 +44,28 @@ export function FiltroProvider({ children }) {
       const cidadesUnicas = [...new Set(produtores.map(p => p.cidade).filter(Boolean))].sort();
       setCidades(cidadesUnicas);
 
+      // Extrair microregiões únicas (todas)
+      const microregioesUnicas = [...new Set(produtores.map(p => p.microregiao).filter(Boolean))].sort();
+      setMicroregioes(microregioesUnicas);
+
     } catch (error) {
       console.error('Erro ao carregar opções de filtro:', error);
+    }
+  };
+
+  const loadMicroregioes = async () => {
+    try {
+      const produtores = await Produtor.list();
+      let produtoresFiltrados = produtores;
+
+      if (filtros.regiao !== 'todas') {
+        produtoresFiltrados = produtoresFiltrados.filter(p => p.regiao === filtros.regiao);
+      }
+
+      const microregioesUnicas = [...new Set(produtoresFiltrados.map(p => p.microregiao).filter(Boolean))].sort();
+      setMicroregioes(microregioesUnicas);
+    } catch (error) {
+      console.error('Erro ao carregar microregiões:', error);
     }
   };
 
@@ -52,6 +79,11 @@ export function FiltroProvider({ children }) {
         produtoresFiltrados = produtoresFiltrados.filter(p => p.regiao === filtros.regiao);
       }
 
+      // Filtrar por microregião se selecionada
+      if (filtros.microregiao !== 'todas') {
+        produtoresFiltrados = produtoresFiltrados.filter(p => p.microregiao === filtros.microregiao);
+      }
+
       // Extrair fazendas com seus IDs
       const fazendasDisponiveis = produtoresFiltrados
         .filter(p => p.fazenda)
@@ -61,6 +93,7 @@ export function FiltroProvider({ children }) {
           produtor: p.nome,
           cidade: p.cidade,
           regiao: p.regiao,
+          microregiao: p.microregiao,
         }))
         .sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -74,7 +107,17 @@ export function FiltroProvider({ children }) {
     setFiltros(prev => ({
       ...prev,
       regiao,
-      fazenda: 'todas', // Resetar fazenda ao mudar região
+      microregiao: 'todas', // Resetar microregião ao mudar região
+      fazenda: 'todas',
+      produtorId: null,
+    }));
+  };
+
+  const setMicroregiao = (microregiao) => {
+    setFiltros(prev => ({
+      ...prev,
+      microregiao,
+      fazenda: 'todas', // Resetar fazenda ao mudar microregião
       produtorId: null,
     }));
   };
@@ -97,6 +140,7 @@ export function FiltroProvider({ children }) {
   const limparFiltros = () => {
     setFiltros({
       regiao: 'todas',
+      microregiao: 'todas',
       fazenda: 'todas',
       produtorId: null,
       cidade: 'todas',
@@ -104,30 +148,20 @@ export function FiltroProvider({ children }) {
   };
 
   const getFiltroAtivo = () => {
-    // Se fazenda e região estão selecionadas, mostrar ambas
-    if (filtros.fazenda !== 'todas' && filtros.regiao !== 'todas') {
-      const fazendaInfo = fazendas.find(f => f.id === filtros.produtorId);
-      return fazendaInfo 
-        ? `${filtros.regiao} • ${fazendaInfo.nome}` 
-        : `${filtros.regiao} • Fazenda Selecionada`;
-    }
-    // Se apenas fazenda está selecionada
+    const parts = [];
+    if (filtros.regiao !== 'todas') parts.push(filtros.regiao);
+    if (filtros.microregiao !== 'todas') parts.push(filtros.microregiao);
     if (filtros.fazenda !== 'todas') {
       const fazendaInfo = fazendas.find(f => f.id === filtros.produtorId);
-      return fazendaInfo ? `${fazendaInfo.nome}` : 'Fazenda Selecionada';
+      parts.push(fazendaInfo ? fazendaInfo.nome : 'Fazenda Selecionada');
     }
-    // Se apenas região está selecionada
-    if (filtros.regiao !== 'todas') {
-      return `Região ${filtros.regiao}`;
-    }
-    if (filtros.cidade !== 'todas') {
-      return filtros.cidade;
-    }
-    return 'Todas as Regiões';
+    if (filtros.cidade !== 'todas') parts.push(filtros.cidade);
+    return parts.length > 0 ? parts.join(' • ') : 'Todas as Regiões';
   };
 
   const temFiltroAtivo = () => {
     return filtros.regiao !== 'todas' || 
+           filtros.microregiao !== 'todas' ||
            filtros.fazenda !== 'todas' || 
            filtros.cidade !== 'todas';
   };
@@ -141,6 +175,11 @@ export function FiltroProvider({ children }) {
     // Filtro por região
     if (filtros.regiao !== 'todas') {
       resultado = resultado.filter(p => p.regiao === filtros.regiao);
+    }
+
+    // Filtro por microregião
+    if (filtros.microregiao !== 'todas') {
+      resultado = resultado.filter(p => p.microregiao === filtros.microregiao);
     }
 
     // Filtro por cidade
@@ -165,9 +204,11 @@ export function FiltroProvider({ children }) {
   const value = {
     filtros,
     regioes,
+    microregioes,
     fazendas,
     cidades,
     setRegiao,
+    setMicroregiao,
     setFazenda,
     setCidade,
     limparFiltros,

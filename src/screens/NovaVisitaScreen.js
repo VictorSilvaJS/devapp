@@ -57,9 +57,8 @@ export default function NovaVisitaScreen() {
       // Filtrar por perfil
       let filtrados = data;
       if (user?.perfil === 'colaborador') {
-        // Colaborador: produtores da sua região/sub-regiões
+        // Colaborador: produtores das suas sub-regiões
         filtrados = data.filter(p => {
-          if (p.regiao === user.regiao) return true;
           if (user.sub_regioes && p.microregiao) {
             return user.sub_regioes.includes(p.microregiao);
           }

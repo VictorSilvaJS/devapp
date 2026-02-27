@@ -16,7 +16,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function DashboardScreen() {
   const { user } = useAuthState();
-  const { filtrarProdutores, getProdutorIdsFiltrados, getFiltroAtivo } = useFiltros();
+  const { filtrarProdutores, getProdutorIdsFiltrados, getFiltroAtivo, setRegiao } = useFiltros();
   const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: 0 });
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,10 +31,17 @@ export default function DashboardScreen() {
     return () => console.log('[DashboardScreen] unmounted');
   }, [user]);
 
-  // Recarregar dados quando filtros mudarem (apenas para admin)
+  // Para colaborador, fixar região no mount
+  useEffect(() => {
+    if (user?.perfil === 'colaborador' && user?.regiao) {
+      setRegiao(user.regiao);
+    }
+  }, [user?.perfil, user?.regiao]);
+
+  // Recarregar dados quando filtros mudarem (admin e colaborador)
   const { filtros } = useFiltros();
   useEffect(() => {
-    if (user?.perfil === 'admin' && !isLoading) {
+    if ((user?.perfil === 'admin' || user?.perfil === 'colaborador') && !isLoading) {
       loadData();
     }
   }, [filtros, user?.perfil]);
@@ -65,27 +72,29 @@ export default function DashboardScreen() {
         // Atualizar texto de localização
         setCidade(getFiltroAtivo());
       } 
-      // COLABORADOR - Acesso à sua região/sub-regiões
+      // COLABORADOR - Acesso às suas sub-regiões com filtros de contexto
       else if (user?.perfil === 'colaborador') {
         if (user.regiao) {
           const todosProdutores = await Produtor.list();
-          // Filtrar produtores por região principal OU microregião nas sub_regiões
-          produtores = todosProdutores.filter(p => {
-            if (p.regiao === user.regiao) return true;
+          // Pré-filtrar por sub_regiões do colaborador (escopo)
+          const produtoresDoColaborador = todosProdutores.filter(p => {
             if (user.sub_regioes && p.microregiao) {
               return user.sub_regioes.includes(p.microregiao);
             }
             return false;
           });
-          const idsRegiao = produtores.map(p => p.id);
+          
+          // Aplicar filtros de contexto (microregião, fazenda)
+          produtores = filtrarProdutores(produtoresDoColaborador);
+          const idsFiltrados = produtores.map(p => p.id);
           
           const todasVisitas = await Visita.list();
-          visitas = todasVisitas.filter(v => idsRegiao.includes(v.produtor_id));
+          visitas = todasVisitas.filter(v => idsFiltrados.includes(v.produtor_id));
           
           const todosRegistros = await CadernoCampo.list();
-          registros = todosRegistros.filter(r => idsRegiao.includes(r.produtor_id));
+          registros = todosRegistros.filter(r => idsFiltrados.includes(r.produtor_id));
           
-          setCidade(user.regiao || 'Região não definida');
+          setCidade(getFiltroAtivo());
         } else {
           setCidade('Região não definida');
         }
@@ -329,10 +338,18 @@ export default function DashboardScreen() {
               {user?.perfil === 'produtor' && 'Visão Geral das suas Propriedades'}
             </Text>
 
-            {/* Filtros Regionais - apenas para Admin */}
+            {/* Filtros Regionais - Admin e Colaborador */}
             {user?.perfil === 'admin' && (
               <View style={styles.filtrosContainer}>
                 <FiltroRegional />
+              </View>
+            )}
+            {user?.perfil === 'colaborador' && (
+              <View style={styles.filtrosContainer}>
+                <FiltroRegional 
+                  fixedRegiao={user.regiao} 
+                  microregiaoOptions={user.sub_regioes} 
+                />
               </View>
             )}
 
