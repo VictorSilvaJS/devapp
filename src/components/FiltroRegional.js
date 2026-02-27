@@ -6,7 +6,7 @@ import { colors, typography, spacing, shadows } from '../theme';
 
 /**
  * FiltroRegional - Componente de filtro regional
- * @param {string} fixedRegiao - Região fixa (para colaborador, não pode alterar)
+ * @param {string} fixedRegiao - Região fixa (para colaborador: mostra como info, não como botão)
  * @param {string[]} microregiaoOptions - Opções de micro-região (para colaborador: sub_regioes)
  */
 export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
@@ -28,6 +28,22 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
 
   // Se microregiaoOptions prop fornecida (colaborador), usar ela; senão, usar do contexto
   const microregioesDisponiveis = microregiaoOptions || contextMicroregioes;
+
+  // Para colaborador, filtrar fazendas apenas pelas sub_regioes do colaborador
+  const fazendasDisponiveis = microregiaoOptions
+    ? fazendas.filter(f => microregiaoOptions.includes(f.microregiao))
+    : fazendas;
+
+  // Para a modal de fazenda no modo colaborador, agrupar por proprietário
+  const fazendasAgrupadas = (() => {
+    const grupos = {};
+    fazendasDisponiveis.forEach(f => {
+      const key = f.produtor; // nome do proprietário
+      if (!grupos[key]) grupos[key] = [];
+      grupos[key].push(f);
+    });
+    return grupos;
+  })();
 
   const abrirModal = (tipo) => {
     // Se região é fixa (colaborador), não abre o modal de região
@@ -79,158 +95,256 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
   const getTituloModal = () => {
     if (tipoModal === 'regiao') return 'Selecionar Região';
     if (tipoModal === 'microregiao') return 'Selecionar Micro-região';
-    return 'Selecionar Fazenda';
+    return 'Selecionar Fazenda / Propriedade';
+  };
+
+  // Verificar se colaborador tem filtro ativo (ignora a região fixa)
+  const temFiltroAtivoColaborador = () => {
+    return filtros.microregiao !== 'todas' || filtros.fazenda !== 'todas';
+  };
+
+  const handleLimpar = () => {
+    limparFiltros();
+    if (fixedRegiao) {
+      setTimeout(() => setRegiao(fixedRegiao), 50);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Título */}
-      <View style={styles.tituloContainer}>
-        <Ionicons name="filter" size={16} color={colors.textLight} />
-        <Text style={styles.titulo}>
-          {fixedRegiao ? 'Filtrar por Micro-região e/ou Fazenda' : 'Selecione a Região e/ou Fazenda'}
-        </Text>
-      </View>
-
-      {/* Filtros - Primeira linha: Região + Micro-região */}
-      <View style={styles.filtrosRow}>
-        {/* Filtro Região */}
-        <TouchableOpacity 
-          style={[
-            styles.filtroButton, 
-            (filtros.regiao !== 'todas' || fixedRegiao) && styles.filtroButtonAtivo,
-            fixedRegiao && styles.filtroButtonFixo,
-          ]}
-          onPress={() => abrirModal('regiao')}
-          activeOpacity={fixedRegiao ? 1 : 0.7}
-          disabled={!!fixedRegiao}
-        >
-          <Ionicons 
-            name="location-outline" 
-            size={18} 
-            color={(filtros.regiao !== 'todas' || fixedRegiao) ? colors.white : colors.primary} 
-          />
-          <Text 
-            style={[
-              styles.filtroText,
-              (filtros.regiao !== 'todas' || fixedRegiao) && styles.filtroTextAtivo
-            ]}
-            numberOfLines={1}
-          >
-            {getTextoRegiao()}
-          </Text>
-          {!fixedRegiao && (
-            <Ionicons 
-              name="chevron-down" 
-              size={16} 
-              color={filtros.regiao !== 'todas' ? colors.white : colors.primary} 
-            />
-          )}
-          {fixedRegiao && (
-            <Ionicons name="lock-closed" size={14} color="rgba(255,255,255,0.7)" />
-          )}
-        </TouchableOpacity>
-
-        {/* Filtro Micro-região */}
-        <TouchableOpacity 
-          style={[
-            styles.filtroButton, 
-            filtros.microregiao !== 'todas' && styles.filtroButtonAtivo
-          ]}
-          onPress={() => abrirModal('microregiao')}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name="map-outline" 
-            size={18} 
-            color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
-          />
-          <Text 
-            style={[
-              styles.filtroText,
-              filtros.microregiao !== 'todas' && styles.filtroTextAtivo
-            ]}
-            numberOfLines={1}
-          >
-            {getTextoMicroregiao()}
-          </Text>
-          <Ionicons 
-            name="chevron-down" 
-            size={16} 
-            color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Filtros - Segunda linha: Fazenda + Limpar */}
-      <View style={[styles.filtrosRow, { marginTop: spacing.xs }]}>
-        {/* Filtro Fazenda */}
-        <TouchableOpacity 
-          style={[
-            styles.filtroButton,
-            filtros.fazenda !== 'todas' && styles.filtroButtonAtivo
-          ]}
-          onPress={() => abrirModal('fazenda')}
-          activeOpacity={0.7}
-        >
-          <Ionicons 
-            name="home-outline" 
-            size={18} 
-            color={filtros.fazenda !== 'todas' ? colors.white : colors.primary} 
-          />
-          <Text 
-            style={[
-              styles.filtroText,
-              filtros.fazenda !== 'todas' && styles.filtroTextAtivo
-            ]}
-            numberOfLines={1}
-          >
-            {getTextoFazenda()}
-          </Text>
-          <Ionicons 
-            name="chevron-down" 
-            size={16} 
-            color={filtros.fazenda !== 'todas' ? colors.white : colors.primary} 
-          />
-        </TouchableOpacity>
-
-        {/* Botão Limpar */}
-        {temFiltroAtivo() && (
-          <TouchableOpacity 
-            style={styles.limparButton}
-            onPress={() => {
-              limparFiltros();
-              // Para colaborador, re-setar região fixa após limpar
-              if (fixedRegiao) {
-                setTimeout(() => setRegiao(fixedRegiao), 50);
-              }
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="close-circle" size={22} color={colors.error} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Indicador de Filtro Ativo */}
-      <View style={styles.indicadorContainer}>
-        <Ionicons 
-          name={temFiltroAtivo() ? 'funnel' : 'earth'} 
-          size={13} 
-          color={temFiltroAtivo() ? colors.primary : colors.textLight} 
-        />
-        <Text style={[
-          styles.indicadorText,
-          temFiltroAtivo() && styles.indicadorTextAtivo
-        ]}>
-          Visualizando: {getFiltroAtivo()}
-        </Text>
-        {temFiltroAtivo() && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Filtrado</Text>
+      {/* === MODO COLABORADOR === */}
+      {fixedRegiao ? (
+        <>
+          {/* Info da região (não clicável) */}
+          <View style={styles.regiaoInfoContainer}>
+            <Ionicons name="location" size={16} color={colors.primary} />
+            <Text style={styles.regiaoInfoText}>Região: {fixedRegiao}</Text>
           </View>
-        )}
-      </View>
+
+          {/* Filtros: Micro-região + Fazenda */}
+          <View style={styles.filtrosRow}>
+            {/* Filtro Micro-região */}
+            <TouchableOpacity 
+              style={[
+                styles.filtroButton, 
+                filtros.microregiao !== 'todas' && styles.filtroButtonAtivo
+              ]}
+              onPress={() => abrirModal('microregiao')}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="map-outline" 
+                size={18} 
+                color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
+              />
+              <Text 
+                style={[
+                  styles.filtroText,
+                  filtros.microregiao !== 'todas' && styles.filtroTextAtivo
+                ]}
+                numberOfLines={1}
+              >
+                {getTextoMicroregiao()}
+              </Text>
+              <Ionicons 
+                name="chevron-down" 
+                size={16} 
+                color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
+              />
+            </TouchableOpacity>
+
+            {/* Filtro Fazenda */}
+            <TouchableOpacity 
+              style={[
+                styles.filtroButton,
+                filtros.fazenda !== 'todas' && styles.filtroButtonAtivo
+              ]}
+              onPress={() => abrirModal('fazenda')}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="home-outline" 
+                size={18} 
+                color={filtros.fazenda !== 'todas' ? colors.white : colors.primary} 
+              />
+              <Text 
+                style={[
+                  styles.filtroText,
+                  filtros.fazenda !== 'todas' && styles.filtroTextAtivo
+                ]}
+                numberOfLines={1}
+              >
+                {getTextoFazenda()}
+              </Text>
+              <Ionicons 
+                name="chevron-down" 
+                size={16} 
+                color={filtros.fazenda !== 'todas' ? colors.white : colors.primary} 
+              />
+            </TouchableOpacity>
+
+            {/* Botão Limpar */}
+            {temFiltroAtivoColaborador() && (
+              <TouchableOpacity 
+                style={styles.limparButton}
+                onPress={handleLimpar}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={22} color={colors.error} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Indicador */}
+          {temFiltroAtivoColaborador() && (
+            <View style={styles.indicadorContainer}>
+              <Ionicons name="funnel" size={13} color={colors.primary} />
+              <Text style={[styles.indicadorText, styles.indicadorTextAtivo]}>
+                Filtrado: {filtros.microregiao !== 'todas' ? filtros.microregiao : ''}{filtros.microregiao !== 'todas' && filtros.fazenda !== 'todas' ? ' • ' : ''}{filtros.fazenda !== 'todas' ? filtros.fazenda : ''}
+              </Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Filtrado</Text>
+              </View>
+            </View>
+          )}
+        </>
+      ) : (
+        /* === MODO ADMIN === */
+        <>
+          {/* Título */}
+          <View style={styles.tituloContainer}>
+            <Ionicons name="filter" size={16} color={colors.textLight} />
+            <Text style={styles.titulo}>Selecione a Região e/ou Fazenda</Text>
+          </View>
+
+          {/* Filtros - Primeira linha: Região + Micro-região */}
+          <View style={styles.filtrosRow}>
+            {/* Filtro Região */}
+            <TouchableOpacity 
+              style={[
+                styles.filtroButton, 
+                filtros.regiao !== 'todas' && styles.filtroButtonAtivo,
+              ]}
+              onPress={() => abrirModal('regiao')}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="location-outline" 
+                size={18} 
+                color={filtros.regiao !== 'todas' ? colors.white : colors.primary} 
+              />
+              <Text 
+                style={[
+                  styles.filtroText,
+                  filtros.regiao !== 'todas' && styles.filtroTextAtivo
+                ]}
+                numberOfLines={1}
+              >
+                {getTextoRegiao()}
+              </Text>
+              <Ionicons 
+                name="chevron-down" 
+                size={16} 
+                color={filtros.regiao !== 'todas' ? colors.white : colors.primary} 
+              />
+            </TouchableOpacity>
+
+            {/* Filtro Micro-região */}
+            <TouchableOpacity 
+              style={[
+                styles.filtroButton, 
+                filtros.microregiao !== 'todas' && styles.filtroButtonAtivo
+              ]}
+              onPress={() => abrirModal('microregiao')}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="map-outline" 
+                size={18} 
+                color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
+              />
+              <Text 
+                style={[
+                  styles.filtroText,
+                  filtros.microregiao !== 'todas' && styles.filtroTextAtivo
+                ]}
+                numberOfLines={1}
+              >
+                {getTextoMicroregiao()}
+              </Text>
+              <Ionicons 
+                name="chevron-down" 
+                size={16} 
+                color={filtros.microregiao !== 'todas' ? colors.white : colors.primary} 
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Filtros - Segunda linha: Fazenda + Limpar */}
+          <View style={[styles.filtrosRow, { marginTop: spacing.xs }]}>
+            {/* Filtro Fazenda */}
+            <TouchableOpacity 
+              style={[
+                styles.filtroButton,
+                filtros.fazenda !== 'todas' && styles.filtroButtonAtivo
+              ]}
+              onPress={() => abrirModal('fazenda')}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name="home-outline" 
+                size={18} 
+                color={filtros.fazenda !== 'todas' ? colors.white : colors.primary} 
+              />
+              <Text 
+                style={[
+                  styles.filtroText,
+                  filtros.fazenda !== 'todas' && styles.filtroTextAtivo
+                ]}
+                numberOfLines={1}
+              >
+                {getTextoFazenda()}
+              </Text>
+              <Ionicons 
+                name="chevron-down" 
+                size={16} 
+                color={filtros.fazenda !== 'todas' ? colors.white : colors.primary} 
+              />
+            </TouchableOpacity>
+
+            {/* Botão Limpar */}
+            {temFiltroAtivo() && (
+              <TouchableOpacity 
+                style={styles.limparButton}
+                onPress={handleLimpar}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={22} color={colors.error} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Indicador de Filtro Ativo */}
+          <View style={styles.indicadorContainer}>
+            <Ionicons 
+              name={temFiltroAtivo() ? 'funnel' : 'earth'} 
+              size={13} 
+              color={temFiltroAtivo() ? colors.primary : colors.textLight} 
+            />
+            <Text style={[
+              styles.indicadorText,
+              temFiltroAtivo() && styles.indicadorTextAtivo
+            ]}>
+              Visualizando: {getFiltroAtivo()}
+            </Text>
+            {temFiltroAtivo() && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Filtrado</Text>
+              </View>
+            )}
+          </View>
+        </>
+      )}
 
       {/* Modal de Seleção */}
       <Modal
@@ -258,7 +372,6 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
               {/* === MODAL REGIÃO === */}
               {tipoModal === 'regiao' && (
                 <>
-                  {/* Opção "Todas" */}
                   <TouchableOpacity
                     style={[
                       styles.modalItem,
@@ -282,7 +395,6 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
                     )}
                   </TouchableOpacity>
 
-                  {/* Lista de Regiões */}
                   {regioes.map((regiao) => (
                     <TouchableOpacity
                       key={regiao}
@@ -314,7 +426,6 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
               {/* === MODAL MICRO-REGIÃO === */}
               {tipoModal === 'microregiao' && (
                 <>
-                  {/* Opção "Todas" */}
                   <TouchableOpacity
                     style={[
                       styles.modalItem,
@@ -338,7 +449,6 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
                     )}
                   </TouchableOpacity>
 
-                  {/* Lista de Micro-regiões */}
                   {microregioesDisponiveis.length === 0 ? (
                     <View style={styles.emptyState}>
                       <Ionicons name="alert-circle-outline" size={32} color={colors.textLight} />
@@ -379,7 +489,6 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
               {/* === MODAL FAZENDA === */}
               {tipoModal === 'fazenda' && (
                 <>
-                  {/* Opção "Todas" */}
                   <TouchableOpacity
                     style={[
                       styles.modalItem,
@@ -403,8 +512,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
                     )}
                   </TouchableOpacity>
 
-                  {/* Lista de Fazendas */}
-                  {fazendas.length === 0 ? (
+                  {fazendasDisponiveis.length === 0 ? (
                     <View style={styles.emptyState}>
                       <Ionicons name="alert-circle-outline" size={32} color={colors.textLight} />
                       <Text style={styles.emptyText}>
@@ -415,38 +523,52 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
                       </Text>
                     </View>
                   ) : (
-                    fazendas.map((fazenda) => (
-                      <TouchableOpacity
-                        key={fazenda.id}
-                        style={[
-                          styles.modalItem,
-                          filtros.produtorId === fazenda.id && styles.modalItemSelecionado
-                        ]}
-                        onPress={() => selecionarFazenda(fazenda)}
-                      >
-                        <Ionicons 
-                          name="home" 
-                          size={20} 
-                          color={filtros.produtorId === fazenda.id ? colors.white : colors.textLight} 
-                        />
-                        <View style={styles.fazendaInfo}>
-                          <Text style={[
-                            styles.modalItemText,
-                            filtros.produtorId === fazenda.id && styles.modalItemTextSelecionado
-                          ]}>
-                            {fazenda.nome}
-                          </Text>
-                          <Text style={[
-                            styles.fazendaSubtext,
-                            filtros.produtorId === fazenda.id && styles.fazendaSubtextSelecionado
-                          ]}>
-                            {fazenda.produtor} • {fazenda.cidade}
+                    Object.entries(fazendasAgrupadas).map(([proprietario, fazsProp]) => (
+                      <View key={proprietario}>
+                        {/* Cabeçalho do proprietário */}
+                        <View style={styles.proprietarioHeader}>
+                          <Ionicons name="person-outline" size={14} color={colors.textLight} />
+                          <Text style={styles.proprietarioText}>{proprietario}</Text>
+                          <Text style={styles.proprietarioCount}>
+                            {fazsProp.length} {fazsProp.length === 1 ? 'propriedade' : 'propriedades'}
                           </Text>
                         </View>
-                        {filtros.produtorId === fazenda.id && (
-                          <Ionicons name="checkmark-circle" size={20} color={colors.white} />
-                        )}
-                      </TouchableOpacity>
+                        {/* Fazendas do proprietário */}
+                        {fazsProp.map((fazenda) => (
+                          <TouchableOpacity
+                            key={fazenda.id}
+                            style={[
+                              styles.modalItem,
+                              styles.fazendaItem,
+                              filtros.produtorId === fazenda.id && styles.modalItemSelecionado
+                            ]}
+                            onPress={() => selecionarFazenda(fazenda)}
+                          >
+                            <Ionicons 
+                              name="home" 
+                              size={20} 
+                              color={filtros.produtorId === fazenda.id ? colors.white : colors.textLight} 
+                            />
+                            <View style={styles.fazendaInfo}>
+                              <Text style={[
+                                styles.modalItemText,
+                                filtros.produtorId === fazenda.id && styles.modalItemTextSelecionado
+                              ]}>
+                                {fazenda.nome}
+                              </Text>
+                              <Text style={[
+                                styles.fazendaSubtext,
+                                filtros.produtorId === fazenda.id && styles.fazendaSubtextSelecionado
+                              ]}>
+                                {fazenda.microregiao} • {fazenda.cidade}
+                              </Text>
+                            </View>
+                            {filtros.produtorId === fazenda.id && (
+                              <Ionicons name="checkmark-circle" size={20} color={colors.white} />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
                     ))
                   )}
                 </>
@@ -469,6 +591,22 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginHorizontal: spacing.md,
     ...shadows.sm,
+  },
+  regiaoInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+    backgroundColor: '#e8f5e8',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  regiaoInfoText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '700',
+    flex: 1,
   },
   tituloContainer: {
     flexDirection: 'row',
@@ -504,11 +642,6 @@ const styles = StyleSheet.create({
   filtroButtonAtivo: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
-  },
-  filtroButtonFixo: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    opacity: 0.85,
   },
   filtroText: {
     fontSize: 13,
@@ -607,6 +740,28 @@ const styles = StyleSheet.create({
   modalItemTextSelecionado: {
     color: colors.white,
     fontWeight: '700',
+  },
+  proprietarioHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: 6,
+  },
+  proprietarioText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text,
+    flex: 1,
+  },
+  proprietarioCount: {
+    fontSize: 11,
+    color: colors.textLight,
+    fontWeight: '500',
+  },
+  fazendaItem: {
+    marginLeft: 8,
   },
   fazendaInfo: {
     flex: 1,

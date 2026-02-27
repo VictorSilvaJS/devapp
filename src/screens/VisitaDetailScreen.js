@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
@@ -37,9 +37,12 @@ export default function VisitaDetailScreen() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  useEffect(() => {
-    loadVisita();
-  }, [visitaId]);
+  // Recarregar visita sempre que a tela ganhar foco (ex: ao voltar da edição)
+  useFocusEffect(
+    useCallback(() => {
+      if (visitaId) loadVisita();
+    }, [visitaId])
+  );
 
   const loadVisita = async () => {
     setLoading(true);
