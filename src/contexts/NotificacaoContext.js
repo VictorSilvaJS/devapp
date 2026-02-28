@@ -3,9 +3,33 @@
  * Gerencia notificações in-app (não push)
  */
 
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from 'react';
+import { useAuthState } from '../auth/AuthContext';
 
 const NotificacaoContext = createContext();
+
+const NOTIFICACOES_INICIAIS = [
+  {
+    id: '1',
+    tipo: 'visita',
+    titulo: 'Visita Agendada',
+    mensagem: 'Nova visita técnica agendada para Fazenda Santa Maria',
+    data: new Date().toISOString(),
+    lida: false,
+    prioridade: 'normal',
+    icone: 'calendar-outline',
+  },
+  {
+    id: '2',
+    tipo: 'mapa',
+    titulo: 'Novo Mapa Disponível',
+    mensagem: 'Mapa de fertilidade atualizado para sua propriedade',
+    data: new Date(Date.now() - 86400000).toISOString(),
+    lida: false,
+    prioridade: 'alta',
+    icone: 'map-outline',
+  },
+];
 
 export const useNotificacao = () => {
   const context = useContext(NotificacaoContext);
@@ -16,6 +40,19 @@ export const useNotificacao = () => {
 };
 
 export const NotificacaoProvider = ({ children }) => {
+  const { user } = useAuthState();
+  const prevUserIdRef = useRef(null);
+
+  // Resetar notificações quando o usuário mudar
+  useEffect(() => {
+    const currentUserId = user?.id || null;
+    if (prevUserIdRef.current !== null && prevUserIdRef.current !== currentUserId) {
+      console.log('[NotificacaoContext] Usuário mudou, resetando notificações');
+      setNotificacoes([...NOTIFICACOES_INICIAIS]);
+    }
+    prevUserIdRef.current = currentUserId;
+  }, [user?.id]);
+
   const [notificacoes, setNotificacoes] = useState([
     // Exemplos de notificações
     {

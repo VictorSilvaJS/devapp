@@ -3,12 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platf
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
+import { useFiltros } from '../contexts/FiltroContext';
+import { useNotificacao } from '../contexts/NotificacaoContext';
 import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
 
 export default function PerfilScreen({ navigation }) {
   const { user } = useAuthState();
   const { logout } = useAuthActions();
+  const { limparFiltros } = useFiltros();
+  const { limparNotificacoes } = useNotificacao();
   const [showLogout, setShowLogout] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -20,6 +24,9 @@ export default function PerfilScreen({ navigation }) {
   const handleLogoutConfirm = async () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     try {
+      // Limpar estados dos contextos antes do logout
+      limparFiltros();
+      limparNotificacoes();
       await logout();
       if (Platform.OS === 'android') {
         ToastAndroid.show('Logout realizado', ToastAndroid.SHORT);

@@ -1,21 +1,37 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Produtor } from '../api/mock';
+import { useAuthState } from '../auth/AuthContext';
 
 const FiltroContext = createContext();
 
+const FILTROS_INICIAIS = {
+  regiao: 'todas',
+  microregiao: 'todas',
+  fazenda: 'todas',
+  produtorId: null,
+  cidade: 'todas',
+};
+
 export function FiltroProvider({ children }) {
-  const [filtros, setFiltros] = useState({
-    regiao: 'todas',
-    microregiao: 'todas',
-    fazenda: 'todas',
-    produtorId: null,
-    cidade: 'todas',
-  });
+  const { user } = useAuthState();
+  const prevUserIdRef = useRef(null);
+
+  const [filtros, setFiltros] = useState({ ...FILTROS_INICIAIS });
 
   const [regioes, setRegioes] = useState([]);
   const [microregioes, setMicroregioes] = useState([]);
   const [fazendas, setFazendas] = useState([]);
   const [cidades, setCidades] = useState([]);
+
+  // Resetar todos os filtros quando o usuário mudar (logout/login diferente)
+  useEffect(() => {
+    const currentUserId = user?.id || null;
+    if (prevUserIdRef.current !== null && prevUserIdRef.current !== currentUserId) {
+      console.log('[FiltroContext] Usuário mudou, resetando filtros');
+      setFiltros({ ...FILTROS_INICIAIS });
+    }
+    prevUserIdRef.current = currentUserId;
+  }, [user?.id]);
 
   // Carregar opções de filtro disponíveis
   useEffect(() => {
@@ -138,13 +154,7 @@ export function FiltroProvider({ children }) {
   };
 
   const limparFiltros = () => {
-    setFiltros({
-      regiao: 'todas',
-      microregiao: 'todas',
-      fazenda: 'todas',
-      produtorId: null,
-      cidade: 'todas',
-    });
+    setFiltros({ ...FILTROS_INICIAIS });
   };
 
   const getFiltroAtivo = () => {

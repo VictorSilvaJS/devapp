@@ -560,7 +560,9 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
                                 styles.fazendaSubtext,
                                 filtros.produtorId === fazenda.id && styles.fazendaSubtextSelecionado
                               ]}>
-                                {fazenda.microregiao} • {fazenda.cidade}
+                                {fazenda.microregiao === fazenda.cidade
+                                  ? fazenda.cidade
+                                  : `${fazenda.microregiao} • ${fazenda.cidade}`}
                               </Text>
                             </View>
                             {filtros.produtorId === fazenda.id && (
