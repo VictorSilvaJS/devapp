@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.large,
+    ...shadows.lg,
     minHeight: 60,
   },
   toastContent: {

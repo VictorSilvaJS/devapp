@@ -130,7 +130,7 @@ export default function ConfirmDialog({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    ...shadows.large,
+    ...shadows.lg,
   },
   iconContainer: {
     width: 80,
@@ -173,18 +173,20 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: spacing.radiusSm,
+    paddingVertical: spacing.md + 2,
+    borderRadius: spacing.radius,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
   },
   cancelButton: {
     backgroundColor: colors.backgroundAlt,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   cancelButtonText: {
     fontSize: typography.fontBody,
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
     color: colors.text,
   },
   confirmButton: {
@@ -192,8 +194,8 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     fontSize: typography.fontBody,
-    fontWeight: '700',
-    color: colors.card,
+    fontWeight: typography.weightBold,
+    color: colors.white,
   },
   buttonDisabled: {
     opacity: 0.6,

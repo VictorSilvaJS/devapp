@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   container: { flex:1, backgroundColor: colors.background },
   content: { padding: spacing.screen },
   label: { color: colors.muted, marginTop: 8 },
-  input: { backgroundColor: colors.card, padding: 10, borderRadius: 8, marginTop: 6, borderWidth:1, borderColor:'#f0f7f0' },
-  button: { backgroundColor: colors.primary, padding:12, borderRadius: 10, marginTop: 20, alignItems:'center' },
-  buttonText: { color:'#fff', fontWeight: typography.weightSemibold }
+  input: { backgroundColor: colors.card, padding: 10, borderRadius: spacing.radiusSm, marginTop: 6, borderWidth:1, borderColor: colors.borderLight },
+  button: { backgroundColor: colors.primary, padding:12, borderRadius: spacing.radius, marginTop: 20, alignItems:'center' },
+  buttonText: { color: colors.white, fontWeight: typography.weightSemibold }
 });

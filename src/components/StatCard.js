@@ -5,28 +5,28 @@ import { colors, typography, spacing, border, shadows } from '../theme';
 
 const colorSchemes = {
   green: {
-    gradient: ['#d9f0d9', '#FFFFFF'],
-    border: '#b6d7a8',
+    gradient: [colors.accent, colors.white],
+    border: colors.accentDark,
     color: colors.primary,
-    bgColor: '#d9f0d9'
+    bgColor: colors.accent
   },
   blue: {
-    gradient: ['#dbeafe', '#FFFFFF'],
+    gradient: [colors.infoLight, colors.white],
     border: '#bfdbfe',
-    color: '#2563eb',
-    bgColor: '#dbeafe'
+    color: colors.info,
+    bgColor: colors.infoLight
   },
   purple: {
-    gradient: ['#ede9fe', '#FFFFFF'],
+    gradient: [colors.purpleLight, colors.white],
     border: '#ddd6fe',
-    color: '#7c3aed',
-    bgColor: '#ede9fe'
+    color: colors.purple,
+    bgColor: colors.purpleLight
   },
   amber: {
-    gradient: ['#fef3c7', '#FFFFFF'],
+    gradient: [colors.amberLight, colors.white],
     border: '#fde68a',
-    color: '#d97706',
-    bgColor: '#fef3c7'
+    color: colors.amber,
+    bgColor: colors.amberLight
   }
 };
 
@@ -46,7 +46,7 @@ export default function StatCard({ label, value, accent, icon, colorScheme }) {
   return (
     <View style={styles.cardWrapper}>
       <LinearGradient
-        colors={finalAccent?.gradient || ['#FFFFFF', colors.backgroundAlt]}
+        colors={finalAccent?.gradient || [colors.white, colors.backgroundAlt]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.card, scheme && { borderColor: scheme.border }]}

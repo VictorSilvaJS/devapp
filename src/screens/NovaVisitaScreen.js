@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: spacing.radiusSm,
     backgroundColor: colors.card,
-    ...shadows.medium,
+    ...shadows.md,
   },
   dropdown: {
     maxHeight: 250,
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: '#FFFFFFCC',
+    backgroundColor: colors.whiteTranslucent,
     borderRadius: 11,
   },
   fotosCount: {
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderTopWidth: 2,
     borderTopColor: colors.border,
-    ...shadows.medium,
+    ...shadows.md,
   },
   button: {
     flex: 1,

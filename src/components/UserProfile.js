@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     ...shadows.md
   },
   initials: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: typography.weightBold
   },
   details: {

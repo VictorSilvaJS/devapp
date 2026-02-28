@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: spacing.radius,
+    borderWidth: 1.5,
     borderColor: colors.border,
     paddingHorizontal: spacing.sm,
     minHeight: 48,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: typography.fontCaption,
     color: colors.danger,
-    fontWeight: typography.weightMedium,
+    fontWeight: typography.weightRegular,
   },
   counter: {
     fontSize: typography.fontCaption,

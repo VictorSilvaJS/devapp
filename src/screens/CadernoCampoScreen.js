@@ -129,11 +129,11 @@ export default function CadernoCampoScreen() {
   const getTipoColor = (tipo) => {
     const cores = {
       plantio: colors.success,
-      adubacao: '#3B82F6',
-      aplicacao: '#A855F7',
-      colheita: '#F59E0B',
-      analise_solo: '#F97316',
-      vistoria: '#06B6D4',
+      adubacao: colors.info,
+      aplicacao: colors.purple,
+      colheita: colors.warning,
+      analise_solo: colors.orange,
+      vistoria: colors.cyan,
       outro: colors.muted
     };
     return cores[tipo] || colors.muted;

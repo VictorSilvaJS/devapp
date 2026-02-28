@@ -176,18 +176,18 @@ export default function DashboardScreen() {
           icon: <Ionicons name="people-outline" size={24} color={colors.primary} />,
           accent: {
             color: colors.primary,
-            bgColor: '#e8f5e8',
-            gradient: ['#e8f5e8', '#FFFFFF']
+            bgColor: colors.borderLight,
+            gradient: [colors.borderLight, colors.white]
           },
         },
         {
           label: 'Área Total',
           value: stats.areaTotal,
-          icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
+          icon: <Ionicons name="leaf-outline" size={24} color={colors.secondary} />,
           accent: {
-            color: '#8B6244',
-            bgColor: '#f5f3f0',
-            gradient: ['#f5f3f0', '#FFFFFF']
+            color: colors.secondary,
+            bgColor: colors.secondaryBg,
+            gradient: [colors.secondaryBg, colors.white]
           },
         },
         {
@@ -196,8 +196,8 @@ export default function DashboardScreen() {
           icon: <Ionicons name="calendar-outline" size={24} color={colors.success} />,
           accent: {
             color: colors.success,
-            bgColor: '#d1fae5',
-            gradient: ['#d1fae5', '#FFFFFF']
+            bgColor: colors.successBg,
+            gradient: [colors.successBg, colors.white]
           },
         },
         {
@@ -206,8 +206,8 @@ export default function DashboardScreen() {
           icon: <Ionicons name="book-outline" size={24} color={colors.warning} />,
           accent: {
             color: colors.warning,
-            bgColor: '#fef3c7',
-            gradient: ['#fef3c7', '#FFFFFF']
+            bgColor: colors.amberLight,
+            gradient: [colors.amberLight, colors.white]
           },
         },
       ];
@@ -219,18 +219,18 @@ export default function DashboardScreen() {
           icon: <Ionicons name="people-outline" size={24} color={colors.primary} />,
           accent: {
             color: colors.primary,
-            bgColor: '#e8f5e8',
-            gradient: ['#e8f5e8', '#FFFFFF']
+            bgColor: colors.borderLight,
+            gradient: [colors.borderLight, colors.white]
           },
         },
         {
           label: 'Área Gerenciada',
           value: stats.areaTotal,
-          icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
+          icon: <Ionicons name="leaf-outline" size={24} color={colors.secondary} />,
           accent: {
-            color: '#8B6244',
-            bgColor: '#f5f3f0',
-            gradient: ['#f5f3f0', '#FFFFFF']
+            color: colors.secondary,
+            bgColor: colors.secondaryBg,
+            gradient: [colors.secondaryBg, colors.white]
           },
         },
         {
@@ -239,8 +239,8 @@ export default function DashboardScreen() {
           icon: <Ionicons name="calendar-outline" size={24} color={colors.success} />,
           accent: {
             color: colors.success,
-            bgColor: '#d1fae5',
-            gradient: ['#d1fae5', '#FFFFFF']
+            bgColor: colors.successBg,
+            gradient: [colors.successBg, colors.white]
           },
         },
         {
@@ -249,8 +249,8 @@ export default function DashboardScreen() {
           icon: <Ionicons name="book-outline" size={24} color={colors.warning} />,
           accent: {
             color: colors.warning,
-            bgColor: '#fef3c7',
-            gradient: ['#fef3c7', '#FFFFFF']
+            bgColor: colors.amberLight,
+            gradient: [colors.amberLight, colors.white]
           },
         },
       ];
@@ -263,18 +263,18 @@ export default function DashboardScreen() {
           icon: <Ionicons name="business-outline" size={24} color={colors.primary} />,
           accent: {
             color: colors.primary,
-            bgColor: '#e8f5e8',
-            gradient: ['#e8f5e8', '#FFFFFF']
+            bgColor: colors.borderLight,
+            gradient: [colors.borderLight, colors.white]
           },
         },
         {
           label: 'Minha Área Total',
           value: stats.areaTotal,
-          icon: <Ionicons name="leaf-outline" size={24} color="#8B6244" />,
+          icon: <Ionicons name="leaf-outline" size={24} color={colors.secondary} />,
           accent: {
-            color: '#8B6244',
-            bgColor: '#f5f3f0',
-            gradient: ['#f5f3f0', '#FFFFFF']
+            color: colors.secondary,
+            bgColor: colors.secondaryBg,
+            gradient: [colors.secondaryBg, colors.white]
           },
         },
         {
@@ -283,8 +283,8 @@ export default function DashboardScreen() {
           icon: <Ionicons name="calendar-outline" size={24} color={colors.success} />,
           accent: {
             color: colors.success,
-            bgColor: '#d1fae5',
-            gradient: ['#d1fae5', '#FFFFFF']
+            bgColor: colors.successBg,
+            gradient: [colors.successBg, colors.white]
           },
         },
         {
@@ -293,8 +293,8 @@ export default function DashboardScreen() {
           icon: <Ionicons name="book-outline" size={24} color={colors.warning} />,
           accent: {
             color: colors.warning,
-            bgColor: '#fef3c7',
-            gradient: ['#fef3c7', '#FFFFFF']
+            bgColor: colors.amberLight,
+            gradient: [colors.amberLight, colors.white]
           },
         },
       ];

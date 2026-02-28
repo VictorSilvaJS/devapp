@@ -137,12 +137,12 @@ export default function ProdutorScreen({ route, navigation }) {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#4CAF50', '#45a049']}
+              colors={[colors.primary, colors.primaryDark]}
               style={styles.editButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Ionicons name="create-outline" size={20} color={colors.white} />
               <Text style={styles.editButtonText}>Editar Produtor</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -153,12 +153,12 @@ export default function ProdutorScreen({ route, navigation }) {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#EF4444', '#DC2626']}
+              colors={[colors.error, colors.error]}
               style={styles.deleteButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Ionicons name="trash-outline" size={20} color="#fff" />
+              <Ionicons name="trash-outline" size={20} color={colors.white} />
               <Text style={styles.deleteButtonText}>Excluir</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -172,7 +172,7 @@ export default function ProdutorScreen({ route, navigation }) {
           contentContainerStyle={styles.statsContent}
         >
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: '#e8f5e8' }]}>
+            <View style={[styles.statIconCompact, { backgroundColor: colors.borderLight }]}>
               <Ionicons name="resize-outline" size={20} color={colors.primary} />
             </View>
             <Text style={styles.statValueCompact}>{produtor.area_total} ha</Text>
@@ -180,24 +180,24 @@ export default function ProdutorScreen({ route, navigation }) {
           </View>
           
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: '#f5f3f0' }]}>
-              <Ionicons name="leaf-outline" size={20} color="#8B6244" />
+            <View style={[styles.statIconCompact, { backgroundColor: colors.amberLight }]}>
+              <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
             </View>
             <Text style={styles.statValueCompact}>{produtor.cultura_atual || 'N/A'}</Text>
             <Text style={styles.statLabelCompact}>Cultura</Text>
           </View>
           
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: '#e0f2fe' }]}>
-              <Ionicons name="calendar-outline" size={20} color="#0284c7" />
+            <View style={[styles.statIconCompact, { backgroundColor: colors.infoLight }]}>
+              <Ionicons name="calendar-outline" size={20} color={colors.info} />
             </View>
             <Text style={styles.statValueCompact}>{visitas.length}</Text>
             <Text style={styles.statLabelCompact}>Visitas</Text>
           </View>
           
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: '#fef3c7' }]}>
-              <Ionicons name="map-outline" size={20} color="#d97706" />
+            <View style={[styles.statIconCompact, { backgroundColor: colors.amberLight }]}>
+              <Ionicons name="map-outline" size={20} color={colors.amber} />
             </View>
             <Text style={styles.statValueCompact}>{mapas.length}</Text>
             <Text style={styles.statLabelCompact}>Mapas</Text>
@@ -407,7 +407,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   </View>
                   {mapa.disponivel_para_download && (
                     <TouchableOpacity style={styles.mapaButton}>
-                      <Ionicons name="download-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+                      <Ionicons name="download-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
                       <Text style={styles.mapaButtonText}>Visualizar Mapa</Text>
                     </TouchableOpacity>
                   )}
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 28,
     fontWeight: typography.weightBold,
-    color: '#fff'
+    color: colors.white
   },
   profileInfo: {
     flex: 1
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md + 2,
   },
   editButtonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: typography.weightBold,
     fontSize: typography.fontBody,
     letterSpacing: 0.3,
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md + 2,
   },
   deleteButtonText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: typography.weightBold,
     fontSize: typography.fontBody,
     letterSpacing: 0.3,
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   countBadgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.fontCaption,
     fontWeight: typography.weightBold
   },
@@ -838,7 +838,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   mapaButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.fontBody - 1,
     fontWeight: typography.weightBold
   },
@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   visitNumberText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.fontBody + 2,
     fontWeight: typography.weightBold
   },

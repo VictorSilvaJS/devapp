@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: typography.fontBody,
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
     color: colors.text,
     marginBottom: spacing.sm,
   },
@@ -371,12 +371,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: spacing.radiusSm,
+    borderRadius: spacing.radius,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     gap: spacing.sm,
+    minHeight: 48,
   },
   inputError: {
     borderColor: colors.error,
@@ -408,18 +409,18 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   modalContent: {
     backgroundColor: colors.card,
-    borderRadius: spacing.radius,
+    borderRadius: spacing.radiusLg,
     width: '100%',
     maxWidth: 400,
     maxHeight: '80%',
-    ...shadows.large,
+    ...shadows.lg,
   },
   modalHeader: {
     padding: spacing.lg,
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: typography.fontSubtitle,
-    fontWeight: '700',
+    fontWeight: typography.weightBold,
     color: colors.text,
     textAlign: 'center',
   },
@@ -449,7 +450,7 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: typography.fontSmall,
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
     color: colors.muted,
     textAlign: 'center',
     marginBottom: spacing.sm,
@@ -472,8 +473,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   dateOptionTextSelected: {
-    color: colors.card,
-    fontWeight: '700',
+    color: colors.white,
+    fontWeight: typography.weightBold,
   },
   timeSelector: {
     flexDirection: 'row',
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
   },
   timeLabel: {
     fontSize: typography.fontSmall,
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
     color: colors.muted,
     textAlign: 'center',
     marginBottom: spacing.sm,
@@ -509,8 +510,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   timeOptionTextSelected: {
-    color: colors.card,
-    fontWeight: '700',
+    color: colors.white,
+    fontWeight: typography.weightBold,
   },
   modalActions: {
     flexDirection: 'row',
@@ -521,16 +522,19 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: spacing.radiusSm,
+    paddingVertical: spacing.md + 2,
+    borderRadius: spacing.radius,
     alignItems: 'center',
+    minHeight: 48,
   },
   cancelButton: {
     backgroundColor: colors.backgroundAlt,
+    borderWidth: 1.5,
+    borderColor: colors.border,
   },
   cancelButtonText: {
     fontSize: typography.fontBody,
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
     color: colors.text,
   },
   confirmButton: {
@@ -538,7 +542,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     fontSize: typography.fontBody,
-    fontWeight: '700',
-    color: colors.card,
+    fontWeight: typography.weightBold,
+    color: colors.white,
   },
 });

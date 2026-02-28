@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFiltros } from '../contexts/FiltroContext';
-import { colors, typography, spacing, shadows } from '../theme';
+import { colors, typography, spacing, shadows, iconSizes } from '../theme';
 
 /**
  * FiltroRegional - Componente de filtro regional
@@ -598,28 +598,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 10,
-    backgroundColor: '#e8f5e8',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    marginBottom: spacing.sm + 2,
+    backgroundColor: colors.borderLight,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: spacing.radiusSm,
   },
   regiaoInfoText: {
-    fontSize: 14,
+    fontSize: typography.sizes.md,
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: typography.weightBold,
     flex: 1,
   },
   tituloContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: spacing.sm + 2,
   },
   titulo: {
-    fontSize: 13,
+    fontSize: typography.fontCaption + 1,
     color: colors.textLight,
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
   },
   filtrosRow: {
     flexDirection: 'row',
@@ -633,10 +633,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
-    paddingVertical: 10,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.sm,
-    borderRadius: 8,
-    borderWidth: 2,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1.5,
     borderColor: colors.primary,
     gap: 6,
     minHeight: 40,
@@ -646,15 +646,15 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   filtroText: {
-    fontSize: 13,
+    fontSize: typography.fontCaption + 1,
     color: colors.primary,
     flex: 1,
     textAlign: 'center',
-    fontWeight: '600',
+    fontWeight: typography.weightSemibold,
   },
   filtroTextAtivo: {
     color: colors.white,
-    fontWeight: '700',
+    fontWeight: typography.weightBold,
   },
   limparButton: {
     padding: 8,
@@ -669,14 +669,14 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   indicadorText: {
-    fontSize: 12,
+    fontSize: typography.fontCaption,
     color: colors.textLight,
     flex: 1,
-    fontWeight: '500',
+    fontWeight: typography.weightRegular,
   },
   indicadorTextAtivo: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: typography.weightBold,
   },
   badge: {
     backgroundColor: colors.primary,
@@ -685,21 +685,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   badgeText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '700',
+    fontSize: typography.sizes.xs,
+    color: colors.white,
+    fontWeight: typography.weightBold,
     letterSpacing: 0.5,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: spacing.radiusLg,
     width: '100%',
     maxWidth: 400,
     maxHeight: '80%',
@@ -709,12 +709,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   modalTitle: {
-    ...typography.h3,
+    fontSize: typography.fontSubtitle - 2,
+    fontWeight: typography.weightBold,
     color: colors.text,
   },
   modalList: {
@@ -724,7 +726,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: spacing.radiusSm,
     marginBottom: spacing.xs,
     gap: spacing.sm,
     backgroundColor: colors.background,
@@ -735,13 +737,13 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   modalItemText: {
-    ...typography.body,
+    fontSize: typography.fontBody,
     color: colors.text,
     flex: 1,
   },
   modalItemTextSelecionado: {
     color: colors.white,
-    fontWeight: '700',
+    fontWeight: typography.weightBold,
   },
   proprietarioHeader: {
     flexDirection: 'row',
@@ -752,15 +754,15 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   proprietarioText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
     color: colors.text,
     flex: 1,
   },
   proprietarioCount: {
-    fontSize: 11,
+    fontSize: typography.fontSmall,
     color: colors.textLight,
-    fontWeight: '500',
+    fontWeight: typography.weightRegular,
   },
   fazendaItem: {
     marginLeft: 8,
@@ -769,7 +771,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fazendaSubtext: {
-    ...typography.caption,
+    fontSize: typography.fontCaption,
     color: colors.textLight,
     marginTop: 2,
   },
@@ -782,7 +784,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   emptyText: {
-    ...typography.body,
+    fontSize: typography.fontBody,
     color: colors.textLight,
     textAlign: 'center',
     marginTop: spacing.sm,

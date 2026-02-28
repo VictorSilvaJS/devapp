@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     borderRadius: spacing.radius,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    ...shadows.small,
+    ...shadows.sm,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderTopWidth: 2,
     borderTopColor: colors.border,
-    ...shadows.medium,
+    ...shadows.md,
   },
   actionButton: {
     flexDirection: 'row',

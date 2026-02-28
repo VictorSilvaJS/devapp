@@ -248,10 +248,10 @@ export default function EditarProdutorScreen({ route, navigation }) {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
+            <ActivityIndicator color={theme.colors.white} />
           ) : (
             <>
-              <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+              <Ionicons name="checkmark" size={20} color={theme.colors.white} />
               <Text style={styles.saveButtonText}>Salvar</Text>
             </>
           )}
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.primary + '15',
     padding: theme.spacing.md,
-    borderRadius: 12,
+    borderRadius: theme.spacing.radius,
     marginBottom: theme.spacing.lg,
     gap: theme.spacing.sm,
     borderLeftWidth: 4,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 12,
+    borderRadius: theme.spacing.radius,
     padding: theme.spacing.md,
     fontSize: theme.typography.fontBody,
     color: theme.colors.text,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    borderRadius: 12,
+    borderRadius: theme.spacing.radius,
     backgroundColor: theme.colors.card,
     borderWidth: 2,
     borderColor: theme.colors.border,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    borderRadius: 12,
+    borderRadius: theme.spacing.radius,
     backgroundColor: theme.colors.primary,
     ...theme.shadows.md,
   },
@@ -368,6 +368,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: theme.typography.fontBody,
     fontWeight: theme.typography.weightBold,
-    color: '#FFFFFF',
+    color: theme.colors.white,
   },
 });

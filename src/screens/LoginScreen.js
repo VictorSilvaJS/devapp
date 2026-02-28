@@ -123,7 +123,7 @@ export default function LoginScreen({ navigation }) {
                 {/* Mensagem de erro */}
                 {erro ? (
                   <View style={styles.erroContainer}>
-                    <Ionicons name="alert-circle-outline" size={16} color={colors.error || '#E74C3C'} />
+                    <Ionicons name="alert-circle-outline" size={16} color={colors.error} />
                     <Text style={styles.erroText}>{erro}</Text>
                   </View>
                 ) : null}
@@ -141,7 +141,7 @@ export default function LoginScreen({ navigation }) {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Ionicons name="log-in-outline" size={24} color="#FFFFFF" style={styles.btnIcon} />
+                    <Ionicons name="log-in-outline" size={24} color={colors.white} style={styles.btnIcon} />
                     <Text style={styles.btnText}>Entrar</Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -245,11 +245,11 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderRadius: spacing.radius,
     paddingHorizontal: 14,
-    borderWidth: 2,
-    borderColor: colors.border || '#E5E7EB',
+    borderWidth: 1.5,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   inputIcon: {
@@ -271,12 +271,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   erroText: {
-    color: colors.error || '#E74C3C',
+    color: colors.error,
     fontSize: typography.fontBody - 1,
   },
   btn: { 
     width: '100%', 
-    borderRadius: 14,
+    borderRadius: spacing.radius,
     overflow: 'hidden',
     marginTop: 4,
     ...shadows.md
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     marginRight: 2
   },
   btnText: { 
-    color: '#fff', 
+    color: colors.white, 
     fontWeight: typography.weightBold,
     fontSize: typography.fontBody + 2
   },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   separadorLinha: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border || '#E5E7EB',
+    backgroundColor: colors.border,
   },
   separadorTexto: {
     fontSize: typography.fontBody - 2,
@@ -326,10 +326,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     padding: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    backgroundColor: colors.card,
+    borderRadius: spacing.radiusSm,
     borderWidth: 1,
-    borderColor: colors.border || '#E5E7EB',
+    borderColor: colors.border,
   },
   devBtnText: {
     fontSize: typography.fontBody - 2,

@@ -191,9 +191,9 @@ export default function VisitasScreen() {
   const getObjetivoColor = (objetivo) => {
     const cores = {
       consultoria: colors.primary,
-      coleta_solo: '#3B82F6',
-      avaliacao_cultivo: '#10B981',
-      entrega_material: '#F59E0B',
+      coleta_solo: colors.info,
+      avaliacao_cultivo: colors.success,
+      entrega_material: colors.warning,
       outro: colors.muted
     };
     return cores[objetivo] || colors.muted;
@@ -202,7 +202,7 @@ export default function VisitasScreen() {
   // Cores para status
   const getStatusColor = (status) => {
     const cores = {
-      agendada: '#3B82F6',
+      agendada: colors.info,
       realizada: colors.success,
       cancelada: colors.danger
     };
@@ -263,7 +263,7 @@ export default function VisitasScreen() {
       
       {/* Top Bar com Busca e Filtros */}
       <LinearGradient
-        colors={['#FFFFFF', '#F8FBF8']}
+        colors={[colors.white, colors.background]}
         style={styles.topBar}
       >
         {mostrarBusca ? (
@@ -297,7 +297,7 @@ export default function VisitasScreen() {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={['#FFFFFF', '#F9FAFB']}
+                colors={[colors.white, colors.backgroundSoft]}
                 style={styles.searchButtonGradient}
               >
                 <Ionicons name="search" size={20} color={colors.primary} />
@@ -310,17 +310,17 @@ export default function VisitasScreen() {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={numFiltrosAtivos > 0 ? [colors.primary, colors.primaryDark] : ['#FFFFFF', '#F9FAFB']}
+                colors={numFiltrosAtivos > 0 ? [colors.primary, colors.primaryDark] : [colors.white, colors.backgroundSoft]}
                 style={styles.filterButtonGradient}
               >
                 <Ionicons 
                   name="options" 
                   size={20} 
-                  color={numFiltrosAtivos > 0 ? '#FFFFFF' : colors.primary} 
+                  color={numFiltrosAtivos > 0 ? colors.white : colors.primary} 
                 />
                 <Text style={[
                   styles.filterButtonText,
-                  numFiltrosAtivos > 0 && { color: '#FFFFFF' }
+                  numFiltrosAtivos > 0 && { color: colors.white }
                 ]}>Filtros</Text>
                 {numFiltrosAtivos > 0 && (
                   <View style={styles.filterBadgeContainer}>
@@ -360,15 +360,15 @@ export default function VisitasScreen() {
               {filtrosAtivos.map((filtro, index) => {
                 const iconeConfig = {
                   status: { name: 'checkmark-circle', color: colors.success },
-                  data: { name: 'calendar', color: '#FF6B6B' },
-                  ordenacao: { name: 'swap-vertical', color: '#4ECDC4' }
+                  data: { name: 'calendar', color: colors.coral },
+                  ordenacao: { name: 'swap-vertical', color: colors.teal }
                 };
                 const config = iconeConfig[filtro.tipo];
                 
                 return (
                   <LinearGradient
                     key={index}
-                    colors={['#FFFFFF', '#F9FAFB']}
+                    colors={[colors.white, colors.backgroundSoft]}
                     style={styles.activeFilterChip}
                   >
                     <View style={[styles.chipIconContainer, { backgroundColor: config.color + '20' }]}>
@@ -395,7 +395,7 @@ export default function VisitasScreen() {
                 activeOpacity={0.7}
               >
                 <LinearGradient
-                  colors={['#FFF5F5', '#FFE5E5']}
+                  colors={[colors.errorBgLight, colors.errorBgMedium]}
                   style={styles.clearAllFiltersGradient}
                 >
                   <Ionicons name="refresh" size={16} color={colors.error} />
@@ -551,14 +551,14 @@ export default function VisitasScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={['#4CAF50', '#45a049', '#2d7a2d']}
+            colors={[colors.primary, colors.primaryDark, colors.fabDark]}
             style={styles.fabGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
             <View style={styles.fabContent}>
               <View style={styles.fabIconContainer}>
-                <Ionicons name="add" size={26} color="#fff" />
+                <Ionicons name="add" size={26} color={colors.white} />
               </View>
               <Text style={styles.fabText}>Nova Visita</Text>
             </View>
@@ -584,7 +584,7 @@ export default function VisitasScreen() {
             
             {/* Header do Bottom Sheet */}
             <LinearGradient
-              colors={['#FFFFFF', '#F8FAFB']}
+              colors={[colors.white, colors.backgroundSoft]}
               style={styles.sheetHeader}
             >
               <View style={styles.sheetTitleContainer}>
@@ -625,7 +625,7 @@ export default function VisitasScreen() {
                     <Ionicons 
                       name={item.icon} 
                       size={18} 
-                      color={filtroStatus === item.key ? '#FFFFFF' : colors.primary} 
+                      color={filtroStatus === item.key ? colors.white : colors.primary} 
                     />
                     <Text style={[
                       styles.chipText,
@@ -657,7 +657,7 @@ export default function VisitasScreen() {
                     <Ionicons 
                       name={item.icon} 
                       size={18} 
-                      color={filtroData === item.key ? '#FFFFFF' : colors.primary} 
+                      color={filtroData === item.key ? colors.white : colors.primary} 
                     />
                     <Text style={[
                       styles.chipText,
@@ -688,7 +688,7 @@ export default function VisitasScreen() {
                     <Ionicons 
                       name={item.icon} 
                       size={18} 
-                      color={ordenacao === item.key ? '#FFFFFF' : colors.primary} 
+                      color={ordenacao === item.key ? colors.white : colors.primary} 
                     />
                     <Text style={[
                       styles.chipText,
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.primary,
   },
@@ -1042,7 +1042,7 @@ const styles = StyleSheet.create({
     bottom: spacing.screen + 20,
     borderRadius: 32,
     overflow: 'hidden',
-    shadowColor: '#2d7a2d',
+    shadowColor: colors.fabShadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
   fabText: {
     fontSize: typography.fontBody + 2,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: colors.white,
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
@@ -1090,7 +1090,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screen,
     paddingVertical: spacing.md + 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8EEF2',
+    borderBottomColor: colors.borderMedium,
     gap: spacing.md,
   },
   searchButton: {
@@ -1107,7 +1107,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E8EEF2',
+    borderColor: colors.borderMedium,
   },
   filterButton: {
     flex: 1,
@@ -1123,7 +1123,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md + 2,
     gap: spacing.sm,
     borderWidth: 1,
-    borderColor: '#E8EEF2',
+    borderColor: colors.borderMedium,
   },
   filterButtonText: {
     fontSize: typography.fontBody,
@@ -1155,7 +1155,7 @@ const styles = StyleSheet.create({
     height: 48,
     paddingLeft: spacing.md,
     paddingRight: spacing.sm,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 24,
     gap: spacing.sm,
     borderWidth: 2,
@@ -1213,7 +1213,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E8EEF2',
+    borderColor: colors.borderMedium,
     ...shadows.sm,
   },
   chipIconContainer: {
@@ -1235,7 +1235,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F7FA',
+    backgroundColor: colors.backgroundNeutral,
   },
   clearAllFiltersChip: {
     borderRadius: 24,
@@ -1249,7 +1249,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#FFD6D6',
+    borderColor: colors.errorBorder,
   },
   clearAllFiltersText: {
     fontSize: typography.sizes.sm,
@@ -1261,7 +1261,7 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   bottomSheet: {
@@ -1353,7 +1353,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   chipTextActive: {
-    color: '#FFFFFF',
+    color: colors.white,
   },
   clearFiltersButton: {
     flexDirection: 'row',
@@ -1388,7 +1388,7 @@ const styles = StyleSheet.create({
   applyButtonText: {
     fontSize: typography.fontBody + 1,
     fontWeight: typography.weightBold,
-    color: '#FFFFFF',
+    color: colors.white,
     letterSpacing: 0.5,
   },
 });

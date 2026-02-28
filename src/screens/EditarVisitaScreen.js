@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: spacing.radiusSm,
     backgroundColor: colors.card,
-    ...shadows.medium,
+    ...shadows.md,
   },
   dropdown: {
     maxHeight: 250,
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
   radio: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: spacing.radius,
     borderWidth: 2,
     borderColor: colors.border,
     alignItems: 'center',
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
   radioInner: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: spacing.radiusSm,
     backgroundColor: colors.primary,
   },
   radioLabel: {
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: spacing.radius,
     borderWidth: 1.5,
     borderColor: colors.primary,
     borderStyle: 'dashed',
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: 90,
     height: 90,
-    borderRadius: 8,
+    borderRadius: spacing.radiusSm,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
@@ -731,14 +731,14 @@ const styles = StyleSheet.create({
   fotoPreview: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    borderRadius: spacing.radiusSm,
   },
   fotoRemover: {
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: '#FFFFFFCC',
-    borderRadius: 11,
+    backgroundColor: colors.whiteTranslucent,
+    borderRadius: spacing.radius,
   },
   fotosCount: {
     marginTop: spacing.xs,
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderTopWidth: 2,
     borderTopColor: colors.border,
-    ...shadows.medium,
+    ...shadows.md,
   },
   button: {
     flex: 1,

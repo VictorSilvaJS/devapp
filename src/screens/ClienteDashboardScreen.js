@@ -159,7 +159,7 @@ export default function ClienteDashboardScreen() {
               style={[styles.filtroFazendaChip, filtroFazenda === 'geral' && styles.filtroFazendaChipAtivo]}
               onPress={() => setFiltroFazenda('geral')}
             >
-              <Ionicons name="globe-outline" size={16} color={filtroFazenda === 'geral' ? '#FFF' : colors.text} style={{ marginRight: 4 }} />
+              <Ionicons name="globe-outline" size={16} color={filtroFazenda === 'geral' ? colors.white : colors.text} style={{ marginRight: 4 }} />
               <Text style={[styles.filtroFazendaChipText, filtroFazenda === 'geral' && styles.filtroFazendaChipTextAtivo]}>
                 Geral ({propriedades.length} fazendas)
               </Text>
@@ -170,7 +170,7 @@ export default function ClienteDashboardScreen() {
                 style={[styles.filtroFazendaChip, filtroFazenda === prop.id && styles.filtroFazendaChipAtivo]}
                 onPress={() => setFiltroFazenda(prop.id)}
               >
-                <Ionicons name="home-outline" size={16} color={filtroFazenda === prop.id ? '#FFF' : colors.text} style={{ marginRight: 4 }} />
+                <Ionicons name="home-outline" size={16} color={filtroFazenda === prop.id ? colors.white : colors.text} style={{ marginRight: 4 }} />
                 <Text style={[styles.filtroFazendaChipText, filtroFazenda === prop.id && styles.filtroFazendaChipTextAtivo]} numberOfLines={1}>
                   {prop.fazenda}
                 </Text>
@@ -218,18 +218,18 @@ export default function ClienteDashboardScreen() {
               icon={<Ionicons name="business-outline" size={24} color={colors.primary} />}
               accent={{
                 color: colors.primary,
-                bgColor: '#e8f5e8',
-                gradient: ['#e8f5e8', '#FFFFFF']
+                bgColor: colors.borderLight,
+                gradient: [colors.borderLight, colors.white]
               }}
             />
             <StatCard
               label="Área Total"
               value={`${areaTotal} ha`}
-              icon={<Ionicons name="resize-outline" size={24} color="#8B6244" />}
+              icon={<Ionicons name="resize-outline" size={24} color={colors.secondary} />}
               accent={{
-                color: '#8B6244',
-                bgColor: '#f5f3f0',
-                gradient: ['#f5f3f0', '#FFFFFF']
+                color: colors.secondary,
+                bgColor: colors.secondaryBg,
+                gradient: [colors.secondaryBg, colors.white]
               }}
             />
           </View>
@@ -240,8 +240,8 @@ export default function ClienteDashboardScreen() {
               icon={<Ionicons name="leaf-outline" size={24} color={colors.primary} />}
               accent={{
                 color: colors.primary,
-                bgColor: '#e8f5e8',
-                gradient: ['#e8f5e8', '#FFFFFF']
+                bgColor: colors.borderLight,
+                gradient: [colors.borderLight, colors.white]
               }}
             />
           </View>
@@ -249,11 +249,11 @@ export default function ClienteDashboardScreen() {
             <StatCard
               label="Mapas Disponíveis"
               value={mapasFiltrados.length}
-              icon={<Ionicons name="map-outline" size={24} color="#d97706" />}
+              icon={<Ionicons name="map-outline" size={24} color={colors.amber} />}
               accent={{
-                color: '#d97706',
-                bgColor: '#fef3c7',
-                gradient: ['#fef3c7', '#FFFFFF']
+                color: colors.amber,
+                bgColor: colors.amberLight,
+                gradient: [colors.amberLight, colors.white]
               }}
             />
             <StatCard
@@ -262,8 +262,8 @@ export default function ClienteDashboardScreen() {
               icon={<Ionicons name="calendar-outline" size={24} color={colors.success} />}
               accent={{
                 color: colors.success,
-                bgColor: '#d1fae5',
-                gradient: ['#d1fae5', '#FFFFFF']
+                bgColor: colors.successBg,
+                gradient: [colors.successBg, colors.white]
               }}
             />
           </View>
@@ -271,11 +271,11 @@ export default function ClienteDashboardScreen() {
             <StatCard
               label="Atividades"
               value={historicoFiltrado.length}
-              icon={<Ionicons name="document-text-outline" size={24} color="#2563eb" />}
+              icon={<Ionicons name="document-text-outline" size={24} color={colors.info} />}
               accent={{
-                color: '#2563eb',
-                bgColor: '#dbeafe',
-                gradient: ['#dbeafe', '#FFFFFF']
+                color: colors.info,
+                bgColor: colors.infoLight,
+                gradient: [colors.infoLight, colors.white]
               }}
             />
           </View>
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   filtroFazendaContainer: {
-    backgroundColor: '#F8FBF8',
+    backgroundColor: colors.background,
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     maxWidth: 140,
   },
   filtroFazendaChipTextAtivo: {
-    color: '#FFFFFF',
+    color: colors.white,
   },
   content: {
     flex: 1,
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   },
   propriedadeCard: {
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: spacing.radiusLg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
     borderWidth: 2,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   },
   emptySecao: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: spacing.radius,
     padding: spacing.xl,
     alignItems: 'center',
     borderWidth: 2,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   categoriaCard: {
     width: 140,
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: spacing.radius,
     padding: spacing.md,
     marginRight: spacing.md,
     alignItems: 'center',
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   },
   visitaCard: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: spacing.radius,
     padding: spacing.card,
     marginBottom: spacing.md,
     borderWidth: 1,
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   },
   atividadeCard: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: spacing.radius,
     padding: spacing.card,
     marginBottom: spacing.md,
     borderWidth: 1,

@@ -23,7 +23,7 @@ export default function Header({ title, showUser = true, showNotifications = tru
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
-        colors={['#FFFFFF', colors.backgroundAlt]}
+        colors={[colors.white, colors.backgroundAlt]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 50,
     height: 50,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

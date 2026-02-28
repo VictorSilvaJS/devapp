@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   profileSection: {
     backgroundColor: colors.card,
     padding: spacing.card * 1.5,
-    borderRadius: 16,
+    borderRadius: spacing.radiusLg,
     marginBottom: spacing.gap * 1.5,
     alignItems: 'center',
     ...shadows.md
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: colors.card,
     padding: spacing.card * 1.5,
-    borderRadius: 16,
+    borderRadius: spacing.radiusLg,
     marginBottom: spacing.gap * 1.5,
     ...shadows.sm
   },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     padding: 14,
-    borderRadius: 12,
+    borderRadius: spacing.radius,
     alignItems: 'center',
     ...shadows.sm
   },
@@ -177,16 +177,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error
   },
   actionBtnText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.fontBody,
     fontWeight: typography.weightBold
   },
   logoutText: { 
-    color: '#fff' 
+    color: colors.white 
   },
   modalOverlay: { 
     flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.5)', 
+    backgroundColor: colors.overlay, 
     alignItems: 'center', 
     justifyContent: 'center',
     padding: spacing.screen
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     backgroundColor: colors.card, 
     padding: spacing.card * 1.5, 
-    borderRadius: 16,
+    borderRadius: spacing.radiusLg,
     ...shadows.lg
   },
   modalTitle: { 
@@ -219,13 +219,13 @@ const styles = StyleSheet.create({
   modalBtnCancel: { 
     padding: 12, 
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: spacing.radius,
     backgroundColor: colors.backgroundAlt
   },
   modalBtnConfirm: { 
     padding: 12,
     paddingHorizontal: 20,
-    borderRadius: 10, 
+    borderRadius: spacing.radius, 
     backgroundColor: colors.error
   },
   modalCancelText: { 
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody
   },
   modalConfirmText: { 
-    color: '#fff', 
+    color: colors.white, 
     fontWeight: typography.weightBold,
     fontSize: typography.fontBody
   }

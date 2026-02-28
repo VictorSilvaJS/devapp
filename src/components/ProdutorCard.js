@@ -104,9 +104,9 @@ const styles = StyleSheet.create({
     ...shadows.sm
   },
   letter: { 
-    color: '#fff', 
+    color: colors.white, 
     fontWeight: typography.weightBold, 
-    fontSize: 22 
+    fontSize: typography.sizes.xl + 2 
   },
   info: { 
     flex: 1 
