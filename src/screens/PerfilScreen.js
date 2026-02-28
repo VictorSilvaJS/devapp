@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, ToastAndroid, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, UIManager, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
 import { useNotificacao } from '../contexts/NotificacaoContext';
+import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
 
@@ -13,6 +14,7 @@ export default function PerfilScreen({ navigation }) {
   const { logout } = useAuthActions();
   const { limparFiltros } = useFiltros();
   const { limparNotificacoes } = useNotificacao();
+  const toast = useToast();
   const [showLogout, setShowLogout] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -28,11 +30,7 @@ export default function PerfilScreen({ navigation }) {
       limparFiltros();
       limparNotificacoes();
       await logout();
-      if (Platform.OS === 'android') {
-        ToastAndroid.show('Logout realizado', ToastAndroid.SHORT);
-      } else {
-        Alert.alert('Logout', 'Logout realizado');
-      }
+      toast.showSuccess('Logout realizado');
       navigation.replace('Login');
     } catch (err) {
       console.error('Logout error', err);
@@ -189,13 +187,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.overlay, 
     alignItems: 'center', 
     justifyContent: 'center',
-    padding: spacing.screen
+    padding: spacing.xl
   },
   modalContent: { 
     width: '100%',
-    maxWidth: 340,
+    maxWidth: 400,
     backgroundColor: colors.card, 
-    padding: spacing.card * 1.5, 
+    padding: spacing.xl, 
     borderRadius: spacing.radiusLg,
     ...shadows.lg
   },
@@ -203,30 +201,40 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSubtitle, 
     fontWeight: typography.weightBold, 
     color: colors.text,
-    marginBottom: 8
+    marginBottom: spacing.sm
   },
   modalBody: { 
     fontSize: typography.fontBody,
     color: colors.textLight,
-    lineHeight: 22
+    lineHeight: 22,
+    marginBottom: spacing.xl
   },
   modalActions: { 
     flexDirection: 'row', 
     justifyContent: 'flex-end', 
-    marginTop: 20,
-    gap: 10
+    gap: spacing.md
   },
   modalBtnCancel: { 
-    padding: 12, 
-    paddingHorizontal: 20,
+    flex: 1,
+    paddingVertical: spacing.md + 2, 
+    paddingHorizontal: spacing.xl,
     borderRadius: spacing.radius,
-    backgroundColor: colors.backgroundAlt
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48
   },
   modalBtnConfirm: { 
-    padding: 12,
-    paddingHorizontal: 20,
+    flex: 1,
+    paddingVertical: spacing.md + 2,
+    paddingHorizontal: spacing.xl,
     borderRadius: spacing.radius, 
-    backgroundColor: colors.error
+    backgroundColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48
   },
   modalCancelText: { 
     color: colors.text,

@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ActivityIndicator,
-  Alert,
   Platform,
   Linking,
   TextInput,
@@ -14,18 +13,22 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useToast } from '../components/Toast';
 import { Mapa, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
 
 export default function MapasScreen({ route, navigation }) {
+  const toast = useToast();
   const [mapas, setMapas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
   const [ordenacao, setOrdenacao] = useState('recente'); // recente, titulo, tamanho
+  const [downloadDialog, setDownloadDialog] = useState({ visible: false, mapa: null });
   const { user } = useAuth();
   const { getProdutorIdsFiltrados, filtros } = useFiltros();
   const produtorId = route?.params?.produtorId;
@@ -79,7 +82,7 @@ export default function MapasScreen({ route, navigation }) {
       
       setMapas(mapasFiltrados);
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível carregar os mapas');
+      toast.showError('Não foi possível carregar os mapas');
     } finally {
       setLoading(false);
     }
@@ -130,25 +133,17 @@ export default function MapasScreen({ route, navigation }) {
 
   const handleDownload = (mapa) => {
     if (!mapa.disponivel_download) {
-      Alert.alert('Indisponível', 'Este mapa não está disponível para download no momento.');
+      toast.showInfo('Este mapa não está disponível para download no momento.');
       return;
     }
 
-    Alert.alert(
-      'Download',
-      `Deseja baixar o mapa "${mapa.titulo}"?\n\nFormato: ${mapa.formato_arquivo?.toUpperCase() || 'PDF'}\nTamanho: ${formatarTamanho(mapa.tamanho_arquivo)}`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Baixar',
-          onPress: () => {
-            // Simular download
-            Alert.alert('Sucesso', 'Download iniciado! O arquivo será salvo na pasta Downloads.');
-            // Em produção, usar expo-file-system ou similar
-          }
-        }
-      ]
-    );
+    setDownloadDialog({ visible: true, mapa });
+  };
+
+  const confirmDownload = () => {
+    setDownloadDialog({ visible: false, mapa: null });
+    toast.showSuccess('Download iniciado! O arquivo será salvo na pasta Downloads.');
+    // Em produção, usar expo-file-system ou similar
   };
 
   const formatarTamanho = (bytes) => {
@@ -411,6 +406,17 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={downloadDialog.visible}
+        title="Download"
+        message={downloadDialog.mapa ? `Deseja baixar o mapa "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'PDF'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}` : ''}
+        type="info"
+        confirmText="Baixar"
+        cancelText="Cancelar"
+        onConfirm={confirmDownload}
+        onCancel={() => setDownloadDialog({ visible: false, mapa: null })}
+      />
     </View>
   );
 }

@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: spacing.xl,
   },
   modalContent: {
     backgroundColor: colors.card,
@@ -423,7 +423,8 @@ const styles = StyleSheet.create({
     ...shadows.lg,
   },
   modalHeader: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },

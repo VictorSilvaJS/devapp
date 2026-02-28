@@ -115,7 +115,7 @@ export default function ConfirmDialog({
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={colors.card} size="small" />
+                <ActivityIndicator color={colors.white} size="small" />
               ) : (
                 <Text style={styles.confirmButtonText}>{confirmText}</Text>
               )}
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.fontSubtitle,
-    fontWeight: '700',
+    fontWeight: typography.weightBold,
     color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.sm,

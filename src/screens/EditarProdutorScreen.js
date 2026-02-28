@@ -5,12 +5,12 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import { useToast } from '../components/Toast';
 import { Produtor } from '../api/mock';
 import theme from '../theme';
 import { 
@@ -21,6 +21,7 @@ import {
 } from '../utils/validacoes';
 
 export default function EditarProdutorScreen({ route, navigation }) {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -66,7 +67,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
     const loadProdutor = async () => {
       const id = route?.params?.id;
       if (!id) {
-        Alert.alert('Erro', 'ID do produtor não fornecido');
+        toast.showError('ID do produtor não fornecido');
         navigation.goBack();
         return;
       }
@@ -83,7 +84,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
           estado: produtor.estado || ''
         });
       } catch (error) {
-        Alert.alert('Erro', 'Não foi possível carregar os dados do produtor');
+        toast.showError('Não foi possível carregar os dados do produtor');
         navigation.goBack();
       } finally {
         setLoading(false);
@@ -95,7 +96,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
   const handleSave = async () => {
     if (!validateForm()) {
-      Alert.alert('Atenção', 'Preencha todos os campos obrigatórios corretamente');
+      toast.showWarning('Preencha todos os campos obrigatórios corretamente');
       return;
     }
 
@@ -106,11 +107,10 @@ export default function EditarProdutorScreen({ route, navigation }) {
         area_total: parseFloat(form.area_total)
       });
       
-      Alert.alert('Sucesso', 'Produtor atualizado com sucesso!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      toast.showSuccess('Produtor atualizado com sucesso!');
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar as alterações. Tente novamente.');
+      toast.showError('Não foi possível salvar as alterações. Tente novamente.');
       console.error(error);
     } finally {
       setSaving(false);

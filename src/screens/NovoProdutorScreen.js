@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ScrollView,
   ActivityIndicator,
   TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import { useToast } from '../components/Toast';
 import { Produtor } from '../api/mock';
 import theme from '../theme';
 import { 
@@ -21,6 +21,7 @@ import {
 } from '../utils/validacoes';
 
 export default function NovoProdutorScreen({ navigation }) {
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
@@ -63,7 +64,7 @@ export default function NovoProdutorScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!validateForm()) {
-      Alert.alert('Atenção', 'Preencha todos os campos obrigatórios corretamente');
+      toast.showWarning('Preencha todos os campos obrigatórios corretamente');
       return;
     }
 
@@ -75,11 +76,10 @@ export default function NovoProdutorScreen({ navigation }) {
       };
       await Produtor.create(dataToSave);
       
-      Alert.alert('Sucesso', 'Produtor cadastrado com sucesso!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      toast.showSuccess('Produtor cadastrado com sucesso!');
+      navigation.goBack();
     } catch (error) {
-      Alert.alert('Erro', 'Não foi possível cadastrar o produtor. Tente novamente.');
+      toast.showError('Não foi possível cadastrar o produtor. Tente novamente.');
       console.error(error);
     } finally {
       setSaving(false);

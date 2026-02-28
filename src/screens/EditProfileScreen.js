@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import Header from '../components/Header';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
+import { useToast } from '../components/Toast';
 import { colors, typography, spacing } from '../theme';
 
 export default function EditProfileScreen({ navigation }) {
   const { user } = useAuthState();
   const { updateProfile } = useAuthActions();
+  const toast = useToast();
   const [form, setForm] = useState({ full_name: user?.full_name || '', regiao: user?.regiao || '', produtor_id: user?.produtor_id || '' });
 
   const handleSave = async () => {
     try {
       await updateProfile(form);
-      Alert.alert('Sucesso', 'Perfil atualizado');
+      toast.showSuccess('Perfil atualizado');
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Erro', 'Não foi possível atualizar o perfil');
+      toast.showError('Não foi possível atualizar o perfil');
     }
   };
 

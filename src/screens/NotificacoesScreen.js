@@ -3,17 +3,17 @@
  * Exibe lista de notificações do usuário
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useNotificacao } from '../contexts/NotificacaoContext';
 import { colors, typography, spacing, shadows } from '../theme';
 
@@ -25,6 +25,7 @@ export default function NotificacoesScreen({ navigation }) {
     removerNotificacao,
     limparNotificacoes,
   } = useNotificacao();
+  const [limparDialogVisible, setLimparDialogVisible] = useState(false);
 
   const handleNotificacaoPress = (notif) => {
     marcarComoLida(notif.id);
@@ -33,18 +34,12 @@ export default function NotificacoesScreen({ navigation }) {
   };
 
   const handleLimparTodas = () => {
-    Alert.alert(
-      'Limpar Notificações',
-      'Deseja remover todas as notificações?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Limpar',
-          style: 'destructive',
-          onPress: limparNotificacoes,
-        },
-      ]
-    );
+    setLimparDialogVisible(true);
+  };
+
+  const confirmLimpar = () => {
+    limparNotificacoes();
+    setLimparDialogVisible(false);
   };
 
   const getPrioridadeCor = (prioridade) => {
@@ -186,6 +181,17 @@ export default function NotificacoesScreen({ navigation }) {
           ))
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={limparDialogVisible}
+        title="Limpar Notificações"
+        message="Deseja remover todas as notificações?"
+        type="danger"
+        confirmText="Limpar"
+        cancelText="Cancelar"
+        onConfirm={confirmLimpar}
+        onCancel={() => setLimparDialogVisible(false)}
+      />
     </View>
   );
 }

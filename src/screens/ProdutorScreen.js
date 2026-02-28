@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, LayoutAnimation, Platform, UIManager, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, LayoutAnimation, Platform, UIManager, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa } from '../api/mock';
 import { colors, typography, spacing, border, shadows } from '../theme';
 
@@ -12,11 +14,14 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function ProdutorScreen({ route, navigation }) {
+  const toast = useToast();
   const [produtor, setProdutor] = useState(null);
   const [visitas, setVisitas] = useState([]);
   const [mapas, setMapas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('resumo');
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const loadData = async (id) => {
     if (id) {
@@ -33,7 +38,7 @@ export default function ProdutorScreen({ route, navigation }) {
         setVisitas(v);
         setMapas(m);
       } catch (error) {
-        Alert.alert('Erro', 'Não foi possível carregar os dados do produtor');
+        toast.showError('Não foi possível carregar os dados do produtor');
         console.error(error);
       } finally {
         setLoading(false);
@@ -62,26 +67,22 @@ export default function ProdutorScreen({ route, navigation }) {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Excluir Produtor',
-      `Tem certeza que deseja excluir ${produtor.nome}? Esta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await Produtor.delete(produtor.id);
-              Alert.alert('Sucesso', 'Produtor excluído com sucesso');
-              navigation.navigate('Produtores');
-            } catch (error) {
-              Alert.alert('Erro', 'Não foi possível excluir o produtor');
-            }
-          }
-        }
-      ]
-    );
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await Produtor.delete(produtor.id);
+      setDeleteDialogVisible(false);
+      setDeleting(false);
+      toast.showSuccess('Produtor excluído com sucesso');
+      navigation.navigate('Produtores');
+    } catch (error) {
+      setDeleteDialogVisible(false);
+      setDeleting(false);
+      toast.showError('Não foi possível excluir o produtor');
+    }
   };
 
   if (loading) {
@@ -495,6 +496,18 @@ export default function ProdutorScreen({ route, navigation }) {
           </View>
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={deleteDialogVisible}
+        title="Excluir Produtor"
+        message={`Tem certeza que deseja excluir ${produtor?.nome}? Esta ação não pode ser desfeita.`}
+        type="danger"
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialogVisible(false)}
+        loading={deleting}
+      />
     </View>
   );
 }

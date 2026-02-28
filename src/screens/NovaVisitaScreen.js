@@ -8,13 +8,13 @@ import {
   ActivityIndicator,
   TextInput,
   Platform,
-  Alert,
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
@@ -35,6 +35,7 @@ export default function NovaVisitaScreen() {
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
   const [fotos, setFotos] = useState([]);
+  const [removePhotoDialog, setRemovePhotoDialog] = useState({ visible: false, fotoId: null });
 
   // Estados de controle
   const [loading, setLoading] = useState(false);
@@ -176,17 +177,13 @@ export default function NovaVisitaScreen() {
   };
 
   const removerFoto = (fotoId) => {
-    Alert.alert(
-      'Remover Foto',
-      'Deseja remover esta foto?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Remover', style: 'destructive', onPress: () => {
-          setFotos(prev => prev.filter(f => f.id !== fotoId));
-          toast.showSuccess('Foto removida');
-        }}
-      ]
-    );
+    setRemovePhotoDialog({ visible: true, fotoId });
+  };
+
+  const confirmRemoverFoto = () => {
+    setFotos(prev => prev.filter(f => f.id !== removePhotoDialog.fotoId));
+    setRemovePhotoDialog({ visible: false, fotoId: null });
+    toast.showSuccess('Foto removida');
   };
 
   return (
@@ -442,6 +439,17 @@ export default function NovaVisitaScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      <ConfirmDialog
+        visible={removePhotoDialog.visible}
+        title="Remover Foto"
+        message="Deseja remover esta foto?"
+        type="danger"
+        confirmText="Remover"
+        cancelText="Cancelar"
+        onConfirm={confirmRemoverFoto}
+        onCancel={() => setRemovePhotoDialog({ visible: false, fotoId: null })}
+      />
     </View>
   );
 }
