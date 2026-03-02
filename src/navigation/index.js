@@ -19,6 +19,8 @@ import LoadingScreen from '../components/LoadingScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthState } from '../auth/AuthContext';
 import { colors } from '../theme';
+import ClienteDashboardScreen from '../screens/ClienteDashboardScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -84,7 +86,7 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
 const ClienteTabs = React.memo(function ClienteTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
-      <Tab.Screen name="Minhas Fazendas" component={require('../screens/ClienteDashboardScreen').default} options={{ title: 'Propriedade' }} />
+      <Tab.Screen name="Minhas Fazendas" component={ClienteDashboardScreen} options={{ title: 'Propriedade' }} />
       <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
@@ -128,7 +130,7 @@ export default function Navigation() {
           <Stack.Screen name="VisitaDetail" component={VisitaDetailScreen} />
           <Stack.Screen name="EditarVisita" component={EditarVisitaScreen} />
           <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />
-          <Stack.Screen name="EditProfile" component={require('../screens/EditProfileScreen').default} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         </>
       )}
     </Stack.Navigator>

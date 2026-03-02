@@ -984,6 +984,482 @@ const mapas = [
   }
 ];
 
+// ─── Limites de Área (Shape / Demarcação de Talhões) ───
+// Referência: arquivos no drive com formato LT 2022, 23, 24, 25
+const limitesArea = [
+  // ─── Produtor p1 - RS ───
+  {
+    id: 'lt1',
+    nome: 'LT 2022 - Talhão A',
+    ano: 2022,
+    produtor_id: 'p1',
+    talhao: 'Talhão A',
+    area_hectares: 45.5,
+    perimetro_km: 2.8,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho',
+    elementos: {
+      ph: 5.8,
+      fosforo: 12.5,
+      potassio: 0.35,
+      calcio: 4.2,
+      magnesio: 1.8,
+      materia_organica: 2.8,
+      ctc: 12.5,
+      saturacao_bases: 65,
+      aluminio: 0.2,
+      enxofre: 8.5
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -28.6341, lng: -53.6055 },
+      { lat: -28.6341, lng: -53.6020 },
+      { lat: -28.6370, lng: -53.6015 },
+      { lat: -28.6380, lng: -53.6030 },
+      { lat: -28.6375, lng: -53.6055 }
+    ],
+    cor: '#228B22',
+    data_upload: new Date('2022-06-15').toISOString(),
+    safra: '2022/2023',
+    disponivel_offline: true,
+    observacoes: 'Demarcação oficial do talhão A - Levantamento topográfico 2022.'
+  },
+  {
+    id: 'lt2',
+    nome: 'LT 2022 - Talhão B',
+    ano: 2022,
+    produtor_id: 'p1',
+    talhao: 'Talhão B',
+    area_hectares: 32.8,
+    perimetro_km: 2.3,
+    textura: 'Argilo-arenosa',
+    tipo_solo: 'Latossolo Vermelho-Amarelo',
+    elementos: {
+      ph: 5.5,
+      fosforo: 8.2,
+      potassio: 0.28,
+      calcio: 3.5,
+      magnesio: 1.2,
+      materia_organica: 2.3,
+      ctc: 10.8,
+      saturacao_bases: 58,
+      aluminio: 0.4,
+      enxofre: 6.0
+    },
+    cultura_atual: 'Milho',
+    poligono: [
+      { lat: -28.6355, lng: -53.6065 },
+      { lat: -28.6355, lng: -53.6035 },
+      { lat: -28.6385, lng: -53.6030 },
+      { lat: -28.6390, lng: -53.6050 },
+      { lat: -28.6380, lng: -53.6070 }
+    ],
+    cor: '#D4A017',
+    data_upload: new Date('2022-06-15').toISOString(),
+    safra: '2022/2023',
+    disponivel_offline: true,
+    observacoes: 'Demarcação talhão B - Solo misto com boa drenagem.'
+  },
+  {
+    id: 'lt3',
+    nome: 'LT 2023 - Talhão A',
+    ano: 2023,
+    produtor_id: 'p1',
+    talhao: 'Talhão A',
+    area_hectares: 46.2,
+    perimetro_km: 2.85,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho',
+    elementos: {
+      ph: 6.0,
+      fosforo: 15.0,
+      potassio: 0.40,
+      calcio: 4.8,
+      magnesio: 2.0,
+      materia_organica: 3.0,
+      ctc: 13.2,
+      saturacao_bases: 70,
+      aluminio: 0.1,
+      enxofre: 9.5
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -28.6340, lng: -53.6056 },
+      { lat: -28.6340, lng: -53.6018 },
+      { lat: -28.6372, lng: -53.6013 },
+      { lat: -28.6382, lng: -53.6028 },
+      { lat: -28.6376, lng: -53.6056 }
+    ],
+    cor: '#228B22',
+    data_upload: new Date('2023-07-10').toISOString(),
+    safra: '2023/2024',
+    disponivel_offline: true,
+    observacoes: 'Atualização de limites 2023 - Leve expansão da área.'
+  },
+  {
+    id: 'lt4',
+    nome: 'LT 2023 - Talhão C',
+    ano: 2023,
+    produtor_id: 'p1',
+    talhao: 'Talhão C',
+    area_hectares: 28.0,
+    perimetro_km: 2.1,
+    textura: 'Arenosa',
+    tipo_solo: 'Neossolo Quartzarênico',
+    elementos: {
+      ph: 5.2,
+      fosforo: 6.0,
+      potassio: 0.20,
+      calcio: 2.5,
+      magnesio: 0.8,
+      materia_organica: 1.5,
+      ctc: 7.5,
+      saturacao_bases: 45,
+      aluminio: 0.8,
+      enxofre: 4.0
+    },
+    cultura_atual: 'Pastagem',
+    poligono: [
+      { lat: -28.6395, lng: -53.6060 },
+      { lat: -28.6395, lng: -53.6035 },
+      { lat: -28.6420, lng: -53.6030 },
+      { lat: -28.6425, lng: -53.6055 },
+      { lat: -28.6410, lng: -53.6065 }
+    ],
+    cor: '#8B4513',
+    data_upload: new Date('2023-07-10').toISOString(),
+    safra: '2023/2024',
+    disponivel_offline: true,
+    observacoes: 'Talhão de pastagem com solo arenoso - necessita correção.'
+  },
+  {
+    id: 'lt5',
+    nome: 'LT 2024 - Talhão A',
+    ano: 2024,
+    produtor_id: 'p1',
+    talhao: 'Talhão A',
+    area_hectares: 46.2,
+    perimetro_km: 2.85,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho',
+    elementos: {
+      ph: 6.2,
+      fosforo: 18.0,
+      potassio: 0.45,
+      calcio: 5.2,
+      magnesio: 2.2,
+      materia_organica: 3.2,
+      ctc: 14.0,
+      saturacao_bases: 72,
+      aluminio: 0.05,
+      enxofre: 10.0
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -28.6340, lng: -53.6056 },
+      { lat: -28.6340, lng: -53.6018 },
+      { lat: -28.6372, lng: -53.6013 },
+      { lat: -28.6382, lng: -53.6028 },
+      { lat: -28.6376, lng: -53.6056 }
+    ],
+    cor: '#228B22',
+    data_upload: new Date('2024-05-20').toISOString(),
+    safra: '2024/2025',
+    disponivel_offline: true,
+    observacoes: 'Melhoria de fertilidade após correção com calcário e gesso.'
+  },
+  {
+    id: 'lt6',
+    nome: 'LT 2024 - Talhão B',
+    ano: 2024,
+    produtor_id: 'p1',
+    talhao: 'Talhão B',
+    area_hectares: 33.5,
+    perimetro_km: 2.35,
+    textura: 'Argilo-arenosa',
+    tipo_solo: 'Latossolo Vermelho-Amarelo',
+    elementos: {
+      ph: 5.9,
+      fosforo: 11.0,
+      potassio: 0.32,
+      calcio: 4.0,
+      magnesio: 1.5,
+      materia_organica: 2.6,
+      ctc: 11.5,
+      saturacao_bases: 62,
+      aluminio: 0.3,
+      enxofre: 7.5
+    },
+    cultura_atual: 'Milho Safrinha',
+    poligono: [
+      { lat: -28.6355, lng: -53.6065 },
+      { lat: -28.6355, lng: -53.6035 },
+      { lat: -28.6385, lng: -53.6030 },
+      { lat: -28.6390, lng: -53.6050 },
+      { lat: -28.6380, lng: -53.6070 }
+    ],
+    cor: '#D4A017',
+    data_upload: new Date('2024-05-20').toISOString(),
+    safra: '2024/2025',
+    disponivel_offline: true,
+    observacoes: 'Rotação soja/milho safrinha. Solo em evolução.'
+  },
+  {
+    id: 'lt7',
+    nome: 'LT 2025 - Talhão A',
+    ano: 2025,
+    produtor_id: 'p1',
+    talhao: 'Talhão A',
+    area_hectares: 46.5,
+    perimetro_km: 2.86,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho',
+    elementos: {
+      ph: 6.3,
+      fosforo: 20.0,
+      potassio: 0.50,
+      calcio: 5.5,
+      magnesio: 2.4,
+      materia_organica: 3.5,
+      ctc: 14.8,
+      saturacao_bases: 75,
+      aluminio: 0.0,
+      enxofre: 11.0
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -28.6339, lng: -53.6057 },
+      { lat: -28.6339, lng: -53.6017 },
+      { lat: -28.6373, lng: -53.6012 },
+      { lat: -28.6383, lng: -53.6027 },
+      { lat: -28.6377, lng: -53.6057 }
+    ],
+    cor: '#228B22',
+    data_upload: new Date('2025-04-10').toISOString(),
+    safra: '2025/2026',
+    disponivel_offline: true,
+    observacoes: 'Solo em excelente condição após 3 anos de manejo integrado.'
+  },
+  {
+    id: 'lt8',
+    nome: 'LT 2025 - Talhão B',
+    ano: 2025,
+    produtor_id: 'p1',
+    talhao: 'Talhão B',
+    area_hectares: 33.8,
+    perimetro_km: 2.36,
+    textura: 'Argilo-arenosa',
+    tipo_solo: 'Latossolo Vermelho-Amarelo',
+    elementos: {
+      ph: 6.1,
+      fosforo: 14.0,
+      potassio: 0.38,
+      calcio: 4.5,
+      magnesio: 1.8,
+      materia_organica: 2.9,
+      ctc: 12.2,
+      saturacao_bases: 66,
+      aluminio: 0.15,
+      enxofre: 8.0
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -28.6354, lng: -53.6066 },
+      { lat: -28.6354, lng: -53.6034 },
+      { lat: -28.6386, lng: -53.6029 },
+      { lat: -28.6391, lng: -53.6049 },
+      { lat: -28.6381, lng: -53.6071 }
+    ],
+    cor: '#D4A017',
+    data_upload: new Date('2025-04-10').toISOString(),
+    safra: '2025/2026',
+    disponivel_offline: true,
+    observacoes: 'Evolução constante do perfil de solo.'
+  },
+  {
+    id: 'lt9',
+    nome: 'LT 2025 - Talhão C',
+    ano: 2025,
+    produtor_id: 'p1',
+    talhao: 'Talhão C',
+    area_hectares: 29.0,
+    perimetro_km: 2.15,
+    textura: 'Franco-arenosa',
+    tipo_solo: 'Neossolo Quartzarênico',
+    elementos: {
+      ph: 5.6,
+      fosforo: 9.0,
+      potassio: 0.25,
+      calcio: 3.2,
+      magnesio: 1.0,
+      materia_organica: 2.0,
+      ctc: 9.0,
+      saturacao_bases: 52,
+      aluminio: 0.5,
+      enxofre: 5.5
+    },
+    cultura_atual: 'Milho',
+    poligono: [
+      { lat: -28.6394, lng: -53.6061 },
+      { lat: -28.6394, lng: -53.6034 },
+      { lat: -28.6421, lng: -53.6029 },
+      { lat: -28.6426, lng: -53.6054 },
+      { lat: -28.6411, lng: -53.6066 }
+    ],
+    cor: '#8B4513',
+    data_upload: new Date('2025-04-10').toISOString(),
+    safra: '2025/2026',
+    disponivel_offline: true,
+    observacoes: 'Melhoria significativa após calagem. Agora Franco-arenosa.'
+  },
+  // ─── Produtor p4 - Goiás ───
+  {
+    id: 'lt10',
+    nome: 'LT 2024 - Pivô Central',
+    ano: 2024,
+    produtor_id: 'p4',
+    talhao: 'Pivô Central',
+    area_hectares: 120.0,
+    perimetro_km: 3.88,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho-Escuro',
+    elementos: {
+      ph: 5.5,
+      fosforo: 10.0,
+      potassio: 0.30,
+      calcio: 3.8,
+      magnesio: 1.5,
+      materia_organica: 2.5,
+      ctc: 11.0,
+      saturacao_bases: 55,
+      aluminio: 0.5,
+      enxofre: 7.0
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -17.7820, lng: -50.9140 },
+      { lat: -17.7820, lng: -50.9100 },
+      { lat: -17.7860, lng: -50.9095 },
+      { lat: -17.7870, lng: -50.9120 },
+      { lat: -17.7855, lng: -50.9145 }
+    ],
+    cor: '#2E86C1',
+    data_upload: new Date('2024-06-01').toISOString(),
+    safra: '2024/2025',
+    disponivel_offline: true,
+    observacoes: 'Área de pivô central - Cerrado goiano, Rio Verde.'
+  },
+  {
+    id: 'lt11',
+    nome: 'LT 2025 - Pivô Central',
+    ano: 2025,
+    produtor_id: 'p4',
+    talhao: 'Pivô Central',
+    area_hectares: 120.5,
+    perimetro_km: 3.90,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho-Escuro',
+    elementos: {
+      ph: 5.8,
+      fosforo: 13.0,
+      potassio: 0.35,
+      calcio: 4.2,
+      magnesio: 1.8,
+      materia_organica: 2.8,
+      ctc: 12.0,
+      saturacao_bases: 60,
+      aluminio: 0.3,
+      enxofre: 8.0
+    },
+    cultura_atual: 'Milho Safrinha',
+    poligono: [
+      { lat: -17.7819, lng: -50.9141 },
+      { lat: -17.7819, lng: -50.9099 },
+      { lat: -17.7861, lng: -50.9094 },
+      { lat: -17.7871, lng: -50.9119 },
+      { lat: -17.7856, lng: -50.9146 }
+    ],
+    cor: '#2E86C1',
+    data_upload: new Date('2025-05-15').toISOString(),
+    safra: '2025/2026',
+    disponivel_offline: true,
+    observacoes: 'Atualização 2025 - Resultado pós-correção.'
+  },
+  // ─── Produtor p5 - Mato Grosso ───
+  {
+    id: 'lt12',
+    nome: 'LT 2024 - Área Norte',
+    ano: 2024,
+    produtor_id: 'p5',
+    talhao: 'Área Norte',
+    area_hectares: 250.0,
+    perimetro_km: 6.32,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Amarelo',
+    elementos: {
+      ph: 5.0,
+      fosforo: 7.0,
+      potassio: 0.22,
+      calcio: 2.8,
+      magnesio: 1.0,
+      materia_organica: 2.0,
+      ctc: 8.5,
+      saturacao_bases: 42,
+      aluminio: 1.0,
+      enxofre: 5.0
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -12.5480, lng: -55.7130 },
+      { lat: -12.5480, lng: -55.7080 },
+      { lat: -12.5530, lng: -55.7075 },
+      { lat: -12.5540, lng: -55.7110 },
+      { lat: -12.5520, lng: -55.7140 }
+    ],
+    cor: '#E67E22',
+    data_upload: new Date('2024-05-01').toISOString(),
+    safra: '2024/2025',
+    disponivel_offline: true,
+    observacoes: 'Área de expansão em Sorriso-MT. Solo ácido, necessita correção intensiva.'
+  },
+  {
+    id: 'lt13',
+    nome: 'LT 2025 - Área Norte',
+    ano: 2025,
+    produtor_id: 'p5',
+    talhao: 'Área Norte',
+    area_hectares: 252.0,
+    perimetro_km: 6.35,
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Amarelo',
+    elementos: {
+      ph: 5.4,
+      fosforo: 10.0,
+      potassio: 0.28,
+      calcio: 3.5,
+      magnesio: 1.3,
+      materia_organica: 2.3,
+      ctc: 9.5,
+      saturacao_bases: 50,
+      aluminio: 0.6,
+      enxofre: 6.5
+    },
+    cultura_atual: 'Soja',
+    poligono: [
+      { lat: -12.5479, lng: -55.7131 },
+      { lat: -12.5479, lng: -55.7079 },
+      { lat: -12.5531, lng: -55.7074 },
+      { lat: -12.5541, lng: -55.7109 },
+      { lat: -12.5521, lng: -55.7141 }
+    ],
+    cor: '#E67E22',
+    data_upload: new Date('2025-06-01').toISOString(),
+    safra: '2025/2026',
+    disponivel_offline: true,
+    observacoes: 'Evolução pós-correção 2024. Solo melhorando.'
+  }
+];
+
 // API para User
 export const User = {
   list: async () => {
@@ -1288,5 +1764,82 @@ export const Mapa = {
         res({ success: true });
       }
     }, 200));
+  }
+};
+
+// API para LimiteArea (Shape / Demarcação)
+export const LimiteArea = {
+  list: async () => {
+    return new Promise((res) => setTimeout(() => res([...limitesArea]), 200));
+  },
+  get: async (id) => {
+    return new Promise((res, rej) => setTimeout(() => {
+      const limite = limitesArea.find(l => l.id === id);
+      if (limite) res(limite); else rej(new Error('Limite não encontrado'));
+    }, 200));
+  },
+  filter: async (query) => {
+    const keys = Object.keys(query || {});
+    return new Promise((res) => setTimeout(() => {
+      const result = limitesArea.filter(l => keys.every(k => String(l[k]) === String(query[k])));
+      res(result);
+    }, 200));
+  },
+  getByAno: async (ano) => {
+    return new Promise((res) => setTimeout(() => {
+      const result = limitesArea.filter(l => l.ano === ano);
+      res(result);
+    }, 200));
+  },
+  getByProdutor: async (produtorId) => {
+    return new Promise((res) => setTimeout(() => {
+      const result = limitesArea.filter(l => l.produtor_id === produtorId);
+      res(result);
+    }, 200));
+  },
+  create: async (data) => {
+    return new Promise((res, rej) => setTimeout(() => {
+      try {
+        const id = `lt${Date.now()}`;
+        const novo = {
+          id,
+          ...data,
+          data_upload: new Date().toISOString(),
+          disponivel_offline: true
+        };
+        limitesArea.unshift(novo);
+        res(novo);
+      } catch (error) {
+        rej(error);
+      }
+    }, 200));
+  },
+  update: async (id, data) => {
+    return new Promise((res, rej) => setTimeout(() => {
+      const index = limitesArea.findIndex(l => l.id === id);
+      if (index === -1) {
+        rej(new Error('Limite não encontrado'));
+      } else {
+        limitesArea[index] = { ...limitesArea[index], ...data, id };
+        res(limitesArea[index]);
+      }
+    }, 300));
+  },
+  delete: async (id) => {
+    return new Promise((res, rej) => setTimeout(() => {
+      const index = limitesArea.findIndex(l => l.id === id);
+      if (index === -1) {
+        rej(new Error('Limite não encontrado'));
+      } else {
+        limitesArea.splice(index, 1);
+        res({ success: true });
+      }
+    }, 200));
+  },
+  getAnosDisponiveis: async () => {
+    return new Promise((res) => setTimeout(() => {
+      const anos = [...new Set(limitesArea.map(l => l.ano))].sort((a, b) => b - a);
+      res(anos);
+    }, 100));
   }
 };

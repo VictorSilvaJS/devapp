@@ -1,0 +1,98 @@
+{
+  "name": "LimiteArea",
+  "description": "Limite de área / Shape de demarcação de talhão - Formato LT (Levantamento Topográfico)",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "ID único do limite (ex: lt1, lt2)"
+    },
+    "nome": {
+      "type": "string",
+      "description": "Nome do levantamento (ex: LT 2025 - Talhão A)"
+    },
+    "ano": {
+      "type": "integer",
+      "description": "Ano do levantamento topográfico (2022, 2023, 2024, 2025)"
+    },
+    "produtor_id": {
+      "type": "string",
+      "description": "ID do produtor/propriedade associada"
+    },
+    "talhao": {
+      "type": "string",
+      "description": "Nome do talhão"
+    },
+    "area_hectares": {
+      "type": "number",
+      "description": "Área total em hectares"
+    },
+    "perimetro_km": {
+      "type": "number",
+      "description": "Perímetro em quilômetros"
+    },
+    "textura": {
+      "type": "string",
+      "enum": ["Argilosa", "Argilo-arenosa", "Franco-arenosa", "Arenosa", "Siltosa", "Franco-argilosa"],
+      "description": "Textura do solo do talhão"
+    },
+    "tipo_solo": {
+      "type": "string",
+      "description": "Classificação do tipo de solo (ex: Latossolo Vermelho)"
+    },
+    "elementos": {
+      "type": "object",
+      "description": "Elementos e nutrientes do solo",
+      "properties": {
+        "ph": { "type": "number", "description": "pH do solo" },
+        "fosforo": { "type": "number", "description": "Fósforo (P) em mg/dm³" },
+        "potassio": { "type": "number", "description": "Potássio (K) em cmolc/dm³" },
+        "calcio": { "type": "number", "description": "Cálcio (Ca) em cmolc/dm³" },
+        "magnesio": { "type": "number", "description": "Magnésio (Mg) em cmolc/dm³" },
+        "materia_organica": { "type": "number", "description": "Matéria Orgânica (MO) em %" },
+        "ctc": { "type": "number", "description": "CTC em cmolc/dm³" },
+        "saturacao_bases": { "type": "number", "description": "Saturação de Bases (V%) em %" },
+        "aluminio": { "type": "number", "description": "Alumínio (Al) em cmolc/dm³" },
+        "enxofre": { "type": "number", "description": "Enxofre (S) em mg/dm³" }
+      }
+    },
+    "cultura_atual": {
+      "type": "string",
+      "description": "Cultura plantada atualmente no talhão"
+    },
+    "poligono": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lat": { "type": "number" },
+          "lng": { "type": "number" }
+        }
+      },
+      "description": "Coordenadas do polígono de demarcação do talhão"
+    },
+    "cor": {
+      "type": "string",
+      "description": "Cor hexadecimal para representação visual"
+    },
+    "data_upload": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de upload/importação do shape"
+    },
+    "safra": {
+      "type": "string",
+      "description": "Safra de referência (ex: 2025/2026)"
+    },
+    "disponivel_offline": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o shape está disponível para visualização offline"
+    },
+    "observacoes": {
+      "type": "string",
+      "description": "Observações sobre o levantamento"
+    }
+  },
+  "required": ["nome", "ano", "produtor_id", "talhao", "poligono"]
+}
