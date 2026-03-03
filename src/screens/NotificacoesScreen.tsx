@@ -58,7 +58,7 @@ export default function NotificacoesScreen({ navigation }) {
   const formatarData = (data) => {
     const d = new Date(data);
     const hoje = new Date();
-    const diffTime = Math.abs(hoje - d);
+    const diffTime = Math.abs(hoje.getTime() - d.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {

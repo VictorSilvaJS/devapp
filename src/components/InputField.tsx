@@ -3,6 +3,24 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, shadows } from '../theme';
 
+type InputFieldProps = {
+  label?: string;
+  value?: string;
+  onChangeText?: (text: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  error?: string;
+  valid?: boolean;
+  icon?: string;
+  keyboardType?: import('react-native').KeyboardTypeOptions;
+  secureTextEntry?: boolean;
+  multiline?: boolean;
+  maxLength?: number;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  editable?: boolean;
+  onBlur?: () => void;
+};
+
 /**
  * Campo de input reutilizável com validação visual
  * @param {Object} props
@@ -35,7 +53,7 @@ export default function InputField({
   autoCapitalize = 'sentences',
   editable = true,
   onBlur,
-}) {
+}: InputFieldProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 

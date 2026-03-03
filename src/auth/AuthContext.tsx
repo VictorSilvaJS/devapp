@@ -2,8 +2,27 @@ import React, { createContext, useState, useContext, useEffect, useCallback, use
 import { authLogin, authLoginByProfile, authLogout } from './authMock';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const AuthStateContext = createContext();
-const AuthActionsContext = createContext();
+type AuthUser = {
+  id?: string;
+  perfil?: string;
+  [key: string]: any;
+} | null;
+
+type AuthState = {
+  user: AuthUser;
+  isReady: boolean;
+};
+
+type AuthActions = {
+  login: (email: string, senha: string) => Promise<any>;
+  loginRapido: (profileKey: string) => Promise<any>;
+  logout: () => Promise<void>;
+  updateProfile: (updates: Record<string, any>) => Promise<any>;
+  loading: boolean;
+};
+
+const AuthStateContext = createContext<AuthState | undefined>(undefined);
+const AuthActionsContext = createContext<AuthActions | undefined>(undefined);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -101,11 +120,19 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuthState() {
-  return useContext(AuthStateContext);
+  const context = useContext(AuthStateContext);
+  if (!context) {
+    throw new Error('useAuthState deve ser usado dentro de AuthProvider');
+  }
+  return context;
 }
 
 export function useAuthActions() {
-  return useContext(AuthActionsContext);
+  const context = useContext(AuthActionsContext);
+  if (!context) {
+    throw new Error('useAuthActions deve ser usado dentro de AuthProvider');
+  }
+  return context;
 }
 
 // legacy combined hook for compatibility - avoid using in performance-sensitive components

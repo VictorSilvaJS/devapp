@@ -9,7 +9,12 @@ import { colors, typography, spacing, shadows, iconSizes } from '../theme';
  * @param {string} fixedRegiao - Região fixa (para colaborador: mostra como info, não como botão)
  * @param {string[]} microregiaoOptions - Opções de micro-região (para colaborador: sub_regioes)
  */
-export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
+type FiltroRegionalProps = {
+  fixedRegiao?: string;
+  microregiaoOptions?: string[];
+};
+
+export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: FiltroRegionalProps) {
   const {
     filtros,
     regioes,
@@ -523,7 +528,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
                       </Text>
                     </View>
                   ) : (
-                    Object.entries(fazendasAgrupadas).map(([proprietario, fazsProp]) => (
+                    Object.entries(fazendasAgrupadas as Record<string, any[]>).map(([proprietario, fazsProp]) => (
                       <View key={proprietario}>
                         {/* Cabeçalho do proprietário */}
                         <View style={styles.proprietarioHeader}>
@@ -585,7 +590,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: 12,

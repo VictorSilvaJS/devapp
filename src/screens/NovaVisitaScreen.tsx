@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  Platform,
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -19,13 +20,10 @@ import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 
-export default function EditarVisitaScreen() {
-  const route = useRoute();
+export default function NovaVisitaScreen() {
   const navigation = useNavigation();
   const toast = useToast();
   const { user } = useAuth();
-
-  const { visitaId } = route.params || {};
 
   // Estados do formulário
   const [produtorId, setProdutorId] = useState('');
@@ -36,88 +34,58 @@ export default function EditarVisitaScreen() {
   const [recomendacoes, setRecomendacoes] = useState('');
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
-  const [status, setStatus] = useState('agendada');
   const [fotos, setFotos] = useState([]);
   const [removePhotoDialog, setRemovePhotoDialog] = useState({ visible: false, fotoId: null });
 
   // Estados de controle
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [produtores, setProdutores] = useState([]);
-  const [errors, setErrors] = useState({});
+  const [loadingProdutores, setLoadingProdutores] = useState(true);
+  const [errors, setErrors] = useState<any>({});
 
-  // Dropdown
+  // Dropdown de produtores
   const [showProdutorPicker, setShowProdutorPicker] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [visitaId]);
+    loadProdutores();
+  }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadProdutores = async () => {
+    setLoadingProdutores(true);
     try {
-      const [visitaData, produtoresData] = await Promise.all([
-        Visita.get(visitaId),
-        Produtor.list(),
-      ]);
-
-      // Preencher formulário com dados da visita
-      if (visitaData) {
-        setProdutorId(visitaData.produtor_id || '');
-        
-        const dataVisitaObj = new Date(visitaData.data_visita);
-        setDataVisita(dataVisitaObj);
-        setHoraVisita(dataVisitaObj);
-        
-        setObjetivo(visitaData.objetivo || 'consultoria');
-        setObservacoes(visitaData.observacoes || '');
-        setRecomendacoes(visitaData.recomendacoes || '');
-        setClima(visitaData.clima || '');
-        setStatus(visitaData.status || 'agendada');
-        
-        if (visitaData.proximaVisita) {
-          setProximaVisita(new Date(visitaData.proximaVisita));
-        }
-
-        // Carregar fotos existentes
-        if (visitaData.fotos && visitaData.fotos.length > 0) {
-          setFotos(visitaData.fotos.map((f, i) => ({
-            id: f.id || `foto_existente_${i}`,
-            uri: f.uri || f,
-            tipo: f.tipo || 'existente',
-            dataCaptura: f.dataCaptura || visitaData.data_visita,
-          })));
-        }
-      }
-
-      // Filtrar produtores por perfil
-      let filtrados = produtoresData;
+      const data = await Produtor.list();
+      
+      // Filtrar por perfil
+      let filtrados = data;
       if (user?.perfil === 'colaborador') {
         // Colaborador: produtores das suas sub-regiões
-        filtrados = produtoresData.filter(p => {
+        filtrados = data.filter(p => {
           if (user.sub_regioes && p.microregiao) {
             return user.sub_regioes.includes(p.microregiao);
           }
           return false;
         });
       } else if (user?.perfil === 'produtor') {
-        filtrados = produtoresData.filter(p => 
+        // Produtor (proprietário) - buscar suas fazendas
+        filtrados = data.filter(p => 
           p.proprietario_id === user.produtor_id || p.id === user.produtor_id
         );
+        if (filtrados.length > 0) {
+          setProdutorId(filtrados[0].id);
+        }
       }
-
+      
       setProdutores(filtrados);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      toast.showError('Erro ao carregar visita');
-      navigation.goBack();
+      console.error('Erro ao carregar produtores:', error);
+      toast.showError('Erro ao carregar produtores');
     } finally {
-      setLoading(false);
+      setLoadingProdutores(false);
     }
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: any = {};
 
     if (!produtorId) {
       newErrors.produtorId = 'Selecione um produtor';
@@ -145,38 +113,39 @@ export default function EditarVisitaScreen() {
       return;
     }
 
-    setSaving(true);
+    setLoading(true);
     try {
       // Combinar data e hora
       const dataCompleta = new Date(dataVisita);
       dataCompleta.setHours(horaVisita.getHours());
       dataCompleta.setMinutes(horaVisita.getMinutes());
 
-      const visitaAtualizada = {
+      const novaVisita = {
         produtor_id: produtorId,
+        tecnico_responsavel: user?.full_name || user?.nome || 'Sistema',
         data_visita: dataCompleta.toISOString(),
         objetivo,
         observacoes,
         recomendacoes,
         clima,
         proximaVisita: proximaVisita?.toISOString().split('T')[0],
-        status,
+        status: 'agendada',
         fotos: fotos,
       };
 
-      await Visita.update(visitaId, visitaAtualizada);
+      await Visita.create(novaVisita);
 
-      toast.showSuccess('Visita atualizada com sucesso!');
+      toast.showSuccess('Visita agendada com sucesso!');
       
-      // Voltar para tela de detalhes
+      // Voltar para tela de visitas
       setTimeout(() => {
         navigation.goBack();
       }, 500);
     } catch (error) {
       console.error('Erro ao salvar visita:', error);
-      toast.showError('Erro ao atualizar visita');
+      toast.showError('Erro ao agendar visita');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
@@ -186,12 +155,6 @@ export default function EditarVisitaScreen() {
     { value: 'avaliacao_cultivo', label: 'Avaliação de Cultivo' },
     { value: 'entrega_material', label: 'Entrega de Material' },
     { value: 'outro', label: 'Outro' },
-  ];
-
-  const statusOptions = [
-    { value: 'agendada', label: 'Agendada' },
-    { value: 'realizada', label: 'Realizada' },
-    { value: 'cancelada', label: 'Cancelada' },
   ];
 
   const getProdutorNome = (id) => {
@@ -223,21 +186,9 @@ export default function EditarVisitaScreen() {
     toast.showSuccess('Foto removida');
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Header title="Editar Visita" showBack />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Carregando...</Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Header title="Editar Visita" showBack />
+      <Header title="Nova Visita" showBack />
 
       <ScrollView 
         style={styles.scrollView}
@@ -255,7 +206,7 @@ export default function EditarVisitaScreen() {
             disabled={user?.perfil === 'produtor'}
           >
             <Text style={[styles.pickerText, !produtorId && styles.placeholder]}>
-              {getProdutorNome(produtorId)}
+              {loadingProdutores ? 'Carregando...' : getProdutorNome(produtorId)}
             </Text>
             <Ionicons 
               name={showProdutorPicker ? 'chevron-up' : 'chevron-down'} 
@@ -300,35 +251,6 @@ export default function EditarVisitaScreen() {
           )}
         </View>
 
-        {/* Status */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Status <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {statusOptions.map(opt => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.radioButton,
-                  status === opt.value && styles.radioButtonSelected
-                ]}
-                onPress={() => setStatus(opt.value)}
-              >
-                <View style={styles.radio}>
-                  {status === opt.value && <View style={styles.radioInner} />}
-                </View>
-                <Text style={[
-                  styles.radioLabel,
-                  status === opt.value && styles.radioLabelSelected
-                ]}>
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
         {/* Data da Visita */}
         <DatePicker
           label="Data da Visita"
@@ -339,6 +261,7 @@ export default function EditarVisitaScreen() {
           }}
           placeholder="Selecione a data"
           error={errors.dataVisita}
+          minimumDate={new Date()}
           mode="date"
         />
 
@@ -422,7 +345,7 @@ export default function EditarVisitaScreen() {
 
         {/* Clima */}
         <View style={styles.field}>
-          <Text style={styles.label}>Condições Climáticas</Text>
+          <Text style={styles.label}>Condições Climáticas Esperadas</Text>
           <TextInput
             style={styles.input}
             value={clima}
@@ -438,7 +361,7 @@ export default function EditarVisitaScreen() {
           value={proximaVisita}
           onChange={setProximaVisita}
           placeholder="Selecione uma data (opcional)"
-          minimumDate={new Date()}
+          minimumDate={dataVisita || new Date()}
           mode="date"
         />
 
@@ -485,8 +408,8 @@ export default function EditarVisitaScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            Ao editar a visita, as alterações serão salvas imediatamente. 
-            Você pode adicionar fotos acessando a visualização de detalhes.
+            A visita será agendada com status "Agendada". Você poderá adicionar fotos e 
+            atualizar o status após realizar a visita.
           </Text>
         </View>
       </ScrollView>
@@ -496,22 +419,22 @@ export default function EditarVisitaScreen() {
         <TouchableOpacity
           style={[styles.button, styles.cancelButton]}
           onPress={() => navigation.goBack()}
-          disabled={saving}
+          disabled={loading}
         >
           <Text style={styles.cancelButtonText}>Cancelar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.saveButton, saving && styles.buttonDisabled]}
+          style={[styles.button, styles.saveButton, loading && styles.buttonDisabled]}
           onPress={handleSave}
-          disabled={saving}
+          disabled={loading}
         >
-          {saving ? (
+          {loading ? (
             <ActivityIndicator color={colors.card} size="small" />
           ) : (
             <>
               <Ionicons name="checkmark" size={20} color={colors.card} />
-              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+              <Text style={styles.saveButtonText}>Agendar Visita</Text>
             </>
           )}
         </TouchableOpacity>
@@ -542,16 +465,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl * 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  loadingText: {
-    fontSize: typography.fontBody,
-    color: colors.muted,
   },
   field: {
     marginBottom: spacing.lg,
@@ -655,7 +568,7 @@ const styles = StyleSheet.create({
   radio: {
     width: 20,
     height: 20,
-    borderRadius: spacing.radius,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: colors.border,
     alignItems: 'center',
@@ -665,7 +578,7 @@ const styles = StyleSheet.create({
   radioInner: {
     width: 10,
     height: 10,
-    borderRadius: spacing.radiusSm,
+    borderRadius: 5,
     backgroundColor: colors.primary,
   },
   radioLabel: {
@@ -710,7 +623,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 12,
-    borderRadius: spacing.radius,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: colors.primary,
     borderStyle: 'dashed',
@@ -731,7 +644,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: 90,
     height: 90,
-    borderRadius: spacing.radiusSm,
+    borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: colors.border,
@@ -739,14 +652,14 @@ const styles = StyleSheet.create({
   fotoPreview: {
     width: '100%',
     height: '100%',
-    borderRadius: spacing.radiusSm,
+    borderRadius: 8,
   },
   fotoRemover: {
     position: 'absolute',
     top: 2,
     right: 2,
     backgroundColor: colors.whiteTranslucent,
-    borderRadius: spacing.radius,
+    borderRadius: 11,
   },
   fotosCount: {
     marginTop: spacing.xs,

@@ -1461,7 +1461,7 @@ const limitesArea = [
 ];
 
 // API para User
-export const User = {
+export const User: any = {
   list: async () => {
     return new Promise((res) => setTimeout(() => res([...users]), 200));
   },
@@ -1527,8 +1527,8 @@ export const User = {
 };
 
 // API para Produtor
-export const Produtor = {
-  list: async (order) => {
+export const Produtor: any = {
+  list: async (order?: any) => {
     return new Promise((res) => setTimeout(() => res([...produtores]), 300));
   },
   get: async (id) => {
@@ -1587,7 +1587,7 @@ export const Produtor = {
 };
 
 // API para Visita
-export const Visita = {
+export const Visita: any = {
   list: async () => {
     return new Promise((res) => setTimeout(() => res([...visitas]), 200));
   },
@@ -1647,7 +1647,7 @@ export const Visita = {
 };
 
 // API para CadernoCampo
-export const CadernoCampo = {
+export const CadernoCampo: any = {
   list: async () => {
     return new Promise((res) => setTimeout(() => res([...cadernos]), 200));
   },
@@ -1708,7 +1708,7 @@ export const CadernoCampo = {
 };
 
 // API para Mapa
-export const Mapa = {
+export const Mapa: any = {
   list: async () => {
     return new Promise((res) => setTimeout(() => res([...mapas]), 200));
   },
@@ -1768,7 +1768,7 @@ export const Mapa = {
 };
 
 // API para LimiteArea (Shape / Demarcação)
-export const LimiteArea = {
+export const LimiteArea: any = {
   list: async () => {
     return new Promise((res) => setTimeout(() => res([...limitesArea]), 200));
   },

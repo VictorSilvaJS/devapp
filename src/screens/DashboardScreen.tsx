@@ -17,7 +17,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function DashboardScreen() {
   const { user } = useAuthState();
   const { filtrarProdutores, getProdutorIdsFiltrados, getFiltroAtivo, setRegiao } = useFiltros();
-  const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: 0 });
+  const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: '' });
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [clima] = useState({ temperatura: '25°C', condicao: 'Ensolarado' });

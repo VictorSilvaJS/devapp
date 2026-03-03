@@ -143,7 +143,7 @@ export default function MapasScreen({ route, navigation }) {
     const limitesFiltrados = todosLimites.filter(l => idsPermitidos.includes(l.produtor_id));
     setLimites(limitesFiltrados);
     
-    const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a, b) => b - a);
+    const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));
     setAnosDisponiveis(anos);
     if (anos.length > 0 && !anoFiltroLimite) {
       setAnoFiltroLimite(anos[0]); // selecionar o ano mais recente
@@ -184,7 +184,7 @@ export default function MapasScreen({ route, navigation }) {
       return matchCategoria && matchBusca && matchAno;
     }).sort((a, b) => {
       if (ordenacao === 'recente') {
-        return new Date(b.data_criacao || 0) - new Date(a.data_criacao || 0);
+        return new Date(b.data_criacao || 0).getTime() - new Date(a.data_criacao || 0).getTime();
       } else if (ordenacao === 'titulo') {
         return (a.titulo || '').localeCompare(b.titulo || '');
       } else if (ordenacao === 'tamanho') {

@@ -6,7 +6,7 @@
 import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from 'react';
 import { useAuthState } from '../auth/AuthContext';
 
-const NotificacaoContext = createContext();
+const NotificacaoContext = createContext<any>(null);
 
 const NOTIFICACOES_INICIAIS = [
   {

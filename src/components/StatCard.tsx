@@ -30,7 +30,15 @@ const colorSchemes = {
   }
 };
 
-export default function StatCard({ label, value, accent, icon, colorScheme }) {
+type StatCardProps = {
+  label: any;
+  value: any;
+  accent?: any;
+  icon?: any;
+  colorScheme?: keyof typeof colorSchemes;
+};
+
+export default function StatCard({ label, value, accent, icon, colorScheme }: StatCardProps) {
   // Se colorScheme for passado, usa o esquema pré-definido
   const scheme = colorScheme ? colorSchemes[colorScheme] : null;
   const finalAccent = scheme || accent;

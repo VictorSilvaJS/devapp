@@ -12,6 +12,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, shadows } from '../theme';
 
+type DatePickerProps = {
+  value?: Date | null;
+  onChange: (value: Date) => void;
+  label?: string;
+  placeholder?: string;
+  error?: string;
+  minimumDate?: Date;
+  maximumDate?: Date;
+  mode?: 'date' | 'time' | 'datetime';
+  disabled?: boolean;
+};
+
 /**
  * DatePicker Component
  * 
@@ -38,7 +50,7 @@ export default function DatePicker({
   maximumDate,
   mode = 'date',
   disabled = false
-}) {
+}: DatePickerProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [tempDate, setTempDate] = useState(value || new Date());
 

@@ -943,7 +943,7 @@ const styles = StyleSheet.create({
     fontSize: 56,
     marginBottom: 16
   },
-  sectionHeader: {
+  sectionHeaderSecondary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

@@ -175,7 +175,7 @@ export default function VisitasScreen() {
   }).sort((a, b) => {
     // Aplicar ordenação
     if (ordenacao === 'data') {
-      return new Date(b.data_visita) - new Date(a.data_visita);
+      return new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime();
     } else if (ordenacao === 'produtor') {
       const prodA = getProd(a.produtor_id);
       const prodB = getProd(b.produtor_id);
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
   searchIcon: {
     marginRight: 8
   },
-  searchInput: {
+  searchInputLegacy: {
     flex: 1,
     height: 44,
     fontSize: typography.fontBody,

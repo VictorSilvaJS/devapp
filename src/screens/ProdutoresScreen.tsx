@@ -76,7 +76,7 @@ export default function ProdutoresScreen() {
     } else if (ordenacao === 'area') {
       return (b.area_total || 0) - (a.area_total || 0);
     } else if (ordenacao === 'recente') {
-      return new Date(b.data_cadastro || 0) - new Date(a.data_cadastro || 0);
+      return new Date(b.data_cadastro || 0).getTime() - new Date(a.data_cadastro || 0).getTime();
     }
     return 0;
   });

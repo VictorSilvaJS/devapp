@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, shadows } from '../theme';
 
-const ToastContext = createContext();
+const ToastContext = createContext<any>(null);
 
 /**
  * Toast Provider

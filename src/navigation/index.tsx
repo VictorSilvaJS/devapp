@@ -54,7 +54,7 @@ function tabScreenOptions({ route }) {
     },
     tabBarLabelStyle: {
       fontSize: 11,
-      fontWeight: '600',
+      fontWeight: '600' as const,
       marginBottom: 4
     }
   };

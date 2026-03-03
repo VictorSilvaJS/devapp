@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -20,31 +20,30 @@ import {
   validarObrigatorio
 } from '../utils/validacoes';
 
-export default function EditarProdutorScreen({ route, navigation }) {
+export default function NovoProdutorScreen({ navigation }) {
   const toast = useToast();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<any>({});
   const [form, setForm] = useState({
     nome: '',
     fazenda: '',
     area_total: '',
     cultura_atual: '',
     cidade: '',
-    estado: ''
+    estado: '',
+    status: 'ativo'
   });
 
-  const handleChange = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    
-    // Limpa erro do campo quando o usuário começa a digitar
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+  const handleChange = (campo, valor) => {
+    setForm(prev => ({ ...prev, [campo]: valor }));
+    // Limpar erro ao digitar
+    if (errors[campo]) {
+      setErrors(prev => ({ ...prev, [campo]: null }));
     }
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: any = {};
 
     if (!validarNome(form.nome)) {
       newErrors.nome = 'Nome deve ter pelo menos 3 caracteres';
@@ -63,37 +62,6 @@ export default function EditarProdutorScreen({ route, navigation }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  useEffect(() => {
-    const loadProdutor = async () => {
-      const id = route?.params?.id;
-      if (!id) {
-        toast.showError('ID do produtor não fornecido');
-        navigation.goBack();
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const produtor = await Produtor.get(id);
-        setForm({
-          nome: produtor.nome || '',
-          fazenda: produtor.fazenda || '',
-          area_total: String(produtor.area_total || ''),
-          cultura_atual: produtor.cultura_atual || '',
-          cidade: produtor.cidade || '',
-          estado: produtor.estado || ''
-        });
-      } catch (error) {
-        toast.showError('Não foi possível carregar os dados do produtor');
-        navigation.goBack();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProdutor();
-  }, [route?.params?.id]);
-
   const handleSave = async () => {
     if (!validateForm()) {
       toast.showWarning('Preencha todos os campos obrigatórios corretamente');
@@ -102,43 +70,32 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
     try {
       setSaving(true);
-      await Produtor.update(route.params.id, {
+      const dataToSave = {
         ...form,
         area_total: parseFloat(form.area_total)
-      });
+      };
+      await Produtor.create(dataToSave);
       
-      toast.showSuccess('Produtor atualizado com sucesso!');
+      toast.showSuccess('Produtor cadastrado com sucesso!');
       navigation.goBack();
     } catch (error) {
-      toast.showError('Não foi possível salvar as alterações. Tente novamente.');
+      toast.showError('Não foi possível cadastrar o produtor. Tente novamente.');
       console.error(error);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Header title="Editar Produtor" showBackButton />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Carregando...</Text>
-        </View>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Header title="Editar Produtor" showBackButton />
+      <Header title="Novo Produtor" showBackButton />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Info Box */}
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            Atualize os dados do produtor
+            Preencha os dados do novo produtor
           </Text>
         </View>
 
@@ -269,17 +226,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: theme.spacing.md,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-  },
-  loadingText: {
-    marginTop: theme.spacing.md,
-    color: theme.colors.textSecondary,
-    fontSize: theme.typography.fontBody,
   },
   infoBox: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { Produtor } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 
-const FiltroContext = createContext();
+const FiltroContext = createContext<any>(null);
 
 const FILTROS_INICIAIS = {
   regiao: 'todas',

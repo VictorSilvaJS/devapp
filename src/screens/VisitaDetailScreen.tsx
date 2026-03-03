@@ -21,7 +21,7 @@ import { useAuth } from '../auth/AuthContext';
 const { width } = Dimensions.get('window');
 
 export default function VisitaDetailScreen() {
-  const route = useRoute();
+  const route = useRoute<any>();
   const navigation = useNavigation();
   const toast = useToast();
   const { user } = useAuth();

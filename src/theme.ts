@@ -88,6 +88,7 @@ export const typography = {
   fontSmall: 11,       // textos muito pequenos
   weightBold: '700',
   weightSemibold: '600',
+  weightMedium: '500',
   weightRegular: '400',
   weightLight: '300',
   // Tamanhos padronizados
@@ -99,7 +100,7 @@ export const typography = {
     xl: 20,
     xxl: 28
   }
-};
+} as const;
 
 export const border = {
   radius: 12,

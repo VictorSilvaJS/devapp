@@ -10,9 +10,11 @@
 
 // Exportar todas as entidades
 export { User, Produtor, Visita, CadernoCampo, Mapa } from './mock';
+import { User, Produtor, Visita, CadernoCampo, Mapa } from './mock';
 
 // Exportar validadores
 export { default as validators } from './validators';
+import validators from './validators';
 export { 
   validateUser, 
   validateProdutor, 
@@ -33,11 +35,11 @@ export const CATEGORIAS_MAPA = ['fertilidade', 'correcao', 'indice_vegetacao', '
 // Helper: Buscar entidade por ID em qualquer coleção
 export const findById = async (entityType, id) => {
   const entities = {
-    'User': (await import('./mock')).User,
-    'Produtor': (await import('./mock')).Produtor,
-    'Visita': (await import('./mock')).Visita,
-    'CadernoCampo': (await import('./mock')).CadernoCampo,
-    'Mapa': (await import('./mock')).Mapa
+    'User': User,
+    'Produtor': Produtor,
+    'Visita': Visita,
+    'CadernoCampo': CadernoCampo,
+    'Mapa': Mapa
   };
   
   const entity = entities[entityType];
@@ -51,11 +53,11 @@ export const findById = async (entityType, id) => {
 // Helper: Listar todas as entidades de um tipo
 export const listAll = async (entityType) => {
   const entities = {
-    'User': (await import('./mock')).User,
-    'Produtor': (await import('./mock')).Produtor,
-    'Visita': (await import('./mock')).Visita,
-    'CadernoCampo': (await import('./mock')).CadernoCampo,
-    'Mapa': (await import('./mock')).Mapa
+    'User': User,
+    'Produtor': Produtor,
+    'Visita': Visita,
+    'CadernoCampo': CadernoCampo,
+    'Mapa': Mapa
   };
   
   const entity = entities[entityType];
@@ -67,10 +69,10 @@ export const listAll = async (entityType) => {
 };
 
 export default {
-  User: (async () => (await import('./mock')).User)(),
-  Produtor: (async () => (await import('./mock')).Produtor)(),
-  Visita: (async () => (await import('./mock')).Visita)(),
-  CadernoCampo: (async () => (await import('./mock')).CadernoCampo)(),
-  Mapa: (async () => (await import('./mock')).Mapa)(),
-  validators: (async () => (await import('./validators')).default)()
+  User,
+  Produtor,
+  Visita,
+  CadernoCampo,
+  Mapa,
+  validators
 };

@@ -12,7 +12,19 @@ import NotificationBadge from './NotificationBadge';
 
 const LOGO = require('../assets/images/logo.png');
 
-export default function Header({ title, showUser = true, showNotifications = true, showBack = false, onActionPress, actionIcon, actionLabel }) {
+type HeaderProps = {
+  title: string;
+  showUser?: boolean;
+  showNotifications?: boolean;
+  showBack?: boolean;
+  showBackButton?: boolean;
+  onBack?: () => void;
+  onActionPress?: () => void;
+  actionIcon?: string;
+  actionLabel?: string;
+};
+
+export default function Header({ title, showUser = true, showNotifications = true, showBack = false, showBackButton = false, onBack, onActionPress, actionIcon, actionLabel }: HeaderProps) {
   const { user } = useAuthState();
   const { contarNaoLidas } = useNotificacao();
   const navigation = useNavigation();
@@ -29,10 +41,10 @@ export default function Header({ title, showUser = true, showNotifications = tru
         style={styles.gradient}
       >
         <View style={styles.logoContainer}>
-          {showBack ? (
+          {(showBack || showBackButton) ? (
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => onBack ? onBack() : navigation.goBack()}
             >
               <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
