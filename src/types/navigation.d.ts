@@ -15,6 +15,7 @@ declare global {
       EditarVisita: { id?: string; visitaId?: string } | undefined;
       Notificacoes: undefined;
       EditProfile: undefined;
+      FazendaMapa: { produtorId?: string; produtorNome?: string; fazendaNome?: string; talhaoId?: string } | undefined;
       Home: undefined;
       Produtores: undefined;
       Visitas: undefined;

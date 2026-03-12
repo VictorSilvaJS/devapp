@@ -670,6 +670,31 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       ) : (
         <>
+          {/* ── Botão Ver no Mapa Satélite ────────────────────── */}
+          <TouchableOpacity
+            style={styles.btnMapaSatelite}
+            onPress={() =>
+              navigation.navigate('FazendaMapa', {
+                produtorId: produtorId || undefined,
+                fazendaNome: produtorId
+                  ? undefined
+                  : undefined,
+              })
+            }
+            activeOpacity={0.8}
+          >
+            <View style={styles.btnMapaSateliteIcone}>
+              <Ionicons name="earth" size={22} color={colors.white} />
+            </View>
+            <View style={styles.btnMapaSateliteTextos}>
+              <Text style={styles.btnMapaSateliteTitulo}>Ver no Mapa Satélite</Text>
+              <Text style={styles.btnMapaSateliteSubtitulo}>
+                Visualize os talhões sobre imagem aérea
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+          </TouchableOpacity>
+
           {/* Visualização Shape */}
           <View style={styles.shapeSection}>
             <View style={styles.shapeSectionHeader}>
@@ -1135,6 +1160,42 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 2,
     textAlign: 'center',
+  },
+
+  // ── BOTÃO MAPA SATÉLITE ──
+  btnMapaSatelite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.screen,
+    marginBottom: spacing.md,
+    borderRadius: spacing.radius,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    padding: spacing.md,
+    gap: spacing.md,
+    ...shadows.sm,
+  },
+  btnMapaSateliteIcone: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnMapaSateliteTextos: {
+    flex: 1,
+  },
+  btnMapaSateliteTitulo: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
+    color: colors.text,
+  },
+  btnMapaSateliteSubtitulo: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    marginTop: 1,
   },
 
   // ── UPLOAD ──

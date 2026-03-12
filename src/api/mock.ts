@@ -1,6 +1,7 @@
 // API mock simples para testes offline/local
 // Baseado nas entidades definidas em /entities
 import { validateUser, validateProdutor, validateVisita, validateCadernoCampo, validateMapa } from './validators';
+import { talhoesSelaDeprata1, SELA_DEPRATA_1_PRODUTOR_ID } from '../assets/kml/selaDeprata1';
 
 // Usuários do sistema
 // NOTA: "produtor" = "cliente" = "proprietário" - mesma pessoa (dono da fazenda)
@@ -347,6 +348,26 @@ const produtores = [
     ultima_analise: new Date('2024-11-05').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-05-15').toISOString()
+  },
+  // ─── Fazenda Sela de Prata I — dados reais importados de KML ───────────────
+  {
+    id: SELA_DEPRATA_1_PRODUTOR_ID,
+    proprietario_id: 'prop_sela1',
+    nome: 'Fazenda Sela de Prata I',
+    fazenda: 'Fazenda Sela de Prata I',
+    area_total: 6200,
+    cultura_atual: 'Soja',
+    telefone: '(66) 99000-0001',
+    email: 'seladeprataI@agrotche.com',
+    endereco: 'Zona Rural, s/n',
+    cidade: 'Alta Floresta',
+    estado: 'MT',
+    regiao: 'Mato Grosso',
+    microregiao: 'MT - Norte',
+    cep: '78580-000',
+    ultima_analise: new Date('2025-06-01').toISOString(),
+    status: 'ativo',
+    data_cadastro: new Date('2025-01-10').toISOString()
   }
 ];
 
@@ -1457,7 +1478,39 @@ const limitesArea = [
     safra: '2025/2026',
     disponivel_offline: true,
     observacoes: 'Evolução pós-correção 2024. Solo melhorando.'
-  }
+  },
+  // ─── Fazenda Sela de Prata I — talhões reais do KML ─────────────────────────
+  // 16 talhões com contornos GPS de alta resolução (simplificados para ~220 pts)
+  ...talhoesSelaDeprata1.map((t, i) => ({
+    id: t.id,
+    nome: `LT 2025 - ${t.talhao}`,
+    ano: 2025,
+    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    talhao: t.talhao,
+    area_hectares: t.area_hectares,
+    perimetro_km: parseFloat((Math.sqrt(t.area_hectares) * 0.4).toFixed(2)),
+    textura: 'Argilosa',
+    tipo_solo: 'Latossolo Vermelho-Amarelo',
+    elementos: {
+      ph: 5.5 + (i % 5) * 0.2,
+      fosforo: 8 + i,
+      potassio: 0.25 + i * 0.02,
+      calcio: 3.5,
+      magnesio: 1.2,
+      materia_organica: 2.2,
+      ctc: 10.5,
+      saturacao_bases: 55,
+      aluminio: 0.4,
+      enxofre: 6.0,
+    },
+    cultura_atual: t.cultura_atual || 'Soja',
+    poligono: t.poligono,
+    cor: t.cor,
+    data_upload: new Date('2025-05-01').toISOString(),
+    safra: t.safra || '2025/2026',
+    disponivel_offline: true,
+    observacoes: `Contorno GPS importado de KML — ${t.talhao}`,
+  })),
 ];
 
 // API para User

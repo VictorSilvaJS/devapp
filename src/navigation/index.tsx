@@ -21,6 +21,7 @@ import { useAuthState } from '../auth/AuthContext';
 import { colors } from '../theme';
 import ClienteDashboardScreen from '../screens/ClienteDashboardScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import FazendaMapaScreen from '../screens/FazendaMapaScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -131,6 +132,7 @@ export default function Navigation() {
           <Stack.Screen name="EditarVisita" component={EditarVisitaScreen} />
           <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="FazendaMapa" component={FazendaMapaScreen} />
         </>
       )}
     </Stack.Navigator>
