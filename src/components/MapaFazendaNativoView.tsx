@@ -83,13 +83,16 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
       clearTimeout(inicializacaoTimeoutRef.current);
     }
 
-    // Fallback: alguns devices Android podem não disparar onMapReady.
+    // Fallback: marcar como carregado mesmo que onMapReady não dispare
+    // Timeout reduzido para 5 segundos para feedback mais rápido
     inicializacaoTimeoutRef.current = setTimeout(() => {
+      console.log('[MapaDebug] Timeout de 5s atingido. mapaProntoRef.current:', mapaProntoRef.current);
       if (!mapaProntoRef.current) {
-        setFalhaInicializacao(true);
+        console.log('[MapaDebug] onMapReady não foi disparado, marcando como carregado');
+        setFalhaInicializacao(false); // Não mostrar erro, apenas carregar
         setEstaCarregado(true);
       }
-    }, 8000);
+    }, 5000);
 
     return () => {
       if (inicializacaoTimeoutRef.current) {
@@ -188,9 +191,10 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
   }, [onTalhaoPress]);
 
   /**
-   * Handler: mapa carregado
+   * Handler: mapa carregado (pode ser onMapReady ou onMapLoaded)
    */
   const handleMapReady = useCallback(() => {
+    console.log('[MapaDebug] handleMapReady disparado');
     mapaProntoRef.current = true;
     setFalhaInicializacao(false);
     setEstaCarregado(true);
@@ -200,7 +204,9 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
       inicializacaoTimeoutRef.current = null;
     }
 
+    // Ajustar automaticamente para visualizar todos os talhões
     const bbox = calcularBoundingBox();
+    console.log('[MapaDebug] Bounding box:', bbox);
     mapRef.current?.animateToRegion(bbox, 300);
   }, [calcularBoundingBox]);
 
@@ -275,17 +281,24 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
       {!estaCarregado && (
         <View style={styles.containerCarregandoOverlay}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.textoCarregando}>Inicializando mapa...</Text>
+          <Text style={styles.textoCarregando}>Carregando mapa ({talhoes.length} talhões)...</Text>
         </View>
       )}
 
-      {falhaInicializacao && (
+      {falhaInicializacao && estaCarregado && talhoes.length > 0 && (
         <View style={styles.avisoFalhaContainer}>
           <Ionicons name="warning-outline" size={16} color={colors.warning} />
-          <Text style={styles.avisoFalhaTexto}>Falha ao iniciar o provedor de mapa.</Text>
+          <Text style={styles.avisoFalhaTexto}>Provedor de mapa lento</Text>
           <TouchableOpacity style={styles.avisoFalhaBotao} onPress={tentarNovamente}>
-            <Text style={styles.avisoFalhaBotaoTexto}>Tentar novamente</Text>
+            <Text style={styles.avisoFalhaBotaoTexto}>Recarregar</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {talhoes.length === 0 && estaCarregado && (
+        <View style={styles.avisoFalhaContainer}>
+          <Ionicons name="alert-circle-outline" size={16} color={colors.warning} />
+          <Text style={styles.avisoFalhaTexto}>Nenhum talhão disponível</Text>
         </View>
       )}
 
