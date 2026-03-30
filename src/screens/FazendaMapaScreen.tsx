@@ -19,11 +19,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MapaFazendaView, {
-  MapaFazendaViewRef,
-  TalhaoMapa,
-} from '../components/MapaFazendaView';
+import MapaFazendaNativoView, {
+  MapaFazendaNativoViewRef,
+} from '../components/MapaFazendaNativoView';
 import { LimiteArea, Produtor } from '../api/mock';
+import { MapaTalhao } from '../types/mapa';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 
@@ -85,7 +85,7 @@ function CardTalhao({
   selecionado,
   onPress,
 }: {
-  talhao: TalhaoMapa & { elementos?: any };
+  talhao: MapaTalhao & { elementos?: any };
   selecionado: boolean;
   onPress: () => void;
 }) {
@@ -164,7 +164,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [produtorNome, setProdutorNome] = useState(produtorNomeParam ?? '');
 
   // Refs
-  const mapaRef = useRef<MapaFazendaViewRef>(null);
+  const mapaRef = useRef<MapaFazendaNativoViewRef>(null);
   const drawerAnim = useRef(new Animated.Value(DRAWER_HEIGHT)).current;
 
   // ── Carregamento de dados ────────────────────────────────────
@@ -213,7 +213,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   };
 
   // ── Talhões filtrados por ano ────────────────────────────────
-  const talhoesExibidos = useMemo<(TalhaoMapa & { elementos?: any })[]>(() => {
+  const talhoesExibidos = useMemo<(MapaTalhao & { elementos?: any })[]>(() => {
     return todosLimites.filter((l) => !anoSelecionado || l.ano === anoSelecionado);
   }, [todosLimites, anoSelecionado]);
 
@@ -384,7 +384,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
       {/* ── MAPA LEAFLET ─────────────────────────────────────── */}
       <View style={styles.mapaContainer}>
-        <MapaFazendaView
+        <MapaFazendaNativoView
           ref={mapaRef}
           talhoes={talhoesExibidos}
           talhaoSelecionadoId={talhaoSelecionadoId}
@@ -510,7 +510,7 @@ function DrawerDetalheTalhao({
   talhao,
   onFechar,
 }: {
-  talhao: TalhaoMapa & { elementos?: any; observacoes?: string; perimetro_km?: number; tipo_solo?: string; safra?: string };
+  talhao: MapaTalhao & { elementos?: any; observacoes?: string; perimetro_km?: number; tipo_solo?: string; safra?: string };
   onFechar: () => void;
 }) {
   const phInfo = talhao.elementos?.ph != null ? classificarPH(talhao.elementos.ph) : null;

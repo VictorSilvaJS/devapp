@@ -18,13 +18,11 @@ import {
   ActivityIndicator,
   Text,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
-import MapView, { Polygon, Marker, MapEvent, Region } from 'react-native-maps';
+import MapView, { Polygon, Marker, Region } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '../theme';
 import { MapaTalhao } from '../types/mapa';
-import { obterMapaCache } from '../services/MapaCacheService';
 
 export interface MapaFazendaNativoViewRef {
   selecionarTalhao: (id: string | null) => void;
@@ -59,13 +57,63 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
   modoOffline = false,
 }, ref) => {
   const mapRef = useRef<MapView>(null);
+  const inicializacaoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapaProntoRef = useRef(false);
   const [estaCarregado, setEstaCarregado] = useState(false);
   const [estadoModoOffline, setEstadoModoOffline] = useState(modoOffline);
-  const cache = obterMapaCache();
+  const [falhaInicializacao, setFalhaInicializacao] = useState(false);
+  const [mapaInstanceKey, setMapaInstanceKey] = useState(0);
 
   useEffect(() => {
-    onMapaReady?.();
+    if (estaCarregado) {
+      onMapaReady?.();
+    }
   }, [estaCarregado, onMapaReady]);
+
+  useEffect(() => {
+    setEstadoModoOffline(modoOffline);
+  }, [modoOffline]);
+
+  useEffect(() => {
+    mapaProntoRef.current = false;
+    setEstaCarregado(false);
+    setFalhaInicializacao(false);
+
+    if (inicializacaoTimeoutRef.current) {
+      clearTimeout(inicializacaoTimeoutRef.current);
+    }
+
+    // Fallback: alguns devices Android podem não disparar onMapReady.
+    inicializacaoTimeoutRef.current = setTimeout(() => {
+      if (!mapaProntoRef.current) {
+        setFalhaInicializacao(true);
+        setEstaCarregado(true);
+      }
+    }, 8000);
+
+    return () => {
+      if (inicializacaoTimeoutRef.current) {
+        clearTimeout(inicializacaoTimeoutRef.current);
+      }
+    };
+  }, [mapaInstanceKey]);
+
+  const corComOpacidade = useCallback((hex: string | undefined, opacidade: number) => {
+    const fallback = `rgba(34, 197, 94, ${opacidade})`;
+    if (!hex || !hex.startsWith('#')) {
+      return fallback;
+    }
+
+    const limpo = hex.replace('#', '');
+    if (limpo.length !== 6) {
+      return fallback;
+    }
+
+    const r = parseInt(limpo.slice(0, 2), 16);
+    const g = parseInt(limpo.slice(2, 4), 16);
+    const b = parseInt(limpo.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacidade})`;
+  }, []);
 
   /**
    * Calcular bounding box de todos os talhões
@@ -113,10 +161,16 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
       const talhao = talhoes.find(t => t.id === id);
       if (talhao) {
         const firstPoint = talhao.poligono[0];
-        mapRef.current?.animateToCoordinate({
-          latitude: firstPoint.lat,
-          longitude: firstPoint.lng,
-        }, 300);
+        mapRef.current?.animateCamera(
+          {
+            center: {
+              latitude: firstPoint.lat,
+              longitude: firstPoint.lng,
+            },
+            zoom: 15,
+          },
+          { duration: 300 }
+        );
       }
     },
 
@@ -137,10 +191,22 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
    * Handler: mapa carregado
    */
   const handleMapReady = useCallback(() => {
+    mapaProntoRef.current = true;
+    setFalhaInicializacao(false);
     setEstaCarregado(true);
+
+    if (inicializacaoTimeoutRef.current) {
+      clearTimeout(inicializacaoTimeoutRef.current);
+      inicializacaoTimeoutRef.current = null;
+    }
+
     const bbox = calcularBoundingBox();
     mapRef.current?.animateToRegion(bbox, 300);
   }, [calcularBoundingBox]);
+
+  const tentarNovamente = useCallback(() => {
+    setMapaInstanceKey((v) => v + 1);
+  }, []);
 
   /**
    * Alternar modo offline
@@ -149,23 +215,16 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
     setEstadoModoOffline(!estadoModoOffline);
   }, [estadoModoOffline]);
 
-  if (!estaCarregado) {
-    return (
-      <View style={styles.containerCarregando}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.textoCarregando}>Preparando mapa...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       {/* ─── Mapa Base ─────────────────────────────────────────── */}
       <MapView
+        key={`mapa-${mapaInstanceKey}`}
         ref={mapRef}
         style={StyleSheet.absoluteFillObject}
         initialRegion={MAPA_PADRAO_REGIAO}
         onMapReady={handleMapReady}
+        onMapLoaded={handleMapReady}
         mapType="satellite"
         loadingEnabled
         loadingIndicatorColor={colors.primary}
@@ -178,8 +237,7 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
               latitude: p.lat,
               longitude: p.lng,
             }))}
-            fillColor={talhao.cor || colors.primary}
-            fillOpacity={talhaoSelecionadoId === talhao.id ? 0.4 : 0.2}
+            fillColor={corComOpacidade(talhao.cor || colors.primary, talhaoSelecionadoId === talhao.id ? 0.4 : 0.2)}
             strokeColor={talhaoSelecionadoId === talhao.id ? colors.primary : (talhao.cor || colors.muted)}
             strokeWidth={talhaoSelecionadoId === talhao.id ? 3 : 2}
             onPress={() => handleTalhaoPress(talhao.id)}
@@ -214,6 +272,23 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
         })}
       </MapView>
 
+      {!estaCarregado && (
+        <View style={styles.containerCarregandoOverlay}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.textoCarregando}>Inicializando mapa...</Text>
+        </View>
+      )}
+
+      {falhaInicializacao && (
+        <View style={styles.avisoFalhaContainer}>
+          <Ionicons name="warning-outline" size={16} color={colors.warning} />
+          <Text style={styles.avisoFalhaTexto}>Falha ao iniciar o provedor de mapa.</Text>
+          <TouchableOpacity style={styles.avisoFalhaBotao} onPress={tentarNovamente}>
+            <Text style={styles.avisoFalhaBotaoTexto}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ─── Botões de Controle ────────────────────────────────── */}
       <View style={styles.controlesContainer}>
         {/* Botão: Modo Offline */}
@@ -239,7 +314,7 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
             mapRef.current?.animateToRegion(bbox, 300);
           }}
         >
-          <Ionicons name="fit" size={20} color={colors.white} />
+          <Ionicons name="scan" size={20} color={colors.white} />
           <Text style={styles.txtControle}>Ajustar</Text>
         </TouchableOpacity>
 
@@ -276,6 +351,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.background,
+  },
+
+  containerCarregandoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
 
   textoCarregando: {
@@ -345,6 +427,40 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 11,
     fontWeight: 'bold',
+  },
+
+  avisoFalhaContainer: {
+    position: 'absolute',
+    top: spacing.md,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: spacing.radiusSm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+
+  avisoFalhaTexto: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  avisoFalhaBotao: {
+    backgroundColor: colors.primary,
+    borderRadius: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+
+  avisoFalhaBotaoTexto: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
 

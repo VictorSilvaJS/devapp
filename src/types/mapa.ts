@@ -43,13 +43,13 @@ export interface MapaTalhao {
   /** ID do servidor — conecta ao serviço de tiles de satélite */
   servidor_id?: string;
   /** Timestamp em milissegundos — último update do servidor */
-  timestamp_servidor: number;
+  timestamp_servidor?: number;
   /** Timestamp local — quando foi sincronizado no device */
-  timestamp_sincronizado: number;
+  timestamp_sincronizado?: number;
   /** Hash MD5 do GeoJSON — detecta alterações sem re-descarregar */
   hash_geojson?: string;
   /** Estado de sincronização */
-  status_sincronizacao: 'pendente' | 'sincronizando' | 'sincronizado' | 'erro';
+  status_sincronizacao?: 'pendente' | 'sincronizando' | 'sincronizado' | 'erro';
   /** Flag: requer re-download? */
   requer_update?: boolean;
 }
