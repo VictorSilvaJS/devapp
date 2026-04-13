@@ -1,6 +1,9 @@
 # Organização Completa do Sistema AgroTchê
 
-> Status: visao funcional e historico parcial do projeto. Para diagnostico confiavel do repositorio atual, consulte `docs/project/estado-atual.md`.
+> Documento historico movido para `archive/` no encerramento formal da Fase 1.
+> Este material mistura estado implementado, visao desejada e backlog antigo.
+> Nao deve ser usado como fonte principal de verdade.
+> Para estado atual use `docs/project/estado-atual.md`. Para backlog ativo use `docs/project/roadmap-futuro.md`.
 
 ## Data: 09/12/2024
 
@@ -723,7 +726,7 @@ src/
 
 Para dúvidas ou sugestões sobre a organização do sistema:
 - **Desenvolvedores:** Equipe AgroTchê Dev
-- **Documentação:** Este arquivo (`docs/project/organizacao-do-sistema.md`)
+- **Documentação:** Este arquivo historico (`docs/archive/organizacao-do-sistema-historico.md`)
 - **Issues:** Use o sistema de controle de versão
 
 ---

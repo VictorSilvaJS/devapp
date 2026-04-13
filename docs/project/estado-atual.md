@@ -2,6 +2,10 @@
 
 Este e o documento-base para entender o repositorio como ele existe hoje. Quando houver conflito entre documentos antigos e o codigo, priorize este arquivo e o proprio codigo-fonte.
 
+## Convencao Provisoria de Linguagem
+
+Na documentacao ativa, o perfil final ligado a fazendas e tratado provisoriamente como `produtor`. Alias historicos como `cliente` e `proprietario` aparecem apenas quando ajudam a explicar inconsistencias ainda existentes no codigo, nos mocks ou em documentos antigos.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:
@@ -66,21 +70,18 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 
 ## Pontos de Atencao Tecnicos
 
-- O dominio ainda mistura termos como `produtor`, `cliente` e `proprietario`
+- O dominio ainda mistura aliases antigos para o perfil hoje tratado provisoriamente como `produtor`
 - Ha inconsistencias de contrato entre schemas, mocks e telas
 - Existem regras de permissao duplicadas em telas alem de `src/utils/acessoControle.ts`
 - Parte das acoes depende apenas de bloqueio visual, sem validacao defensiva no fluxo
 - A camada offline-first ainda nao esta conectada ao fluxo principal
 - `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
 
-## Documentos Prioritarios
+## Documentos Complementares
 
-Leia nesta ordem:
-
-1. `docs/project/estado-atual.md`
-2. `docs/project/plano-reorganizacao.md`
-3. `README.md`
-4. `docs/project/organizacao-do-sistema.md`
+- `docs/README.md` para navegar pela documentacao
+- `docs/project/plano-reorganizacao.md` para a ordem tecnica do trabalho
+- `docs/project/roadmap-futuro.md` para backlog de evolucao depois da estabilizacao da base
 
 ## Proximo Passo Recomendado
 

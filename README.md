@@ -12,13 +12,15 @@ Hoje o projeto tem:
 - dashboards e fluxos principais de produtores, visitas, caderno e mapas
 - autenticacao mock com persistencia local
 - dados mockados em memoria
-- trilha inicial de mapas nativos e arquitetura planejada de offline-first
+- notificacoes in-app em memoria
+- trilha experimental de mapas nativos e offline-first ainda incompleta
 
 Hoje o projeto ainda nao tem:
 
 - backend real
 - autenticacao real
 - upload real de arquivos
+- download real de mapas
 - notificacoes push reais
 - sincronizacao offline completa
 - suite de testes automatizados integrada ao `package.json`
@@ -73,14 +75,13 @@ devapp/
 
 O ponto de entrada da documentacao agora e [docs/README.md](docs/README.md).
 
-Leitura recomendada:
+Para começar pelo essencial:
 
 1. [Estado atual do projeto](docs/project/estado-atual.md)
 2. [Plano de reorganizacao](docs/project/plano-reorganizacao.md)
-3. [Organizacao do sistema](docs/project/organizacao-do-sistema.md)
+3. [Backlog futuro de evolucao](docs/project/roadmap-futuro.md)
 4. [Arquitetura offline-first nativa](docs/architecture/offline-first-nativo.md)
-5. [Guia de testes](docs/testing/guia-testes.md)
-6. [Documentacao da API mock](src/api/README.md)
+5. [Documentacao da API mock](src/api/README.md)
 
 ## Direcao de Reorganizacao
 
@@ -94,6 +95,7 @@ A ordem recomendada para evolucao do projeto e:
 
 ## Observacoes Importantes
 
+- Na documentacao ativa, usamos `produtor` como termo provisório para o perfil final ligado a fazendas ate a consolidacao da Fase 2.
 - Parte da documentacao antiga foi preservada em `docs/reviews` e `docs/archive`.
 - Alguns documentos historicos ainda podem refletir decisoes antigas ou mais otimistas do que o codigo atual.
 - Se houver conflito entre documentos antigos e o estado do codigo, priorize o codigo e o plano de reorganizacao.

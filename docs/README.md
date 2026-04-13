@@ -8,8 +8,8 @@ Comece por estes arquivos:
 
 1. [Estado atual do projeto](project/estado-atual.md)
 2. [Plano de reorganizacao](project/plano-reorganizacao.md)
-3. [README da raiz](../README.md)
-4. [Organizacao do sistema](project/organizacao-do-sistema.md)
+3. [Backlog futuro de evolucao](project/roadmap-futuro.md)
+4. [README da raiz](../README.md)
 5. [Guia de testes](testing/guia-testes.md)
 
 ## Estrutura
@@ -21,7 +21,7 @@ Comece por estes arquivos:
 - Guias operacionais e referencias de implementacao, como mapas, importacao de KML e padrao de icones.
 
 ### `project/`
-- Documentos vivos de contexto do produto e do projeto, incluindo estado atual, organizacao do sistema, plano de reorganizacao e roadmap.
+- Documentos vivos de contexto do produto e do projeto, incluindo estado atual, plano de reorganizacao e backlog futuro.
 
 ### `testing/`
 - Roteiros de teste e materiais de validacao funcional.
@@ -41,4 +41,4 @@ Comece por estes arquivos:
 
 ## Observacao
 
-Use `project/estado-atual.md` como fonte principal de verdade sobre o repositorio. Documentos em `reviews/` e `archive/` podem refletir premissas antigas, promessas nao entregues ou caminhos que ja mudaram.
+Use `project/estado-atual.md` como fonte principal de verdade sobre o repositorio. `project/plano-reorganizacao.md` organiza a ordem tecnica do trabalho e `project/roadmap-futuro.md` lista backlog de evolucao sem substituir esse plano. Documentos em `reviews/` e `archive/` podem refletir premissas antigas, promessas nao entregues ou caminhos que ja mudaram.

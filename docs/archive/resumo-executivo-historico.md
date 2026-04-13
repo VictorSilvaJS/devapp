@@ -334,7 +334,7 @@ Cliente abre app:
 ## 📞 Suporte
 
 ### Dúvidas sobre a Implementação:
-- **Documentação completa:** `docs/project/organizacao-do-sistema.md`
+- **Documentação completa histórica:** `docs/archive/organizacao-do-sistema-historico.md`
 - **Guia de mapas:** `docs/guides/guia-mapas.md`
 - **Este resumo:** `docs/archive/resumo-executivo-historico.md`
 

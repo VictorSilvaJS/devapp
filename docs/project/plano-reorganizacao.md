@@ -1,5 +1,7 @@
 # Plano de Reorganizacao Tecnica
 
+> Status: Fase 1 encerrada no escopo documental e de organizacao do repositorio. A estabilizacao final de nomenclatura e dominio foi explicitamente movida para a Fase 2.
+
 Este documento define a ordem recomendada para reorganizar o projeto sem misturar refatoracao estrutural com entrega de funcionalidade.
 
 ## Objetivo
@@ -14,23 +16,28 @@ Criar uma base previsivel para evolucao do app, reduzindo ambiguidade de dominio
 - Refatoracao por etapas pequenas, com impacto controlado.
 - Nenhuma feature nova importante antes de estabilizar contratos e estrutura.
 
+## Convencao Provisoria de Linguagem
+
+Enquanto a Fase 2 nao consolidar o dominio, a documentacao ativa usa `produtor` como termo provisório para o perfil final ligado a fazendas. Alias historicos como `cliente` e `proprietario` devem aparecer apenas quando forem necessarios para explicar inconsistencias existentes.
+
 ## Ordem Recomendada
 
 ### Fase 1 - Saneamento de Base
 
 - Reorganizar a documentacao em `docs/`
 - Reescrever o `README` para refletir o estado real do projeto
-- Congelar a nomenclatura principal do dominio
+- Mapear inconsistencias de nomenclatura e explicitar que a consolidacao final ficara para a Fase 2
 - Corrigir inconsistencias obvias de organizacao do repositorio
 
 **Definicao de pronto**
 - Raiz limpa
 - Indice de documentacao claro
 - Estado atual do projeto descrito sem promessas incorretas
+- Pendencias de dominio registradas sem tentar resolve-las parcialmente nesta fase
 
 ### Fase 2 - Contratos e Dominio
 
-- Escolher padrao oficial para termos como `produtor`, `cliente`, `proprietario`
+- Consolidar o padrao oficial para alias hoje tratados provisoriamente como `produtor`, `cliente` e `proprietario`
 - Padronizar campos como `nome` vs `full_name`
 - Padronizar contratos como `disponivel_download` vs `disponivel_para_download`
 - Revisar schemas, validadores e mocks para usar o mesmo idioma
