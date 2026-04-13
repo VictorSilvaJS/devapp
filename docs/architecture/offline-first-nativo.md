@@ -1,8 +1,10 @@
-# Arquitetura Offline-First com Native Maps — Guia Completo
+# Arquitetura Offline-First com Native Maps
 
 **Versão:** 1.0  
 **Data:** 12 de março de 2026  
-**Status:** Implementação Completa
+**Status:** trilha tecnica em evolucao, com implementacao parcial no repositorio atual
+
+> Documento de apoio tecnico. Use `docs/project/estado-atual.md` para confirmar o que ja esta efetivamente integrado ao sistema.
 
 ---
 
@@ -21,7 +23,7 @@
 
 ## 🎯 Visão Geral
 
-Este documento descreve a refatoração completa do sistema de visualização de mapas de fazendas, migrando de uma solução baseada em **WebView + Leaflet.js** para uma arquitetura **offline-first com react-native-maps**.
+Este documento descreve a trilha tecnica de migracao do sistema de visualizacao de mapas de fazendas, saindo de uma solucao baseada em **WebView + Leaflet.js** para uma arquitetura **offline-first com react-native-maps**.
 
 ### Benefícios da Nova Abordagem
 
@@ -29,7 +31,7 @@ Este documento descreve a refatoração completa do sistema de visualização de
 |---------|----------------|--------------------------|
 | **Performance** | ~2-3s para abrir | ~500ms (nativo) |
 | **Consumo de Bateria** | Alto (WebView) | Baixo (mapa nativo) |
-| **Offline** | ❌ Não funciona | ✅ Completo |
+| **Offline** | ❌ Não funciona | ⚠️ Parcial / em evolucao |
 | **Sincronização Inteligente** | ❌ Baixa tudo sempre | ✅ Apenas o que mudou |
 | **Cache de Satélite** | ❌ Não | ✅ Sim |
 | **Tamanho do Bundle** | Maior | Menor |
@@ -58,7 +60,7 @@ Celular produtor (sem Wi-Fi)
 
 ---
 
-### ✅ Solução Implementada
+### ✅ Solucao Tecnica Proposta
 
 ```
 📱 Primeira Visita (com WiFi):
@@ -639,12 +641,12 @@ const DiagnosticoDashboard = () => {
 | **Tempo de Abertura** | ~2.5s | ~0.5s | **5x mais rápido** |
 | **Consumo de RAM** | ~80MB | ~30MB | **62% menos** |
 | **Bateria (1h uso)** | 18% | 6% | **67% mais eficiente** |
-| **Tamanho offline** | N/A | ~150MB (tiles+dados) | **Completo!** |
+| **Tamanho offline** | N/A | ~150MB (tiles+dados) | **Estimado / parcial** |
 | **Gestos Touch** | Lento | Suave | **60 FPS** |
 
 ---
 
-## ✅ Checklist de Deployment
+## ✅ Checklist Tecnico Sugerido
 
 - [ ] Instalar `react-native-maps` e `@react-native-async-storage/async-storage`
 - [ ] Testar sincronização em WiFi (primeira vez)
@@ -701,4 +703,4 @@ console.log('Tiles disponíveis:', tiles);
 
 ---
 
-**Documento preparado para produção — 12 de março de 2026**
+**Documento de referencia tecnica, nao de entrega concluida — 12 de marco de 2026**

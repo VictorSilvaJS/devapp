@@ -1,5 +1,7 @@
 # Guia de Testes - Sistema AgroTchê
 
+> Roteiro de testes manuais sobre fluxos majoritariamente mock ou parciais. Confirme o estado funcional geral em `docs/project/estado-atual.md`.
+
 ## 🧪 Como Testar as Novas Funcionalidades
 
 ---
@@ -171,7 +173,7 @@ npm start
 2. Clicar em **"Fertilidade"**
 3. ✅ **Verificar:**
    - Apenas mapas de fertilidade aparecem
-   - Mapas com subcategorias (pH, Fósforo, Potássio, Matéria Orgânica)
+   - Mapas com tipos e agrupamentos exibidos conforme o mock atual (ex: pH, Fosforo, Potassio, Materia Organica)
 4. Clicar em **"Índice Vegetação"**
 5. ✅ **Verificar:**
    - Apenas mapas NDVI e NDRE aparecem
@@ -195,11 +197,11 @@ npm start
 
 ---
 
-### Teste 5: Dashboard do Cliente
+### Teste 5: Dashboard do Produtor
 
-#### Teste 5.1 - Tela Inicial Cliente
+#### Teste 5.1 - Tela Inicial do Produtor
 
-1. Login como **"Cliente"** (João Silva)
+1. Login como **"Produtor"** (João Silva)
 2. ✅ **Verificar tela inicial:**
    - Título: "Minha Propriedade"
    - Card grande com:
@@ -213,7 +215,7 @@ npm start
      - Y Visitas Registradas
      - Z Atividades
 
-#### Teste 5.2 - Mapas do Cliente
+#### Teste 5.2 - Mapas do Produtor
 
 1. Rolar para baixo até **"Mapas da Propriedade"**
 2. ✅ **Verificar:**
@@ -244,9 +246,9 @@ npm start
 
 ### Teste 6: Controle de Visibilidade
 
-#### Teste 6.1 - Cliente vê apenas mapas disponíveis
+#### Teste 6.1 - Produtor ve apenas mapas disponiveis
 
-1. Login como **Cliente**
+1. Login como **Produtor**
 2. Ir para **Mapas**
 3. ✅ **Verificar:**
    - Aparecem apenas mapas com `disponivel_download: true`
@@ -258,16 +260,16 @@ npm start
 2. Acessar mesmo produtor (João Silva)
 3. Ir para **Mapas**
 4. ✅ **Verificar:**
-   - Aparecem mais mapas que cliente vê
+   - Aparecem mais mapas que o produtor ve
    - Incluindo mapas com `disponivel_download: false`
 
 ---
 
 ### Teste 7: Caderno de Campo
 
-#### Teste 7.1 - Cliente vê apenas registros visíveis
+#### Teste 7.1 - Produtor ve apenas registros visiveis
 
-1. Login como **Cliente**
+1. Login como **Produtor**
 2. Ir para **"Histórico"**
 3. ✅ **Verificar:**
    - Aparecem apenas registros com `visivel_para_produtor: true`
@@ -293,9 +295,9 @@ npm start
 
 ### Teste 8: Botões Condicionais
 
-#### Teste 8.1 - Cliente não pode criar produtor
+#### Teste 8.1 - Produtor nao pode criar produtor
 
-1. Login como **Cliente**
+1. Login como **Produtor**
 2. ✅ **Verificar:**
    - **NÃO** tem acesso à tela "Produtores"
    - Bottom tabs não incluem "Produtores"
@@ -378,7 +380,7 @@ npm start
 - [ ] Download real de arquivos
 - [ ] Visualizador de PDF integrado
 - [ ] Notificações push
-- [ ] Sincronização offline completa
+- [ ] Capacidade offline consolidada
 
 ---
 
@@ -389,7 +391,7 @@ npm start
 - [ ] Filtro de região (admin) funciona
 - [ ] Controle de acesso por perfil funciona
 - [ ] Tela de mapas filtra categorias
-- [ ] Dashboard cliente mostra dados corretos
+- [ ] Dashboard do produtor mostra dados corretos
 - [ ] Botões condicionais aparecem/escondem
 
 ### Visual:
@@ -452,19 +454,19 @@ npm start
 3. Vê que tem novos mapas pendentes
 4. Entra nos mapas
 5. Marca alguns como "disponível para download"
-6. Cliente agora pode ver e baixar
+6. Produtor agora pode ver o mapa como disponivel e acessar o fluxo atual
 ```
 
-### Cenário 2: Cliente baixa mapa
+### Cenário 2: Produtor acessa mapa disponivel
 ```
-1. Cliente faz login
+1. Produtor faz login
 2. Vê notificação: "3 novos mapas disponíveis"
 3. Acessa "Mapas"
 4. Filtra por "Fertilidade"
 5. Vê "Mapa de pH - Talhão A"
 6. Clica para baixar
-7. Arquivo salvo no dispositivo
-8. Abre PDF e visualiza
+7. O app executa o comportamento atualmente disponivel para esse fluxo
+8. Se houver apenas simulacao, validar a indicacao visual correspondente
 ```
 
 ### Cenário 3: Colaborador registra atividade
@@ -474,7 +476,7 @@ npm start
 3. Acessa João Silva
 4. Vai em "Caderno"
 5. Adiciona nova atividade: "Adubação - Talhão B"
-6. Marca: "Visível para cliente"
+6. Marca: "Visivel para produtor"
 7. João pode ver no histórico
 ```
 
@@ -526,4 +528,4 @@ npm start
 
 **Documento criado:** 09/12/2024  
 **Versão:** 1.0  
-**Status:** ✅ Pronto para testes
+**Status:** roteiro manual de teste para os fluxos atuais do repositorio

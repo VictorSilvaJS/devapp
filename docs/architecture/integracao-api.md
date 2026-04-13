@@ -5,7 +5,7 @@
 ## ✅ O que foi implementado
 
 ### 1. **Entidades JSON Schema** (`/entities`)
-Criadas 5 entidades com definições completas:
+Criadas 5 entidades com definicoes base para a camada mock:
 - ✅ `User.json` - Usuários do sistema
 - ✅ `Produtor.json` - Produtores rurais
 - ✅ `Mapa.json` - Mapas técnicos
@@ -15,7 +15,7 @@ Criadas 5 entidades com definições completas:
 ### 2. **API Mock Atualizada** (`/src/api/mock.ts`)
 - ✅ Importação automática dos validadores
 - ✅ Dados mock expandidos para todas as entidades
-- ✅ CRUD completo para todas as entidades:
+- ✅ CRUD mock disponivel para todas as entidades:
   - `list()` - Listar todos
   - `get(id)` - Buscar por ID
   - `filter(query)` - Filtrar por propriedades
@@ -36,7 +36,7 @@ Criadas 5 entidades com definições completas:
 - ✅ Constantes úteis (PERFIS_USUARIO, STATUS_PRODUTOR, etc)
 - ✅ Helpers para busca genérica
 
-### 5. **Documentação Completa**
+### 5. **Documentação de Apoio**
 - ✅ `/entities/README.md` - Documentação das entidades
 - ✅ `/src/api/README.md` - Documentação da API
 - ✅ `/src/api/examples.ts` - Exemplos práticos de uso
@@ -151,7 +151,7 @@ try {
 ### Usuários (4)
 - 1 Admin
 - 2 Colaboradores (Carlos Silva - RS Norte, Ana Santos - RS Sul)
-- 1 Cliente (vinculado ao produtor p1)
+- 1 Produtor (vinculado ao produtor p1)
 
 ### Produtores (3)
 - João Silva - Fazenda Boa Vista (850 ha, Soja)
@@ -163,7 +163,7 @@ try {
 
 ### Caderno de Campo (5 registros)
 - Diversos tipos de atividades
-- Alguns visíveis/invisíveis para cliente
+- Alguns visiveis/invisiveis para produtor
 
 ### Mapas (3)
 - Mapa de Fertilidade
@@ -203,7 +203,7 @@ A validação continua funcionando igual!
 ✅ **Código reutilizável** - Validadores compartilhados
 ✅ **Testes incluídos** - Garantia de funcionamento
 ✅ **Fácil manutenção** - Mudanças centralizadas
-✅ **Pronto para produção** - Interface estável para backend real
+✅ **Base util para migracao futura** - Interface reaproveitavel para backend real, ainda dependente de consolidacao
 
 ## 🎯 Próximos Passos Sugeridos
 

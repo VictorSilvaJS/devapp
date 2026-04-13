@@ -2,6 +2,8 @@
 
 ## 🗺️ Sistema de Categorização de Mapas - AgroTchê
 
+> Guia de referencia operacional. Este documento nao afirma que a taxonomia abaixo ja esteja totalmente consolidada no produto ou integralmente implementada no repositorio atual.
+
 ---
 
 ## 📋 Categorias de Mapas
@@ -10,7 +12,7 @@
 
 **Objetivo:** Análise nutricional completa do solo
 
-#### Subcategorias Implementadas:
+#### Subcategorias de Referencia:
 
 ##### 1.1 pH do Solo
 - **O que é:** Medida de acidez/alcalinidade
@@ -108,8 +110,8 @@ fertilidade/
 - **SHP:** Shapefile para máquinas agrícolas
 - **DWG:** Para edição em CAD
 
-#### Exemplo de Uso pelo Cliente:
-1. Cliente baixa `recomendacao_calcario.pdf`
+#### Exemplo de Uso pelo Produtor:
+1. Produtor baixa `recomendacao_calcario.pdf`
 2. Vê quantidade por talhão
 3. Baixa `zonas_aplicacao.shp`
 4. Carrega na máquina distribuidora
@@ -204,7 +206,7 @@ Exemplo de imagem NDVI:
 
 #### Exemplo de Uso:
 ```
-Cliente acessa "Panorama" no app:
+Produtor acessa "Panorama" no app:
 ├── Vê visão aérea completa
 ├── Identifica talhões coloridos
 ├── Visualiza infraestrutura
@@ -236,15 +238,15 @@ Cliente acessa "Panorama" no app:
 - **Uso:** Carregar em pulverizador/distribuidor
 - **Formato:** Shapefile ISOBUS-XML
 
-#### Uso pelo Cliente:
+#### Uso pelo Produtor:
 
 **Cenário Real:**
 1. Bruna envia mapa de plantio em DWG
-2. Cliente baixa pelo app
+2. Produtor baixa pelo app
 3. Técnico da fazenda abre no AutoCAD/QGIS
 4. Carrega na plantadeira (monitor)
 5. Máquina segue linhas automaticamente (piloto automático)
-6. Cliente confirma sucesso no app
+6. Produtor confirma sucesso no app
 
 #### Formatos Detalhados:
 
@@ -378,9 +380,9 @@ Visita → Coleta amostras → Lab analisa → Gera mapa → Upload
 Upload → Categoriza → Define subcategoria → Marca disponibilidade → Publica
 ```
 
-### 3. Acesso pelo Cliente
+### 3. Acesso pelo Produtor
 ```
-Login → Minha Propriedade → Mapas → Filtra categoria → Visualiza → Download
+Login → Minhas Fazendas → Mapas → Filtra categoria → Visualiza → Download quando autorizado
 ```
 
 ---
@@ -398,7 +400,7 @@ Login → Minha Propriedade → Mapas → Filtra categoria → Visualiza → Dow
 4. Admin faz upload:
    - `fertilidade_ph_completo_2024.pdf` (análise)
    - `correcao_calcario_zonas_2024.shp` (aplicação)
-5. Cliente visualiza no app:
+5. Produtor visualiza no app:
    - Vê mapa de pH colorido
    - Lê recomendações em PDF
    - Baixa shapefile
@@ -419,7 +421,7 @@ Login → Minha Propriedade → Mapas → Filtra categoria → Visualiza → Dow
    - `ndvi_propriedade_2024-11-01.jpg`
    - `ndvi_propriedade_2024-11-06.jpg`
    - `ndvi_propriedade_2024-11-11.jpg`
-4. Cliente acessa no app:
+4. Produtor acessa no app:
    - Vê evolução do vigor
    - Identifica mancha com baixo NDVI
    - Notifica colaborador
@@ -442,7 +444,7 @@ Login → Minha Propriedade → Mapas → Filtra categoria → Visualiza → Dow
 3. Admin faz upload:
    - `plantio_linhas_milho_talhaoa_2024.dwg`
    - `plantio_linhas_milho_talhaoa_2024.shp`
-4. Cliente baixa pelo app
+4. Produtor baixa pelo app
 5. Operador carrega no monitor da plantadeira
 6. Sistema de piloto automático segue linhas
 7. **Resultado:** Plantio perfeito + economia de combustível

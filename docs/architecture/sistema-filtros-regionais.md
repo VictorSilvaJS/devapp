@@ -1,10 +1,10 @@
-# Sistema de Filtros Regionais - Implementação Completa
+# Sistema de Filtros Regionais
 
 > Status: documento tecnico de apoio. Confirme o estado geral do repositorio em `docs/project/estado-atual.md`.
 
 ## 📋 Resumo da Implementação
 
-Sistema completo de filtros regionais que permite ao administrador visualizar dados por **região** e **fazenda específica**, mantendo a opção de ver o panorama geral ("Todas as Regiões").
+Este documento descreve a implementacao atual dos filtros regionais, permitindo ao administrador visualizar dados por **regiao** e **fazenda especifica**, mantendo a opcao de ver o panorama geral ("Todas as Regioes").
 
 ---
 
@@ -100,7 +100,7 @@ if (user?.perfil === 'admin') {
 ### **VisitasScreen**
 - Filtra visitas baseado nos produtores filtrados
 - Admin vê visitas apenas dos produtores selecionados
-- Mantém filtros específicos de colaborador/cliente
+- Mantem filtros especificos de colaborador/produtor
 
 ```javascript
 const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
@@ -165,9 +165,9 @@ if (produtorId) {
 - ✅ Vê apenas sua região (hardcoded)
 - ✅ Mantém comportamento atual
 
-**Cliente:**
+**Produtor:**
 - ❌ Não vê filtros regionais
-- ✅ Vê apenas sua propriedade
+- ✅ Ve apenas sua propriedade
 - ✅ Mantém comportamento atual
 
 ---
@@ -327,6 +327,6 @@ if (produtorId) {
 
 ---
 
-**Status**: ✅ Implementação Completa e Testável  
+**Status**: implementacao atual documentada como apoio tecnico  
 **Data**: 20 de janeiro de 2026  
 **Versão**: 1.0
