@@ -11,10 +11,13 @@
    - Use a câmera para escanear o QR code, ou
    - Pressione `a` no terminal para abrir no Android
 
-3. **Login como usuário admin ou colaborador**
-   - Email: `admin@agro.com` (perfil: admin)
-   - Email: `carlos@agro.com` (perfil: colaborador)
-   - Senha: qualquer uma (mock)
+3. **Login como usuario admin ou colaborador**
+   - Opcao recomendada: usar o modo **Acesso rapido (dev)** da tela de login
+   - Admin: `Admin (Bruna)`
+   - Colaborador: `Colab. (Carlos)`
+   - Se preferir login por email:
+     - `bruna@agrotche.com`
+     - `carlos@agrotche.com`
 
 ---
 
@@ -177,15 +180,15 @@
 
 **Soluções comuns:**
 - Se erro de `undefined is not an object (evaluating 'navigation.navigate')`:
-  - Verifique se a rota 'NovaVisita' existe em `navigation/index.js`
+  - Verifique se a rota `NovaVisita` existe em `src/navigation/index.tsx`
 
 ---
 
 ### **Problema: Toast não aparece**
 
 **Causas:**
-1. ❌ ToastProvider não está no App.js
-   - **Solução:** Verifique se `<ToastProvider>` envolve `<NavigationContainer>`
+1. ❌ ToastProvider não está no `App.tsx`
+   - **Solução:** Verifique se `<ToastProvider>` envolve `<NavigationContainer>` em `App.tsx`
 
 2. ❌ useToast chamado fora do Provider
    - **Solução:** Apenas use `useToast()` dentro de componentes que estão dentro do ToastProvider
@@ -205,7 +208,7 @@
 
 ## 📋 **Dados Mock para Testar**
 
-O sistema já vem com dados mock em `src/api/mock.js`:
+O sistema já vem com dados mock em `src/api/mock.ts`:
 
 **Visitas existentes:**
 - Visita 1: João Silva - Consultoria (Agendada)
@@ -222,7 +225,7 @@ O sistema já vem com dados mock em `src/api/mock.js`:
 
 ## 🎯 **Fluxo Completo de Teste (5 minutos)**
 
-1. **Login** como admin@agro.com
+1. **Login** como admin (`Admin (Bruna)` no acesso rapido)
 2. **Navegar** para tab "Visitas"
 3. **Clicar** no botão verde "+" no header
 4. **Preencher** formulário:
@@ -293,7 +296,7 @@ Se algo não funcionar:
 - Navegação funcionando
 
 ✅ **Integrações**
-- ToastProvider no App.js
+- ToastProvider no `App.tsx`
 - Botões de ação no Header
 - FAB na tela de visitas
 

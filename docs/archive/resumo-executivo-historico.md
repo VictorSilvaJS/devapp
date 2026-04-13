@@ -1,5 +1,7 @@
 # Resumo Executivo - Implementações AgroTchê
 
+> Documento historico movido para arquivo. As afirmacoes abaixo podem refletir um estado mais otimista do que o codigo atual. Consulte `docs/project/estado-atual.md` antes de usar este material como referencia.
+
 ## ✅ O que foi implementado
 
 ### 1. **Sistema de Controle de Acesso por Perfil**
@@ -332,16 +334,16 @@ Cliente abre app:
 ## 📞 Suporte
 
 ### Dúvidas sobre a Implementação:
-- **Documentação completa:** `ORGANIZACAO_SISTEMA.md`
-- **Guia de mapas:** `GUIA_MAPAS.md`
-- **Este resumo:** `RESUMO_EXECUTIVO.md`
+- **Documentação completa:** `docs/project/organizacao-do-sistema.md`
+- **Guia de mapas:** `docs/guides/guia-mapas.md`
+- **Este resumo:** `docs/archive/resumo-executivo-historico.md`
 
 ### Arquivos Importantes:
-- **Controle de acesso:** `src/utils/acessoControle.js`
-- **Tela de mapas:** `src/screens/MapasScreen.js`
-- **Tela cliente:** `src/screens/ClienteDashboardScreen.js`
-- **Navegação:** `src/navigation/index.js`
-- **Dados mock:** `src/api/mock.js`
+- **Controle de acesso:** `src/utils/acessoControle.ts`
+- **Tela de mapas:** `src/screens/MapasScreen.tsx`
+- **Tela cliente:** `src/screens/ClienteDashboardScreen.tsx`
+- **Navegação:** `src/navigation/index.tsx`
+- **Dados mock:** `src/api/mock.ts`
 
 ---
 

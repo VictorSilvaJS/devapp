@@ -1,5 +1,7 @@
 # Organização Completa do Sistema AgroTchê
 
+> Status: visao funcional e historico parcial do projeto. Para diagnostico confiavel do repositorio atual, consulte `docs/project/estado-atual.md`.
+
 ## Data: 09/12/2024
 
 ---
@@ -489,7 +491,7 @@ Stack Screens:
 
 ## 🔧 Utilitários de Controle de Acesso
 
-### Arquivo: `src/utils/acessoControle.js`
+### Arquivo: `src/utils/acessoControle.ts`
 
 **Funções Implementadas:**
 
@@ -679,7 +681,7 @@ src/
 ├── navigation/    # Configuração de navegação
 ├── screens/       # Telas do aplicativo
 ├── utils/         # Utilitários e helpers
-└── theme.js       # Tema e estilos globais
+└── theme.ts       # Tema e estilos globais
 ```
 
 ---
@@ -721,7 +723,7 @@ src/
 
 Para dúvidas ou sugestões sobre a organização do sistema:
 - **Desenvolvedores:** Equipe AgroTchê Dev
-- **Documentação:** Este arquivo (ORGANIZACAO_SISTEMA.md)
+- **Documentação:** Este arquivo (`docs/project/organizacao-do-sistema.md`)
 - **Issues:** Use o sistema de controle de versão
 
 ---

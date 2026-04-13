@@ -117,7 +117,7 @@ sincronizarCompleto()
 
 ---
 
-### 6. **Documentação Completa** — `ARQUITETURA_OFFLINE_FIRST_NATIVA.md` ✅
+### 6. **Documentação Completa** — `offline-first-nativo.md` ✅
 
 Cobrindo:
 - Visão geral da solução

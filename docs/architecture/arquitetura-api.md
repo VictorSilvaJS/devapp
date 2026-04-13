@@ -1,5 +1,7 @@
 # Arquitetura da API Integrada
 
+> Status: representa a arquitetura da API mock atual. Serve como base de migracao para uma camada real futura.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    APLICAÇÃO REACT NATIVE                    │
@@ -9,7 +11,7 @@
                          │ import { Produtor, User, etc }
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   /src/api/index.js                          │
+│                   /src/api/index.ts                          │
 │              (Exportações Centralizadas)                     │
 │  • User, Produtor, Visita, CadernoCampo, Mapa              │
 │  • Validators                                                │
@@ -18,7 +20,7 @@
                │                          │
                ↓                          ↓
 ┌──────────────────────────┐  ┌──────────────────────────────┐
-│   /src/api/mock.js       │  │  /src/api/validators.js      │
+│   /src/api/mock.ts       │  │  /src/api/validators.ts      │
 │   (API Mock com CRUD)    │  │  (Validação de Dados)        │
 │                          │  │                              │
 │  • Dados Mock            │◄─┤  • validateUser()            │
@@ -62,15 +64,15 @@ Tela do App
     │
     │ await Produtor.create(data)
     ↓
-/src/api/index.js
+/src/api/index.ts
     │
     │ export Produtor from mock
     ↓
-/src/api/mock.js
+/src/api/mock.ts
     │
     │ validateProdutor(data)
     ↓
-/src/api/validators.js
+/src/api/validators.ts
     │
     │ Verifica contra /entities/Produtor.json
     │ • Campos obrigatórios
@@ -89,9 +91,9 @@ Tela do App
     │ await Produtor.list()
     │ await Produtor.filter({ status: 'ativo' })
     ↓
-/src/api/index.js
+/src/api/index.ts
     ↓
-/src/api/mock.js
+/src/api/mock.ts
     │
     │ Busca nos dados mock
     │ Aplica filtros
@@ -106,7 +108,7 @@ Tela do App
     │
     │ await Produtor.update(id, { area_total: 900 })
     ↓
-/src/api/mock.js
+/src/api/mock.ts
     │
     │ Encontra registro por ID
     │ Mescla dados
@@ -130,14 +132,14 @@ devapp/
 │
 ├── src/
 │   └── api/                     # 🔌 Camada de API
-│       ├── mock.js             # Dados mock + CRUD completo
-│       ├── validators.js       # Validadores baseados em entities
-│       ├── index.js            # Exportações centralizadas
-│       ├── examples.js         # Exemplos de uso
-│       ├── tests.js            # Testes automatizados
+│       ├── mock.ts             # Dados mock + CRUD completo
+│       ├── validators.ts       # Validadores baseados em entities
+│       ├── index.ts            # Exportações centralizadas
+│       ├── examples.ts         # Exemplos de uso
+│       ├── tests.ts            # Testes automatizados
 │       └── README.md           # Documentação da API
 │
-├── INTEGRACAO_API.md           # 📖 Este documento
+├── docs/architecture/integracao-api.md
 └── package.json
 ```
 
@@ -225,7 +227,7 @@ import { Produtor } from './api/client';
 
 ```javascript
 import {
-  PERFIS_USUARIO,      // ['admin', 'colaborador', 'cliente']
+  PERFIS_USUARIO,      // ['admin', 'colaborador', 'produtor']
   STATUS_PRODUTOR,     // ['ativo', 'inativo', 'pendente']
   STATUS_VISITA,       // ['agendada', 'realizada', 'cancelada']
   OBJETIVOS_VISITA,    // ['consultoria', 'coleta_solo', ...]

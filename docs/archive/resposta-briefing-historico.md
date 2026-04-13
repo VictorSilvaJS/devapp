@@ -1,5 +1,7 @@
 # Resposta aos Pontos Solicitados
 
+> Documento historico movido para arquivo. As afirmacoes abaixo podem refletir um estado mais otimista do que o codigo atual. Consulte `docs/project/estado-atual.md` antes de usar este material como referencia.
+
 ## 📋 Resumo das Implementações Baseadas no Briefing
 
 ---

@@ -1,5 +1,7 @@
 # Sistema de Filtros Regionais - Implementação Completa
 
+> Status: documento tecnico de apoio. Confirme o estado geral do repositorio em `docs/project/estado-atual.md`.
+
 ## 📋 Resumo da Implementação
 
 Sistema completo de filtros regionais que permite ao administrador visualizar dados por **região** e **fazenda específica**, mantendo a opção de ver o panorama geral ("Todas as Regiões").
@@ -8,7 +10,7 @@ Sistema completo de filtros regionais que permite ao administrador visualizar da
 
 ## 🎯 Funcionalidades Implementadas
 
-### 1. **FiltroContext** (`src/contexts/FiltroContext.js`)
+### 1. **FiltroContext** (`src/contexts/FiltroContext.tsx`)
 Contexto global que gerencia o estado dos filtros em toda a aplicação.
 
 **Estado gerenciado:**
@@ -33,7 +35,7 @@ Contexto global que gerencia o estado dos filtros em toda a aplicação.
 
 ---
 
-### 2. **Componente FiltroRegional** (`src/components/FiltroRegional.js`)
+### 2. **Componente FiltroRegional** (`src/components/FiltroRegional.tsx`)
 Interface visual para seleção de filtros.
 
 **Características:**
@@ -51,7 +53,7 @@ Interface visual para seleção de filtros.
 
 ---
 
-### 3. **Integração no App.js**
+### 3. **Integração no App.tsx**
 FiltroProvider adicionado na árvore de contextos:
 ```javascript
 <AuthProvider>
@@ -277,7 +279,7 @@ if (produtorId) {
 
 - [x] Criar FiltroContext com estado e métodos
 - [x] Criar componente FiltroRegional
-- [x] Integrar no App.js (Provider)
+- [x] Integrar no `App.tsx` (Provider)
 - [x] Atualizar DashboardScreen
 - [x] Atualizar ProdutoresScreen
 - [x] Atualizar VisitasScreen

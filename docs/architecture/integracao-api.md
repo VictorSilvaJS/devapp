@@ -1,5 +1,7 @@
 # Integração das Entidades na API - Resumo
 
+> Status: descreve a camada mock atual em TypeScript. Backend real ainda nao existe.
+
 ## ✅ O que foi implementado
 
 ### 1. **Entidades JSON Schema** (`/entities`)
@@ -10,7 +12,7 @@ Criadas 5 entidades com definições completas:
 - ✅ `Visita.json` - Visitas técnicas
 - ✅ `CadernoCampo.json` - Registros de atividades
 
-### 2. **API Mock Atualizada** (`/src/api/mock.js`)
+### 2. **API Mock Atualizada** (`/src/api/mock.ts`)
 - ✅ Importação automática dos validadores
 - ✅ Dados mock expandidos para todas as entidades
 - ✅ CRUD completo para todas as entidades:
@@ -21,14 +23,14 @@ Criadas 5 entidades com definições completas:
   - `update(id, data)` - Atualizar
   - `delete(id)` - Remover
 
-### 3. **Sistema de Validação** (`/src/api/validators.js`)
+### 3. **Sistema de Validação** (`/src/api/validators.ts`)
 - ✅ Validadores específicos para cada entidade
 - ✅ Validação de campos obrigatórios
 - ✅ Validação de enums (valores permitidos)
 - ✅ Validação de tipos (email, números, arrays)
 - ✅ Mensagens de erro descritivas
 
-### 4. **Exportações Centralizadas** (`/src/api/index.js`)
+### 4. **Exportações Centralizadas** (`/src/api/index.ts`)
 - ✅ Exportação de todas as entidades
 - ✅ Exportação de todos os validadores
 - ✅ Constantes úteis (PERFIS_USUARIO, STATUS_PRODUTOR, etc)
@@ -37,8 +39,8 @@ Criadas 5 entidades com definições completas:
 ### 5. **Documentação Completa**
 - ✅ `/entities/README.md` - Documentação das entidades
 - ✅ `/src/api/README.md` - Documentação da API
-- ✅ `/src/api/examples.js` - Exemplos práticos de uso
-- ✅ `/src/api/tests.js` - Testes automatizados
+- ✅ `/src/api/examples.ts` - Exemplos práticos de uso
+- ✅ `/src/api/tests.ts` - Testes automatizados
 
 ## 📊 Estrutura de Arquivos
 
@@ -54,11 +56,11 @@ devapp/
 │
 └── src/
     └── api/
-        ├── mock.js          # API mock com dados e CRUD
-        ├── validators.js    # Validadores baseados nas entidades
-        ├── index.js         # Exportações centralizadas
-        ├── examples.js      # Exemplos de uso
-        ├── tests.js         # Testes automatizados
+        ├── mock.ts          # API mock com dados e CRUD
+        ├── validators.ts    # Validadores baseados nas entidades
+        ├── index.ts         # Exportações centralizadas
+        ├── examples.ts      # Exemplos de uso
+        ├── tests.ts         # Testes automatizados
         └── README.md        # Documentação da API
 ```
 
@@ -115,9 +117,9 @@ try {
 ### User
 - ✅ Campos obrigatórios: nome, email, senha, perfil
 - ✅ Email válido
-- ✅ Perfil: admin | colaborador | cliente
+- ✅ Perfil: admin | colaborador | produtor
 - ✅ Warning: colaborador sem região
-- ✅ Warning: cliente sem produtor_id
+- ✅ Warning: produtor sem produtor_id
 
 ### Produtor
 - ✅ Campos obrigatórios: nome, fazenda, area_total
@@ -181,7 +183,7 @@ await runAllTests();
 
 Quando conectar ao backend real, basta:
 
-1. Criar novo arquivo `src/api/client.js` com mesma interface
+1. Criar novo arquivo `src/api/client.ts` com mesma interface
 2. Atualizar imports:
    ```javascript
    // Antes

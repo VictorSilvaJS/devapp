@@ -1,5 +1,7 @@
 # Checklist de Implementações Futuras
 
+> Status: backlog de ideias e oportunidades. Para saber o que ja existe hoje, consulte `docs/project/estado-atual.md`.
+
 ## 📋 Roadmap Detalhado
 
 ---
@@ -31,9 +33,9 @@ npm install expo-document-picker expo-file-system
 ```
 
 **Arquivos a criar/modificar:**
-- `src/screens/UploadMapaScreen.js`
-- `src/api/index.js` (adicionar função de upload)
-- `src/navigation/index.js` (adicionar rota)
+- `src/screens/UploadMapaScreen.tsx`
+- `src/api/index.ts` (adicionar função de upload)
+- `src/navigation/index.tsx` (adicionar rota)
 
 ---
 
@@ -59,9 +61,9 @@ npm install expo-notifications
 ```
 
 **Arquivos a criar/modificar:**
-- `src/services/notifications.js`
-- `src/hooks/useNotifications.js`
-- `App.js` (configurar listeners)
+- `src/services/notifications.ts`
+- `src/hooks/useNotifications.ts`
+- `App.tsx` (configurar listeners)
 
 ---
 
@@ -85,8 +87,8 @@ npm install expo-web-browser
 ```
 
 **Arquivos a criar/modificar:**
-- `src/screens/VisualizadorPDFScreen.js`
-- `src/components/PDFViewer.js`
+- `src/screens/VisualizadorPDFScreen.tsx`
+- `src/components/PDFViewer.tsx`
 
 ---
 
@@ -129,9 +131,9 @@ npm install @react-native-community/netinfo
 ```
 
 **Arquivos a criar/modificar:**
-- `src/services/syncService.js`
-- `src/hooks/useOfflineSync.js`
-- `src/utils/cacheManager.js`
+- `src/services/syncService.ts`
+- `src/hooks/useOfflineSync.ts`
+- `src/utils/cacheManager.ts`
 
 ---
 
@@ -153,9 +155,9 @@ npm install victory-native
 ```
 
 **Arquivos a criar/modificar:**
-- `src/screens/AnalisesScreen.js`
+- `src/screens/AnalisesScreen.tsx`
 - `src/components/charts/`
-- `src/utils/chartUtils.js`
+- `src/utils/chartUtils.ts`
 
 ---
 
@@ -179,9 +181,9 @@ npm install expo-image-picker
 ```
 
 **Arquivos a criar/modificar:**
-- `src/screens/ChatScreen.js`
-- `src/screens/ConversasScreen.js`
-- `src/api/chat.js`
+- `src/screens/ChatScreen.tsx`
+- `src/screens/ConversasScreen.tsx`
+- `src/api/chat.ts`
 - `entities/Mensagem.json`
 
 ---
@@ -204,9 +206,9 @@ npm install react-native-html-to-pdf
 ```
 
 **Arquivos a criar/modificar:**
-- `src/screens/RelatoriosScreen.js`
-- `src/services/pdfGenerator.js`
-- `src/templates/relatorioTemplate.js`
+- `src/screens/RelatoriosScreen.tsx`
+- `src/services/pdfGenerator.ts`
+- `src/templates/relatorioTemplate.ts`
 
 ---
 
@@ -224,9 +226,9 @@ npm install react-native-html-to-pdf
 - [ ] Troubleshooting guide
 
 **Arquivos a criar/modificar:**
-- `src/services/isobusService.js`
-- `src/utils/fileConverter.js`
-- `GUIA_INTEGRACAO_MAQUINAS.md`
+- `src/services/isobusService.ts`
+- `src/utils/fileConverter.ts`
+- `docs/guides/guia-integracao-maquinas.md`
 
 ---
 
@@ -261,7 +263,7 @@ npm install react-native-html-to-pdf
 - [ ] Export para contabilidade
 
 **Arquivos a criar/modificar:**
-- `src/screens/FinanceiroScreen.js`
+- `src/screens/FinanceiroScreen.tsx`
 - `entities/CustoProducao.json`
 - `entities/Receita.json`
 

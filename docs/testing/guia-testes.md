@@ -51,10 +51,10 @@ npm start
 - **Região:** Sul
 - **Email:** ana@agrotche.com
 
-#### 5️⃣ Cliente
-**Usuário:** `cliente`
+#### 5️⃣ Produtor
+**Usuário:** `produtor`
 - **Nome:** João Silva
-- **Perfil:** Cliente (Produtor)
+- **Perfil:** Produtor
 - **Propriedade:** Fazenda Boa Vista
 - **Email:** joao.silva@email.com
 
@@ -80,13 +80,13 @@ npm start
    - Bottom tabs: Dashboard, Meus Produtores, Minhas Visitas, Caderno, Perfil
    - Títulos personalizados
 
-#### Teste 1.3 - Login Cliente
+#### Teste 1.3 - Login Produtor
 1. Fazer logout
-2. Clicar botão **"Cliente"**
+2. Clicar botao **"Produtor (Joao)"**
 3. ✅ **Verificar:**
    - Login bem-sucedido
-   - Bottom tabs: Minha Propriedade, Histórico, Perfil
-   - Tela específica do cliente
+   - Bottom tabs: Minhas Fazendas, Historico, Perfil
+   - Tela especifica do produtor
 
 ---
 

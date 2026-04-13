@@ -12,11 +12,5 @@ coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
-yarn.lock
-*.keystorenode_modules/
-.expo/
-android/
-ios/
-dist/
 *.log
+*.keystore
