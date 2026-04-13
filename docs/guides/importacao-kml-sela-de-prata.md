@@ -3,13 +3,15 @@
 **Data:** 12 de março de 2026  
 **Objetivo:** Importar o arquivo `Fazenda Sela de Prata I.kml` no aplicativo e renderizá-lo sobre imagem de satélite.
 
+> Guia especifico de caso. Este documento registra uma estrategia aplicada a esta importacao e a uma trilha baseada em WebView/Leaflet, mas nao define sozinho a trilha arquitetural oficial atual do projeto.
+
 ---
 
 ## Visão Geral
 
 O usuário forneceu um arquivo KML real de uma fazenda com 16 talhões mapeados por GPS. O trabalho consistiu em:
 
-1. Criar um sistema completo de visualização de mapas por satélite (WebView + Leaflet)
+1. Criar uma trilha especifica de visualizacao de mapas por satelite (WebView + Leaflet)
 2. Ler, converter e importar os dados do KML para dentro do app
 3. Integrar a fazenda como um produtor real no banco de dados mock
 4. Conectar o fluxo de navegação para que o usuário acesse o mapa com 2-3 toques
@@ -22,7 +24,7 @@ O usuário forneceu um arquivo KML real de uma fazenda com 16 talhões mapeados 
 
 **O que é:** Componente React Native que renderiza um mapa Leaflet dentro de uma WebView.
 
-**Por que WebView?** O React Native não possui suporte nativo a mapas vetoriais/satélite sem uma biblioteca externa paga (Google Maps, Mapbox). A solução com WebView + Leaflet.js é gratuita, funciona offline (exceto as tiles de satélite) e não exige chave de API.
+**Por que WebView?** Na epoca desta implementacao, WebView + Leaflet foi adotado como estrategia especifica para este caso. Isso nao deve ser lido como definicao arquitetural oficial permanente do projeto.
 
 **O que ele faz:**
 - Gera dinamicamente um HTML completo com Leaflet.js 1.9.4 embutido
@@ -411,7 +413,7 @@ Passo = ceil(1766 / 219) = 9
 
 ---
 
-## Resultado Final
+## Resultado Documentado
 
 Após todas as alterações:
 
@@ -420,5 +422,5 @@ Após todas as alterações:
 - ✅ **Produtor cadastrado** no sistema (`p_sela1`) com dados da fazenda em Mato Grosso
 - ✅ **Mapa satélite funcional** com polígonos coloridos, labels, zoom automático
 - ✅ **Drawer de detalhes** com dados de solo ao tocar em qualquer talhão
-- ✅ **Fluxo de navegação** completo: Produtores → Detalhe → Mapas → Satélite
+- ✅ **Fluxo de navegação** documentado para este caso: Produtores → Detalhe → Mapas → Satélite
 - ✅ **Reutilizável:** o botão "Ver no Mapa Satélite" funciona para qualquer produtor — não só a Sela de Prata I

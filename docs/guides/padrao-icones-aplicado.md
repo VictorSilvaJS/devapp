@@ -1,5 +1,7 @@
 # 🎨 Padrão de Ícones - AgroTchê
 
+> Guia visual de apoio. Este documento registra uma padronizacao aplicada como referencia e nao substitui o nucleo ativo de `docs/project/`.
+
 ## 📋 Padronização de Ícones Ionicons
 
 ### Tamanhos Padronizados:
@@ -75,7 +77,7 @@
 
 ---
 
-### 🏠 **Cliente/Propriedade**
+### 🏠 **Produtor/Propriedade**
 | Contexto | Ícone | Tamanho |
 |----------|-------|---------|
 | Casa/Propriedade | `home-outline` | 40px |
@@ -89,7 +91,7 @@
 |----------|-------|---------|
 | Administrador | `briefcase-outline` | 24px |
 | Colaborador | `people-circle-outline` | 24px |
-| Cliente/Produtor | `leaf-outline` | 24px |
+| Produtor | `leaf-outline` | 24px |
 
 ---
 
@@ -202,7 +204,7 @@
 ### LoginScreen:
 - ✅ Administrador: `briefcase-outline` (24px)
 - ✅ Colaborador: `people-circle-outline` (24px)  
-- ✅ Cliente: `leaf-outline` (24px)
+- ✅ Produtor: `leaf-outline` (24px)
 
 ### DashboardScreen:
 - ✅ Todos os cards com 24px
@@ -237,4 +239,4 @@
 ---
 
 **Padrão estabelecido em:** 10/12/2025  
-**Status:** ✅ Aplicado em todas as telas
+**Status:** referencia visual aplicada, sujeita a confirmacao no estado atual do repositorio

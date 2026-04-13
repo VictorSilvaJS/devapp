@@ -2,6 +2,8 @@
 
 Este documento descreve o padrão de ícones utilizado em todo o aplicativo para manter a harmonia visual.
 
+> Guia visual de apoio. Em caso de conflito com o nucleo ativo de `docs/project/`, priorize a terminologia e o estado atual definidos ali.
+
 ## Biblioteca Utilizada
 
 **Ionicons** do pacote `@expo/vector-icons`
@@ -31,7 +33,7 @@ Exceções:
 ### 🔐 Autenticação (LoginScreen)
 - **Admin**: `briefcase-outline` (24px) - Representa gestão/administração
 - **Colaborador**: `people-circle-outline` (24px) - Representa equipe de campo
-- **Cliente**: `leaf-outline` (24px) - Representa agricultura/produção
+- **Produtor**: `leaf-outline` (24px) - Representa agricultura/producao
 
 ### 📊 Dashboard
 - **Saudação**: `hand-left-outline` - Aceno de boas-vindas
@@ -72,7 +74,7 @@ Exceções:
 - **Data**: `calendar-outline` (16px) - Calendário
 - **Talhão**: `location-outline` (16px) - Pin
 
-### 🏠 Cliente Dashboard (ClienteDashboardScreen)
+### 🏠 Dashboard do Produtor (`ClienteDashboardScreen`)
 - **Propriedade**: `home-outline` (40px) - Casa principal
 - **Área/Tamanho**: `resize-outline` (24px) - Redimensionar
 - **Culturas**: `leaf-outline` (24px) - Folha
@@ -176,7 +178,7 @@ Exceções:
 - [x] UserProfile
 
 **Última atualização:** 10/12/2025  
-**Status:** ✅ Padronização completa aplicada em TODAS as telas
+**Status:** padrao visual de referencia, sujeito a validacao contra o estado atual do repositorio
 
 ## Benefícios da Padronização
 
