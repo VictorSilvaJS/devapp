@@ -20,12 +20,34 @@ Ao analisar este projeto, siga esta ordem de prioridade:
 
 Se houver conflito entre documentos, priorize sempre os documentos em `docs/project/`.
 
+Dentro de `docs/project/`, use esta ordem de leitura:
+
+1. `estado-atual.md`
+2. `contexto-consolidado.md`
+3. `escopo-mvp.md`
+4. `regras-de-negocio.md`
+5. `decisoes-consolidadas.md`
+6. `pendencias-de-definicao.md`
+7. `plano-reorganizacao.md`
+8. `roadmap-futuro.md`
+
 ---
 
 ## Regra de interpretação por pasta
 
 ### `docs/project/`
-Contém o estado atual, decisões consolidadas, regras de negócio, escopo do MVP e direcionamento principal do projeto.
+Contém o núcleo documental ativo e prioritário do projeto.
+
+Papéis dos documentos ativos:
+
+- `estado-atual.md`: retrato do repositório e do que existe hoje
+- `contexto-consolidado.md`: problema, propósito, usuários e contexto do domínio
+- `escopo-mvp.md`: limite do MVP atual
+- `regras-de-negocio.md`: regras de domínio e acesso
+- `decisoes-consolidadas.md`: decisões já assumidas pelo projeto
+- `pendencias-de-definicao.md`: pontos reais ainda em aberto
+- `plano-reorganizacao.md`: ordem técnica de reorganização
+- `roadmap-futuro.md`: backlog de evolução, subordinado ao escopo e às decisões ativas
 
 **Esta é a fonte principal de verdade do projeto.**
 
@@ -48,6 +70,8 @@ Podem ser úteis para contexto, mas não substituem o estado atual.
 Contém histórico do projeto: propostas antigas, reuniões, protótipos, reorganizações anteriores, resumos históricos e materiais que ajudaram na evolução do projeto.
 
 **Não tratar como verdade atual sem confirmação explícita em documentos ativos.**
+
+Ideias, hipóteses e explorações futuras não pertencem à fonte principal de verdade a menos que sejam promovidas explicitamente para documentos ativos em `docs/project/`.
 
 ---
 

@@ -1,6 +1,8 @@
 # Estado Atual do Projeto
 
-Este e o documento-base para entender o repositorio como ele existe hoje. Quando houver conflito entre documentos antigos e o codigo, priorize este arquivo e o proprio codigo-fonte.
+Este documento descreve o estado atual do repositorio e do sistema como eles existem hoje. Seu foco e registrar o retrato presente da base, sem substituir documentos especificos de contexto, escopo, regras, decisoes ou pendencias.
+
+Quando houver conflito entre documentos antigos e o codigo, priorize este arquivo e o proprio codigo-fonte para entender o que esta efetivamente no repositorio atual.
 
 ## Convencao Provisoria de Linguagem
 
@@ -77,16 +79,23 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - A camada offline-first ainda nao esta conectada ao fluxo principal
 - `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
 
-## Documentos Complementares
+## Complementares Oficiais
 
-- `docs/README.md` para navegar pela documentacao
+Use estes documentos junto com este retrato do presente:
+
+- `docs/project/contexto-consolidado.md` para problema, proposito, usuarios e contexto do dominio
+- `docs/project/escopo-mvp.md` para o limite atual do MVP
+- `docs/project/regras-de-negocio.md` para regras de dominio e acesso
+- `docs/project/decisoes-consolidadas.md` para direcoes ja assumidas pelo projeto
+- `docs/project/pendencias-de-definicao.md` para pontos reais ainda em aberto
 - `docs/project/plano-reorganizacao.md` para a ordem tecnica do trabalho
-- `docs/project/roadmap-futuro.md` para backlog de evolucao depois da estabilizacao da base
+- `docs/project/roadmap-futuro.md` para backlog de evolucao apos a estabilizacao da base
+- `docs/README.md` para a trilha geral de leitura da documentacao
 
 ## Proximo Passo Recomendado
 
 Antes de mover codigo entre pastas ou quebrar telas em componentes menores, estabilizar o dominio e os contratos:
 
-- escolher o vocabulario oficial do produto
-- alinhar schemas, mocks e telas
-- reduzir divergencia entre documentacao e implementacao
+- consolidar as pendencias de definicao da Fase 2
+- alinhar vocabulario, contratos, schemas, mocks e telas
+- reduzir divergencia entre documentacao ativa e implementacao

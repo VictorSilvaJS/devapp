@@ -73,29 +73,18 @@ devapp/
 
 ## Documentacao
 
-O ponto de entrada da documentacao agora e [docs/README.md](docs/README.md).
+A documentacao oficial do projeto esta em [docs/](docs/).
 
-Para começar pelo essencial:
+O ponto de entrada recomendado e [docs/README.md](docs/README.md), que organiza:
 
-1. [Estado atual do projeto](docs/project/estado-atual.md)
-2. [Plano de reorganizacao](docs/project/plano-reorganizacao.md)
-3. [Backlog futuro de evolucao](docs/project/roadmap-futuro.md)
-4. [Arquitetura offline-first nativa](docs/architecture/offline-first-nativo.md)
-5. [Documentacao da API mock](src/api/README.md)
-
-## Direcao de Reorganizacao
-
-A ordem recomendada para evolucao do projeto e:
-
-1. estabilizar documentacao e nomenclatura de dominio
-2. padronizar contratos e entidades
-3. separar mocks, services e regras de permissao
-4. componentizar por feature
-5. conectar backend e offline reais
+- a hierarquia de leitura
+- o nucleo documental ativo em `docs/project/`
+- o papel das pastas complementares
+- a trilha recomendada para humanos e IA/agentes de codigo
 
 ## Observacoes Importantes
 
 - Na documentacao ativa, usamos `produtor` como termo provisório para o perfil final ligado a fazendas ate a consolidacao da Fase 2.
 - Parte da documentacao antiga foi preservada em `docs/reviews` e `docs/archive`.
 - Alguns documentos historicos ainda podem refletir decisoes antigas ou mais otimistas do que o codigo atual.
-- Se houver conflito entre documentos antigos e o estado do codigo, priorize o codigo e o plano de reorganizacao.
+- Se houver conflito entre materiais historicos e a documentacao ativa, priorize `docs/project/` e o estado real do codigo.
