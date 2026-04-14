@@ -1,6 +1,31 @@
 // API mock simples para testes offline/local
 // Baseado nas entidades definidas em /entities
-import { validateUser, validateProdutor, validateVisita, validateCadernoCampo, validateMapa } from './validators';
+import {
+  validateUser,
+  validateProdutor,
+  validateVisita,
+  validateCadernoCampo,
+  validateMapa,
+  validateLimiteArea,
+} from './validators';
+import {
+  filterMockCadernosCampo,
+  filterMockLimitesArea,
+  filterMockMapas,
+  filterMockVisitas,
+  listMockCadernosCampo,
+  listMockLimitesArea,
+  listMockMapas,
+  listMockVisitas,
+  persistMockCadernoCampo,
+  persistMockLimiteArea,
+  persistMockMapa,
+  persistMockVisita,
+  readMockCadernoCampo,
+  readMockLimiteArea,
+  readMockMapa,
+  readMockVisita,
+} from './mockCompat';
 import { talhoesSelaDeprata1, SELA_DEPRATA_1_PRODUTOR_ID } from '../assets/kml/selaDeprata1';
 
 // Usuários do sistema
@@ -372,7 +397,7 @@ const produtores = [
 ];
 
 // Visitas técnicas
-const visitas = [
+const visitas: any[] = [
   {
     id: 'v1',
     produtor_id: 'p1',
@@ -528,7 +553,7 @@ const visitas = [
   }
 ];
 
-const cadernos = [
+const cadernos: any[] = [
   {
     id: 'c1',
     produtor_id: 'p1',
@@ -710,7 +735,7 @@ const cadernos = [
 ];
 
 // Mapas técnicos
-const mapas = [
+const mapas: any[] = [
   {
     id: 'm1',
     titulo: 'Mapa de Fertilidade - Talhão A',
@@ -1007,7 +1032,7 @@ const mapas = [
 
 // ─── Limites de Área (Shape / Demarcação de Talhões) ───
 // Referência: arquivos no drive com formato LT 2022, 23, 24, 25
-const limitesArea = [
+const limitesArea: any[] = [
   // ─── Produtor p1 - RS ───
   {
     id: 'lt1',
@@ -1642,18 +1667,17 @@ export const Produtor: any = {
 // API para Visita
 export const Visita: any = {
   list: async () => {
-    return new Promise((res) => setTimeout(() => res([...visitas]), 200));
+    return new Promise((res) => setTimeout(() => res(listMockVisitas(visitas)), 200));
   },
   get: async (id) => {
     return new Promise((res, rej) => setTimeout(() => {
       const visita = visitas.find(v => v.id === id);
-      if (visita) res(visita); else rej(new Error('Visita não encontrada'));
+      if (visita) res(readMockVisita(visita)); else rej(new Error('Visita não encontrada'));
     }, 200));
   },
   filter: async (query) => {
-    const keys = Object.keys(query || {});
     return new Promise((res) => setTimeout(() => {
-      const result = visitas.filter(v => keys.every(k => String(v[k]) === String(query[k])));
+      const result = filterMockVisitas(visitas, query);
       res(result);
     }, 200));
   },
@@ -1662,14 +1686,9 @@ export const Visita: any = {
       try {
         validateVisita(data);
         const id = `v${Date.now()}`;
-        const novo = { 
-          id, 
-          ...data,
-          status: data.status || 'agendada',
-          fotos: data.fotos || []
-        };
+        const novo = persistMockVisita({ id, data });
         visitas.unshift(novo);
-        res(novo);
+        res(readMockVisita(novo));
       } catch (error) {
         rej(error);
       }
@@ -1681,8 +1700,10 @@ export const Visita: any = {
       if (index === -1) {
         rej(new Error('Visita não encontrada'));
       } else {
-        visitas[index] = { ...visitas[index], ...data, id };
-        res(visitas[index]);
+        const atualizado = persistMockVisita({ id, data, existing: visitas[index] });
+        validateVisita(atualizado);
+        visitas[index] = atualizado;
+        res(readMockVisita(visitas[index]));
       }
     }, 300));
   },
@@ -1702,18 +1723,17 @@ export const Visita: any = {
 // API para CadernoCampo
 export const CadernoCampo: any = {
   list: async () => {
-    return new Promise((res) => setTimeout(() => res([...cadernos]), 200));
+    return new Promise((res) => setTimeout(() => res(listMockCadernosCampo(cadernos)), 200));
   },
   get: async (id) => {
     return new Promise((res, rej) => setTimeout(() => {
       const caderno = cadernos.find(c => c.id === id);
-      if (caderno) res(caderno); else rej(new Error('Registro não encontrado'));
+      if (caderno) res(readMockCadernoCampo(caderno)); else rej(new Error('Registro não encontrado'));
     }, 200));
   },
   filter: async (query) => {
-    const keys = Object.keys(query || {});
     return new Promise((res) => setTimeout(() => {
-      const result = cadernos.filter(c => keys.every(k => String(c[k]) === String(query[k])));
+      const result = filterMockCadernosCampo(cadernos, query);
       res(result);
     }, 200));
   },
@@ -1722,15 +1742,9 @@ export const CadernoCampo: any = {
       try {
         validateCadernoCampo(data);
         const id = `c${Date.now()}`;
-        const novo = { 
-          id, 
-          ...data,
-          visivel_para_produtor: data.visivel_para_produtor !== undefined ? data.visivel_para_produtor : true,
-          fotos: data.fotos || [],
-          data_criacao: new Date().toISOString()
-        };
+        const novo = persistMockCadernoCampo({ id, data });
         cadernos.unshift(novo);
-        res(novo);
+        res(readMockCadernoCampo(novo));
       } catch (error) {
         rej(error);
       }
@@ -1742,8 +1756,10 @@ export const CadernoCampo: any = {
       if (index === -1) {
         rej(new Error('Registro não encontrado'));
       } else {
-        cadernos[index] = { ...cadernos[index], ...data, id };
-        res(cadernos[index]);
+        const atualizado = persistMockCadernoCampo({ id, data, existing: cadernos[index] });
+        validateCadernoCampo(atualizado);
+        cadernos[index] = atualizado;
+        res(readMockCadernoCampo(cadernos[index]));
       }
     }, 300));
   },
@@ -1763,18 +1779,17 @@ export const CadernoCampo: any = {
 // API para Mapa
 export const Mapa: any = {
   list: async () => {
-    return new Promise((res) => setTimeout(() => res([...mapas]), 200));
+    return new Promise((res) => setTimeout(() => res(listMockMapas(mapas)), 200));
   },
   get: async (id) => {
     return new Promise((res, rej) => setTimeout(() => {
       const mapa = mapas.find(m => m.id === id);
-      if (mapa) res(mapa); else rej(new Error('Mapa não encontrado'));
+      if (mapa) res(readMockMapa(mapa)); else rej(new Error('Mapa não encontrado'));
     }, 200));
   },
   filter: async (query) => {
-    const keys = Object.keys(query || {});
     return new Promise((res) => setTimeout(() => {
-      const result = mapas.filter(m => keys.every(k => String(m[k]) === String(query[k])));
+      const result = filterMockMapas(mapas, query);
       res(result);
     }, 200));
   },
@@ -1783,14 +1798,9 @@ export const Mapa: any = {
       try {
         validateMapa(data);
         const id = `m${Date.now()}`;
-        const novo = { 
-          id, 
-          ...data,
-          data_criacao: new Date().toISOString(),
-          disponivel_download: data.disponivel_download !== undefined ? data.disponivel_download : true
-        };
+        const novo = persistMockMapa({ id, data });
         mapas.unshift(novo);
-        res(novo);
+        res(readMockMapa(novo));
       } catch (error) {
         rej(error);
       }
@@ -1802,8 +1812,10 @@ export const Mapa: any = {
       if (index === -1) {
         rej(new Error('Mapa não encontrado'));
       } else {
-        mapas[index] = { ...mapas[index], ...data, id };
-        res(mapas[index]);
+        const atualizado = persistMockMapa({ id, data, existing: mapas[index] });
+        validateMapa(atualizado);
+        mapas[index] = atualizado;
+        res(readMockMapa(mapas[index]));
       }
     }, 300));
   },
@@ -1823,45 +1835,40 @@ export const Mapa: any = {
 // API para LimiteArea (Shape / Demarcação)
 export const LimiteArea: any = {
   list: async () => {
-    return new Promise((res) => setTimeout(() => res([...limitesArea]), 200));
+    return new Promise((res) => setTimeout(() => res(listMockLimitesArea(limitesArea)), 200));
   },
   get: async (id) => {
     return new Promise((res, rej) => setTimeout(() => {
       const limite = limitesArea.find(l => l.id === id);
-      if (limite) res(limite); else rej(new Error('Limite não encontrado'));
+      if (limite) res(readMockLimiteArea(limite)); else rej(new Error('Limite não encontrado'));
     }, 200));
   },
   filter: async (query) => {
-    const keys = Object.keys(query || {});
     return new Promise((res) => setTimeout(() => {
-      const result = limitesArea.filter(l => keys.every(k => String(l[k]) === String(query[k])));
+      const result = filterMockLimitesArea(limitesArea, query);
       res(result);
     }, 200));
   },
   getByAno: async (ano) => {
     return new Promise((res) => setTimeout(() => {
-      const result = limitesArea.filter(l => l.ano === ano);
+      const result = listMockLimitesArea(limitesArea).filter(l => l.ano === ano);
       res(result);
     }, 200));
   },
   getByProdutor: async (produtorId) => {
     return new Promise((res) => setTimeout(() => {
-      const result = limitesArea.filter(l => l.produtor_id === produtorId);
+      const result = filterMockLimitesArea(limitesArea, { produtor_id: produtorId });
       res(result);
     }, 200));
   },
   create: async (data) => {
     return new Promise((res, rej) => setTimeout(() => {
       try {
+        validateLimiteArea(data);
         const id = `lt${Date.now()}`;
-        const novo = {
-          id,
-          ...data,
-          data_upload: new Date().toISOString(),
-          disponivel_offline: true
-        };
+        const novo = persistMockLimiteArea({ id, data });
         limitesArea.unshift(novo);
-        res(novo);
+        res(readMockLimiteArea(novo));
       } catch (error) {
         rej(error);
       }
@@ -1873,8 +1880,10 @@ export const LimiteArea: any = {
       if (index === -1) {
         rej(new Error('Limite não encontrado'));
       } else {
-        limitesArea[index] = { ...limitesArea[index], ...data, id };
-        res(limitesArea[index]);
+        const atualizado = persistMockLimiteArea({ id, data, existing: limitesArea[index] });
+        validateLimiteArea(atualizado);
+        limitesArea[index] = atualizado;
+        res(readMockLimiteArea(limitesArea[index]));
       }
     }, 300));
   },

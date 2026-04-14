@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
+    "jsx": "react",
     "moduleResolution": "node",
     "outDir": ".tmp-domain-compat",
     "rootDir": ".",
@@ -11,6 +12,8 @@
   },
   "include": [
     "src/domain/**/*.ts",
-    "src/api/validators.ts"
+    "src/api/validators.ts",
+    "src/api/mockCompat.ts",
+    "src/api/mock.ts"
   ]
 }
