@@ -4,6 +4,7 @@ android/
 ios/
 build/
 dist/
+.tmp-domain-compat/
 coverage/
 .vscode/
 .DS_Store

@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
