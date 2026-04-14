@@ -9,8 +9,8 @@
  */
 
 // Exportar todas as entidades
-export { User, Produtor, Visita, CadernoCampo, Mapa } from './mock';
-import { User, Produtor, Visita, CadernoCampo, Mapa } from './mock';
+export { User, Produtor, Visita, CadernoCampo, Mapa, LimiteArea } from './mock';
+import { User, Produtor, Visita, CadernoCampo, Mapa, LimiteArea } from './mock';
 
 // Exportar validadores
 export { default as validators } from './validators';
@@ -21,6 +21,7 @@ export {
   validateVisita, 
   validateCadernoCampo, 
   validateMapa,
+  validateLimiteArea,
   validate 
 } from './validators';
 
@@ -30,7 +31,7 @@ export const STATUS_PRODUTOR = ['ativo', 'inativo', 'pendente'];
 export const STATUS_VISITA = ['agendada', 'realizada', 'cancelada'];
 export const OBJETIVOS_VISITA = ['consultoria', 'coleta_solo', 'avaliacao_cultivo', 'entrega_material', 'outro'];
 export const TIPOS_ATIVIDADE = ['plantio', 'adubacao', 'aplicacao', 'colheita', 'analise_solo', 'vistoria', 'outro'];
-export const CATEGORIAS_MAPA = ['fertilidade', 'correcao', 'indice_vegetacao', 'colheita', 'plantio'];
+export const CATEGORIAS_MAPA = ['fertilidade', 'correcao', 'indice_vegetacao', 'colheita', 'plantio', 'panorama'];
 
 // Helper: Buscar entidade por ID em qualquer coleção
 export const findById = async (entityType, id) => {
@@ -39,7 +40,8 @@ export const findById = async (entityType, id) => {
     'Produtor': Produtor,
     'Visita': Visita,
     'CadernoCampo': CadernoCampo,
-    'Mapa': Mapa
+    'Mapa': Mapa,
+    'LimiteArea': LimiteArea
   };
   
   const entity = entities[entityType];
@@ -57,7 +59,8 @@ export const listAll = async (entityType) => {
     'Produtor': Produtor,
     'Visita': Visita,
     'CadernoCampo': CadernoCampo,
-    'Mapa': Mapa
+    'Mapa': Mapa,
+    'LimiteArea': LimiteArea
   };
   
   const entity = entities[entityType];
@@ -74,5 +77,6 @@ export default {
   Visita,
   CadernoCampo,
   Mapa,
+  LimiteArea,
   validators
 };

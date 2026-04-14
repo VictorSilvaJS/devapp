@@ -17,7 +17,11 @@
     },
     "produtor_id": {
       "type": "string",
-      "description": "ID do produtor/propriedade associada"
+      "description": "Alias legado aceito temporariamente na borda quando o valor representa a fazenda associada"
+    },
+    "fazenda_id": {
+      "type": "string",
+      "description": "Campo canônico: ID da fazenda associada ao limite de área"
     },
     "talhao": {
       "type": "string",
@@ -94,5 +98,9 @@
       "description": "Observações sobre o levantamento"
     }
   },
-  "required": ["nome", "ano", "produtor_id", "talhao", "poligono"]
+  "required": ["nome", "ano", "talhao", "poligono"],
+  "anyOf": [
+    { "required": ["fazenda_id"] },
+    { "required": ["produtor_id"] }
+  ]
 }

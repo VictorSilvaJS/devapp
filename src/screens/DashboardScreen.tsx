@@ -303,6 +303,7 @@ export default function DashboardScreen() {
 
   // Determinar se é proprietário/produtor
   const isProdutorPerfil = user?.perfil === 'produtor';
+  const primeiroNomeUsuario = user?.nome?.split(' ')[0] || user?.full_name?.split(' ')[0] || 'Usuário';
 
   return (
     <View style={styles.container}>
@@ -329,7 +330,7 @@ export default function DashboardScreen() {
           <View style={styles.headerSection}>
             <View style={styles.welcomeContainer}>
               <Text style={styles.welcomeText} numberOfLines={1}>
-                Olá, {user?.full_name?.split(' ')[0] || 'Usuário'}!
+                Olá, {primeiroNomeUsuario}!
               </Text>
             </View>
             <Text style={styles.subtitle} numberOfLines={2}>

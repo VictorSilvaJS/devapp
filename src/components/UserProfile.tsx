@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, shadows } from '../theme';
+import { normalizeNome } from '../domain';
 
 export default function UserProfile({ user, size = 'medium', showDetails = true }) {
   const sizeStyles = {
@@ -11,14 +12,14 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
   };
 
   const avatarSize = sizeStyles[size] || sizeStyles.medium;
+  const displayName = normalizeNome(user || {}) || 'Usuário';
 
   const getInitials = () => {
-    if (!user?.full_name) return 'U';
-    const names = user.full_name.split(' ');
+    const names = displayName.split(' ');
     if (names.length >= 2) {
       return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
-    return user.full_name.charAt(0).toUpperCase();
+    return displayName.charAt(0).toUpperCase();
   };
 
   const getPerfilColor = () => {
@@ -56,7 +57,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
       {showDetails && (
         <View style={styles.details}>
           <Text style={styles.name} numberOfLines={1}>
-            {user?.full_name || 'Usuário'}
+            {displayName}
           </Text>
           <View style={styles.badge}>
             <Text style={styles.perfil}>

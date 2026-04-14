@@ -4,12 +4,17 @@ import Header from '../components/Header';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing } from '../theme';
+import { normalizeNome } from '../domain';
 
 export default function EditProfileScreen({ navigation }) {
   const { user } = useAuthState();
   const { updateProfile } = useAuthActions();
   const toast = useToast();
-  const [form, setForm] = useState({ full_name: user?.full_name || '', regiao: user?.regiao || '', produtor_id: user?.produtor_id || '' });
+  const [form, setForm] = useState({
+    nome: normalizeNome(user || {}),
+    regiao: user?.regiao || '',
+    produtor_id: user?.produtor_id || '',
+  });
 
   const handleSave = async () => {
     try {
@@ -26,7 +31,7 @@ export default function EditProfileScreen({ navigation }) {
       <Header title="Editar Perfil" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.label}>Nome completo</Text>
-        <TextInput style={styles.input} value={form.full_name} onChangeText={(t)=>setForm(s=>({...s,full_name:t}))} />
+        <TextInput style={styles.input} value={form.nome} onChangeText={(t)=>setForm(s=>({...s,nome:t}))} />
 
         <Text style={styles.label}>Região</Text>
         <TextInput style={styles.input} value={form.regiao} onChangeText={(t)=>setForm(s=>({...s,regiao:t}))} />

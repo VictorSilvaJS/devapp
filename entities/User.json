@@ -8,7 +8,11 @@
     },
     "nome": {
       "type": "string",
-      "description": "Nome completo do usuário"
+      "description": "Campo canônico: nome completo do usuário"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Alias legado aceito temporariamente na borda. Deve ser normalizado internamente para `nome`."
     },
     "email": {
       "type": "string",
@@ -43,7 +47,7 @@
     },
     "produtor_id": {
       "type": "string",
-      "description": "ID do proprietário vinculado (para perfil produtor). Um proprietário pode ter várias fazendas. Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo proprietário."
+      "description": "Campo canônico do vínculo ao produtor titular (para perfil produtor). Um produtor pode ter várias fazendas. Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo produtor."
     },
     "telefone": {
       "type": "string",
@@ -60,5 +64,9 @@
       "description": "Data de cadastro do usuário"
     }
   },
-  "required": ["nome", "email", "senha", "perfil"]
+  "required": ["email", "senha", "perfil"],
+  "anyOf": [
+    { "required": ["nome"] },
+    { "required": ["full_name"] }
+  ]
 }

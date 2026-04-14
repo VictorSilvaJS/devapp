@@ -19,6 +19,12 @@
  *    - Um produtor pode ter VÁRIAS fazendas (1:N)
  *    - Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo produtor
  */
+import { normalizeUsuario } from '../domain';
+
+const toCanonicalAuthUser = (user) => {
+  const { senha: _senha, ...userData } = user;
+  return normalizeUsuario(userData);
+};
 
 export const users = [
   // ─── ADMINISTRADORES ─ Acesso total ao Brasil ──────────────────
@@ -143,9 +149,7 @@ export const authLogin = async (email, senha) => {
         user => user.email.toLowerCase() === email.toLowerCase() && user.senha === senha
       );
       if (u) {
-        // Retorna dados do usuário sem a senha
-        const { senha: _, ...userData } = u;
-        res(userData);
+        res(toCanonicalAuthUser(u));
       } else {
         rej(new Error('Email ou senha incorretos'));
       }
@@ -169,8 +173,7 @@ export const authLoginByProfile = async (profileKey) => {
       };
       const u = profileMap[profileKey];
       if (u) {
-        const { senha: _, ...userData } = u;
-        res(userData);
+        res(toCanonicalAuthUser(u));
       } else {
         rej(new Error('Perfil não encontrado'));
       }

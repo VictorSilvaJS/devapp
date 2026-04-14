@@ -163,7 +163,7 @@ export default function VisitaDetailScreen() {
 
   const canEdit = () => {
     if (user?.perfil === 'admin') return true;
-    if (user?.perfil === 'colaborador' && visita?.tecnico_responsavel === user.full_name) {
+    if (user?.perfil === 'colaborador' && visita?.tecnico_responsavel === (user?.nome || user?.full_name)) {
       return true;
     }
     return false;

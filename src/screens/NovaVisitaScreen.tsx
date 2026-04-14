@@ -122,7 +122,7 @@ export default function NovaVisitaScreen() {
 
       const novaVisita = {
         produtor_id: produtorId,
-        tecnico_responsavel: user?.full_name || user?.nome || 'Sistema',
+        tecnico_responsavel: user?.nome || user?.full_name || 'Sistema',
         data_visita: dataCompleta.toISOString(),
         objetivo,
         observacoes,

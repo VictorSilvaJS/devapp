@@ -8,7 +8,11 @@
     },
     "produtor_id": {
       "type": "string",
-      "description": "ID do produtor"
+      "description": "Alias legado aceito temporariamente na borda quando o valor representa a fazenda do registro"
+    },
+    "fazenda_id": {
+      "type": "string",
+      "description": "Campo canônico: ID da fazenda do registro"
     },
     "colaborador_responsavel": {
       "type": "string",
@@ -69,5 +73,9 @@
       "description": "Data de criação do registro"
     }
   },
-  "required": ["produtor_id", "colaborador_responsavel", "data_atividade", "tipo_atividade"]
+  "required": ["colaborador_responsavel", "data_atividade", "tipo_atividade"],
+  "anyOf": [
+    { "required": ["fazenda_id"] },
+    { "required": ["produtor_id"] }
+  ]
 }

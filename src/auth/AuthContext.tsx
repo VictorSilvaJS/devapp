@@ -1,12 +1,10 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { authLogin, authLoginByProfile, authLogout } from './authMock';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { normalizeUsuario, toUsuarioCompativelBorda } from '../domain';
 
-type AuthUser = {
-  id?: string;
-  perfil?: string;
-  [key: string]: any;
-} | null;
+type CanonicalAuthUser = ReturnType<typeof normalizeUsuario> | null;
+type AuthUser = ReturnType<typeof toUsuarioCompativelBorda> | null;
 
 type AuthState = {
   user: AuthUser;
@@ -25,10 +23,27 @@ const AuthStateContext = createContext<AuthState | undefined>(undefined);
 const AuthActionsContext = createContext<AuthActions | undefined>(undefined);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<CanonicalAuthUser>(null);
   const [loading, setLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // indica que carregamento inicial terminou
   const STORAGE_KEY = '@tche:user';
+
+  const normalizeAuthUser = useCallback((rawUser: any): CanonicalAuthUser => {
+    if (!rawUser) return null;
+    return normalizeUsuario(rawUser as any);
+  }, []);
+
+  const persistCanonicalUser = useCallback(async (nextUser: CanonicalAuthUser) => {
+    try {
+      if (nextUser) {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (e) {
+      console.warn('Não foi possível persistir usuário', e);
+    }
+  }, []);
 
   useEffect(() => {
     // carregar usuario salvo ao iniciar
@@ -39,7 +54,7 @@ export function AuthProvider({ children }) {
         if (raw) {
           const parsed = JSON.parse(raw);
           console.log('[AuthContext] loaded user from storage', parsed);
-          setUser(parsed);
+          setUser(normalizeAuthUser(parsed));
         }
       } catch (err) {
         console.error('Erro carregando usuário do storage', err);
@@ -54,29 +69,31 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, senha) => {
     setLoading(true);
     try {
-      const u = await authLogin(email, senha);
-      console.log('[AuthContext] login -> setUser', u);
-      setUser(u);
-      try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(u)); } catch(e) { console.warn('Não foi possível salvar usuário', e); }
-      return u;
+      const rawUser = await authLogin(email, senha);
+      const nextUser = normalizeAuthUser(rawUser);
+      console.log('[AuthContext] login -> setUser', nextUser);
+      setUser(nextUser);
+      await persistCanonicalUser(nextUser);
+      return nextUser ? toUsuarioCompativelBorda(nextUser) : null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [normalizeAuthUser, persistCanonicalUser]);
 
   // Login rápido por perfil (para testes/dev)
   const loginRapido = useCallback(async (profileKey) => {
     setLoading(true);
     try {
-      const u = await authLoginByProfile(profileKey);
-      console.log('[AuthContext] loginRapido -> setUser', u);
-      setUser(u);
-      try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(u)); } catch(e) { console.warn('Não foi possível salvar usuário', e); }
-      return u;
+      const rawUser = await authLoginByProfile(profileKey);
+      const nextUser = normalizeAuthUser(rawUser);
+      console.log('[AuthContext] loginRapido -> setUser', nextUser);
+      setUser(nextUser);
+      await persistCanonicalUser(nextUser);
+      return nextUser ? toUsuarioCompativelBorda(nextUser) : null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [normalizeAuthUser, persistCanonicalUser]);
 
   const logout = useCallback(async () => {
     setLoading(true);
@@ -84,29 +101,34 @@ export function AuthProvider({ children }) {
       await authLogout();
       console.log('[AuthContext] logout -> clear user');
       setUser(null);
-      try { await AsyncStorage.removeItem(STORAGE_KEY); } catch(e) { console.warn('Não foi possível remover usuário', e); }
+      await persistCanonicalUser(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [persistCanonicalUser]);
 
   const updateProfile = useCallback(async (updates) => {
     // simula atualização remota
     setLoading(true);
     try {
-      const newUser = { ...user, ...updates };
-      console.log('[AuthContext] updateProfile -> setUser', newUser);
+      const nextUser = normalizeAuthUser({ ...(user || {}), ...updates });
+      console.log('[AuthContext] updateProfile -> setUser', nextUser);
       // aqui você chamaria API real
-      setUser(newUser);
-      try { await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newUser)); } catch (e) { console.warn('Erro salvando user atualizado', e); }
-      return newUser;
+      setUser(nextUser);
+      await persistCanonicalUser(nextUser);
+      return nextUser ? toUsuarioCompativelBorda(nextUser) : null;
     } finally {
       setLoading(false);
     }
+  }, [normalizeAuthUser, persistCanonicalUser, user]);
+
+  const exposedUser = useMemo<AuthUser>(() => {
+    if (!user) return null;
+    return toUsuarioCompativelBorda(user);
   }, [user]);
 
   // state value (memoized) - only changes when user or isReady change
-  const stateValue = useMemo(() => ({ user, isReady }), [user, isReady]);
+  const stateValue = useMemo(() => ({ user: exposedUser, isReady }), [exposedUser, isReady]);
   // actions value (memoized) - stable function refs, but includes loading
   const actionsValue = useMemo(() => ({ login, loginRapido, logout, updateProfile, loading }), [login, loginRapido, logout, updateProfile, loading]);
 

@@ -12,8 +12,7 @@
     },
     "categoria": {
       "type": "string",
-      "enum": ["fertilidade", "correcao", "indice_vegetacao", "colheita", "plantio", "panorama"],
-      "description": "Categoria do mapa"
+      "description": "Categoria do mapa. A taxonomia final ainda está em consolidação; o catálogo atual de implementação inclui valores como fertilidade, correcao, indice_vegetacao, colheita, plantio e panorama."
     },
     "subcategoria": {
       "type": "string",
@@ -31,11 +30,15 @@
     "disponivel_download": {
       "type": "boolean",
       "default": true,
-      "description": "Se o mapa está disponível para download pelo cliente"
+      "description": "Campo canônico: se o mapa está disponível para download"
+    },
+    "fazenda_id": {
+      "type": "string",
+      "description": "Campo canônico: ID da fazenda à qual o mapa pertence"
     },
     "produtor_id": {
       "type": "string",
-      "description": "ID do produtor associado"
+      "description": "Alias legado aceito temporariamente na borda quando o valor representa a fazenda associada ao mapa"
     },
     "talhao": {
       "type": "string",
@@ -90,8 +93,12 @@
     "disponivel_para_download": {
       "type": "boolean",
       "default": true,
-      "description": "Se o mapa pode ser baixado pelo cliente"
+      "description": "Alias legado aceito temporariamente na borda. Deve ser normalizado internamente para `disponivel_download`."
     }
   },
-  "required": ["titulo", "categoria", "produtor_id", "talhao"]
+  "required": ["titulo", "categoria", "talhao"],
+  "anyOf": [
+    { "required": ["fazenda_id"] },
+    { "required": ["produtor_id"] }
+  ]
 }
