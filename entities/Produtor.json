@@ -4,19 +4,35 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "ID único da fazenda/propriedade"
+      "description": "Na API atual, representa o ID da fazenda/propriedade. Em leituras compatíveis, este valor também pode aparecer explicitamente como `fazenda_id`."
+    },
+    "fazenda_id": {
+      "type": "string",
+      "description": "Campo explícito de compatibilidade: ID da fazenda/contexto operacional."
     },
     "proprietario_id": {
       "type": "string",
-      "description": "ID do proprietário (produtor/cliente). Um proprietário pode ter VÁRIAS fazendas (relação 1:N)"
+      "description": "Alias legado do vínculo com o produtor titular."
+    },
+    "produtor_id": {
+      "type": "string",
+      "description": "Campo explícito/canônico na borda mockada: ID do produtor titular associado à fazenda."
     },
     "nome": {
       "type": "string",
-      "description": "Nome do proprietário/produtor"
+      "description": "Na API legada atual, este campo representa o nome do produtor titular. Em payload canônico de fazenda, `nome` pode representar o nome da fazenda quando acompanhado por `produtor_nome`."
+    },
+    "produtor_nome": {
+      "type": "string",
+      "description": "Campo explícito de compatibilidade: nome do produtor titular."
     },
     "fazenda": {
       "type": "string",
-      "description": "Nome da fazenda"
+      "description": "Alias legado do nome da fazenda."
+    },
+    "fazenda_nome": {
+      "type": "string",
+      "description": "Campo explícito de compatibilidade: nome da fazenda/contexto operacional."
     },
     "area_total": {
       "type": "number",
@@ -76,5 +92,10 @@
       "description": "Data de cadastro do produtor"
     }
   },
-  "required": ["nome", "fazenda", "area_total"]
+  "required": ["area_total"],
+  "anyOf": [
+    { "required": ["fazenda"] },
+    { "required": ["fazenda_nome"] },
+    { "required": ["nome"] }
+  ]
 }

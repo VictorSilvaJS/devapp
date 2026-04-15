@@ -26,6 +26,12 @@ import {
   readMockMapa,
   readMockVisita,
 } from './mockCompat';
+import {
+  filterMockProdutores,
+  listMockProdutores,
+  persistMockProdutor,
+  readMockProdutor,
+} from './produtorCompat';
 import { talhoesSelaDeprata1, SELA_DEPRATA_1_PRODUTOR_ID } from '../assets/kml/selaDeprata1';
 
 // Usuários do sistema
@@ -179,7 +185,7 @@ const users = [
 // IMPORTANTE: Produtor = Cliente = Proprietário (dono da fazenda)
 // Um proprietário pode ter VÁRIAS fazendas (relação 1:N)
 // proprietario_id vincula a fazenda ao dono
-const produtores = [
+const produtores: any[] = [
   // ─── Fazendas do proprietário "prop1" (João Silva) ───
   {
     id: 'p1',
@@ -1607,18 +1613,17 @@ export const User: any = {
 // API para Produtor
 export const Produtor: any = {
   list: async (order?: any) => {
-    return new Promise((res) => setTimeout(() => res([...produtores]), 300));
+    return new Promise((res) => setTimeout(() => res(listMockProdutores(produtores)), 300));
   },
   get: async (id) => {
     return new Promise((res, rej) => setTimeout(() => {
       const p = produtores.find(x => x.id === id);
-      if (p) res(p); else rej(new Error('Produtor não encontrado'));
+      if (p) res(readMockProdutor(p)); else rej(new Error('Produtor não encontrado'));
     }, 200));
   },
   filter: async (query) => {
-    const keys = Object.keys(query || {});
     return new Promise((res) => setTimeout(() => {
-      const result = produtores.filter(p => keys.every(k => String(p[k]).includes(String(query[k]))));
+      const result = filterMockProdutores(produtores, query);
       res(result);
     }, 200));
   },
@@ -1627,14 +1632,9 @@ export const Produtor: any = {
       try {
         validateProdutor(data);
         const id = `p${Date.now()}`;
-        const novo = { 
-          id, 
-          ...data,
-          status: data.status || 'ativo',
-          data_cadastro: new Date().toISOString()
-        };
+        const novo = persistMockProdutor({ id, data });
         produtores.unshift(novo);
-        res(novo);
+        res(readMockProdutor(novo));
       } catch (error) {
         rej(error);
       }
@@ -1646,8 +1646,10 @@ export const Produtor: any = {
       if (index === -1) {
         rej(new Error('Produtor não encontrado'));
       } else {
-        produtores[index] = { ...produtores[index], ...data, id };
-        res(produtores[index]);
+        const atualizado = persistMockProdutor({ id, data, existing: produtores[index] });
+        validateProdutor(atualizado);
+        produtores[index] = atualizado;
+        res(readMockProdutor(produtores[index]));
       }
     }, 300));
   },

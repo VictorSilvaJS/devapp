@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  validateProdutor,
   validateUser,
   validateMapa,
   validateVisita,
@@ -27,6 +28,25 @@ test('validateUser aceita full_name legado e normaliza para nome', () => {
     senha: '123456',
     perfil: 'admin',
   }), true);
+});
+
+test('validateProdutor aceita payload explícito de fazenda sem quebrar legado atual', () => {
+  const warnOriginal = console.warn;
+  const warnings = [];
+  console.warn = (message) => warnings.push(String(message));
+
+  try {
+    assert.equal(validateProdutor({
+      nome: 'Fazenda Aurora',
+      produtor_nome: 'José da Silva',
+      produtor_id: 'prop_jose',
+      area_total: 220,
+    }), true);
+  } finally {
+    console.warn = warnOriginal;
+  }
+
+  assert.equal(warnings.length, 0);
 });
 
 test('validateMapa aceita fazenda_id canônico e panorama do catálogo provisório', () => {

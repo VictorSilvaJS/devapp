@@ -14,6 +14,7 @@
     "src/domain/**/*.ts",
     "src/api/validators.ts",
     "src/api/mockCompat.ts",
+    "src/api/produtorCompat.ts",
     "src/api/mock.ts"
   ]
 }

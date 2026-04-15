@@ -10,6 +10,7 @@ import {
   normalizeUsuario,
   normalizeVisita,
 } from '../domain';
+import { normalizeMockFazendaInput } from './produtorCompat';
 
 const isMissingValue = (value) =>
   value === undefined ||
@@ -62,17 +63,27 @@ export const validateUser = (data) => {
 
 // Validador de Produtor
 export const validateProdutor = (data) => {
-  validateRequired(data, ['nome', 'fazenda', 'area_total'], 'Produtor');
+  const normalized = normalizeMockFazendaInput(data);
+
+  validateRequired(normalized, ['nome', 'area_total'], 'Produtor');
+
+  if (!normalized.produtor_nome) {
+    console.warn('Produtor/Fazenda: nome do produtor titular não informado de forma explícita');
+  }
+
+  if (!normalized.produtor_id) {
+    console.warn('Produtor/Fazenda: produtor_id do titular não informado');
+  }
   
-  if (data.area_total && (typeof data.area_total !== 'number' || data.area_total <= 0)) {
+  if (normalized.area_total && (typeof normalized.area_total !== 'number' || normalized.area_total <= 0)) {
     throw new Error('Produtor.area_total: Deve ser um número maior que zero');
   }
   
-  if (data.status) {
-    validateEnum(data.status, ['ativo', 'inativo', 'pendente'], 'status', 'Produtor');
+  if (normalized.status) {
+    validateEnum(normalized.status, ['ativo', 'inativo', 'pendente'], 'status', 'Produtor');
   }
   
-  if (data.email && !validateEmail(data.email)) {
+  if (normalized.email && !validateEmail(normalized.email)) {
     throw new Error('Produtor.email: Email inválido');
   }
   
