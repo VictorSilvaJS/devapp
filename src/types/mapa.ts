@@ -17,6 +17,16 @@ export interface CoordenadasGeoJSON {
   coordinates: number[][][] | number[][];
 }
 
+/**
+ * Escopo operacional canônico da camada offline/sync.
+ * `fazenda_id` identifica a fazenda/contexto operacional.
+ * `produtor_id` permanece apenas como alias legado de compatibilidade.
+ */
+export interface EscopoMapaFazenda {
+  fazenda_id: string;
+  produtor_id?: string;
+}
+
 // ─────────────────────────────────────────────────────────────
 // DADOS DO TALHÃO (vindo da API do servidor)
 // ─────────────────────────────────────────────────────────────
@@ -27,6 +37,8 @@ export interface CoordenadasGeoJSON {
  */
 export interface MapaTalhao {
   id: string;
+  fazenda_id?: string;
+  produtor_id?: string;
   talhao: string;                      // nome do talhão (T01, T02, etc)
   nome?: string;
   area_hectares: number;
@@ -57,8 +69,7 @@ export interface MapaTalhao {
 /**
  * Resposta da API ao solicitar mapas de uma fazenda
  */
-export interface MapaFazendaResponse {
-  produtor_id: string;
+export interface MapaFazendaResponse extends EscopoMapaFazenda {
   fazenda_nome: string;
   ano: number;
   gerados_em: number;              // timestamp servidor
@@ -84,8 +95,7 @@ export interface MapaFazendaResponse {
 /**
  * Metadados de tiles de satélite baixados para cache
  */
-export interface CacheTilesSatelite {
-  produtor_id: string;
+export interface CacheTilesSatelite extends EscopoMapaFazenda {
   talhao_id: string;
   zoom_levels: number[];           // [10, 11, 12, 13, 14, 15]
   data_download: number;           // timestamp
@@ -103,8 +113,7 @@ export interface CacheTilesSatelite {
  * Requisição de sincronização — o device pergunta ao servidor:
  * "Qual mapa foi atualizado após data_ultima_sincronizacao?"
  */
-export interface RequisicaoSincronizacao {
-  produtor_id: string;
+export interface RequisicaoSincronizacao extends EscopoMapaFazenda {
   data_ultima_sincronizacao: number;  // timestamp milissegundos
   versao_app: string;
   /** device_id para rastreamento de uso de dados */
@@ -128,9 +137,8 @@ export interface RespostaSincronizacao {
 /**
  * Log local de sincronização — salvo no device
  */
-export interface LogSincronizacao {
+export interface LogSincronizacao extends EscopoMapaFazenda {
   id: string;
-  produtor_id: string;
   timestamp_requisicao: number;
   timestamp_resposta: number;
   status: 'sucesso' | 'erro' | 'parcial';
@@ -147,8 +155,7 @@ export interface LogSincronizacao {
 /**
  * Estado de um mapa no dispositivo local
  */
-export interface EstadoMapaLocal {
-  produtor_id: string;
+export interface EstadoMapaLocal extends EscopoMapaFazenda {
   talhao_id: string;
   /** Está disponível offline? */
   disponivel_offline: boolean;
@@ -190,9 +197,26 @@ export interface ConfigSincronizacao {
  * Endpoint POST /api/mapas/sincronizar
  * Retorna quais mapas precisam de update desde uma data
  */
-export interface RequisicaoAPISincronizar {
-  produtor_id: string;
+export interface RequisicaoAPISincronizar extends EscopoMapaFazenda {
   ultima_sincronizacao?: number;  // timestamp ms — se null, retorna tudo
+}
+
+export interface BackupMapaOffline extends EscopoMapaFazenda {
+  versao: string;
+  data_export: string;
+  talhoes: MapaTalhao[];
+  checksum: string;
+}
+
+export interface RelatorioCacheMapas {
+  tamanho_mb: number;
+  total_talhoes: number;
+  fazendas: string[];
+  /**
+   * Alias legado mantido enquanto a nomenclatura pública ainda não migrou.
+   */
+  produtores: string[];
+  arquivos_local: number;
 }
 
 /**

@@ -10,6 +10,13 @@
 
 import { MapaTalhao, MapaFazendaResponse, RespostaSincronizacao, RequisicaoSincronizacao, RequisicaoAPISincronizar, RequisicaoAPITiles, RespostaAPITiles } from '../types/mapa';
 import { talhoesSelaDeprata1, SELA_DEPRATA_1_PRODUTOR_ID } from '../assets/kml/selaDeprata1';
+import {
+  buildScopedMapKey,
+  resolveMapaOfflineFazendaId,
+  toMapaFazendaResponseCompativel,
+  toMapaTalhaoOfflineCompativel,
+  toRequisicaoSincronizacaoCompativel,
+} from '../services/mapaOfflineCompat';
 
 // ─────────────────────────────────────────────────────────────────
 // SIMULAÇÃO DE BANCO DE DADOS DO SERVIDOR
@@ -55,24 +62,27 @@ export const SincronizarMapas = {
    */
   post: async (requisicao: RequisicaoSincronizacao): Promise<RespostaSincronizacao> => {
     try {
-      console.log(`[API] Sincronização para produtor ${requisicao.produtor_id}`);
+      const requisicaoNormalizada = toRequisicaoSincronizacaoCompativel(requisicao);
+      const fazendaId = requisicaoNormalizada.fazenda_id;
+
+      console.log(`[API] Sincronização para fazenda ${fazendaId}`);
 
       // Simular latência de rede
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Para Sela de Prata I, retornar todos os talhões se nunca sincronizou
-      if (requisicao.produtor_id === SELA_DEPRATA_1_PRODUTOR_ID) {
+      if (fazendaId === SELA_DEPRATA_1_PRODUTOR_ID) {
         // Se data_ultima_sincronizacao for 0 ou undefined, retorna tudo (primeira vez)
-        if (!requisicao.data_ultima_sincronizacao || requisicao.data_ultima_sincronizacao === 0) {
+        if (!requisicaoNormalizada.data_ultima_sincronizacao || requisicaoNormalizada.data_ultima_sincronizacao === 0) {
           console.log(`[API] Primeira sincronização para Sela de Prata I - retornando ${talhoesSelaDeprata1.length} talhões`);
 
           return {
-            mapas_atualizados: talhoesSelaDeprata1.map(t => ({
+            mapas_atualizados: talhoesSelaDeprata1.map(t => toMapaTalhaoOfflineCompativel({
               ...t,
               status_sincronizacao: 'sincronizado',
               timestamp_servidor: Date.now(),
               timestamp_sincronizado: 0,
-            } as MapaTalhao)),
+            } as MapaTalhao, fazendaId)),
             mapas_removidos: [],
             proxima_sincronizacao_em: 24 * 60 * 60 * 1000, // próxima em 24h
             sync_token: `token_${Date.now()}`,
@@ -81,19 +91,19 @@ export const SincronizarMapas = {
 
         // Se já sincronizou, verificar se houve mudanças
         const talhoes_atualizados = talhoesSelaDeprata1.filter(t => {
-          const timestampServidor = serverMapasTimestamps.get(`${requisicao.produtor_id}_${t.id}`) || 0;
-          return timestampServidor > requisicao.data_ultima_sincronizacao;
+          const timestampServidor = serverMapasTimestamps.get(buildScopedMapKey(fazendaId, t.id)) || 0;
+          return timestampServidor > requisicaoNormalizada.data_ultima_sincronizacao;
         });
 
-        console.log(`[API] Para ${requisicao.produtor_id}: ${talhoes_atualizados.length} atualizado(s)`);
+        console.log(`[API] Para ${fazendaId}: ${talhoes_atualizados.length} atualizado(s)`);
 
         return {
-          mapas_atualizados: talhoes_atualizados.map(t => ({
+          mapas_atualizados: talhoes_atualizados.map(t => toMapaTalhaoOfflineCompativel({
             ...t,
             status_sincronizacao: 'sincronizado',
-            timestamp_servidor: serverMapasTimestamps.get(`${requisicao.produtor_id}_${t.id}`) || Date.now(),
+            timestamp_servidor: serverMapasTimestamps.get(buildScopedMapKey(fazendaId, t.id)) || Date.now(),
             timestamp_sincronizado: 0,
-          } as MapaTalhao)),
+          } as MapaTalhao, fazendaId)),
           mapas_removidos: [],
           proxima_sincronizacao_em: 24 * 60 * 60 * 1000,
           sync_token: `token_${Date.now()}`,
@@ -151,21 +161,21 @@ export const MapasTiles = {
 };
 
 // ─────────────────────────────────────────────────────────────────
-// ENDPOINT 3: GET /api/mapas/{produtor_id}
-// Obter todos os mapas de um produtor com metadados completos
+// ENDPOINT 3: GET /api/mapas/{fazenda_id}
+// Obter todos os mapas de uma fazenda com metadados completos
 // ─────────────────────────────────────────────────────────────────
 
-export const MapasPorProdutor = {
+export const MapasPorFazenda = {
   /**
-   * Retorna resposta completa com metadados do produtor
+   * Retorna resposta completa com metadados da fazenda
    */
-  get: async (produtorId: string): Promise<MapaFazendaResponse> => {
+  get: async (fazendaId: string): Promise<MapaFazendaResponse> => {
     try {
-      console.log(`[API] Obtendo mapas do produtor ${produtorId}`);
+      console.log(`[API] Obtendo mapas da fazenda ${fazendaId}`);
 
       await new Promise(resolve => setTimeout(resolve, 400));
 
-      if (produtorId === SELA_DEPRATA_1_PRODUTOR_ID) {
+      if (fazendaId === SELA_DEPRATA_1_PRODUTOR_ID) {
         // Calcular bbox
         let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
         for (const t of talhoesSelaDeprata1) {
@@ -177,15 +187,15 @@ export const MapasPorProdutor = {
           }
         }
 
-        return {
-          produtor_id: produtorId,
+        return toMapaFazendaResponseCompativel({
+          fazenda_id: fazendaId,
           fazenda_nome: 'Fazenda Sela de Prata I',
           ano: 2025,
           gerados_em: Date.now(),
           talhoes: talhoesSelaDeprata1.map(t => ({
-            ...t,
+            ...toMapaTalhaoOfflineCompativel(t, fazendaId),
             status_sincronizacao: 'sincronizado',
-            timestamp_servidor: serverMapasTimestamps.get(`${produtorId}_${t.id}`) || Date.now(),
+            timestamp_servidor: serverMapasTimestamps.get(buildScopedMapKey(fazendaId, t.id)) || Date.now(),
             timestamp_sincronizado: Date.now(),
           } as MapaTalhao)),
           tiles_url_base: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/',
@@ -197,23 +207,27 @@ export const MapasPorProdutor = {
           },
           versao_dados: '1.0.0',
           checksum_completo: `chk_sela_prata_${Date.now().toString(36)}`,
-        };
+        });
       }
 
-      // Produtor sem mapas
-      return {
-        produtor_id: produtorId,
+      // Fazenda sem mapas
+      return toMapaFazendaResponseCompativel({
+        fazenda_id: fazendaId,
         fazenda_nome: 'Fazenda',
         ano: 2025,
         gerados_em: Date.now(),
         talhoes: [],
         versao_dados: '1.0.0',
-      };
+      });
     } catch (erro) {
-      console.error('[API] Erro ao obter mapas do produtor:', erro);
+      console.error('[API] Erro ao obter mapas da fazenda:', erro);
       throw erro;
     }
   },
+};
+
+export const MapasPorProdutor = {
+  get: async (produtorId: string): Promise<MapaFazendaResponse> => MapasPorFazenda.get(produtorId),
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -225,13 +239,13 @@ export const MapasValidate = {
   /**
    * Valida checksum dos dados para garantir que foram baixados completamente
    */
-  post: async (produtorId: string, checksumLocal: string): Promise<{ valido: boolean; mensagem: string }> => {
+  post: async (fazendaId: string, checksumLocal: string): Promise<{ valido: boolean; mensagem: string }> => {
     try {
-      console.log(`[API] Validando checksum para ${produtorId}`);
+      console.log(`[API] Validando checksum para ${fazendaId}`);
 
       await new Promise(resolve => setTimeout(resolve, 150));
 
-      if (produtorId === SELA_DEPRATA_1_PRODUTOR_ID) {
+      if (fazendaId === SELA_DEPRATA_1_PRODUTOR_ID) {
         // Simular verificação de checksum
         const valido = checksumLocal && checksumLocal.length > 0;
         return {
@@ -260,20 +274,22 @@ export const Mapa = {
   obterTiles: (talhaoId: string, zooms: number[]) => MapasTiles.get(talhaoId, zooms),
 
   // Dados
+  obterPorFazenda: (fazendaId: string) => MapasPorFazenda.get(fazendaId),
   obterPorProdutor: (produtorId: string) => MapasPorProdutor.get(produtorId),
 
   // Validação
+  validarChecksumFazenda: (fazendaId: string, checksum: string) => MapasValidate.post(fazendaId, checksum),
   validarChecksum: (produtorId: string, checksum: string) => MapasValidate.post(produtorId, checksum),
 
   // ─── Método de conveniência: sincronizar E baixar tiles ───
-  sincronizarCompleto: async (produtorId: string, ultimaSincronizacao?: number) => {
-    const requisicao: RequisicaoSincronizacao = {
-      produtor_id: produtorId,
+  sincronizarCompleto: async (fazendaId: string, ultimaSincronizacao?: number) => {
+    const requisicao: RequisicaoSincronizacao = toRequisicaoSincronizacaoCompativel({
+      fazenda_id: fazendaId,
       data_ultima_sincronizacao: ultimaSincronizacao || 0,
       versao_app: '1.0.0',
-    };
+    });
 
-    console.log(`[API] Iniciando sincronização completa para ${produtorId}`);
+    console.log(`[API] Iniciando sincronização completa para ${fazendaId}`);
 
     // Etapa 1: Sincronizar mapas
     const resposta = await SincronizarMapas.post(requisicao);

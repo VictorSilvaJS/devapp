@@ -12,10 +12,15 @@
   },
   "include": [
     "src/domain/**/*.ts",
+    "src/types/mapa.ts",
     "src/api/validators.ts",
     "src/api/mockCompat.ts",
     "src/api/produtorCompat.ts",
     "src/api/mock.ts",
-    "src/utils/acessoControle.ts"
+    "src/api/mapaSyncEndpoints.ts",
+    "src/utils/acessoControle.ts",
+    "src/services/mapaOfflineCompat.ts",
+    "src/services/MapaSincronizacaoService.ts",
+    "src/services/MapaCacheService.ts"
   ]
 }
