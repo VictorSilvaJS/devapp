@@ -12,6 +12,14 @@
  *   - Várias pessoas podem ter login vinculado ao mesmo proprietário
  */
 
+import {
+  normalizeCadernoCampo,
+  normalizeFazenda,
+  normalizeLimiteArea,
+  normalizeMapa,
+  normalizeVisita,
+} from '../domain';
+
 // ────────────────────────────────────────────────────────────────
 // HELPERS DE PERFIL
 // ────────────────────────────────────────────────────────────────
@@ -37,6 +45,157 @@ export const isProdutor = (user) => user?.perfil === 'produtor';
  * Colaboradores têm as MESMAS funcionalidades do admin, limitadas à região
  */
 export const podeGerenciar = (user) => isAdmin(user) || isColaborador(user);
+
+const firstNonEmptyString = (...values) => {
+  for (const value of values) {
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      if (normalized.length > 0) {
+        return normalized;
+      }
+    }
+  }
+
+  return '';
+};
+
+const buildAllowedIds = (ids = []) =>
+  new Set((ids || []).filter((value) => typeof value === 'string' && value.trim().length > 0));
+
+const filterByFazendaIds = (items, getId, fazendaIds) => {
+  if (!items) return [];
+
+  const allowedIds = buildAllowedIds(fazendaIds);
+  if (allowedIds.size === 0) return [];
+
+  return items.filter((item) => allowedIds.has(getId(item)));
+};
+
+export const getTitularIdUsuario = (user) => firstNonEmptyString(user?.produtor_id);
+
+export const getFazendaId = (fazenda) => {
+  if (!fazenda) return '';
+
+  const explicitId = firstNonEmptyString(fazenda.fazenda_id);
+  if (explicitId) {
+    return explicitId;
+  }
+
+  return normalizeFazenda(fazenda).id;
+};
+
+export const getTitularIdFazenda = (fazenda) => {
+  if (!fazenda) return '';
+  return normalizeFazenda(fazenda).produtor_id;
+};
+
+export const getNomeFazenda = (fazenda) => {
+  if (!fazenda) return '';
+  return normalizeFazenda(fazenda).nome;
+};
+
+export const getNomeTitularFazenda = (fazenda) => {
+  if (!fazenda) return '';
+  const normalized = normalizeFazenda(fazenda);
+  return firstNonEmptyString(normalized.produtor_nome, fazenda?.nome);
+};
+
+export const getMapaFazendaId = (mapa) => {
+  if (!mapa) return '';
+  return normalizeMapa(mapa).fazenda_id;
+};
+
+export const getVisitaFazendaId = (visita) => {
+  if (!visita) return '';
+  return normalizeVisita(visita).fazenda_id;
+};
+
+export const getCadernoFazendaId = (registro) => {
+  if (!registro) return '';
+  return normalizeCadernoCampo(registro).fazenda_id;
+};
+
+export const getLimiteAreaFazendaId = (limite) => {
+  if (!limite) return '';
+  return normalizeLimiteArea(limite).fazenda_id;
+};
+
+export const findFazendaById = (fazendas, fazendaId) => {
+  if (!fazendas || !fazendaId) return null;
+  return fazendas.find((fazenda) => getFazendaId(fazenda) === fazendaId) || null;
+};
+
+export const fazendaPertenceAoTitular = (fazenda, titularIdOrUser) => {
+  const titularId =
+    typeof titularIdOrUser === 'string'
+      ? titularIdOrUser
+      : getTitularIdUsuario(titularIdOrUser);
+
+  if (!fazenda || !titularId) return false;
+  return getTitularIdFazenda(fazenda) === titularId;
+};
+
+export const getFazendasDoTitular = (fazendas, titularIdOrUser) => {
+  if (!fazendas) return [];
+  return fazendas.filter((fazenda) => fazendaPertenceAoTitular(fazenda, titularIdOrUser));
+};
+
+export const getFazendaIds = (fazendas) => {
+  if (!fazendas) return [];
+  return fazendas.map((fazenda) => getFazendaId(fazenda)).filter(Boolean);
+};
+
+export const filtrarMapasPorFazendaIds = (
+  mapas,
+  fazendaIds,
+  options: { somenteDisponiveisDownload?: boolean } = {}
+) => {
+  const mapasFiltrados = filterByFazendaIds(mapas, getMapaFazendaId, fazendaIds);
+
+  if (options.somenteDisponiveisDownload) {
+    return mapasFiltrados.filter((mapa) => normalizeMapa(mapa).disponivel_download);
+  }
+
+  return mapasFiltrados;
+};
+
+export const filtrarVisitasPorFazendaIds = (visitas, fazendaIds) =>
+  filterByFazendaIds(visitas, getVisitaFazendaId, fazendaIds);
+
+export const filtrarCadernosPorFazendaIds = (
+  registros,
+  fazendaIds,
+  options: { somenteVisivelParaProdutor?: boolean } = {}
+) => {
+  const registrosFiltrados = filterByFazendaIds(registros, getCadernoFazendaId, fazendaIds);
+
+  if (options.somenteVisivelParaProdutor) {
+    return registrosFiltrados.filter((registro) => registro.visivel_para_produtor === true);
+  }
+
+  return registrosFiltrados;
+};
+
+export const filtrarLimitesPorFazendaIds = (limites, fazendaIds) =>
+  filterByFazendaIds(limites, getLimiteAreaFazendaId, fazendaIds);
+
+export const getFazendasPorAcesso = (fazendas, user) => {
+  if (!user || !fazendas) return [];
+
+  if (isAdmin(user)) return fazendas;
+
+  if (isProdutor(user)) {
+    return getFazendasDoTitular(fazendas, user);
+  }
+
+  if (isColaborador(user)) {
+    return fazendas.filter((fazenda) => produtorNaRegiao(user, fazenda));
+  }
+
+  return [];
+};
+
+export const getFazendaIdsPorAcesso = (user, fazendas) => getFazendaIds(getFazendasPorAcesso(fazendas, user));
 
 /**
  * Verifica se o produtor/fazenda pertence às sub-regiões do colaborador
@@ -73,7 +232,7 @@ export const temAcessoProdutor = (user, produtor) => {
 
   // Produtor/Cliente: acessa apenas suas próprias fazendas (pelo produtor_id = proprietário)
   if (isProdutor(user)) {
-    return user.produtor_id === produtor.proprietario_id || user.produtor_id === produtor.id;
+    return fazendaPertenceAoTitular(produtor, user);
   }
 
   // Colaborador: acessa produtores da sua região/sub-regiões
@@ -88,21 +247,7 @@ export const temAcessoProdutor = (user, produtor) => {
  * Filtra lista de produtores/fazendas de acordo com permissões
  */
 export const filtrarProdutoresPorAcesso = (produtores, user) => {
-  if (!user || !produtores) return [];
-
-  if (isAdmin(user)) return produtores;
-
-  if (isProdutor(user)) {
-    return produtores.filter(p => 
-      p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-    );
-  }
-
-  if (isColaborador(user)) {
-    return produtores.filter(p => produtorNaRegiao(user, p));
-  }
-
-  return [];
+  return getFazendasPorAcesso(produtores, user);
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -115,11 +260,13 @@ export const filtrarProdutoresPorAcesso = (produtores, user) => {
 export const temAcessoMapa = (user, mapa, produtor) => {
   if (!user || !mapa) return false;
 
+  if (isAdmin(user)) return true;
+
+  const mapaNormalizado = normalizeMapa(mapa);
+
   // Produtor: acessa apenas mapas disponíveis para download das suas fazendas
   if (isProdutor(user)) {
-    const pertence = mapa.produtor_id === user.produtor_id || 
-      (produtor && (produtor.proprietario_id === user.produtor_id));
-    return pertence && mapa.disponivel_download;
+    return fazendaPertenceAoTitular(produtor, user) && mapaNormalizado.disponivel_download;
   }
 
   // Admin e colaborador: usam regra de acesso ao produtor
@@ -134,23 +281,11 @@ export const filtrarMapasPorAcesso = (mapas, user, produtores = []) => {
 
   if (isAdmin(user)) return mapas;
 
-  if (isProdutor(user)) {
-    // Produtor vê apenas mapas disponíveis das suas fazendas
-    const meusProdutorIds = produtores
-      .filter(p => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
-      .map(p => p.id);
-    return mapas.filter(m => 
-      meusProdutorIds.includes(m.produtor_id) && m.disponivel_download
-    );
-  }
+  const fazendaIdsPermitidos = getFazendaIdsPorAcesso(user, produtores);
 
-  if (isColaborador(user)) {
-    const produtoresRegiao = produtores.filter(p => produtorNaRegiao(user, p));
-    const idsRegiao = produtoresRegiao.map(p => p.id);
-    return mapas.filter(m => idsRegiao.includes(m.produtor_id));
-  }
-
-  return [];
+  return filtrarMapasPorFazendaIds(mapas, fazendaIdsPermitidos, {
+    somenteDisponiveisDownload: isProdutor(user),
+  });
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -168,9 +303,7 @@ export const temAcessoCaderno = (user, registro, produtor) => {
 
   // Produtor: vê registros visíveis das suas fazendas
   if (isProdutor(user)) {
-    const pertence = registro.produtor_id === user.produtor_id ||
-      (produtor && produtor.proprietario_id === user.produtor_id);
-    return pertence && registro.visivel_para_produtor === true;
+    return fazendaPertenceAoTitular(produtor, user) && registro.visivel_para_produtor === true;
   }
 
   if (isColaborador(user)) {
@@ -188,22 +321,11 @@ export const filtrarCadernosPorAcesso = (registros, user, produtores = []) => {
 
   if (isAdmin(user)) return registros;
 
-  if (isProdutor(user)) {
-    const meusProdutorIds = produtores
-      .filter(p => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
-      .map(p => p.id);
-    return registros.filter(r => 
-      meusProdutorIds.includes(r.produtor_id) && r.visivel_para_produtor === true
-    );
-  }
+  const fazendaIdsPermitidos = getFazendaIdsPorAcesso(user, produtores);
 
-  if (isColaborador(user)) {
-    const produtoresRegiao = produtores.filter(p => produtorNaRegiao(user, p));
-    const idsRegiao = produtoresRegiao.map(p => p.id);
-    return registros.filter(r => idsRegiao.includes(r.produtor_id));
-  }
-
-  return [];
+  return filtrarCadernosPorFazendaIds(registros, fazendaIdsPermitidos, {
+    somenteVisivelParaProdutor: isProdutor(user),
+  });
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -220,8 +342,7 @@ export const temAcessoVisita = (user, visita, produtor) => {
 
   // Produtor: vê visitas das suas fazendas (apenas visualização)
   if (isProdutor(user)) {
-    return visita.produtor_id === user.produtor_id ||
-      (produtor && produtor.proprietario_id === user.produtor_id);
+    return fazendaPertenceAoTitular(produtor, user);
   }
 
   if (isColaborador(user)) {
@@ -239,20 +360,17 @@ export const filtrarVisitasPorAcesso = (visitas, user, produtores = []) => {
 
   if (isAdmin(user)) return visitas;
 
-  if (isProdutor(user)) {
-    const meusProdutorIds = produtores
-      .filter(p => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
-      .map(p => p.id);
-    return visitas.filter(v => meusProdutorIds.includes(v.produtor_id));
-  }
+  const fazendaIdsPermitidos = getFazendaIdsPorAcesso(user, produtores);
+  return filtrarVisitasPorFazendaIds(visitas, fazendaIdsPermitidos);
+};
 
-  if (isColaborador(user)) {
-    const produtoresRegiao = produtores.filter(p => produtorNaRegiao(user, p));
-    const idsRegiao = produtoresRegiao.map(p => p.id);
-    return visitas.filter(v => idsRegiao.includes(v.produtor_id));
-  }
+export const filtrarLimitesPorAcesso = (limites, user, produtores = []) => {
+  if (!user || !limites) return [];
 
-  return [];
+  if (isAdmin(user)) return limites;
+
+  const fazendaIdsPermitidos = getFazendaIdsPorAcesso(user, produtores);
+  return filtrarLimitesPorFazendaIds(limites, fazendaIdsPermitidos);
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -377,17 +495,27 @@ export const podeEditarCaderno = (user, registro) => {
 /**
  * Verifica se usuário pode fazer download de um mapa
  */
-export const podeBaixarMapa = (user, mapa) => {
+export const podeBaixarMapa = (user, mapa, produtores = []) => {
   if (!user || !mapa) return false;
 
-  if (!mapa.disponivel_download) {
+  const mapaNormalizado = normalizeMapa(mapa);
+
+  if (!mapaNormalizado.disponivel_download) {
     return isAdmin(user);
   }
 
   if (isAdmin(user) || isColaborador(user)) return true;
   
   if (isProdutor(user)) {
-    return mapa.produtor_id === user.produtor_id;
+    const minhasFazendas = getFazendasDoTitular(produtores, user);
+    const minhasFazendaIds = getFazendaIds(minhasFazendas);
+
+    if (minhasFazendaIds.length > 0) {
+      return minhasFazendaIds.includes(mapaNormalizado.fazenda_id);
+    }
+
+    // Fallback temporário enquanto nem todos os chamadores enviam as fazendas.
+    return mapaNormalizado.fazenda_id === getTitularIdUsuario(user);
   }
 
   return false;

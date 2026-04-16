@@ -19,6 +19,7 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { filtrarProdutoresPorAcesso, getFazendaId } from '../utils/acessoControle';
 
 export default function NovaVisitaScreen() {
   const navigation = useNavigation();
@@ -54,25 +55,11 @@ export default function NovaVisitaScreen() {
     setLoadingProdutores(true);
     try {
       const data = await Produtor.list();
-      
-      // Filtrar por perfil
-      let filtrados = data;
-      if (user?.perfil === 'colaborador') {
-        // Colaborador: produtores das suas sub-regiões
-        filtrados = data.filter(p => {
-          if (user.sub_regioes && p.microregiao) {
-            return user.sub_regioes.includes(p.microregiao);
-          }
-          return false;
-        });
-      } else if (user?.perfil === 'produtor') {
-        // Produtor (proprietário) - buscar suas fazendas
-        filtrados = data.filter(p => 
-          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-        );
-        if (filtrados.length > 0) {
-          setProdutorId(filtrados[0].id);
-        }
+
+      const filtrados = user ? filtrarProdutoresPorAcesso(data, user) : data;
+
+      if (user?.perfil === 'produtor' && filtrados.length > 0) {
+        setProdutorId(getFazendaId(filtrados[0]));
       }
       
       setProdutores(filtrados);
@@ -121,7 +108,7 @@ export default function NovaVisitaScreen() {
       dataCompleta.setMinutes(horaVisita.getMinutes());
 
       const novaVisita = {
-        produtor_id: produtorId,
+        fazenda_id: produtorId,
         tecnico_responsavel: user?.nome || user?.full_name || 'Sistema',
         data_visita: dataCompleta.toISOString(),
         objetivo,
@@ -158,7 +145,7 @@ export default function NovaVisitaScreen() {
   ];
 
   const getProdutorNome = (id) => {
-    const prod = produtores.find(p => p.id === id);
+    const prod = produtores.find(p => getFazendaId(p) === id);
     return prod ? `${prod.nome} - ${prod.fazenda}` : 'Selecione um produtor';
   };
 
@@ -224,20 +211,20 @@ export default function NovaVisitaScreen() {
               <ScrollView style={styles.dropdown} nestedScrollEnabled>
                 {produtores.map(prod => (
                   <TouchableOpacity
-                    key={prod.id}
+                    key={getFazendaId(prod)}
                     style={[
                       styles.dropdownItem,
-                      produtorId === prod.id && styles.dropdownItemSelected
+                      produtorId === getFazendaId(prod) && styles.dropdownItemSelected
                     ]}
                     onPress={() => {
-                      setProdutorId(prod.id);
+                      setProdutorId(getFazendaId(prod));
                       setShowProdutorPicker(false);
                       setErrors(prev => ({ ...prev, produtorId: null }));
                     }}
                   >
                     <Text style={[
                       styles.dropdownItemText,
-                      produtorId === prod.id && styles.dropdownItemTextSelected
+                      produtorId === getFazendaId(prod) && styles.dropdownItemTextSelected
                     ]}>
                       {prod.nome}
                     </Text>

@@ -22,6 +22,13 @@ import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useFiltros } from '../contexts/FiltroContext';
+import {
+  filtrarProdutoresPorAcesso,
+  filtrarVisitasPorFazendaIds,
+  findFazendaById,
+  getFazendaIds,
+  getVisitaFazendaId,
+} from '../utils/acessoControle';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -41,7 +48,7 @@ export default function VisitasScreen() {
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const { user } = useAuth();
-  const { getProdutorIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
+  const { getFazendaIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
 
   useEffect(() => { load(); }, [filtros]);
   
@@ -67,39 +74,19 @@ export default function VisitasScreen() {
         ]);
         
         // Aplicar filtros regionais
-        const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
-        visitasData = todasVisitas.filter(v => produtorIdsFiltrados.includes(v.produtor_id));
-        produtoresData = todosProdutores.filter(p => produtorIdsFiltrados.includes(p.id));
-      } else if (user?.perfil === 'colaborador') {
-        // Colaborador vê visitas dos produtores das suas sub-regiões
+        const fazendaIdsFiltrados = getFazendaIdsFiltrados(todosProdutores);
+        visitasData = filtrarVisitasPorFazendaIds(todasVisitas, fazendaIdsFiltrados);
+        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(p.fazenda_id || p.id));
+      } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
         const [todasVisitas, todosProdutores] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
-        // Pré-filtrar por sub_regiões do colaborador (escopo)
-        const produtoresDoColaborador = todosProdutores.filter(p => {
-          if (user.sub_regioes && p.microregiao) {
-            return user.sub_regioes.includes(p.microregiao);
-          }
-          return false;
-        });
-        // Aplicar filtros de contexto (microregião, fazenda)
-        produtoresData = filtrarProdutores(produtoresDoColaborador);
-        const idsFiltrados = produtoresData.map(p => p.id);
-        visitasData = todasVisitas.filter(v => idsFiltrados.includes(v.produtor_id));
-      } else if (user?.perfil === 'produtor') {
-        // Produtor/Proprietário vê apenas visitas das suas fazendas (somente visualização)
-        const [todasVisitas, todosProdutores] = await Promise.all([
-          Visita.list(),
-          Produtor.list()
-        ]);
-        // Buscar todas as fazendas do proprietário
-        const minhasFazendas = todosProdutores.filter(p => 
-          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-        );
-        const meusIds = minhasFazendas.map(p => p.id);
-        visitasData = todasVisitas.filter(v => meusIds.includes(v.produtor_id));
-        produtoresData = minhasFazendas;
+
+        const produtoresComAcesso = filtrarProdutoresPorAcesso(todosProdutores, user);
+        produtoresData = filtrarProdutores(produtoresComAcesso);
+        const idsFiltrados = getFazendaIds(produtoresData);
+        visitasData = filtrarVisitasPorFazendaIds(todasVisitas, idsFiltrados);
       } else {
         // Sem usuário, carrega tudo (fallback)
         [visitasData, produtoresData] = await Promise.all([
@@ -124,7 +111,7 @@ export default function VisitasScreen() {
     setRefreshing(false);
   };
 
-  const getProd = (id) => produtores.find(x => x.id === id) || {};
+  const getProd = (fazendaId) => findFazendaById(produtores, fazendaId) || {};
 
   // Função para filtrar por data
   const filtrarPorData = (visita) => {
@@ -159,7 +146,7 @@ export default function VisitasScreen() {
 
   // Filtro de busca e filtros combinados
   const visitasFiltradas = visitas.filter(visita => {
-    const produtor = getProd(visita.produtor_id);
+    const produtor = getProd(getVisitaFazendaId(visita));
     const buscaLower = busca.toLowerCase();
     
     const matchBusca = !busca || 
@@ -177,8 +164,8 @@ export default function VisitasScreen() {
     if (ordenacao === 'data') {
       return new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime();
     } else if (ordenacao === 'produtor') {
-      const prodA = getProd(a.produtor_id);
-      const prodB = getProd(b.produtor_id);
+      const prodA = getProd(getVisitaFazendaId(a));
+      const prodB = getProd(getVisitaFazendaId(b));
       return (prodA.nome || '').localeCompare(prodB.nome || '');
     } else if (ordenacao === 'status') {
       const statusOrder = { agendada: 0, realizada: 1, cancelada: 2 };
@@ -439,7 +426,7 @@ export default function VisitasScreen() {
           </View>
         ) : (
           visitasFiltradas.map(visita => {
-            const produtor = getProd(visita.produtor_id);
+            const produtor = getProd(getVisitaFazendaId(visita));
             const objetivoColor = getObjetivoColor(visita.objetivo);
             const statusColor = getStatusColor(visita.status);
             const objetivoIcon = getObjetivoIcon(visita.objetivo);

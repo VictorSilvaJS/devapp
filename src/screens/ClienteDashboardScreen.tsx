@@ -16,6 +16,14 @@ import { Produtor, Mapa, Visita, CadernoCampo } from '../api/mock';
 import { colors, typography, spacing, shadows, border } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import {
+  filtrarCadernosPorFazendaIds,
+  filtrarMapasPorFazendaIds,
+  filtrarProdutoresPorAcesso,
+  filtrarVisitasPorFazendaIds,
+  getFazendaId,
+  getFazendaIds,
+} from '../utils/acessoControle';
 
 /**
  * Tela específica para produtores/proprietários - Dashboard das propriedades
@@ -49,27 +57,25 @@ export default function ClienteDashboardScreen() {
         ]);
 
         // Buscar TODAS as fazendas deste proprietário (relação 1:N)
-        const minhasFazendas = todosProdutores.filter(p => 
-          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-        );
+        const minhasFazendas = filtrarProdutoresPorAcesso(todosProdutores, user);
         setPropriedades(minhasFazendas);
         
-        const meusIds = minhasFazendas.map(p => p.id);
+        const meusIds = getFazendaIds(minhasFazendas);
         
         // Filtrar apenas mapas disponíveis para download das minhas fazendas
-        const mapasDisponiveis = todosMapas.filter(m => 
-          meusIds.includes(m.produtor_id) && m.disponivel_download
-        );
+        const mapasDisponiveis = filtrarMapasPorFazendaIds(todosMapas, meusIds, {
+          somenteDisponiveisDownload: true,
+        });
         setMapas(mapasDisponiveis);
 
         // Filtrar visitas das minhas fazendas
-        const visitasProdutor = todasVisitas.filter(v => meusIds.includes(v.produtor_id));
+        const visitasProdutor = filtrarVisitasPorFazendaIds(todasVisitas, meusIds);
         setVisitas(visitasProdutor);
 
         // Filtrar histórico visível para proprietário
-        const historicoCliente = todosCadernos.filter(c => 
-          meusIds.includes(c.produtor_id) && c.visivel_para_produtor
-        );
+        const historicoCliente = filtrarCadernosPorFazendaIds(todosCadernos, meusIds, {
+          somenteVisivelParaProdutor: true,
+        });
         setHistorico(historicoCliente);
       }
     } catch (error) {
@@ -136,11 +142,11 @@ export default function ClienteDashboardScreen() {
   // Dados filtrados conforme fazenda selecionada
   const propriedadesExibidas = filtroFazenda === 'geral'
     ? propriedades
-    : propriedades.filter(p => p.id === filtroFazenda);
-  const idsFiltrados = propriedadesExibidas.map(p => p.id);
-  const mapasFiltrados = mapas.filter(m => idsFiltrados.includes(m.produtor_id));
-  const visitasFiltradas = visitas.filter(v => idsFiltrados.includes(v.produtor_id));
-  const historicoFiltrado = historico.filter(h => idsFiltrados.includes(h.produtor_id));
+    : propriedades.filter(p => getFazendaId(p) === filtroFazenda);
+  const idsFiltrados = getFazendaIds(propriedadesExibidas);
+  const mapasFiltrados = filtrarMapasPorFazendaIds(mapas, idsFiltrados);
+  const visitasFiltradas = filtrarVisitasPorFazendaIds(visitas, idsFiltrados);
+  const historicoFiltrado = filtrarCadernosPorFazendaIds(historico, idsFiltrados);
 
   const areaTotal = propriedadesExibidas.reduce((sum, p) => sum + (p.area_total || 0), 0);
   const culturas = [...new Set(propriedadesExibidas.map(p => p.cultura_atual).filter(Boolean))];
@@ -166,12 +172,12 @@ export default function ClienteDashboardScreen() {
             </TouchableOpacity>
             {propriedades.map(prop => (
               <TouchableOpacity
-                key={prop.id}
-                style={[styles.filtroFazendaChip, filtroFazenda === prop.id && styles.filtroFazendaChipAtivo]}
-                onPress={() => setFiltroFazenda(prop.id)}
+                key={getFazendaId(prop)}
+                style={[styles.filtroFazendaChip, filtroFazenda === getFazendaId(prop) && styles.filtroFazendaChipAtivo]}
+                onPress={() => setFiltroFazenda(getFazendaId(prop))}
               >
-                <Ionicons name="home-outline" size={16} color={filtroFazenda === prop.id ? colors.white : colors.text} style={{ marginRight: 4 }} />
-                <Text style={[styles.filtroFazendaChipText, filtroFazenda === prop.id && styles.filtroFazendaChipTextAtivo]} numberOfLines={1}>
+                <Ionicons name="home-outline" size={16} color={filtroFazenda === getFazendaId(prop) ? colors.white : colors.text} style={{ marginRight: 4 }} />
+                <Text style={[styles.filtroFazendaChipText, filtroFazenda === getFazendaId(prop) && styles.filtroFazendaChipTextAtivo]} numberOfLines={1}>
                   {prop.fazenda}
                 </Text>
               </TouchableOpacity>
@@ -193,7 +199,7 @@ export default function ClienteDashboardScreen() {
       >
         {/* Cards das Fazendas (filtradas) */}
         {propriedadesExibidas.map((prop, idx) => (
-          <View key={prop.id} style={styles.propriedadeCard}>
+          <View key={getFazendaId(prop)} style={styles.propriedadeCard}>
             <View style={styles.propriedadeHeader}>
               <Ionicons name="home-outline" size={40} color={colors.primary} />
               <View style={styles.propriedadeInfo}>

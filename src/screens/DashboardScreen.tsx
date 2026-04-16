@@ -8,6 +8,12 @@ import StatCard from '../components/StatCard';
 import { useAuthState } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
 import FiltroRegional from '../components/FiltroRegional';
+import {
+  filtrarCadernosPorFazendaIds,
+  filtrarProdutoresPorAcesso,
+  filtrarVisitasPorFazendaIds,
+  getFazendaIds,
+} from '../utils/acessoControle';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -16,7 +22,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function DashboardScreen() {
   const { user } = useAuthState();
-  const { filtrarProdutores, getProdutorIdsFiltrados, getFiltroAtivo, setRegiao } = useFiltros();
+  const { filtrarProdutores, getFiltroAtivo, setRegiao } = useFiltros();
   const [stats, setStats] = useState({ produtores: 0, visitas: 0, registros: 0, areaTotal: '' });
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,12 +68,12 @@ export default function DashboardScreen() {
         // Aplicar filtros de região/fazenda
         produtores = filtrarProdutores(todosProdutores);
         
-        // Obter IDs dos produtores filtrados
-        const produtorIdsFiltrados = produtores.map(p => p.id);
+        // Obter IDs das fazendas filtradas
+        const fazendaIdsFiltrados = getFazendaIds(produtores);
         
         // Filtrar visitas e registros baseado nos produtores filtrados
-        visitas = todasVisitas.filter(v => produtorIdsFiltrados.includes(v.produtor_id));
-        registros = todosRegistros.filter(r => produtorIdsFiltrados.includes(r.produtor_id));
+        visitas = filtrarVisitasPorFazendaIds(todasVisitas, fazendaIdsFiltrados);
+        registros = filtrarCadernosPorFazendaIds(todosRegistros, fazendaIdsFiltrados);
         
         // Atualizar texto de localização
         setCidade(getFiltroAtivo());
@@ -76,23 +82,17 @@ export default function DashboardScreen() {
       else if (user?.perfil === 'colaborador') {
         if (user.regiao) {
           const todosProdutores = await Produtor.list();
-          // Pré-filtrar por sub_regiões do colaborador (escopo)
-          const produtoresDoColaborador = todosProdutores.filter(p => {
-            if (user.sub_regioes && p.microregiao) {
-              return user.sub_regioes.includes(p.microregiao);
-            }
-            return false;
-          });
+          const produtoresDoColaborador = filtrarProdutoresPorAcesso(todosProdutores, user);
           
           // Aplicar filtros de contexto (microregião, fazenda)
           produtores = filtrarProdutores(produtoresDoColaborador);
-          const idsFiltrados = produtores.map(p => p.id);
+          const idsFiltrados = getFazendaIds(produtores);
           
           const todasVisitas = await Visita.list();
-          visitas = todasVisitas.filter(v => idsFiltrados.includes(v.produtor_id));
+          visitas = filtrarVisitasPorFazendaIds(todasVisitas, idsFiltrados);
           
           const todosRegistros = await CadernoCampo.list();
-          registros = todosRegistros.filter(r => idsFiltrados.includes(r.produtor_id));
+          registros = filtrarCadernosPorFazendaIds(todosRegistros, idsFiltrados);
           
           setCidade(getFiltroAtivo());
         } else {
@@ -103,11 +103,8 @@ export default function DashboardScreen() {
       else if (user?.perfil === 'produtor') {
         if (user.produtor_id) {
           try {
-            // Buscar todas as fazendas do proprietário (relação 1:N)
             const todosProdutores = await Produtor.list();
-            produtores = todosProdutores.filter(p => 
-              p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-            );
+            produtores = filtrarProdutoresPorAcesso(todosProdutores, user);
             if (produtores.length > 0) {
               const primeiraProp = produtores[0];
               setCidade(`${primeiraProp.cidade || 'Cidade'}, ${primeiraProp.estado || 'Estado'}`);
@@ -116,17 +113,17 @@ export default function DashboardScreen() {
             }
             
             // IDs de todas as fazendas do proprietário
-            const meusIds = produtores.map(p => p.id);
+            const meusIds = getFazendaIds(produtores);
             
             // Filtrar visitas das fazendas do proprietário
             const todasVisitas = await Visita.list();
-            visitas = todasVisitas.filter(v => meusIds.includes(v.produtor_id));
+            visitas = filtrarVisitasPorFazendaIds(todasVisitas, meusIds);
             
             // Filtrar registros que são visíveis para o proprietário
             const todosRegistros = await CadernoCampo.list();
-            registros = todosRegistros.filter(r => 
-              meusIds.includes(r.produtor_id) && r.visivel_para_produtor === true
-            );
+            registros = filtrarCadernosPorFazendaIds(todosRegistros, meusIds, {
+              somenteVisivelParaProdutor: true,
+            });
           } catch (error) {
             console.error('Erro ao carregar dados do produtor:', error);
             setCidade('Propriedade não encontrada');

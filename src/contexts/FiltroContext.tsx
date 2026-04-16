@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Produtor } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
+import { getFazendaId, getNomeFazenda, getNomeTitularFazenda } from '../utils/acessoControle';
 
 const FiltroContext = createContext<any>(null);
 
@@ -104,9 +105,9 @@ export function FiltroProvider({ children }) {
       const fazendasDisponiveis = produtoresFiltrados
         .filter(p => p.fazenda)
         .map(p => ({
-          id: p.id,
-          nome: p.fazenda,
-          produtor: p.nome,
+          id: getFazendaId(p),
+          nome: getNomeFazenda(p),
+          produtor: getNomeTitularFazenda(p),
           cidade: p.cidade,
           regiao: p.regiao,
           microregiao: p.microregiao,
@@ -199,17 +200,20 @@ export function FiltroProvider({ children }) {
 
     // Filtro por fazenda específica (produtor)
     if (filtros.fazenda !== 'todas' && filtros.produtorId) {
-      resultado = resultado.filter(p => p.id === filtros.produtorId);
+      resultado = resultado.filter(p => getFazendaId(p) === filtros.produtorId);
     }
 
     return resultado;
   };
 
-  // Função auxiliar para obter IDs dos produtores filtrados
-  const getProdutorIdsFiltrados = (produtores) => {
+  // Função auxiliar para obter IDs das fazendas filtradas
+  const getFazendaIdsFiltrados = (produtores) => {
     const produtoresFiltrados = filtrarProdutores(produtores);
-    return produtoresFiltrados.map(p => p.id);
+    return produtoresFiltrados.map(p => getFazendaId(p)).filter(Boolean);
   };
+
+  // Alias temporário para evitar mudanças amplas na UI neste lote.
+  const getProdutorIdsFiltrados = (produtores) => getFazendaIdsFiltrados(produtores);
 
   const value = {
     filtros,
@@ -225,6 +229,7 @@ export function FiltroProvider({ children }) {
     getFiltroAtivo,
     temFiltroAtivo,
     filtrarProdutores,
+    getFazendaIdsFiltrados,
     getProdutorIdsFiltrados,
   };
 

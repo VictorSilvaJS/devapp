@@ -18,6 +18,13 @@ import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
+import {
+  filtrarCadernosPorFazendaIds,
+  filtrarProdutoresPorAcesso,
+  findFazendaById,
+  getCadernoFazendaId,
+  getFazendaIds,
+} from '../utils/acessoControle';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -31,7 +38,7 @@ export default function CadernoCampoScreen() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const { user } = useAuth();
-  const { getProdutorIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
+  const { getFazendaIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
 
   useEffect(() => { load(); }, [filtros]);
   
@@ -50,42 +57,21 @@ export default function CadernoCampoScreen() {
         ]);
         
         // Aplicar filtros regionais
-        const produtorIdsFiltrados = getProdutorIdsFiltrados(todosProdutores);
-        registrosData = todosRegistros.filter(r => produtorIdsFiltrados.includes(r.produtor_id));
-        produtoresData = todosProdutores.filter(p => produtorIdsFiltrados.includes(p.id));
-      } else if (user?.perfil === 'colaborador') {
-        // Colaborador vê registros dos produtores das suas sub-regiões
+        const fazendaIdsFiltrados = getFazendaIdsFiltrados(todosProdutores);
+        registrosData = filtrarCadernosPorFazendaIds(todosRegistros, fazendaIdsFiltrados);
+        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(p.fazenda_id || p.id));
+      } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
         const [todosRegistros, todosProdutores] = await Promise.all([
           CadernoCampo.list(),
           Produtor.list()
         ]);
-        // Pré-filtrar por sub_regiões do colaborador (escopo)
-        const produtoresDoColaborador = todosProdutores.filter(p => {
-          if (user.sub_regioes && p.microregiao) {
-            return user.sub_regioes.includes(p.microregiao);
-          }
-          return false;
+
+        const produtoresComAcesso = filtrarProdutoresPorAcesso(todosProdutores, user);
+        produtoresData = filtrarProdutores(produtoresComAcesso);
+        const idsFiltrados = getFazendaIds(produtoresData);
+        registrosData = filtrarCadernosPorFazendaIds(todosRegistros, idsFiltrados, {
+          somenteVisivelParaProdutor: user?.perfil === 'produtor',
         });
-        // Aplicar filtros de contexto (microregião, fazenda)
-        produtoresData = filtrarProdutores(produtoresDoColaborador);
-        const idsFiltrados = produtoresData.map(p => p.id);
-        registrosData = todosRegistros.filter(r => idsFiltrados.includes(r.produtor_id));
-      } else if (user?.perfil === 'produtor') {
-        // Produtor/Proprietário vê registros visíveis das suas fazendas
-        // PODE incluir novos registros no caderno de campo
-        const [todosRegistros, todosProdutores] = await Promise.all([
-          CadernoCampo.list(),
-          Produtor.list()
-        ]);
-        // Buscar todas as fazendas do proprietário
-        const minhasFazendas = todosProdutores.filter(p => 
-          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-        );
-        const meusIds = minhasFazendas.map(p => p.id);
-        registrosData = todosRegistros.filter(r => 
-          meusIds.includes(r.produtor_id) && r.visivel_para_produtor === true
-        );
-        produtoresData = minhasFazendas;
       } else {
         // Sem usuário, carrega tudo (fallback)
         [registrosData, produtoresData] = await Promise.all([
@@ -110,12 +96,12 @@ export default function CadernoCampoScreen() {
     setRefreshing(false);
   };
 
-  const getProd = (id) => produtores.find(x => x.id === id) || {};
+  const getProd = (fazendaId) => findFazendaById(produtores, fazendaId) || {};
 
   // Filtro de busca
   const registrosFiltrados = registros.filter(registro => {
     if (!busca) return true;
-    const produtor = getProd(registro.produtor_id);
+    const produtor = getProd(getCadernoFazendaId(registro));
     const buscaLower = busca.toLowerCase();
     return (
       produtor.nome?.toLowerCase().includes(buscaLower) ||
@@ -203,7 +189,7 @@ export default function CadernoCampoScreen() {
           </View>
         ) : (
           registrosFiltrados.map(reg => {
-            const produtor = getProd(reg.produtor_id);
+            const produtor = getProd(getCadernoFazendaId(reg));
             const tipoColor = getTipoColor(reg.tipo_atividade);
             
             return (

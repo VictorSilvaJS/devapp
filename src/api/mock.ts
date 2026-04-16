@@ -1859,7 +1859,7 @@ export const LimiteArea: any = {
   },
   getByProdutor: async (produtorId) => {
     return new Promise((res) => setTimeout(() => {
-      const result = filterMockLimitesArea(limitesArea, { produtor_id: produtorId });
+      const result = filterMockLimitesArea(limitesArea, { fazenda_id: produtorId });
       res(result);
     }, 200));
   },

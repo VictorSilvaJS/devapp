@@ -26,6 +26,12 @@ import { LimiteArea, Produtor } from '../api/mock';
 import { MapaTalhao } from '../types/mapa';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
+import {
+  filtrarLimitesPorFazendaIds,
+  filtrarProdutoresPorAcesso,
+  findFazendaById,
+  getFazendaIds,
+} from '../utils/acessoControle';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -182,18 +188,18 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
       // Busca nome do produtor se não foi passado
       if (!produtorNomeParam && produtorId) {
-        const prod = produtores.find((p: any) => p.id === produtorId);
+        const prod = findFazendaById(produtores, produtorId);
         if (prod) setProdutorNome(prod.nome);
       }
 
       // Filtra por produtor (ou todos se admin sem filtro)
       let limitesFiltrados: any[] = limites;
       if (produtorId) {
-        limitesFiltrados = limites.filter((l: any) => l.produtor_id === produtorId);
+        limitesFiltrados = filtrarLimitesPorFazendaIds(limites, [produtorId]);
       } else if (user?.perfil !== 'admin') {
         // Colaborador/produtor — filtra pelo usuário
         const idsPermitidos = obterIdsPermitidos(user, produtores);
-        limitesFiltrados = limites.filter((l: any) => idsPermitidos.includes(l.produtor_id));
+        limitesFiltrados = filtrarLimitesPorFazendaIds(limites, idsPermitidos);
       }
 
       setTodosLimites(limitesFiltrados);
@@ -644,22 +650,8 @@ const ELEMENTOS_CONFIG = [
 // HELPER — IDs permitidos por perfil
 // ─────────────────────────────────────────────────────────────
 function obterIdsPermitidos(user: any, produtores: any[]): string[] {
-  if (!user) return produtores.map((p) => p.id);
-  if (user.perfil === 'colaborador') {
-    return produtores
-      .filter((p) => {
-        if (user.regiao === p.regiao) return true;
-        if (user.sub_regioes && p.microregiao) return user.sub_regioes.includes(p.microregiao);
-        return false;
-      })
-      .map((p) => p.id);
-  }
-  if (user.perfil === 'produtor') {
-    return produtores
-      .filter((p) => p.proprietario_id === user.produtor_id || p.id === user.produtor_id)
-      .map((p) => p.id);
-  }
-  return produtores.map((p) => p.id);
+  if (!user) return getFazendaIds(produtores);
+  return getFazendaIds(filtrarProdutoresPorAcesso(produtores, user));
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@
     "src/api/validators.ts",
     "src/api/mockCompat.ts",
     "src/api/produtorCompat.ts",
-    "src/api/mock.ts"
+    "src/api/mock.ts",
+    "src/utils/acessoControle.ts"
   ]
 }

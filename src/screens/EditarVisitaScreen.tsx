@@ -18,6 +18,7 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { filtrarProdutoresPorAcesso, getFazendaId } from '../utils/acessoControle';
 
 export default function EditarVisitaScreen() {
   const route = useRoute<any>();
@@ -63,7 +64,7 @@ export default function EditarVisitaScreen() {
 
       // Preencher formulário com dados da visita
       if (visitaData) {
-        setProdutorId(visitaData.produtor_id || '');
+        setProdutorId(visitaData.fazenda_id || visitaData.produtor_id || '');
         
         const dataVisitaObj = new Date(visitaData.data_visita);
         setDataVisita(dataVisitaObj);
@@ -90,21 +91,7 @@ export default function EditarVisitaScreen() {
         }
       }
 
-      // Filtrar produtores por perfil
-      let filtrados = produtoresData;
-      if (user?.perfil === 'colaborador') {
-        // Colaborador: produtores das suas sub-regiões
-        filtrados = produtoresData.filter(p => {
-          if (user.sub_regioes && p.microregiao) {
-            return user.sub_regioes.includes(p.microregiao);
-          }
-          return false;
-        });
-      } else if (user?.perfil === 'produtor') {
-        filtrados = produtoresData.filter(p => 
-          p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-        );
-      }
+      const filtrados = user ? filtrarProdutoresPorAcesso(produtoresData, user) : produtoresData;
 
       setProdutores(filtrados);
     } catch (error) {
@@ -153,7 +140,7 @@ export default function EditarVisitaScreen() {
       dataCompleta.setMinutes(horaVisita.getMinutes());
 
       const visitaAtualizada = {
-        produtor_id: produtorId,
+        fazenda_id: produtorId,
         data_visita: dataCompleta.toISOString(),
         objetivo,
         observacoes,
@@ -195,7 +182,7 @@ export default function EditarVisitaScreen() {
   ];
 
   const getProdutorNome = (id) => {
-    const prod = produtores.find(p => p.id === id);
+    const prod = produtores.find(p => getFazendaId(p) === id);
     return prod ? `${prod.nome} - ${prod.fazenda}` : 'Selecione um produtor';
   };
 
@@ -273,20 +260,20 @@ export default function EditarVisitaScreen() {
               <ScrollView style={styles.dropdown} nestedScrollEnabled>
                 {produtores.map(prod => (
                   <TouchableOpacity
-                    key={prod.id}
+                    key={getFazendaId(prod)}
                     style={[
                       styles.dropdownItem,
-                      produtorId === prod.id && styles.dropdownItemSelected
+                      produtorId === getFazendaId(prod) && styles.dropdownItemSelected
                     ]}
                     onPress={() => {
-                      setProdutorId(prod.id);
+                      setProdutorId(getFazendaId(prod));
                       setShowProdutorPicker(false);
                       setErrors(prev => ({ ...prev, produtorId: null }));
                     }}
                   >
                     <Text style={[
                       styles.dropdownItemText,
-                      produtorId === prod.id && styles.dropdownItemTextSelected
+                      produtorId === getFazendaId(prod) && styles.dropdownItemTextSelected
                     ]}>
                       {prod.nome}
                     </Text>

@@ -21,6 +21,11 @@ import { Mapa, Produtor, LimiteArea } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
+import {
+  filtrarLimitesPorFazendaIds,
+  filtrarMapasPorFazendaIds,
+  filtrarProdutoresPorAcesso,
+} from '../utils/acessoControle';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -47,7 +52,7 @@ const CATEGORIAS = [
 export default function MapasScreen({ route, navigation }) {
   const toast = useToast();
   const { user } = useAuth();
-  const { getProdutorIdsFiltrados, filtros } = useFiltros();
+  const { getFazendaIdsFiltrados, filtros } = useFiltros();
   const produtorId = route?.params?.produtorId;
 
   // Estado geral
@@ -97,50 +102,29 @@ export default function MapasScreen({ route, navigation }) {
     if (produtorId) {
       return [produtorId];
     }
-    
-    if (user?.perfil === 'admin') {
-      return getProdutorIdsFiltrados(todosProdutores);
-    }
-    
-    if (user?.perfil === 'colaborador') {
-      const produtoresRegiao = todosProdutores.filter(p => {
-        if (user.regiao === p.regiao) return true;
-        if (user.sub_regioes && p.microregiao) return user.sub_regioes.includes(p.microregiao);
-        return false;
-      });
-      return produtoresRegiao.map(p => p.id);
-    }
-    
-    if (user?.perfil === 'produtor') {
-      const minhasFazendas = todosProdutores.filter(p =>
-        p.proprietario_id === user.produtor_id || p.id === user.produtor_id
-      );
-      return minhasFazendas.map(p => p.id);
-    }
-    
-    return todosProdutores.map(p => p.id);
+
+    const produtoresComAcesso = user
+      ? filtrarProdutoresPorAcesso(todosProdutores, user)
+      : todosProdutores;
+
+    return getFazendaIdsFiltrados(produtoresComAcesso);
   };
 
   const loadMapas = async () => {
     const todosMapas = await Mapa.list();
     const idsPermitidos = await getProdutoresPermitidos();
-    
-    let mapasFiltrados;
-    if (user?.perfil === 'produtor') {
-      mapasFiltrados = todosMapas.filter(m => 
-        idsPermitidos.includes(m.produtor_id) && m.disponivel_download
-      );
-    } else {
-      mapasFiltrados = todosMapas.filter(m => idsPermitidos.includes(m.produtor_id));
-    }
-    
+
+    const mapasFiltrados = filtrarMapasPorFazendaIds(todosMapas, idsPermitidos, {
+      somenteDisponiveisDownload: user?.perfil === 'produtor',
+    });
+
     setMapas(mapasFiltrados);
   };
 
   const loadLimites = async () => {
     const todosLimites = await LimiteArea.list();
     const idsPermitidos = await getProdutoresPermitidos();
-    const limitesFiltrados = todosLimites.filter(l => idsPermitidos.includes(l.produtor_id));
+    const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
     setLimites(limitesFiltrados);
     
     const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));

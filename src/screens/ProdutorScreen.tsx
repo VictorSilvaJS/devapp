@@ -29,8 +29,8 @@ export default function ProdutorScreen({ route, navigation }) {
         setLoading(true);
         const [p, v, m] = await Promise.all([
           Produtor.get(id),
-          Visita.filter({ produtor_id: id }),
-          Mapa.filter({ produtor_id: id })
+          Visita.filter({ fazenda_id: id }),
+          Mapa.filter({ fazenda_id: id })
         ]);
         // animar mudanças locais
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

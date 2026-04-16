@@ -50,8 +50,9 @@ export default function VisitaDetailScreen() {
       const visitaData = await Visita.get(visitaId);
       setVisita(visitaData);
 
-      if (visitaData?.produtor_id) {
-        const produtorData = await Produtor.get(visitaData.produtor_id);
+      const fazendaId = visitaData?.fazenda_id || visitaData?.produtor_id;
+      if (fazendaId) {
+        const produtorData = await Produtor.get(fazendaId);
         setProdutor(produtorData);
       }
     } catch (error) {
