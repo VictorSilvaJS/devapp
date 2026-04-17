@@ -1,3 +1,8 @@
+import type {
+  FazendaMapaRouteParams,
+  MapasRouteParams,
+} from '../navigation/mapaRouteCompat';
+
 export {};
 
 declare global {
@@ -7,7 +12,7 @@ declare global {
       Login: undefined;
       Main: undefined;
       ProdutorDetail: { id: string } | undefined;
-      Mapas: { produtorId?: string } | undefined;
+      Mapas: MapasRouteParams | undefined;
       NovoProdutor: undefined;
       EditarProdutor: { id: string } | undefined;
       NovaVisita: undefined;
@@ -15,7 +20,7 @@ declare global {
       EditarVisita: { id?: string; visitaId?: string } | undefined;
       Notificacoes: undefined;
       EditProfile: undefined;
-      FazendaMapa: { produtorId?: string; produtorNome?: string; fazendaNome?: string; talhaoId?: string } | undefined;
+      FazendaMapa: FazendaMapaRouteParams | undefined;
       Home: undefined;
       Produtores: undefined;
       Visitas: undefined;

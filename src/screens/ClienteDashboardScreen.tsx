@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Header from '../components/Header';
 import StatCard from '../components/StatCard';
 import { Produtor, Mapa, Visita, CadernoCampo } from '../api/mock';
+import { buildMapasRouteParams } from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, shadows, border } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -152,6 +153,9 @@ export default function ClienteDashboardScreen() {
   const culturas = [...new Set(propriedadesExibidas.map(p => p.cultura_atual).filter(Boolean))];
   const mapasCategorizados = agruparMapasPorCategoria(mapasFiltrados);
   const primeiraFazenda = propriedadesExibidas[0] || propriedades[0];
+  const mapasRouteParams = buildMapasRouteParams({
+    fazendaId: primeiraFazenda ? getFazendaId(primeiraFazenda) : undefined,
+  });
 
   return (
     <View style={styles.container}>
@@ -293,7 +297,7 @@ export default function ClienteDashboardScreen() {
             <Text style={styles.secaoTitulo}>Mapas da Propriedade</Text>
             {mapas.length > 0 && (
               <TouchableOpacity 
-                onPress={() => navigation.navigate('Mapas', { produtorId: primeiraFazenda.id })}
+                onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
               >
                 <Text style={styles.verTodosLink}>Ver todos</Text>
               </TouchableOpacity>
@@ -315,7 +319,7 @@ export default function ClienteDashboardScreen() {
                 <TouchableOpacity
                   key={index}
                   style={styles.categoriaCard}
-                  onPress={() => navigation.navigate('Mapas', { produtorId: primeiraFazenda.id })}
+                  onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
                 >
                   <View style={styles.categoriaIconContainer}>
                     <Ionicons name={cat.icon} size={32} color={colors.primary} />

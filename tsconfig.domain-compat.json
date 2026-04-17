@@ -18,6 +18,7 @@
     "src/api/produtorCompat.ts",
     "src/api/mock.ts",
     "src/api/mapaSyncEndpoints.ts",
+    "src/navigation/mapaRouteCompat.ts",
     "src/utils/acessoControle.ts",
     "src/services/mapaOfflineCompat.ts",
     "src/services/MapaSincronizacaoService.ts",

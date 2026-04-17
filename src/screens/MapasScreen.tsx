@@ -18,6 +18,10 @@ import ShapeRenderer from '../components/ShapeRenderer';
 import TalhaoDetailModal from '../components/TalhaoDetailModal';
 import { useToast } from '../components/Toast';
 import { Mapa, Produtor, LimiteArea } from '../api/mock';
+import {
+  buildFazendaMapaRouteParams,
+  resolveRouteFazendaId,
+} from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
@@ -53,7 +57,7 @@ export default function MapasScreen({ route, navigation }) {
   const toast = useToast();
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros } = useFiltros();
-  const produtorId = route?.params?.produtorId;
+  const fazendaId = resolveRouteFazendaId(route?.params);
 
   // Estado geral
   const [abaAtiva, setAbaAtiva] = useState('mapas');
@@ -83,7 +87,7 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   useEffect(() => {
     loadDados();
-  }, [produtorId, filtros]);
+  }, [fazendaId, filtros]);
 
   const loadDados = async () => {
     setLoading(true);
@@ -96,11 +100,11 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const getProdutoresPermitidos = async () => {
+  const getFazendaIdsPermitidos = async () => {
     const todosProdutores = await Produtor.list();
     
-    if (produtorId) {
-      return [produtorId];
+    if (fazendaId) {
+      return [fazendaId];
     }
 
     const produtoresComAcesso = user
@@ -112,7 +116,7 @@ export default function MapasScreen({ route, navigation }) {
 
   const loadMapas = async () => {
     const todosMapas = await Mapa.list();
-    const idsPermitidos = await getProdutoresPermitidos();
+    const idsPermitidos = await getFazendaIdsPermitidos();
 
     const mapasFiltrados = filtrarMapasPorFazendaIds(todosMapas, idsPermitidos, {
       somenteDisponiveisDownload: user?.perfil === 'produtor',
@@ -123,7 +127,7 @@ export default function MapasScreen({ route, navigation }) {
 
   const loadLimites = async () => {
     const todosLimites = await LimiteArea.list();
-    const idsPermitidos = await getProdutoresPermitidos();
+    const idsPermitidos = await getFazendaIdsPermitidos();
     const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
     setLimites(limitesFiltrados);
     
@@ -658,12 +662,12 @@ export default function MapasScreen({ route, navigation }) {
           <TouchableOpacity
             style={styles.btnMapaSatelite}
             onPress={() =>
-              navigation.navigate('FazendaMapa', {
-                produtorId: produtorId || undefined,
-                fazendaNome: produtorId
-                  ? undefined
-                  : undefined,
-              })
+              navigation.navigate(
+                'FazendaMapa',
+                buildFazendaMapaRouteParams({
+                  fazendaId,
+                })
+              )
             }
             activeOpacity={0.8}
           >

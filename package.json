@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js && node tests/validatorsCompat.test.js && node tests/mockCompat.test.js && node tests/produtorFazendaCompat.test.js && node tests/acessoControleCompat.test.js && node tests/mapaOfflineCompat.test.js"
+    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js && node tests/validatorsCompat.test.js && node tests/mockCompat.test.js && node tests/produtorFazendaCompat.test.js && node tests/acessoControleCompat.test.js && node tests/mapaOfflineCompat.test.js && node tests/mapaRouteCompat.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",

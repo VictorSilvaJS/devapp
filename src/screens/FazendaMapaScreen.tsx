@@ -23,6 +23,7 @@ import MapaFazendaNativoView, {
   MapaFazendaNativoViewRef,
 } from '../components/MapaFazendaNativoView';
 import { LimiteArea, Produtor } from '../api/mock';
+import { resolveRouteFazendaId } from '../navigation/mapaRouteCompat';
 import { MapaTalhao } from '../types/mapa';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -152,7 +153,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const { user } = useAuth();
 
   // Params da rota
-  const produtorId: string | undefined = route?.params?.produtorId;
+  const fazendaId: string | undefined = resolveRouteFazendaId(route?.params);
   const produtorNomeParam: string | undefined = route?.params?.produtorNome;
   const fazendaNome: string | undefined = route?.params?.fazendaNome;
   const talhaoIdInicial: string | undefined = route?.params?.talhaoId;
@@ -176,7 +177,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   // ── Carregamento de dados ────────────────────────────────────
   useEffect(() => {
     carregarDados();
-  }, [produtorId]);
+  }, [fazendaId]);
 
   const carregarDados = async () => {
     setCarregando(true);
@@ -187,15 +188,15 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       ]);
 
       // Busca nome do produtor se não foi passado
-      if (!produtorNomeParam && produtorId) {
-        const prod = findFazendaById(produtores, produtorId);
+      if (!produtorNomeParam && fazendaId) {
+        const prod = findFazendaById(produtores, fazendaId);
         if (prod) setProdutorNome(prod.nome);
       }
 
       // Filtra por produtor (ou todos se admin sem filtro)
       let limitesFiltrados: any[] = limites;
-      if (produtorId) {
-        limitesFiltrados = filtrarLimitesPorFazendaIds(limites, [produtorId]);
+      if (fazendaId) {
+        limitesFiltrados = filtrarLimitesPorFazendaIds(limites, [fazendaId]);
       } else if (user?.perfil !== 'admin') {
         // Colaborador/produtor — filtra pelo usuário
         const idsPermitidos = obterIdsPermitidos(user, produtores);

@@ -6,7 +6,9 @@ import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa } from '../api/mock';
+import { buildMapasRouteParams } from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, border, shadows } from '../theme';
+import { getFazendaId } from '../utils/acessoControle';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -107,6 +109,10 @@ export default function ProdutorScreen({ route, navigation }) {
       </View>
     );
   }
+
+  const mapasRouteParams = buildMapasRouteParams({
+    fazendaId: getFazendaId(produtor),
+  });
 
   return (
     <View style={styles.container}>
@@ -358,7 +364,7 @@ export default function ProdutorScreen({ route, navigation }) {
               <Text style={styles.sectionTitle}>Mapas da Lavoura</Text>
               <TouchableOpacity 
                 style={styles.verTodosButton}
-                onPress={() => navigation.navigate('Mapas', { produtorId: produtor.id })}
+                onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
               >
                 <Text style={styles.verTodosText}>Ver Todos</Text>
                 <Ionicons name="chevron-forward-outline" size={16} color={colors.primary} />
@@ -417,7 +423,7 @@ export default function ProdutorScreen({ route, navigation }) {
               {mapas.length > 3 && (
                 <TouchableOpacity 
                   style={styles.verMaisButton}
-                  onPress={() => navigation.navigate('Mapas', { produtorId: produtor.id })}
+                  onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
                 >
                   <Text style={styles.verMaisText}>
                     Ver mais {mapas.length - 3} mapas
