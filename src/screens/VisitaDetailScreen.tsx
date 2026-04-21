@@ -18,6 +18,7 @@ import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { getVisitaFazendaId } from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -30,7 +31,7 @@ export default function VisitaDetailScreen() {
   const { visitaId } = route.params || {};
 
   const [visita, setVisita] = useState(null);
-  const [produtor, setProdutor] = useState(null);
+  const [fazenda, setFazenda] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -53,8 +54,8 @@ export default function VisitaDetailScreen() {
 
       const fazendaId = getVisitaFazendaId(visitaData);
       if (fazendaId) {
-        const produtorData = await Produtor.get(fazendaId);
-        setProdutor(produtorData);
+        const fazendaData = await Produtor.get(fazendaId);
+        setFazenda(fazendaData);
       }
     } catch (error) {
       console.error('Erro ao carregar visita:', error);
@@ -207,6 +208,8 @@ export default function VisitaDetailScreen() {
     );
   }
 
+  const fazendaInfo = fazenda ? getFazendaUiInfo(fazenda) : null;
+
   return (
     <View style={styles.container}>
       <Header title="Detalhes da Visita" showBack />
@@ -223,22 +226,22 @@ export default function VisitaDetailScreen() {
           </View>
         </View>
 
-        {/* Informações do Produtor */}
-        {produtor && (
+        {/* Informações da Fazenda */}
+        {fazenda && fazendaInfo && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
-              <Text style={styles.cardTitle}>Produtor</Text>
+              <Ionicons name="home-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Fazenda</Text>
             </View>
             <TouchableOpacity
-              style={styles.produtorInfo}
-              onPress={() => navigation.navigate('ProdutorDetail', { id: produtor.id })}
+              style={styles.fazendaInfo}
+              onPress={() => navigation.navigate('ProdutorDetail', { id: fazenda.id })}
             >
-              <View style={styles.produtorDetails}>
-                <Text style={styles.produtorNome}>{produtor.nome}</Text>
-                <Text style={styles.produtorSubtext}>{produtor.fazenda}</Text>
-                <Text style={styles.produtorSubtext}>
-                  {produtor.cidade}/{produtor.estado}
+              <View style={styles.fazendaDetails}>
+                <Text style={styles.fazendaNome}>{fazendaInfo.fazendaNome}</Text>
+                <Text style={styles.fazendaSubtext}>{fazendaInfo.titularNome}</Text>
+                <Text style={styles.fazendaSubtext}>
+                  {fazendaInfo.localizacao}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.muted} />
@@ -492,21 +495,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  produtorInfo: {
+  fazendaInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  produtorDetails: {
+  fazendaDetails: {
     flex: 1,
   },
-  produtorNome: {
+  fazendaNome: {
     fontSize: typography.fontBody,
     fontWeight: '700',
     color: colors.text,
     marginBottom: spacing.xs,
   },
-  produtorSubtext: {
+  fazendaSubtext: {
     fontSize: typography.fontSmall,
     color: colors.muted,
     marginBottom: 2,

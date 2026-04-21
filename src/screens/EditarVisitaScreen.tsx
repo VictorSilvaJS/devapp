@@ -51,12 +51,12 @@ export default function EditarVisitaScreen() {
   // Estados de controle
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [produtores, setProdutores] = useState([]);
+  const [fazendas, setFazendas] = useState([]);
   const [errors, setErrors] = useState<any>({});
 
   // Dropdown
   const [showFazendaPicker, setShowFazendaPicker] = useState(false);
-  const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(produtores), [produtores]);
+  const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(fazendas), [fazendas]);
   const fazendaSelecionada = useMemo(
     () => findVisitaFazendaOption(fazendaOptions, fazendaId),
     [fazendaOptions, fazendaId]
@@ -69,7 +69,7 @@ export default function EditarVisitaScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [visitaData, produtoresData] = await Promise.all([
+      const [visitaData, fazendasDisponiveis] = await Promise.all([
         Visita.get(visitaId),
         Produtor.list(),
       ]);
@@ -103,9 +103,9 @@ export default function EditarVisitaScreen() {
         }
       }
 
-      const filtrados = user ? filtrarProdutoresPorAcesso(produtoresData, user) : produtoresData;
+      const fazendasFiltradas = user ? filtrarProdutoresPorAcesso(fazendasDisponiveis, user) : fazendasDisponiveis;
 
-      setProdutores(filtrados);
+      setFazendas(fazendasFiltradas);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast.showError('Erro ao carregar visita');
@@ -119,7 +119,7 @@ export default function EditarVisitaScreen() {
     const newErrors: any = {};
 
     if (!fazendaId) {
-      newErrors.fazendaId = 'Selecione um produtor';
+      newErrors.fazendaId = 'Selecione uma fazenda';
     }
 
     if (!dataVisita) {
@@ -238,10 +238,10 @@ export default function EditarVisitaScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Produtor */}
+        {/* Fazenda */}
         <View style={styles.field}>
           <Text style={styles.label}>
-            Produtor <Text style={styles.required}>*</Text>
+            Fazenda <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
             style={[styles.picker, errors.fazendaId && styles.inputError]}
@@ -282,10 +282,10 @@ export default function EditarVisitaScreen() {
                       styles.dropdownItemText,
                       fazendaId === fazenda.id && styles.dropdownItemTextSelected
                     ]}>
-                      {fazenda.produtorNome}
+                      {fazenda.fazendaNome}
                     </Text>
                     <Text style={styles.dropdownItemSubtext}>
-                      {fazenda.fazendaNome} - {fazenda.cidade}/{fazenda.estado}
+                      {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -406,7 +406,7 @@ export default function EditarVisitaScreen() {
             style={[styles.textarea, styles.input]}
             value={recomendacoes}
             onChangeText={setRecomendacoes}
-            placeholder="Recomendações para o produtor..."
+            placeholder="Recomendações técnicas para a fazenda..."
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}

@@ -8,7 +8,7 @@ import {
 export type VisitaFazendaOption = {
   id: string;
   fazendaNome: string;
-  produtorNome: string;
+  titularNome: string;
   cidade?: string;
   estado?: string;
 };
@@ -31,7 +31,7 @@ export const buildVisitaFazendaOptions = (fazendas: any[] = []): VisitaFazendaOp
   (fazendas || []).map((fazenda) => ({
     id: getFazendaId(fazenda),
     fazendaNome: getNomeFazenda(fazenda),
-    produtorNome: getNomeTitularFazenda(fazenda),
+    titularNome: getNomeTitularFazenda(fazenda),
     cidade: fazenda?.cidade,
     estado: fazenda?.estado,
   }));
@@ -45,13 +45,13 @@ export const getVisitaFormFazendaId = (visita: any): string => getVisitaFazendaI
 
 export const getVisitaFormFazendaLabel = (
   option?: VisitaFazendaOption | null,
-  emptyLabel = 'Selecione um produtor'
+  emptyLabel = 'Selecione uma fazenda'
 ): string => {
   if (!option) {
     return emptyLabel;
   }
 
-  return `${option.produtorNome} - ${option.fazendaNome}`;
+  return [option.fazendaNome, option.titularNome].filter(Boolean).join(' - ');
 };
 
 export const combineVisitaDateTime = (

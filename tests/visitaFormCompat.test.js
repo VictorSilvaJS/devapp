@@ -36,8 +36,8 @@ const run = async () => {
     assert.deepEqual(options, [
       {
         id: 'faz_01',
-        produtorNome: 'João Silva',
         fazendaNome: 'Fazenda Horizonte',
+        titularNome: 'João Silva',
         cidade: 'Rio Verde',
         estado: 'GO',
       },
@@ -54,14 +54,14 @@ const run = async () => {
       [
         {
           id: 'faz_10',
-          produtorNome: 'Maria Souza',
           fazendaNome: 'Estância Boa Vista',
+          titularNome: 'Maria Souza',
         },
       ],
       'faz_10'
     );
 
-    assert.equal(getVisitaFormFazendaLabel(option), 'Maria Souza - Estância Boa Vista');
+    assert.equal(getVisitaFormFazendaLabel(option), 'Estância Boa Vista - Maria Souza');
   });
 
   await test('combineVisitaDateTime junta data e hora sem depender da tela', () => {

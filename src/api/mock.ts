@@ -1857,9 +1857,16 @@ export const LimiteArea: any = {
       res(result);
     }, 200));
   },
-  getByProdutor: async (produtorId) => {
+  getByFazenda: async (fazendaId) => {
     return new Promise((res) => setTimeout(() => {
-      const result = filterMockLimitesArea(limitesArea, { fazenda_id: produtorId });
+      const result = filterMockLimitesArea(limitesArea, { fazenda_id: fazendaId });
+      res(result);
+    }, 200));
+  },
+  getByProdutor: async (fazendaId) => {
+    return new Promise((res) => setTimeout(() => {
+      // Alias legado mantido enquanto consumidores antigos ainda pedem "produtor".
+      const result = filterMockLimitesArea(limitesArea, { fazenda_id: fazendaId });
       res(result);
     }, 200));
   },

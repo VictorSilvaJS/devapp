@@ -26,6 +26,7 @@ import {
   getFazendaId,
   getFazendaIds,
 } from '../utils/acessoControle';
+import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -34,12 +35,12 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function CadernoCampoScreen() {
   const [registros, setRegistros] = useState([]);
-  const [produtores, setProdutores] = useState([]);
+  const [fazendas, setFazendas] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const { user } = useAuth();
-  const { getFazendaIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
+  const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
 
   useEffect(() => { load(); }, [filtros]);
   
@@ -48,34 +49,34 @@ export default function CadernoCampoScreen() {
     try {
       // Simula lógica de permissões por perfil
       let registrosData = [];
-      let produtoresData = [];
+      let fazendasData = [];
 
       if (user?.perfil === 'admin') {
         // Admin vê tudo com filtros aplicados
-        const [todosRegistros, todosProdutores] = await Promise.all([
+        const [todosRegistros, fazendasBrutas] = await Promise.all([
           CadernoCampo.list(),
           Produtor.list()
         ]);
         
         // Aplicar filtros regionais
-        const fazendaIdsFiltrados = getFazendaIdsFiltrados(todosProdutores);
+        const fazendaIdsFiltrados = getFazendaIdsFiltrados(fazendasBrutas);
         registrosData = filtrarCadernosPorFazendaIds(todosRegistros, fazendaIdsFiltrados);
-        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
+        fazendasData = fazendasBrutas.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
       } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
-        const [todosRegistros, todosProdutores] = await Promise.all([
+        const [todosRegistros, fazendasBrutas] = await Promise.all([
           CadernoCampo.list(),
           Produtor.list()
         ]);
 
-        const produtoresComAcesso = filtrarProdutoresPorAcesso(todosProdutores, user);
-        produtoresData = filtrarProdutores(produtoresComAcesso);
-        const idsFiltrados = getFazendaIds(produtoresData);
+        const fazendasComAcesso = filtrarProdutoresPorAcesso(fazendasBrutas, user);
+        fazendasData = filtrarFazendas(fazendasComAcesso);
+        const idsFiltrados = getFazendaIds(fazendasData);
         registrosData = filtrarCadernosPorFazendaIds(todosRegistros, idsFiltrados, {
           somenteVisivelParaProdutor: user?.perfil === 'produtor',
         });
       } else {
         // Sem usuário, carrega tudo (fallback)
-        [registrosData, produtoresData] = await Promise.all([
+        [registrosData, fazendasData] = await Promise.all([
           CadernoCampo.list(),
           Produtor.list()
         ]);
@@ -83,7 +84,7 @@ export default function CadernoCampoScreen() {
 
       try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
       setRegistros(registrosData);
-      setProdutores(produtoresData);
+      setFazendas(fazendasData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -97,19 +98,16 @@ export default function CadernoCampoScreen() {
     setRefreshing(false);
   };
 
-  const getProd = (fazendaId) => findFazendaById(produtores, fazendaId) || {};
+  const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};
 
   // Filtro de busca
   const registrosFiltrados = registros.filter(registro => {
-    if (!busca) return true;
-    const produtor = getProd(getCadernoFazendaId(registro));
-    const buscaLower = busca.toLowerCase();
-    return (
-      produtor.nome?.toLowerCase().includes(buscaLower) ||
-      registro.tipo_atividade?.toLowerCase().includes(buscaLower) ||
-      registro.talhao?.toLowerCase().includes(buscaLower) ||
-      registro.colaborador_responsavel?.toLowerCase().includes(buscaLower)
-    );
+    const fazenda = getFazenda(getCadernoFazendaId(registro));
+    return matchesFazendaUiBusca(fazenda, busca, [
+      registro.tipo_atividade,
+      registro.talhao,
+      registro.colaborador_responsavel,
+    ]);
   });
 
   // Cores para tipos de atividade
@@ -142,7 +140,7 @@ export default function CadernoCampoScreen() {
           <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por produtor, atividade ou talhão..."
+            placeholder="Buscar por fazenda, atividade ou talhão..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -190,7 +188,8 @@ export default function CadernoCampoScreen() {
           </View>
         ) : (
           registrosFiltrados.map(reg => {
-            const produtor = getProd(getCadernoFazendaId(reg));
+            const fazenda = getFazenda(getCadernoFazendaId(reg));
+            const fazendaInfo = getFazendaUiInfo(fazenda);
             const tipoColor = getTipoColor(reg.tipo_atividade);
             
             return (
@@ -203,10 +202,10 @@ export default function CadernoCampoScreen() {
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>
-                        {produtor.nome || 'Produtor não encontrado'}
+                        {fazendaInfo.fazendaNome || 'Fazenda não encontrada'}
                       </Text>
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
-                        {reg.talhao}
+                        {fazendaInfo.titularNome || reg.talhao}
                       </Text>
                     </View>
                   </View>

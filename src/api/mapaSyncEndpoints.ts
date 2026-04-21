@@ -227,7 +227,7 @@ export const MapasPorFazenda = {
 };
 
 export const MapasPorProdutor = {
-  get: async (produtorId: string): Promise<MapaFazendaResponse> => MapasPorFazenda.get(produtorId),
+  get: async (fazendaId: string): Promise<MapaFazendaResponse> => MapasPorFazenda.get(fazendaId),
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -275,11 +275,13 @@ export const Mapa = {
 
   // Dados
   obterPorFazenda: (fazendaId: string) => MapasPorFazenda.get(fazendaId),
-  obterPorProdutor: (produtorId: string) => MapasPorProdutor.get(produtorId),
+  // Wrappers legados publicos: manter temporariamente enquanto a UI ainda
+  // convive com aliases historicos baseados em produtor.
+  obterPorProdutor: (fazendaId: string) => MapasPorProdutor.get(fazendaId),
 
   // Validação
   validarChecksumFazenda: (fazendaId: string, checksum: string) => MapasValidate.post(fazendaId, checksum),
-  validarChecksum: (produtorId: string, checksum: string) => MapasValidate.post(produtorId, checksum),
+  validarChecksum: (fazendaId: string, checksum: string) => MapasValidate.post(fazendaId, checksum),
 
   // ─── Método de conveniência: sincronizar E baixar tiles ───
   sincronizarCompleto: async (fazendaId: string, ultimaSincronizacao?: number) => {

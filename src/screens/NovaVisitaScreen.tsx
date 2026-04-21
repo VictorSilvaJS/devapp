@@ -46,39 +46,39 @@ export default function NovaVisitaScreen() {
 
   // Estados de controle
   const [loading, setLoading] = useState(false);
-  const [produtores, setProdutores] = useState([]);
-  const [loadingProdutores, setLoadingProdutores] = useState(true);
+  const [fazendas, setFazendas] = useState([]);
+  const [loadingFazendas, setLoadingFazendas] = useState(true);
   const [errors, setErrors] = useState<any>({});
 
   // Dropdown de fazendas
   const [showFazendaPicker, setShowFazendaPicker] = useState(false);
-  const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(produtores), [produtores]);
+  const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(fazendas), [fazendas]);
   const fazendaSelecionada = useMemo(
     () => findVisitaFazendaOption(fazendaOptions, fazendaId),
     [fazendaOptions, fazendaId]
   );
 
   useEffect(() => {
-    loadProdutores();
+    loadFazendas();
   }, []);
 
-  const loadProdutores = async () => {
-    setLoadingProdutores(true);
+  const loadFazendas = async () => {
+    setLoadingFazendas(true);
     try {
-      const data = await Produtor.list();
+      const fazendasDisponiveis = await Produtor.list();
 
-      const filtrados = user ? filtrarProdutoresPorAcesso(data, user) : data;
+      const fazendasFiltradas = user ? filtrarProdutoresPorAcesso(fazendasDisponiveis, user) : fazendasDisponiveis;
 
-      if (user?.perfil === 'produtor' && filtrados.length > 0) {
-        setFazendaId(buildVisitaFazendaOptions(filtrados)[0]?.id || '');
+      if (user?.perfil === 'produtor' && fazendasFiltradas.length > 0) {
+        setFazendaId(buildVisitaFazendaOptions(fazendasFiltradas)[0]?.id || '');
       }
       
-      setProdutores(filtrados);
+      setFazendas(fazendasFiltradas);
     } catch (error) {
-      console.error('Erro ao carregar produtores:', error);
-      toast.showError('Erro ao carregar produtores');
+      console.error('Erro ao carregar fazendas:', error);
+      toast.showError('Erro ao carregar fazendas');
     } finally {
-      setLoadingProdutores(false);
+      setLoadingFazendas(false);
     }
   };
 
@@ -86,7 +86,7 @@ export default function NovaVisitaScreen() {
     const newErrors: any = {};
 
     if (!fazendaId) {
-      newErrors.fazendaId = 'Selecione um produtor';
+      newErrors.fazendaId = 'Selecione uma fazenda';
     }
 
     if (!dataVisita) {
@@ -188,10 +188,10 @@ export default function NovaVisitaScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Produtor */}
+        {/* Fazenda */}
         <View style={styles.field}>
           <Text style={styles.label}>
-            Produtor <Text style={styles.required}>*</Text>
+            Fazenda <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
             style={[styles.picker, errors.fazendaId && styles.inputError]}
@@ -199,7 +199,7 @@ export default function NovaVisitaScreen() {
             disabled={user?.perfil === 'produtor'}
           >
             <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
-              {loadingProdutores ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
+              {loadingFazendas ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
             </Text>
             <Ionicons 
               name={showFazendaPicker ? 'chevron-up' : 'chevron-down'} 
@@ -232,10 +232,10 @@ export default function NovaVisitaScreen() {
                       styles.dropdownItemText,
                       fazendaId === fazenda.id && styles.dropdownItemTextSelected
                     ]}>
-                      {fazenda.produtorNome}
+                      {fazenda.fazendaNome}
                     </Text>
                     <Text style={styles.dropdownItemSubtext}>
-                      {fazenda.fazendaNome} - {fazenda.cidade}/{fazenda.estado}
+                      {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -328,7 +328,7 @@ export default function NovaVisitaScreen() {
             style={[styles.textarea, styles.input]}
             value={recomendacoes}
             onChangeText={setRecomendacoes}
-            placeholder="Recomendações para o produtor..."
+            placeholder="Recomendações técnicas para a fazenda..."
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}

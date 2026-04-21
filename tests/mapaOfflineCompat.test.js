@@ -139,12 +139,17 @@ const run = async () => {
     });
 
     const respostaMapas = await Mapa.obterPorFazenda(SELA_DEPRATA_1_PRODUTOR_ID);
+    const respostaMapasLegada = await Mapa.obterPorProdutor(SELA_DEPRATA_1_PRODUTOR_ID);
+    const checksumLegado = await Mapa.validarChecksum(SELA_DEPRATA_1_PRODUTOR_ID, 'abc123');
 
     assert.ok(respostaSync.mapas_atualizados.length > 0);
     assert.equal(respostaSync.mapas_atualizados[0].fazenda_id, SELA_DEPRATA_1_PRODUTOR_ID);
     assert.equal(respostaSync.mapas_atualizados[0].produtor_id, SELA_DEPRATA_1_PRODUTOR_ID);
     assert.equal(respostaMapas.fazenda_id, SELA_DEPRATA_1_PRODUTOR_ID);
     assert.equal(respostaMapas.produtor_id, SELA_DEPRATA_1_PRODUTOR_ID);
+    assert.equal(respostaMapasLegada.fazenda_id, SELA_DEPRATA_1_PRODUTOR_ID);
+    assert.equal(respostaMapasLegada.produtor_id, SELA_DEPRATA_1_PRODUTOR_ID);
+    assert.equal(checksumLegado.valido, true);
   });
 
   if (failed > 0) {

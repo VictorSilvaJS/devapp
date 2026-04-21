@@ -170,14 +170,13 @@ export class MapaSincronizacaoService {
     }
   }
 
-  /**
-   * Wrapper legado preservado enquanto o nome público ainda não migrou.
-   */
+  // Wrappers legados publicos: manter temporariamente enquanto consumidores
+  // externos ainda chamam a semantica antiga de produtor para contexto de fazenda.
   async sincronizarProdutorMapas(
-    produtorId: string,
+    fazendaId: string,
     onProgress?: (progresso: number) => void
   ): Promise<{ talhoes_atualizados: MapaTalhao[]; talhoes_removidos: string[] }> {
-    return this.sincronizarFazendaMapas(produtorId, onProgress);
+    return this.sincronizarFazendaMapas(fazendaId, onProgress);
   }
 
   /**
@@ -200,8 +199,8 @@ export class MapaSincronizacaoService {
     return estado.update_disponivel || false;
   }
 
-  async verificarUpdateTalhao(produtorId: string, talhaoId: string): Promise<boolean> {
-    return this.verificarUpdateTalhaoFazenda(produtorId, talhaoId);
+  async verificarUpdateTalhao(fazendaId: string, talhaoId: string): Promise<boolean> {
+    return this.verificarUpdateTalhaoFazenda(fazendaId, talhaoId);
   }
 
   /**
@@ -213,8 +212,8 @@ export class MapaSincronizacaoService {
     await this.sincronizarFazendaMapas(fazendaId);
   }
 
-  async forceSincronizar(produtorId: string): Promise<void> {
-    await this.forceSincronizarFazenda(produtorId);
+  async forceSincronizar(fazendaId: string): Promise<void> {
+    await this.forceSincronizarFazenda(fazendaId);
   }
 
   /**
@@ -224,8 +223,8 @@ export class MapaSincronizacaoService {
     return this.estadoLocal.get(buildScopedMapKey(fazendaId, talhaoId)) || null;
   }
 
-  obterEstadoLocal(produtorId: string, talhaoId: string): EstadoMapaLocal | null {
-    return this.obterEstadoLocalFazenda(produtorId, talhaoId);
+  obterEstadoLocal(fazendaId: string, talhaoId: string): EstadoMapaLocal | null {
+    return this.obterEstadoLocalFazenda(fazendaId, talhaoId);
   }
 
   /**
@@ -238,8 +237,8 @@ export class MapaSincronizacaoService {
     return Array.from(this.logsLocal.values()).filter(log => log.fazenda_id === fazendaId);
   }
 
-  obterLogs(produtorId?: string): LogSincronizacao[] {
-    return this.obterLogsFazenda(produtorId);
+  obterLogs(fazendaId?: string): LogSincronizacao[] {
+    return this.obterLogsFazenda(fazendaId);
   }
 
   /**

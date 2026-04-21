@@ -536,7 +536,7 @@ export default function MapasScreen({ route, navigation }) {
               {busca 
                 ? 'Tente ajustar sua busca, categoria ou filtro de ano'
                 : categoriaAtiva === 'todos' 
-                  ? 'Ainda não há mapas cadastrados para este produtor.'
+                  ? 'Ainda não há mapas cadastrados para esta fazenda.'
                   : 'Não há mapas nesta categoria no momento.'}
             </Text>
           </View>

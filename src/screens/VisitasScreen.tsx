@@ -30,6 +30,7 @@ import {
   getFazendaIds,
   getVisitaFazendaId,
 } from '../utils/acessoControle';
+import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -39,17 +40,17 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function VisitasScreen() {
   const navigation = useNavigation();
   const [visitas, setVisitas] = useState([]);
-  const [produtores, setProdutores] = useState([]);
+  const [fazendas, setFazendas] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
   const [filtroData, setFiltroData] = useState('todos'); // todos, hoje, semana, mes
-  const [ordenacao, setOrdenacao] = useState('data'); // data, produtor, status
+  const [ordenacao, setOrdenacao] = useState('data'); // data, fazenda, status
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const { user } = useAuth();
-  const { getFazendaIdsFiltrados, filtros, filtrarProdutores } = useFiltros();
+  const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
 
   useEffect(() => { load(); }, [filtros]);
   
@@ -65,32 +66,32 @@ export default function VisitasScreen() {
     try {
       // Simula lógica de permissões por perfil
       let visitasData = [];
-      let produtoresData = [];
+      let fazendasData = [];
 
       if (user?.perfil === 'admin') {
         // Admin vê tudo com filtros aplicados
-        const [todasVisitas, todosProdutores] = await Promise.all([
+        const [todasVisitas, fazendasBrutas] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
         
         // Aplicar filtros regionais
-        const fazendaIdsFiltrados = getFazendaIdsFiltrados(todosProdutores);
+        const fazendaIdsFiltrados = getFazendaIdsFiltrados(fazendasBrutas);
         visitasData = filtrarVisitasPorFazendaIds(todasVisitas, fazendaIdsFiltrados);
-        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
+        fazendasData = fazendasBrutas.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
       } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
-        const [todasVisitas, todosProdutores] = await Promise.all([
+        const [todasVisitas, fazendasBrutas] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
 
-        const produtoresComAcesso = filtrarProdutoresPorAcesso(todosProdutores, user);
-        produtoresData = filtrarProdutores(produtoresComAcesso);
-        const idsFiltrados = getFazendaIds(produtoresData);
+        const fazendasComAcesso = filtrarProdutoresPorAcesso(fazendasBrutas, user);
+        fazendasData = filtrarFazendas(fazendasComAcesso);
+        const idsFiltrados = getFazendaIds(fazendasData);
         visitasData = filtrarVisitasPorFazendaIds(todasVisitas, idsFiltrados);
       } else {
         // Sem usuário, carrega tudo (fallback)
-        [visitasData, produtoresData] = await Promise.all([
+        [visitasData, fazendasData] = await Promise.all([
           Visita.list(),
           Produtor.list()
         ]);
@@ -98,7 +99,7 @@ export default function VisitasScreen() {
 
       try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
       setVisitas(visitasData);
-      setProdutores(produtoresData);
+      setFazendas(fazendasData);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -112,7 +113,7 @@ export default function VisitasScreen() {
     setRefreshing(false);
   };
 
-  const getProd = (fazendaId) => findFazendaById(produtores, fazendaId) || {};
+  const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};
 
   // Função para filtrar por data
   const filtrarPorData = (visita) => {
@@ -147,14 +148,13 @@ export default function VisitasScreen() {
 
   // Filtro de busca e filtros combinados
   const visitasFiltradas = visitas.filter(visita => {
-    const produtor = getProd(getVisitaFazendaId(visita));
-    const buscaLower = busca.toLowerCase();
-    
-    const matchBusca = !busca || 
-      produtor.nome?.toLowerCase().includes(buscaLower) ||
-      visita.objetivo?.toLowerCase().includes(buscaLower) ||
-      visita.tecnico_responsavel?.toLowerCase().includes(buscaLower) ||
-      visita.status?.toLowerCase().includes(buscaLower);
+    const fazenda = getFazenda(getVisitaFazendaId(visita));
+
+    const matchBusca = matchesFazendaUiBusca(fazenda, busca, [
+      visita.objetivo,
+      visita.tecnico_responsavel,
+      visita.status,
+    ]);
     
     const matchStatus = filtroStatus === 'todos' || visita.status === filtroStatus;
     const matchData = filtrarPorData(visita);
@@ -164,10 +164,10 @@ export default function VisitasScreen() {
     // Aplicar ordenação
     if (ordenacao === 'data') {
       return new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime();
-    } else if (ordenacao === 'produtor') {
-      const prodA = getProd(getVisitaFazendaId(a));
-      const prodB = getProd(getVisitaFazendaId(b));
-      return (prodA.nome || '').localeCompare(prodB.nome || '');
+    } else if (ordenacao === 'fazenda' || ordenacao === 'produtor') {
+      const fazendaA = getFazendaUiInfo(getFazenda(getVisitaFazendaId(a)));
+      const fazendaB = getFazendaUiInfo(getFazenda(getVisitaFazendaId(b)));
+      return (fazendaA.fazendaNome || '').localeCompare(fazendaB.fazendaNome || '');
     } else if (ordenacao === 'status') {
       const statusOrder = { agendada: 0, realizada: 1, cancelada: 2 };
       return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
@@ -236,7 +236,7 @@ export default function VisitasScreen() {
       filtros.push({ tipo: 'data', label: dataLabels[filtroData], remover: () => setFiltroData('todos') });
     }
     if (ordenacao !== 'data') {
-      const ordenacaoLabels = { produtor: 'Por Produtor', status: 'Por Status' };
+      const ordenacaoLabels = { fazenda: 'Por Fazenda', produtor: 'Por Fazenda', status: 'Por Status' };
       filtros.push({ tipo: 'ordenacao', label: ordenacaoLabels[ordenacao], remover: () => setOrdenacao('data') });
     }
     return filtros;
@@ -261,7 +261,7 @@ export default function VisitasScreen() {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Buscar por produtor, objetivo ou técnico..."
+              placeholder="Buscar por fazenda, objetivo ou técnico..."
               placeholderTextColor={colors.muted}
               value={busca}
               onChangeText={setBusca}
@@ -427,7 +427,8 @@ export default function VisitasScreen() {
           </View>
         ) : (
           visitasFiltradas.map(visita => {
-            const produtor = getProd(getVisitaFazendaId(visita));
+            const fazenda = getFazenda(getVisitaFazendaId(visita));
+            const fazendaInfo = getFazendaUiInfo(fazenda);
             const objetivoColor = getObjetivoColor(visita.objetivo);
             const statusColor = getStatusColor(visita.status);
             const objetivoIcon = getObjetivoIcon(visita.objetivo);
@@ -447,10 +448,10 @@ export default function VisitasScreen() {
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>
-                        {produtor.nome || 'Produtor não encontrado'}
+                        {fazendaInfo.fazendaNome || 'Fazenda não encontrada'}
                       </Text>
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
-                        {produtor.fazenda}
+                        {fazendaInfo.titularNome || fazendaInfo.localizacao}
                       </Text>
                     </View>
                   </View>
@@ -662,7 +663,7 @@ export default function VisitasScreen() {
               <View style={styles.chipsContainer}>
                 {[
                   { key: 'data', label: 'Data', icon: 'calendar-outline' },
-                  { key: 'produtor', label: 'Produtor', icon: 'person-outline' },
+                  { key: 'fazenda', label: 'Fazenda', icon: 'home-outline' },
                   { key: 'status', label: 'Status', icon: 'flag-outline' }
                 ].map((item) => (
                   <TouchableOpacity

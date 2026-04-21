@@ -134,7 +134,7 @@ const run = async () => {
     assert.equal(limite.produtor_id, 'p1');
   });
 
-  await test('LimiteArea.create e getByProdutor continuam funcionando com contrato canônico', async () => {
+  await test('LimiteArea.create aceita contrato canônico e expõe aliases de leitura compatíveis', async () => {
     const limite = await LimiteArea.create({
       nome: 'LT 2026 - Talhão Z',
       ano: 2026,
@@ -147,8 +147,11 @@ const run = async () => {
     assert.equal(limite.fazenda_id, 'p6');
     assert.equal(limite.produtor_id, 'p6');
 
-    const encontrados = await LimiteArea.getByProdutor('p6');
-    assert.ok(encontrados.some((item) => item.id === limite.id));
+    const encontradosCanonicos = await LimiteArea.getByFazenda('p6');
+    const encontradosLegados = await LimiteArea.getByProdutor('p6');
+
+    assert.ok(encontradosCanonicos.some((item) => item.id === limite.id));
+    assert.ok(encontradosLegados.some((item) => item.id === limite.id));
   });
 
   if (failed > 0) {

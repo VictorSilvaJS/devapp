@@ -116,8 +116,10 @@ export class MapaCacheService {
     }
   }
 
-  async salvarTalhao(talhao: MapaTalhao, produtorId: string): Promise<void> {
-    await this.salvarTalhaoFazenda(talhao, produtorId);
+  // Wrappers legados publicos: manter temporariamente enquanto a superficie
+  // externa ainda expor nomes antigos baseados em produtor.
+  async salvarTalhao(talhao: MapaTalhao, fazendaId: string): Promise<void> {
+    await this.salvarTalhaoFazenda(talhao, fazendaId);
   }
 
   /**
@@ -139,8 +141,8 @@ export class MapaCacheService {
     }
   }
 
-  async obterTalhao(produtorId: string, talhaoId: string): Promise<MapaTalhao | null> {
-    return this.obterTalhaoFazenda(produtorId, talhaoId);
+  async obterTalhao(fazendaId: string, talhaoId: string): Promise<MapaTalhao | null> {
+    return this.obterTalhaoFazenda(fazendaId, talhaoId);
   }
 
   /**
@@ -162,13 +164,13 @@ export class MapaCacheService {
 
       return talhoes;
     } catch (erro) {
-      console.error(`[MapaCache] Erro ao listar talhões do produtor:`, erro);
+      console.error(`[MapaCache] Erro ao listar talhões da fazenda:`, erro);
       return [];
     }
   }
 
-  async obterTalhoesProdutorCache(produtorId: string): Promise<MapaTalhao[]> {
-    return this.obterTalhoesFazendaCache(produtorId);
+  async obterTalhoesProdutorCache(fazendaId: string): Promise<MapaTalhao[]> {
+    return this.obterTalhoesFazendaCache(fazendaId);
   }
 
   /**
@@ -191,8 +193,8 @@ export class MapaCacheService {
     }
   }
 
-  async removerTalhao(produtorId: string, talhaoId: string): Promise<void> {
-    await this.removerTalhaoFazenda(produtorId, talhaoId);
+  async removerTalhao(fazendaId: string, talhaoId: string): Promise<void> {
+    await this.removerTalhaoFazenda(fazendaId, talhaoId);
   }
 
   /**
@@ -226,8 +228,8 @@ export class MapaCacheService {
     }
   }
 
-  async obterMetadadosTiles(produtorId: string, talhaoId: string): Promise<CacheTilesSatelite | null> {
-    return this.obterMetadadosTilesFazenda(produtorId, talhaoId);
+  async obterMetadadosTiles(fazendaId: string, talhaoId: string): Promise<CacheTilesSatelite | null> {
+    return this.obterMetadadosTilesFazenda(fazendaId, talhaoId);
   }
 
   /**
@@ -295,8 +297,8 @@ export class MapaCacheService {
     }
   }
 
-  async exportarDadosProdutor(produtorId: string): Promise<string> {
-    return this.exportarDadosFazenda(produtorId);
+  async exportarDadosProdutor(fazendaId: string): Promise<string> {
+    return this.exportarDadosFazenda(fazendaId);
   }
 
   /**
