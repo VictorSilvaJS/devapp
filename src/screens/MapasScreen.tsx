@@ -26,10 +26,15 @@ import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
 import {
+  avaliarAcessoFazendaPorId,
   filtrarLimitesPorFazendaIds,
   filtrarMapasPorFazendaIds,
   filtrarProdutoresPorAcesso,
+  getFazendaId,
+  getLimiteAreaFazendaId,
+  getMapaFazendaId,
 } from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -63,6 +68,12 @@ export default function MapasScreen({ route, navigation }) {
   const [abaAtiva, setAbaAtiva] = useState('mapas');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
+  const [contextoConsulta, setContextoConsulta] = useState<any>({
+    tipo: 'geral',
+    fazenda: null,
+    fazendasPermitidas: [],
+  });
 
   // Estado aba MAPAS
   const [mapas, setMapas] = useState([]);
@@ -87,54 +98,78 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   useEffect(() => {
     loadDados();
-  }, [fazendaId, filtros]);
+  }, [fazendaId, filtros, user]);
 
   const loadDados = async () => {
     setLoading(true);
+    setEstadoBloqueio(null);
     try {
-      await Promise.all([loadMapas(), loadLimites()]);
+      const todosProdutores = await Produtor.list();
+      const fazendasComAcesso = user
+        ? filtrarProdutoresPorAcesso(todosProdutores, user)
+        : [];
+
+      let idsPermitidos = [];
+      let fazendasNoContexto = fazendasComAcesso;
+      let fazendaContexto = null;
+
+      if (fazendaId) {
+        const avaliacao = avaliarAcessoFazendaPorId(todosProdutores, user, fazendaId);
+
+        if (avaliacao.status !== 'permitido') {
+          setEstadoBloqueio(avaliacao.status);
+          setContextoConsulta({
+            tipo: 'fazenda',
+            fazenda: null,
+            fazendasPermitidas: fazendasComAcesso,
+          });
+          setMapas([]);
+          setLimites([]);
+          setAnosDisponiveis([]);
+          setAnoFiltroLimite(null);
+          return;
+        }
+
+        fazendaContexto = avaliacao.fazenda;
+        fazendasNoContexto = [fazendaContexto];
+        idsPermitidos = [avaliacao.fazendaId];
+      } else {
+        idsPermitidos = getFazendaIdsFiltrados(fazendasComAcesso);
+        const idsSet = new Set(idsPermitidos);
+        fazendasNoContexto = fazendasComAcesso.filter((fazenda) =>
+          idsSet.has(getFazendaId(fazenda))
+        );
+      }
+
+      setContextoConsulta({
+        tipo: fazendaId ? 'fazenda' : 'geral',
+        fazenda: fazendaContexto,
+        fazendasPermitidas: fazendasNoContexto,
+      });
+
+      const [todosMapas, todosLimites] = await Promise.all([
+        Mapa.list(),
+        LimiteArea.list(),
+      ]);
+
+      const mapasFiltrados = filtrarMapasPorFazendaIds(todosMapas, idsPermitidos, {
+        somenteDisponiveisDownload: user?.perfil === 'produtor',
+      });
+      const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
+
+      setMapas(mapasFiltrados);
+      setLimites(limitesFiltrados);
+
+      const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));
+      setAnosDisponiveis(anos);
+      setAnoFiltroLimite((anoAtual) => {
+        if (anos.length === 0) return null;
+        return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
+      });
     } catch (error) {
       toast.showError('Não foi possível carregar os dados');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getFazendaIdsPermitidos = async () => {
-    const todosProdutores = await Produtor.list();
-    
-    if (fazendaId) {
-      return [fazendaId];
-    }
-
-    const produtoresComAcesso = user
-      ? filtrarProdutoresPorAcesso(todosProdutores, user)
-      : todosProdutores;
-
-    return getFazendaIdsFiltrados(produtoresComAcesso);
-  };
-
-  const loadMapas = async () => {
-    const todosMapas = await Mapa.list();
-    const idsPermitidos = await getFazendaIdsPermitidos();
-
-    const mapasFiltrados = filtrarMapasPorFazendaIds(todosMapas, idsPermitidos, {
-      somenteDisponiveisDownload: user?.perfil === 'produtor',
-    });
-
-    setMapas(mapasFiltrados);
-  };
-
-  const loadLimites = async () => {
-    const todosLimites = await LimiteArea.list();
-    const idsPermitidos = await getFazendaIdsPermitidos();
-    const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
-    setLimites(limitesFiltrados);
-    
-    const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));
-    setAnosDisponiveis(anos);
-    if (anos.length > 0 && !anoFiltroLimite) {
-      setAnoFiltroLimite(anos[0]); // selecionar o ano mais recente
     }
   };
 
@@ -238,6 +273,36 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
+  const consultaPorFazenda = contextoConsulta.tipo === 'fazenda' && contextoConsulta.fazenda;
+  const fazendaContextoInfo = consultaPorFazenda ? getFazendaUiInfo(contextoConsulta.fazenda) : null;
+  const tituloTela = consultaPorFazenda ? 'Mapas da Fazenda' : 'Mapas & Limites';
+  const contextoTitulo = fazendaContextoInfo?.fazendaNome || 'Visão geral de mapas e limites';
+  const contextoSubtitulo = fazendaContextoInfo
+    ? [
+        fazendaContextoInfo.titularNome ? `Titular: ${fazendaContextoInfo.titularNome}` : null,
+        fazendaContextoInfo.localizacao,
+      ].filter(Boolean).join(' • ')
+    : `${contextoConsulta.fazendasPermitidas.length} fazenda${contextoConsulta.fazendasPermitidas.length !== 1 ? 's' : ''} no escopo atual`;
+  const fazendaInfoPorId = useMemo<Map<string, any>>(() => {
+    const entries = (contextoConsulta.fazendasPermitidas || []).map((fazenda) => {
+      const info = getFazendaUiInfo(fazenda);
+      return [info.id, info];
+    });
+    return new Map(entries);
+  }, [contextoConsulta.fazendasPermitidas]);
+
+  const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
+    ? {
+        icon: 'lock-closed-outline',
+        title: 'Acesso negado',
+        text: 'Esta fazenda não está disponível no seu escopo de acesso.',
+      }
+    : {
+        icon: 'alert-circle-outline',
+        title: 'Fazenda não encontrada',
+        text: 'Não foi possível localizar a fazenda informada para consultar mapas e limites.',
+      };
+
   // ──────────────────────────────────────────────
   // FORMATADORES
   // ──────────────────────────────────────────────
@@ -268,13 +333,18 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   // RENDER: Card de Mapa
   // ──────────────────────────────────────────────
-  const renderMapaCard = (mapa) => (
-    <TouchableOpacity 
-      key={mapa.id} 
-      style={styles.mapaCard}
-      onPress={() => handleDownload(mapa)}
-      activeOpacity={0.7}
-    >
+  const renderMapaCard = (mapa) => {
+    const fazendaMapaInfo = !consultaPorFazenda
+      ? fazendaInfoPorId.get(getMapaFazendaId(mapa))
+      : null;
+
+    return (
+      <TouchableOpacity 
+        key={mapa.id} 
+        style={styles.mapaCard}
+        onPress={() => handleDownload(mapa)}
+        activeOpacity={0.7}
+      >
       <View style={styles.mapaHeader}>
         <View style={styles.mapaIconContainer}>
           <Ionicons 
@@ -287,6 +357,11 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.mapaTitulo} numberOfLines={2}>{mapa.titulo}</Text>
           {mapa.subcategoria && (
             <Text style={styles.mapaSubcategoria}>{mapa.subcategoria}</Text>
+          )}
+          {fazendaMapaInfo && (
+            <Text style={styles.mapaContexto} numberOfLines={1}>
+              {fazendaMapaInfo.fazendaNome} • {fazendaMapaInfo.titularNome || 'Titular não informado'}
+            </Text>
           )}
           <View style={styles.mapaDetalhes}>
             <Text style={styles.mapaDetalhe}>
@@ -320,26 +395,37 @@ export default function MapasScreen({ route, navigation }) {
         )}
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   // ──────────────────────────────────────────────
   // RENDER: Card de Talhão (Lista Limite)
   // ──────────────────────────────────────────────
-  const renderTalhaoCard = (talhao) => (
-    <TouchableOpacity
-      key={talhao.id}
-      style={[
-        styles.talhaoCard,
-        selectedTalhao?.id === talhao.id && styles.talhaoCardSelected
-      ]}
-      onPress={() => handleTalhaoPress(talhao)}
-      activeOpacity={0.7}
-    >
+  const renderTalhaoCard = (talhao) => {
+    const fazendaTalhaoInfo = !consultaPorFazenda
+      ? fazendaInfoPorId.get(getLimiteAreaFazendaId(talhao))
+      : null;
+
+    return (
+      <TouchableOpacity
+        key={talhao.id}
+        style={[
+          styles.talhaoCard,
+          selectedTalhao?.id === talhao.id && styles.talhaoCardSelected
+        ]}
+        onPress={() => handleTalhaoPress(talhao)}
+        activeOpacity={0.7}
+      >
       <View style={styles.talhaoCardHeader}>
         <View style={[styles.talhaoColorBar, { backgroundColor: talhao.cor || colors.primary }]} />
         <View style={styles.talhaoCardInfo}>
           <Text style={styles.talhaoCardNome}>{talhao.talhao}</Text>
           <Text style={styles.talhaoCardSub}>{talhao.nome}</Text>
+          {fazendaTalhaoInfo && (
+            <Text style={styles.talhaoCardContexto} numberOfLines={1}>
+              {fazendaTalhaoInfo.fazendaNome} • {fazendaTalhaoInfo.titularNome || 'Titular não informado'}
+            </Text>
+          )}
         </View>
         <View style={styles.talhaoCardRight}>
           <Text style={styles.talhaoCardArea}>{talhao.area_hectares} ha</Text>
@@ -368,7 +454,8 @@ export default function MapasScreen({ route, navigation }) {
         )}
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   // ──────────────────────────────────────────────
   // RENDER: ABA MAPAS
@@ -665,7 +752,9 @@ export default function MapasScreen({ route, navigation }) {
               navigation.navigate(
                 'FazendaMapa',
                 buildFazendaMapaRouteParams({
-                  fazendaId,
+                  fazendaId: fazendaContextoInfo?.id,
+                  fazendaNome: fazendaContextoInfo?.fazendaNome,
+                  titularNome: fazendaContextoInfo?.titularNome,
                 })
               )
             }
@@ -736,7 +825,7 @@ export default function MapasScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Mapas & Limites" showBack onBack={() => navigation.goBack()} />
+        <Header title={tituloTela} showBack onBack={() => navigation.goBack()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Carregando dados...</Text>
@@ -745,9 +834,46 @@ export default function MapasScreen({ route, navigation }) {
     );
   }
 
+  if (estadoBloqueio) {
+    return (
+      <View style={styles.container}>
+        <Header title="Mapas & Limites" showBack onBack={() => navigation.goBack()} />
+        <View style={styles.blockedContainer}>
+          <Ionicons name={mensagemBloqueio.icon as any} size={64} color={colors.muted} />
+          <Text style={styles.blockedTitle}>{mensagemBloqueio.title}</Text>
+          <Text style={styles.blockedText}>{mensagemBloqueio.text}</Text>
+          <TouchableOpacity style={styles.blockedButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.blockedButtonText}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Header title="Mapas & Limites" showBack onBack={() => navigation.goBack()} />
+      <Header title={tituloTela} showBack onBack={() => navigation.goBack()} />
+
+      <View style={styles.contextoContainer}>
+        <View style={styles.contextoIcon}>
+          <Ionicons
+            name={consultaPorFazenda ? 'home-outline' : 'globe-outline'}
+            size={20}
+            color={colors.primary}
+          />
+        </View>
+        <View style={styles.contextoTextos}>
+          <Text style={styles.contextoLabel}>
+            {consultaPorFazenda ? 'Consulta por fazenda' : 'Visão geral'}
+          </Text>
+          <Text style={styles.contextoTitulo} numberOfLines={1}>
+            {contextoTitulo}
+          </Text>
+          <Text style={styles.contextoSubtitulo} numberOfLines={1}>
+            {contextoSubtitulo}
+          </Text>
+        </View>
+      </View>
       
       {/* Abas Principais */}
       <View style={styles.tabContainer}>
@@ -910,8 +1036,80 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     color: colors.muted,
   },
+  blockedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  blockedTitle: {
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  blockedText: {
+    fontSize: typography.fontBody,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginTop: spacing.sm,
+  },
+  blockedButton: {
+    backgroundColor: colors.primary,
+    borderRadius: spacing.radius,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    marginTop: spacing.lg,
+  },
+  blockedButtonText: {
+    color: colors.white,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+  },
   scrollContent: {
     flex: 1,
+  },
+
+  // ── CONTEXTO ──
+  contextoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing.md,
+  },
+  contextoIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contextoTextos: {
+    flex: 1,
+    minWidth: 0,
+  },
+  contextoLabel: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold,
+    marginBottom: 2,
+  },
+  contextoTitulo: {
+    fontSize: typography.fontBody,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+  },
+  contextoSubtitulo: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    marginTop: 2,
   },
 
   // ── ABAS ──
@@ -1406,6 +1604,12 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     marginBottom: 3,
   },
+  mapaContexto: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
+    marginBottom: 3,
+  },
   mapaDetalhes: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1532,6 +1736,11 @@ const styles = StyleSheet.create({
   talhaoCardSub: {
     fontSize: typography.fontCaption,
     color: colors.muted,
+    marginTop: 1,
+  },
+  talhaoCardContexto: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
     marginTop: 1,
   },
   talhaoCardRight: {

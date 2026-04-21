@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  avaliarAcessoFazendaPorId,
   filtrarCadernosPorAcesso,
   filtrarMapasPorAcesso,
   filtrarProdutoresPorAcesso,
@@ -134,6 +135,21 @@ const run = async () => {
     assert.equal(temAcessoProdutor(colaboradorUser, fazendaPropria), true);
     assert.equal(temAcessoProdutor(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(temAcessoProdutor(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('avaliarAcessoFazendaPorId valida rota de fazenda contra escopo do usuário', () => {
+    const acessoProdutor = avaliarAcessoFazendaPorId(fazendasBase, produtorUser, 'fz1');
+    const acessoColaboradorForaEscopo = avaliarAcessoFazendaPorId(fazendasBase, colaboradorUser, 'fz2');
+    const acessoAdmin = avaliarAcessoFazendaPorId(fazendasBase, adminUser, 'fz2');
+    const fazendaInexistente = avaliarAcessoFazendaPorId(fazendasBase, adminUser, 'fz999');
+
+    assert.equal(acessoProdutor.status, 'permitido');
+    assert.equal(acessoProdutor.fazendaId, 'fz1');
+    assert.equal(acessoColaboradorForaEscopo.status, 'acesso_negado');
+    assert.equal(acessoAdmin.status, 'permitido');
+    assert.equal(acessoAdmin.fazendaId, 'fz2');
+    assert.equal(fazendaInexistente.status, 'fazenda_nao_encontrada');
+    assert.equal(fazendaInexistente.fazenda, null);
   });
 
   await test('podeEditarProdutor e podeExcluirProdutor bloqueiam produtor e colaborador fora do escopo', () => {

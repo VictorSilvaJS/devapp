@@ -125,6 +125,42 @@ export const findFazendaById = (fazendas, fazendaId) => {
   return fazendas.find((fazenda) => getFazendaId(fazenda) === fazendaId) || null;
 };
 
+export const avaliarAcessoFazendaPorId = (fazendas, user, fazendaId) => {
+  const idNormalizado = firstNonEmptyString(fazendaId);
+
+  if (!idNormalizado) {
+    return {
+      status: 'fazenda_nao_encontrada',
+      fazenda: null,
+      fazendaId: '',
+    };
+  }
+
+  const fazenda = findFazendaById(fazendas, idNormalizado);
+
+  if (!fazenda) {
+    return {
+      status: 'fazenda_nao_encontrada',
+      fazenda: null,
+      fazendaId: idNormalizado,
+    };
+  }
+
+  if (!temAcessoProdutor(user, fazenda)) {
+    return {
+      status: 'acesso_negado',
+      fazenda,
+      fazendaId: getFazendaId(fazenda),
+    };
+  }
+
+  return {
+    status: 'permitido',
+    fazenda,
+    fazendaId: getFazendaId(fazenda),
+  };
+};
+
 export const fazendaPertenceAoTitular = (fazenda, titularIdOrUser) => {
   const titularId =
     typeof titularIdOrUser === 'string'

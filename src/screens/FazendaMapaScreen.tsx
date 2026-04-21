@@ -28,9 +28,9 @@ import { MapaTalhao } from '../types/mapa';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import {
+  avaliarAcessoFazendaPorId,
   filtrarLimitesPorFazendaIds,
   filtrarProdutoresPorAcesso,
-  findFazendaById,
   getFazendaIds,
   getNomeFazenda,
   getNomeTitularFazenda,
@@ -172,6 +172,8 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [listaExpandida, setListaExpandida] = useState(false);
   const [titularNome, setTitularNome] = useState(titularNomeParam ?? '');
   const [fazendaNome, setFazendaNome] = useState(fazendaNomeParam ?? '');
+  const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
+  const [fazendasContexto, setFazendasContexto] = useState<any[]>([]);
 
   // Refs
   const mapaRef = useRef<MapaFazendaNativoViewRef>(null);
@@ -180,7 +182,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   // ── Carregamento de dados ────────────────────────────────────
   useEffect(() => {
     carregarDados();
-  }, [fazendaId]);
+  }, [fazendaId, user]);
 
   useEffect(() => {
     setTitularNome(titularNomeParam ?? '');
@@ -192,34 +194,48 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
   const carregarDados = async () => {
     setCarregando(true);
+    setErroConexao(false);
+    setEstadoBloqueio(null);
     try {
-      const [limites, fazendas] = await Promise.all([
-        LimiteArea.list(),
-        Produtor.list(),
-      ]);
+      const fazendas = await Produtor.list();
+      const fazendasComAcesso = user
+        ? filtrarProdutoresPorAcesso(fazendas, user)
+        : [];
+
+      let idsPermitidos = getFazendaIds(fazendasComAcesso);
+      let fazendasNoContexto = fazendasComAcesso;
 
       // Busca metadata semantica da fazenda quando a rota nao informar os nomes.
       if (fazendaId) {
-        const fazendaAtual = findFazendaById(fazendas, fazendaId);
-        if (fazendaAtual) {
-          if (!titularNomeParam) {
-            setTitularNome(getNomeTitularFazenda(fazendaAtual));
-          }
-          if (!fazendaNomeParam) {
-            setFazendaNome(getNomeFazenda(fazendaAtual));
-          }
+        const avaliacao = avaliarAcessoFazendaPorId(fazendas, user, fazendaId);
+
+        if (avaliacao.status !== 'permitido') {
+          setEstadoBloqueio(avaliacao.status);
+          setTodosLimites([]);
+          setAnoSelecionado(null);
+          setFazendasContexto(fazendasComAcesso);
+          return;
         }
+
+        const fazendaAtual = avaliacao.fazenda;
+        idsPermitidos = [avaliacao.fazendaId];
+        fazendasNoContexto = [fazendaAtual];
+
+        if (!titularNomeParam) {
+          setTitularNome(getNomeTitularFazenda(fazendaAtual));
+        }
+        if (!fazendaNomeParam) {
+          setFazendaNome(getNomeFazenda(fazendaAtual));
+        }
+      } else {
+        setTitularNome('');
+        setFazendaNome('');
       }
 
-      // Filtra por produtor (ou todos se admin sem filtro)
-      let limitesFiltrados: any[] = limites;
-      if (fazendaId) {
-        limitesFiltrados = filtrarLimitesPorFazendaIds(limites, [fazendaId]);
-      } else if (user?.perfil !== 'admin') {
-        // Colaborador/produtor — filtra pelo usuário
-        const idsPermitidos = obterIdsPermitidos(user, fazendas);
-        limitesFiltrados = filtrarLimitesPorFazendaIds(limites, idsPermitidos);
-      }
+      setFazendasContexto(fazendasNoContexto);
+
+      const limites = await LimiteArea.list();
+      const limitesFiltrados = filtrarLimitesPorFazendaIds(limites, idsPermitidos);
 
       setTodosLimites(limitesFiltrados);
 
@@ -229,6 +245,8 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       );
       if (anos.length > 0) {
         setAnoSelecionado(anos[0]);
+      } else {
+        setAnoSelecionado(null);
       }
     } catch (err) {
       setErroConexao(true);
@@ -315,7 +333,25 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   }, []);
 
   // ── Título da tela ────────────────────────────────────────────
-  const tituloCabecalho = fazendaNome || titularNome || 'Limites da Fazenda';
+  const consultaPorFazenda = !!fazendaId && !estadoBloqueio;
+  const tituloCabecalho = consultaPorFazenda
+    ? (fazendaNome || 'Limites da Fazenda')
+    : 'Visão geral de limites';
+  const contextoCabecalho = consultaPorFazenda
+    ? `Titular: ${titularNome || 'Não informado'}`
+    : `${fazendasContexto.length} fazenda${fazendasContexto.length !== 1 ? 's' : ''} no escopo`;
+  const resumoTalhoes = `${talhoesExibidos.length} talhão${talhoesExibidos.length !== 1 ? 'es' : ''}  ·  ${fmt(areaTotal)} ha`;
+  const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
+    ? {
+        icon: 'lock-closed-outline',
+        title: 'Acesso negado',
+        text: 'Esta fazenda não está disponível no seu escopo de acesso.',
+      }
+    : {
+        icon: 'alert-circle-outline',
+        title: 'Fazenda não encontrada',
+        text: 'Não foi possível localizar a fazenda informada para visualizar os limites.',
+      };
 
   // ── Estado de Loading ─────────────────────────────────────────
   if (carregando) {
@@ -348,6 +384,23 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
     );
   }
 
+  if (estadoBloqueio) {
+    return (
+      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor="#111" />
+        <TouchableOpacity style={styles.voltarLoading} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color={colors.white} />
+        </TouchableOpacity>
+        <Ionicons name={mensagemBloqueio.icon as any} size={64} color={colors.error} />
+        <Text style={styles.loadingTitulo}>{mensagemBloqueio.title}</Text>
+        <Text style={styles.loadingSubtexto}>{mensagemBloqueio.text}</Text>
+        <TouchableOpacity style={styles.btnTentarNovamente} onPress={() => navigation.goBack()}>
+          <Text style={styles.btnTentarNovamenteTexto}>Voltar</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   // ── Render principal ──────────────────────────────────────────
   return (
     <View style={styles.container}>
@@ -368,11 +421,12 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             <Text style={styles.cabecalhoTitulo} numberOfLines={1}>
               {tituloCabecalho}
             </Text>
-            {anosDisponiveis.length > 0 && (
-              <Text style={styles.cabecalhoSubtitulo}>
-                {talhoesExibidos.length} talhão{talhoesExibidos.length !== 1 ? 'es' : ''}  ·  {fmt(areaTotal)} ha
-              </Text>
-            )}
+            <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
+              {contextoCabecalho}
+            </Text>
+            <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
+              {resumoTalhoes}
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -666,14 +720,6 @@ const ELEMENTOS_CONFIG = [
 ] as const;
 
 // ─────────────────────────────────────────────────────────────
-// HELPER — IDs permitidos por perfil
-// ─────────────────────────────────────────────────────────────
-function obterIdsPermitidos(user: any, produtores: any[]): string[] {
-  if (!user) return getFazendaIds(produtores);
-  return getFazendaIds(filtrarProdutoresPorAcesso(produtores, user));
-}
-
-// ─────────────────────────────────────────────────────────────
 // ESTILOS
 // ─────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
@@ -704,6 +750,20 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     textAlign: 'center',
     marginTop: spacing.md,
+  },
+  loadingTitulo: {
+    color: colors.white,
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
+    textAlign: 'center',
+    marginTop: spacing.md,
+  },
+  loadingSubtexto: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: typography.fontBody,
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: spacing.xl,
   },
   btnTentarNovamente: {
     backgroundColor: colors.primary,
