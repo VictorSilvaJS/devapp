@@ -9,7 +9,8 @@ import {
   TextInput,
   RefreshControl,
   Modal,
-  Dimensions
+  Dimensions,
+  Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -39,6 +40,7 @@ import {
   buildFazendaUiInfoMap,
   getFazendaUiInfo,
 } from '../utils/fazendaUiCompat';
+import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -128,7 +130,11 @@ export default function MapasScreen({ route, navigation }) {
   const [fazendaFiltroOperacional, setFazendaFiltroOperacional] = useState(FILTRO_TODOS);
   const [safraFiltroMapas, setSafraFiltroMapas] = useState(FILTRO_TODOS);
   const [talhaoFiltroMapas, setTalhaoFiltroMapas] = useState(FILTRO_TODOS);
-  const [downloadDialog, setDownloadDialog] = useState({ visible: false, mapa: null });
+  const [downloadDialog, setDownloadDialog] = useState<any>({
+    visible: false,
+    mapa: null,
+    status: null,
+  });
   const [uploadDialog, setUploadDialog] = useState(false);
   const [uploadAno, setUploadAno] = useState(new Date().getFullYear().toString());
 
@@ -351,6 +357,11 @@ export default function MapasScreen({ route, navigation }) {
       .filter(cat => cat.mapas.length > 0);
   }, [mapasFiltrados]);
 
+  const totalMapasComArquivo = useMemo(
+    () => mapasNoContexto.filter((mapa) => avaliarDownloadMapa(mapa).podeAbrir).length,
+    [mapasNoContexto]
+  );
+
   // ──────────────────────────────────────────────
   // FILTROS DA ABA LIMITE
   // ──────────────────────────────────────────────
@@ -393,16 +404,30 @@ export default function MapasScreen({ route, navigation }) {
   // HANDLERS
   // ──────────────────────────────────────────────
   const handleDownload = (mapa) => {
-    if (!mapa.disponivel_download) {
-      toast.showInfo('Este mapa não está disponível para download no momento.');
+    const status = avaliarDownloadMapa(mapa);
+
+    if (!status.podeAbrir) {
+      toast.showInfo(status.descricao);
       return;
     }
-    setDownloadDialog({ visible: true, mapa });
+
+    setDownloadDialog({ visible: true, mapa, status });
   };
 
-  const confirmDownload = () => {
-    setDownloadDialog({ visible: false, mapa: null });
-    toast.showSuccess('Download iniciado! O arquivo será salvo na pasta Downloads.');
+  const confirmDownload = async () => {
+    const status = downloadDialog.status || avaliarDownloadMapa(downloadDialog.mapa);
+    setDownloadDialog({ visible: false, mapa: null, status: null });
+
+    if (!status.podeAbrir || !status.arquivoUrl) {
+      toast.showInfo(status.descricao);
+      return;
+    }
+
+    try {
+      await Linking.openURL(status.arquivoUrl);
+    } catch (error) {
+      toast.showError('Não foi possível abrir o material informado.');
+    }
   };
 
   const handleTalhaoPress = useCallback((talhao) => {
@@ -511,6 +536,7 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   const renderMapaCard = (mapa) => {
     const safraMapa = getMapaSafra(mapa);
+    const statusDownload = avaliarDownloadMapa(mapa);
     const fazendaMapaInfo = !consultaPorFazenda
       ? fazendaInfoPorId.get(getMapaFazendaId(mapa))
       : null;
@@ -519,8 +545,9 @@ export default function MapasScreen({ route, navigation }) {
       <TouchableOpacity 
         key={mapa.id} 
         style={styles.mapaCard}
-        onPress={() => handleDownload(mapa)}
-        activeOpacity={0.7}
+        onPress={statusDownload.podeAbrir ? () => handleDownload(mapa) : undefined}
+        disabled={!statusDownload.podeAbrir}
+        activeOpacity={statusDownload.podeAbrir ? 0.7 : 1}
       >
       <View style={styles.mapaHeader}>
         <View style={styles.mapaIconContainer}>
@@ -569,13 +596,28 @@ export default function MapasScreen({ route, navigation }) {
         {mapa.tamanho_arquivo && (
           <Text style={styles.mapaTamanho}>{formatarTamanho(mapa.tamanho_arquivo)}</Text>
         )}
-        {mapa.disponivel_download && (
-          <View style={styles.downloadIndicator}>
-            <Ionicons name="download-outline" size={16} color={colors.success} />
-            <Text style={styles.downloadTexto}>Disponível</Text>
-          </View>
-        )}
+        <View style={[
+          styles.downloadIndicator,
+          statusDownload.podeAbrir ? styles.downloadIndicatorDisponivel : styles.downloadIndicatorIndisponivel,
+        ]}>
+          <Ionicons
+            name={statusDownload.podeAbrir ? 'open-outline' : 'alert-circle-outline'}
+            size={16}
+            color={statusDownload.podeAbrir ? colors.success : colors.warning}
+          />
+          <Text style={[
+            styles.downloadTexto,
+            !statusDownload.podeAbrir && styles.downloadTextoIndisponivel,
+          ]}>
+            {statusDownload.label}
+          </Text>
+        </View>
       </View>
+      {!statusDownload.podeAbrir && (
+        <Text style={styles.materialIndisponivelTexto}>
+          {statusDownload.descricao}
+        </Text>
+      )}
     </TouchableOpacity>
     );
   };
@@ -839,8 +881,8 @@ export default function MapasScreen({ route, navigation }) {
             <Text style={styles.statLabel}>No contexto</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumero}>{mapasNoContexto.filter(m => m.disponivel_download).length}</Text>
-            <Text style={styles.statLabel}>Disponíveis</Text>
+            <Text style={styles.statNumero}>{totalMapasComArquivo}</Text>
+            <Text style={styles.statLabel}>Com arquivo</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statNumero}>{mapasFiltrados.length}</Text>
@@ -1233,18 +1275,18 @@ export default function MapasScreen({ route, navigation }) {
       {/* Conteúdo da aba ativa */}
       {abaAtiva === 'mapas' ? renderAbaMapas() : renderAbaLimite()}
 
-      {/* Dialog de Download */}
+      {/* Dialog de abertura de material */}
       <ConfirmDialog
         visible={downloadDialog.visible}
-        title="Download"
+        title="Abrir material"
         message={downloadDialog.mapa 
-          ? `Deseja baixar o mapa "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'PDF'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}` 
+          ? `Abrir o material "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'PDF'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}\nOrigem: ${downloadDialog.status?.arquivoUrl || 'URL não informada'}` 
           : ''}
         type="info"
-        confirmText="Baixar"
+        confirmText="Abrir"
         cancelText="Cancelar"
         onConfirm={confirmDownload}
-        onCancel={() => setDownloadDialog({ visible: false, mapa: null })}
+        onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
       />
 
       {/* Modal de Upload com Data */}
@@ -1995,11 +2037,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+    borderRadius: spacing.radiusSm,
+  },
+  downloadIndicatorDisponivel: {
+    backgroundColor: colors.successBg,
+  },
+  downloadIndicatorIndisponivel: {
+    backgroundColor: colors.amberLight,
   },
   downloadTexto: {
     fontSize: typography.fontCaption,
     color: colors.success,
     fontWeight: typography.weightSemibold,
+  },
+  downloadTextoIndisponivel: {
+    color: colors.warning,
+  },
+  materialIndisponivelTexto: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 18,
+    marginTop: spacing.sm,
   },
 
   // ── SHAPE SECTION ──
