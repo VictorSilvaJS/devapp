@@ -12,6 +12,28 @@ export type MapaDownloadStatus = {
   descricao: string;
 };
 
+export type MapaArquivoAssociacaoInput = {
+  arquivoUrl?: string;
+  formatoArquivo?: string;
+  tamanhoArquivo?: string | number;
+};
+
+export type MapaArquivoAssociacaoResult =
+  | {
+      ok: true;
+      payload: {
+        arquivo_url: string;
+        formato_arquivo?: string;
+        tamanho_arquivo?: number;
+        disponivel_download: true;
+        disponivel_para_download: true;
+      };
+    }
+  | {
+      ok: false;
+      mensagem: string;
+    };
+
 const URL_SCHEMES_ABRIVEIS = ['http:', 'https:', 'file:', 'content:', 'data:'];
 
 const firstNonEmptyString = (...values: unknown[]): string | undefined => {
@@ -55,6 +77,74 @@ export const isMapaArquivoUrlUsavel = (value?: unknown): boolean => {
   } catch {
     return false;
   }
+};
+
+export const inferFormatoArquivoFromUrl = (value?: unknown): string | undefined => {
+  const arquivoUrl = firstNonEmptyString(value);
+  if (!arquivoUrl) {
+    return undefined;
+  }
+
+  if (arquivoUrl.startsWith('data:')) {
+    const mime = arquivoUrl.match(/^data:([^;,]+)/)?.[1];
+    const subtype = mime?.split('/')[1]?.toLowerCase();
+    return subtype === 'jpeg' ? 'jpg' : subtype;
+  }
+
+  try {
+    const parsed = new URL(arquivoUrl);
+    const pathname = decodeURIComponent(parsed.pathname || '');
+    const extension = pathname.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+    return extension === 'jpeg' ? 'jpg' : extension;
+  } catch {
+    return undefined;
+  }
+};
+
+export const buildMapaArquivoAssociacaoPayload = (
+  input: MapaArquivoAssociacaoInput = {}
+): MapaArquivoAssociacaoResult => {
+  const arquivoUrl = firstNonEmptyString(input.arquivoUrl);
+
+  if (!arquivoUrl) {
+    return {
+      ok: false,
+      mensagem: 'Informe uma URL de arquivo para associar ao mapa.',
+    };
+  }
+
+  if (!isMapaArquivoUrlUsavel(arquivoUrl)) {
+    return {
+      ok: false,
+      mensagem: 'Informe uma URL abrível, como https://, file://, content:// ou data:.',
+    };
+  }
+
+  const tamanhoTexto = typeof input.tamanhoArquivo === 'number'
+    ? String(input.tamanhoArquivo)
+    : firstNonEmptyString(input.tamanhoArquivo);
+  const tamanhoArquivo = tamanhoTexto ? Number(tamanhoTexto) : undefined;
+
+  if (tamanhoTexto && (!Number.isFinite(tamanhoArquivo) || tamanhoArquivo <= 0)) {
+    return {
+      ok: false,
+      mensagem: 'Informe o tamanho em bytes com um número maior que zero ou deixe em branco.',
+    };
+  }
+
+  const formatoArquivo = firstNonEmptyString(input.formatoArquivo)
+    ?? inferFormatoArquivoFromUrl(arquivoUrl);
+
+  return {
+    ok: true,
+    payload: {
+      arquivo_url: arquivoUrl,
+      ...(formatoArquivo ? { formato_arquivo: formatoArquivo } : {}),
+      ...(tamanhoArquivo ? { tamanho_arquivo: tamanhoArquivo } : {}),
+      disponivel_download: true,
+      disponivel_para_download: true,
+    },
+  };
 };
 
 export const avaliarDownloadMapa = (

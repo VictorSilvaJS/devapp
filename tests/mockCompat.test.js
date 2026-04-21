@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const { Mapa, Visita, CadernoCampo, LimiteArea } = require('../.tmp-domain-compat/src/api/mock');
+const { avaliarDownloadMapa } = require('../.tmp-domain-compat/src/utils/mapaDownloadCompat');
 
 let failed = 0;
 
@@ -62,6 +63,28 @@ const run = async () => {
     assert.equal(atualizado.produtor_id, 'p3');
     assert.equal(atualizado.disponivel_download, false);
     assert.equal(atualizado.disponivel_para_download, false);
+  });
+
+  await test('Mapa.update persiste URL real associada ao material do mapa', async () => {
+    const criado = await Mapa.create({
+      titulo: 'Mapa com material associado',
+      categoria: 'panorama',
+      fazenda_id: 'p1',
+      talhao: 'Área total',
+      disponivel_para_download: false,
+    });
+
+    const atualizado = await Mapa.update(criado.id, {
+      arquivo_url: 'https://cdn.exemplo.com/mapas/panorama-p1.pdf',
+      formato_arquivo: 'pdf',
+      tamanho_arquivo: 98765,
+      disponivel_download: true,
+    });
+
+    assert.equal(atualizado.arquivo_url, 'https://cdn.exemplo.com/mapas/panorama-p1.pdf');
+    assert.equal(atualizado.disponivel_download, true);
+    assert.equal(atualizado.disponivel_para_download, true);
+    assert.equal(avaliarDownloadMapa(atualizado).podeAbrir, true);
   });
 
   await test('Visita.create aceita fazenda_id e retorna alias legado compatível', async () => {

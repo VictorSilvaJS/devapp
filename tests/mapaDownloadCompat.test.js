@@ -1,6 +1,8 @@
 const assert = require('node:assert/strict');
 const {
   avaliarDownloadMapa,
+  buildMapaArquivoAssociacaoPayload,
+  inferFormatoArquivoFromUrl,
   isMapaArquivoUrlUsavel,
   resolveMapaArquivoUrl,
 } = require('../.tmp-domain-compat/src/utils/mapaDownloadCompat');
@@ -42,6 +44,48 @@ const run = async () => {
         url_download: 'https://cdn.exemplo.com/legado.pdf',
       }),
       'https://cdn.exemplo.com/legado.pdf'
+    );
+  });
+
+  await test('inferFormatoArquivoFromUrl deriva extensão de URLs abríveis', () => {
+    assert.equal(inferFormatoArquivoFromUrl('https://cdn.exemplo.com/mapa.PDF?token=1'), 'pdf');
+    assert.equal(inferFormatoArquivoFromUrl('file:///tmp/panorama.jpeg'), 'jpg');
+    assert.equal(inferFormatoArquivoFromUrl('data:application/pdf;base64,abc'), 'pdf');
+  });
+
+  await test('buildMapaArquivoAssociacaoPayload monta update compatível para URL real', () => {
+    const result = buildMapaArquivoAssociacaoPayload({
+      arquivoUrl: 'https://cdn.exemplo.com/mapa.pdf',
+      tamanhoArquivo: '12345',
+    });
+
+    assert.deepEqual(result, {
+      ok: true,
+      payload: {
+        arquivo_url: 'https://cdn.exemplo.com/mapa.pdf',
+        formato_arquivo: 'pdf',
+        tamanho_arquivo: 12345,
+        disponivel_download: true,
+        disponivel_para_download: true,
+      },
+    });
+  });
+
+  await test('buildMapaArquivoAssociacaoPayload rejeita caminho relativo e tamanho inválido', () => {
+    assert.deepEqual(buildMapaArquivoAssociacaoPayload({ arquivoUrl: 'mapas/local.pdf' }), {
+      ok: false,
+      mensagem: 'Informe uma URL abrível, como https://, file://, content:// ou data:.',
+    });
+
+    assert.deepEqual(
+      buildMapaArquivoAssociacaoPayload({
+        arquivoUrl: 'https://cdn.exemplo.com/mapa.pdf',
+        tamanhoArquivo: 'abc',
+      }),
+      {
+        ok: false,
+        mensagem: 'Informe o tamanho em bytes com um número maior que zero ou deixe em branco.',
+      }
     );
   });
 

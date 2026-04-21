@@ -40,7 +40,10 @@ import {
   buildFazendaUiInfoMap,
   getFazendaUiInfo,
 } from '../utils/fazendaUiCompat';
-import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
+import {
+  avaliarDownloadMapa,
+  buildMapaArquivoAssociacaoPayload,
+} from '../utils/mapaDownloadCompat';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -136,7 +139,11 @@ export default function MapasScreen({ route, navigation }) {
     status: null,
   });
   const [uploadDialog, setUploadDialog] = useState(false);
-  const [uploadAno, setUploadAno] = useState(new Date().getFullYear().toString());
+  const [uploadMapaId, setUploadMapaId] = useState('');
+  const [uploadArquivoUrl, setUploadArquivoUrl] = useState('');
+  const [uploadFormato, setUploadFormato] = useState('');
+  const [uploadTamanho, setUploadTamanho] = useState('');
+  const [associandoMaterial, setAssociandoMaterial] = useState(false);
 
   // Estado aba LIMITE
   const [limites, setLimites] = useState([]);
@@ -361,6 +368,15 @@ export default function MapasScreen({ route, navigation }) {
     () => mapasNoContexto.filter((mapa) => avaliarDownloadMapa(mapa).podeAbrir).length,
     [mapasNoContexto]
   );
+  const podeAssociarMaterial = user?.perfil === 'admin' || user?.perfil === 'colaborador';
+  const mapasAssociacaoOptions = useMemo(
+    () => [...mapasNoContexto].sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '')),
+    [mapasNoContexto]
+  );
+  const mapaUploadSelecionado = useMemo(
+    () => mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId) ?? null,
+    [mapasAssociacaoOptions, uploadMapaId]
+  );
 
   // ──────────────────────────────────────────────
   // FILTROS DA ABA LIMITE
@@ -435,13 +451,59 @@ export default function MapasScreen({ route, navigation }) {
     setTalhaoDetailVisible(true);
   }, []);
 
-  const handleUploadSimulate = () => {
-    setUploadDialog(false);
-    const anoNum = parseInt(uploadAno);
-    if (anoNum >= 2000 && anoNum <= 2030) {
-      toast.showSuccess(`Upload simulado para o ano ${anoNum}. Em produção, selecione o arquivo do drive.`);
-    } else {
-      toast.showError('Ano inválido. Use um ano entre 2000 e 2030.');
+  const preencherUploadComMapa = (mapa) => {
+    const status = avaliarDownloadMapa(mapa);
+    setUploadMapaId(mapa?.id || '');
+    setUploadArquivoUrl(status.podeAbrir ? status.arquivoUrl || '' : '');
+    setUploadFormato(mapa?.formato_arquivo || '');
+    setUploadTamanho(mapa?.tamanho_arquivo ? String(mapa.tamanho_arquivo) : '');
+  };
+
+  const abrirAssociacaoMaterial = (mapa = null) => {
+    if (abaAtiva !== 'mapas') {
+      toast.showInfo('Associação de shape ainda não está disponível nesta etapa.');
+      return;
+    }
+
+    const mapaBase = mapa || mapasFiltrados[0] || mapasAssociacaoOptions[0];
+    if (!mapaBase) {
+      toast.showInfo('Não há mapas no contexto atual para associar material.');
+      return;
+    }
+
+    preencherUploadComMapa(mapaBase);
+    setUploadDialog(true);
+  };
+
+  const handleAssociarMaterial = async () => {
+    const mapaSelecionado = mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId);
+
+    if (!mapaSelecionado) {
+      toast.showError('Selecione um mapa para associar o material.');
+      return;
+    }
+
+    const result = buildMapaArquivoAssociacaoPayload({
+      arquivoUrl: uploadArquivoUrl,
+      formatoArquivo: uploadFormato,
+      tamanhoArquivo: uploadTamanho,
+    });
+
+    if (result.ok === false) {
+      toast.showError(result.mensagem);
+      return;
+    }
+
+    setAssociandoMaterial(true);
+    try {
+      const atualizado = await Mapa.update(mapaSelecionado.id, result.payload);
+      setMapas((prev) => prev.map((mapa) => mapa.id === atualizado.id ? atualizado : mapa));
+      setUploadDialog(false);
+      toast.showSuccess('Material associado ao mapa. A abertura já está disponível.');
+    } catch (error) {
+      toast.showError('Não foi possível associar o material ao mapa.');
+    } finally {
+      setAssociandoMaterial(false);
     }
   };
 
@@ -546,7 +608,6 @@ export default function MapasScreen({ route, navigation }) {
         key={mapa.id} 
         style={styles.mapaCard}
         onPress={statusDownload.podeAbrir ? () => handleDownload(mapa) : undefined}
-        disabled={!statusDownload.podeAbrir}
         activeOpacity={statusDownload.podeAbrir ? 0.7 : 1}
       >
       <View style={styles.mapaHeader}>
@@ -591,7 +652,7 @@ export default function MapasScreen({ route, navigation }) {
 
       <View style={styles.mapaFooter}>
         <View style={styles.mapaFormatoTag}>
-          <Text style={styles.mapaFormatoTexto}>{mapa.formato_arquivo?.toUpperCase() || 'PDF'}</Text>
+          <Text style={styles.mapaFormatoTexto}>{mapa.formato_arquivo?.toUpperCase() || 'ARQ'}</Text>
         </View>
         {mapa.tamanho_arquivo && (
           <Text style={styles.mapaTamanho}>{formatarTamanho(mapa.tamanho_arquivo)}</Text>
@@ -617,6 +678,16 @@ export default function MapasScreen({ route, navigation }) {
         <Text style={styles.materialIndisponivelTexto}>
           {statusDownload.descricao}
         </Text>
+      )}
+      {podeAssociarMaterial && !statusDownload.podeAbrir && (
+        <TouchableOpacity
+          style={styles.associarMaterialButton}
+          onPress={() => abrirAssociacaoMaterial(mapa)}
+          activeOpacity={0.75}
+        >
+          <Ionicons name="link-outline" size={15} color={colors.primary} />
+          <Text style={styles.associarMaterialText}>Associar URL abrível</Text>
+        </TouchableOpacity>
       )}
     </TouchableOpacity>
     );
@@ -891,14 +962,14 @@ export default function MapasScreen({ route, navigation }) {
         </View>
 
         {/* Botão Upload (admin/colab) */}
-        {(user?.perfil === 'admin' || user?.perfil === 'colaborador') && (
+        {podeAssociarMaterial && (
           <TouchableOpacity
             style={styles.uploadButton}
-            onPress={() => setUploadDialog(true)}
+            onPress={() => abrirAssociacaoMaterial()}
             activeOpacity={0.7}
           >
-            <Ionicons name="cloud-upload-outline" size={20} color={colors.white} />
-            <Text style={styles.uploadButtonText}>Importar Mapa do Drive</Text>
+            <Ionicons name="link-outline" size={20} color={colors.white} />
+            <Text style={styles.uploadButtonText}>Associar Material ao Mapa</Text>
           </TouchableOpacity>
         )}
 
@@ -1164,14 +1235,14 @@ export default function MapasScreen({ route, navigation }) {
           </View>
 
           {/* Botão Upload Shape (admin/colab) */}
-          {(user?.perfil === 'admin' || user?.perfil === 'colaborador') && (
+          {podeAssociarMaterial && (
             <TouchableOpacity
               style={[styles.uploadButton, { marginHorizontal: spacing.md }]}
-              onPress={() => setUploadDialog(true)}
+              onPress={() => abrirAssociacaoMaterial()}
               activeOpacity={0.7}
             >
               <Ionicons name="cloud-upload-outline" size={20} color={colors.white} />
-              <Text style={styles.uploadButtonText}>Importar Shape do Drive</Text>
+              <Text style={styles.uploadButtonText}>Importar Shape (em breve)</Text>
             </TouchableOpacity>
           )}
         </>
@@ -1280,7 +1351,7 @@ export default function MapasScreen({ route, navigation }) {
         visible={downloadDialog.visible}
         title="Abrir material"
         message={downloadDialog.mapa 
-          ? `Abrir o material "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'PDF'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}\nOrigem: ${downloadDialog.status?.arquivoUrl || 'URL não informada'}` 
+          ? `Abrir o material "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'ARQ'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}\nOrigem: ${downloadDialog.status?.arquivoUrl || 'URL não informada'}` 
           : ''}
         type="info"
         confirmText="Abrir"
@@ -1301,9 +1372,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.uploadHeader}>
               <View style={styles.uploadHeaderLeft}>
                 <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
-                <Text style={styles.uploadTitle}>
-                  {abaAtiva === 'mapas' ? 'Importar Mapa' : 'Importar Shape'}
-                </Text>
+                <Text style={styles.uploadTitle}>Associar Material</Text>
               </View>
               <TouchableOpacity onPress={() => setUploadDialog(false)} style={styles.uploadClose}>
                 <Ionicons name="close" size={22} color={colors.text} />
@@ -1311,42 +1380,90 @@ export default function MapasScreen({ route, navigation }) {
             </View>
             
             <Text style={styles.uploadDescription}>
-              {abaAtiva === 'mapas' 
-                ? 'Selecione o arquivo do drive e informe o ano de referência para o mapa histórico.'
-                : 'Selecione o arquivo shape (.shp) do drive e informe o ano do levantamento topográfico (ex: LT 2025).'}
+              Informe uma URL abrível para vincular ao mapa. O mock guarda essa associação durante a sessão atual.
             </Text>
 
-            {/* Simulação de seleção de arquivo */}
-            <TouchableOpacity style={styles.fileSelectButton} activeOpacity={0.7}>
-              <Ionicons name="folder-open-outline" size={24} color={colors.primary} />
-              <Text style={styles.fileSelectText}>Selecionar arquivo do Drive</Text>
-            </TouchableOpacity>
+            <View style={styles.uploadAnoContainer}>
+              <Text style={styles.uploadAnoLabel}>Mapa</Text>
+              <ScrollView style={styles.uploadMapaOptions} nestedScrollEnabled>
+                {mapasAssociacaoOptions.map((mapa) => {
+                  const ativo = uploadMapaId === mapa.id;
+                  const status = avaliarDownloadMapa(mapa);
+
+                  return (
+                    <TouchableOpacity
+                      key={mapa.id}
+                      style={[styles.uploadMapaOption, ativo && styles.uploadMapaOptionActive]}
+                      onPress={() => preencherUploadComMapa(mapa)}
+                      activeOpacity={0.75}
+                    >
+                      <View style={styles.uploadMapaOptionTextos}>
+                        <Text style={[styles.uploadMapaOptionTitulo, ativo && styles.uploadMapaOptionTituloActive]} numberOfLines={1}>
+                          {mapa.titulo}
+                        </Text>
+                        <Text style={styles.uploadMapaOptionSubtitulo} numberOfLines={1}>
+                          {mapa.talhao || 'Talhão não informado'} • {getMapaSafra(mapa) || 'Safra não informada'} • {status.label}
+                        </Text>
+                      </View>
+                      {ativo && <Ionicons name="checkmark-circle" size={18} color={colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
 
             {/* Formatos suportados */}
             <View style={styles.formatosInfo}>
               <Ionicons name="information-circle-outline" size={16} color={colors.info} />
               <Text style={styles.formatosInfoText}>
-                {abaAtiva === 'mapas' 
-                  ? 'Formatos: PDF, JPG, PNG, GeoTIFF, DWG'
-                  : 'Formatos: SHP, KML, GeoJSON'}
+                URLs aceitas: https://, file://, content:// ou data:
               </Text>
             </View>
 
-            {/* Input de Ano */}
             <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>
-                Ano de referência / data do upload:
-              </Text>
+              <Text style={styles.uploadAnoLabel}>URL do material</Text>
               <TextInput
                 style={styles.uploadAnoInput}
-                value={uploadAno}
-                onChangeText={setUploadAno}
-                keyboardType="numeric"
-                maxLength={4}
-                placeholder="Ex: 2025"
+                value={uploadArquivoUrl}
+                onChangeText={setUploadArquivoUrl}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                placeholder="https://exemplo.com/mapa.pdf"
                 placeholderTextColor={colors.muted}
               />
             </View>
+
+            <View style={styles.uploadCamposRow}>
+              <View style={styles.uploadCampoFlex}>
+                <Text style={styles.uploadAnoLabel}>Formato</Text>
+                <TextInput
+                  style={styles.uploadAnoInput}
+                  value={uploadFormato}
+                  onChangeText={setUploadFormato}
+                  autoCapitalize="none"
+                  placeholder="pdf"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+              <View style={styles.uploadCampoFlex}>
+                <Text style={styles.uploadAnoLabel}>Tamanho bytes</Text>
+                <TextInput
+                  style={styles.uploadAnoInput}
+                  value={uploadTamanho}
+                  onChangeText={setUploadTamanho}
+                  keyboardType="numeric"
+                  placeholder="opcional"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+            </View>
+
+            {mapaUploadSelecionado && (
+              <Text style={styles.uploadMapaSelecionadoInfo}>
+                Após associar, "{mapaUploadSelecionado.titulo}" passará a usar o fluxo honesto de Abrir material.
+              </Text>
+            )}
 
             <View style={styles.uploadActions}>
               <TouchableOpacity 
@@ -1357,10 +1474,13 @@ export default function MapasScreen({ route, navigation }) {
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.uploadConfirmBtn} 
-                onPress={handleUploadSimulate}
+                onPress={handleAssociarMaterial}
+                disabled={associandoMaterial}
               >
-                <Ionicons name="cloud-upload" size={18} color={colors.white} />
-                <Text style={styles.uploadConfirmText}>Importar</Text>
+                <Ionicons name="link-outline" size={18} color={colors.white} />
+                <Text style={styles.uploadConfirmText}>
+                  {associandoMaterial ? 'Associando...' : 'Associar'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1881,6 +2001,55 @@ const styles = StyleSheet.create({
     color: colors.text,
     textAlign: 'center',
   },
+  uploadMapaOptions: {
+    maxHeight: 170,
+  },
+  uploadMapaOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  uploadMapaOptionActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.accent,
+  },
+  uploadMapaOptionTextos: {
+    flex: 1,
+    minWidth: 0,
+  },
+  uploadMapaOptionTitulo: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+  },
+  uploadMapaOptionTituloActive: {
+    color: colors.primary,
+  },
+  uploadMapaOptionSubtitulo: {
+    fontSize: typography.fontSmall,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  uploadCamposRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  uploadCampoFlex: {
+    flex: 1,
+  },
+  uploadMapaSelecionadoInfo: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+  },
   uploadActions: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -2060,6 +2229,24 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     lineHeight: 18,
     marginTop: spacing.sm,
+  },
+  associarMaterialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  associarMaterialText: {
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
   },
 
   // ── SHAPE SECTION ──
