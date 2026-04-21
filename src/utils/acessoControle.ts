@@ -431,6 +431,13 @@ export const podeEditarProdutor = (user, produtor) => {
 };
 
 /**
+ * Verifica se usuário pode excluir um produtor/fazenda.
+ * Por enquanto segue a mesma regra defensiva de edição estrutural:
+ * admin pode, colaborador apenas dentro do seu escopo, produtor não pode.
+ */
+export const podeExcluirProdutor = (user, produtor) => podeEditarProdutor(user, produtor);
+
+/**
  * Verifica se usuário pode criar novo produtor/fazenda
  * Produtor (proprietário) NÃO pode criar
  */

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { useToast } from '../components/Toast';
 import { Produtor } from '../api/mock';
+import { useAuth } from '../auth/AuthContext';
 import theme from '../theme';
 import { 
   validarNome, 
@@ -19,11 +20,15 @@ import {
   validarUF, 
   validarObrigatorio
 } from '../utils/validacoes';
+import { podeEditarProdutor } from '../utils/acessoControle';
 
 export default function EditarProdutorScreen({ route, navigation }) {
   const toast = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [produtorAtual, setProdutorAtual] = useState(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [form, setForm] = useState({
     nome: '',
@@ -74,7 +79,17 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
       try {
         setLoading(true);
+        setAccessDenied(false);
         const produtor = await Produtor.get(id);
+
+        if (!podeEditarProdutor(user, produtor)) {
+          setProdutorAtual(null);
+          setAccessDenied(true);
+          toast.showWarning('Você não tem permissão para editar esta fazenda.');
+          return;
+        }
+
+        setProdutorAtual(produtor);
         setForm({
           nome: produtor.nome || '',
           fazenda: produtor.fazenda || '',
@@ -92,9 +107,14 @@ export default function EditarProdutorScreen({ route, navigation }) {
     };
 
     loadProdutor();
-  }, [route?.params?.id]);
+  }, [route?.params?.id, user]);
 
   const handleSave = async () => {
+    if (!podeEditarProdutor(user, produtorAtual)) {
+      toast.showWarning('Você não tem permissão para editar esta fazenda.');
+      return;
+    }
+
     if (!validateForm()) {
       toast.showWarning('Preencha todos os campos obrigatórios corretamente');
       return;
@@ -124,6 +144,18 @@ export default function EditarProdutorScreen({ route, navigation }) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Carregando...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <View style={styles.container}>
+        <Header title="Editar Produtor" showBackButton />
+        <View style={styles.loadingContainer}>
+          <Ionicons name="lock-closed-outline" size={42} color={theme.colors.muted} />
+          <Text style={styles.loadingText}>Você não tem permissão para editar esta fazenda.</Text>
         </View>
       </View>
     );

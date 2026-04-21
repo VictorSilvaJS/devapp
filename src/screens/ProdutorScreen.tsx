@@ -8,7 +8,13 @@ import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa } from '../api/mock';
 import { buildMapasRouteParams } from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, border, shadows } from '../theme';
-import { getFazendaId } from '../utils/acessoControle';
+import { useAuth } from '../auth/AuthContext';
+import {
+  getFazendaId,
+  podeEditarProdutor,
+  podeExcluirProdutor,
+  temAcessoProdutor,
+} from '../utils/acessoControle';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -17,41 +23,61 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 export default function ProdutorScreen({ route, navigation }) {
   const toast = useToast();
+  const { user } = useAuth();
   const [produtor, setProdutor] = useState(null);
   const [visitas, setVisitas] = useState([]);
   const [mapas, setMapas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [activeTab, setActiveTab] = useState('resumo');
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const loadData = async (id) => {
-    if (id) {
-      try {
-        setLoading(true);
-        const [p, v, m] = await Promise.all([
-          Produtor.get(id),
-          Visita.filter({ fazenda_id: id }),
-          Mapa.filter({ fazenda_id: id })
-        ]);
-        // animar mudanças locais
+    if (!id) {
+      setAccessDenied(false);
+      setProdutor(null);
+      setVisitas([]);
+      setMapas([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setAccessDenied(false);
+      const p = await Produtor.get(id);
+
+      if (!temAcessoProdutor(user, p)) {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setProdutor(p);
-        setVisitas(v);
-        setMapas(m);
-      } catch (error) {
-        toast.showError('Não foi possível carregar os dados do produtor');
-        console.error(error);
-      } finally {
-        setLoading(false);
+        setProdutor(null);
+        setVisitas([]);
+        setMapas([]);
+        setAccessDenied(true);
+        return;
       }
+
+      const [v, m] = await Promise.all([
+        Visita.filter({ fazenda_id: id }),
+        Mapa.filter({ fazenda_id: id })
+      ]);
+      // animar mudanças locais
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setProdutor(p);
+      setVisitas(v);
+      setMapas(m);
+    } catch (error) {
+      toast.showError('Não foi possível carregar os dados do produtor');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     const id = route?.params?.id;
     loadData(id);
-  }, [route?.params?.id]);
+  }, [route?.params?.id, user]);
 
   // Recarregar dados quando voltar da tela de edição
   useEffect(() => {
@@ -65,14 +91,30 @@ export default function ProdutorScreen({ route, navigation }) {
   }, [navigation, route?.params?.id]);
 
   const handleEdit = () => {
+    if (!podeEditarProdutor(user, produtor)) {
+      toast.showWarning('Você não tem permissão para editar esta fazenda.');
+      return;
+    }
+
     navigation.navigate('EditarProdutor', { id: produtor.id });
   };
 
   const handleDelete = () => {
+    if (!podeExcluirProdutor(user, produtor)) {
+      toast.showWarning('Você não tem permissão para excluir esta fazenda.');
+      return;
+    }
+
     setDeleteDialogVisible(true);
   };
 
   const confirmDelete = async () => {
+    if (!podeExcluirProdutor(user, produtor)) {
+      setDeleteDialogVisible(false);
+      toast.showWarning('Você não tem permissão para excluir esta fazenda.');
+      return;
+    }
+
     setDeleting(true);
     try {
       await Produtor.delete(produtor.id);
@@ -104,7 +146,9 @@ export default function ProdutorScreen({ route, navigation }) {
       <View style={styles.container}>
         <Header title="Produtor" />
         <View style={styles.loadingContainer}>
-          <Text style={styles.body}>Produtor não encontrado.</Text>
+          <Text style={styles.body}>
+            {accessDenied ? 'Você não tem permissão para acessar esta fazenda.' : 'Produtor não encontrado.'}
+          </Text>
         </View>
       </View>
     );
@@ -113,6 +157,8 @@ export default function ProdutorScreen({ route, navigation }) {
   const mapasRouteParams = buildMapasRouteParams({
     fazendaId: getFazendaId(produtor),
   });
+  const podeEditar = podeEditarProdutor(user, produtor);
+  const podeExcluir = podeExcluirProdutor(user, produtor);
 
   return (
     <View style={styles.container}>
@@ -137,39 +183,45 @@ export default function ProdutorScreen({ route, navigation }) {
         </View>
 
         {/* Botões de Ação */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={styles.editButton} 
-            onPress={handleEdit}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={[colors.primary, colors.primaryDark]}
-              style={styles.editButtonGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="create-outline" size={20} color={colors.white} />
-              <Text style={styles.editButtonText}>Editar Produtor</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.deleteButton} 
-            onPress={handleDelete}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={[colors.error, colors.error]}
-              style={styles.deleteButtonGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Ionicons name="trash-outline" size={20} color={colors.white} />
-              <Text style={styles.deleteButtonText}>Excluir</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+        {(podeEditar || podeExcluir) && (
+          <View style={styles.actionButtons}>
+            {podeEditar && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={handleEdit}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[colors.primary, colors.primaryDark]}
+                  style={styles.editButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="create-outline" size={20} color={colors.white} />
+                  <Text style={styles.editButtonText}>Editar Produtor</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+
+            {podeExcluir && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDelete}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[colors.error, colors.error]}
+                  style={styles.deleteButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Ionicons name="trash-outline" size={20} color={colors.white} />
+                  <Text style={styles.deleteButtonText}>Excluir</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {/* Cards de Estatísticas Compactos */}
         <ScrollView 

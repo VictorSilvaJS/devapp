@@ -6,6 +6,9 @@ const {
   filtrarVisitasPorAcesso,
   getFazendaIdsPorAcesso,
   podeBaixarMapa,
+  podeEditarProdutor,
+  podeExcluirProdutor,
+  temAcessoProdutor,
 } = require('../.tmp-domain-compat/src/utils/acessoControle');
 
 let failed = 0;
@@ -120,6 +123,31 @@ const run = async () => {
     assert.equal(podeBaixarMapa(produtorUser, mapaProprio, fazendasBase), true);
     assert.equal(podeBaixarMapa(produtorUser, mapaDeOutro, fazendasBase), false);
     assert.equal(podeBaixarMapa(adminUser, { ...mapaDeOutro, disponivel_download: false }, fazendasBase), true);
+  });
+
+  await test('temAcessoProdutor protege detalhe por titular e escopo regional', () => {
+    const fazendaPropria = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+
+    assert.equal(temAcessoProdutor(produtorUser, fazendaPropria), true);
+    assert.equal(temAcessoProdutor(produtorUser, fazendaForaEscopo), false);
+    assert.equal(temAcessoProdutor(colaboradorUser, fazendaPropria), true);
+    assert.equal(temAcessoProdutor(colaboradorUser, fazendaForaEscopo), false);
+    assert.equal(temAcessoProdutor(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('podeEditarProdutor e podeExcluirProdutor bloqueiam produtor e colaborador fora do escopo', () => {
+    const fazendaNoEscopo = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+
+    assert.equal(podeEditarProdutor(produtorUser, fazendaNoEscopo), false);
+    assert.equal(podeExcluirProdutor(produtorUser, fazendaNoEscopo), false);
+    assert.equal(podeEditarProdutor(colaboradorUser, fazendaNoEscopo), true);
+    assert.equal(podeExcluirProdutor(colaboradorUser, fazendaNoEscopo), true);
+    assert.equal(podeEditarProdutor(colaboradorUser, fazendaForaEscopo), false);
+    assert.equal(podeExcluirProdutor(colaboradorUser, fazendaForaEscopo), false);
+    assert.equal(podeEditarProdutor(adminUser, fazendaForaEscopo), true);
+    assert.equal(podeExcluirProdutor(adminUser, fazendaForaEscopo), true);
   });
 
   if (failed > 0) {
