@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { Produtor } = require('../.tmp-domain-compat/src/api/mock');
 const {
+  buildFazendaDeleteIntegrity,
   buildFazendaUpdatePayload,
   listMockProdutoresTitulares,
 } = require('../.tmp-domain-compat/src/api/produtorCompat');
@@ -145,6 +146,48 @@ const run = async () => {
     assert.equal(atualizado.nome, 'Helena Campos');
     assert.equal(outraFazenda.produtor_id, 'prop_helena');
     assert.equal(outraFazenda.produtor_nome, 'Helena Campos');
+  });
+
+  await test('buildFazendaDeleteIntegrity bloqueia exclusao quando ha dependencias', () => {
+    const integridade = buildFazendaDeleteIntegrity(
+      {
+        id: 'faz_bloqueada',
+        fazenda: 'Fazenda com Histórico',
+        proprietario_id: 'prop_hist',
+        nome: 'Titular Historico',
+      },
+      {
+        mapas: [{ id: 'm1', fazenda_id: 'faz_bloqueada', titulo: 'Mapa', categoria: 'fertilidade', talhao: 'A' }],
+        visitas: [{ id: 'v1', fazenda_id: 'faz_bloqueada', tecnico_responsavel: 'Ana', data_visita: new Date().toISOString(), objetivo: 'consultoria' }],
+        cadernos: [{ id: 'c1', fazenda_id: 'faz_bloqueada', colaborador_responsavel: 'Ana', data_atividade: new Date().toISOString(), tipo_atividade: 'vistoria' }],
+        limites: [{ id: 'l1', fazenda_id: 'faz_bloqueada', nome: 'Limite', ano: 2026 }],
+      }
+    );
+
+    assert.equal(integridade.canDelete, false);
+    assert.equal(integridade.counts.mapas, 1);
+    assert.equal(integridade.counts.visitas, 1);
+    assert.equal(integridade.counts.cadernos, 1);
+    assert.equal(integridade.counts.limites, 1);
+    assert.match(integridade.blockingMessage, /Não é possível excluir Fazenda com Histórico/);
+  });
+
+  await test('Produtor.delete bloqueia fazenda com registros vinculados e permite fazenda segura', async () => {
+    await assert.rejects(
+      () => Produtor.delete('p1'),
+      /Não é possível excluir Fazenda Boa Vista/
+    );
+
+    const semDependencias = await Produtor.create({
+      nome: 'Luiza Martins',
+      fazenda: 'Fazenda Sem Dependencias',
+      area_total: 60,
+      proprietario_id: 'prop_luiza',
+    });
+
+    const resultado = await Produtor.delete(semDependencias.id);
+    assert.deepEqual(resultado, { success: true });
+    await assert.rejects(() => Produtor.get(semDependencias.id), /não encontrado/i);
   });
 
   await test('Produtor.filter aceita nomes legados e campos explícitos', async () => {

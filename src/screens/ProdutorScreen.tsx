@@ -5,12 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
-import { Produtor, Visita, Mapa, CadernoCampo } from '../api/mock';
+import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea } from '../api/mock';
+import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
 import { buildFazendaMapaRouteParams, buildMapasRouteParams } from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import {
   filtrarCadernosPorFazendaIds,
+  filtrarLimitesPorFazendaIds,
   filtrarMapasPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaId,
@@ -32,6 +34,8 @@ export default function ProdutorScreen({ route, navigation }) {
   const [visitas, setVisitas] = useState([]);
   const [mapas, setMapas] = useState([]);
   const [cadernos, setCadernos] = useState([]);
+  const [limites, setLimites] = useState([]);
+  const [deleteIntegrity, setDeleteIntegrity] = useState(null);
   const [outrasFazendasTitular, setOutrasFazendasTitular] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -46,6 +50,8 @@ export default function ProdutorScreen({ route, navigation }) {
       setVisitas([]);
       setMapas([]);
       setCadernos([]);
+      setLimites([]);
+      setDeleteIntegrity(null);
       setOutrasFazendasTitular([]);
       setLoading(false);
       return;
@@ -62,16 +68,19 @@ export default function ProdutorScreen({ route, navigation }) {
         setVisitas([]);
         setMapas([]);
         setCadernos([]);
+        setLimites([]);
+        setDeleteIntegrity(null);
         setOutrasFazendasTitular([]);
         setAccessDenied(true);
         return;
       }
 
       const fazendaAtualId = getFazendaId(p) || id;
-      const [v, todosMapas, todosCadernos, todasFazendas] = await Promise.all([
+      const [v, todosMapas, todosCadernos, todosLimites, todasFazendas] = await Promise.all([
         Visita.filter({ fazenda_id: fazendaAtualId }),
         Mapa.list(),
         CadernoCampo.list(),
+        LimiteArea.list(),
         Produtor.list(),
       ]);
       const m = filtrarMapasPorFazendaIds(todosMapas, [fazendaAtualId], {
@@ -80,8 +89,15 @@ export default function ProdutorScreen({ route, navigation }) {
       const c = filtrarCadernosPorFazendaIds(todosCadernos, [fazendaAtualId], {
         somenteVisivelParaProdutor: user?.perfil === 'produtor',
       });
+      const l = filtrarLimitesPorFazendaIds(todosLimites, [fazendaAtualId]);
       const fazendasComAcesso = filtrarProdutoresPorAcesso(todasFazendas, user);
       const detalheContexto = buildFazendaDetailContext(p, fazendasComAcesso);
+      const integridadeExclusao = buildFazendaDeleteIntegrity(p, {
+        mapas: m,
+        visitas: v,
+        cadernos: c,
+        limites: l,
+      });
 
       // animar mudanças locais
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -89,6 +105,8 @@ export default function ProdutorScreen({ route, navigation }) {
       setVisitas(v);
       setMapas(m);
       setCadernos(c);
+      setLimites(l);
+      setDeleteIntegrity(integridadeExclusao);
       setOutrasFazendasTitular(detalheContexto.outrasFazendasTitular);
     } catch (error) {
       toast.showError('Não foi possível carregar os dados da fazenda');
@@ -123,9 +141,23 @@ export default function ProdutorScreen({ route, navigation }) {
     navigation.navigate('EditarProdutor', { id: produtor.id });
   };
 
+  const getCurrentDeleteIntegrity = () =>
+    buildFazendaDeleteIntegrity(produtor, {
+      mapas,
+      visitas,
+      cadernos,
+      limites,
+    });
+
   const handleDelete = () => {
     if (!podeExcluirProdutor(user, produtor)) {
       toast.showWarning('Você não tem permissão para excluir esta fazenda.');
+      return;
+    }
+
+    const integridade = getCurrentDeleteIntegrity();
+    if (!integridade.canDelete) {
+      toast.showWarning(integridade.blockingMessage);
       return;
     }
 
@@ -139,6 +171,13 @@ export default function ProdutorScreen({ route, navigation }) {
       return;
     }
 
+    const integridade = getCurrentDeleteIntegrity();
+    if (!integridade.canDelete) {
+      setDeleteDialogVisible(false);
+      toast.showWarning(integridade.blockingMessage);
+      return;
+    }
+
     setDeleting(true);
     try {
       await Produtor.delete(produtor.id);
@@ -149,7 +188,7 @@ export default function ProdutorScreen({ route, navigation }) {
     } catch (error) {
       setDeleteDialogVisible(false);
       setDeleting(false);
-      toast.showError('Não foi possível excluir a fazenda');
+      toast.showError(error?.message || 'Não foi possível excluir a fazenda');
     }
   };
 
@@ -190,6 +229,8 @@ export default function ProdutorScreen({ route, navigation }) {
   });
   const podeEditar = podeEditarProdutor(user, produtor);
   const podeExcluir = podeExcluirProdutor(user, produtor);
+  const integridadeExclusao = deleteIntegrity || getCurrentDeleteIntegrity();
+  const exclusaoBloqueadaPorIntegridade = podeExcluir && !integridadeExclusao.canDelete;
   const getMapaAtualRouteParams = (mapa) => buildFazendaMapaRouteParams({
     fazendaId: fazendaAtualId,
     fazendaNome: fazendaInfo.fazendaNome,
@@ -255,13 +296,23 @@ export default function ProdutorScreen({ route, navigation }) {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={[colors.error, colors.error]}
+                  colors={
+                    exclusaoBloqueadaPorIntegridade
+                      ? [colors.muted, colors.muted]
+                      : [colors.error, colors.error]
+                  }
                   style={styles.deleteButtonGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Ionicons name="trash-outline" size={20} color={colors.white} />
-                  <Text style={styles.deleteButtonText}>Excluir</Text>
+                  <Ionicons
+                    name={exclusaoBloqueadaPorIntegridade ? 'lock-closed-outline' : 'trash-outline'}
+                    size={20}
+                    color={colors.white}
+                  />
+                  <Text style={styles.deleteButtonText}>
+                    {exclusaoBloqueadaPorIntegridade ? 'Bloqueada' : 'Excluir'}
+                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -313,6 +364,14 @@ export default function ProdutorScreen({ route, navigation }) {
             </View>
             <Text style={styles.statValueCompact}>{cadernos.length}</Text>
             <Text style={styles.statLabelCompact}>Caderno</Text>
+          </View>
+
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: colors.accent }]}>
+              <Ionicons name="git-network-outline" size={20} color={colors.primary} />
+            </View>
+            <Text style={styles.statValueCompact}>{limites.length}</Text>
+            <Text style={styles.statLabelCompact}>Limites</Text>
           </View>
         </ScrollView>
 
@@ -477,6 +536,13 @@ export default function ProdutorScreen({ route, navigation }) {
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
+                  <Ionicons name="git-network" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Limites de Área</Text>
+                </View>
+                <Text style={styles.infoValue}>{limites.length} limite{limites.length !== 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
                   <Ionicons name="checkmark-circle" size={16} color={produtor.status === 'ativo' ? colors.success : colors.warning} />
                   <Text style={styles.infoLabel}>Status</Text>
                 </View>
@@ -487,6 +553,32 @@ export default function ProdutorScreen({ route, navigation }) {
                 </View>
               </View>
             </View>
+
+            {podeExcluir && (
+              <>
+                <Text style={styles.sectionTitle}>Integridade da Exclusão</Text>
+                <View style={[
+                  styles.integrityBox,
+                  integridadeExclusao.canDelete ? styles.integrityBoxOk : styles.integrityBoxBlocked
+                ]}>
+                  <Ionicons
+                    name={integridadeExclusao.canDelete ? 'checkmark-circle-outline' : 'alert-circle-outline'}
+                    size={22}
+                    color={integridadeExclusao.canDelete ? colors.success : colors.warning}
+                  />
+                  <View style={styles.integrityTextContainer}>
+                    <Text style={styles.integrityTitle}>
+                      {integridadeExclusao.canDelete ? 'Exclusão segura' : 'Exclusão bloqueada'}
+                    </Text>
+                    <Text style={styles.integrityText}>
+                      {integridadeExclusao.canDelete
+                        ? 'Esta fazenda não possui vínculos operacionais relevantes no momento.'
+                        : integridadeExclusao.blockingMessage}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
 
             {produtor.observacoes && (
               <>
@@ -651,7 +743,7 @@ export default function ProdutorScreen({ route, navigation }) {
       <ConfirmDialog
         visible={deleteDialogVisible}
         title="Excluir Fazenda"
-        message={`Tem certeza que deseja excluir ${fazendaInfo.fazendaNome || 'esta fazenda'}? Esta ação não pode ser desfeita.`}
+        message={integridadeExclusao.confirmationMessage}
         type="danger"
         confirmText="Excluir"
         cancelText="Cancelar"
@@ -912,6 +1004,38 @@ const styles = StyleSheet.create({
   relatedFarmLocation: {
     fontSize: typography.fontCaption,
     color: colors.muted,
+  },
+  integrityBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: 12,
+    borderRadius: spacing.radiusSm,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  integrityBoxOk: {
+    backgroundColor: colors.successBg,
+    borderColor: colors.success + '40',
+  },
+  integrityBoxBlocked: {
+    backgroundColor: colors.amberLight,
+    borderColor: colors.warning + '40',
+  },
+  integrityTextContainer: {
+    flex: 1,
+    minWidth: 0,
+  },
+  integrityTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 4,
+  },
+  integrityText: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    lineHeight: 20,
   },
   infoRow: {
     paddingVertical: spacing.md,

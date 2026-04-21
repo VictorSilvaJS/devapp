@@ -1,6 +1,10 @@
 import {
   deriveProdutorFromFazenda,
+  normalizeCadernoCampo,
   normalizeFazenda,
+  normalizeLimiteArea,
+  normalizeMapa,
+  normalizeVisita,
   toFazendaCompativelBorda,
 } from '../domain';
 import type { FazendaCanonica, FazendaCompativelBorda, FazendaLegada } from '../domain';
@@ -36,6 +40,13 @@ interface FazendaUpdateFormInput {
   cultura_atual?: string;
   cidade?: string;
   estado?: string;
+}
+
+interface FazendaDeleteDependenciesInput {
+  mapas?: any[];
+  visitas?: any[];
+  cadernos?: any[];
+  limites?: any[];
 }
 
 const hasOwn = (value: unknown, key: string) =>
@@ -87,6 +98,20 @@ const normalizeAreaField = (value: unknown, fallback?: number) => {
   }
 
   return fallback;
+};
+
+const countByFazendaId = (items: any[] = [], fazendaId: string, getItemFazendaId: (item: any) => string) => {
+  if (!fazendaId || !items) return 0;
+  return items.filter((item) => getItemFazendaId(item) === fazendaId).length;
+};
+
+const pluralize = (count: number, singular: string, plural: string) =>
+  `${count} ${count === 1 ? singular : plural}`;
+
+const joinDependencyLabels = (labels: string[]) => {
+  if (labels.length <= 1) return labels.join('');
+  if (labels.length === 2) return `${labels[0]} e ${labels[1]}`;
+  return `${labels.slice(0, -1).join(', ')} e ${labels[labels.length - 1]}`;
 };
 
 const buildCanonicalFazendaFromBoundary = (
@@ -205,6 +230,48 @@ export const buildFazendaUpdatePayload = (
     estado: normalizeStringField(form.estado, current.estado)?.toUpperCase(),
     regiao: current.regiao,
     microregiao: current.microregiao,
+  };
+};
+
+export const buildFazendaDeleteIntegrity = (
+  fazendaAtual: FazendaBoundaryInput,
+  dependencies: FazendaDeleteDependenciesInput = {}
+) => {
+  const current = readMockFazenda(fazendaAtual);
+  const fazendaId = firstNonEmptyString(current.fazenda_id, current.id) ?? '';
+  const fazendaNome = firstNonEmptyString(current.fazenda_nome, current.fazenda) ?? 'esta fazenda';
+
+  const counts = {
+    mapas: countByFazendaId(dependencies.mapas, fazendaId, (item) => normalizeMapa(item).fazenda_id),
+    visitas: countByFazendaId(dependencies.visitas, fazendaId, (item) => normalizeVisita(item).fazenda_id),
+    cadernos: countByFazendaId(dependencies.cadernos, fazendaId, (item) => normalizeCadernoCampo(item).fazenda_id),
+    limites: countByFazendaId(dependencies.limites, fazendaId, (item) => normalizeLimiteArea(item).fazenda_id),
+  };
+
+  const dependencyLabels = [
+    counts.mapas > 0 ? pluralize(counts.mapas, 'mapa', 'mapas') : '',
+    counts.visitas > 0 ? pluralize(counts.visitas, 'visita', 'visitas') : '',
+    counts.cadernos > 0 ? pluralize(counts.cadernos, 'registro de caderno', 'registros de caderno') : '',
+    counts.limites > 0 ? pluralize(counts.limites, 'limite de área', 'limites de área') : '',
+  ].filter(Boolean);
+
+  const hasDependencies = dependencyLabels.length > 0;
+  const canDelete = Boolean(fazendaId) && !hasDependencies;
+  const blockingMessage = !fazendaId
+    ? 'Não foi possível identificar a fazenda para validar a exclusão.'
+    : hasDependencies
+      ? `Não é possível excluir ${fazendaNome} porque há ${joinDependencyLabels(dependencyLabels)} vinculados. Remova ou reassocie esses registros antes de excluir.`
+      : '';
+
+  return {
+    fazendaId,
+    fazendaNome,
+    canDelete,
+    hasDependencies,
+    counts,
+    dependencyLabels,
+    blockingMessage,
+    confirmationMessage: `Tem certeza que deseja excluir ${fazendaNome}? Esta ação remove apenas a fazenda e não altera o titular vinculado.`,
   };
 };
 

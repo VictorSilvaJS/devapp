@@ -27,6 +27,7 @@ import {
   readMockVisita,
 } from './mockCompat';
 import {
+  buildFazendaDeleteIntegrity,
   filterMockProdutores,
   listMockProdutores,
   persistMockProdutor,
@@ -1657,8 +1658,23 @@ export const Produtor: any = {
     return new Promise((res, rej) => setTimeout(() => {
       const index = produtores.findIndex(p => p.id === id);
       if (index === -1) {
-        rej(new Error('Produtor não encontrado'));
+        rej(new Error('Fazenda não encontrada'));
       } else {
+        const integridade = buildFazendaDeleteIntegrity(produtores[index], {
+          mapas,
+          visitas,
+          cadernos,
+          limites: limitesArea,
+        });
+
+        if (!integridade.canDelete) {
+          const error: any = new Error(integridade.blockingMessage);
+          error.code = 'FAZENDA_DELETE_BLOCKED';
+          error.integridade = integridade;
+          rej(error);
+          return;
+        }
+
         produtores.splice(index, 1);
         res({ success: true });
       }
