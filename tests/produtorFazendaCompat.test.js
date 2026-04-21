@@ -1,6 +1,9 @@
 const assert = require('node:assert/strict');
 const { Produtor } = require('../.tmp-domain-compat/src/api/mock');
-const { listMockProdutoresTitulares } = require('../.tmp-domain-compat/src/api/produtorCompat');
+const {
+  buildFazendaUpdatePayload,
+  listMockProdutoresTitulares,
+} = require('../.tmp-domain-compat/src/api/produtorCompat');
 
 let failed = 0;
 
@@ -98,6 +101,50 @@ const run = async () => {
     assert.equal(atualizado.produtor_nome, 'Carlos Novo');
     assert.equal(atualizado.produtor_id, 'prop_novo');
     assert.equal(atualizado.proprietario_id, 'prop_novo');
+  });
+
+  await test('buildFazendaUpdatePayload atualiza fazenda sem reassociar titular', async () => {
+    const base = await Produtor.create({
+      nome: 'Helena Campos',
+      fazenda: 'Fazenda Raiz',
+      area_total: 210,
+      proprietario_id: 'prop_helena',
+    });
+
+    const outraFazendaMesmoTitular = await Produtor.create({
+      nome: 'Helena Campos',
+      fazenda: 'Fazenda Irma',
+      area_total: 95,
+      proprietario_id: 'prop_helena',
+    });
+
+    const payload = buildFazendaUpdatePayload(base, {
+      fazenda_nome: 'Fazenda Raiz Norte',
+      area_total: '240.5',
+      cultura_atual: 'Soja',
+      cidade: 'Rio Verde',
+      estado: 'go',
+    });
+
+    assert.equal(payload.nome, undefined);
+    assert.equal(payload.produtor_id, 'prop_helena');
+    assert.equal(payload.proprietario_id, 'prop_helena');
+    assert.equal(payload.produtor_nome, 'Helena Campos');
+    assert.equal(payload.fazenda_nome, 'Fazenda Raiz Norte');
+    assert.equal(payload.area_total, 240.5);
+    assert.equal(payload.estado, 'GO');
+
+    const atualizado = await Produtor.update(base.id, payload);
+    const outraFazenda = await Produtor.get(outraFazendaMesmoTitular.id);
+
+    assert.equal(atualizado.fazenda_id, base.id);
+    assert.equal(atualizado.fazenda_nome, 'Fazenda Raiz Norte');
+    assert.equal(atualizado.produtor_id, 'prop_helena');
+    assert.equal(atualizado.proprietario_id, 'prop_helena');
+    assert.equal(atualizado.produtor_nome, 'Helena Campos');
+    assert.equal(atualizado.nome, 'Helena Campos');
+    assert.equal(outraFazenda.produtor_id, 'prop_helena');
+    assert.equal(outraFazenda.produtor_nome, 'Helena Campos');
   });
 
   await test('Produtor.filter aceita nomes legados e campos explícitos', async () => {

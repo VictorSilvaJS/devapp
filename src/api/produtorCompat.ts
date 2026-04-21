@@ -29,6 +29,15 @@ interface FazendaBoundaryInput {
   data_cadastro?: string;
 }
 
+interface FazendaUpdateFormInput {
+  fazenda_nome?: string;
+  fazenda?: string;
+  area_total?: number | string;
+  cultura_atual?: string;
+  cidade?: string;
+  estado?: string;
+}
+
 const hasOwn = (value: unknown, key: string) =>
   typeof value === 'object' && value !== null && Object.prototype.hasOwnProperty.call(value, key);
 
@@ -52,6 +61,32 @@ const matchesIncludesQuery = (record: Record<string, any>, query?: Record<string
     const recordValue = record[key];
     return String(recordValue ?? '').toLowerCase().includes(String(value).toLowerCase());
   });
+};
+
+const normalizeStringField = (value: unknown, fallback?: string) => {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  return value === undefined ? fallback : String(value);
+};
+
+const normalizeAreaField = (value: unknown, fallback?: number) => {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().replace(',', '.');
+    if (!normalized) {
+      return fallback;
+    }
+
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  return fallback;
 };
 
 const buildCanonicalFazendaFromBoundary = (
@@ -145,6 +180,32 @@ export const persistMockFazenda = ({
   );
 
   return readMockFazenda(canonical);
+};
+
+export const buildFazendaUpdatePayload = (
+  fazendaAtual: FazendaBoundaryInput,
+  form: FazendaUpdateFormInput = {}
+) => {
+  const current = readMockFazenda(fazendaAtual);
+  const fazendaNome =
+    firstNonEmptyString(form.fazenda_nome, form.fazenda, current.fazenda_nome, current.fazenda) ?? '';
+  const produtorId = firstNonEmptyString(current.produtor_id, current.proprietario_id) ?? '';
+  const produtorNome = firstNonEmptyString(current.produtor_nome, current.nome) ?? '';
+
+  return {
+    fazenda_id: firstNonEmptyString(current.fazenda_id, current.id),
+    produtor_id: produtorId,
+    proprietario_id: produtorId,
+    produtor_nome: produtorNome,
+    fazenda_nome: fazendaNome,
+    fazenda: fazendaNome,
+    area_total: normalizeAreaField(form.area_total, current.area_total),
+    cultura_atual: normalizeStringField(form.cultura_atual, current.cultura_atual),
+    cidade: normalizeStringField(form.cidade, current.cidade),
+    estado: normalizeStringField(form.estado, current.estado)?.toUpperCase(),
+    regiao: current.regiao,
+    microregiao: current.microregiao,
+  };
 };
 
 export const listMockProdutoresTitulares = (records: any[]) => {

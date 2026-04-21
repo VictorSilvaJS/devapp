@@ -12,15 +12,16 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { useToast } from '../components/Toast';
 import { Produtor } from '../api/mock';
+import { buildFazendaUpdatePayload } from '../api/produtorCompat';
 import { useAuth } from '../auth/AuthContext';
 import theme from '../theme';
 import { 
-  validarNome, 
   validarArea, 
   validarUF, 
   validarObrigatorio
 } from '../utils/validacoes';
 import { podeEditarProdutor } from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 export default function EditarProdutorScreen({ route, navigation }) {
   const toast = useToast();
@@ -31,8 +32,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
   const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [form, setForm] = useState({
-    nome: '',
-    fazenda: '',
+    fazenda_nome: '',
     area_total: '',
     cultura_atual: '',
     cidade: '',
@@ -51,11 +51,8 @@ export default function EditarProdutorScreen({ route, navigation }) {
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (!validarNome(form.nome)) {
-      newErrors.nome = 'Nome deve ter pelo menos 3 caracteres';
-    }
-    if (!validarObrigatorio(form.fazenda)) {
-      newErrors.fazenda = 'Fazenda é obrigatória';
+    if (!validarObrigatorio(form.fazenda_nome)) {
+      newErrors.fazenda_nome = 'Fazenda é obrigatória';
     }
     if (!validarArea(form.area_total)) {
       newErrors.area_total = 'Informe uma área válida';
@@ -72,7 +69,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
     const loadProdutor = async () => {
       const id = route?.params?.id;
       if (!id) {
-        toast.showError('ID do produtor não fornecido');
+        toast.showError('ID da fazenda não fornecido');
         navigation.goBack();
         return;
       }
@@ -90,16 +87,16 @@ export default function EditarProdutorScreen({ route, navigation }) {
         }
 
         setProdutorAtual(produtor);
+        const fazendaInfo = getFazendaUiInfo(produtor);
         setForm({
-          nome: produtor.nome || '',
-          fazenda: produtor.fazenda || '',
+          fazenda_nome: fazendaInfo.fazendaNome || '',
           area_total: String(produtor.area_total || ''),
           cultura_atual: produtor.cultura_atual || '',
           cidade: produtor.cidade || '',
           estado: produtor.estado || ''
         });
       } catch (error) {
-        toast.showError('Não foi possível carregar os dados do produtor');
+        toast.showError('Não foi possível carregar os dados da fazenda');
         navigation.goBack();
       } finally {
         setLoading(false);
@@ -122,12 +119,10 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
     try {
       setSaving(true);
-      await Produtor.update(route.params.id, {
-        ...form,
-        area_total: parseFloat(form.area_total)
-      });
+      const payload = buildFazendaUpdatePayload(produtorAtual, form);
+      await Produtor.update(route.params.id, payload);
       
-      toast.showSuccess('Produtor atualizado com sucesso!');
+      toast.showSuccess('Fazenda atualizada com sucesso!');
       navigation.goBack();
     } catch (error) {
       toast.showError('Não foi possível salvar as alterações. Tente novamente.');
@@ -140,7 +135,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Produtor" showBackButton />
+        <Header title="Editar Fazenda" showBackButton />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Carregando...</Text>
@@ -152,7 +147,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
   if (accessDenied) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Produtor" showBackButton />
+        <Header title="Editar Fazenda" showBackButton />
         <View style={styles.loadingContainer}>
           <Ionicons name="lock-closed-outline" size={42} color={theme.colors.muted} />
           <Text style={styles.loadingText}>Você não tem permissão para editar esta fazenda.</Text>
@@ -161,46 +156,71 @@ export default function EditarProdutorScreen({ route, navigation }) {
     );
   }
 
+  const fazendaInfo = getFazendaUiInfo(produtorAtual);
+  const titularNome = fazendaInfo.titularNome || 'Titular não informado';
+  const titularId = produtorAtual?.produtor_id || produtorAtual?.proprietario_id || 'Vínculo não informado';
+  const escopo = [produtorAtual?.regiao, produtorAtual?.microregiao].filter(Boolean).join(' • ');
+
   return (
     <View style={styles.container}>
-      <Header title="Editar Produtor" showBackButton />
+      <Header title="Editar Fazenda" showBackButton />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Info Box */}
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            Atualize os dados do produtor
+            Atualize os dados da fazenda mantendo o titular vinculado.
           </Text>
         </View>
 
-        {/* Nome */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Nome do Produtor *</Text>
-          <TextInput
-            style={[styles.input, errors.nome && styles.inputError]}
-            value={form.nome}
-            onChangeText={(text) => handleChange('nome', text)}
-            placeholder="Digite o nome completo"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-          {errors.nome && (
-            <Text style={styles.errorText}>{errors.nome}</Text>
+        <Text style={styles.sectionTitle}>Titular Vinculado</Text>
+        <View style={styles.linkedBox}>
+          <View style={styles.linkedRow}>
+            <View style={styles.linkedIcon}>
+              <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <View style={styles.linkedInfo}>
+              <Text style={styles.linkedLabel}>Titular atual</Text>
+              <Text style={styles.linkedValue}>{titularNome}</Text>
+            </View>
+          </View>
+          <View style={styles.linkedRow}>
+            <View style={styles.linkedIcon}>
+              <Ionicons name="link-outline" size={18} color={theme.colors.primary} />
+            </View>
+            <View style={styles.linkedInfo}>
+              <Text style={styles.linkedLabel}>Vínculo</Text>
+              <Text style={styles.linkedValue}>{titularId}</Text>
+            </View>
+          </View>
+          {!!escopo && (
+            <View style={styles.linkedRow}>
+              <View style={styles.linkedIcon}>
+                <Ionicons name="location-outline" size={18} color={theme.colors.primary} />
+              </View>
+              <View style={styles.linkedInfo}>
+                <Text style={styles.linkedLabel}>Escopo</Text>
+                <Text style={styles.linkedValue}>{escopo}</Text>
+              </View>
+            </View>
           )}
         </View>
 
+        <Text style={styles.sectionTitle}>Dados da Fazenda</Text>
+
         {/* Fazenda */}
         <View style={styles.field}>
-          <Text style={styles.label}>Fazenda *</Text>
+          <Text style={styles.label}>Nome da Fazenda *</Text>
           <TextInput
-            style={[styles.input, errors.fazenda && styles.inputError]}
-            value={form.fazenda}
-            onChangeText={(text) => handleChange('fazenda', text)}
+            style={[styles.input, errors.fazenda_nome && styles.inputError]}
+            value={form.fazenda_nome}
+            onChangeText={(text) => handleChange('fazenda_nome', text)}
             placeholder="Nome da fazenda"
             placeholderTextColor={theme.colors.textSecondary}
           />
-          {errors.fazenda && (
-            <Text style={styles.errorText}>{errors.fazenda}</Text>
+          {errors.fazenda_nome && (
+            <Text style={styles.errorText}>{errors.fazenda_nome}</Text>
           )}
         </View>
 
@@ -222,7 +242,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
         {/* Cultura Atual */}
         <View style={styles.field}>
-          <Text style={styles.label}>Cultura Principal</Text>
+          <Text style={styles.label}>Cultura Atual</Text>
           <TextInput
             style={styles.input}
             value={form.cultura_atual}
@@ -329,6 +349,51 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontBody,
     color: theme.colors.text,
     lineHeight: 20,
+  },
+  sectionTitle: {
+    fontSize: theme.typography.fontBody + 1,
+    fontWeight: theme.typography.weightBold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  linkedBox: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.spacing.radius,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  linkedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  linkedIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary + '15',
+  },
+  linkedInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  linkedLabel: {
+    fontSize: theme.typography.fontCaption,
+    fontWeight: theme.typography.weightBold,
+    color: theme.colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  linkedValue: {
+    fontSize: theme.typography.fontBody,
+    fontWeight: theme.typography.weightSemibold,
+    color: theme.colors.text,
   },
   field: {
     marginBottom: theme.spacing.lg,
