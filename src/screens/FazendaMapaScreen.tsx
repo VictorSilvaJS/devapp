@@ -23,7 +23,7 @@ import MapaFazendaNativoView, {
   MapaFazendaNativoViewRef,
 } from '../components/MapaFazendaNativoView';
 import { LimiteArea, Produtor } from '../api/mock';
-import { resolveRouteFazendaId } from '../navigation/mapaRouteCompat';
+import { resolveRouteFazendaId, resolveRouteTitularNome } from '../navigation/mapaRouteCompat';
 import { MapaTalhao } from '../types/mapa';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -32,6 +32,8 @@ import {
   filtrarProdutoresPorAcesso,
   findFazendaById,
   getFazendaIds,
+  getNomeFazenda,
+  getNomeTitularFazenda,
 } from '../utils/acessoControle';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -154,8 +156,8 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
   // Params da rota
   const fazendaId: string | undefined = resolveRouteFazendaId(route?.params);
-  const produtorNomeParam: string | undefined = route?.params?.produtorNome;
-  const fazendaNome: string | undefined = route?.params?.fazendaNome;
+  const titularNomeParam: string | undefined = resolveRouteTitularNome(route?.params);
+  const fazendaNomeParam: string | undefined = route?.params?.fazendaNome;
   const talhaoIdInicial: string | undefined = route?.params?.talhaoId;
 
   // ── Estado ──────────────────────────────────────────────────
@@ -168,7 +170,8 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [erroConexao, setErroConexao] = useState(false);
   const [drawerVisivel, setDrawerVisivel] = useState(false);
   const [listaExpandida, setListaExpandida] = useState(false);
-  const [produtorNome, setProdutorNome] = useState(produtorNomeParam ?? '');
+  const [titularNome, setTitularNome] = useState(titularNomeParam ?? '');
+  const [fazendaNome, setFazendaNome] = useState(fazendaNomeParam ?? '');
 
   // Refs
   const mapaRef = useRef<MapaFazendaNativoViewRef>(null);
@@ -179,18 +182,33 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
     carregarDados();
   }, [fazendaId]);
 
+  useEffect(() => {
+    setTitularNome(titularNomeParam ?? '');
+  }, [titularNomeParam]);
+
+  useEffect(() => {
+    setFazendaNome(fazendaNomeParam ?? '');
+  }, [fazendaNomeParam]);
+
   const carregarDados = async () => {
     setCarregando(true);
     try {
-      const [limites, produtores] = await Promise.all([
+      const [limites, fazendas] = await Promise.all([
         LimiteArea.list(),
         Produtor.list(),
       ]);
 
-      // Busca nome do produtor se não foi passado
-      if (!produtorNomeParam && fazendaId) {
-        const prod = findFazendaById(produtores, fazendaId);
-        if (prod) setProdutorNome(prod.nome);
+      // Busca metadata semantica da fazenda quando a rota nao informar os nomes.
+      if (fazendaId) {
+        const fazendaAtual = findFazendaById(fazendas, fazendaId);
+        if (fazendaAtual) {
+          if (!titularNomeParam) {
+            setTitularNome(getNomeTitularFazenda(fazendaAtual));
+          }
+          if (!fazendaNomeParam) {
+            setFazendaNome(getNomeFazenda(fazendaAtual));
+          }
+        }
       }
 
       // Filtra por produtor (ou todos se admin sem filtro)
@@ -199,7 +217,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         limitesFiltrados = filtrarLimitesPorFazendaIds(limites, [fazendaId]);
       } else if (user?.perfil !== 'admin') {
         // Colaborador/produtor — filtra pelo usuário
-        const idsPermitidos = obterIdsPermitidos(user, produtores);
+        const idsPermitidos = obterIdsPermitidos(user, fazendas);
         limitesFiltrados = filtrarLimitesPorFazendaIds(limites, idsPermitidos);
       }
 
@@ -297,7 +315,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   }, []);
 
   // ── Título da tela ────────────────────────────────────────────
-  const tituloCabecalho = fazendaNome || produtorNome || 'Limites da Fazenda';
+  const tituloCabecalho = fazendaNome || titularNome || 'Limites da Fazenda';
 
   // ── Estado de Loading ─────────────────────────────────────────
   if (carregando) {

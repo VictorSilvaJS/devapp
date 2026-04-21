@@ -6,6 +6,7 @@ type ParamContextoFazenda = {
 export type MapasRouteParams = ParamContextoFazenda;
 
 export type FazendaMapaRouteParams = ParamContextoFazenda & {
+  titularNome?: string;
   produtorNome?: string;
   fazendaNome?: string;
   talhaoId?: string;
@@ -39,6 +40,10 @@ export const resolveRouteFazendaId = (
   params?: ParamContextoFazenda | null
 ): string | undefined => firstNonEmptyString(params?.fazendaId, params?.produtorId);
 
+export const resolveRouteTitularNome = (
+  params?: FazendaMapaRouteParams | null
+): string | undefined => firstNonEmptyString(params?.titularNome, params?.produtorNome);
+
 export const buildMapasRouteParams = (
   params?: MapasRouteParams | null
 ): MapasRouteParams | undefined => {
@@ -58,6 +63,7 @@ export const buildFazendaMapaRouteParams = (
   params?: FazendaMapaRouteParams | null
 ): FazendaMapaRouteParams | undefined => {
   const fazendaId = resolveRouteFazendaId(params);
+  const titularNome = resolveRouteTitularNome(params);
   const routeParams: FazendaMapaRouteParams = {};
 
   if (fazendaId) {
@@ -65,7 +71,8 @@ export const buildFazendaMapaRouteParams = (
     routeParams.produtorId = fazendaId;
   }
 
-  withDefinedString(routeParams, 'produtorNome', params?.produtorNome);
+  withDefinedString(routeParams, 'titularNome', titularNome);
+  withDefinedString(routeParams, 'produtorNome', titularNome);
   withDefinedString(routeParams, 'fazendaNome', params?.fazendaNome);
   withDefinedString(routeParams, 'talhaoId', params?.talhaoId);
 

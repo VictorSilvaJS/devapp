@@ -3,6 +3,7 @@ const {
   buildFazendaMapaRouteParams,
   buildMapasRouteParams,
   resolveRouteFazendaId,
+  resolveRouteTitularNome,
 } = require('../.tmp-domain-compat/src/navigation/mapaRouteCompat');
 
 let failed = 0;
@@ -51,7 +52,7 @@ const run = async () => {
     const params = buildFazendaMapaRouteParams({
       produtorId: 'faz_sat',
       fazendaNome: 'Fazenda Satélite',
-      produtorNome: 'João Silva',
+      titularNome: 'João Silva',
       talhaoId: 'talhao_7',
     });
 
@@ -59,9 +60,27 @@ const run = async () => {
       fazendaId: 'faz_sat',
       produtorId: 'faz_sat',
       fazendaNome: 'Fazenda Satélite',
+      titularNome: 'João Silva',
       produtorNome: 'João Silva',
       talhaoId: 'talhao_7',
     });
+  });
+
+  await test('resolveRouteTitularNome prioriza titularNome canônico e aceita alias legado', () => {
+    assert.equal(
+      resolveRouteTitularNome({
+        titularNome: 'Maria Souza',
+        produtorNome: 'Legado Ignorado',
+      }),
+      'Maria Souza'
+    );
+
+    assert.equal(
+      resolveRouteTitularNome({
+        produtorNome: 'João Silva',
+      }),
+      'João Silva'
+    );
   });
 
   await test('buildFazendaMapaRouteParams retorna undefined quando não há contexto nem metadados úteis', () => {

@@ -70,13 +70,21 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
 
+## Fechamento Formal Da Fase 2
+
+A Fase 2 pode ser considerada formalmente encerrada.
+
+- O dominio central foi estabilizado com contratos canonicos, compatibilidade de borda controlada e uso explicito de `fazenda_id` como chave operacional quando esse e o significado real.
+- O alinhamento semantico ja cobre dominio, auth, validadores, schemas, mock persistence, acesso, navegacao principal, filtros, formularios e camada offline/sync/cache.
+- As pendencias restantes foram reduzidas a aliases publicos de compatibilidade e nomes historicos localizados na superficie, sem contaminar o nucleo canonico.
+- Esses residuos nao bloqueiam o encerramento da fase porque nao reintroduzem ambiguidade estrutural no miolo do sistema e ja estao isolados para limpeza incremental de baixo risco.
+
 ## Pontos de Atencao Tecnicos
 
-- O dominio ainda mistura aliases antigos para o perfil hoje tratado provisoriamente como `produtor`
-- Ha inconsistencias de contrato entre schemas, mocks e telas
-- Existem regras de permissao duplicadas em telas alem de `src/utils/acessoControle.ts`
+- O dominio central ja foi estabilizado, mas ainda existem aliases historicos de compatibilidade na superficie publica
+- Ainda existem nomes legados isolados em rotas, wrappers e algumas telas historicas
 - Parte das acoes depende apenas de bloqueio visual, sem validacao defensiva no fluxo
-- A camada offline-first ainda nao esta conectada ao fluxo principal
+- A camada offline-first ja esta alinhada semanticamente, mas ainda nao esta conectada a um backend real
 - `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
 
 ## Complementares Oficiais
@@ -94,8 +102,8 @@ Use estes documentos junto com este retrato do presente:
 
 ## Proximo Passo Recomendado
 
-Antes de mover codigo entre pastas ou quebrar telas em componentes menores, estabilizar o dominio e os contratos:
+Executar apenas um lote curto de limpeza nominal controlada, sem reabrir refatoracao estrutural ampla:
 
-- consolidar as pendencias de definicao da Fase 2
-- alinhar vocabulario, contratos, schemas, mocks e telas
-- reduzir divergencia entre documentacao ativa e implementacao
+- limpar metadata local residual da superficie de mapas/fazenda
+- manter aliases legados apenas em helpers e wrappers explicitamente marcados como compatibilidade temporaria
+- adiar renomeacoes amplas de modulos, rotas e telas para uma etapa posterior e opcional

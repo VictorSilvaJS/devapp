@@ -1,6 +1,6 @@
 # Plano de Reorganizacao Tecnica
 
-> Status: Fase 1 encerrada no escopo documental e de organizacao do repositorio. A estabilizacao final de nomenclatura e dominio foi explicitamente movida para a Fase 2.
+> Status: Fase 1 encerrada no escopo documental e de organizacao do repositorio. A Fase 2 foi encerrada com a consolidacao do dominio e dos contratos centrais; permanecem apenas limpezas nominais residuais de baixo risco na superficie.
 
 Este documento define a ordem recomendada para reorganizar o projeto sem misturar refatoracao estrutural com entrega de funcionalidade.
 
@@ -18,7 +18,7 @@ Criar uma base previsivel para evolucao do app, reduzindo ambiguidade de dominio
 
 ## Convencao Provisoria de Linguagem
 
-Enquanto a Fase 2 nao consolidar o dominio, a documentacao ativa usa `produtor` como termo provisório para o perfil final ligado a fazendas. Alias historicos como `cliente` e `proprietario` devem aparecer apenas quando forem necessarios para explicar inconsistencias existentes.
+Com a Fase 2 encerrada, o dominio tecnico interno ja diferencia explicitamente `produtor` como titular de negocio e `fazenda` como contexto operacional. Alias historicos como `cliente`, `proprietario` e nomes publicos antigos devem aparecer apenas quando forem necessarios para explicar compatibilidades ainda mantidas na borda.
 
 ## Ordem Recomendada
 
@@ -45,6 +45,10 @@ Enquanto a Fase 2 nao consolidar o dominio, a documentacao ativa usa `produtor` 
 **Definicao de pronto**
 - Entidades, validadores e telas usam o mesmo vocabulario
 - Nao ha mais alias contraditorios no dominio central
+
+**Status atual**
+- Fase considerada concluida no nucleo semantico e contratual
+- Residuos restantes limitados a aliases publicos e nomes historicos localizados na superficie
 
 ### Fase 3 - Camada de Dados
 
@@ -125,4 +129,4 @@ src/
 
 ## Proxima Acao Recomendada
 
-Depois desta reorganizacao documental, o melhor proximo passo e a Fase 2: padronizar o dominio e os contratos antes de mover codigo entre pastas.
+Depois do encerramento da Fase 2, o melhor proximo passo e um lote curto de limpeza nominal controlada na superficie de mapas/fazenda, sem reabrir refatoracao estrutural ampla.
