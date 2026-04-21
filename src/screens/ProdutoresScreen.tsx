@@ -31,6 +31,14 @@ export default function ProdutoresScreen() {
   const { filtrarProdutores: filtrarProdutoresPorRegiao, filtros } = useFiltros();
 
   useEffect(() => { load(); }, [user, filtros]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      load();
+    });
+
+    return unsubscribe;
+  }, [navigation, user, filtros]);
   
   const load = async () => {
     const data = await Produtor.list();

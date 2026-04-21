@@ -20,6 +20,7 @@
     "src/api/mapaSyncEndpoints.ts",
     "src/navigation/mapaRouteCompat.ts",
     "src/utils/acessoControle.ts",
+    "src/utils/fazendaCadastroCompat.ts",
     "src/utils/fazendaUiCompat.ts",
     "src/contexts/filtroCompat.ts",
     "src/utils/visitaFormCompat.ts",
