@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,14 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
-import { filtrarProdutoresPorAcesso, getFazendaId } from '../utils/acessoControle';
+import { filtrarProdutoresPorAcesso } from '../utils/acessoControle';
+import {
+  buildVisitaFazendaOptions,
+  buildVisitaPayload,
+  findVisitaFazendaOption,
+  getVisitaFormFazendaId,
+  getVisitaFormFazendaLabel,
+} from '../utils/visitaFormCompat';
 
 export default function EditarVisitaScreen() {
   const route = useRoute<any>();
@@ -29,7 +36,7 @@ export default function EditarVisitaScreen() {
   const { visitaId } = route.params || {};
 
   // Estados do formulário
-  const [produtorId, setProdutorId] = useState('');
+  const [fazendaId, setFazendaId] = useState('');
   const [dataVisita, setDataVisita] = useState(null);
   const [horaVisita, setHoraVisita] = useState(null);
   const [objetivo, setObjetivo] = useState('consultoria');
@@ -48,7 +55,12 @@ export default function EditarVisitaScreen() {
   const [errors, setErrors] = useState<any>({});
 
   // Dropdown
-  const [showProdutorPicker, setShowProdutorPicker] = useState(false);
+  const [showFazendaPicker, setShowFazendaPicker] = useState(false);
+  const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(produtores), [produtores]);
+  const fazendaSelecionada = useMemo(
+    () => findVisitaFazendaOption(fazendaOptions, fazendaId),
+    [fazendaOptions, fazendaId]
+  );
 
   useEffect(() => {
     loadData();
@@ -64,7 +76,7 @@ export default function EditarVisitaScreen() {
 
       // Preencher formulário com dados da visita
       if (visitaData) {
-        setProdutorId(visitaData.fazenda_id || visitaData.produtor_id || '');
+        setFazendaId(getVisitaFormFazendaId(visitaData));
         
         const dataVisitaObj = new Date(visitaData.data_visita);
         setDataVisita(dataVisitaObj);
@@ -106,8 +118,8 @@ export default function EditarVisitaScreen() {
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (!produtorId) {
-      newErrors.produtorId = 'Selecione um produtor';
+    if (!fazendaId) {
+      newErrors.fazendaId = 'Selecione um produtor';
     }
 
     if (!dataVisita) {
@@ -134,22 +146,22 @@ export default function EditarVisitaScreen() {
 
     setSaving(true);
     try {
-      // Combinar data e hora
-      const dataCompleta = new Date(dataVisita);
-      dataCompleta.setHours(horaVisita.getHours());
-      dataCompleta.setMinutes(horaVisita.getMinutes());
-
-      const visitaAtualizada = {
-        fazenda_id: produtorId,
-        data_visita: dataCompleta.toISOString(),
+      const visitaAtualizada = buildVisitaPayload({
+        fazendaId,
+        dataVisita,
+        horaVisita,
         objetivo,
         observacoes,
         recomendacoes,
         clima,
-        proximaVisita: proximaVisita?.toISOString().split('T')[0],
+        proximaVisita,
         status,
-        fotos: fotos,
-      };
+        fotos,
+      });
+
+      if (!visitaAtualizada) {
+        throw new Error('Não foi possível montar o payload da visita');
+      }
 
       await Visita.update(visitaId, visitaAtualizada);
 
@@ -180,11 +192,6 @@ export default function EditarVisitaScreen() {
     { value: 'realizada', label: 'Realizada' },
     { value: 'cancelada', label: 'Cancelada' },
   ];
-
-  const getProdutorNome = (id) => {
-    const prod = produtores.find(p => getFazendaId(p) === id);
-    return prod ? `${prod.nome} - ${prod.fazenda}` : 'Selecione um produtor';
-  };
 
   const adicionarFotoSimulada = (tipo) => {
     const timestamp = Date.now();
@@ -237,48 +244,48 @@ export default function EditarVisitaScreen() {
             Produtor <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
-            style={[styles.picker, errors.produtorId && styles.inputError]}
-            onPress={() => setShowProdutorPicker(!showProdutorPicker)}
+            style={[styles.picker, errors.fazendaId && styles.inputError]}
+            onPress={() => setShowFazendaPicker(!showFazendaPicker)}
             disabled={user?.perfil === 'produtor'}
           >
-            <Text style={[styles.pickerText, !produtorId && styles.placeholder]}>
-              {getProdutorNome(produtorId)}
+            <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
+              {getVisitaFormFazendaLabel(fazendaSelecionada)}
             </Text>
             <Ionicons 
-              name={showProdutorPicker ? 'chevron-up' : 'chevron-down'} 
+              name={showFazendaPicker ? 'chevron-up' : 'chevron-down'} 
               size={20} 
               color={colors.muted} 
             />
           </TouchableOpacity>
-          {errors.produtorId && (
-            <Text style={styles.errorText}>{errors.produtorId}</Text>
+          {errors.fazendaId && (
+            <Text style={styles.errorText}>{errors.fazendaId}</Text>
           )}
 
-          {/* Dropdown de produtores */}
-          {showProdutorPicker && (
+          {/* Dropdown de fazendas */}
+          {showFazendaPicker && (
             <View style={styles.dropdownContainer}>
               <ScrollView style={styles.dropdown} nestedScrollEnabled>
-                {produtores.map(prod => (
+                {fazendaOptions.map((fazenda) => (
                   <TouchableOpacity
-                    key={getFazendaId(prod)}
+                    key={fazenda.id}
                     style={[
                       styles.dropdownItem,
-                      produtorId === getFazendaId(prod) && styles.dropdownItemSelected
+                      fazendaId === fazenda.id && styles.dropdownItemSelected
                     ]}
                     onPress={() => {
-                      setProdutorId(getFazendaId(prod));
-                      setShowProdutorPicker(false);
-                      setErrors(prev => ({ ...prev, produtorId: null }));
+                      setFazendaId(fazenda.id);
+                      setShowFazendaPicker(false);
+                      setErrors(prev => ({ ...prev, fazendaId: null }));
                     }}
                   >
                     <Text style={[
                       styles.dropdownItemText,
-                      produtorId === getFazendaId(prod) && styles.dropdownItemTextSelected
+                      fazendaId === fazenda.id && styles.dropdownItemTextSelected
                     ]}>
-                      {prod.nome}
+                      {fazenda.produtorNome}
                     </Text>
                     <Text style={styles.dropdownItemSubtext}>
-                      {prod.fazenda} - {prod.cidade}/{prod.estado}
+                      {fazenda.fazendaNome} - {fazenda.cidade}/{fazenda.estado}
                     </Text>
                   </TouchableOpacity>
                 ))}

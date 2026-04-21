@@ -545,32 +545,32 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
                             style={[
                               styles.modalItem,
                               styles.fazendaItem,
-                              filtros.produtorId === fazenda.id && styles.modalItemSelecionado
+                              filtros.fazendaId === fazenda.id && styles.modalItemSelecionado
                             ]}
                             onPress={() => selecionarFazenda(fazenda)}
                           >
                             <Ionicons 
                               name="home" 
                               size={20} 
-                              color={filtros.produtorId === fazenda.id ? colors.white : colors.textLight} 
+                              color={filtros.fazendaId === fazenda.id ? colors.white : colors.textLight} 
                             />
                             <View style={styles.fazendaInfo}>
                               <Text style={[
                                 styles.modalItemText,
-                                filtros.produtorId === fazenda.id && styles.modalItemTextSelecionado
+                                filtros.fazendaId === fazenda.id && styles.modalItemTextSelecionado
                               ]}>
                                 {fazenda.nome}
                               </Text>
                               <Text style={[
                                 styles.fazendaSubtext,
-                                filtros.produtorId === fazenda.id && styles.fazendaSubtextSelecionado
+                                filtros.fazendaId === fazenda.id && styles.fazendaSubtextSelecionado
                               ]}>
                                 {fazenda.microregiao === fazenda.cidade
                                   ? fazenda.cidade
                                   : `${fazenda.microregiao} • ${fazenda.cidade}`}
                               </Text>
                             </View>
-                            {filtros.produtorId === fazenda.id && (
+                            {filtros.fazendaId === fazenda.id && (
                               <Ionicons name="checkmark-circle" size={20} color={colors.white} />
                             )}
                           </TouchableOpacity>

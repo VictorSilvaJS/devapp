@@ -23,6 +23,7 @@ import {
   filtrarProdutoresPorAcesso,
   findFazendaById,
   getCadernoFazendaId,
+  getFazendaId,
   getFazendaIds,
 } from '../utils/acessoControle';
 
@@ -59,7 +60,7 @@ export default function CadernoCampoScreen() {
         // Aplicar filtros regionais
         const fazendaIdsFiltrados = getFazendaIdsFiltrados(todosProdutores);
         registrosData = filtrarCadernosPorFazendaIds(todosRegistros, fazendaIdsFiltrados);
-        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(p.fazenda_id || p.id));
+        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
       } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
         const [todosRegistros, todosProdutores] = await Promise.all([
           CadernoCampo.list(),

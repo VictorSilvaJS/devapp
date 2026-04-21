@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,13 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
-import { filtrarProdutoresPorAcesso, getFazendaId } from '../utils/acessoControle';
+import { filtrarProdutoresPorAcesso } from '../utils/acessoControle';
+import {
+  buildVisitaFazendaOptions,
+  buildVisitaPayload,
+  findVisitaFazendaOption,
+  getVisitaFormFazendaLabel,
+} from '../utils/visitaFormCompat';
 
 export default function NovaVisitaScreen() {
   const navigation = useNavigation();
@@ -27,7 +33,7 @@ export default function NovaVisitaScreen() {
   const { user } = useAuth();
 
   // Estados do formulário
-  const [produtorId, setProdutorId] = useState('');
+  const [fazendaId, setFazendaId] = useState('');
   const [dataVisita, setDataVisita] = useState(null);
   const [horaVisita, setHoraVisita] = useState(null);
   const [objetivo, setObjetivo] = useState('consultoria');
@@ -44,8 +50,13 @@ export default function NovaVisitaScreen() {
   const [loadingProdutores, setLoadingProdutores] = useState(true);
   const [errors, setErrors] = useState<any>({});
 
-  // Dropdown de produtores
-  const [showProdutorPicker, setShowProdutorPicker] = useState(false);
+  // Dropdown de fazendas
+  const [showFazendaPicker, setShowFazendaPicker] = useState(false);
+  const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(produtores), [produtores]);
+  const fazendaSelecionada = useMemo(
+    () => findVisitaFazendaOption(fazendaOptions, fazendaId),
+    [fazendaOptions, fazendaId]
+  );
 
   useEffect(() => {
     loadProdutores();
@@ -59,7 +70,7 @@ export default function NovaVisitaScreen() {
       const filtrados = user ? filtrarProdutoresPorAcesso(data, user) : data;
 
       if (user?.perfil === 'produtor' && filtrados.length > 0) {
-        setProdutorId(getFazendaId(filtrados[0]));
+        setFazendaId(buildVisitaFazendaOptions(filtrados)[0]?.id || '');
       }
       
       setProdutores(filtrados);
@@ -74,8 +85,8 @@ export default function NovaVisitaScreen() {
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (!produtorId) {
-      newErrors.produtorId = 'Selecione um produtor';
+    if (!fazendaId) {
+      newErrors.fazendaId = 'Selecione um produtor';
     }
 
     if (!dataVisita) {
@@ -102,23 +113,23 @@ export default function NovaVisitaScreen() {
 
     setLoading(true);
     try {
-      // Combinar data e hora
-      const dataCompleta = new Date(dataVisita);
-      dataCompleta.setHours(horaVisita.getHours());
-      dataCompleta.setMinutes(horaVisita.getMinutes());
-
-      const novaVisita = {
-        fazenda_id: produtorId,
-        tecnico_responsavel: user?.nome || user?.full_name || 'Sistema',
-        data_visita: dataCompleta.toISOString(),
+      const novaVisita = buildVisitaPayload({
+        fazendaId,
+        dataVisita,
+        horaVisita,
         objetivo,
         observacoes,
         recomendacoes,
         clima,
-        proximaVisita: proximaVisita?.toISOString().split('T')[0],
+        proximaVisita,
         status: 'agendada',
-        fotos: fotos,
-      };
+        fotos,
+        tecnicoResponsavel: user?.nome || user?.full_name || 'Sistema',
+      });
+
+      if (!novaVisita) {
+        throw new Error('Não foi possível montar o payload da visita');
+      }
 
       await Visita.create(novaVisita);
 
@@ -143,11 +154,6 @@ export default function NovaVisitaScreen() {
     { value: 'entrega_material', label: 'Entrega de Material' },
     { value: 'outro', label: 'Outro' },
   ];
-
-  const getProdutorNome = (id) => {
-    const prod = produtores.find(p => getFazendaId(p) === id);
-    return prod ? `${prod.nome} - ${prod.fazenda}` : 'Selecione um produtor';
-  };
 
   const adicionarFotoSimulada = (tipo) => {
     const timestamp = Date.now();
@@ -188,48 +194,48 @@ export default function NovaVisitaScreen() {
             Produtor <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
-            style={[styles.picker, errors.produtorId && styles.inputError]}
-            onPress={() => setShowProdutorPicker(!showProdutorPicker)}
+            style={[styles.picker, errors.fazendaId && styles.inputError]}
+            onPress={() => setShowFazendaPicker(!showFazendaPicker)}
             disabled={user?.perfil === 'produtor'}
           >
-            <Text style={[styles.pickerText, !produtorId && styles.placeholder]}>
-              {loadingProdutores ? 'Carregando...' : getProdutorNome(produtorId)}
+            <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
+              {loadingProdutores ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
             </Text>
             <Ionicons 
-              name={showProdutorPicker ? 'chevron-up' : 'chevron-down'} 
+              name={showFazendaPicker ? 'chevron-up' : 'chevron-down'} 
               size={20} 
               color={colors.muted} 
             />
           </TouchableOpacity>
-          {errors.produtorId && (
-            <Text style={styles.errorText}>{errors.produtorId}</Text>
+          {errors.fazendaId && (
+            <Text style={styles.errorText}>{errors.fazendaId}</Text>
           )}
 
-          {/* Dropdown de produtores */}
-          {showProdutorPicker && (
+          {/* Dropdown de fazendas */}
+          {showFazendaPicker && (
             <View style={styles.dropdownContainer}>
               <ScrollView style={styles.dropdown} nestedScrollEnabled>
-                {produtores.map(prod => (
+                {fazendaOptions.map((fazenda) => (
                   <TouchableOpacity
-                    key={getFazendaId(prod)}
+                    key={fazenda.id}
                     style={[
                       styles.dropdownItem,
-                      produtorId === getFazendaId(prod) && styles.dropdownItemSelected
+                      fazendaId === fazenda.id && styles.dropdownItemSelected
                     ]}
                     onPress={() => {
-                      setProdutorId(getFazendaId(prod));
-                      setShowProdutorPicker(false);
-                      setErrors(prev => ({ ...prev, produtorId: null }));
+                      setFazendaId(fazenda.id);
+                      setShowFazendaPicker(false);
+                      setErrors(prev => ({ ...prev, fazendaId: null }));
                     }}
                   >
                     <Text style={[
                       styles.dropdownItemText,
-                      produtorId === getFazendaId(prod) && styles.dropdownItemTextSelected
+                      fazendaId === fazenda.id && styles.dropdownItemTextSelected
                     ]}>
-                      {prod.nome}
+                      {fazenda.produtorNome}
                     </Text>
                     <Text style={styles.dropdownItemSubtext}>
-                      {prod.fazenda} - {prod.cidade}/{prod.estado}
+                      {fazenda.fazendaNome} - {fazenda.cidade}/{fazenda.estado}
                     </Text>
                   </TouchableOpacity>
                 ))}

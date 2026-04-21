@@ -17,6 +17,7 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { getVisitaFazendaId } from '../utils/acessoControle';
 
 const { width } = Dimensions.get('window');
 
@@ -50,7 +51,7 @@ export default function VisitaDetailScreen() {
       const visitaData = await Visita.get(visitaId);
       setVisita(visitaData);
 
-      const fazendaId = visitaData?.fazenda_id || visitaData?.produtor_id;
+      const fazendaId = getVisitaFazendaId(visitaData);
       if (fazendaId) {
         const produtorData = await Produtor.get(fazendaId);
         setProdutor(produtorData);

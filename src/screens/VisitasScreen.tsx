@@ -26,6 +26,7 @@ import {
   filtrarProdutoresPorAcesso,
   filtrarVisitasPorFazendaIds,
   findFazendaById,
+  getFazendaId,
   getFazendaIds,
   getVisitaFazendaId,
 } from '../utils/acessoControle';
@@ -76,7 +77,7 @@ export default function VisitasScreen() {
         // Aplicar filtros regionais
         const fazendaIdsFiltrados = getFazendaIdsFiltrados(todosProdutores);
         visitasData = filtrarVisitasPorFazendaIds(todasVisitas, fazendaIdsFiltrados);
-        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(p.fazenda_id || p.id));
+        produtoresData = todosProdutores.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
       } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
         const [todasVisitas, todosProdutores] = await Promise.all([
           Visita.list(),

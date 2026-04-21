@@ -1,35 +1,39 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Produtor } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
+import {
+  normalizeFiltrosState,
+  resolveFiltroFazendaId,
+  toFiltrosCompativeis,
+} from './filtroCompat';
 import { getFazendaId, getNomeFazenda, getNomeTitularFazenda } from '../utils/acessoControle';
 
 const FiltroContext = createContext<any>(null);
 
-const FILTROS_INICIAIS = {
-  regiao: 'todas',
-  microregiao: 'todas',
-  fazenda: 'todas',
-  produtorId: null,
-  cidade: 'todas',
-};
+const createFiltrosIniciais = () => normalizeFiltrosState();
 
 export function FiltroProvider({ children }) {
   const { user } = useAuthState();
   const prevUserIdRef = useRef(null);
 
-  const [filtros, setFiltros] = useState({ ...FILTROS_INICIAIS });
+  const [filtrosState, setFiltrosState] = useState(createFiltrosIniciais);
 
   const [regioes, setRegioes] = useState([]);
   const [microregioes, setMicroregioes] = useState([]);
   const [fazendas, setFazendas] = useState([]);
   const [cidades, setCidades] = useState([]);
+  const filtros = toFiltrosCompativeis(filtrosState);
+
+  const updateFiltros = (patch) => {
+    setFiltrosState((prev) => normalizeFiltrosState({ ...prev, ...patch }));
+  };
 
   // Resetar todos os filtros quando o usuário mudar (logout/login diferente)
   useEffect(() => {
     const currentUserId = user?.id || null;
     if (prevUserIdRef.current !== null && prevUserIdRef.current !== currentUserId) {
       console.log('[FiltroContext] Usuário mudou, resetando filtros');
-      setFiltros({ ...FILTROS_INICIAIS });
+      setFiltrosState(createFiltrosIniciais());
     }
     prevUserIdRef.current = currentUserId;
   }, [user?.id]);
@@ -42,12 +46,12 @@ export function FiltroProvider({ children }) {
   // Atualizar microregiões e fazendas quando região mudar
   useEffect(() => {
     loadMicroregioes();
-  }, [filtros.regiao]);
+  }, [filtrosState.regiao]);
 
   // Atualizar fazendas disponíveis quando região ou microregião mudar
   useEffect(() => {
     loadFazendas();
-  }, [filtros.regiao, filtros.microregiao]);
+  }, [filtrosState.regiao, filtrosState.microregiao]);
 
   const loadOpcoesDisponiveis = async () => {
     try {
@@ -75,8 +79,8 @@ export function FiltroProvider({ children }) {
       const produtores = await Produtor.list();
       let produtoresFiltrados = produtores;
 
-      if (filtros.regiao !== 'todas') {
-        produtoresFiltrados = produtoresFiltrados.filter(p => p.regiao === filtros.regiao);
+      if (filtrosState.regiao !== 'todas') {
+        produtoresFiltrados = produtoresFiltrados.filter(p => p.regiao === filtrosState.regiao);
       }
 
       const microregioesUnicas = [...new Set(produtoresFiltrados.map(p => p.microregiao).filter(Boolean))].sort();
@@ -92,13 +96,13 @@ export function FiltroProvider({ children }) {
       let produtoresFiltrados = produtores;
 
       // Filtrar por região se selecionada
-      if (filtros.regiao !== 'todas') {
-        produtoresFiltrados = produtoresFiltrados.filter(p => p.regiao === filtros.regiao);
+      if (filtrosState.regiao !== 'todas') {
+        produtoresFiltrados = produtoresFiltrados.filter(p => p.regiao === filtrosState.regiao);
       }
 
       // Filtrar por microregião se selecionada
-      if (filtros.microregiao !== 'todas') {
-        produtoresFiltrados = produtoresFiltrados.filter(p => p.microregiao === filtros.microregiao);
+      if (filtrosState.microregiao !== 'todas') {
+        produtoresFiltrados = produtoresFiltrados.filter(p => p.microregiao === filtrosState.microregiao);
       }
 
       // Extrair fazendas com seus IDs
@@ -121,60 +125,57 @@ export function FiltroProvider({ children }) {
   };
 
   const setRegiao = (regiao) => {
-    setFiltros(prev => ({
-      ...prev,
+    updateFiltros({
       regiao,
       microregiao: 'todas', // Resetar microregião ao mudar região
       fazenda: 'todas',
-      produtorId: null,
-    }));
+      fazendaId: null,
+    });
   };
 
   const setMicroregiao = (microregiao) => {
-    setFiltros(prev => ({
-      ...prev,
+    updateFiltros({
       microregiao,
       fazenda: 'todas', // Resetar fazenda ao mudar microregião
-      produtorId: null,
-    }));
+      fazendaId: null,
+    });
   };
 
-  const setFazenda = (fazenda, produtorId = null) => {
-    setFiltros(prev => ({
-      ...prev,
+  const setFazenda = (fazenda, fazendaId = null) => {
+    updateFiltros({
       fazenda,
-      produtorId,
-    }));
+      fazendaId,
+    });
   };
 
   const setCidade = (cidade) => {
-    setFiltros(prev => ({
-      ...prev,
+    updateFiltros({
       cidade,
-    }));
+    });
   };
 
   const limparFiltros = () => {
-    setFiltros({ ...FILTROS_INICIAIS });
+    setFiltrosState(createFiltrosIniciais());
   };
 
   const getFiltroAtivo = () => {
     const parts = [];
-    if (filtros.regiao !== 'todas') parts.push(filtros.regiao);
-    if (filtros.microregiao !== 'todas') parts.push(filtros.microregiao);
-    if (filtros.fazenda !== 'todas') {
-      const fazendaInfo = fazendas.find(f => f.id === filtros.produtorId);
+    const fazendaIdSelecionada = resolveFiltroFazendaId(filtrosState);
+    if (filtrosState.regiao !== 'todas') parts.push(filtrosState.regiao);
+    if (filtrosState.microregiao !== 'todas') parts.push(filtrosState.microregiao);
+    if (filtrosState.fazenda !== 'todas') {
+      const fazendaInfo = fazendas.find(f => f.id === fazendaIdSelecionada);
       parts.push(fazendaInfo ? fazendaInfo.nome : 'Fazenda Selecionada');
     }
-    if (filtros.cidade !== 'todas') parts.push(filtros.cidade);
+    if (filtrosState.cidade !== 'todas') parts.push(filtrosState.cidade);
     return parts.length > 0 ? parts.join(' • ') : 'Todas as Regiões';
   };
 
   const temFiltroAtivo = () => {
-    return filtros.regiao !== 'todas' || 
-           filtros.microregiao !== 'todas' ||
-           filtros.fazenda !== 'todas' || 
-           filtros.cidade !== 'todas';
+    return filtrosState.regiao !== 'todas' || 
+           filtrosState.microregiao !== 'todas' ||
+           filtrosState.fazenda !== 'todas' || 
+           filtrosState.cidade !== 'todas';
   };
 
   // Função auxiliar para filtrar produtores baseado nos filtros ativos
@@ -184,23 +185,23 @@ export function FiltroProvider({ children }) {
     let resultado = [...produtores];
 
     // Filtro por região
-    if (filtros.regiao !== 'todas') {
-      resultado = resultado.filter(p => p.regiao === filtros.regiao);
+    if (filtrosState.regiao !== 'todas') {
+      resultado = resultado.filter(p => p.regiao === filtrosState.regiao);
     }
 
     // Filtro por microregião
-    if (filtros.microregiao !== 'todas') {
-      resultado = resultado.filter(p => p.microregiao === filtros.microregiao);
+    if (filtrosState.microregiao !== 'todas') {
+      resultado = resultado.filter(p => p.microregiao === filtrosState.microregiao);
     }
 
     // Filtro por cidade
-    if (filtros.cidade !== 'todas') {
-      resultado = resultado.filter(p => p.cidade === filtros.cidade);
+    if (filtrosState.cidade !== 'todas') {
+      resultado = resultado.filter(p => p.cidade === filtrosState.cidade);
     }
 
-    // Filtro por fazenda específica (produtor)
-    if (filtros.fazenda !== 'todas' && filtros.produtorId) {
-      resultado = resultado.filter(p => getFazendaId(p) === filtros.produtorId);
+    // Filtro por fazenda específica
+    if (filtrosState.fazenda !== 'todas' && filtrosState.fazendaId) {
+      resultado = resultado.filter(p => getFazendaId(p) === filtrosState.fazendaId);
     }
 
     return resultado;

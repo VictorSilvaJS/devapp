@@ -20,6 +20,8 @@
     "src/api/mapaSyncEndpoints.ts",
     "src/navigation/mapaRouteCompat.ts",
     "src/utils/acessoControle.ts",
+    "src/contexts/filtroCompat.ts",
+    "src/utils/visitaFormCompat.ts",
     "src/services/mapaOfflineCompat.ts",
     "src/services/MapaSincronizacaoService.ts",
     "src/services/MapaCacheService.ts"
