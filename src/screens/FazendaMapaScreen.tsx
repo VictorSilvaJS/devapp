@@ -23,7 +23,11 @@ import MapaFazendaNativoView, {
   MapaFazendaNativoViewRef,
 } from '../components/MapaFazendaNativoView';
 import { LimiteArea, Produtor } from '../api/mock';
-import { resolveRouteFazendaId, resolveRouteTitularNome } from '../navigation/mapaRouteCompat';
+import {
+  resolveRouteFazendaId,
+  resolveRouteTitularNome,
+  resolveTalhaoSelecionadoFromRoute,
+} from '../navigation/mapaRouteCompat';
 import { MapaTalhao } from '../types/mapa';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -158,14 +162,11 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const fazendaId: string | undefined = resolveRouteFazendaId(route?.params);
   const titularNomeParam: string | undefined = resolveRouteTitularNome(route?.params);
   const fazendaNomeParam: string | undefined = route?.params?.fazendaNome;
-  const talhaoIdInicial: string | undefined = route?.params?.talhaoId;
 
   // ── Estado ──────────────────────────────────────────────────
   const [todosLimites, setTodosLimites] = useState<any[]>([]);
   const [anoSelecionado, setAnoSelecionado] = useState<number | null>(null);
-  const [talhaoSelecionadoId, setTalhaoSelecionadoId] = useState<string | null>(
-    talhaoIdInicial ?? null
-  );
+  const [talhaoSelecionadoId, setTalhaoSelecionadoId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erroConexao, setErroConexao] = useState(false);
   const [drawerVisivel, setDrawerVisivel] = useState(false);
@@ -182,7 +183,14 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   // ── Carregamento de dados ────────────────────────────────────
   useEffect(() => {
     carregarDados();
-  }, [fazendaId, user]);
+  }, [
+    fazendaId,
+    user,
+    route?.params?.talhaoId,
+    route?.params?.talhaoNome,
+    route?.params?.talhao,
+    route?.params?.talhaoAno,
+  ]);
 
   useEffect(() => {
     setTitularNome(titularNomeParam ?? '');
@@ -213,6 +221,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
           setEstadoBloqueio(avaliacao.status);
           setTodosLimites([]);
           setAnoSelecionado(null);
+          setTalhaoSelecionadoId(null);
           setFazendasContexto(fazendasComAcesso);
           return;
         }
@@ -236,14 +245,18 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
       const limites = await LimiteArea.list();
       const limitesFiltrados = filtrarLimitesPorFazendaIds(limites, idsPermitidos);
+      const selecaoRota = resolveTalhaoSelecionadoFromRoute(limitesFiltrados, route?.params);
 
       setTodosLimites(limitesFiltrados);
+      setTalhaoSelecionadoId(selecaoRota.talhaoId ?? null);
 
       // Seleciona o ano mais recente por padrão
       const anos = [...new Set<number>(limitesFiltrados.map((l: any) => l.ano))].sort(
         (a, b) => b - a
       );
-      if (anos.length > 0) {
+      if (selecaoRota.talhaoAno != null && anos.includes(selecaoRota.talhaoAno)) {
+        setAnoSelecionado(selecaoRota.talhaoAno);
+      } else if (anos.length > 0) {
         setAnoSelecionado(anos[0]);
       } else {
         setAnoSelecionado(null);
@@ -299,6 +312,17 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       mapaRef.current?.selecionarTalhao(null);
     });
   }, [drawerAnim]);
+
+  useEffect(() => {
+    if (!talhaoSelecionadoId || !talhaoDetalhe) {
+      return;
+    }
+
+    mapaRef.current?.selecionarTalhao(talhaoSelecionadoId);
+    if (!drawerVisivel) {
+      abrirDrawer();
+    }
+  }, [talhaoSelecionadoId, talhaoDetalhe, drawerVisivel, abrirDrawer]);
 
   // ── Handlers ─────────────────────────────────────────────────
   const handleTalhaoPress = useCallback(
@@ -469,7 +493,9 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
           talhaoSelecionadoId={talhaoSelecionadoId}
           onTalhaoPress={handleTalhaoPress}
           onMapaReady={() => {
-            if (talhaoIdInicial) handleTalhaoPress(talhaoIdInicial);
+            if (talhaoSelecionadoId) {
+              mapaRef.current?.selecionarTalhao(talhaoSelecionadoId);
+            }
           }}
         />
 

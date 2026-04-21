@@ -7,7 +7,11 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
-import { buildFazendaMapaRouteParams, buildMapasRouteParams } from '../navigation/mapaRouteCompat';
+import {
+  buildFazendaMapaRouteParams,
+  buildMapaTalhaoRouteSelection,
+  buildMapasRouteParams,
+} from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -235,7 +239,7 @@ export default function ProdutorScreen({ route, navigation }) {
     fazendaId: fazendaAtualId,
     fazendaNome: fazendaInfo.fazendaNome,
     titularNome: fazendaInfo.titularNome,
-    talhaoId: mapa?.talhao,
+    ...buildMapaTalhaoRouteSelection(mapa, limites),
   });
 
   return (

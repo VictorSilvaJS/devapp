@@ -1,9 +1,11 @@
 const assert = require('node:assert/strict');
 const {
   buildFazendaMapaRouteParams,
+  buildMapaTalhaoRouteSelection,
   buildMapasRouteParams,
   resolveRouteFazendaId,
   resolveRouteTitularNome,
+  resolveTalhaoSelecionadoFromRoute,
 } = require('../.tmp-domain-compat/src/navigation/mapaRouteCompat');
 
 let failed = 0;
@@ -54,6 +56,9 @@ const run = async () => {
       fazendaNome: 'Fazenda Satélite',
       titularNome: 'João Silva',
       talhaoId: 'talhao_7',
+      talhaoNome: 'Talhão 7',
+      talhao: 'Talhão 7',
+      talhaoAno: '2025',
     });
 
     assert.deepEqual(params, {
@@ -63,6 +68,64 @@ const run = async () => {
       titularNome: 'João Silva',
       produtorNome: 'João Silva',
       talhaoId: 'talhao_7',
+      talhaoNome: 'Talhão 7',
+      talhao: 'Talhão 7',
+      talhaoAno: '2025',
+    });
+  });
+
+  await test('buildMapaTalhaoRouteSelection resolve id canônico do limite por talhão e safra', () => {
+    const params = buildMapaTalhaoRouteSelection(
+      {
+        id: 'mapa_1',
+        fazenda_id: 'faz_1',
+        talhao: 'Talhão A',
+        safra: '2024/2025',
+      },
+      [
+        { id: 'limite_2024', fazenda_id: 'faz_1', talhao: 'Talhão A', ano: 2024 },
+        { id: 'limite_2025', fazenda_id: 'faz_1', talhao: 'Talhão A', ano: 2025 },
+        { id: 'limite_outra_fazenda', fazenda_id: 'faz_2', talhao: 'Talhão A', ano: 2025 },
+      ]
+    );
+
+    assert.deepEqual(params, {
+      talhaoId: 'limite_2025',
+      talhaoNome: 'Talhão A',
+      talhao: 'Talhão A',
+      talhaoAno: '2025',
+    });
+  });
+
+  await test('resolveTalhaoSelecionadoFromRoute usa id canônico quando disponível', () => {
+    const selecao = resolveTalhaoSelecionadoFromRoute(
+      [
+        { id: 'limite_2024', talhao: 'Talhão A', ano: 2024 },
+        { id: 'limite_2025', talhao: 'Talhão A', ano: 2025 },
+      ],
+      { talhaoId: 'limite_2024', talhaoNome: 'Talhão A', talhaoAno: '2025' }
+    );
+
+    assert.deepEqual(selecao, {
+      talhaoId: 'limite_2024',
+      talhaoAno: 2024,
+      matchType: 'id',
+    });
+  });
+
+  await test('resolveTalhaoSelecionadoFromRoute aceita talhaoId legado como nome controlado', () => {
+    const selecao = resolveTalhaoSelecionadoFromRoute(
+      [
+        { id: 'limite_2024', talhao: 'Talhão A', ano: 2024 },
+        { id: 'limite_2025', talhao: 'Talhão A', ano: 2025 },
+      ],
+      { talhaoId: 'Talhão A', talhaoAno: '2024' }
+    );
+
+    assert.deepEqual(selecao, {
+      talhaoId: 'limite_2024',
+      talhaoAno: 2024,
+      matchType: 'legado',
     });
   });
 
