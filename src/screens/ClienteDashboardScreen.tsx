@@ -25,6 +25,7 @@ import {
   getFazendaId,
   getFazendaIds,
 } from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 /**
  * Tela específica para produtores/proprietários - Dashboard das propriedades
@@ -152,10 +153,16 @@ export default function ClienteDashboardScreen() {
   const areaTotal = propriedadesExibidas.reduce((sum, p) => sum + (p.area_total || 0), 0);
   const culturas = [...new Set(propriedadesExibidas.map(p => p.cultura_atual).filter(Boolean))];
   const mapasCategorizados = agruparMapasPorCategoria(mapasFiltrados);
-  const primeiraFazenda = propriedadesExibidas[0] || propriedades[0];
-  const mapasRouteParams = buildMapasRouteParams({
-    fazendaId: primeiraFazenda ? getFazendaId(primeiraFazenda) : undefined,
-  });
+  const mapasRouteParams = filtroFazenda === 'geral'
+    ? undefined
+    : buildMapasRouteParams({ fazendaId: filtroFazenda });
+  const abrirMapas = () => {
+    if (mapasRouteParams) {
+      navigation.navigate('Mapas', mapasRouteParams);
+    } else {
+      navigation.navigate('Mapas');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -202,22 +209,26 @@ export default function ClienteDashboardScreen() {
         }
       >
         {/* Cards das Fazendas (filtradas) */}
-        {propriedadesExibidas.map((prop, idx) => (
-          <View key={getFazendaId(prop)} style={styles.propriedadeCard}>
-            <View style={styles.propriedadeHeader}>
-              <Ionicons name="home-outline" size={40} color={colors.primary} />
-              <View style={styles.propriedadeInfo}>
-                <Text style={styles.propriedadeNome}>{prop.fazenda}</Text>
-                <Text style={styles.propriedadeLocalização}>
-                  {prop.cidade}, {prop.estado}
-                </Text>
-                <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
-                  {prop.area_total} ha • {prop.cultura_atual || 'N/A'}
-                </Text>
+        {propriedadesExibidas.map((prop) => {
+          const fazendaInfo = getFazendaUiInfo(prop);
+
+          return (
+            <View key={getFazendaId(prop)} style={styles.propriedadeCard}>
+              <View style={styles.propriedadeHeader}>
+                <Ionicons name="home-outline" size={40} color={colors.primary} />
+                <View style={styles.propriedadeInfo}>
+                  <Text style={styles.propriedadeNome}>{fazendaInfo.fazendaNome}</Text>
+                  <Text style={styles.propriedadeLocalização}>
+                    {fazendaInfo.localizacao || 'Localização não informada'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
+                    Titular: {fazendaInfo.titularNome || 'Não informado'} • {prop.area_total} ha • {prop.cultura_atual || 'N/A'}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
 
         {/* Resumo de Informações */}
         <View style={styles.statsGrid}>
@@ -297,7 +308,7 @@ export default function ClienteDashboardScreen() {
             <Text style={styles.secaoTitulo}>Mapas da Propriedade</Text>
             {mapas.length > 0 && (
               <TouchableOpacity 
-                onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
+                onPress={abrirMapas}
               >
                 <Text style={styles.verTodosLink}>Ver todos</Text>
               </TouchableOpacity>
@@ -319,7 +330,7 @@ export default function ClienteDashboardScreen() {
                 <TouchableOpacity
                   key={index}
                   style={styles.categoriaCard}
-                  onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
+                  onPress={abrirMapas}
                 >
                   <View style={styles.categoriaIconContainer}>
                     <Ionicons name={cat.icon} size={32} color={colors.primary} />

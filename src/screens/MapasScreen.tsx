@@ -34,7 +34,11 @@ import {
   getLimiteAreaFazendaId,
   getMapaFazendaId,
 } from '../utils/acessoControle';
-import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import {
+  buildFazendaConsultaOptions,
+  buildFazendaUiInfoMap,
+  getFazendaUiInfo,
+} from '../utils/fazendaUiCompat';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -54,6 +58,47 @@ const CATEGORIAS = [
   { id: 'panorama', nome: 'Panorama', icon: 'image-outline' },
   { id: 'plantio', nome: 'Plantio', icon: 'git-network-outline' },
 ];
+
+const FILTRO_TODOS = 'todos';
+
+const normalizarBusca = (value: unknown): string =>
+  typeof value === 'string'
+    ? value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+    : '';
+
+const getAnoData = (data?: string | null): number | null => {
+  if (!data) return null;
+  const year = new Date(data).getFullYear();
+  return Number.isFinite(year) ? year : null;
+};
+
+const getMapaSafra = (mapa: any): string => {
+  const safra = typeof mapa?.safra === 'string' ? mapa.safra.trim() : '';
+  if (safra) return safra;
+
+  const ano = getAnoData(mapa?.data_criacao);
+  return ano ? String(ano) : '';
+};
+
+const getMapaTalhao = (mapa: any): string =>
+  typeof mapa?.talhao === 'string' ? mapa.talhao.trim() : '';
+
+const getSafraSortValue = (safra: string): number => {
+  const anos = safra.match(/\d{4}/g)?.map((ano) => Number.parseInt(ano, 10)) ?? [];
+  return anos.length > 0 ? Math.max(...anos) : 0;
+};
+
+const buildOptionsOrdenadas = (values: string[]): string[] =>
+  [...new Set(values.map((value) => value.trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+
+const buildSafraOptions = (mapas: any[]): string[] =>
+  buildOptionsOrdenadas(mapas.map(getMapaSafra))
+    .sort((a, b) => getSafraSortValue(b) - getSafraSortValue(a) || a.localeCompare(b));
 
 // ──────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
@@ -80,7 +125,9 @@ export default function MapasScreen({ route, navigation }) {
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
   const [ordenacao, setOrdenacao] = useState('recente');
-  const [anoFiltroMapas, setAnoFiltroMapas] = useState(null); // null = todos
+  const [fazendaFiltroOperacional, setFazendaFiltroOperacional] = useState(FILTRO_TODOS);
+  const [safraFiltroMapas, setSafraFiltroMapas] = useState(FILTRO_TODOS);
+  const [talhaoFiltroMapas, setTalhaoFiltroMapas] = useState(FILTRO_TODOS);
   const [downloadDialog, setDownloadDialog] = useState({ visible: false, mapa: null });
   const [uploadDialog, setUploadDialog] = useState(false);
   const [uploadAno, setUploadAno] = useState(new Date().getFullYear().toString());
@@ -92,6 +139,7 @@ export default function MapasScreen({ route, navigation }) {
   const [selectedTalhao, setSelectedTalhao] = useState(null);
   const [talhaoDetailVisible, setTalhaoDetailVisible] = useState(false);
   const [buscaLimite, setBuscaLimite] = useState('');
+  const [talhaoFiltroLimite, setTalhaoFiltroLimite] = useState(FILTRO_TODOS);
 
   // ──────────────────────────────────────────────
   // CARREGAMENTO DE DADOS
@@ -127,6 +175,9 @@ export default function MapasScreen({ route, navigation }) {
           setLimites([]);
           setAnosDisponiveis([]);
           setAnoFiltroLimite(null);
+          setFazendaFiltroOperacional(FILTRO_TODOS);
+          setTalhaoFiltroLimite(FILTRO_TODOS);
+          setSelectedTalhao(null);
           return;
         }
 
@@ -145,6 +196,12 @@ export default function MapasScreen({ route, navigation }) {
         tipo: fazendaId ? 'fazenda' : 'geral',
         fazenda: fazendaContexto,
         fazendasPermitidas: fazendasNoContexto,
+      });
+      setFazendaFiltroOperacional((filtroAtual) => {
+        if (fazendaId) return FILTRO_TODOS;
+        return filtroAtual !== FILTRO_TODOS && idsPermitidos.includes(filtroAtual)
+          ? filtroAtual
+          : FILTRO_TODOS;
       });
 
       const [todosMapas, todosLimites] = await Promise.all([
@@ -180,31 +237,90 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   // ──────────────────────────────────────────────
-  // ANOS DISPONÍVEIS PARA MAPAS
+  // CONTEXTO OPERACIONAL
   // ──────────────────────────────────────────────
-  const anosMapas = useMemo(() => {
-    const anos = [...new Set(mapas.map(m => {
-      const d = m.data_criacao ? new Date(m.data_criacao) : null;
-      return d ? d.getFullYear() : null;
-    }).filter(Boolean))].sort((a, b) => b - a);
-    return anos;
-  }, [mapas]);
+  const consultaPorFazenda = contextoConsulta.tipo === 'fazenda' && !!contextoConsulta.fazenda;
+  const fazendaContextoInfo = consultaPorFazenda ? getFazendaUiInfo(contextoConsulta.fazenda) : null;
+  const fazendaOptions = useMemo(
+    () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
+    [contextoConsulta.fazendasPermitidas]
+  );
+  const fazendaInfoPorId = useMemo<Map<string, any>>(
+    () => buildFazendaUiInfoMap(contextoConsulta.fazendasPermitidas || []),
+    [contextoConsulta.fazendasPermitidas]
+  );
+  const fazendaFiltroInfo = fazendaFiltroOperacional !== FILTRO_TODOS
+    ? fazendaInfoPorId.get(fazendaFiltroOperacional)
+    : null;
+  const fazendaFiltroId = !consultaPorFazenda && fazendaFiltroInfo
+    ? fazendaFiltroInfo.id
+    : null;
+
+  const mapasNoContexto = useMemo(() => {
+    if (!fazendaFiltroId) return mapas;
+    return mapas.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
+  }, [mapas, fazendaFiltroId]);
+
+  const limitesNoContexto = useMemo(() => {
+    if (!fazendaFiltroId) return limites;
+    return limites.filter((limite) => getLimiteAreaFazendaId(limite) === fazendaFiltroId);
+  }, [limites, fazendaFiltroId]);
+
+  const safrasMapas = useMemo(() => buildSafraOptions(mapasNoContexto), [mapasNoContexto]);
+
+  const talhoesMapas = useMemo(
+    () => buildOptionsOrdenadas(mapasNoContexto.map(getMapaTalhao)),
+    [mapasNoContexto]
+  );
+
+  const talhoesLimite = useMemo(
+    () => buildOptionsOrdenadas(limitesNoContexto.map((limite: any) => limite?.talhao || limite?.nome || '')),
+    [limitesNoContexto]
+  );
+
+  useEffect(() => {
+    if (safraFiltroMapas !== FILTRO_TODOS && !safrasMapas.includes(safraFiltroMapas)) {
+      setSafraFiltroMapas(FILTRO_TODOS);
+    }
+  }, [safrasMapas, safraFiltroMapas]);
+
+  useEffect(() => {
+    if (talhaoFiltroMapas !== FILTRO_TODOS && !talhoesMapas.includes(talhaoFiltroMapas)) {
+      setTalhaoFiltroMapas(FILTRO_TODOS);
+    }
+  }, [talhoesMapas, talhaoFiltroMapas]);
+
+  useEffect(() => {
+    if (talhaoFiltroLimite !== FILTRO_TODOS && !talhoesLimite.includes(talhaoFiltroLimite)) {
+      setTalhaoFiltroLimite(FILTRO_TODOS);
+    }
+  }, [talhoesLimite, talhaoFiltroLimite]);
 
   // ──────────────────────────────────────────────
   // FILTROS DA ABA MAPAS
   // ──────────────────────────────────────────────
   const mapasFiltrados = useMemo(() => {
-    return mapas.filter(m => {
-      const matchCategoria = categoriaAtiva === 'todos' || m.categoria === categoriaAtiva;
-      const matchBusca = !busca || 
-        m.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
-        m.subcategoria?.toLowerCase().includes(busca.toLowerCase()) ||
-        m.talhao?.toLowerCase().includes(busca.toLowerCase()) ||
-        m.observacoes?.toLowerCase().includes(busca.toLowerCase());
-      const matchAno = !anoFiltroMapas || (
-        m.data_criacao && new Date(m.data_criacao).getFullYear() === anoFiltroMapas
-      );
-      return matchCategoria && matchBusca && matchAno;
+    const termoBusca = normalizarBusca(busca);
+
+    return mapasNoContexto.filter(m => {
+      const fazendaInfo = fazendaInfoPorId.get(getMapaFazendaId(m));
+      const safraMapa = getMapaSafra(m);
+      const talhaoMapa = getMapaTalhao(m);
+      const matchCategoria = categoriaAtiva === FILTRO_TODOS || m.categoria === categoriaAtiva;
+      const matchSafra = safraFiltroMapas === FILTRO_TODOS || safraMapa === safraFiltroMapas;
+      const matchTalhao = talhaoFiltroMapas === FILTRO_TODOS || talhaoMapa === talhaoFiltroMapas;
+      const textoBusca = [
+        m.titulo,
+        m.subcategoria,
+        talhaoMapa,
+        safraMapa,
+        m.observacoes,
+        fazendaInfo?.fazendaNome,
+        fazendaInfo?.titularNome,
+      ].map(normalizarBusca).filter(Boolean).join(' ');
+      const matchBusca = !termoBusca || textoBusca.includes(termoBusca);
+
+      return matchCategoria && matchBusca && matchSafra && matchTalhao;
     }).sort((a, b) => {
       if (ordenacao === 'recente') {
         return new Date(b.data_criacao || 0).getTime() - new Date(a.data_criacao || 0).getTime();
@@ -215,7 +331,15 @@ export default function MapasScreen({ route, navigation }) {
       }
       return 0;
     });
-  }, [mapas, categoriaAtiva, busca, ordenacao, anoFiltroMapas]);
+  }, [
+    mapasNoContexto,
+    fazendaInfoPorId,
+    categoriaAtiva,
+    busca,
+    safraFiltroMapas,
+    talhaoFiltroMapas,
+    ordenacao,
+  ]);
 
   const mapasPorCategoria = useMemo(() => {
     return CATEGORIAS
@@ -231,16 +355,39 @@ export default function MapasScreen({ route, navigation }) {
   // FILTROS DA ABA LIMITE
   // ──────────────────────────────────────────────
   const limitesFiltrados = useMemo(() => {
-    return limites.filter(l => {
+    const termoBusca = normalizarBusca(buscaLimite);
+
+    return limitesNoContexto.filter(l => {
+      const talhaoLimite = l.talhao || l.nome || '';
       const matchAno = !anoFiltroLimite || l.ano === anoFiltroLimite;
-      const matchBusca = !buscaLimite ||
-        l.talhao?.toLowerCase().includes(buscaLimite.toLowerCase()) ||
-        l.nome?.toLowerCase().includes(buscaLimite.toLowerCase()) ||
-        l.textura?.toLowerCase().includes(buscaLimite.toLowerCase()) ||
-        l.cultura_atual?.toLowerCase().includes(buscaLimite.toLowerCase());
-      return matchAno && matchBusca;
+      const matchTalhao = talhaoFiltroLimite === FILTRO_TODOS || talhaoLimite === talhaoFiltroLimite;
+      const textoBusca = [
+        l.talhao,
+        l.nome,
+        l.textura,
+        l.cultura_atual,
+        l.tipo_solo,
+        fazendaInfoPorId.get(getLimiteAreaFazendaId(l))?.fazendaNome,
+        fazendaInfoPorId.get(getLimiteAreaFazendaId(l))?.titularNome,
+      ].map(normalizarBusca).filter(Boolean).join(' ');
+      const matchBusca = !termoBusca || textoBusca.includes(termoBusca);
+
+      return matchAno && matchTalhao && matchBusca;
     });
-  }, [limites, anoFiltroLimite, buscaLimite]);
+  }, [
+    limitesNoContexto,
+    anoFiltroLimite,
+    buscaLimite,
+    talhaoFiltroLimite,
+    fazendaInfoPorId,
+  ]);
+
+  useEffect(() => {
+    if (selectedTalhao && !limitesFiltrados.some((talhao) => talhao.id === selectedTalhao.id)) {
+      setSelectedTalhao(null);
+      setTalhaoDetailVisible(false);
+    }
+  }, [limitesFiltrados, selectedTalhao]);
 
   // ──────────────────────────────────────────────
   // HANDLERS
@@ -273,23 +420,52 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const consultaPorFazenda = contextoConsulta.tipo === 'fazenda' && contextoConsulta.fazenda;
-  const fazendaContextoInfo = consultaPorFazenda ? getFazendaUiInfo(contextoConsulta.fazenda) : null;
+  const limparFiltrosMapas = () => {
+    setCategoriaAtiva(FILTRO_TODOS);
+    setSafraFiltroMapas(FILTRO_TODOS);
+    setTalhaoFiltroMapas(FILTRO_TODOS);
+    setBusca('');
+    if (!consultaPorFazenda) {
+      setFazendaFiltroOperacional(FILTRO_TODOS);
+    }
+  };
+
+  const limparFiltrosLimite = () => {
+    setAnoFiltroLimite(null);
+    setTalhaoFiltroLimite(FILTRO_TODOS);
+    setBuscaLimite('');
+    if (!consultaPorFazenda) {
+      setFazendaFiltroOperacional(FILTRO_TODOS);
+    }
+  };
+
   const tituloTela = consultaPorFazenda ? 'Mapas da Fazenda' : 'Mapas & Limites';
-  const contextoTitulo = fazendaContextoInfo?.fazendaNome || 'Visão geral de mapas e limites';
-  const contextoSubtitulo = fazendaContextoInfo
+  const contextoLabel = consultaPorFazenda
+    ? 'Consulta por fazenda'
+    : fazendaFiltroInfo
+      ? 'Visão geral filtrada'
+      : 'Visão geral';
+  const contextoTitulo = fazendaContextoInfo?.fazendaNome
+    || fazendaFiltroInfo?.fazendaNome
+    || 'Todas as fazendas acessíveis';
+  const contextoSubtitulo = fazendaContextoInfo || fazendaFiltroInfo
     ? [
-        fazendaContextoInfo.titularNome ? `Titular: ${fazendaContextoInfo.titularNome}` : null,
-        fazendaContextoInfo.localizacao,
+        (fazendaContextoInfo || fazendaFiltroInfo)?.titularNome
+          ? `Titular: ${(fazendaContextoInfo || fazendaFiltroInfo)?.titularNome}`
+          : null,
+        (fazendaContextoInfo || fazendaFiltroInfo)?.localizacao,
       ].filter(Boolean).join(' • ')
     : `${contextoConsulta.fazendasPermitidas.length} fazenda${contextoConsulta.fazendasPermitidas.length !== 1 ? 's' : ''} no escopo atual`;
-  const fazendaInfoPorId = useMemo<Map<string, any>>(() => {
-    const entries = (contextoConsulta.fazendasPermitidas || []).map((fazenda) => {
-      const info = getFazendaUiInfo(fazenda);
-      return [info.id, info];
-    });
-    return new Map(entries);
-  }, [contextoConsulta.fazendasPermitidas]);
+  const mapaSateliteFazendaInfo = fazendaContextoInfo || fazendaFiltroInfo;
+  const temFiltroMapaAtivo = categoriaAtiva !== FILTRO_TODOS
+    || safraFiltroMapas !== FILTRO_TODOS
+    || talhaoFiltroMapas !== FILTRO_TODOS
+    || busca.trim().length > 0
+    || !!fazendaFiltroInfo;
+  const temFiltroLimiteAtivo = !!anoFiltroLimite
+    || talhaoFiltroLimite !== FILTRO_TODOS
+    || buscaLimite.trim().length > 0
+    || !!fazendaFiltroInfo;
 
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
@@ -334,6 +510,7 @@ export default function MapasScreen({ route, navigation }) {
   // RENDER: Card de Mapa
   // ──────────────────────────────────────────────
   const renderMapaCard = (mapa) => {
+    const safraMapa = getMapaSafra(mapa);
     const fazendaMapaInfo = !consultaPorFazenda
       ? fazendaInfoPorId.get(getMapaFazendaId(mapa))
       : null;
@@ -360,13 +537,18 @@ export default function MapasScreen({ route, navigation }) {
           )}
           {fazendaMapaInfo && (
             <Text style={styles.mapaContexto} numberOfLines={1}>
-              {fazendaMapaInfo.fazendaNome} • {fazendaMapaInfo.titularNome || 'Titular não informado'}
+              Fazenda: {fazendaMapaInfo.fazendaNome} • Titular: {fazendaMapaInfo.titularNome || 'Não informado'}
             </Text>
           )}
           <View style={styles.mapaDetalhes}>
             <Text style={styles.mapaDetalhe}>
               <Ionicons name="calendar-outline" size={14} color={colors.secondary} /> {formatarData(mapa.data_criacao)}
             </Text>
+            {safraMapa && (
+              <Text style={styles.mapaDetalhe}>
+                <Ionicons name="leaf-outline" size={14} color={colors.secondary} /> Safra {safraMapa}
+              </Text>
+            )}
             {mapa.talhao && (
               <Text style={styles.mapaDetalhe}>
                 <Ionicons name="location-outline" size={14} color={colors.secondary} /> {mapa.talhao}
@@ -423,7 +605,7 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.talhaoCardSub}>{talhao.nome}</Text>
           {fazendaTalhaoInfo && (
             <Text style={styles.talhaoCardContexto} numberOfLines={1}>
-              {fazendaTalhaoInfo.fazendaNome} • {fazendaTalhaoInfo.titularNome || 'Titular não informado'}
+              Fazenda: {fazendaTalhaoInfo.fazendaNome} • Titular: {fazendaTalhaoInfo.titularNome || 'Não informado'}
             </Text>
           )}
         </View>
@@ -437,6 +619,10 @@ export default function MapasScreen({ route, navigation }) {
         <View style={styles.talhaoChip}>
           <Ionicons name="layers-outline" size={12} color={colors.secondary} />
           <Text style={styles.talhaoChipText}>{talhao.textura || '-'}</Text>
+        </View>
+        <View style={styles.talhaoChip}>
+          <Ionicons name="calendar-outline" size={12} color={colors.primary} />
+          <Text style={styles.talhaoChipText}>LT {talhao.ano || '-'}</Text>
         </View>
         <View style={styles.talhaoChip}>
           <Ionicons name="leaf-outline" size={12} color={colors.success} />
@@ -468,7 +654,7 @@ export default function MapasScreen({ route, navigation }) {
           <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar mapas..."
+            placeholder="Buscar por mapa, safra, talhão, fazenda..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -481,29 +667,95 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Filtro por Ano */}
+      {!consultaPorFazenda && fazendaOptions.length > 1 && (
+        <View style={styles.anoFilterContainer}>
+          <Text style={styles.anoFilterLabel}>
+            <Ionicons name="business-outline" size={14} color={colors.text} /> Contexto da consulta:
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
+            <TouchableOpacity
+              style={[styles.anoChip, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipActive]}
+              onPress={() => setFazendaFiltroOperacional(FILTRO_TODOS)}
+            >
+              <Text style={[styles.anoChipText, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipTextActive]}>
+                Todas
+              </Text>
+            </TouchableOpacity>
+            {fazendaOptions.map((fazenda) => (
+              <TouchableOpacity
+                key={fazenda.id}
+                style={[styles.anoChip, fazendaFiltroOperacional === fazenda.id && styles.anoChipActive]}
+                onPress={() => setFazendaFiltroOperacional(fazenda.id)}
+              >
+                <Text
+                  style={[styles.anoChipText, fazendaFiltroOperacional === fazenda.id && styles.anoChipTextActive]}
+                  numberOfLines={1}
+                >
+                  {fazenda.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Filtro por Safra */}
       <View style={styles.anoFilterContainer}>
         <Text style={styles.anoFilterLabel}>
-          <Ionicons name="calendar-outline" size={14} color={colors.text} /> Filtrar por ano:
+          <Ionicons name="calendar-outline" size={14} color={colors.text} /> Safra:
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
           <TouchableOpacity
-            style={[styles.anoChip, !anoFiltroMapas && styles.anoChipActive]}
-            onPress={() => setAnoFiltroMapas(null)}
+            style={[styles.anoChip, safraFiltroMapas === FILTRO_TODOS && styles.anoChipActive]}
+            onPress={() => setSafraFiltroMapas(FILTRO_TODOS)}
           >
-            <Text style={[styles.anoChipText, !anoFiltroMapas && styles.anoChipTextActive]}>Todos</Text>
+            <Text style={[styles.anoChipText, safraFiltroMapas === FILTRO_TODOS && styles.anoChipTextActive]}>Todas</Text>
           </TouchableOpacity>
-          {anosMapas.map(ano => (
+          {safrasMapas.map(safra => (
             <TouchableOpacity
-              key={ano}
-              style={[styles.anoChip, anoFiltroMapas === ano && styles.anoChipActive]}
-              onPress={() => setAnoFiltroMapas(ano)}
+              key={safra}
+              style={[styles.anoChip, safraFiltroMapas === safra && styles.anoChipActive]}
+              onPress={() => setSafraFiltroMapas(safra)}
             >
-              <Text style={[styles.anoChipText, anoFiltroMapas === ano && styles.anoChipTextActive]}>{ano}</Text>
+              <Text style={[styles.anoChipText, safraFiltroMapas === safra && styles.anoChipTextActive]}>{safra}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
+
+      {talhoesMapas.length > 0 && (
+        <View style={styles.anoFilterContainer}>
+          <Text style={styles.anoFilterLabel}>
+            <Ionicons name="location-outline" size={14} color={colors.text} /> Talhão:
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
+            <TouchableOpacity
+              style={[styles.anoChip, talhaoFiltroMapas === FILTRO_TODOS && styles.anoChipActive]}
+              onPress={() => setTalhaoFiltroMapas(FILTRO_TODOS)}
+            >
+              <Text style={[styles.anoChipText, talhaoFiltroMapas === FILTRO_TODOS && styles.anoChipTextActive]}>Todos</Text>
+            </TouchableOpacity>
+            {talhoesMapas.map(talhao => (
+              <TouchableOpacity
+                key={talhao}
+                style={[styles.anoChip, talhaoFiltroMapas === talhao && styles.anoChipActive]}
+                onPress={() => setTalhaoFiltroMapas(talhao)}
+              >
+                <Text style={[styles.anoChipText, talhaoFiltroMapas === talhao && styles.anoChipTextActive]} numberOfLines={1}>
+                  {talhao}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {temFiltroMapaAtivo && (
+        <TouchableOpacity style={styles.limparFiltrosButton} onPress={limparFiltrosMapas} activeOpacity={0.75}>
+          <Ionicons name="close-circle-outline" size={16} color={colors.primary} />
+          <Text style={styles.limparFiltrosText}>Limpar filtros de mapas</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Ordenação */}
       <View style={styles.ordenacaoContainer}>
@@ -583,11 +835,11 @@ export default function MapasScreen({ route, navigation }) {
         {/* Estatísticas */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            <Text style={styles.statNumero}>{mapas.length}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statNumero}>{mapasNoContexto.length}</Text>
+            <Text style={styles.statLabel}>No contexto</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumero}>{mapas.filter(m => m.disponivel_download).length}</Text>
+            <Text style={styles.statNumero}>{mapasNoContexto.filter(m => m.disponivel_download).length}</Text>
             <Text style={styles.statLabel}>Disponíveis</Text>
           </View>
           <View style={styles.statBox}>
@@ -612,18 +864,18 @@ export default function MapasScreen({ route, navigation }) {
         {mapasFiltrados.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons 
-              name={busca ? 'search-outline' : 'map-outline'} 
+              name={temFiltroMapaAtivo ? 'search-outline' : 'map-outline'} 
               size={80} 
               color={colors.muted} 
             />
             <Text style={styles.emptyText}>
-              {busca ? 'Nenhum mapa encontrado' : 'Nenhum mapa disponível'}
+              {temFiltroMapaAtivo ? 'Nenhum mapa encontrado' : 'Nenhum mapa disponível'}
             </Text>
             <Text style={styles.emptySubtext}>
-              {busca 
-                ? 'Tente ajustar sua busca, categoria ou filtro de ano'
+              {temFiltroMapaAtivo
+                ? 'Tente ajustar fazenda, safra, talhão, categoria ou busca'
                 : categoriaAtiva === 'todos' 
-                  ? 'Ainda não há mapas cadastrados para esta fazenda.'
+                  ? 'Ainda não há mapas cadastrados para esta consulta.'
                   : 'Não há mapas nesta categoria no momento.'}
             </Text>
           </View>
@@ -687,6 +939,38 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       </View>
 
+      {!consultaPorFazenda && fazendaOptions.length > 1 && (
+        <View style={styles.anoFilterContainer}>
+          <Text style={styles.anoFilterLabel}>
+            <Ionicons name="business-outline" size={14} color={colors.text} /> Contexto da consulta:
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
+            <TouchableOpacity
+              style={[styles.anoChip, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipActive]}
+              onPress={() => setFazendaFiltroOperacional(FILTRO_TODOS)}
+            >
+              <Text style={[styles.anoChipText, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipTextActive]}>
+                Todas
+              </Text>
+            </TouchableOpacity>
+            {fazendaOptions.map((fazenda) => (
+              <TouchableOpacity
+                key={fazenda.id}
+                style={[styles.anoChip, fazendaFiltroOperacional === fazenda.id && styles.anoChipActive]}
+                onPress={() => setFazendaFiltroOperacional(fazenda.id)}
+              >
+                <Text
+                  style={[styles.anoChipText, fazendaFiltroOperacional === fazenda.id && styles.anoChipTextActive]}
+                  numberOfLines={1}
+                >
+                  {fazenda.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Filtro por Ano */}
       <View style={styles.anoFilterContainer}>
         <Text style={styles.anoFilterLabel}>
@@ -712,6 +996,40 @@ export default function MapasScreen({ route, navigation }) {
           ))}
         </ScrollView>
       </View>
+
+      {talhoesLimite.length > 0 && (
+        <View style={styles.anoFilterContainer}>
+          <Text style={styles.anoFilterLabel}>
+            <Ionicons name="location-outline" size={14} color={colors.text} /> Talhão:
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
+            <TouchableOpacity
+              style={[styles.anoChip, talhaoFiltroLimite === FILTRO_TODOS && styles.anoChipActive]}
+              onPress={() => setTalhaoFiltroLimite(FILTRO_TODOS)}
+            >
+              <Text style={[styles.anoChipText, talhaoFiltroLimite === FILTRO_TODOS && styles.anoChipTextActive]}>Todos</Text>
+            </TouchableOpacity>
+            {talhoesLimite.map(talhao => (
+              <TouchableOpacity
+                key={talhao}
+                style={[styles.anoChip, talhaoFiltroLimite === talhao && styles.anoChipActive]}
+                onPress={() => setTalhaoFiltroLimite(talhao)}
+              >
+                <Text style={[styles.anoChipText, talhaoFiltroLimite === talhao && styles.anoChipTextActive]} numberOfLines={1}>
+                  {talhao}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {temFiltroLimiteAtivo && (
+        <TouchableOpacity style={styles.limparFiltrosButton} onPress={limparFiltrosLimite} activeOpacity={0.75}>
+          <Ionicons name="close-circle-outline" size={16} color={colors.primary} />
+          <Text style={styles.limparFiltrosText}>Limpar filtros de limites</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Estatísticas Limite */}
       <View style={styles.statsContainer}>
@@ -752,9 +1070,9 @@ export default function MapasScreen({ route, navigation }) {
               navigation.navigate(
                 'FazendaMapa',
                 buildFazendaMapaRouteParams({
-                  fazendaId: fazendaContextoInfo?.id,
-                  fazendaNome: fazendaContextoInfo?.fazendaNome,
-                  titularNome: fazendaContextoInfo?.titularNome,
+                  fazendaId: mapaSateliteFazendaInfo?.id,
+                  fazendaNome: mapaSateliteFazendaInfo?.fazendaNome,
+                  titularNome: mapaSateliteFazendaInfo?.titularNome,
                 })
               )
             }
@@ -766,7 +1084,9 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.btnMapaSateliteTextos}>
               <Text style={styles.btnMapaSateliteTitulo}>Ver no Mapa Satélite</Text>
               <Text style={styles.btnMapaSateliteSubtitulo}>
-                Visualize os talhões sobre imagem aérea
+                {mapaSateliteFazendaInfo
+                  ? `Abrir ${mapaSateliteFazendaInfo.fazendaNome}`
+                  : 'Abrir visão geral dos talhões acessíveis'}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
@@ -857,14 +1177,14 @@ export default function MapasScreen({ route, navigation }) {
       <View style={styles.contextoContainer}>
         <View style={styles.contextoIcon}>
           <Ionicons
-            name={consultaPorFazenda ? 'home-outline' : 'globe-outline'}
+            name={consultaPorFazenda || fazendaFiltroInfo ? 'home-outline' : 'globe-outline'}
             size={20}
             color={colors.primary}
           />
         </View>
         <View style={styles.contextoTextos}>
           <Text style={styles.contextoLabel}>
-            {consultaPorFazenda ? 'Consulta por fazenda' : 'Visão geral'}
+            {contextoLabel}
           </Text>
           <Text style={styles.contextoTitulo} numberOfLines={1}>
             {contextoTitulo}
@@ -892,17 +1212,17 @@ export default function MapasScreen({ route, navigation }) {
             <Text style={[styles.tabText, abaAtiva === aba.id && styles.tabTextActive]}>
               {aba.label}
             </Text>
-            {aba.id === 'mapas' && mapas.length > 0 && (
+            {aba.id === 'mapas' && mapasNoContexto.length > 0 && (
               <View style={[styles.tabBadge, abaAtiva === aba.id && styles.tabBadgeActive]}>
                 <Text style={[styles.tabBadgeText, abaAtiva === aba.id && styles.tabBadgeTextActive]}>
-                  {mapas.length}
+                  {mapasNoContexto.length}
                 </Text>
               </View>
             )}
-            {aba.id === 'limite' && limites.length > 0 && (
+            {aba.id === 'limite' && limitesNoContexto.length > 0 && (
               <View style={[styles.tabBadge, abaAtiva === aba.id && styles.tabBadgeActive]}>
                 <Text style={[styles.tabBadgeText, abaAtiva === aba.id && styles.tabBadgeTextActive]}>
-                  {limites.length}
+                  {limitesNoContexto.length}
                 </Text>
               </View>
             )}
@@ -1225,6 +1545,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
     marginRight: spacing.xs,
+    maxWidth: 190,
   },
   anoChipActive: {
     backgroundColor: colors.primary,
@@ -1237,6 +1558,26 @@ const styles = StyleSheet.create({
   },
   anoChipTextActive: {
     color: colors.white,
+  },
+  limparFiltrosButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  limparFiltrosText: {
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
   },
 
   // ── ORDENAÇÃO ──

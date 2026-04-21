@@ -35,6 +35,11 @@ export type FazendaDetailContext = FazendaUiInfo & {
   outrasFazendasTitular: FazendaUiInfo[];
 };
 
+export type FazendaConsultaOption = FazendaUiInfo & {
+  label: string;
+  subtitle: string;
+};
+
 export const getFazendaUiInfo = (fazenda: any): FazendaUiInfo => {
   const fazendaNome = getNomeFazenda(fazenda);
   const titularNome = getNomeTitularFazenda(fazenda);
@@ -52,6 +57,30 @@ export const getFazendaUiInfo = (fazenda: any): FazendaUiInfo => {
     buscaTexto,
   };
 };
+
+export const buildFazendaUiInfoMap = (fazendas: any[] = []): Map<string, FazendaUiInfo> => {
+  const entries = fazendas
+    .map(getFazendaUiInfo)
+    .filter((info) => info.id)
+    .map((info) => [info.id, info] as [string, FazendaUiInfo]);
+
+  return new Map(entries);
+};
+
+export const buildFazendaConsultaOptions = (
+  fazendas: any[] = []
+): FazendaConsultaOption[] =>
+  fazendas
+    .map((fazenda) => {
+      const info = getFazendaUiInfo(fazenda);
+      return {
+        ...info,
+        label: info.fazendaNome || 'Fazenda sem nome',
+        subtitle: joinDefined([info.titularNome, info.localizacao], ' • '),
+      };
+    })
+    .filter((info) => info.id)
+    .sort((a, b) => a.label.localeCompare(b.label));
 
 export const matchesFazendaUiBusca = (
   fazenda: any,

@@ -1,7 +1,9 @@
 const assert = require('node:assert/strict');
 const {
+  buildFazendaConsultaOptions,
   buildFazendaDetailContext,
   buildFazendaListMetrics,
+  buildFazendaUiInfoMap,
   getFazendaUiInfo,
   matchesFazendaUiBusca,
 } = require('../.tmp-domain-compat/src/utils/fazendaUiCompat');
@@ -55,6 +57,48 @@ const run = async () => {
     assert.equal(matchesFazendaUiBusca(fazenda, 'sudoeste'), true);
     assert.equal(matchesFazendaUiBusca(fazenda, 'coleta', ['coleta_solo']), true);
     assert.equal(matchesFazendaUiBusca(fazenda, 'milho'), false);
+  });
+
+  await test('buildFazendaUiInfoMap indexa contexto visual por id operacional da fazenda', () => {
+    const mapa = buildFazendaUiInfoMap([
+      {
+        id: 'faz_01',
+        produtor_nome: 'Joao Silva',
+        fazenda: 'Fazenda Horizonte',
+        cidade: 'Rio Verde',
+        estado: 'GO',
+      },
+    ]);
+
+    assert.deepEqual(mapa.get('faz_01'), {
+      id: 'faz_01',
+      fazendaNome: 'Fazenda Horizonte',
+      titularNome: 'Joao Silva',
+      localizacao: 'Rio Verde/GO',
+      buscaTexto: 'fazenda horizonte joao silva rio verde go',
+    });
+  });
+
+  await test('buildFazendaConsultaOptions monta labels de filtro com fazenda e titular', () => {
+    const options = buildFazendaConsultaOptions([
+      {
+        id: 'faz_b',
+        produtor_nome: 'Maria Souza',
+        fazenda: 'Estancia Boa Vista',
+        cidade: 'Jatai',
+        estado: 'GO',
+      },
+      {
+        id: 'faz_a',
+        produtor_nome: 'Joao Silva',
+        fazenda: 'Fazenda Horizonte',
+      },
+    ]);
+
+    assert.deepEqual(options.map((option) => option.id), ['faz_b', 'faz_a']);
+    assert.equal(options[0].label, 'Estancia Boa Vista');
+    assert.equal(options[0].subtitle, 'Maria Souza • Jatai/GO');
+    assert.equal(options[1].subtitle, 'Joao Silva');
   });
 
   await test('buildFazendaListMetrics diferencia total de fazendas e titulares', () => {
