@@ -5,16 +5,20 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
-import { Produtor, Visita, Mapa } from '../api/mock';
-import { buildMapasRouteParams } from '../navigation/mapaRouteCompat';
+import { Produtor, Visita, Mapa, CadernoCampo } from '../api/mock';
+import { buildFazendaMapaRouteParams, buildMapasRouteParams } from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import {
+  filtrarCadernosPorFazendaIds,
+  filtrarMapasPorFazendaIds,
+  filtrarProdutoresPorAcesso,
   getFazendaId,
   podeEditarProdutor,
   podeExcluirProdutor,
   temAcessoProdutor,
 } from '../utils/acessoControle';
+import { buildFazendaDetailContext, getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -27,6 +31,8 @@ export default function ProdutorScreen({ route, navigation }) {
   const [produtor, setProdutor] = useState(null);
   const [visitas, setVisitas] = useState([]);
   const [mapas, setMapas] = useState([]);
+  const [cadernos, setCadernos] = useState([]);
+  const [outrasFazendasTitular, setOutrasFazendasTitular] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [activeTab, setActiveTab] = useState('resumo');
@@ -39,6 +45,8 @@ export default function ProdutorScreen({ route, navigation }) {
       setProdutor(null);
       setVisitas([]);
       setMapas([]);
+      setCadernos([]);
+      setOutrasFazendasTitular([]);
       setLoading(false);
       return;
     }
@@ -53,21 +61,37 @@ export default function ProdutorScreen({ route, navigation }) {
         setProdutor(null);
         setVisitas([]);
         setMapas([]);
+        setCadernos([]);
+        setOutrasFazendasTitular([]);
         setAccessDenied(true);
         return;
       }
 
-      const [v, m] = await Promise.all([
-        Visita.filter({ fazenda_id: id }),
-        Mapa.filter({ fazenda_id: id })
+      const fazendaAtualId = getFazendaId(p) || id;
+      const [v, todosMapas, todosCadernos, todasFazendas] = await Promise.all([
+        Visita.filter({ fazenda_id: fazendaAtualId }),
+        Mapa.list(),
+        CadernoCampo.list(),
+        Produtor.list(),
       ]);
+      const m = filtrarMapasPorFazendaIds(todosMapas, [fazendaAtualId], {
+        somenteDisponiveisDownload: user?.perfil === 'produtor',
+      });
+      const c = filtrarCadernosPorFazendaIds(todosCadernos, [fazendaAtualId], {
+        somenteVisivelParaProdutor: user?.perfil === 'produtor',
+      });
+      const fazendasComAcesso = filtrarProdutoresPorAcesso(todasFazendas, user);
+      const detalheContexto = buildFazendaDetailContext(p, fazendasComAcesso);
+
       // animar mudanças locais
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setProdutor(p);
       setVisitas(v);
       setMapas(m);
+      setCadernos(c);
+      setOutrasFazendasTitular(detalheContexto.outrasFazendasTitular);
     } catch (error) {
-      toast.showError('Não foi possível carregar os dados do produtor');
+      toast.showError('Não foi possível carregar os dados da fazenda');
       console.error(error);
     } finally {
       setLoading(false);
@@ -120,22 +144,22 @@ export default function ProdutorScreen({ route, navigation }) {
       await Produtor.delete(produtor.id);
       setDeleteDialogVisible(false);
       setDeleting(false);
-      toast.showSuccess('Produtor excluído com sucesso');
+      toast.showSuccess('Fazenda excluída com sucesso');
       navigation.navigate('Produtores');
     } catch (error) {
       setDeleteDialogVisible(false);
       setDeleting(false);
-      toast.showError('Não foi possível excluir o produtor');
+      toast.showError('Não foi possível excluir a fazenda');
     }
   };
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Produtor" />
+        <Header title="Fazenda" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Carregando perfil...</Text>
+          <Text style={styles.loadingText}>Carregando fazenda...</Text>
         </View>
       </View>
     );
@@ -144,39 +168,60 @@ export default function ProdutorScreen({ route, navigation }) {
   if (!produtor) {
     return (
       <View style={styles.container}>
-        <Header title="Produtor" />
+        <Header title="Fazenda" />
         <View style={styles.loadingContainer}>
           <Text style={styles.body}>
-            {accessDenied ? 'Você não tem permissão para acessar esta fazenda.' : 'Produtor não encontrado.'}
+            {accessDenied ? 'Você não tem permissão para acessar esta fazenda.' : 'Fazenda não encontrada.'}
           </Text>
         </View>
       </View>
     );
   }
 
+  const fazendaInfo = getFazendaUiInfo(produtor);
+  const fazendaAtualId = getFazendaId(produtor);
+  const localizacaoFazenda = [
+    fazendaInfo.localizacao,
+    produtor.regiao,
+    produtor.microregiao,
+  ].filter(Boolean).join(' • ');
   const mapasRouteParams = buildMapasRouteParams({
-    fazendaId: getFazendaId(produtor),
+    fazendaId: fazendaAtualId,
   });
   const podeEditar = podeEditarProdutor(user, produtor);
   const podeExcluir = podeExcluirProdutor(user, produtor);
+  const getMapaAtualRouteParams = (mapa) => buildFazendaMapaRouteParams({
+    fazendaId: fazendaAtualId,
+    fazendaNome: fazendaInfo.fazendaNome,
+    titularNome: fazendaInfo.titularNome,
+    talhaoId: mapa?.talhao,
+  });
 
   return (
     <View style={styles.container}>
-      <Header title={produtor.nome} />
+      <Header title={fazendaInfo.fazendaNome || 'Fazenda'} />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Cabeçalho com Avatar e Informações Básicas */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarText}>
-              {produtor.nome.charAt(0).toUpperCase()}
+              {(fazendaInfo.fazendaNome || 'F').charAt(0).toUpperCase()}
             </Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{produtor.nome}</Text>
+            <Text style={styles.profileName} numberOfLines={1}>
+              {fazendaInfo.fazendaNome || 'Fazenda sem nome'}
+            </Text>
+            <View style={styles.locationContainer}>
+              <Ionicons name="person-outline" size={14} color={colors.muted} />
+              <Text style={styles.profileLocation} numberOfLines={1}>
+                Titular: {fazendaInfo.titularNome || 'Não informado'}
+              </Text>
+            </View>
             <View style={styles.locationContainer}>
               <Ionicons name="location" size={14} color={colors.muted} />
-              <Text style={styles.profileLocation}>
-                {produtor.fazenda} - {produtor.cidade}, {produtor.estado}
+              <Text style={styles.profileLocation} numberOfLines={2}>
+                {localizacaoFazenda || 'Localização não informada'}
               </Text>
             </View>
           </View>
@@ -198,7 +243,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   end={{ x: 1, y: 1 }}
                 >
                   <Ionicons name="create-outline" size={20} color={colors.white} />
-                  <Text style={styles.editButtonText}>Editar Produtor</Text>
+                  <Text style={styles.editButtonText}>Editar Fazenda</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -261,6 +306,14 @@ export default function ProdutorScreen({ route, navigation }) {
             <Text style={styles.statValueCompact}>{mapas.length}</Text>
             <Text style={styles.statLabelCompact}>Mapas</Text>
           </View>
+
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="book-outline" size={20} color={colors.primary} />
+            </View>
+            <Text style={styles.statValueCompact}>{cadernos.length}</Text>
+            <Text style={styles.statLabelCompact}>Caderno</Text>
+          </View>
         </ScrollView>
 
         {/* Tabs de Navegação */}
@@ -312,22 +365,22 @@ export default function ProdutorScreen({ route, navigation }) {
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Informações do Produtor</Text>
+            <Text style={styles.sectionTitle}>Contexto da Fazenda</Text>
             
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
-                  <Ionicons name="person" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Nome Completo</Text>
+                  <Ionicons name="home" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Fazenda Atual</Text>
                 </View>
-                <Text style={styles.infoValue}>{produtor.nome}</Text>
+                <Text style={styles.infoValue}>{fazendaInfo.fazendaNome || 'Não informado'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
-                  <Ionicons name="home" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Fazenda</Text>
+                  <Ionicons name="person" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Titular</Text>
                 </View>
-                <Text style={styles.infoValue}>{produtor.fazenda}</Text>
+                <Text style={styles.infoValue}>{fazendaInfo.titularNome || 'Não informado'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
@@ -339,7 +392,7 @@ export default function ProdutorScreen({ route, navigation }) {
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="leaf-outline" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Cultura Principal</Text>
+                  <Text style={styles.infoLabel}>Cultura Atual</Text>
                 </View>
                 <Text style={styles.infoValue}>{produtor.cultura_atual || 'Não informado'}</Text>
               </View>
@@ -348,13 +401,13 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Ionicons name="location" size={16} color={colors.primary} />
                   <Text style={styles.infoLabel}>Localização</Text>
                 </View>
-                <Text style={styles.infoValue}>{produtor.cidade}, {produtor.estado}</Text>
+                <Text style={styles.infoValue}>{localizacaoFazenda || 'Não informado'}</Text>
               </View>
               {produtor.contato && (
                 <View style={styles.infoRow}>
                   <View style={styles.infoLabelContainer}>
                     <Ionicons name="call" size={16} color={colors.primary} />
-                    <Text style={styles.infoLabel}>Contato</Text>
+                    <Text style={styles.infoLabel}>Contato do Titular</Text>
                   </View>
                   <Text style={styles.infoValue}>{produtor.contato}</Text>
                 </View>
@@ -363,28 +416,64 @@ export default function ProdutorScreen({ route, navigation }) {
                 <View style={styles.infoRow}>
                   <View style={styles.infoLabelContainer}>
                     <Ionicons name="mail" size={16} color={colors.primary} />
-                    <Text style={styles.infoLabel}>Email</Text>
+                    <Text style={styles.infoLabel}>Email do Titular</Text>
                   </View>
                   <Text style={styles.infoValue}>{produtor.email}</Text>
                 </View>
               )}
             </View>
 
+            {outrasFazendasTitular.length > 0 && (
+              <>
+                <Text style={styles.sectionTitle}>Outras Fazendas do Titular</Text>
+                <View style={styles.relatedFarmsSection}>
+                  {outrasFazendasTitular.map((fazenda) => (
+                    <TouchableOpacity
+                      key={fazenda.id}
+                      style={styles.relatedFarmRow}
+                      onPress={() => navigation.navigate('ProdutorDetail', { id: fazenda.id })}
+                      activeOpacity={0.75}
+                    >
+                      <View style={styles.relatedFarmIcon}>
+                        <Ionicons name="business-outline" size={18} color={colors.primary} />
+                      </View>
+                      <View style={styles.relatedFarmInfo}>
+                        <Text style={styles.relatedFarmName} numberOfLines={1}>
+                          {fazenda.fazendaNome || 'Fazenda sem nome'}
+                        </Text>
+                        <Text style={styles.relatedFarmLocation} numberOfLines={1}>
+                          {fazenda.localizacao || 'Localização não informada'}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward-outline" size={18} color={colors.muted} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+
             <Text style={styles.sectionTitle}>Estatísticas</Text>
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="calendar" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Total de Visitas</Text>
+                  <Text style={styles.infoLabel}>Visitas da Fazenda</Text>
                 </View>
                 <Text style={styles.infoValue}>{visitas.length} visita{visitas.length !== 1 ? 's' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="map" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Total de Mapas</Text>
+                  <Text style={styles.infoLabel}>Mapas da Fazenda</Text>
                 </View>
                 <Text style={styles.infoValue}>{mapas.length} mapa{mapas.length !== 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name="book" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Registros de Caderno</Text>
+                </View>
+                <Text style={styles.infoValue}>{cadernos.length} registro{cadernos.length !== 1 ? 's' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
@@ -413,7 +502,7 @@ export default function ProdutorScreen({ route, navigation }) {
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Mapas da Lavoura</Text>
+              <Text style={styles.sectionTitle}>Mapas da Fazenda</Text>
               <TouchableOpacity 
                 style={styles.verTodosButton}
                 onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
@@ -426,7 +515,7 @@ export default function ProdutorScreen({ route, navigation }) {
             {mapas.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="map-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>Nenhum mapa cadastrado</Text>
+                <Text style={styles.emptyText}>Nenhum mapa cadastrado para esta fazenda</Text>
               </View>
             ) : (
               <>
@@ -464,8 +553,12 @@ export default function ProdutorScreen({ route, navigation }) {
                       </Text>
                     )}
                   </View>
-                  {mapa.disponivel_para_download && (
-                    <TouchableOpacity style={styles.mapaButton}>
+                  {(mapa.disponivel_para_download || mapa.disponivel_download) && (
+                    <TouchableOpacity
+                      style={styles.mapaButton}
+                      onPress={() => navigation.navigate('FazendaMapa', getMapaAtualRouteParams(mapa))}
+                      activeOpacity={0.8}
+                    >
                       <Ionicons name="download-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
                       <Text style={styles.mapaButtonText}>Visualizar Mapa</Text>
                     </TouchableOpacity>
@@ -502,7 +595,7 @@ export default function ProdutorScreen({ route, navigation }) {
                 <Ionicons name="calendar-outline" size={48} color={colors.muted} />
                 <Text style={styles.emptyText}>Nenhuma visita registrada</Text>
                 <Text style={styles.emptySubtext}>
-                  As visitas técnicas aparecerão aqui
+                  As visitas técnicas desta fazenda aparecerão aqui
                 </Text>
               </View>
             ) : (
@@ -557,8 +650,8 @@ export default function ProdutorScreen({ route, navigation }) {
 
       <ConfirmDialog
         visible={deleteDialogVisible}
-        title="Excluir Produtor"
-        message={`Tem certeza que deseja excluir ${produtor?.nome}? Esta ação não pode ser desfeita.`}
+        title="Excluir Fazenda"
+        message={`Tem certeza que deseja excluir ${fazendaInfo.fazendaNome || 'esta fazenda'}? Esta ação não pode ser desfeita.`}
         type="danger"
         confirmText="Excluir"
         cancelText="Cancelar"
@@ -626,6 +719,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginTop: 4,
   },
   profileLocation: {
     flex: 1,
@@ -782,6 +876,43 @@ const styles = StyleSheet.create({
     borderRadius: spacing.radiusSm,
     marginBottom: 16
   },
+  relatedFarmsSection: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radiusSm,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  relatedFarmRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  relatedFarmIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+    marginRight: spacing.sm,
+  },
+  relatedFarmInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  relatedFarmName: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  relatedFarmLocation: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+  },
   infoRow: {
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -903,6 +1034,8 @@ const styles = StyleSheet.create({
     marginTop: 4
   },
   mapaButton: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     backgroundColor: colors.primary,
     padding: 10,
     borderRadius: spacing.radiusSm,

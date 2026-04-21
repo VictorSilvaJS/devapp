@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  buildFazendaDetailContext,
   buildFazendaListMetrics,
   getFazendaUiInfo,
   matchesFazendaUiBusca,
@@ -91,6 +92,47 @@ const run = async () => {
       fazendasPendentes: 1,
       areaTotal: 500,
     });
+  });
+
+  await test('buildFazendaDetailContext lista outras fazendas do mesmo titular', () => {
+    const fazendaAtual = {
+      id: 'faz_01',
+      produtor_id: 'tit_01',
+      produtor_nome: 'Joao Silva',
+      fazenda: 'Fazenda Horizonte',
+      cidade: 'Rio Verde',
+      estado: 'GO',
+    };
+
+    const contexto = buildFazendaDetailContext(fazendaAtual, [
+      fazendaAtual,
+      {
+        id: 'faz_02',
+        produtor_id: 'tit_01',
+        produtor_nome: 'Joao Silva',
+        fazenda: 'Fazenda Ponte Alta',
+        cidade: 'Jatai',
+        estado: 'GO',
+      },
+      {
+        id: 'faz_03',
+        produtor_id: 'tit_02',
+        produtor_nome: 'Maria Souza',
+        fazenda: 'Estancia Boa Vista',
+      },
+    ]);
+
+    assert.equal(contexto.id, 'faz_01');
+    assert.equal(contexto.titularId, 'tit_01');
+    assert.deepEqual(contexto.outrasFazendasTitular, [
+      {
+        id: 'faz_02',
+        fazendaNome: 'Fazenda Ponte Alta',
+        titularNome: 'Joao Silva',
+        localizacao: 'Jatai/GO',
+        buscaTexto: 'fazenda ponte alta joao silva jatai go',
+      },
+    ]);
   });
 
   if (failed > 0) {

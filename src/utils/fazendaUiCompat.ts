@@ -30,6 +30,11 @@ export type FazendaListMetrics = {
   areaTotal: number;
 };
 
+export type FazendaDetailContext = FazendaUiInfo & {
+  titularId: string;
+  outrasFazendasTitular: FazendaUiInfo[];
+};
+
 export const getFazendaUiInfo = (fazenda: any): FazendaUiInfo => {
   const fazendaNome = getNomeFazenda(fazenda);
   const titularNome = getNomeTitularFazenda(fazenda);
@@ -101,5 +106,29 @@ export const buildFazendaListMetrics = (fazendas: any[] = []): FazendaListMetric
     fazendasAtivas: totals.fazendasAtivas,
     fazendasPendentes: totals.fazendasPendentes,
     areaTotal: totals.areaTotal,
+  };
+};
+
+export const buildFazendaDetailContext = (
+  fazendaAtual: any,
+  fazendasDisponiveis: any[] = []
+): FazendaDetailContext => {
+  const info = getFazendaUiInfo(fazendaAtual);
+  const titularId = getTitularIdFazenda(fazendaAtual);
+
+  const outrasFazendasTitular = titularId
+    ? fazendasDisponiveis
+        .filter((fazenda) => {
+          const mesmoTitular = getTitularIdFazenda(fazenda) === titularId;
+          const mesmaFazenda = getFazendaId(fazenda) === info.id;
+          return mesmoTitular && !mesmaFazenda;
+        })
+        .map(getFazendaUiInfo)
+    : [];
+
+  return {
+    ...info,
+    titularId,
+    outrasFazendasTitular,
   };
 };
