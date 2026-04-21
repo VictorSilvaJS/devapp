@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../auth/AuthContext';
 import { filtrarProdutoresPorAcesso, podeCriarProdutor, getRegioesDisponiveis } from '../utils/acessoControle';
 import { useFiltros } from '../contexts/FiltroContext';
+import { buildFazendaListMetrics, getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
 // enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -63,12 +64,9 @@ export default function ProdutoresScreen() {
   const regioes = getRegioesDisponiveis(user, produtores);
   const mostrarFiltroRegiao = user?.perfil === 'admin' && regioes.length > 0;
 
-  // Filtrar produtores por busca, status e região
+  // Filtrar fazendas por busca, status e região
   const produtoresFiltrados = produtores.filter(produtor => {
-    const matchBusca = !busca || 
-      produtor.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      produtor.fazenda.toLowerCase().includes(busca.toLowerCase()) ||
-      produtor.cidade?.toLowerCase().includes(busca.toLowerCase());
+    const matchBusca = matchesFazendaUiBusca(produtor, busca);
     
     const matchStatus = filtroStatus === 'todos' || produtor.status === filtroStatus;
     
@@ -80,7 +78,7 @@ export default function ProdutoresScreen() {
   }).sort((a, b) => {
     // Aplicar ordenação
     if (ordenacao === 'nome') {
-      return a.nome.localeCompare(b.nome);
+      return getFazendaUiInfo(a).fazendaNome.localeCompare(getFazendaUiInfo(b).fazendaNome);
     } else if (ordenacao === 'area') {
       return (b.area_total || 0) - (a.area_total || 0);
     } else if (ordenacao === 'recente') {
@@ -89,11 +87,8 @@ export default function ProdutoresScreen() {
     return 0;
   });
 
-  // Calcular estatísticas
-  const totalProdutores = produtores.length;
-  const produtoresAtivos = produtores.filter(p => p.status === 'ativo').length;
-  const areaTotal = produtores.reduce((sum, p) => sum + (p.area_total || 0), 0);
-  const produtoresPendentes = produtores.filter(p => p.status === 'pendente').length;
+  // Calcular estatísticas da listagem Fazenda + Titular
+  const metricasFazendas = buildFazendaListMetrics(produtores);
 
   // Formata área para exibição compacta
   const formatarArea = (area) => {
@@ -131,10 +126,12 @@ export default function ProdutoresScreen() {
 
   const filtrosAtivos = getFiltrosAtivos();
   const numFiltrosAtivos = contarFiltrosAtivos();
+  const listaSemResultadoPorFiltro =
+    busca.trim().length > 0 || filtroStatus !== 'todos' || regiaoSelecionada !== 'todas';
 
   return (
     <View style={styles.container}>
-      <Header title="Produtores" />
+      <Header title="Fazendas" />
       
       {/* Barra de Busca Compacta */}
       <LinearGradient
@@ -148,7 +145,7 @@ export default function ProdutoresScreen() {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Buscar por nome, fazenda..."
+              placeholder="Buscar por fazenda, titular, cidade ou região..."
               placeholderTextColor={colors.muted}
               value={busca}
               onChangeText={setBusca}
@@ -291,17 +288,25 @@ export default function ProdutoresScreen() {
           >
             <View style={styles.metricCard}>
               <View style={[styles.metricIcon, { backgroundColor: colors.borderLight }]}>
+                <Ionicons name="business-outline" size={20} color={colors.primary} />
+              </View>
+              <Text style={styles.metricValue}>{metricasFazendas.totalFazendas}</Text>
+              <Text style={styles.metricLabel}>Fazendas</Text>
+            </View>
+
+            <View style={styles.metricCard}>
+              <View style={[styles.metricIcon, { backgroundColor: colors.accent }]}>
                 <Ionicons name="people-outline" size={20} color={colors.primary} />
               </View>
-              <Text style={styles.metricValue}>{totalProdutores}</Text>
-              <Text style={styles.metricLabel}>Total</Text>
+              <Text style={styles.metricValue}>{metricasFazendas.totalTitulares}</Text>
+              <Text style={styles.metricLabel}>Titulares</Text>
             </View>
             
             <View style={styles.metricCard}>
               <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
                 <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
               </View>
-              <Text style={styles.metricValue}>{formatarArea(areaTotal)}</Text>
+              <Text style={styles.metricValue}>{formatarArea(metricasFazendas.areaTotal)}</Text>
               <Text style={styles.metricLabel}>Área Total</Text>
             </View>
             
@@ -309,21 +314,21 @@ export default function ProdutoresScreen() {
               <View style={[styles.metricIcon, { backgroundColor: colors.successBg }]}>
                 <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
               </View>
-              <Text style={styles.metricValue}>{produtoresAtivos}</Text>
-              <Text style={styles.metricLabel}>Ativos</Text>
+              <Text style={styles.metricValue}>{metricasFazendas.fazendasAtivas}</Text>
+              <Text style={styles.metricLabel}>Ativas</Text>
             </View>
             
             <View style={styles.metricCard}>
               <View style={[styles.metricIcon, { backgroundColor: colors.amberLight }]}>
                 <Ionicons name="time-outline" size={20} color={colors.warning} />
               </View>
-              <Text style={styles.metricValue}>{produtoresPendentes}</Text>
+              <Text style={styles.metricValue}>{metricasFazendas.fazendasPendentes}</Text>
               <Text style={styles.metricLabel}>Pendentes</Text>
             </View>
           </ScrollView>
         )}
 
-        {/* Lista de Produtores */}
+        {/* Lista de Fazendas + Titular */}
         {produtoresFiltrados.length === 0 ? (
           <View style={styles.emptyContainer}>
             <LinearGradient
@@ -331,20 +336,20 @@ export default function ProdutoresScreen() {
               style={styles.emptyIconContainer}
             >
               <Ionicons 
-                name={busca ? 'search' : 'person-add'} 
+                name={listaSemResultadoPorFiltro ? 'search' : 'person-add'} 
                 size={64} 
                 color={colors.primary} 
               />
             </LinearGradient>
             <Text style={styles.emptyText}>
-              {busca ? 'Nenhum produtor encontrado' : 'Nenhum produtor cadastrado'}
+              {listaSemResultadoPorFiltro ? 'Nenhuma fazenda encontrada' : 'Nenhuma fazenda cadastrada'}
             </Text>
             <Text style={styles.emptySubtext}>
-              {busca 
+              {listaSemResultadoPorFiltro
                 ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados' 
-                : 'Comece adicionando seu primeiro produtor ao sistema'}
+                : 'Comece adicionando a primeira fazenda vinculada a um titular'}
             </Text>
-            {!busca && podeCriarProdutor(user) && (
+            {!listaSemResultadoPorFiltro && podeCriarProdutor(user) && (
               <TouchableOpacity 
                 style={styles.emptyActionButton}
                 onPress={() => navigation.navigate('NovoProdutor')}
@@ -357,7 +362,7 @@ export default function ProdutoresScreen() {
                   end={{ x: 1, y: 1 }}
                 >
                   <Ionicons name="add-circle" size={22} color={colors.white} />
-                  <Text style={styles.emptyActionText}>Adicionar Primeiro Produtor</Text>
+                  <Text style={styles.emptyActionText}>Adicionar Primeira Fazenda</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -386,7 +391,7 @@ export default function ProdutoresScreen() {
               <View style={styles.fabIconContainer}>
                 <Ionicons name="add" size={26} color={colors.white} />
               </View>
-              <Text style={styles.fabText}>Novo Produtor</Text>
+              <Text style={styles.fabText}>Nova Fazenda</Text>
             </View>
           </LinearGradient>
           <View style={styles.fabPulse} />
@@ -467,7 +472,7 @@ export default function ProdutoresScreen() {
               <Text style={styles.sectionTitle}>Ordenar por</Text>
               <View style={styles.chipsContainer}>
                 {[
-                  { key: 'nome', label: 'Nome', icon: 'text-outline' },
+                  { key: 'nome', label: 'Fazenda', icon: 'business-outline' },
                   { key: 'area', label: 'Área', icon: 'resize-outline' },
                   { key: 'recente', label: 'Mais Recente', icon: 'time-outline' }
                 ].map((item) => (

@@ -1,4 +1,9 @@
-import { getFazendaId, getNomeFazenda, getNomeTitularFazenda } from './acessoControle';
+import {
+  getFazendaId,
+  getNomeFazenda,
+  getNomeTitularFazenda,
+  getTitularIdFazenda,
+} from './acessoControle';
 
 const toSearchableText = (value: unknown): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -15,6 +20,14 @@ export type FazendaUiInfo = {
   titularNome: string;
   localizacao: string;
   buscaTexto: string;
+};
+
+export type FazendaListMetrics = {
+  totalFazendas: number;
+  totalTitulares: number;
+  fazendasAtivas: number;
+  fazendasPendentes: number;
+  areaTotal: number;
 };
 
 export const getFazendaUiInfo = (fazenda: any): FazendaUiInfo => {
@@ -50,4 +63,43 @@ export const matchesFazendaUiBusca = (
   const contextoBusca = joinDefined([info.buscaTexto, extrasTexto], ' ').toLowerCase();
 
   return contextoBusca.includes(termoBusca);
+};
+
+export const buildFazendaListMetrics = (fazendas: any[] = []): FazendaListMetrics => {
+  const titulares = new Set<string>();
+
+  const totals = fazendas.reduce(
+    (acc, fazenda) => {
+      const titularKey = getTitularIdFazenda(fazenda) || getNomeTitularFazenda(fazenda);
+      if (titularKey) {
+        titulares.add(titularKey);
+      }
+
+      if (fazenda?.status === 'ativo') {
+        acc.fazendasAtivas += 1;
+      }
+
+      if (fazenda?.status === 'pendente') {
+        acc.fazendasPendentes += 1;
+      }
+
+      const area = Number(fazenda?.area_total || 0);
+      acc.areaTotal += Number.isFinite(area) ? area : 0;
+
+      return acc;
+    },
+    {
+      fazendasAtivas: 0,
+      fazendasPendentes: 0,
+      areaTotal: 0,
+    }
+  );
+
+  return {
+    totalFazendas: fazendas.length,
+    totalTitulares: titulares.size,
+    fazendasAtivas: totals.fazendasAtivas,
+    fazendasPendentes: totals.fazendasPendentes,
+    areaTotal: totals.areaTotal,
+  };
 };

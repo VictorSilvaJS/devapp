@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  buildFazendaListMetrics,
   getFazendaUiInfo,
   matchesFazendaUiBusca,
 } = require('../.tmp-domain-compat/src/utils/fazendaUiCompat');
@@ -43,12 +44,53 @@ const run = async () => {
       fazenda: 'Estancia Boa Vista',
       cidade: 'Jatai',
       estado: 'GO',
+      regiao: 'Goias',
+      microregiao: 'Sudoeste Goiano',
     };
 
     assert.equal(matchesFazendaUiBusca(fazenda, 'boa vista'), true);
     assert.equal(matchesFazendaUiBusca(fazenda, 'maria'), true);
+    assert.equal(matchesFazendaUiBusca(fazenda, 'goias'), true);
+    assert.equal(matchesFazendaUiBusca(fazenda, 'sudoeste'), true);
     assert.equal(matchesFazendaUiBusca(fazenda, 'coleta', ['coleta_solo']), true);
     assert.equal(matchesFazendaUiBusca(fazenda, 'milho'), false);
+  });
+
+  await test('buildFazendaListMetrics diferencia total de fazendas e titulares', () => {
+    const metricas = buildFazendaListMetrics([
+      {
+        id: 'faz_01',
+        produtor_id: 'tit_01',
+        produtor_nome: 'Joao Silva',
+        fazenda: 'Fazenda Horizonte',
+        status: 'ativo',
+        area_total: 120,
+      },
+      {
+        id: 'faz_02',
+        produtor_id: 'tit_01',
+        produtor_nome: 'Joao Silva',
+        fazenda: 'Fazenda Ponte Alta',
+        status: 'pendente',
+        area_total: 80,
+      },
+      {
+        id: 'faz_03',
+        produtor_id: 'tit_02',
+        produtor_nome: 'Maria Souza',
+        fazenda: 'Estancia Boa Vista',
+        status: 'ativo',
+        area_total: 300,
+      },
+    ]);
+
+    assert.deepEqual(metricas, {
+      totalFazendas: 3,
+      totalTitulares: 2,
+      fazendasAtivas: 2,
+      fazendasPendentes: 1,
+      areaTotal: 500,
+    });
   });
 
   if (failed > 0) {

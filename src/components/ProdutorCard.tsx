@@ -3,8 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, border, shadows } from '../theme';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 export default function ProdutorCard({ produtor, onPress }) {
+  const fazendaInfo = getFazendaUiInfo(produtor);
+  const nomeFazenda = fazendaInfo.fazendaNome || 'Fazenda sem nome';
+  const nomeTitular = fazendaInfo.titularNome || 'Titular não informado';
+  const localizacao = [fazendaInfo.localizacao, produtor.regiao].filter(Boolean).join(' • ');
+  const areaTotal = Number(produtor.area_total || 0);
+
   const getStatusInfo = () => {
     switch (produtor.status) {
       case 'ativo':
@@ -45,11 +52,11 @@ export default function ProdutorCard({ produtor, onPress }) {
           end={{ x: 1, y: 1 }}
           style={styles.avatar}
         >
-          <Text style={styles.letter}>{produtor.nome.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.letter}>{nomeFazenda.charAt(0).toUpperCase()}</Text>
         </LinearGradient>
         <View style={styles.info}>
           <View style={styles.header}>
-            <Text style={styles.nome} numberOfLines={1}>{produtor.nome}</Text>
+            <Text style={styles.nome} numberOfLines={1}>{nomeFazenda}</Text>
             <View style={[styles.statusBadge, { 
               backgroundColor: statusInfo.color + '15',
               borderColor: statusInfo.color + '40'
@@ -60,18 +67,21 @@ export default function ProdutorCard({ produtor, onPress }) {
               </Text>
             </View>
           </View>
-          <Text style={styles.fazenda} numberOfLines={1}>{produtor.fazenda}</Text>
+          <View style={styles.titularContainer}>
+            <Ionicons name="person-outline" size={14} color={colors.textLight} />
+            <Text style={styles.fazenda} numberOfLines={1}>Titular: {nomeTitular}</Text>
+          </View>
           <View style={styles.metaContainer}>
-            <View style={styles.metaItem}>
+            <View style={[styles.metaItem, styles.locationMetaItem]}>
               <Ionicons name="location" size={13} color={colors.muted} />
               <Text style={styles.meta} numberOfLines={1}>
-                {produtor.cidade}, {produtor.estado}
+                {localizacao || 'Localização não informada'}
               </Text>
             </View>
             <View style={styles.metaDivider} />
             <View style={styles.metaItem}>
               <Ionicons name="resize" size={13} color={colors.muted} />
-              <Text style={styles.meta}>{produtor.area_total} ha</Text>
+              <Text style={styles.meta}>{areaTotal} ha</Text>
             </View>
           </View>
         </View>
@@ -139,10 +149,16 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   fazenda: { 
+    flex: 1,
     color: colors.textLight,
     fontSize: typography.fontBody - 1,
     fontWeight: typography.weightSemibold,
-    marginBottom: 6
+  },
+  titularContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 6,
   },
   metaContainer: {
     flexDirection: 'row',
@@ -153,6 +169,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  locationMetaItem: {
+    flex: 1,
+    minWidth: 0,
   },
   metaDivider: {
     width: 3,
@@ -165,5 +185,6 @@ const styles = StyleSheet.create({
     color: colors.muted, 
     fontSize: typography.fontCaption + 1,
     fontWeight: '500',
+    flexShrink: 1,
   }
 });
