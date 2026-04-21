@@ -57,7 +57,7 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - CRUD em memoria para produtores, visitas, caderno e mapas
 - filtros regionais via `FiltroContext`
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
-- fluxo principal de produtores com lista e detalhe
+- frente funcional de `Produtor` / `Fazenda` concluida no nivel necessario para o MVP atual
 - visualizacao de mapas e detalhe de fazenda
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
@@ -79,11 +79,41 @@ A Fase 2 pode ser considerada formalmente encerrada.
 - As pendencias restantes foram reduzidas a aliases publicos de compatibilidade e nomes historicos localizados na superficie, sem contaminar o nucleo canonico.
 - Esses residuos nao bloqueiam o encerramento da fase porque nao reintroduzem ambiguidade estrutural no miolo do sistema e ja estao isolados para limpeza incremental de baixo risco.
 
+## Fechamento Da Frente Funcional Produtor / Fazenda
+
+Status em 2026-04-21: a frente funcional de `Produtor` / `Fazenda` esta concluida no nivel necessario para o MVP atual.
+
+Entregas consolidadas:
+
+- cadastro de fazenda com vinculo real ao titular
+- permissoes defensivas em detalhe e edicao
+- listagem orientada a Fazenda + Titular
+- detalhe com contexto real de fazenda atual e titular
+- edicao de fazenda sem quebrar vinculo com titular
+- exclusao de fazenda com validacao de integridade
+
+Decisoes funcionais aplicadas:
+
+- a entidade operacional das telas desse fluxo e a fazenda, mesmo que nomes historicos de modulos, rotas e componentes ainda usem `Produtor`
+- o titular e tratado como vinculo da fazenda e nao deve ser alterado acidentalmente em edicao simples
+- mapas, visitas, caderno e limites devem usar `fazenda_id` como contexto operacional
+- colaborador opera apenas dentro do proprio escopo regional/sub-regional
+- exclusao de fazenda fica bloqueada quando houver mapas, visitas, registros de caderno ou limites vinculados
+
+Limites assumidos para evolucao posterior:
+
+- reassociacao de titular nao foi implementada
+- edicao centralizada dos dados do titular nao foi implementada
+- limpeza assistida ou reassociacao de dependencias antes da exclusao nao foi implementada
+- exclusao em cascata controlada nao foi implementada
+
+Esses limites nao bloqueiam o MVP atual e devem ser tratados como evolucao posterior, nao como pendencia de fechamento desta frente.
+
 ## Pontos de Atencao Tecnicos
 
 - O dominio central ja foi estabilizado, mas ainda existem aliases historicos de compatibilidade na superficie publica
 - Ainda existem nomes legados isolados em rotas, wrappers e algumas telas historicas
-- Parte das acoes depende apenas de bloqueio visual, sem validacao defensiva no fluxo
+- A frente `Produtor` / `Fazenda` ja possui permissoes defensivas e integridade de exclusao; outros fluxos ainda podem exigir a mesma revisao pontual
 - A camada offline-first ja esta alinhada semanticamente, mas ainda nao esta conectada a um backend real
 - `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
 
@@ -102,8 +132,10 @@ Use estes documentos junto com este retrato do presente:
 
 ## Proximo Passo Recomendado
 
-Executar apenas um lote curto de limpeza nominal controlada, sem reabrir refatoracao estrutural ampla:
+Com a frente `Produtor` / `Fazenda` fechada para o MVP atual, o proximo trabalho deve escolher uma nova frente funcional ou tecnica sem reabrir a limpeza estrutural ja encerrada.
 
-- limpar metadata local residual da superficie de mapas/fazenda
-- manter aliases legados apenas em helpers e wrappers explicitamente marcados como compatibilidade temporaria
-- adiar renomeacoes amplas de modulos, rotas e telas para uma etapa posterior e opcional
+Opcoes seguras:
+
+- evoluir outra frente funcional do MVP, como visitas, caderno ou mapas
+- iniciar a separacao gradual da camada mock quando houver decisao sobre backend
+- executar apenas limpeza nominal pequena e localizada, se ela desbloquear trabalho funcional real

@@ -46,6 +46,16 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
 
 ## Backlog Secundario
 
+### Evolucao posterior de Produtor / Fazenda
+
+A frente funcional de `Produtor` / `Fazenda` esta fechada para o MVP atual. Os itens abaixo nao bloqueiam o MVP e so devem ser retomados quando houver necessidade funcional clara:
+
+- reassociacao segura de titular
+- edicao centralizada dos dados compartilhados do titular
+- fluxo assistido para limpar ou reassociar dependencias antes da exclusao de fazenda
+- exclusao em cascata controlada, com confirmacao explicita e regra de integridade bem definida
+- renomeacao ampla de modulos, telas ou rotas historicas que ainda usam `Produtor` para representar fazenda
+
 ### Analise e apoio operacional
 
 - Graficos de evolucao de visitas e mapas
