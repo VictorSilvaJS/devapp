@@ -20,6 +20,7 @@ import {
   filtrarMapasPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaId,
+  podeIncluirCadernoEmFazenda,
   podeEditarProdutor,
   podeExcluirProdutor,
   temAcessoProdutor,
@@ -241,6 +242,57 @@ export default function ProdutorScreen({ route, navigation }) {
     titularNome: fazendaInfo.titularNome,
     ...buildMapaTalhaoRouteSelection(mapa, limites),
   });
+  const podeCriarCadernoNaFazenda = podeIncluirCadernoEmFazenda(user, produtor);
+
+  const handleNovoCaderno = () => {
+    if (!podeCriarCadernoNaFazenda) {
+      toast.showWarning('Você não tem permissão para criar registro nesta fazenda.');
+      return;
+    }
+
+    navigation.navigate('NovoCaderno', { fazendaId: fazendaAtualId });
+  };
+
+  const getCadernoTipoColor = (tipo) => {
+    const cores = {
+      plantio: colors.success,
+      adubacao: colors.info,
+      aplicacao: colors.purple,
+      colheita: colors.warning,
+      analise_solo: colors.orange,
+      vistoria: colors.cyan,
+      outro: colors.muted,
+    };
+    return cores[tipo] || colors.muted;
+  };
+
+  const getCadernoTipoLabel = (tipo) => {
+    const labels = {
+      plantio: 'Plantio',
+      adubacao: 'Adubação',
+      aplicacao: 'Aplicação',
+      colheita: 'Colheita',
+      analise_solo: 'Análise de Solo',
+      vistoria: 'Vistoria',
+      outro: 'Outro',
+    };
+    return labels[tipo] || String(tipo || 'Registro').replace(/_/g, ' ');
+  };
+
+  const formatarDataCaderno = (data) => {
+    if (!data) return '-';
+    return new Date(data).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  const formatarAreaCaderno = (area) => {
+    const areaNumber = Number(area);
+    if (!Number.isFinite(areaNumber) || areaNumber <= 0) return null;
+    return `${areaNumber.toLocaleString('pt-BR')} ha`;
+  };
 
   return (
     <View style={styles.container}>
@@ -421,6 +473,20 @@ export default function ProdutorScreen({ route, navigation }) {
             />
             <Text style={[styles.tabText, activeTab === 'visitas' && styles.tabTextActive]}>
               Visitas
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'caderno' && styles.tabActive]}
+            onPress={() => setActiveTab('caderno')}
+          >
+            <Ionicons
+              name="book-outline"
+              size={20}
+              color={activeTab === 'caderno' ? colors.primary : colors.muted}
+              style={styles.tabIcon}
+            />
+            <Text style={[styles.tabText, activeTab === 'caderno' && styles.tabTextActive]}>
+              Caderno
             </Text>
           </TouchableOpacity>
         </View>
@@ -742,6 +808,119 @@ export default function ProdutorScreen({ route, navigation }) {
             )}
           </View>
         )}
+
+        {activeTab === 'caderno' && (
+          <View style={styles.tabContent}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Caderno de Campo</Text>
+              <View style={styles.sectionActions}>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{cadernos.length}</Text>
+                </View>
+                {podeCriarCadernoNaFazenda && (
+                  <TouchableOpacity
+                    style={styles.newCadernoButton}
+                    onPress={handleNovoCaderno}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="add" size={16} color={colors.white} />
+                    <Text style={styles.newCadernoButtonText}>Novo</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            {cadernos.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="book-outline" size={48} color={colors.muted} />
+                <Text style={styles.emptyText}>Nenhum registro de caderno</Text>
+                <Text style={styles.emptySubtext}>
+                  Os registros desta fazenda aparecerão aqui
+                </Text>
+                {podeCriarCadernoNaFazenda && (
+                  <TouchableOpacity
+                    style={styles.emptyActionButton}
+                    onPress={handleNovoCaderno}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="add" size={18} color={colors.white} />
+                    <Text style={styles.emptyActionButtonText}>Novo Registro</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              cadernos.map((registro) => {
+                const tipoColor = getCadernoTipoColor(registro.tipo_atividade);
+                const areaFormatada = formatarAreaCaderno(registro.area_aplicada);
+                const produtos = Array.isArray(registro.produtos_utilizados)
+                  ? registro.produtos_utilizados
+                  : [];
+                const visivelParaProdutor = registro.visivel_para_produtor === true;
+
+                return (
+                  <TouchableOpacity
+                    key={registro.id}
+                    style={styles.cadernoCard}
+                    activeOpacity={0.85}
+                    onPress={() => navigation.navigate('CadernoDetail', { cadernoId: registro.id })}
+                  >
+                    <View style={styles.cadernoHeader}>
+                      <View style={[styles.cadernoIcon, { backgroundColor: tipoColor + '20' }]}>
+                        <Ionicons name="book-outline" size={22} color={tipoColor} />
+                      </View>
+                      <View style={styles.cadernoHeaderInfo}>
+                        <Text style={styles.cadernoTitle} numberOfLines={1}>
+                          {getCadernoTipoLabel(registro.tipo_atividade)}
+                        </Text>
+                        <Text style={styles.cadernoSubtitle} numberOfLines={1}>
+                          {[registro.talhao, registro.colaborador_responsavel].filter(Boolean).join(' • ') || 'Registro da fazenda'}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward-outline" size={20} color={colors.muted} />
+                    </View>
+
+                    <View style={styles.cadernoMeta}>
+                      <View style={styles.cadernoMetaItem}>
+                        <Ionicons name="calendar-outline" size={15} color={colors.textLight} />
+                        <Text style={styles.cadernoMetaText}>{formatarDataCaderno(registro.data_atividade)}</Text>
+                      </View>
+                      {areaFormatada && (
+                        <View style={styles.cadernoMetaItem}>
+                          <Ionicons name="resize-outline" size={15} color={colors.textLight} />
+                          <Text style={styles.cadernoMetaText}>{areaFormatada}</Text>
+                        </View>
+                      )}
+                      {user?.perfil !== 'produtor' && (
+                        <View style={styles.cadernoMetaItem}>
+                          <Ionicons
+                            name={visivelParaProdutor ? 'eye-outline' : 'lock-closed-outline'}
+                            size={15}
+                            color={visivelParaProdutor ? colors.success : colors.warning}
+                          />
+                          <Text style={styles.cadernoMetaText}>
+                            {visivelParaProdutor ? 'Visível ao produtor' : 'Restrito à equipe'}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {produtos.length > 0 && (
+                      <Text style={styles.cadernoProdutos} numberOfLines={2}>
+                        Produtos: {produtos.join(', ')}
+                      </Text>
+                    )}
+
+                    {registro.observacoes && (
+                      <Text style={styles.cadernoObservacoes} numberOfLines={2}>
+                        {registro.observacoes}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </View>
+        )}
       </ScrollView>
 
       <ConfirmDialog
@@ -965,6 +1144,25 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: typography.fontCaption,
     fontWeight: typography.weightBold
+  },
+  sectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  newCadernoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.radiusSm,
+  },
+  newCadernoButtonText: {
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+    color: colors.white,
   },
   infoSection: {
     backgroundColor: colors.backgroundAlt,
@@ -1252,6 +1450,69 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontStyle: 'italic'
   },
+  cadernoCard: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radius,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: colors.borderLight,
+    padding: 12,
+  },
+  cadernoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  cadernoIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: spacing.radiusSm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  cadernoHeaderInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cadernoTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: 2,
+  },
+  cadernoSubtitle: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.muted,
+  },
+  cadernoMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  cadernoMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  cadernoMetaText: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
+  },
+  cadernoProdutos: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    lineHeight: 18,
+    marginBottom: spacing.xs,
+  },
+  cadernoObservacoes: {
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1312,6 +1573,21 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.mutedLight,
     textAlign: 'center'
+  },
+  emptyActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: spacing.radiusSm,
+    marginTop: spacing.lg,
+  },
+  emptyActionButtonText: {
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
+    color: colors.white,
   },
   body: {
     fontSize: typography.fontBody,

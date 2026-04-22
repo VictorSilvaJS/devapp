@@ -4,6 +4,7 @@ const {
   avaliarAcessoFazendaPorId,
   avaliarAcessoVisita,
   filtrarCadernosPorAcesso,
+  filtrarCadernosPorFazendaIds,
   filtrarMapasPorAcesso,
   filtrarProdutoresPorAcesso,
   filtrarVisitasPorAcesso,
@@ -167,6 +168,22 @@ const run = async () => {
     const resultado = filtrarCadernosPorAcesso(registros, produtorUser, fazendasBase);
 
     assert.deepEqual(resultado.map((registro) => registro.id), ['c1']);
+  });
+
+  await test('filtrarCadernosPorFazendaIds alimenta detalhe da fazenda com visibilidade correta', () => {
+    const registros = [
+      { id: 'c1', fazenda_id: 'fz1', colaborador_responsavel: 'Ana', data_atividade: '2026-04-16', tipo_atividade: 'vistoria', visivel_para_produtor: true },
+      { id: 'c2', produtor_id: 'fz1', colaborador_responsavel: 'Ana', data_atividade: '2026-04-16', tipo_atividade: 'adubacao', visivel_para_produtor: false },
+      { id: 'c3', fazenda_id: 'fz2', colaborador_responsavel: 'Ana', data_atividade: '2026-04-16', tipo_atividade: 'vistoria', visivel_para_produtor: true },
+    ];
+
+    const equipe = filtrarCadernosPorFazendaIds(registros, ['fz1']);
+    const produtor = filtrarCadernosPorFazendaIds(registros, ['fz1'], {
+      somenteVisivelParaProdutor: true,
+    });
+
+    assert.deepEqual(equipe.map((registro) => registro.id), ['c1', 'c2']);
+    assert.deepEqual(produtor.map((registro) => registro.id), ['c1']);
   });
 
   await test('avaliarAcessoCaderno valida fazenda e visibilidade do detalhe', () => {
