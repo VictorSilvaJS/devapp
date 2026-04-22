@@ -19,7 +19,12 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
-import { filtrarProdutoresPorAcesso } from '../utils/acessoControle';
+import {
+  filtrarProdutoresPorAcesso,
+  findFazendaById,
+  podeCriarVisita,
+  podeCriarVisitaEmFazenda,
+} from '../utils/acessoControle';
 import {
   buildVisitaFazendaOptions,
   buildVisitaPayload,
@@ -57,21 +62,24 @@ export default function NovaVisitaScreen() {
     () => findVisitaFazendaOption(fazendaOptions, fazendaId),
     [fazendaOptions, fazendaId]
   );
+  const canCreateVisit = podeCriarVisita(user);
 
   useEffect(() => {
     loadFazendas();
-  }, []);
+  }, [user]);
 
   const loadFazendas = async () => {
     setLoadingFazendas(true);
     try {
+      if (!podeCriarVisita(user)) {
+        setFazendaId('');
+        setFazendas([]);
+        return;
+      }
+
       const fazendasDisponiveis = await Produtor.list();
 
       const fazendasFiltradas = user ? filtrarProdutoresPorAcesso(fazendasDisponiveis, user) : fazendasDisponiveis;
-
-      if (user?.perfil === 'produtor' && fazendasFiltradas.length > 0) {
-        setFazendaId(buildVisitaFazendaOptions(fazendasFiltradas)[0]?.id || '');
-      }
       
       setFazendas(fazendasFiltradas);
     } catch (error) {
@@ -106,8 +114,20 @@ export default function NovaVisitaScreen() {
   };
 
   const handleSave = async () => {
+    if (!podeCriarVisita(user)) {
+      toast.showWarning('Você não tem permissão para criar visitas.');
+      return;
+    }
+
     if (!validateForm()) {
       toast.showError('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
+
+    if (!podeCriarVisitaEmFazenda(user, fazendaSelecionadaData)) {
+      toast.showWarning('Você não tem permissão para criar visita nesta fazenda.');
       return;
     }
 
@@ -178,6 +198,19 @@ export default function NovaVisitaScreen() {
     setRemovePhotoDialog({ visible: false, fotoId: null });
     toast.showSuccess('Foto removida');
   };
+
+  if (!canCreateVisit) {
+    return (
+      <View style={styles.container}>
+        <Header title="Nova Visita" showBack />
+        <View style={styles.blockedContainer}>
+          <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
+          <Text style={styles.blockedText}>Acesso restrito</Text>
+          <Text style={styles.blockedSubtext}>Você não tem permissão para criar visitas técnicas.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -697,5 +730,23 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  blockedContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.sm,
+  },
+  blockedText: {
+    fontSize: typography.fontBody + 2,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  blockedSubtext: {
+    fontSize: typography.fontBody,
+    color: colors.muted,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

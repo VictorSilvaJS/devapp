@@ -18,7 +18,12 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
-import { filtrarProdutoresPorAcesso } from '../utils/acessoControle';
+import {
+  avaliarAcessoVisita,
+  filtrarProdutoresPorAcesso,
+  findFazendaById,
+  podeEditarVisita,
+} from '../utils/acessoControle';
 import {
   buildVisitaFazendaOptions,
   buildVisitaPayload,
@@ -33,7 +38,8 @@ export default function EditarVisitaScreen() {
   const toast = useToast();
   const { user } = useAuth();
 
-  const { visitaId } = route.params || {};
+  const { visitaId, id } = route.params || {};
+  const visitaRouteId = visitaId || id;
 
   // Estados do formulário
   const [fazendaId, setFazendaId] = useState('');
@@ -52,6 +58,9 @@ export default function EditarVisitaScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fazendas, setFazendas] = useState([]);
+  const [visitaOriginal, setVisitaOriginal] = useState(null);
+  const [fazendaOriginal, setFazendaOriginal] = useState(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
 
   // Dropdown
@@ -64,18 +73,38 @@ export default function EditarVisitaScreen() {
 
   useEffect(() => {
     loadData();
-  }, [visitaId]);
+  }, [visitaRouteId, user]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      setAccessDenied(false);
+
+      if (!visitaRouteId) {
+        throw new Error('Visita não informada');
+      }
+
       const [visitaData, fazendasDisponiveis] = await Promise.all([
-        Visita.get(visitaId),
+        Visita.get(visitaRouteId),
         Produtor.list(),
       ]);
 
+      const acesso = avaliarAcessoVisita(user, visitaData, fazendasDisponiveis);
+
+      if (acesso.status !== 'permitido' || !podeEditarVisita(user, visitaData, acesso.fazenda)) {
+        setVisitaOriginal(null);
+        setFazendaOriginal(null);
+        setAccessDenied(true);
+        toast.showWarning('Você não tem permissão para editar esta visita.');
+        navigation.goBack();
+        return;
+      }
+
       // Preencher formulário com dados da visita
       if (visitaData) {
+        setVisitaOriginal(visitaData);
+        setFazendaOriginal(acesso.fazenda);
+        setAccessDenied(false);
         setFazendaId(getVisitaFormFazendaId(visitaData));
         
         const dataVisitaObj = new Date(visitaData.data_visita);
@@ -139,8 +168,25 @@ export default function EditarVisitaScreen() {
   };
 
   const handleSave = async () => {
+    if (!podeEditarVisita(user, visitaOriginal, fazendaOriginal)) {
+      toast.showWarning('Você não tem permissão para editar esta visita.');
+      return;
+    }
+
     if (!validateForm()) {
       toast.showError('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
+
+    if (!fazendaSelecionadaData) {
+      toast.showWarning('Fazenda selecionada não está disponível para edição.');
+      return;
+    }
+
+    if (!podeEditarVisita(user, { ...visitaOriginal, fazenda_id: fazendaId }, fazendaSelecionadaData)) {
+      toast.showWarning('Você não tem permissão para editar visita nesta fazenda.');
       return;
     }
 
@@ -163,7 +209,7 @@ export default function EditarVisitaScreen() {
         throw new Error('Não foi possível montar o payload da visita');
       }
 
-      await Visita.update(visitaId, visitaAtualizada);
+      await Visita.update(visitaRouteId, visitaAtualizada);
 
       toast.showSuccess('Visita atualizada com sucesso!');
       
@@ -224,6 +270,18 @@ export default function EditarVisitaScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Carregando...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (accessDenied || !visitaOriginal) {
+    return (
+      <View style={styles.container}>
+        <Header title="Editar Visita" showBack />
+        <View style={styles.loadingContainer}>
+          <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
+          <Text style={styles.loadingText}>Você não tem permissão para editar esta visita.</Text>
         </View>
       </View>
     );

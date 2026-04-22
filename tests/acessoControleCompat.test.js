@@ -1,13 +1,17 @@
 const assert = require('node:assert/strict');
 const {
   avaliarAcessoFazendaPorId,
+  avaliarAcessoVisita,
   filtrarCadernosPorAcesso,
   filtrarMapasPorAcesso,
   filtrarProdutoresPorAcesso,
   filtrarVisitasPorAcesso,
   getFazendaIdsPorAcesso,
   podeBaixarMapa,
+  podeCriarVisita,
+  podeCriarVisitaEmFazenda,
   podeEditarProdutor,
+  podeEditarVisita,
   podeExcluirProdutor,
   temAcessoProdutor,
 } = require('../.tmp-domain-compat/src/utils/acessoControle');
@@ -103,6 +107,49 @@ const run = async () => {
     const resultado = filtrarVisitasPorAcesso(visitas, colaboradorUser, fazendasBase);
 
     assert.deepEqual(resultado.map((visita) => visita.id), ['v1']);
+  });
+
+  await test('avaliarAcessoVisita bloqueia visita fora da fazenda autorizada', () => {
+    const visitaPropria = { id: 'v1', fazenda_id: 'fz1', tecnico_responsavel: 'Ana', data_visita: '2026-04-16', objetivo: 'consultoria' };
+    const visitaForaEscopo = { id: 'v2', fazenda_id: 'fz2', tecnico_responsavel: 'Ana', data_visita: '2026-04-16', objetivo: 'consultoria' };
+    const visitaSemFazenda = { id: 'v3', fazenda_id: 'fz999', tecnico_responsavel: 'Ana', data_visita: '2026-04-16', objetivo: 'consultoria' };
+
+    const acessoProdutor = avaliarAcessoVisita(produtorUser, visitaPropria, fazendasBase);
+    const acessoProdutorFora = avaliarAcessoVisita(produtorUser, visitaForaEscopo, fazendasBase);
+    const acessoColaboradorFora = avaliarAcessoVisita(colaboradorUser, visitaForaEscopo, fazendasBase);
+    const acessoAdmin = avaliarAcessoVisita(adminUser, visitaForaEscopo, fazendasBase);
+    const acessoSemFazenda = avaliarAcessoVisita(adminUser, visitaSemFazenda, fazendasBase);
+
+    assert.equal(acessoProdutor.status, 'permitido');
+    assert.equal(acessoProdutor.fazendaId, 'fz1');
+    assert.equal(acessoProdutorFora.status, 'acesso_negado');
+    assert.equal(acessoColaboradorFora.status, 'acesso_negado');
+    assert.equal(acessoAdmin.status, 'permitido');
+    assert.equal(acessoSemFazenda.status, 'fazenda_nao_encontrada');
+  });
+
+  await test('podeCriarVisita e podeCriarVisitaEmFazenda bloqueiam produtor e colaborador fora do escopo', () => {
+    const fazendaNoEscopo = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+
+    assert.equal(podeCriarVisita(produtorUser), false);
+    assert.equal(podeCriarVisita(adminUser), true);
+    assert.equal(podeCriarVisita(colaboradorUser), true);
+    assert.equal(podeCriarVisitaEmFazenda(produtorUser, fazendaNoEscopo), false);
+    assert.equal(podeCriarVisitaEmFazenda(colaboradorUser, fazendaNoEscopo), true);
+    assert.equal(podeCriarVisitaEmFazenda(colaboradorUser, fazendaForaEscopo), false);
+    assert.equal(podeCriarVisitaEmFazenda(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('podeEditarVisita bloqueia produtor e colaborador fora do escopo', () => {
+    const visita = { id: 'v1', fazenda_id: 'fz1', tecnico_responsavel: 'Ana', data_visita: '2026-04-16', objetivo: 'consultoria' };
+    const fazendaNoEscopo = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+
+    assert.equal(podeEditarVisita(produtorUser, visita, fazendaNoEscopo), false);
+    assert.equal(podeEditarVisita(colaboradorUser, visita, fazendaNoEscopo), true);
+    assert.equal(podeEditarVisita(colaboradorUser, visita, fazendaForaEscopo), false);
+    assert.equal(podeEditarVisita(adminUser, visita, fazendaForaEscopo), true);
   });
 
   await test('filtrarCadernosPorAcesso mantém compatibilidade legada e restringe visibilidade do produtor', () => {

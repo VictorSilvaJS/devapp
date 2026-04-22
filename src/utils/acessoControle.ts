@@ -388,6 +388,33 @@ export const temAcessoVisita = (user, visita, produtor) => {
   return false;
 };
 
+export const avaliarAcessoVisita = (user, visita, fazendas = []) => {
+  if (!user || !visita) {
+    return {
+      status: 'visita_nao_encontrada',
+      fazenda: null,
+      fazendaId: '',
+    };
+  }
+
+  const fazendaId = getVisitaFazendaId(visita);
+  const acessoFazenda = avaliarAcessoFazendaPorId(fazendas, user, fazendaId);
+
+  if (acessoFazenda.status !== 'permitido') {
+    return acessoFazenda;
+  }
+
+  if (!temAcessoVisita(user, visita, acessoFazenda.fazenda)) {
+    return {
+      status: 'acesso_negado',
+      fazenda: acessoFazenda.fazenda,
+      fazendaId: acessoFazenda.fazendaId,
+    };
+  }
+
+  return acessoFazenda;
+};
+
 /**
  * Filtra visitas por acesso
  */
@@ -489,6 +516,11 @@ export const podeCriarProdutor = (user) => {
 export const podeCriarVisita = (user) => {
   if (!user) return false;
   return podeGerenciar(user);
+};
+
+export const podeCriarVisitaEmFazenda = (user, fazenda) => {
+  if (!podeCriarVisita(user)) return false;
+  return temAcessoProdutor(user, fazenda);
 };
 
 /**

@@ -29,6 +29,7 @@ import {
   getFazendaId,
   getFazendaIds,
   getVisitaFazendaId,
+  podeCriarVisita,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
@@ -533,7 +534,7 @@ export default function VisitasScreen() {
       </ScrollView>
 
       {/* Botão FAB - Nova Visita */}
-      {(user?.perfil === 'admin' || user?.perfil === 'colaborador') && (
+      {podeCriarVisita(user) && (
         <TouchableOpacity
           style={styles.fab}
           onPress={() => navigation.navigate('NovaVisita')}

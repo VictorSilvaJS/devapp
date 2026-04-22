@@ -17,7 +17,10 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
-import { getVisitaFazendaId } from '../utils/acessoControle';
+import {
+  avaliarAcessoVisita,
+  podeEditarVisita,
+} from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 const { width } = Dimensions.get('window');
@@ -28,7 +31,8 @@ export default function VisitaDetailScreen() {
   const toast = useToast();
   const { user } = useAuth();
 
-  const { visitaId } = route.params || {};
+  const { visitaId, id } = route.params || {};
+  const visitaRouteId = visitaId || id;
 
   const [visita, setVisita] = useState(null);
   const [fazenda, setFazenda] = useState(null);
@@ -42,21 +46,34 @@ export default function VisitaDetailScreen() {
   // Recarregar visita sempre que a tela ganhar foco (ex: ao voltar da edição)
   useFocusEffect(
     useCallback(() => {
-      if (visitaId) loadVisita();
-    }, [visitaId])
+      loadVisita();
+    }, [visitaRouteId, user])
   );
 
   const loadVisita = async () => {
     setLoading(true);
     try {
-      const visitaData = await Visita.get(visitaId);
-      setVisita(visitaData);
-
-      const fazendaId = getVisitaFazendaId(visitaData);
-      if (fazendaId) {
-        const fazendaData = await Produtor.get(fazendaId);
-        setFazenda(fazendaData);
+      if (!visitaRouteId) {
+        throw new Error('Visita não informada');
       }
+
+      const [visitaData, fazendas] = await Promise.all([
+        Visita.get(visitaRouteId),
+        Produtor.list(),
+      ]);
+
+      const acesso = avaliarAcessoVisita(user, visitaData, fazendas);
+
+      if (acesso.status !== 'permitido') {
+        setVisita(null);
+        setFazenda(null);
+        toast.showWarning('Você não tem permissão para acessar esta visita.');
+        navigation.goBack();
+        return;
+      }
+
+      setVisita(visitaData);
+      setFazenda(acesso.fazenda);
     } catch (error) {
       console.error('Erro ao carregar visita:', error);
       toast.showError('Erro ao carregar detalhes da visita');
@@ -67,9 +84,14 @@ export default function VisitaDetailScreen() {
   };
 
   const handleMarcarRealizada = async () => {
+    if (!canEdit()) {
+      toast.showWarning('Você não tem permissão para alterar esta visita.');
+      return;
+    }
+
     setActionLoading(true);
     try {
-      await Visita.update(visitaId, { status: 'realizada' });
+      await Visita.update(visitaRouteId, { status: 'realizada' });
       toast.showSuccess('Visita marcada como realizada!');
       await loadVisita();
     } catch (error) {
@@ -81,9 +103,14 @@ export default function VisitaDetailScreen() {
   };
 
   const handleCancelar = async () => {
+    if (!canEdit()) {
+      toast.showWarning('Você não tem permissão para alterar esta visita.');
+      return;
+    }
+
     setActionLoading(true);
     try {
-      await Visita.update(visitaId, { status: 'cancelada' });
+      await Visita.update(visitaRouteId, { status: 'cancelada' });
       toast.showSuccess('Visita cancelada');
       setShowCancelDialog(false);
       await loadVisita();
@@ -96,9 +123,14 @@ export default function VisitaDetailScreen() {
   };
 
   const handleExcluir = async () => {
+    if (!canDelete()) {
+      toast.showWarning('Você não tem permissão para excluir esta visita.');
+      return;
+    }
+
     setActionLoading(true);
     try {
-      await Visita.delete(visitaId);
+      await Visita.delete(visitaRouteId);
       toast.showSuccess('Visita excluída');
       setShowDeleteDialog(false);
       navigation.goBack();
@@ -110,7 +142,12 @@ export default function VisitaDetailScreen() {
   };
 
   const handleEditar = () => {
-    navigation.navigate('EditarVisita', { visitaId });
+    if (!canEdit()) {
+      toast.showWarning('Você não tem permissão para editar esta visita.');
+      return;
+    }
+
+    navigation.navigate('EditarVisita', { visitaId: visitaRouteId });
   };
 
   const getStatusColor = (status) => {
@@ -165,11 +202,7 @@ export default function VisitaDetailScreen() {
   };
 
   const canEdit = () => {
-    if (user?.perfil === 'admin') return true;
-    if (user?.perfil === 'colaborador' && visita?.tecnico_responsavel === (user?.nome || user?.full_name)) {
-      return true;
-    }
-    return false;
+    return podeEditarVisita(user, visita, fazenda);
   };
 
   const canMarkDone = () => {
@@ -181,7 +214,7 @@ export default function VisitaDetailScreen() {
   };
 
   const canDelete = () => {
-    return user?.perfil === 'admin';
+    return user?.perfil === 'admin' && !!visita;
   };
 
   if (loading) {
