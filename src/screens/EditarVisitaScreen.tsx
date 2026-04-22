@@ -27,9 +27,10 @@ import {
 import {
   buildVisitaFazendaOptions,
   buildVisitaPayload,
-  findVisitaFazendaOption,
+  getVisitaFluxoUi,
   getVisitaFormFazendaId,
   getVisitaFormFazendaLabel,
+  resolveVisitaEdicaoFazendaId,
 } from '../utils/visitaFormCompat';
 
 export default function EditarVisitaScreen() {
@@ -63,13 +64,8 @@ export default function EditarVisitaScreen() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
 
-  // Dropdown
-  const [showFazendaPicker, setShowFazendaPicker] = useState(false);
   const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(fazendas), [fazendas]);
-  const fazendaSelecionada = useMemo(
-    () => findVisitaFazendaOption(fazendaOptions, fazendaId),
-    [fazendaOptions, fazendaId]
-  );
+  const fluxoInfo = getVisitaFluxoUi(status);
 
   useEffect(() => {
     loadData();
@@ -147,8 +143,8 @@ export default function EditarVisitaScreen() {
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (!fazendaId) {
-      newErrors.fazendaId = 'Selecione uma fazenda';
+    if (!resolveVisitaEdicaoFazendaId(visitaOriginal, fazendaId)) {
+      newErrors.fazendaId = 'Visita sem contexto de fazenda';
     }
 
     if (!dataVisita) {
@@ -178,14 +174,15 @@ export default function EditarVisitaScreen() {
       return;
     }
 
-    const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
+    const fazendaContextoId = resolveVisitaEdicaoFazendaId(visitaOriginal, fazendaId);
+    const fazendaSelecionadaData = findFazendaById(fazendas, fazendaContextoId) || fazendaOriginal;
 
     if (!fazendaSelecionadaData) {
       toast.showWarning('Fazenda selecionada não está disponível para edição.');
       return;
     }
 
-    if (!podeEditarVisita(user, { ...visitaOriginal, fazenda_id: fazendaId }, fazendaSelecionadaData)) {
+    if (!podeEditarVisita(user, { ...visitaOriginal, fazenda_id: fazendaContextoId }, fazendaSelecionadaData)) {
       toast.showWarning('Você não tem permissão para editar visita nesta fazenda.');
       return;
     }
@@ -193,7 +190,7 @@ export default function EditarVisitaScreen() {
     setSaving(true);
     try {
       const visitaAtualizada = buildVisitaPayload({
-        fazendaId,
+        fazendaId: fazendaContextoId,
         dataVisita,
         horaVisita,
         objetivo,
@@ -287,6 +284,10 @@ export default function EditarVisitaScreen() {
     );
   }
 
+  const fazendaContextoId = resolveVisitaEdicaoFazendaId(visitaOriginal, fazendaId);
+  const fazendaContextoOption = fazendaOptions.find((option) => option.id === fazendaContextoId);
+  const fazendaContextoLabel = getVisitaFormFazendaLabel(fazendaContextoOption, 'Fazenda vinculada não encontrada');
+
   return (
     <View style={styles.container}>
       <Header title="Editar Visita" showBack />
@@ -299,57 +300,15 @@ export default function EditarVisitaScreen() {
         {/* Fazenda */}
         <View style={styles.field}>
           <Text style={styles.label}>
-            Fazenda <Text style={styles.required}>*</Text>
+            Fazenda vinculada
           </Text>
-          <TouchableOpacity
-            style={[styles.picker, errors.fazendaId && styles.inputError]}
-            onPress={() => setShowFazendaPicker(!showFazendaPicker)}
-            disabled={user?.perfil === 'produtor'}
-          >
-            <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
-              {getVisitaFormFazendaLabel(fazendaSelecionada)}
+          <View style={[styles.picker, styles.lockedPicker]}>
+            <Text style={styles.pickerText}>
+              {fazendaContextoLabel}
             </Text>
-            <Ionicons 
-              name={showFazendaPicker ? 'chevron-up' : 'chevron-down'} 
-              size={20} 
-              color={colors.muted} 
-            />
-          </TouchableOpacity>
-          {errors.fazendaId && (
-            <Text style={styles.errorText}>{errors.fazendaId}</Text>
-          )}
-
-          {/* Dropdown de fazendas */}
-          {showFazendaPicker && (
-            <View style={styles.dropdownContainer}>
-              <ScrollView style={styles.dropdown} nestedScrollEnabled>
-                {fazendaOptions.map((fazenda) => (
-                  <TouchableOpacity
-                    key={fazenda.id}
-                    style={[
-                      styles.dropdownItem,
-                      fazendaId === fazenda.id && styles.dropdownItemSelected
-                    ]}
-                    onPress={() => {
-                      setFazendaId(fazenda.id);
-                      setShowFazendaPicker(false);
-                      setErrors(prev => ({ ...prev, fazendaId: null }));
-                    }}
-                  >
-                    <Text style={[
-                      styles.dropdownItemText,
-                      fazendaId === fazenda.id && styles.dropdownItemTextSelected
-                    ]}>
-                      {fazenda.fazendaNome}
-                    </Text>
-                    <Text style={styles.dropdownItemSubtext}>
-                      {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+            <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
+          </View>
+          <Text style={styles.contextHint}>A fazenda da visita não é alterada nesta edição.</Text>
         </View>
 
         {/* Status */}
@@ -383,7 +342,7 @@ export default function EditarVisitaScreen() {
 
         {/* Data da Visita */}
         <DatePicker
-          label="Data da Visita"
+          label={fluxoInfo.dataLabel}
           value={dataVisita}
           onChange={(date) => {
             setDataVisita(date);
@@ -474,7 +433,7 @@ export default function EditarVisitaScreen() {
 
         {/* Clima */}
         <View style={styles.field}>
-          <Text style={styles.label}>Condições Climáticas</Text>
+          <Text style={styles.label}>{fluxoInfo.climaLabel}</Text>
           <TextInput
             style={styles.input}
             value={clima}
@@ -537,8 +496,7 @@ export default function EditarVisitaScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            Ao editar a visita, as alterações serão salvas imediatamente. 
-            Você pode adicionar fotos acessando a visualização de detalhes.
+            {fluxoInfo.infoText}
           </Text>
         </View>
       </ScrollView>
@@ -645,10 +603,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
+  lockedPicker: {
+    backgroundColor: colors.backgroundAlt,
+    borderColor: colors.borderLight,
+  },
   pickerText: {
     flex: 1,
     fontSize: typography.fontBody,
     color: colors.text,
+  },
+  contextHint: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSmall,
+    color: colors.muted,
   },
   placeholder: {
     color: colors.muted,

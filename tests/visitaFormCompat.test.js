@@ -4,8 +4,10 @@ const {
   buildVisitaPayload,
   combineVisitaDateTime,
   findVisitaFazendaOption,
+  getVisitaFluxoUi,
   getVisitaFormFazendaId,
   getVisitaFormFazendaLabel,
+  resolveVisitaEdicaoFazendaId,
 } = require('../.tmp-domain-compat/src/utils/visitaFormCompat');
 
 let failed = 0;
@@ -64,6 +66,25 @@ const run = async () => {
     assert.equal(getVisitaFormFazendaLabel(option), 'Estância Boa Vista - Maria Souza');
   });
 
+  await test('getVisitaFluxoUi diferencia agendamento e visita realizada', () => {
+    const agendada = getVisitaFluxoUi('agendada');
+    const realizada = getVisitaFluxoUi('realizada');
+    const cancelada = getVisitaFluxoUi('cancelada');
+
+    assert.equal(agendada.status, 'agendada');
+    assert.equal(agendada.submitLabel, 'Agendar Visita');
+    assert.equal(realizada.status, 'realizada');
+    assert.equal(realizada.submitLabel, 'Registrar Visita');
+    assert.equal(cancelada.status, 'cancelada');
+    assert.equal(cancelada.submitLabel, 'Salvar Alterações');
+  });
+
+  await test('resolveVisitaEdicaoFazendaId preserva fazenda original da visita', () => {
+    assert.equal(resolveVisitaEdicaoFazendaId({ fazenda_id: 'faz_original' }, 'faz_tentativa'), 'faz_original');
+    assert.equal(resolveVisitaEdicaoFazendaId({ produtor_id: 'faz_legada' }, 'faz_tentativa'), 'faz_legada');
+    assert.equal(resolveVisitaEdicaoFazendaId({}, 'faz_fallback'), 'faz_fallback');
+  });
+
   await test('combineVisitaDateTime junta data e hora sem depender da tela', () => {
     const dataCompleta = combineVisitaDateTime(
       new Date(2026, 3, 20),
@@ -95,6 +116,19 @@ const run = async () => {
     assert.equal(payload.objetivo, 'consultoria');
     assert.equal(payload.proximaVisita, '2026-05-02');
     assert.deepEqual(payload.fotos, [{ id: 'foto1' }]);
+  });
+
+  await test('buildVisitaPayload preserva status realizada com fazenda_id canônico', () => {
+    const payload = buildVisitaPayload({
+      fazendaId: 'faz_realizada',
+      dataVisita: new Date('2026-04-20T00:00:00.000Z'),
+      horaVisita: new Date('2026-04-20T10:00:00.000Z'),
+      objetivo: 'avaliacao_cultivo',
+      status: 'realizada',
+    });
+
+    assert.equal(payload.fazenda_id, 'faz_realizada');
+    assert.equal(payload.status, 'realizada');
   });
 
   if (failed > 0) {

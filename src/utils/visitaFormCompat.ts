@@ -13,6 +13,67 @@ export type VisitaFazendaOption = {
   estado?: string;
 };
 
+export const VISITA_STATUS_AGENDADA = 'agendada';
+export const VISITA_STATUS_REALIZADA = 'realizada';
+export const VISITA_STATUS_CANCELADA = 'cancelada';
+
+export const VISITA_FLUXOS_OPERACIONAIS = [
+  {
+    value: VISITA_STATUS_AGENDADA,
+    label: 'Agendar visita',
+    description: 'Planejar acompanhamento futuro',
+  },
+  {
+    value: VISITA_STATUS_REALIZADA,
+    label: 'Registrar realizada',
+    description: 'Registrar visita já feita',
+  },
+];
+
+export const isVisitaStatusRealizada = (status?: string | null) => status === VISITA_STATUS_REALIZADA;
+
+export const getVisitaFluxoUi = (status?: string | null) => {
+  if (isVisitaStatusRealizada(status)) {
+    return {
+      status: VISITA_STATUS_REALIZADA,
+      dataLabel: 'Data da Visita Realizada',
+      dataPlaceholder: 'Selecione quando a visita ocorreu',
+      climaLabel: 'Condições Climáticas Observadas',
+      observacoesPlaceholder: 'Descreva o que foi observado na visita...',
+      submitLabel: 'Registrar Visita',
+      successMessage: 'Visita registrada como realizada!',
+      errorMessage: 'Erro ao registrar visita',
+      infoText: 'A visita será salva como realizada no histórico da fazenda selecionada.',
+    };
+  }
+
+  if (status === VISITA_STATUS_CANCELADA) {
+    return {
+      status: VISITA_STATUS_CANCELADA,
+      dataLabel: 'Data da Visita',
+      dataPlaceholder: 'Selecione a data da visita',
+      climaLabel: 'Condições Climáticas',
+      observacoesPlaceholder: 'Descreva detalhes da visita...',
+      submitLabel: 'Salvar Alterações',
+      successMessage: 'Visita atualizada com sucesso!',
+      errorMessage: 'Erro ao atualizar visita',
+      infoText: 'A visita será mantida como cancelada no histórico da fazenda selecionada.',
+    };
+  }
+
+  return {
+    status: VISITA_STATUS_AGENDADA,
+    dataLabel: 'Data da Visita Agendada',
+    dataPlaceholder: 'Selecione quando a visita deve ocorrer',
+    climaLabel: 'Condições Climáticas Esperadas',
+    observacoesPlaceholder: 'Descreva detalhes do agendamento...',
+    submitLabel: 'Agendar Visita',
+    successMessage: 'Visita agendada com sucesso!',
+    errorMessage: 'Erro ao agendar visita',
+    infoText: 'A visita será salva como agendada para acompanhamento técnico da fazenda selecionada.',
+  };
+};
+
 type BuildVisitaPayloadInput = {
   fazendaId: string;
   dataVisita: Date | null;
@@ -42,6 +103,9 @@ export const findVisitaFazendaOption = (
 ): VisitaFazendaOption | null => options.find((option) => option.id === fazendaId) ?? null;
 
 export const getVisitaFormFazendaId = (visita: any): string => getVisitaFazendaId(visita);
+
+export const resolveVisitaEdicaoFazendaId = (visita: any, fallbackFazendaId = ''): string =>
+  getVisitaFormFazendaId(visita) || fallbackFazendaId;
 
 export const getVisitaFormFazendaLabel = (
   option?: VisitaFazendaOption | null,

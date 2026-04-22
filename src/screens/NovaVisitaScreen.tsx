@@ -26,9 +26,14 @@ import {
   podeCriarVisitaEmFazenda,
 } from '../utils/acessoControle';
 import {
+  VISITA_FLUXOS_OPERACIONAIS,
+  VISITA_STATUS_AGENDADA,
+  VISITA_STATUS_REALIZADA,
   buildVisitaFazendaOptions,
   buildVisitaPayload,
+  combineVisitaDateTime,
   findVisitaFazendaOption,
+  getVisitaFluxoUi,
   getVisitaFormFazendaLabel,
 } from '../utils/visitaFormCompat';
 
@@ -42,6 +47,7 @@ export default function NovaVisitaScreen() {
   const [dataVisita, setDataVisita] = useState(null);
   const [horaVisita, setHoraVisita] = useState(null);
   const [objetivo, setObjetivo] = useState('consultoria');
+  const [status, setStatus] = useState(VISITA_STATUS_AGENDADA);
   const [observacoes, setObservacoes] = useState('');
   const [recomendacoes, setRecomendacoes] = useState('');
   const [clima, setClima] = useState('');
@@ -63,6 +69,8 @@ export default function NovaVisitaScreen() {
     [fazendaOptions, fazendaId]
   );
   const canCreateVisit = podeCriarVisita(user);
+  const fluxoInfo = getVisitaFluxoUi(status);
+  const semFazendasAutorizadas = !loadingFazendas && fazendaOptions.length === 0;
 
   useEffect(() => {
     loadFazendas();
@@ -109,6 +117,20 @@ export default function NovaVisitaScreen() {
       newErrors.objetivo = 'Selecione o objetivo da visita';
     }
 
+    const dataCompleta = combineVisitaDateTime(dataVisita, horaVisita);
+
+    if (dataCompleta) {
+      const agora = new Date();
+
+      if (status === VISITA_STATUS_AGENDADA && dataCompleta.getTime() < agora.getTime()) {
+        newErrors.dataVisita = 'Visita agendada precisa ter data e hora futuras';
+      }
+
+      if (status === VISITA_STATUS_REALIZADA && dataCompleta.getTime() > agora.getTime()) {
+        newErrors.dataVisita = 'Visita realizada não pode ter data e hora futuras';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -142,7 +164,7 @@ export default function NovaVisitaScreen() {
         recomendacoes,
         clima,
         proximaVisita,
-        status: 'agendada',
+        status,
         fotos,
         tecnicoResponsavel: user?.nome || user?.full_name || 'Sistema',
       });
@@ -153,7 +175,7 @@ export default function NovaVisitaScreen() {
 
       await Visita.create(novaVisita);
 
-      toast.showSuccess('Visita agendada com sucesso!');
+      toast.showSuccess(fluxoInfo.successMessage);
       
       // Voltar para tela de visitas
       setTimeout(() => {
@@ -161,7 +183,7 @@ export default function NovaVisitaScreen() {
       }, 500);
     } catch (error) {
       console.error('Erro ao salvar visita:', error);
-      toast.showError('Erro ao agendar visita');
+      toast.showError(fluxoInfo.errorMessage);
     } finally {
       setLoading(false);
     }
@@ -229,7 +251,7 @@ export default function NovaVisitaScreen() {
           <TouchableOpacity
             style={[styles.picker, errors.fazendaId && styles.inputError]}
             onPress={() => setShowFazendaPicker(!showFazendaPicker)}
-            disabled={user?.perfil === 'produtor'}
+            disabled={loadingFazendas || semFazendasAutorizadas}
           >
             <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
               {loadingFazendas ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
@@ -242,6 +264,9 @@ export default function NovaVisitaScreen() {
           </TouchableOpacity>
           {errors.fazendaId && (
             <Text style={styles.errorText}>{errors.fazendaId}</Text>
+          )}
+          {semFazendasAutorizadas && (
+            <Text style={styles.errorText}>Nenhuma fazenda autorizada disponível para nova visita.</Text>
           )}
 
           {/* Dropdown de fazendas */}
@@ -277,17 +302,53 @@ export default function NovaVisitaScreen() {
           )}
         </View>
 
+        {/* Tipo de registro */}
+        <View style={styles.field}>
+          <Text style={styles.label}>
+            Fluxo da Visita <Text style={styles.required}>*</Text>
+          </Text>
+          <View style={styles.radioGroup}>
+            {VISITA_FLUXOS_OPERACIONAIS.map(opt => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.radioButton,
+                  status === opt.value && styles.radioButtonSelected
+                ]}
+                onPress={() => {
+                  setStatus(opt.value);
+                  setErrors(prev => ({ ...prev, dataVisita: null }));
+                }}
+              >
+                <View style={styles.radio}>
+                  {status === opt.value && <View style={styles.radioInner} />}
+                </View>
+                <View style={styles.radioContent}>
+                  <Text style={[
+                    styles.radioLabel,
+                    status === opt.value && styles.radioLabelSelected
+                  ]}>
+                    {opt.label}
+                  </Text>
+                  <Text style={styles.radioDescription}>{opt.description}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {/* Data da Visita */}
         <DatePicker
-          label="Data da Visita"
+          label={fluxoInfo.dataLabel}
           value={dataVisita}
           onChange={(date) => {
             setDataVisita(date);
             setErrors(prev => ({ ...prev, dataVisita: null }));
           }}
-          placeholder="Selecione a data"
+          placeholder={fluxoInfo.dataPlaceholder}
           error={errors.dataVisita}
-          minimumDate={new Date()}
+          minimumDate={status === VISITA_STATUS_AGENDADA ? new Date() : undefined}
+          maximumDate={status === VISITA_STATUS_REALIZADA ? new Date() : undefined}
           mode="date"
         />
 
@@ -346,7 +407,7 @@ export default function NovaVisitaScreen() {
             style={[styles.textarea, styles.input]}
             value={observacoes}
             onChangeText={setObservacoes}
-            placeholder="Descreva detalhes da visita..."
+            placeholder={fluxoInfo.observacoesPlaceholder}
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}
@@ -371,7 +432,7 @@ export default function NovaVisitaScreen() {
 
         {/* Clima */}
         <View style={styles.field}>
-          <Text style={styles.label}>Condições Climáticas Esperadas</Text>
+          <Text style={styles.label}>{fluxoInfo.climaLabel}</Text>
           <TextInput
             style={styles.input}
             value={clima}
@@ -434,8 +495,7 @@ export default function NovaVisitaScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            A visita será agendada com status "Agendada". Você poderá adicionar fotos e 
-            atualizar o status após realizar a visita.
+            {fluxoInfo.infoText}
           </Text>
         </View>
       </ScrollView>
@@ -451,16 +511,20 @@ export default function NovaVisitaScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.saveButton, loading && styles.buttonDisabled]}
+          style={[
+            styles.button,
+            styles.saveButton,
+            (loading || loadingFazendas || semFazendasAutorizadas) && styles.buttonDisabled
+          ]}
           onPress={handleSave}
-          disabled={loading}
+          disabled={loading || loadingFazendas || semFazendasAutorizadas}
         >
           {loading ? (
             <ActivityIndicator color={colors.card} size="small" />
           ) : (
             <>
               <Ionicons name="checkmark" size={20} color={colors.card} />
-              <Text style={styles.saveButtonText}>Agendar Visita</Text>
+              <Text style={styles.saveButtonText}>{fluxoInfo.submitLabel}</Text>
             </>
           )}
         </TouchableOpacity>
@@ -612,9 +676,17 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.text,
   },
+  radioContent: {
+    flex: 1,
+  },
   radioLabelSelected: {
     fontWeight: '600',
     color: colors.primary,
+  },
+  radioDescription: {
+    marginTop: 2,
+    fontSize: typography.fontSmall,
+    color: colors.muted,
   },
   errorText: {
     fontSize: typography.fontSmall,
