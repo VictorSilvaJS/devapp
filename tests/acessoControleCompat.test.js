@@ -14,6 +14,8 @@ const {
   podeEditarProdutor,
   podeEditarVisita,
   podeExcluirProdutor,
+  podeIncluirCaderno,
+  podeIncluirCadernoEmFazenda,
   temAcessoProdutor,
 } = require('../.tmp-domain-compat/src/utils/acessoControle');
 
@@ -206,6 +208,20 @@ const run = async () => {
     assert.equal(avaliarAcessoCaderno(colaboradorUser, registroForaEscopo, fazendasBase).status, 'acesso_negado');
     assert.equal(avaliarAcessoCaderno(adminUser, registroRestrito, fazendasBase).status, 'permitido');
     assert.equal(avaliarAcessoCaderno(adminUser, registroSemFazenda, fazendasBase).status, 'fazenda_nao_encontrada');
+  });
+
+  await test('podeIncluirCadernoEmFazenda permite criação apenas dentro do escopo', () => {
+    const fazendaNoEscopo = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+
+    assert.equal(podeIncluirCaderno(produtorUser), true);
+    assert.equal(podeIncluirCaderno(colaboradorUser), true);
+    assert.equal(podeIncluirCaderno(adminUser), true);
+    assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaNoEscopo), true);
+    assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaForaEscopo), false);
+    assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaNoEscopo), true);
+    assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaForaEscopo), false);
+    assert.equal(podeIncluirCadernoEmFazenda(adminUser, fazendaForaEscopo), true);
   });
 
   await test('podeBaixarMapa usa a fazenda do mapa quando a lista de fazendas está disponível', () => {

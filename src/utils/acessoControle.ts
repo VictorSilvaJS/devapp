@@ -576,6 +576,11 @@ export const podeIncluirCaderno = (user) => {
   return true;
 };
 
+export const podeIncluirCadernoEmFazenda = (user, fazenda) => {
+  if (!podeIncluirCaderno(user)) return false;
+  return temAcessoProdutor(user, fazenda);
+};
+
 /**
  * Verifica se usuário pode editar registros do caderno (edição completa)
  * Produtor pode incluir MAS não pode editar registros existentes de outros

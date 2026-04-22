@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -13,7 +13,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -26,6 +26,7 @@ import {
   getCadernoFazendaId,
   getFazendaId,
   getFazendaIds,
+  podeIncluirCaderno,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
@@ -44,8 +45,6 @@ export default function CadernoCampoScreen() {
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
 
-  useEffect(() => { load(); }, [filtros]);
-  
   const load = async () => {
     setLoading(true);
     try {
@@ -93,6 +92,12 @@ export default function CadernoCampoScreen() {
       setLoading(false);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [user, filtros])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -290,6 +295,17 @@ export default function CadernoCampoScreen() {
           })
         )}
       </ScrollView>
+
+      {podeIncluirCaderno(user) && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('NovoCaderno')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="add" size={24} color={colors.card} />
+          <Text style={styles.fabText}>Novo</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -503,5 +519,23 @@ const styles = StyleSheet.create({
     color: colors.muted,
     textAlign: 'center',
     lineHeight: 22
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.screen,
+    bottom: spacing.screen + 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: 28,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    ...shadows.md
+  },
+  fabText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.card
   }
 });
