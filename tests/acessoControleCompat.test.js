@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  avaliarAcessoCaderno,
   avaliarAcessoFazendaPorId,
   avaliarAcessoVisita,
   filtrarCadernosPorAcesso,
@@ -162,6 +163,49 @@ const run = async () => {
     const resultado = filtrarCadernosPorAcesso(registros, produtorUser, fazendasBase);
 
     assert.deepEqual(resultado.map((registro) => registro.id), ['c1']);
+  });
+
+  await test('avaliarAcessoCaderno valida fazenda e visibilidade do detalhe', () => {
+    const registroVisivel = {
+      id: 'c1',
+      fazenda_id: 'fz1',
+      colaborador_responsavel: 'Ana',
+      data_atividade: '2026-04-16',
+      tipo_atividade: 'vistoria',
+      visivel_para_produtor: true,
+    };
+    const registroRestrito = {
+      id: 'c2',
+      fazenda_id: 'fz1',
+      colaborador_responsavel: 'Ana',
+      data_atividade: '2026-04-16',
+      tipo_atividade: 'vistoria',
+      visivel_para_produtor: false,
+    };
+    const registroForaEscopo = {
+      id: 'c3',
+      fazenda_id: 'fz2',
+      colaborador_responsavel: 'Ana',
+      data_atividade: '2026-04-16',
+      tipo_atividade: 'vistoria',
+      visivel_para_produtor: true,
+    };
+    const registroSemFazenda = {
+      id: 'c4',
+      fazenda_id: 'fz999',
+      colaborador_responsavel: 'Ana',
+      data_atividade: '2026-04-16',
+      tipo_atividade: 'vistoria',
+      visivel_para_produtor: true,
+    };
+
+    assert.equal(avaliarAcessoCaderno(produtorUser, registroVisivel, fazendasBase).status, 'permitido');
+    assert.equal(avaliarAcessoCaderno(produtorUser, registroRestrito, fazendasBase).status, 'acesso_negado');
+    assert.equal(avaliarAcessoCaderno(produtorUser, registroForaEscopo, fazendasBase).status, 'acesso_negado');
+    assert.equal(avaliarAcessoCaderno(colaboradorUser, registroVisivel, fazendasBase).status, 'permitido');
+    assert.equal(avaliarAcessoCaderno(colaboradorUser, registroForaEscopo, fazendasBase).status, 'acesso_negado');
+    assert.equal(avaliarAcessoCaderno(adminUser, registroRestrito, fazendasBase).status, 'permitido');
+    assert.equal(avaliarAcessoCaderno(adminUser, registroSemFazenda, fazendasBase).status, 'fazenda_nao_encontrada');
   });
 
   await test('podeBaixarMapa usa a fazenda do mapa quando a lista de fazendas está disponível', () => {

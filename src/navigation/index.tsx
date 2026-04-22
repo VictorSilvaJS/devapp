@@ -6,6 +6,7 @@ import ProdutoresScreen from '../screens/ProdutoresScreen';
 import ProdutorScreen from '../screens/ProdutorScreen';
 import MapasScreen from '../screens/MapasScreen';
 import CadernoCampoScreen from '../screens/CadernoCampoScreen';
+import CadernoDetailScreen from '../screens/CadernoDetailScreen';
 import VisitasScreen from '../screens/VisitasScreen';
 import NovoProdutorScreen from '../screens/NovoProdutorScreen';
 import EditarProdutorScreen from '../screens/EditarProdutorScreen';
@@ -130,6 +131,7 @@ export default function Navigation() {
           <Stack.Screen name="NovaVisita" component={NovaVisitaScreen} />
           <Stack.Screen name="VisitaDetail" component={VisitaDetailScreen} />
           <Stack.Screen name="EditarVisita" component={EditarVisitaScreen} />
+          <Stack.Screen name="CadernoDetail" component={CadernoDetailScreen} />
           <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="FazendaMapa" component={FazendaMapaScreen} />

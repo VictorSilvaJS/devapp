@@ -349,6 +349,33 @@ export const temAcessoCaderno = (user, registro, produtor) => {
   return false;
 };
 
+export const avaliarAcessoCaderno = (user, registro, fazendas = []) => {
+  if (!user || !registro) {
+    return {
+      status: 'caderno_nao_encontrado',
+      fazenda: null,
+      fazendaId: '',
+    };
+  }
+
+  const fazendaId = getCadernoFazendaId(registro);
+  const acessoFazenda = avaliarAcessoFazendaPorId(fazendas, user, fazendaId);
+
+  if (acessoFazenda.status !== 'permitido') {
+    return acessoFazenda;
+  }
+
+  if (!temAcessoCaderno(user, registro, acessoFazenda.fazenda)) {
+    return {
+      status: 'acesso_negado',
+      fazenda: acessoFazenda.fazenda,
+      fazendaId: acessoFazenda.fazendaId,
+    };
+  }
+
+  return acessoFazenda;
+};
+
 /**
  * Filtra registros de caderno de campo por acesso
  */

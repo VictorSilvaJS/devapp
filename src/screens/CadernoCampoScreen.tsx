@@ -13,6 +13,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -34,6 +35,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 export default function CadernoCampoScreen() {
+  const navigation = useNavigation<any>();
   const [registros, setRegistros] = useState([]);
   const [fazendas, setFazendas] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -193,7 +195,12 @@ export default function CadernoCampoScreen() {
             const tipoColor = getTipoColor(reg.tipo_atividade);
             
             return (
-              <View key={reg.id} style={styles.card}>
+              <TouchableOpacity
+                key={reg.id}
+                style={styles.card}
+                activeOpacity={0.86}
+                onPress={() => navigation.navigate('CadernoDetail', { cadernoId: reg.id })}
+              >
                 {/* Cabeçalho do Card */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
@@ -209,10 +216,13 @@ export default function CadernoCampoScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View style={[styles.badge, { backgroundColor: tipoColor + '20' }]}>
-                    <Text style={[styles.badgeText, { color: tipoColor }]}>
-                      {reg.tipo_atividade.replace(/_/g, ' ')}
-                    </Text>
+                  <View style={styles.cardHeaderRight}>
+                    <View style={[styles.badge, { backgroundColor: tipoColor + '20' }]}>
+                      <Text style={[styles.badgeText, { color: tipoColor }]}>
+                        {reg.tipo_atividade.replace(/_/g, ' ')}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color={colors.muted} />
                   </View>
                 </View>
 
@@ -275,7 +285,7 @@ export default function CadernoCampoScreen() {
                     </Text>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             );
           })
         )}
@@ -353,6 +363,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     marginRight: spacing.gap
+  },
+  cardHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexShrink: 0
   },
   cardIcon: {
     width: 44,
