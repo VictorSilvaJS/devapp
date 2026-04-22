@@ -12,6 +12,8 @@ const {
   podeCriarVisita,
   podeCriarVisitaEmFazenda,
   podeEditarProdutor,
+  podeEditarCaderno,
+  podeEditarCadernoEmFazenda,
   podeEditarVisita,
   podeExcluirProdutor,
   podeIncluirCaderno,
@@ -222,6 +224,33 @@ const run = async () => {
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaNoEscopo), true);
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeIncluirCadernoEmFazenda(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('podeEditarCadernoEmFazenda preserva escopo e autoria do produtor', () => {
+    const fazendaNoEscopo = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+    const registroDoProdutor = {
+      id: 'c1',
+      fazenda_id: 'fz1',
+      colaborador_responsavel: 'Ana',
+      data_atividade: '2026-04-16',
+      tipo_atividade: 'vistoria',
+      visivel_para_produtor: true,
+      criado_por_user_id: 'u1',
+    };
+    const registroDeOutro = {
+      ...registroDoProdutor,
+      id: 'c2',
+      criado_por_user_id: 'u99',
+    };
+
+    assert.equal(podeEditarCaderno(produtorUser, registroDoProdutor), true);
+    assert.equal(podeEditarCaderno(produtorUser, registroDeOutro), false);
+    assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaNoEscopo), true);
+    assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaForaEscopo), false);
+    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoProdutor, fazendaNoEscopo), true);
+    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoProdutor, fazendaForaEscopo), false);
+    assert.equal(podeEditarCadernoEmFazenda(adminUser, registroDeOutro, fazendaForaEscopo), true);
   });
 
   await test('podeBaixarMapa usa a fazenda do mapa quando a lista de fazendas está disponível', () => {

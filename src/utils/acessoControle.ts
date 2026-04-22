@@ -585,18 +585,29 @@ export const podeIncluirCadernoEmFazenda = (user, fazenda) => {
  * Verifica se usuário pode editar registros do caderno (edição completa)
  * Produtor pode incluir MAS não pode editar registros existentes de outros
  */
-export const podeEditarCaderno = (user, registro) => {
+export const podeEditarCaderno = (user, registro, fazenda = null) => {
   if (!user || !registro) return false;
 
   if (isAdmin(user)) return true;
-  if (isColaborador(user)) return true;
+  if (isColaborador(user)) {
+    return fazenda ? produtorNaRegiao(user, fazenda) : true;
+  }
 
   // Produtor pode editar apenas seus próprios registros do caderno
-  if (isProdutor(user) && registro.criado_por === user.id) {
+  if (
+    isProdutor(user) &&
+    (registro.criado_por === user.id || registro.criado_por_user_id === user.id)
+  ) {
     return true;
   }
 
   return false;
+};
+
+export const podeEditarCadernoEmFazenda = (user, registro, fazenda) => {
+  if (!registro || !fazenda) return false;
+  if (!temAcessoProdutor(user, fazenda)) return false;
+  return podeEditarCaderno(user, registro, fazenda);
 };
 
 /**

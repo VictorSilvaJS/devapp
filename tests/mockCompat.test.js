@@ -150,6 +150,26 @@ const run = async () => {
     assert.ok(porProdutor.some((item) => item.id === registro.id));
   });
 
+  await test('CadernoCampo.update parcial preserva fazenda existente e valida o registro completo', async () => {
+    const registro = await CadernoCampo.create({
+      fazenda_id: 'p4',
+      colaborador_responsavel: 'Carlos Silva',
+      data_atividade: new Date().toISOString(),
+      tipo_atividade: 'vistoria',
+      visivel_para_produtor: true,
+    });
+
+    const atualizado = await CadernoCampo.update(registro.id, {
+      observacoes: 'Registro ajustado',
+      visivel_para_produtor: false,
+    });
+
+    assert.equal(atualizado.fazenda_id, 'p4');
+    assert.equal(atualizado.produtor_id, 'p4');
+    assert.equal(atualizado.observacoes, 'Registro ajustado');
+    assert.equal(atualizado.visivel_para_produtor, false);
+  });
+
   await test('LimiteArea.get expõe fazenda_id em leituras de seed legado', async () => {
     const limite = await LimiteArea.get('lt1');
 

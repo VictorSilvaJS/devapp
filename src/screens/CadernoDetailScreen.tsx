@@ -16,7 +16,10 @@ import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { colors, shadows, spacing, typography } from '../theme';
-import { avaliarAcessoCaderno } from '../utils/acessoControle';
+import {
+  avaliarAcessoCaderno,
+  podeEditarCadernoEmFazenda,
+} from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 const { width } = Dimensions.get('window');
@@ -113,6 +116,17 @@ export default function CadernoDetailScreen() {
     const areaNumber = Number(area);
     if (!Number.isFinite(areaNumber) || areaNumber <= 0) return null;
     return `${areaNumber.toLocaleString('pt-BR')} ha`;
+  };
+
+  const canEdit = () => podeEditarCadernoEmFazenda(user, registro, fazenda);
+
+  const handleEditar = () => {
+    if (!canEdit()) {
+      toast.showWarning('Você não tem permissão para editar este registro.');
+      return;
+    }
+
+    navigation.navigate('EditarCaderno', { cadernoId: cadernoRouteId });
   };
 
   if (loading) {
@@ -306,6 +320,15 @@ export default function CadernoDetailScreen() {
           </View>
         )}
       </ScrollView>
+
+      {canEdit() && (
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleEditar}>
+            <Ionicons name="create-outline" size={20} color={colors.card} />
+            <Text style={styles.actionButtonText}>Editar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -470,5 +493,27 @@ const styles = StyleSheet.create({
     height: width * 0.4,
     borderRadius: spacing.radiusSm,
     marginRight: spacing.md,
+  },
+  footer: {
+    padding: spacing.lg,
+    backgroundColor: colors.card,
+    borderTopWidth: 2,
+    borderTopColor: colors.border,
+    ...shadows.md,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: spacing.radiusSm,
+    gap: spacing.sm,
+    minHeight: 48,
+    backgroundColor: colors.primary,
+  },
+  actionButtonText: {
+    fontSize: typography.fontBody,
+    fontWeight: '700',
+    color: colors.card,
   },
 });

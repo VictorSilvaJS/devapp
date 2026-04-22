@@ -3,9 +3,11 @@ const {
   buildCadernoFazendaOptions,
   buildCadernoPayload,
   findCadernoFazendaOption,
+  getCadernoFormFazendaId,
   getCadernoFormFazendaLabel,
   parseCadernoAreaAplicada,
   parseCadernoProdutos,
+  resolveCadernoEdicaoFazendaId,
 } = require('../.tmp-domain-compat/src/utils/cadernoFormCompat');
 
 let failed = 0;
@@ -57,6 +59,14 @@ const run = async () => {
     );
 
     assert.equal(getCadernoFormFazendaLabel(option), 'Estância Boa Vista - Maria Souza');
+  });
+
+  await test('resolveCadernoEdicaoFazendaId preserva fazenda original do registro', () => {
+    assert.equal(getCadernoFormFazendaId({ fazenda_id: 'faz_a' }), 'faz_a');
+    assert.equal(getCadernoFormFazendaId({ produtor_id: 'faz_b' }), 'faz_b');
+    assert.equal(resolveCadernoEdicaoFazendaId({ fazenda_id: 'faz_original' }, 'faz_tentativa'), 'faz_original');
+    assert.equal(resolveCadernoEdicaoFazendaId({ produtor_id: 'faz_legada' }, 'faz_tentativa'), 'faz_legada');
+    assert.equal(resolveCadernoEdicaoFazendaId({}, 'faz_fallback'), 'faz_fallback');
   });
 
   await test('parseCadernoProdutos normaliza lista simples separada por vírgula', () => {

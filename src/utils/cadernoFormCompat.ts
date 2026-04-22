@@ -1,4 +1,5 @@
 import {
+  getCadernoFazendaId,
   getFazendaId,
   getNomeFazenda,
   getNomeTitularFazenda,
@@ -50,6 +51,11 @@ export const findCadernoFazendaOption = (
   options: CadernoFazendaOption[] = [],
   fazendaId?: string | null
 ): CadernoFazendaOption | null => options.find((option) => option.id === fazendaId) ?? null;
+
+export const getCadernoFormFazendaId = (registro: any): string => getCadernoFazendaId(registro);
+
+export const resolveCadernoEdicaoFazendaId = (registro: any, fallbackFazendaId = ''): string =>
+  getCadernoFormFazendaId(registro) || fallbackFazendaId;
 
 export const getCadernoFormFazendaLabel = (
   option?: CadernoFazendaOption | null,
