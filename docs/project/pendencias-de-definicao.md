@@ -85,7 +85,26 @@ Esse ponto nao e backlog tecnico generico. Ele e uma pendencia de alinhamento en
 
 ## Pendencias de Escopo Tecnico-Funcional
 
-### 8. Capacidade offline declarada por fluxo
+### 8. Remocao do painel temporario `Smoke Dev`
+
+Durante o fechamento da frente de visitas tecnicas por fazenda e caderno de campo por fazenda, foi criado um painel temporario `Smoke Dev` em `src/screens/PerfilScreen.tsx`.
+
+**Status atual**
+
+- manter enquanto a estabilizacao do MVP estiver em andamento
+- remover antes de uma entrega formal, build de demonstracao externa ou publicacao
+
+**O que remover**
+
+- constante `smokeRoutes`
+- bloco visual `Smoke Dev`
+- estilos usados exclusivamente por esse painel
+
+**Por que importa**
+
+O painel esta protegido por `__DEV__`, mas ainda e uma ferramenta interna de teste manual. Ele nao deve ser confundido com funcionalidade do produto.
+
+### 9. Capacidade offline declarada por fluxo
 
 Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda falta declarar com clareza:
 
@@ -95,7 +114,7 @@ Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda fa
 
 Sem esse fechamento, o projeto corre risco de descrever offline de forma mais ampla do que a capacidade real.
 
-### 9. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
+### 10. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
 O produto ja depende de mapas e arquivos no contexto da fazenda, mas ainda faltam definicoes sobre:
 

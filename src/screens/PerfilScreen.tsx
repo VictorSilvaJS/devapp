@@ -9,6 +9,153 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
 
+const smokeRoutes = [
+  {
+    id: 'S-01',
+    label: 'NovaVisita',
+    description: 'Produtor tenta criar visita por rota direta',
+    route: 'NovaVisita',
+  },
+  {
+    id: 'S-02',
+    label: 'EditarVisita v1',
+    description: 'Produtor tenta editar visita por rota direta',
+    route: 'EditarVisita',
+    params: { visitaId: 'v1' },
+  },
+  {
+    id: 'S-03',
+    label: 'CadernoDetail c3',
+    description: 'Produtor tenta abrir caderno restrito',
+    route: 'CadernoDetail',
+    params: { cadernoId: 'c3' },
+  },
+  {
+    id: 'S-04',
+    label: 'EditarCaderno c1',
+    description: 'Produtor tenta editar registro de outro autor',
+    route: 'EditarCaderno',
+    params: { cadernoId: 'c1' },
+  },
+  {
+    id: 'S-05',
+    label: 'VisitaDetail v8',
+    description: 'Colaborador tenta abrir visita fora do escopo',
+    route: 'VisitaDetail',
+    params: { visitaId: 'v8' },
+  },
+  {
+    id: 'S-06',
+    label: 'EditarVisita v8',
+    description: 'Colaborador tenta editar visita fora do escopo',
+    route: 'EditarVisita',
+    params: { visitaId: 'v8' },
+  },
+  {
+    id: 'S-07',
+    label: 'CadernoDetail c9',
+    description: 'Colaborador tenta abrir caderno fora do escopo',
+    route: 'CadernoDetail',
+    params: { cadernoId: 'c9' },
+  },
+  {
+    id: 'S-08',
+    label: 'CadernoDetail c6',
+    description: 'Produtor tenta abrir caderno de outra fazenda',
+    route: 'CadernoDetail',
+    params: { cadernoId: 'c6' },
+  },
+  {
+    id: 'S-09',
+    label: 'CadernoDetail c3',
+    description: 'Admin abre caderno restrito ao produtor',
+    route: 'CadernoDetail',
+    params: { cadernoId: 'c3' },
+  },
+  {
+    id: 'S-10',
+    label: 'CadernoDetail c7',
+    description: 'Colaborador abre caderno dentro do escopo',
+    route: 'CadernoDetail',
+    params: { cadernoId: 'c7' },
+  },
+  {
+    id: 'S-11',
+    label: 'EditarVisita v1',
+    description: 'Admin edita visita e confere fazenda travada',
+    route: 'EditarVisita',
+    params: { visitaId: 'v1' },
+  },
+  {
+    id: 'S-12',
+    label: 'EditarCaderno c1',
+    description: 'Admin edita caderno e confere fazenda travada',
+    route: 'EditarCaderno',
+    params: { cadernoId: 'c1' },
+  },
+  {
+    id: 'S-13',
+    label: 'EditarCaderno c7',
+    description: 'Colaborador edita caderno dentro do escopo',
+    route: 'EditarCaderno',
+    params: { cadernoId: 'c7' },
+  },
+  {
+    id: 'S-15/S-16',
+    label: 'NovaVisita',
+    description: 'Admin/colaborador cria visita em fazenda autorizada',
+    route: 'NovaVisita',
+  },
+  {
+    id: 'S-17',
+    label: 'NovoCaderno',
+    description: 'Admin cria caderno pela listagem',
+    route: 'NovoCaderno',
+  },
+  {
+    id: 'S-18',
+    label: 'NovoCaderno p1',
+    description: 'Produtor cria caderno na própria fazenda',
+    route: 'NovoCaderno',
+    params: { fazendaId: 'p1' },
+  },
+  {
+    id: 'S-19',
+    label: 'NovoCaderno p3',
+    description: 'Produtor tenta criar caderno em fazenda de outro titular',
+    route: 'NovoCaderno',
+    params: { fazendaId: 'p3' },
+  },
+  {
+    id: 'S-20/S-22',
+    label: 'Fazenda p1',
+    description: 'Admin abre detalhe da fazenda para testar aba Caderno e novo registro',
+    route: 'ProdutorDetail',
+    params: { id: 'p1' },
+  },
+  {
+    id: 'S-21/S-23',
+    label: 'Fazenda p4',
+    description: 'Colaborador abre fazenda do escopo para testar aba Caderno e novo registro',
+    route: 'ProdutorDetail',
+    params: { id: 'p4' },
+  },
+  {
+    id: 'S-24',
+    label: 'Fazenda p1',
+    description: 'Produtor abre própria fazenda e confere aba Caderno visível',
+    route: 'ProdutorDetail',
+    params: { id: 'p1' },
+  },
+  {
+    id: 'S-30',
+    label: 'VisitaDetail v1',
+    description: 'Produtor abre detalhe de visita própria',
+    route: 'VisitaDetail',
+    params: { visitaId: 'v1' },
+  },
+];
+
 export default function PerfilScreen({ navigation }) {
   const { user } = useAuthState();
   const { logout } = useAuthActions();
@@ -71,6 +218,26 @@ export default function PerfilScreen({ navigation }) {
           </View>
 
           <View style={styles.actionsSection}>
+            {__DEV__ && (
+              <View style={styles.devSmokeCard}>
+                <Text style={styles.devSmokeTitle}>Smoke Dev</Text>
+                <Text style={styles.devSmokeHint}>Atalhos temporários para testar rotas diretas.</Text>
+                {smokeRoutes.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.devSmokeBtn}
+                    onPress={() => navigation.navigate(item.route, item.params)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.devSmokeTextGroup}>
+                      <Text style={styles.devSmokeBtnText}>{item.id} - {item.label}</Text>
+                      <Text style={styles.devSmokeDescription}>{item.description}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             <TouchableOpacity 
               style={[styles.actionBtn, styles.editBtn]} 
               onPress={() => navigation.navigate('EditProfile')}
@@ -161,6 +328,42 @@ const styles = StyleSheet.create({
   },
   actionsSection: {
     gap: spacing.gap
+  },
+  devSmokeCard: {
+    backgroundColor: colors.card,
+    padding: spacing.card,
+    borderRadius: spacing.radius,
+    gap: spacing.sm,
+    ...shadows.sm
+  },
+  devSmokeTitle: {
+    fontSize: typography.fontBody + 1,
+    fontWeight: typography.weightBold,
+    color: colors.text
+  },
+  devSmokeHint: {
+    fontSize: typography.fontSmall,
+    color: colors.muted,
+    marginBottom: spacing.xs
+  },
+  devSmokeBtn: {
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: spacing.radiusSm,
+    padding: spacing.md
+  },
+  devSmokeTextGroup: {
+    gap: 3
+  },
+  devSmokeBtnText: {
+    color: colors.text,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold
+  },
+  devSmokeDescription: {
+    color: colors.muted,
+    fontSize: typography.fontSmall
   },
   actionBtn: {
     padding: 14,

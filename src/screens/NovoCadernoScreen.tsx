@@ -184,6 +184,18 @@ export default function NovoCadernoScreen() {
     }
   };
 
+  if (loadingFazendas) {
+    return (
+      <View style={styles.container}>
+        <Header title="Novo Registro" showBack />
+        <View style={styles.blockedContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.blockedSubtext}>Carregando fazendas autorizadas...</Text>
+        </View>
+      </View>
+    );
+  }
+
   if (accessDenied) {
     return (
       <View style={styles.container}>

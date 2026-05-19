@@ -58,6 +58,7 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - filtros regionais via `FiltroContext`
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
 - frente funcional de `Produtor` / `Fazenda` concluida no nivel necessario para o MVP atual
+- frente funcional de visitas tecnicas por fazenda e caderno de campo por fazenda validada no nivel necessario para o MVP atual
 - visualizacao de mapas e detalhe de fazenda
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
@@ -108,6 +109,31 @@ Limites assumidos para evolucao posterior:
 - exclusao em cascata controlada nao foi implementada
 
 Esses limites nao bloqueiam o MVP atual e devem ser tratados como evolucao posterior, nao como pendencia de fechamento desta frente.
+
+## Fechamento Da Frente Visitas / Caderno Por Fazenda
+
+Status em 2026-05-19: a frente funcional de visitas tecnicas por fazenda e caderno de campo por fazenda esta concluida no nivel necessario para o MVP atual.
+
+Entregas consolidadas:
+
+- permissoes defensivas para rotas diretas de visitas e caderno
+- bloqueio de produtor para criacao e edicao de visitas
+- bloqueio de colaborador fora do proprio escopo regional/sub-regional
+- preservacao de `fazenda_id` em edicao de visita e caderno
+- criacao de caderno no contexto real da fazenda
+- aba Caderno no detalhe da fazenda com registros da fazenda atual
+- visibilidade de caderno respeitando restricao para produtor
+
+Durante o smoke foram aplicados dois ajustes pontuais:
+
+- `NovoCadernoScreen` passou a exibir carregamento enquanto valida fazendas autorizadas, evitando flash de formulario antes do bloqueio
+- `ProdutorScreen` passou a recarregar dados ao receber foco, garantindo que cadernos criados pela aba aparecam ao voltar para a fazenda
+
+Decisao funcional pendente para evolucao posterior:
+
+- definir se produtor tera caminho visual explicito para abrir detalhe de visitas proprias; a permissao por rota valida ja foi validada
+
+Documento de fechamento: `docs/project/fechamento-visitas-caderno-fazenda.md`.
 
 ## Pontos de Atencao Tecnicos
 

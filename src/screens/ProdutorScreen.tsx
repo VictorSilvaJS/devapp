@@ -130,12 +130,12 @@ export default function ProdutorScreen({ route, navigation }) {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       const id = route?.params?.id;
-      if (id && produtor) {
+      if (id) {
         loadData(id);
       }
     });
     return unsubscribe;
-  }, [navigation, route?.params?.id]);
+  }, [navigation, route?.params?.id, user]);
 
   const handleEdit = () => {
     if (!podeEditarProdutor(user, produtor)) {

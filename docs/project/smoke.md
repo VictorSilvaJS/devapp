@@ -17,58 +17,58 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 **Rodada 1 - Bloqueios E Escopo**
 | ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
-| S-01 | P0 | Produtor | Qualquer visita | Tentar criar visita por rota direta | Bloqueado | Pendente |  |
-| S-02 | P0 | Produtor | Qualquer visita | Tentar editar visita por rota direta | Bloqueado | Pendente |  |
-| S-03 | P0 | Produtor | Caderno restrito da própria fazenda | Abrir por rota direta | Bloqueado | Pendente |  |
-| S-04 | P0 | Produtor | Registro de outro autor | Editar caderno por rota direta | Bloqueado | Pendente |  |
-| S-05 | P0 | Colaborador | Visita fora do escopo | Abrir por rota direta | Acesso bloqueado/volta | Pendente |  |
-| S-06 | P0 | Colaborador | Fazenda fora do escopo | Criar/editar visita por rota direta | Bloqueado | Pendente |  |
-| S-07 | P0 | Colaborador | Registro de caderno fora do escopo | Abrir detalhe/editar por rota direta | Bloqueado | Pendente |  |
-| S-08 | P0 | Produtor | Caderno de outra fazenda | Abrir por rota direta | Bloqueado | Pendente |  |
-| S-09 | P1 | Admin | Registro de caderno existente | Abrir detalhe do caderno | Detalhe carrega mesmo se restrito ao produtor | Pendente |  |
-| S-10 | P1 | Colaborador | Registro de caderno dentro do escopo | Abrir detalhe | Permitido, inclusive restrito ao produtor | Pendente |  |
+| S-01 | P0 | Produtor | Qualquer visita | Tentar criar visita por rota direta | Bloqueado | Passou | Exibiu acesso restrito |
+| S-02 | P0 | Produtor | Qualquer visita | Tentar editar visita por rota direta | Bloqueado | Passou | Exibiu acesso negado |
+| S-03 | P0 | Produtor | Caderno restrito da própria fazenda | Abrir por rota direta | Bloqueado | Passou | Exibiu mensagem sem permissão para acessar o registro |
+| S-04 | P0 | Produtor | Registro de outro autor | Editar caderno por rota direta | Bloqueado | Passou | Exibiu mensagem sem permissão para acessar o registro |
+| S-05 | P0 | Colaborador | Visita fora do escopo | Abrir por rota direta | Acesso bloqueado/volta | Passou | Exibiu mensagem sem permissão para acessar o registro |
+| S-06 | P0 | Colaborador | Fazenda fora do escopo | Criar/editar visita por rota direta | Bloqueado | Passou | Edição direta de visita fora do escopo exibiu mensagem sem permissão |
+| S-07 | P0 | Colaborador | Registro de caderno fora do escopo | Abrir detalhe/editar por rota direta | Bloqueado | Passou | Exibiu mensagem sem permissão para acessar o registro |
+| S-08 | P0 | Produtor | Caderno de outra fazenda | Abrir por rota direta | Bloqueado | Passou | Exibiu mensagem sem permissão para acessar o registro |
+| S-09 | P1 | Admin | Registro de caderno existente | Abrir detalhe do caderno | Detalhe carrega mesmo se restrito ao produtor | Passou | Detalhe do caderno abriu para admin |
+| S-10 | P1 | Colaborador | Registro de caderno dentro do escopo | Abrir detalhe | Permitido, inclusive restrito ao produtor | Passou | Detalhe do caderno abriu para colaborador |
 
 **Rodada 2 - Integridade De Contexto**
 | ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
-| S-11 | P0 | Admin | Visita existente | Editar visita | Fazenda permanece a mesma; alterações salvam | Pendente |  |
-| S-12 | P0 | Admin | Registro de caderno existente | Editar caderno | Fazenda fica travada; `fazenda_id` preservado | Pendente |  |
-| S-13 | P0 | Colaborador | Caderno existente | Editar caderno | Fazenda travada; alterações salvam | Pendente |  |
-| S-14 | P0 | Produtor | Registro próprio | Editar caderno | Permitido; fazenda travada | Pendente |  |
-| S-15 | P1 | Admin | Fazenda existente | Criar visita para a fazenda | Salva com `fazenda_id`; aparece na listagem/detalhe | Pendente |  |
-| S-16 | P1 | Colaborador | Fazenda dentro do escopo | Criar visita | Permitido; salva com `fazenda_id` correto | Pendente |  |
-| S-17 | P1 | Admin | Fazenda existente | Criar caderno pela listagem | Pode escolher fazenda autorizada e salvar | Pendente |  |
-| S-18 | P1 | Produtor | Própria fazenda | Criar caderno | Permitido; visível ao produtor | Pendente |  |
-| S-19 | P1 | Produtor | Fazenda de outro titular | Criar caderno por rota direta com `fazendaId` | Bloqueado | Pendente |  |
+| S-11 | P0 | Admin | Visita existente | Editar visita | Fazenda permanece a mesma; alterações salvam | Passou | Fazenda vinculada ficou travada e edição salvou |
+| S-12 | P0 | Admin | Registro de caderno existente | Editar caderno | Fazenda fica travada; `fazenda_id` preservado | Passou | Fazenda vinculada ficou travada e edição salvou |
+| S-13 | P0 | Colaborador | Caderno existente | Editar caderno | Fazenda travada; alterações salvam | Passou | Fazenda vinculada ficou travada e edição salvou |
+| S-14 | P0 | Produtor | Registro próprio | Editar caderno | Permitido; fazenda travada | Passou | Produtor editou registro próprio com fazenda vinculada travada |
+| S-15 | P1 | Admin | Fazenda existente | Criar visita para a fazenda | Salva com `fazenda_id`; aparece na listagem/detalhe | Passou | Visita criada como admin e salva sem erro |
+| S-16 | P1 | Colaborador | Fazenda dentro do escopo | Criar visita | Permitido; salva com `fazenda_id` correto | Passou | Visita criada como colaborador em fazenda autorizada |
+| S-17 | P1 | Admin | Fazenda existente | Criar caderno pela listagem | Pode escolher fazenda autorizada e salvar | Passou | Caderno criado como admin e detalhe abriu |
+| S-18 | P1 | Produtor | Própria fazenda | Criar caderno | Permitido; visível ao produtor | Passou | Registro criado no contexto da própria fazenda e detalhe abriu |
+| S-19 | P1 | Produtor | Fazenda de outro titular | Criar caderno por rota direta com `fazendaId` | Bloqueado | Passou | Acesso restrito após ajuste para não exibir formulário antes da permissão |
 
 **Rodada 3 - Integração Na Fazenda**
 | ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
-| S-20 | P0 | Admin | Fazenda no detalhe | Criar caderno pela aba Caderno | Abre `NovoCaderno` já no contexto da fazenda | Pendente |  |
-| S-21 | P0 | Colaborador | Fazenda dentro do escopo | Criar caderno pela aba da fazenda | Salva vinculado à fazenda atual | Pendente |  |
-| S-22 | P1 | Admin | Detalhe da fazenda | Abrir aba Caderno | Vê registros reais da fazenda atual | Pendente |  |
-| S-23 | P1 | Colaborador | Detalhe da fazenda | Aba Caderno | Mostra só registros daquela fazenda | Pendente |  |
-| S-24 | P1 | Produtor | Detalhe da própria fazenda | Aba Caderno | Mostra apenas registros visíveis daquela fazenda | Pendente |  |
+| S-20 | P0 | Admin | Fazenda no detalhe | Criar caderno pela aba Caderno | Abre `NovoCaderno` já no contexto da fazenda | Passou | Criou pela aba e registro apareceu na fazenda após ajuste de recarregamento |
+| S-21 | P0 | Colaborador | Fazenda dentro do escopo | Criar caderno pela aba da fazenda | Salva vinculado à fazenda atual | Passou | Criou pela aba da fazenda dentro do escopo |
+| S-22 | P1 | Admin | Detalhe da fazenda | Abrir aba Caderno | Vê registros reais da fazenda atual | Passou | Aba Caderno abriu e mostrou registros da fazenda |
+| S-23 | P1 | Colaborador | Detalhe da fazenda | Aba Caderno | Mostra só registros daquela fazenda | Passou | Aba Caderno abriu e mostrou registros da fazenda do escopo |
+| S-24 | P1 | Produtor | Detalhe da própria fazenda | Aba Caderno | Mostra apenas registros visíveis daquela fazenda | Passou | Aba Caderno abriu para produtor sem exibir registro restrito |
 
 **Cobertura Complementar**
 | ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
-| S-25 | P2 | Admin | Existem fazendas com visitas | Abrir listagem de visitas | Vê visitas de múltiplas fazendas conforme filtros | Pendente |  |
-| S-26 | P2 | Admin | Visita existente | Abrir detalhe da visita | Detalhe carrega e mostra contexto da fazenda | Pendente |  |
-| S-27 | P2 | Colaborador | Tem região/sub-região | Abrir visitas | Vê apenas visitas de fazendas no escopo | Pendente |  |
-| S-28 | P2 | Colaborador | Visita dentro do escopo | Abrir detalhe | Acesso permitido | Pendente |  |
-| S-29 | P2 | Produtor | Tem uma ou mais fazendas | Abrir visitas | Vê visitas das próprias fazendas | Pendente |  |
-| S-30 | P2 | Produtor | Visita própria | Abrir detalhe | Permitido | Pendente |  |
-| S-31 | P2 | Produtor | Caderno visível da própria fazenda | Abrir listagem/detalhe | Permitido | Pendente |  |
+| S-25 | P2 | Admin | Existem fazendas com visitas | Abrir listagem de visitas | Vê visitas de múltiplas fazendas conforme filtros | Passou | Listagem de visitas abriu para admin |
+| S-26 | P2 | Admin | Visita existente | Abrir detalhe da visita | Detalhe carrega e mostra contexto da fazenda | Passou | Detalhe de visita abriu para admin |
+| S-27 | P2 | Colaborador | Tem região/sub-região | Abrir visitas | Vê apenas visitas de fazendas no escopo | Passou | Listagem de visitas abriu para colaborador |
+| S-28 | P2 | Colaborador | Visita dentro do escopo | Abrir detalhe | Acesso permitido | Passou | Detalhe de visita dentro do escopo abriu |
+| S-29 | P2 | Produtor | Tem uma ou mais fazendas | Abrir visitas | Vê visitas das próprias fazendas | Passou | Produtor vê histórico das próprias fazendas |
+| S-30 | P2 | Produtor | Visita própria | Abrir detalhe | Permitido | Passou | Detalhe abriu por rota direta; caminho visual para produtor fica como decisão de produto |
+| S-31 | P2 | Produtor | Caderno visível da própria fazenda | Abrir listagem/detalhe | Permitido | Passou | Caderno visível abriu para produtor |
 
 **Validações De Ponta A Ponta**
 | ID | Fluxo | Resultado esperado | Status | Observação |
 |---|---|---|---|---|
-| E2E-01 | Criar visita como admin/colaborador -> abrir detalhe -> editar | Fazenda não mudou | Pendente |  |
-| E2E-02 | Criar caderno pela aba da fazenda -> cair no detalhe do registro -> voltar à fazenda | Registro aparece na aba | Pendente |  |
-| E2E-03 | Editar caderno -> salvar -> abrir detalhe atualizado | `fazenda_id` preservado | Pendente |  |
-| E2E-04 | Produtor cria caderno próprio -> abrir listagem e detalhe da fazenda | Registro aparece nos dois lugares | Pendente |  |
-| E2E-05 | Produtor tenta acessar caderno restrito por listagem/detalhe/rota direta | Registro não aparece e rota direta bloqueia | Pendente |  |
+| E2E-01 | Criar visita como admin/colaborador -> abrir detalhe -> editar | Fazenda não mudou | Passou | Fluxo literal criado, aberto em detalhe e editado com fazenda preservada |
+| E2E-02 | Criar caderno pela aba da fazenda -> cair no detalhe do registro -> voltar à fazenda | Registro aparece na aba | Passou | Coberto por S-20 após ajuste de recarregamento |
+| E2E-03 | Editar caderno -> salvar -> abrir detalhe atualizado | `fazenda_id` preservado | Passou | Coberto por S-12, S-13 e S-14 |
+| E2E-04 | Produtor cria caderno próprio -> abrir listagem e detalhe da fazenda | Registro aparece nos dois lugares | Passou | Coberto por S-18, S-24 e S-31 |
+| E2E-05 | Produtor tenta acessar caderno restrito por listagem/detalhe/rota direta | Registro não aparece e rota direta bloqueia | Passou | Coberto por S-03 e S-24 |
 
 **Critério Para Encerrar A Frente**
 - Todos os casos P0 passam.
