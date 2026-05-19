@@ -19,9 +19,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import MapaFazendaNativoView, {
-  MapaFazendaNativoViewRef,
-} from '../components/MapaFazendaNativoView';
+import MapaFazendaView, {
+  MapaFazendaViewRef,
+} from '../components/MapaFazendaView';
 import { LimiteArea, Produtor } from '../api/mock';
 import {
   resolveRouteFazendaId,
@@ -177,7 +177,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [fazendasContexto, setFazendasContexto] = useState<any[]>([]);
 
   // Refs
-  const mapaRef = useRef<MapaFazendaNativoViewRef>(null);
+  const mapaRef = useRef<MapaFazendaViewRef>(null);
   const drawerAnim = useRef(new Animated.Value(DRAWER_HEIGHT)).current;
 
   // ── Carregamento de dados ────────────────────────────────────
@@ -487,7 +487,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
       {/* ── MAPA LEAFLET ─────────────────────────────────────── */}
       <View style={styles.mapaContainer}>
-        <MapaFazendaNativoView
+        <MapaFazendaView
           ref={mapaRef}
           talhoes={talhoesExibidos}
           talhaoSelecionadoId={talhaoSelecionadoId}
@@ -499,10 +499,10 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
           }}
         />
 
-        {/* Badge "satélite" no canto inferior esquerdo */}
+        {/* Badge do mapa no canto inferior esquerdo */}
         <View style={styles.badgeSatelite}>
           <Ionicons name="earth" size={12} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.badgeSateliteTexto}>SATÉLITE</Text>
+          <Text style={styles.badgeSateliteTexto}>MAPA</Text>
         </View>
 
         {/* Legenda de cores dos talhões */}
@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // ── Badge satélite ──
+  // ── Badge do mapa ──
   badgeSatelite: {
     position: 'absolute',
     bottom: spacing.md,

@@ -1176,7 +1176,7 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       ) : (
         <>
-          {/* ── Botão Ver no Mapa Satélite ────────────────────── */}
+          {/* ── Botão Ver no Mapa ────────────────────── */}
           <TouchableOpacity
             style={styles.btnMapaSatelite}
             onPress={() =>
@@ -1195,7 +1195,7 @@ export default function MapasScreen({ route, navigation }) {
               <Ionicons name="earth" size={22} color={colors.white} />
             </View>
             <View style={styles.btnMapaSateliteTextos}>
-              <Text style={styles.btnMapaSateliteTitulo}>Ver no Mapa Satélite</Text>
+              <Text style={styles.btnMapaSateliteTitulo}>Ver no Mapa</Text>
               <Text style={styles.btnMapaSateliteSubtitulo}>
                 {mapaSateliteFazendaInfo
                   ? `Abrir ${mapaSateliteFazendaInfo.fazendaNome}`
@@ -1851,7 +1851,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ── BOTÃO MAPA SATÉLITE ──
+  // ── BOTÃO MAPA ──
   btnMapaSatelite: {
     flexDirection: 'row',
     alignItems: 'center',

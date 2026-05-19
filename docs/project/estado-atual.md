@@ -46,8 +46,10 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 
 ### Camada experimental de mapas/offline
 
-- `src/components/MapaFazendaView.tsx` ainda representa a trilha com WebView
-- `src/components/MapaFazendaNativoView.tsx` e `src/screens/FazendaMapaScreen.tsx` apontam para a migracao nativa
+- `src/components/MapaFazendaView.tsx` representa a trilha visual atual do MVP com WebView, Leaflet e tiles OpenStreetMap
+- `src/screens/FazendaMapaScreen.tsx` usa `MapaFazendaView.tsx` para exibir talhoes e limites no contexto da fazenda
+- `src/components/MapaFazendaNativoView.tsx` permanece como experimento historico com `react-native-maps`, mas nao e a tela ativa no fluxo atual
+- a visualizacao atual prioriza mostrar a demarcacao; quando o mapa-base nao carrega, ha fallback vetorial local para os shapes
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -141,6 +143,7 @@ Documento de fechamento: `docs/project/fechamento-visitas-caderno-fazenda.md`.
 - Ainda existem nomes legados isolados em rotas, wrappers e algumas telas historicas
 - A frente `Produtor` / `Fazenda` ja possui permissoes defensivas e integridade de exclusao; outros fluxos ainda podem exigir a mesma revisao pontual
 - A camada offline-first ja esta alinhada semanticamente, mas ainda nao esta conectada a um backend real
+- A visualizacao atual de mapas usa tiles online OpenStreetMap no MVP; cache/offline de tiles e estrategia de provedor ainda precisam de decisao antes de producao
 - `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
 
 ## Complementares Oficiais

@@ -1,11 +1,24 @@
-import React, { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  ActivityIndicator,
+  LayoutChangeEvent,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { G, Polygon as SvgPolygon, Rect, Text as SvgText } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
-import { colors, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 
-// ─────────────────────────────────────────────────────────────
-// TIPOS
-// ─────────────────────────────────────────────────────────────
 export interface PontoPoligono {
   lat: number;
   lng: number;
@@ -36,57 +49,139 @@ interface Props {
   onMapaReady?: () => void;
 }
 
-// ─────────────────────────────────────────────────────────────
-// GERADOR DE HTML LEAFLET
-// ─────────────────────────────────────────────────────────────
+type SvgTalhao = TalhaoMapa & {
+  svgPoints: string;
+  center: { x: number; y: number };
+};
+
+const LEAFLET_READY_TIMEOUT_MS = 6500;
+const SVG_PADDING = 26;
+
+const normalizeHexColor = (value?: string): string => {
+  if (!value) return colors.primary;
+  const normalized = value.startsWith('#') ? value : `#${value}`;
+  return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized : colors.primary;
+};
+
+const colorWithOpacity = (hex: string | undefined, opacity: number): string => {
+  const normalized = normalizeHexColor(hex).replace('#', '');
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
+const shortenTalhaoLabel = (value: string): string =>
+  String(value || '')
+    .replace(/^Talh[aã]o\s*/i, '')
+    .trim()
+    .slice(0, 12);
+
+function buildSvgTalhoes(talhoes: TalhaoMapa[], width: number, height: number): SvgTalhao[] {
+  const validTalhoes = talhoes.filter((talhao) => talhao.poligono?.length >= 3);
+  if (validTalhoes.length === 0 || width <= 0 || height <= 0) {
+    return [];
+  }
+
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+
+  validTalhoes.forEach((talhao) => {
+    talhao.poligono.forEach((ponto) => {
+      minLat = Math.min(minLat, ponto.lat);
+      maxLat = Math.max(maxLat, ponto.lat);
+      minLng = Math.min(minLng, ponto.lng);
+      maxLng = Math.max(maxLng, ponto.lng);
+    });
+  });
+
+  const latRange = Math.max(maxLat - minLat, 0.000001);
+  const lngRange = Math.max(maxLng - minLng, 0.000001);
+  const usableW = Math.max(width - SVG_PADDING * 2, 1);
+  const usableH = Math.max(height - SVG_PADDING * 2, 1);
+  const scale = Math.min(usableW / lngRange, usableH / latRange);
+  const offsetX = SVG_PADDING + (usableW - lngRange * scale) / 2;
+  const offsetY = SVG_PADDING + (usableH - latRange * scale) / 2;
+
+  return validTalhoes.map((talhao) => {
+    const points = talhao.poligono.map((ponto) => {
+      const x = offsetX + (ponto.lng - minLng) * scale;
+      const y = offsetY + (maxLat - ponto.lat) * scale;
+      return { x, y };
+    });
+    const center = points.reduce(
+      (acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }),
+      { x: 0, y: 0 }
+    );
+
+    return {
+      ...talhao,
+      svgPoints: points.map((point) => `${point.x},${point.y}`).join(' '),
+      center: {
+        x: center.x / points.length,
+        y: center.y / points.length,
+      },
+    };
+  });
+}
+
 function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | null): string {
   const features = talhoes
-    .filter(t => t.poligono && t.poligono.length >= 3)
-    .map(t => ({
+    .filter((talhao) => talhao.poligono?.length >= 3)
+    .map((talhao) => ({
       type: 'Feature',
       geometry: {
         type: 'Polygon',
         coordinates: [[
-          ...t.poligono.map(p => [p.lng, p.lat]),
-          [t.poligono[0].lng, t.poligono[0].lat], // fechar o anel
+          ...talhao.poligono.map((ponto) => [ponto.lng, ponto.lat]),
+          [talhao.poligono[0].lng, talhao.poligono[0].lat],
         ]],
       },
       properties: {
-        id: t.id,
-        talhao: t.talhao,
-        area_hectares: t.area_hectares,
-        cor: t.cor || '#22C55E',
-        cultura_atual: t.cultura_atual || '',
-        textura: t.textura || '',
-        tipo_solo: t.tipo_solo || '',
-        safra: t.safra || '',
-        nome: t.nome || '',
+        id: talhao.id,
+        talhao: talhao.talhao,
+        area_hectares: talhao.area_hectares,
+        cor: normalizeHexColor(talhao.cor),
+        cultura_atual: talhao.cultura_atual || '',
+        textura: talhao.textura || '',
+        tipo_solo: talhao.tipo_solo || '',
+        safra: talhao.safra || '',
+        nome: talhao.nome || '',
       },
     }));
 
   const geojsonStr = JSON.stringify({ type: 'FeatureCollection', features });
-  const selectedStr = talhaoSelecionadoId ? `'${talhaoSelecionadoId}'` : 'null';
+  const selectedStr = JSON.stringify(talhaoSelecionadoId || null);
 
   return `<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #map { width: 100%; height: 100%; background: #111; }
-    .leaflet-control-zoom { border: none !important; }
+    html, body, #map { width: 100%; height: 100%; background: #101827; }
+    .leaflet-container { background: #101827; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .leaflet-control-zoom { border: none !important; margin-top: 76px !important; }
     .leaflet-control-zoom a {
-      background: rgba(255,255,255,0.9) !important;
-      color: #333 !important;
-      font-weight: bold;
-      border-radius: 6px !important;
-      width: 34px !important;
-      height: 34px !important;
-      line-height: 34px !important;
+      background: rgba(255,255,255,0.94) !important;
+      color: #172033 !important;
+      font-weight: 800;
+      border-radius: 8px !important;
+      width: 36px !important;
+      height: 36px !important;
+      line-height: 36px !important;
       font-size: 18px !important;
-      margin-bottom: 4px !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+      margin-bottom: 6px !important;
+      border: 0 !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.32) !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(255,255,255,0.76) !important;
+      font-size: 9px !important;
     }
     .talhao-label {
       background: transparent !important;
@@ -96,198 +191,287 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
     .talhao-label-text {
       color: white;
       font-size: 11px;
-      font-weight: bold;
+      font-weight: 800;
       text-align: center;
-      text-shadow:
-        0 0 4px rgba(0,0,0,1),
-        0 1px 3px rgba(0,0,0,0.9),
-        -1px 0 2px rgba(0,0,0,0.8),
-        1px 0 2px rgba(0,0,0,0.8);
+      text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9);
       pointer-events: none;
       white-space: nowrap;
-      line-height: 1.3;
+      line-height: 1.25;
     }
     .talhao-label-area {
-      color: rgba(255,255,255,0.85);
+      color: rgba(255,255,255,0.9);
       font-size: 10px;
       text-align: center;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+      text-shadow: 0 1px 4px rgba(0,0,0,1);
       pointer-events: none;
       white-space: nowrap;
+      line-height: 1.25;
     }
-    .leaflet-bottom.leaflet-right { display: none; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    var GEOJSON = ${geojsonStr};
-    var SELECTED_ID = ${selectedStr};
+    (function () {
+      var GEOJSON = ${geojsonStr};
+      var SELECTED_ID = ${selectedStr};
+      var layersById = {};
+      var labelsById = {};
+      var geojsonLayer = null;
+      var map = null;
 
-    // ── Inicializa mapa ──
-    var map = L.map('map', {
-      zoomControl: false,
-      attributionControl: false,
-      tap: true,
-    });
+      function post(tipo, payload) {
+        try {
+          window.ReactNativeWebView.postMessage(JSON.stringify(Object.assign({ tipo: tipo }, payload || {})));
+        } catch (err) {}
+      }
 
-    // ── Tiles satélite ESRI (gratuito, sem API key) ──
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 20, tileSize: 256 }
-    ).addTo(map);
+      if (typeof L === 'undefined') {
+        post('erro_mapa', { motivo: 'leaflet_indisponivel' });
+        return;
+      }
 
-    // ── Overlay de rótulos geográficos ──
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 20, tileSize: 256, opacity: 0.6 }
-    ).addTo(map);
+      function escapeLabel(value) {
+        return String(value || '').replace(/[&<>"']/g, function (c) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c];
+        });
+      }
 
-    // ── Controle de zoom ──
-    L.control.zoom({ position: 'topright' }).addTo(map);
+      function getEstilo(feature, selecionado) {
+        var cor = feature.properties.cor || '#22C55E';
+        return {
+          color: selecionado ? '#FFFFFF' : cor,
+          weight: selecionado ? 4 : 2.4,
+          opacity: 1,
+          fillColor: cor,
+          fillOpacity: selecionado ? 0.48 : 0.26,
+        };
+      }
 
-    // ── Estado ──
-    var layersById = {};
-    var labelMarkersById = {};
+      function ajustarLimites() {
+        if (!geojsonLayer || geojsonLayer.getLayers().length === 0) {
+          map.setView([-15.0, -52.0], 4);
+          return;
+        }
+        map.fitBounds(geojsonLayer.getBounds(), {
+          padding: [34, 34],
+          maxZoom: 16,
+          animate: true
+        });
+      }
 
-    function normalizarCor(hex) {
-      if (!hex || typeof hex !== 'string') return '#22C55E';
-      return hex.startsWith('#') ? hex : '#' + hex;
-    }
-
-    function getEstilo(feature, selecionado) {
-      var cor = normalizarCor(feature.properties.cor);
-      return {
-        color: cor,
-        weight: selecionado ? 3.5 : 2,
-        opacity: 1,
-        fillColor: cor,
-        fillOpacity: selecionado ? 0.55 : 0.25,
-        dashArray: null,
-      };
-    }
-
-    // ── Renderiza camada GeoJSON ──
-    var geojsonLayer = L.geoJSON(GEOJSON, {
-      style: function(feature) {
-        return getEstilo(feature, SELECTED_ID === feature.properties.id);
-      },
-      onEachFeature: function(feature, layer) {
-        var id = feature.properties.id;
-        layersById[id] = layer;
-
-        layer.on('click', function(e) {
-          L.DomEvent.stopPropagation(e);
-          try {
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              tipo: 'talhaoPress',
-              id: id
-            }));
-          } catch(err) {}
+      function selecionarTalhao(id) {
+        Object.keys(layersById).forEach(function (layerId) {
+          var layer = layersById[layerId];
+          layer.setStyle(getEstilo(layer.feature, false));
         });
 
-        // Label no centróide do polígono
-        try {
-          var bounds = layer.getBounds();
-          var center = bounds.getCenter();
-          var icon = L.divIcon({
-            className: 'talhao-label',
-            html:
-              '<div class="talhao-label-text">' + feature.properties.talhao + '</div>' +
-              '<div class="talhao-label-area">' + feature.properties.area_hectares.toFixed(1) + ' ha</div>',
-            iconSize: [120, 36],
-            iconAnchor: [60, 18],
-          });
-          var marker = L.marker(center, { icon: icon, interactive: false });
-          labelMarkersById[id] = marker;
-          marker.addTo(map);
-        } catch(e) {}
-      }
-    }).addTo(map);
-
-    // ── Ajusta visão inicial ──
-    if (geojsonLayer.getLayers().length > 0) {
-      map.fitBounds(geojsonLayer.getBounds(), { padding: [40, 40], animate: false });
-    } else {
-      map.setView([-15.0, -52.0], 5);
-    }
-
-    // ── Toque fora de polígonos desmarca ──
-    map.on('click', function() {
-      try {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ tipo: 'mapaPress' }));
-      } catch(e) {}
-    });
-
-    // ── Recebe mensagens do React Native ──
-    function handleMensagem(event) {
-      try {
-        var data = JSON.parse(event.data);
-        if (data.tipo === 'selecionarTalhao') {
-          selecionarTalhao(data.id);
-        } else if (data.tipo === 'ajustarLimites') {
-          if (geojsonLayer.getLayers().length > 0) {
-            map.fitBounds(geojsonLayer.getBounds(), { padding: [40, 40] });
-          }
+        SELECTED_ID = id || null;
+        if (id && layersById[id]) {
+          var selectedLayer = layersById[id];
+          selectedLayer.setStyle(getEstilo(selectedLayer.feature, true));
+          selectedLayer.bringToFront();
+          map.panTo(selectedLayer.getBounds().getCenter(), { animate: true, duration: 0.45 });
         }
-      } catch(e) {}
-    }
-    document.addEventListener('message', handleMensagem);
-    window.addEventListener('message', handleMensagem);
-
-    function selecionarTalhao(id) {
-      Object.keys(layersById).forEach(function(lid) {
-        var feat = layersById[lid].feature;
-        layersById[lid].setStyle(getEstilo(feat, false));
-      });
-      if (id && layersById[id]) {
-        var feat = layersById[id].feature;
-        layersById[id].setStyle(getEstilo(feat, true));
-        layersById[id].bringToFront();
-        var bounds = layersById[id].getBounds();
-        map.panTo(bounds.getCenter(), { animate: true, duration: 0.5 });
       }
-    }
 
-    // Seleciona inicial se houver
-    if (SELECTED_ID) {
-      selecionarTalhao(SELECTED_ID);
-    }
+      window.selecionarTalhao = selecionarTalhao;
+      window.ajustarLimites = ajustarLimites;
 
-    // Notifica que está pronto
-    try {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ tipo: 'ready' }));
-    } catch(e) {}
+      try {
+        map = L.map('map', {
+          zoomControl: true,
+          attributionControl: true,
+          preferCanvas: true,
+          tap: true,
+          zoomSnap: 0.25
+        });
+
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        geojsonLayer = L.geoJSON(GEOJSON, {
+          style: function (feature) {
+            return getEstilo(feature, SELECTED_ID === feature.properties.id);
+          },
+          onEachFeature: function (feature, layer) {
+            var id = feature.properties.id;
+            layersById[id] = layer;
+
+            layer.on('click', function (event) {
+              L.DomEvent.stopPropagation(event);
+              post('talhaoPress', { id: id });
+            });
+
+            try {
+              var bounds = layer.getBounds();
+              var center = bounds.getCenter();
+              var label = feature.properties.talhao || '';
+              var labelHtml =
+                '<div class="talhao-label-text">' + escapeLabel(label) + '</div>' +
+                '<div class="talhao-label-area">' + Number(feature.properties.area_hectares || 0).toFixed(1) + ' ha</div>';
+              var icon = L.divIcon({
+                className: 'talhao-label',
+                html: labelHtml,
+                iconSize: [140, 38],
+                iconAnchor: [70, 19],
+              });
+              labelsById[id] = L.marker(center, { icon: icon, interactive: false }).addTo(map);
+            } catch (err) {}
+          }
+        }).addTo(map);
+
+        if (geojsonLayer.getLayers().length > 0) {
+          ajustarLimites();
+        } else {
+          map.setView([-15.0, -52.0], 4);
+        }
+
+        if (SELECTED_ID) {
+          selecionarTalhao(SELECTED_ID);
+        }
+
+        map.on('click', function () {
+          post('mapaPress');
+        });
+
+        function handleMensagem(event) {
+          try {
+            var data = JSON.parse(event.data);
+            if (data.tipo === 'selecionarTalhao') {
+              selecionarTalhao(data.id);
+            }
+            if (data.tipo === 'ajustarLimites') {
+              ajustarLimites();
+            }
+          } catch (err) {}
+        }
+
+        document.addEventListener('message', handleMensagem);
+        window.addEventListener('message', handleMensagem);
+        setTimeout(function () {
+          map.invalidateSize(false);
+          ajustarLimites();
+          post('ready');
+        }, 180);
+      } catch (err) {
+        post('erro_mapa', { motivo: String(err && err.message ? err.message : err) });
+      }
+    })();
   </script>
 </body>
 </html>`;
 }
 
-// ─────────────────────────────────────────────────────────────
-// COMPONENTE
-// ─────────────────────────────────────────────────────────────
+function FallbackShapeMap({
+  talhoes,
+  talhaoSelecionadoId,
+  onTalhaoPress,
+}: {
+  talhoes: TalhaoMapa[];
+  talhaoSelecionadoId?: string | null;
+  onTalhaoPress?: (id: string) => void;
+}) {
+  const [layout, setLayout] = useState({ width: 0, height: 0 });
+  const svgTalhoes = useMemo(
+    () => buildSvgTalhoes(talhoes, layout.width, layout.height),
+    [talhoes, layout.width, layout.height]
+  );
+
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setLayout({ width, height });
+  }, []);
+
+  return (
+    <View style={styles.fallbackContainer} onLayout={handleLayout}>
+      {layout.width > 0 && layout.height > 0 && (
+        <Svg width={layout.width} height={layout.height}>
+          <Rect x={0} y={0} width={layout.width} height={layout.height} fill="#111827" />
+          {svgTalhoes.map((talhao) => {
+            const selected = talhaoSelecionadoId === talhao.id;
+            const cor = normalizeHexColor(talhao.cor);
+
+            return (
+              <G key={talhao.id} onPress={() => onTalhaoPress?.(talhao.id)}>
+                <SvgPolygon
+                  points={talhao.svgPoints}
+                  fill={colorWithOpacity(cor, selected ? 0.48 : 0.24)}
+                  stroke={selected ? colors.white : cor}
+                  strokeWidth={selected ? 3.4 : 2.2}
+                  strokeLinejoin="round"
+                />
+                <SvgText
+                  x={talhao.center.x}
+                  y={talhao.center.y}
+                  fill={colors.white}
+                  fontSize={11}
+                  fontWeight="700"
+                  textAnchor="middle"
+                  stroke="rgba(0,0,0,0.9)"
+                  strokeWidth={0.8}
+                >
+                  {shortenTalhaoLabel(talhao.talhao)}
+                </SvgText>
+              </G>
+            );
+          })}
+        </Svg>
+      )}
+    </View>
+  );
+}
+
 const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
   ({ talhoes, talhaoSelecionadoId, onTalhaoPress, onMapaReady }, ref) => {
-    const webViewRef = useRef<any>(null);
+    const webViewRef = useRef<WebView>(null);
+    const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [mapaPronto, setMapaPronto] = useState(false);
+    const [fallbackAtivo, setFallbackAtivo] = useState(false);
 
-    const html = React.useMemo(
-      () => gerarHTMLLeaflet(talhoes, talhaoSelecionadoId),
-      // Re-gera HTML apenas quando a lista de talhões muda (não na seleção, pois usamos postMessage)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [JSON.stringify(talhoes.map(t => t.id))]
+    const html = useMemo(
+      () => gerarHTMLLeaflet(talhoes || [], talhaoSelecionadoId),
+      [talhoes, talhaoSelecionadoId]
     );
 
-    // Expõe métodos para o pai via ref
+    useEffect(() => {
+      setMapaPronto(false);
+      setFallbackAtivo(false);
+
+      if (readyTimeoutRef.current) {
+        clearTimeout(readyTimeoutRef.current);
+      }
+
+      readyTimeoutRef.current = setTimeout(() => {
+        setFallbackAtivo(true);
+      }, LEAFLET_READY_TIMEOUT_MS);
+
+      return () => {
+        if (readyTimeoutRef.current) {
+          clearTimeout(readyTimeoutRef.current);
+          readyTimeoutRef.current = null;
+        }
+      };
+    }, [html]);
+
+    useEffect(() => {
+      if (fallbackAtivo) {
+        onMapaReady?.();
+      }
+    }, [fallbackAtivo, onMapaReady]);
+
     useImperativeHandle(ref, () => ({
       selecionarTalhao(id: string | null) {
         webViewRef.current?.injectJavaScript(
-          `selecionarTalhao(${id ? `'${id}'` : 'null'}); true;`
+          `window.selecionarTalhao && window.selecionarTalhao(${JSON.stringify(id)}); true;`
         );
       },
       ajustarLimites() {
         webViewRef.current?.injectJavaScript(
-          `if (geojsonLayer.getLayers().length > 0) { map.fitBounds(geojsonLayer.getBounds(), { padding: [40, 40] }); } true;`
+          `window.ajustarLimites && window.ajustarLimites(); true;`
         );
       },
     }));
@@ -296,14 +480,26 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       (event: { nativeEvent: { data: string } }) => {
         try {
           const data = JSON.parse(event.nativeEvent.data);
-          if (data.tipo === 'talhaoPress' && onTalhaoPress) {
-            onTalhaoPress(data.id);
-          } else if (data.tipo === 'ready' && onMapaReady) {
-            onMapaReady();
+          if (data.tipo === 'ready') {
+            if (readyTimeoutRef.current) {
+              clearTimeout(readyTimeoutRef.current);
+              readyTimeoutRef.current = null;
+            }
+            setMapaPronto(true);
+            setFallbackAtivo(false);
+            onMapaReady?.();
+            return;
+          }
+          if (data.tipo === 'erro_mapa') {
+            setFallbackAtivo(true);
+            return;
+          }
+          if (data.tipo === 'talhaoPress') {
+            onTalhaoPress?.(data.id);
           }
         } catch (_) {}
       },
-      [onTalhaoPress, onMapaReady]
+      [onMapaReady, onTalhaoPress]
     );
 
     if (!talhoes || talhoes.length === 0) {
@@ -315,31 +511,44 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       );
     }
 
+    if (fallbackAtivo) {
+      return (
+        <FallbackShapeMap
+          talhoes={talhoes}
+          talhaoSelecionadoId={talhaoSelecionadoId}
+          onTalhaoPress={onTalhaoPress}
+        />
+      );
+    }
+
     return (
-      <WebView
-        ref={webViewRef}
-        source={{ html }}
-        style={styles.webview}
-        originWhitelist={['*']}
-        javaScriptEnabled
-        domStorageEnabled
-        startInLoadingState
-        renderLoading={() => (
+      <View style={styles.webviewContainer}>
+        <WebView
+          ref={webViewRef}
+          source={{ html }}
+          style={styles.webview}
+          originWhitelist={['*']}
+          javaScriptEnabled
+          domStorageEnabled
+          onMessage={handleMessage}
+          onError={() => setFallbackAtivo(true)}
+          onHttpError={() => setFallbackAtivo(true)}
+          scrollEnabled={false}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          overScrollMode="never"
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
+          mixedContentMode="always"
+        />
+        {!mapaPronto && (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Carregando mapa satélite...</Text>
+            <Text style={styles.loadingText}>Carregando mapa...</Text>
           </View>
         )}
-        onMessage={handleMessage}
-        scrollEnabled={false}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-        mixedContentMode="always"
-      />
+      </View>
     );
   }
 );
@@ -347,39 +556,40 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
 MapaFazendaView.displayName = 'MapaFazendaView';
 export default MapaFazendaView;
 
-// Importação necessária para o ícone no estado vazio
-import { Ionicons } from '@expo/vector-icons';
-
 const styles = StyleSheet.create({
+  webviewContainer: {
+    flex: 1,
+    backgroundColor: '#111827',
+  },
   webview: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#111827',
   },
   loading: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#111',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing.sm,
   },
   loadingText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.fontBody,
-    marginTop: 8,
+    marginTop: spacing.xs,
   },
   vazio: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing.sm,
   },
   vazioTexto: {
     color: colors.muted,
     fontSize: typography.fontBody,
+  },
+  fallbackContainer: {
+    flex: 1,
+    backgroundColor: '#111827',
   },
 });
