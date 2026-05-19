@@ -5,6 +5,9 @@ Este arquivo define como assistentes de IA, agentes de código e ferramentas com
 
 O objetivo é evitar que materiais históricos, ideias antigas, protótipos ou hipóteses técnicas sejam tratados como estado atual do sistema.
 
+Para agentes de código, o ponto de entrada rápido do repositório é `AGENTS.md`.
+Este arquivo detalha as regras de interpretação, governança e comportamento.
+
 ---
 
 ## Hierarquia de fontes
@@ -63,7 +66,7 @@ Contém guias operacionais, padrões de uso e instruções práticas.
 Contém guias e critérios relacionados a testes.
 
 ### `docs/reviews/`
-Contém análises, auditorias, revisões e verificações.  
+Contém análises, auditorias, revisões e verificações.
 Podem ser úteis para contexto, mas não substituem o estado atual.
 
 ### `docs/archive/`
@@ -116,6 +119,88 @@ Sempre validar se a proposta:
 
 ---
 
+## Protocolo de trabalho para agentes
+
+### 1. Trabalhar por tarefa delimitada
+
+Cada conversa ou sessão de agente deve tratar uma tarefa pequena e verificável sempre que possível.
+
+Antes de executar, delimite:
+
+- objetivo da tarefa
+- arquivos ou áreas provavelmente afetadas
+- documentos ativos que sustentam a mudança
+- pendências de definição que podem limitar a implementação
+- validações necessárias
+
+Essa delimitação funciona como uma spec curta da tarefa. Ela deve deixar claro:
+
+- contexto
+- comportamento esperado
+- critérios de aceite
+- fora de escopo
+- validação final
+
+Se a tarefa crescer demais, quebre em etapas menores antes de continuar.
+
+### 2. Controlar a janela de contexto
+
+Evite carregar histórico, revisões antigas ou documentos longos sem necessidade.
+
+Priorize:
+
+1. documentos ativos em `docs/project/`
+2. código real relacionado à tarefa
+3. documentos técnicos complementares apenas quando forem necessários
+
+Quando a conversa ficar extensa, produza um resumo operacional antes de seguir:
+
+- objetivo
+- decisões tomadas
+- arquivos alterados
+- validações executadas
+- pendências restantes
+
+### 3. Separar planejamento, execução e revisão
+
+Quando houver mais de um agente ou mais de uma etapa de IA:
+
+- use o agente mais forte para planejamento, leitura de domínio e revisão
+- use agentes executores para mudanças bem delimitadas
+- use revisão independente para procurar regressões, inconsistências e testes ausentes
+
+Mesmo quando houver apenas um agente, mantenha essas fases mentalmente separadas:
+
+1. entender e planejar
+2. implementar o menor conjunto necessário
+3. revisar o resultado antes de finalizar
+
+### 4. Transformar falhas em insumo
+
+Quando uma implementação, teste ou smoke falhar:
+
+- registre a falha específica
+- corrija o menor ponto responsável
+- reexecute a validação afetada
+- documente a descoberta se ela revelar regra, pendência ou risco novo
+
+Falhas recorrentes não devem ficar apenas na conversa. Elas devem virar documentação, teste ou pendência conforme o caso.
+
+### 5. Validar antes de encerrar
+
+Use os comandos disponíveis no projeto quando a mudança tocar código:
+
+```powershell
+npm run typecheck
+npm run test:domain-compat
+```
+
+Use `docs/project/smoke.md` quando a mudança tocar fluxo funcional, permissão, rota direta, visitas, caderno, fazenda ou preservação de `fazenda_id`.
+
+Se a validação não for executada, explique o motivo no fechamento da tarefa.
+
+---
+
 ## Comportamento esperado do agente
 
 Antes de propor mudanças relevantes:
@@ -126,6 +211,15 @@ Antes de propor mudanças relevantes:
    - histórico
    - hipótese
 4. só então propor alteração de código ou documentação
+
+Ao executar mudanças já solicitadas pelo usuário, o agente deve aplicar o mesmo raciocínio antes de editar, ainda que não precise transformar tudo em uma resposta longa.
+
+Antes de encerrar, o agente deve informar:
+
+- o que mudou
+- onde mudou
+- quais validações foram executadas
+- se restou alguma pendência ou risco
 
 ---
 

@@ -23,7 +23,7 @@ Hoje o projeto ainda nao tem:
 - download real de mapas
 - notificacoes push reais
 - sincronizacao offline completa
-- suite de testes automatizados integrada ao `package.json`
+- suite de testes automatizados completa cobrindo todos os fluxos de produto
 
 ## Stack Atual
 
@@ -58,6 +58,7 @@ Comandos disponiveis em [package.json](package.json):
 - `npm run ios`
 - `npm run web`
 - `npm run typecheck`
+- `npm run test:domain-compat`
 
 ## Estrutura Atual
 
@@ -75,7 +76,9 @@ devapp/
 
 A documentacao oficial do projeto esta em [docs/](docs/).
 
-O ponto de entrada recomendado e [docs/README.md](docs/README.md), que organiza:
+Para agentes de codigo, o ponto de entrada rapido e [AGENTS.md](AGENTS.md).
+
+Para humanos e leitura completa, o ponto de entrada recomendado e [docs/README.md](docs/README.md), que organiza:
 
 - a hierarquia de leitura
 - o nucleo documental ativo em `docs/project/`

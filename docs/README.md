@@ -8,6 +8,10 @@ Esta pasta concentra a documentacao oficial do projeto. O objetivo e separar com
 
 `docs/project/` e o nucleo documental ativo e prioritario. Em caso de conflito, ele deve prevalecer sobre as demais pastas de `docs/`.
 
+Para agentes de codigo, o ponto de entrada rapido do repositorio e `../AGENTS.md`.
+Ele resume o protocolo operacional e aponta para as regras completas em
+`project/instrucoes-para-ia.md`.
+
 ## Hierarquia de Leitura
 
 Ao interpretar a documentacao, use esta ordem:
@@ -46,14 +50,15 @@ Ao interpretar a documentacao, use esta ordem:
 
 Para humanos e IA/agentes de codigo, a trilha recomendada comeca por:
 
-1. [Estado atual do projeto](project/estado-atual.md)
-2. [Contexto consolidado](project/contexto-consolidado.md)
-3. [Escopo do MVP](project/escopo-mvp.md)
-4. [Regras de negocio](project/regras-de-negocio.md)
-5. [Decisoes consolidadas](project/decisoes-consolidadas.md)
-6. [Pendencias de definicao](project/pendencias-de-definicao.md)
-7. [Plano de reorganizacao](project/plano-reorganizacao.md)
-8. [Backlog futuro de evolucao](project/roadmap-futuro.md)
+1. [AGENTS.md](../AGENTS.md), quando a leitura for para execucao por agente
+2. [Estado atual do projeto](project/estado-atual.md)
+3. [Contexto consolidado](project/contexto-consolidado.md)
+4. [Escopo do MVP](project/escopo-mvp.md)
+5. [Regras de negocio](project/regras-de-negocio.md)
+6. [Decisoes consolidadas](project/decisoes-consolidadas.md)
+7. [Pendencias de definicao](project/pendencias-de-definicao.md)
+8. [Plano de reorganizacao](project/plano-reorganizacao.md)
+9. [Backlog futuro de evolucao](project/roadmap-futuro.md)
 
 ## Leitura Complementar
 
@@ -69,4 +74,4 @@ Depois da trilha principal:
 - Documentacao viva deve ficar em `project/`, `architecture/`, `guides/` ou `testing/`.
 - Revisoes pontuais vao para `reviews/`.
 - Materiais obsoletos ou superseded vao para `archive/`.
-- Evite criar novos `.md` na raiz do repositorio.
+- Evite criar novos `.md` na raiz do repositorio, exceto pontos de entrada operacionais como `AGENTS.md`.
