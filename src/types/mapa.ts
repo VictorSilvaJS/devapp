@@ -44,6 +44,7 @@ export interface MapaTalhao {
   area_hectares: number;
   perimetro_km?: number;
   poligono: PontoPoligono[];           // formato simplificado (~220 pts)
+  poligonos?: PontoPoligono[][];       // partes multiplas de um mesmo talhao, quando o shape vier fragmentado
   poligono_geojson?: CoordenadasGeoJSON; // GeoJSON opcional para compatibilidade
   cor?: string;
   cultura_atual?: string;

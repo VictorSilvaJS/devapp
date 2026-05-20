@@ -179,3 +179,4 @@ Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingest
 - A tela de mapas deve tratar a demarcacao como base do panorama, e nao como uma aba funcional separada.
 - Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da fazenda.
 - O app deve consumir um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, em vez de carregar no celular o pacote bruto de arquivos `.shp`, `.shx`, `.dbf`, `.prj`, `.kml`, `.kmz` ou metadados auxiliares.
+- Para acelerar o MVP, a validacao local pode usar um conversor de desenvolvimento que gera o arquivo final a partir dos originais, mas a conversao produtiva futura deve acontecer fora do app, em backend ou processo operacional controlado.

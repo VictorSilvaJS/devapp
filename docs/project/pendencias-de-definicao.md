@@ -125,6 +125,8 @@ O produto ja depende de mapas e arquivos no contexto da fazenda, mas ainda falta
 
 Decisao ja assumida para o MVP: o app deve consumir uma demarcacao final normalizada, preferencialmente GeoJSON ou JSON equivalente, e nao carregar o pacote bruto de origem no dispositivo. Ainda falta definir o pipeline de producao para conversao, validacao, armazenamento, permissao e publicacao desses arquivos finais.
 
+Estado atual do teste local: existe uma amostragem da Fazenda Sela de Prata I convertida a partir de shapefile para validar a exibicao dos talhoes no mock. Esse conversor local nao fecha a estrategia produtiva; ele apenas prova o formato de entrada esperado pelo app.
+
 ## Regra de Governanca
 
 Uma pendencia deve sair deste documento quando ocorrer uma destas situacoes:

@@ -176,6 +176,7 @@ export interface LimiteAreaCanonico {
   elementos?: Record<string, number>;
   cultura_atual?: string;
   poligono: CoordenadaPoligono[];
+  poligonos?: CoordenadaPoligono[][];
   cor?: string;
   data_upload?: string;
   safra?: string;

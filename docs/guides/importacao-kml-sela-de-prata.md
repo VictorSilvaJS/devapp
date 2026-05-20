@@ -5,6 +5,8 @@
 
 > Guia especifico de caso. Este documento registra uma estrategia aplicada a esta importacao e a uma trilha baseada em WebView/Leaflet, mas nao define sozinho a trilha arquitetural oficial atual do projeto.
 
+> Atualizacao de 2026-05-20: para a validacao atual de mapas/limites no mock, a fonte principal passou a ser o shapefile real da Fazenda Sela de Prata I convertido previamente para GeoJSON/JSON. O KML permanece como registro historico e prova de conceito, mas nao deve ser tratado como pipeline oficial.
+
 ---
 
 ## Visão Geral

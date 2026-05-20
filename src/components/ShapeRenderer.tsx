@@ -6,6 +6,14 @@ import { colors, spacing, typography, shadows } from '../theme';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SVG_PADDING = 30;
 
+const getTalhaoPoligonos = (talhao) => {
+  const parts = Array.isArray(talhao.poligonos) && talhao.poligonos.length > 0
+    ? talhao.poligonos
+    : [talhao.poligono];
+
+  return parts.filter((poligono) => Array.isArray(poligono) && poligono.length >= 3);
+};
+
 /**
  * Converte coordenadas geográficas (lat/lng) para coordenadas de tela SVG.
  * Normaliza todos os polígonos para caber dentro do viewBox.
@@ -18,11 +26,13 @@ function geoToSvg(talhoes, width, height) {
   let minLng = Infinity, maxLng = -Infinity;
 
   talhoes.forEach(t => {
-    (t.poligono || []).forEach(p => {
-      if (p.lat < minLat) minLat = p.lat;
-      if (p.lat > maxLat) maxLat = p.lat;
-      if (p.lng < minLng) minLng = p.lng;
-      if (p.lng > maxLng) maxLng = p.lng;
+    getTalhaoPoligonos(t).forEach(poligono => {
+      poligono.forEach(p => {
+        if (p.lat < minLat) minLat = p.lat;
+        if (p.lat > maxLat) maxLat = p.lat;
+        if (p.lng < minLng) minLng = p.lng;
+        if (p.lng > maxLng) maxLng = p.lng;
+      });
     });
   });
 
@@ -41,19 +51,22 @@ function geoToSvg(talhoes, width, height) {
   const offsetY = SVG_PADDING + (usableH - latRange * scale) / 2;
 
   return talhoes.map(t => {
-    const points = (t.poligono || []).map(p => {
-      const x = offsetX + (p.lng - minLng) * scale;
-      const y = offsetY + (maxLat - p.lat) * scale; // inverter Y
-      return { x, y };
-    });
+    const polygons = getTalhaoPoligonos(t).map(poligono =>
+      poligono.map(p => {
+        const x = offsetX + (p.lng - minLng) * scale;
+        const y = offsetY + (maxLat - p.lat) * scale; // inverter Y
+        return { x, y };
+      })
+    );
+    const allPoints = polygons.flat();
 
     // Centróide para label
-    const cx = points.reduce((s, p) => s + p.x, 0) / (points.length || 1);
-    const cy = points.reduce((s, p) => s + p.y, 0) / (points.length || 1);
+    const cx = allPoints.reduce((s, p) => s + p.x, 0) / (allPoints.length || 1);
+    const cy = allPoints.reduce((s, p) => s + p.y, 0) / (allPoints.length || 1);
 
     return {
       ...t,
-      svgPoints: points.map(p => `${p.x},${p.y}`).join(' '),
+      svgPolygons: polygons.map(points => points.map(p => `${p.x},${p.y}`).join(' ')),
       center: { x: cx, y: cy },
     };
   });
@@ -102,13 +115,16 @@ export default function ShapeRenderer({
             const isSelected = selectedId === t.id;
             return (
               <G key={t.id} onPress={() => onTalhaoPress && onTalhaoPress(t)}>
-                <Polygon
-                  points={t.svgPoints}
-                  fill={isSelected ? t.cor + 'AA' : t.cor + '55'}
-                  stroke={isSelected ? t.cor : t.cor + 'CC'}
-                  strokeWidth={isSelected ? 3 : 2}
-                  strokeLinejoin="round"
-                />
+                {t.svgPolygons.map((svgPoints, partIndex) => (
+                  <Polygon
+                    key={`${t.id}-${partIndex}`}
+                    points={svgPoints}
+                    fill={isSelected ? t.cor + 'AA' : t.cor + '55'}
+                    stroke={isSelected ? t.cor : t.cor + 'CC'}
+                    strokeWidth={isSelected ? 3 : 2}
+                    strokeLinejoin="round"
+                  />
+                ))}
                 {showLabels && (
                   <>
                     <Circle

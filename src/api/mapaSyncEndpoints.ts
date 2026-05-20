@@ -2,14 +2,17 @@
  * API Endpoints para Sincronização de Mapas Offline-First
  * 
  * Estes endpoints simulam o comportamento de um servidor real que:
- * 1. Converte KML → GeoJSON no servidor
+ * 1. Entrega talhões já convertidos para formato consumível pelo app
  * 2. Fornece dados de forma paginada/timestamp-based
  * 3. Entrega tiles de satélite em cache
  * 4. Rastreia última atualização de cada mapa
  */
 
 import { MapaTalhao, MapaFazendaResponse, RespostaSincronizacao, RequisicaoSincronizacao, RequisicaoAPISincronizar, RequisicaoAPITiles, RespostaAPITiles } from '../types/mapa';
-import { talhoesSelaDeprata1, SELA_DEPRATA_1_PRODUTOR_ID } from '../assets/kml/selaDeprata1';
+import {
+  talhoesSelaDePrata1Shape,
+  SELA_DE_PRATA_1_SHAPE_FAZENDA_ID,
+} from '../assets/geojson/selaDePrata1Talhoes';
 import {
   buildScopedMapKey,
   resolveMapaOfflineFazendaId,
@@ -21,6 +24,9 @@ import {
 // ─────────────────────────────────────────────────────────────────
 // SIMULAÇÃO DE BANCO DE DADOS DO SERVIDOR
 // ─────────────────────────────────────────────────────────────────
+
+const talhoesSelaDeprata1 = talhoesSelaDePrata1Shape;
+const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
 
 /**
  * Registra o timestamp de última modificação de cada mapa

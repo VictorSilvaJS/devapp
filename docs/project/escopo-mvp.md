@@ -38,6 +38,8 @@ Nao implica, por si so, que todos os fluxos de upload, download ou processamento
 
 Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 
+No mock, esse corte pode ser validado com uma amostragem controlada de uma fazenda e um ano. A demarcacao real da Fazenda Sela de Prata I foi convertida a partir de shapefile para um GeoJSON/JSON final, sem incluir analises de solo, NDVI, prescricoes ou dados agronomicos que nao estejam nesse arquivo vetorial.
+
 ### 4. Visitas tecnicas
 
 O MVP deve incluir o registro e a consulta de visitas tecnicas ligadas ao contexto do produtor e da fazenda.

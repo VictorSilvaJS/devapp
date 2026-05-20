@@ -33,7 +33,12 @@ import {
   persistMockProdutor,
   readMockProdutor,
 } from './produtorCompat';
-import { talhoesSelaDeprata1, SELA_DEPRATA_1_PRODUTOR_ID } from '../assets/kml/selaDeprata1';
+import {
+  talhoesSelaDePrata1Shape,
+  SELA_DE_PRATA_1_SHAPE_FAZENDA_ID,
+} from '../assets/geojson/selaDePrata1Talhoes';
+
+const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
 
 // Usuários do sistema
 // NOTA: "produtor" = "cliente" = "proprietário" - mesma pessoa (dono da fazenda)
@@ -1511,37 +1516,27 @@ const limitesArea: any[] = [
     disponivel_offline: true,
     observacoes: 'Evolução pós-correção 2024. Solo melhorando.'
   },
-  // ─── Fazenda Sela de Prata I — talhões reais do KML ─────────────────────────
-  // 16 talhões com contornos GPS de alta resolução (simplificados para ~220 pts)
-  ...talhoesSelaDeprata1.map((t, i) => ({
+  // ─── Fazenda Sela de Prata I — talhões reais do shapefile ───────────────────
+  // Demarcação real vinda do SHP. Não contém análise de solo.
+  ...talhoesSelaDePrata1Shape.map((t) => ({
     id: t.id,
-    nome: `LT 2025 - ${t.talhao}`,
-    ano: 2025,
+    nome: t.nome || `LT 2025 - ${t.talhao}`,
+    ano: t.ano,
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
     talhao: t.talhao,
     area_hectares: t.area_hectares,
-    perimetro_km: parseFloat((Math.sqrt(t.area_hectares) * 0.4).toFixed(2)),
-    textura: 'Argilosa',
-    tipo_solo: 'Latossolo Vermelho-Amarelo',
-    elementos: {
-      ph: 5.5 + (i % 5) * 0.2,
-      fosforo: 8 + i,
-      potassio: 0.25 + i * 0.02,
-      calcio: 3.5,
-      magnesio: 1.2,
-      materia_organica: 2.2,
-      ctc: 10.5,
-      saturacao_bases: 55,
-      aluminio: 0.4,
-      enxofre: 6.0,
-    },
-    cultura_atual: t.cultura_atual || 'Soja',
+    perimetro_km: t.perimetro_km,
+    textura: t.textura,
+    tipo_solo: t.tipo_solo,
+    cultura_atual: t.cultura_atual,
     poligono: t.poligono,
+    poligonos: t.poligonos,
     cor: t.cor,
-    data_upload: new Date('2025-05-01').toISOString(),
-    safra: t.safra || '2025/2026',
+    data_upload: t.data_upload || new Date('2025-05-01').toISOString(),
+    safra: t.safra,
     disponivel_offline: true,
-    observacoes: `Contorno GPS importado de KML — ${t.talhao}`,
+    observacoes: t.observacoes || `Contorno importado de shapefile real — ${t.talhao}`,
   })),
 ];
 

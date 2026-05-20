@@ -30,6 +30,7 @@ export interface TalhaoMapa {
   area_hectares: number;
   cor?: string;
   poligono: PontoPoligono[];
+  poligonos?: PontoPoligono[][];
   cultura_atual?: string;
   textura?: string;
   tipo_solo?: string;
@@ -50,7 +51,7 @@ interface Props {
 }
 
 type SvgTalhao = TalhaoMapa & {
-  svgPoints: string;
+  svgPolygons: string[];
   center: { x: number; y: number };
 };
 
@@ -77,8 +78,16 @@ const shortenTalhaoLabel = (value: string): string =>
     .trim()
     .slice(0, 12);
 
+const getTalhaoPoligonos = (talhao: TalhaoMapa): PontoPoligono[][] => {
+  const parts = Array.isArray(talhao.poligonos) && talhao.poligonos.length > 0
+    ? talhao.poligonos
+    : [talhao.poligono];
+
+  return parts.filter((poligono) => Array.isArray(poligono) && poligono.length >= 3);
+};
+
 function buildSvgTalhoes(talhoes: TalhaoMapa[], width: number, height: number): SvgTalhao[] {
-  const validTalhoes = talhoes.filter((talhao) => talhao.poligono?.length >= 3);
+  const validTalhoes = talhoes.filter((talhao) => getTalhaoPoligonos(talhao).length > 0);
   if (validTalhoes.length === 0 || width <= 0 || height <= 0) {
     return [];
   }
@@ -89,11 +98,13 @@ function buildSvgTalhoes(talhoes: TalhaoMapa[], width: number, height: number): 
   let maxLng = -Infinity;
 
   validTalhoes.forEach((talhao) => {
-    talhao.poligono.forEach((ponto) => {
-      minLat = Math.min(minLat, ponto.lat);
-      maxLat = Math.max(maxLat, ponto.lat);
-      minLng = Math.min(minLng, ponto.lng);
-      maxLng = Math.max(maxLng, ponto.lng);
+    getTalhaoPoligonos(talhao).forEach((poligono) => {
+      poligono.forEach((ponto) => {
+        minLat = Math.min(minLat, ponto.lat);
+        maxLat = Math.max(maxLat, ponto.lat);
+        minLng = Math.min(minLng, ponto.lng);
+        maxLng = Math.max(maxLng, ponto.lng);
+      });
     });
   });
 
@@ -106,22 +117,25 @@ function buildSvgTalhoes(talhoes: TalhaoMapa[], width: number, height: number): 
   const offsetY = SVG_PADDING + (usableH - latRange * scale) / 2;
 
   return validTalhoes.map((talhao) => {
-    const points = talhao.poligono.map((ponto) => {
-      const x = offsetX + (ponto.lng - minLng) * scale;
-      const y = offsetY + (maxLat - ponto.lat) * scale;
-      return { x, y };
-    });
-    const center = points.reduce(
+    const polygons = getTalhaoPoligonos(talhao).map((poligono) =>
+      poligono.map((ponto) => {
+        const x = offsetX + (ponto.lng - minLng) * scale;
+        const y = offsetY + (maxLat - ponto.lat) * scale;
+        return { x, y };
+      })
+    );
+    const allPoints = polygons.flat();
+    const center = allPoints.reduce(
       (acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }),
       { x: 0, y: 0 }
     );
 
     return {
       ...talhao,
-      svgPoints: points.map((point) => `${point.x},${point.y}`).join(' '),
+      svgPolygons: polygons.map((points) => points.map((point) => `${point.x},${point.y}`).join(' ')),
       center: {
-        x: center.x / points.length,
-        y: center.y / points.length,
+        x: center.x / allPoints.length,
+        y: center.y / allPoints.length,
       },
     };
   });
@@ -129,16 +143,25 @@ function buildSvgTalhoes(talhoes: TalhaoMapa[], width: number, height: number): 
 
 function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | null): string {
   const features = talhoes
-    .filter((talhao) => talhao.poligono?.length >= 3)
+    .filter((talhao) => getTalhaoPoligonos(talhao).length > 0)
     .map((talhao) => ({
       type: 'Feature',
-      geometry: {
-        type: 'Polygon',
-        coordinates: [[
-          ...talhao.poligono.map((ponto) => [ponto.lng, ponto.lat]),
-          [talhao.poligono[0].lng, talhao.poligono[0].lat],
-        ]],
-      },
+      geometry: (() => {
+        const poligonos = getTalhaoPoligonos(talhao);
+        const rings = poligonos.map((poligono) => {
+          const coordinates = poligono.map((ponto) => [ponto.lng, ponto.lat]);
+          const first = poligono[0];
+          const last = poligono[poligono.length - 1];
+          if (first.lat !== last.lat || first.lng !== last.lng) {
+            coordinates.push([first.lng, first.lat]);
+          }
+          return coordinates;
+        });
+
+        return poligonos.length > 1
+          ? { type: 'MultiPolygon', coordinates: rings.map((ring) => [ring]) }
+          : { type: 'Polygon', coordinates: [rings[0]] };
+      })(),
       properties: {
         id: talhao.id,
         talhao: talhao.talhao,
@@ -397,13 +420,16 @@ function FallbackShapeMap({
 
             return (
               <G key={talhao.id} onPress={() => onTalhaoPress?.(talhao.id)}>
-                <SvgPolygon
-                  points={talhao.svgPoints}
-                  fill={colorWithOpacity(cor, selected ? 0.48 : 0.24)}
-                  stroke={selected ? colors.white : cor}
-                  strokeWidth={selected ? 3.4 : 2.2}
-                  strokeLinejoin="round"
-                />
+                {talhao.svgPolygons.map((svgPoints, index) => (
+                  <SvgPolygon
+                    key={`${talhao.id}-${index}`}
+                    points={svgPoints}
+                    fill={colorWithOpacity(cor, selected ? 0.48 : 0.24)}
+                    stroke={selected ? colors.white : cor}
+                    strokeWidth={selected ? 3.4 : 2.2}
+                    strokeLinejoin="round"
+                  />
+                ))}
                 <SvgText
                   x={talhao.center.x}
                   y={talhao.center.y}
