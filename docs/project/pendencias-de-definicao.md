@@ -50,8 +50,9 @@ Mapas e arquivos sao parte central do produto, mas a classificacao final ainda p
 
 - categorias base
 - tratamento de panorama
-- tratamento de limite ou shape
 - recorte temporal por safra, ano ou periodo
+
+O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao dentro do panorama da fazenda, nao uma experiencia separada para o usuario. O que permanece pendente e a taxonomia final das categorias de materiais tecnicos e a forma de evoluir panoramas alem da demarcacao basica.
 
 ### 5. Experiencia detalhada do produtor
 
@@ -121,6 +122,8 @@ O produto ja depende de mapas e arquivos no contexto da fazenda, mas ainda falta
 - quais tipos de material entram no fluxo principal
 - qual o nivel minimo de tratamento desses materiais no MVP
 - como separar consulta simples de manutencao operacional do acervo
+
+Decisao ja assumida para o MVP: o app deve consumir uma demarcacao final normalizada, preferencialmente GeoJSON ou JSON equivalente, e nao carregar o pacote bruto de origem no dispositivo. Ainda falta definir o pipeline de producao para conversao, validacao, armazenamento, permissao e publicacao desses arquivos finais.
 
 ## Regra de Governanca
 

@@ -46,6 +46,7 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 
 ### Camada experimental de mapas/offline
 
+- `src/screens/MapasScreen.tsx` apresenta uma experiencia unificada de panorama da fazenda; `LimiteArea` alimenta a demarcacao e nao aparece mais como aba funcional separada
 - `src/components/MapaFazendaView.tsx` representa a trilha visual atual do MVP com WebView, Leaflet e tiles OpenStreetMap
 - `src/screens/FazendaMapaScreen.tsx` usa `MapaFazendaView.tsx` para exibir talhoes e limites no contexto da fazenda
 - `src/components/MapaFazendaNativoView.tsx` permanece como experimento historico com `react-native-maps`, mas nao e a tela ativa no fluxo atual
@@ -61,7 +62,7 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
 - frente funcional de `Produtor` / `Fazenda` concluida no nivel necessario para o MVP atual
 - frente funcional de visitas tecnicas por fazenda e caderno de campo por fazenda validada no nivel necessario para o MVP atual
-- visualizacao de mapas e detalhe de fazenda
+- visualizacao de panorama/mapas e detalhe de fazenda
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
@@ -144,6 +145,7 @@ Documento de fechamento: `docs/project/fechamento-visitas-caderno-fazenda.md`.
 - A frente `Produtor` / `Fazenda` ja possui permissoes defensivas e integridade de exclusao; outros fluxos ainda podem exigir a mesma revisao pontual
 - A camada offline-first ja esta alinhada semanticamente, mas ainda nao esta conectada a um backend real
 - A visualizacao atual de mapas usa tiles online OpenStreetMap no MVP; cache/offline de tiles e estrategia de provedor ainda precisam de decisao antes de producao
+- A ingestao ideal de demarcacoes para o app e um GeoJSON/JSON final ja normalizado fora do celular; o importador KML atual e prova de conceito local, nao pipeline definitivo
 - `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
 
 ## Complementares Oficiais

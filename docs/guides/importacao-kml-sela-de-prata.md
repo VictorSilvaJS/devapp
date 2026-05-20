@@ -296,7 +296,8 @@ FazendaMapa: {
 
 ### 8. `src/screens/MapasScreen.tsx`
 
-Adicionado o botão **"Ver no Mapa Satélite"** na aba "Limite", visível quando há talhões carregados:
+Historicamente, o botão **"Ver no Mapa Satélite"** foi adicionado na aba "Limite".
+No estado atual do MVP, `LimiteArea` e a demarcacao aparecem dentro da experiencia unica de **Panorama da Fazenda**, e o botao visivel ao usuario e **"Ver no Mapa"**:
 
 ```tsx
 <TouchableOpacity
@@ -308,8 +309,8 @@ Adicionado o botão **"Ver no Mapa Satélite"** na aba "Limite", visível quando
   }
 >
   <Ionicons name="earth" size={22} color={colors.white} />
-  <Text>Ver no Mapa Satélite</Text>
-  <Text>Visualize os talhões sobre imagem aérea</Text>
+  <Text>Ver no Mapa</Text>
+  <Text>Abrir panorama da fazenda</Text>
   <Ionicons name="chevron-forward" size={20} />
 </TouchableOpacity>
 ```
@@ -329,15 +330,15 @@ Tela Produtores
       │
       ├─ aba "Mapas da Lavoura" → MapasScreen (produtorId: 'p_sela1')
       │         │
-      │         ▼ aba "Limite"
-      │    [Ver no Mapa Satélite] ──────────────────────────────┐
+      │         ▼ Panorama da Fazenda
+      │    [Ver no Mapa] ───────────────────────────────────────┐
       │                                                         │
       └─────────────────────────────────────────────────────────┘
                                         │
                                         ▼
                              FazendaMapaScreen
                           ┌──────────────────────┐
-                          │ Mapa Leaflet Satélite │
+                          │ Mapa Leaflet/OSM      │
                           │ + 16 polígonos GPS    │
                           │ + painel de talhões   │
                           │ + drawer de detalhes  │

@@ -50,11 +50,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ──────────────────────────────────────────────
 // CONSTANTES
 // ──────────────────────────────────────────────
-const ABAS = [
-  { id: 'mapas', label: 'Mapas', icon: 'map-outline' },
-  { id: 'limite', label: 'Limite', icon: 'git-network-outline' },
-];
-
 const CATEGORIAS = [
   { id: 'todos', nome: 'Todos', icon: 'grid-outline' },
   { id: 'fertilidade', nome: 'Fertilidade', icon: 'leaf-outline' },
@@ -115,7 +110,6 @@ export default function MapasScreen({ route, navigation }) {
   const fazendaId = resolveRouteFazendaId(route?.params);
 
   // Estado geral
-  const [abaAtiva, setAbaAtiva] = useState('mapas');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
@@ -125,7 +119,7 @@ export default function MapasScreen({ route, navigation }) {
     fazendasPermitidas: [],
   });
 
-  // Estado aba MAPAS
+  // Estado de materiais técnicos
   const [mapas, setMapas] = useState([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
@@ -145,13 +139,12 @@ export default function MapasScreen({ route, navigation }) {
   const [uploadTamanho, setUploadTamanho] = useState('');
   const [associandoMaterial, setAssociandoMaterial] = useState(false);
 
-  // Estado aba LIMITE
+  // Estado técnico de demarcação/panorama
   const [limites, setLimites] = useState([]);
   const [anosDisponiveis, setAnosDisponiveis] = useState([]);
   const [anoFiltroLimite, setAnoFiltroLimite] = useState(null);
   const [selectedTalhao, setSelectedTalhao] = useState(null);
   const [talhaoDetailVisible, setTalhaoDetailVisible] = useState(false);
-  const [buscaLimite, setBuscaLimite] = useState('');
   const [talhaoFiltroLimite, setTalhaoFiltroLimite] = useState(FILTRO_TODOS);
 
   // ──────────────────────────────────────────────
@@ -290,6 +283,10 @@ export default function MapasScreen({ route, navigation }) {
     () => buildOptionsOrdenadas(limitesNoContexto.map((limite: any) => limite?.talhao || limite?.nome || '')),
     [limitesNoContexto]
   );
+  const talhoesPanorama = useMemo(
+    () => buildOptionsOrdenadas([...talhoesLimite, ...talhoesMapas]),
+    [talhoesLimite, talhoesMapas]
+  );
 
   useEffect(() => {
     if (safraFiltroMapas !== FILTRO_TODOS && !safrasMapas.includes(safraFiltroMapas)) {
@@ -298,19 +295,19 @@ export default function MapasScreen({ route, navigation }) {
   }, [safrasMapas, safraFiltroMapas]);
 
   useEffect(() => {
-    if (talhaoFiltroMapas !== FILTRO_TODOS && !talhoesMapas.includes(talhaoFiltroMapas)) {
+    if (talhaoFiltroMapas !== FILTRO_TODOS && !talhoesPanorama.includes(talhaoFiltroMapas)) {
       setTalhaoFiltroMapas(FILTRO_TODOS);
     }
-  }, [talhoesMapas, talhaoFiltroMapas]);
+  }, [talhoesPanorama, talhaoFiltroMapas]);
 
   useEffect(() => {
-    if (talhaoFiltroLimite !== FILTRO_TODOS && !talhoesLimite.includes(talhaoFiltroLimite)) {
+    if (talhaoFiltroLimite !== FILTRO_TODOS && !talhoesPanorama.includes(talhaoFiltroLimite)) {
       setTalhaoFiltroLimite(FILTRO_TODOS);
     }
-  }, [talhoesLimite, talhaoFiltroLimite]);
+  }, [talhoesPanorama, talhaoFiltroLimite]);
 
   // ──────────────────────────────────────────────
-  // FILTROS DA ABA MAPAS
+  // FILTROS DE MATERIAIS
   // ──────────────────────────────────────────────
   const mapasFiltrados = useMemo(() => {
     const termoBusca = normalizarBusca(busca);
@@ -379,10 +376,10 @@ export default function MapasScreen({ route, navigation }) {
   );
 
   // ──────────────────────────────────────────────
-  // FILTROS DA ABA LIMITE
+  // FILTROS DA DEMARCAÇÃO DO PANORAMA
   // ──────────────────────────────────────────────
   const limitesFiltrados = useMemo(() => {
-    const termoBusca = normalizarBusca(buscaLimite);
+    const termoBusca = normalizarBusca(busca);
 
     return limitesNoContexto.filter(l => {
       const talhaoLimite = l.talhao || l.nome || '';
@@ -404,7 +401,7 @@ export default function MapasScreen({ route, navigation }) {
   }, [
     limitesNoContexto,
     anoFiltroLimite,
-    buscaLimite,
+    busca,
     talhaoFiltroLimite,
     fazendaInfoPorId,
   ]);
@@ -460,11 +457,6 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const abrirAssociacaoMaterial = (mapa = null) => {
-    if (abaAtiva !== 'mapas') {
-      toast.showInfo('Associação de shape ainda não está disponível nesta etapa.');
-      return;
-    }
-
     const mapaBase = mapa || mapasFiltrados[0] || mapasAssociacaoOptions[0];
     if (!mapaBase) {
       toast.showInfo('Não há mapas no contexto atual para associar material.');
@@ -507,26 +499,24 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const limparFiltrosMapas = () => {
+  const handleTalhaoFiltroChange = (talhao) => {
+    setTalhaoFiltroMapas(talhao);
+    setTalhaoFiltroLimite(talhao);
+  };
+
+  const limparFiltrosPanorama = () => {
     setCategoriaAtiva(FILTRO_TODOS);
     setSafraFiltroMapas(FILTRO_TODOS);
     setTalhaoFiltroMapas(FILTRO_TODOS);
+    setTalhaoFiltroLimite(FILTRO_TODOS);
+    setAnoFiltroLimite(null);
     setBusca('');
     if (!consultaPorFazenda) {
       setFazendaFiltroOperacional(FILTRO_TODOS);
     }
   };
 
-  const limparFiltrosLimite = () => {
-    setAnoFiltroLimite(null);
-    setTalhaoFiltroLimite(FILTRO_TODOS);
-    setBuscaLimite('');
-    if (!consultaPorFazenda) {
-      setFazendaFiltroOperacional(FILTRO_TODOS);
-    }
-  };
-
-  const tituloTela = consultaPorFazenda ? 'Mapas da Fazenda' : 'Mapas & Limites';
+  const tituloTela = consultaPorFazenda ? 'Panorama da Fazenda' : 'Panorama de Mapas';
   const contextoLabel = consultaPorFazenda
     ? 'Consulta por fazenda'
     : fazendaFiltroInfo
@@ -544,15 +534,24 @@ export default function MapasScreen({ route, navigation }) {
       ].filter(Boolean).join(' • ')
     : `${contextoConsulta.fazendasPermitidas.length} fazenda${contextoConsulta.fazendasPermitidas.length !== 1 ? 's' : ''} no escopo atual`;
   const mapaSateliteFazendaInfo = fazendaContextoInfo || fazendaFiltroInfo;
-  const temFiltroMapaAtivo = categoriaAtiva !== FILTRO_TODOS
+  const temFiltroPanoramaAtivo = categoriaAtiva !== FILTRO_TODOS
+    || safraFiltroMapas !== FILTRO_TODOS
+    || talhaoFiltroMapas !== FILTRO_TODOS
+    || talhaoFiltroLimite !== FILTRO_TODOS
+    || !!anoFiltroLimite
+    || busca.trim().length > 0
+    || !!fazendaFiltroInfo;
+  const temFiltroMaterialAtivo = categoriaAtiva !== FILTRO_TODOS
     || safraFiltroMapas !== FILTRO_TODOS
     || talhaoFiltroMapas !== FILTRO_TODOS
     || busca.trim().length > 0
     || !!fazendaFiltroInfo;
-  const temFiltroLimiteAtivo = !!anoFiltroLimite
-    || talhaoFiltroLimite !== FILTRO_TODOS
-    || buscaLimite.trim().length > 0
-    || !!fazendaFiltroInfo;
+  const talhaoFiltroAtual = talhaoFiltroLimite !== FILTRO_TODOS
+    ? talhaoFiltroLimite
+    : talhaoFiltroMapas;
+  const areaLimitesFiltrados = limitesFiltrados
+    .reduce((s, l) => s + (l.area_hectares || 0), 0)
+    .toFixed(1);
 
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
@@ -563,7 +562,7 @@ export default function MapasScreen({ route, navigation }) {
     : {
         icon: 'alert-circle-outline',
         title: 'Fazenda não encontrada',
-        text: 'Não foi possível localizar a fazenda informada para consultar mapas e limites.',
+        text: 'Não foi possível localizar a fazenda informada para consultar o panorama.',
       };
 
   // ──────────────────────────────────────────────
@@ -694,7 +693,7 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   // ──────────────────────────────────────────────
-  // RENDER: Card de Talhão (Lista Limite)
+  // RENDER: Card de Talhão do Panorama
   // ──────────────────────────────────────────────
   const renderTalhaoCard = (talhao) => {
     const fazendaTalhaoInfo = !consultaPorFazenda
@@ -757,17 +756,27 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   // ──────────────────────────────────────────────
-  // RENDER: ABA MAPAS
+  // RENDER: PANORAMA UNIFICADO
   // ──────────────────────────────────────────────
-  const renderAbaMapas = () => (
-    <>
-      {/* Barra de Busca */}
+  const renderPanorama = () => (
+    <ScrollView
+      style={styles.scrollContent}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
+      }
+    >
+      {/* Busca */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por mapa, safra, talhão, fazenda..."
+            placeholder="Buscar mapa, talhão, safra, fazenda..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -812,49 +821,52 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       )}
 
-      {/* Filtro por Safra */}
-      <View style={styles.anoFilterContainer}>
-        <Text style={styles.anoFilterLabel}>
-          <Ionicons name="calendar-outline" size={14} color={colors.text} /> Safra:
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-          <TouchableOpacity
-            style={[styles.anoChip, safraFiltroMapas === FILTRO_TODOS && styles.anoChipActive]}
-            onPress={() => setSafraFiltroMapas(FILTRO_TODOS)}
-          >
-            <Text style={[styles.anoChipText, safraFiltroMapas === FILTRO_TODOS && styles.anoChipTextActive]}>Todas</Text>
-          </TouchableOpacity>
-          {safrasMapas.map(safra => (
+      {anosDisponiveis.length > 0 && (
+        <View style={styles.anoFilterContainer}>
+          <Text style={styles.anoFilterLabel}>
+            <Ionicons name="calendar-outline" size={14} color={colors.text} /> Demarcação:
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
             <TouchableOpacity
-              key={safra}
-              style={[styles.anoChip, safraFiltroMapas === safra && styles.anoChipActive]}
-              onPress={() => setSafraFiltroMapas(safra)}
+              style={[styles.anoChip, !anoFiltroLimite && styles.anoChipActive]}
+              onPress={() => setAnoFiltroLimite(null)}
             >
-              <Text style={[styles.anoChipText, safraFiltroMapas === safra && styles.anoChipTextActive]}>{safra}</Text>
+              <Text style={[styles.anoChipText, !anoFiltroLimite && styles.anoChipTextActive]}>Todas</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+            {anosDisponiveis.map(ano => (
+              <TouchableOpacity
+                key={ano}
+                style={[styles.anoChip, anoFiltroLimite === ano && styles.anoChipActive]}
+                onPress={() => setAnoFiltroLimite(ano)}
+              >
+                <Text style={[styles.anoChipText, anoFiltroLimite === ano && styles.anoChipTextActive]}>
+                  LT {ano}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
-      {talhoesMapas.length > 0 && (
+      {talhoesPanorama.length > 0 && (
         <View style={styles.anoFilterContainer}>
           <Text style={styles.anoFilterLabel}>
             <Ionicons name="location-outline" size={14} color={colors.text} /> Talhão:
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
             <TouchableOpacity
-              style={[styles.anoChip, talhaoFiltroMapas === FILTRO_TODOS && styles.anoChipActive]}
-              onPress={() => setTalhaoFiltroMapas(FILTRO_TODOS)}
+              style={[styles.anoChip, talhaoFiltroAtual === FILTRO_TODOS && styles.anoChipActive]}
+              onPress={() => handleTalhaoFiltroChange(FILTRO_TODOS)}
             >
-              <Text style={[styles.anoChipText, talhaoFiltroMapas === FILTRO_TODOS && styles.anoChipTextActive]}>Todos</Text>
+              <Text style={[styles.anoChipText, talhaoFiltroAtual === FILTRO_TODOS && styles.anoChipTextActive]}>Todos</Text>
             </TouchableOpacity>
-            {talhoesMapas.map(talhao => (
+            {talhoesPanorama.map(talhao => (
               <TouchableOpacity
                 key={talhao}
-                style={[styles.anoChip, talhaoFiltroMapas === talhao && styles.anoChipActive]}
-                onPress={() => setTalhaoFiltroMapas(talhao)}
+                style={[styles.anoChip, talhaoFiltroAtual === talhao && styles.anoChipActive]}
+                onPress={() => handleTalhaoFiltroChange(talhao)}
               >
-                <Text style={[styles.anoChipText, talhaoFiltroMapas === talhao && styles.anoChipTextActive]} numberOfLines={1}>
+                <Text style={[styles.anoChipText, talhaoFiltroAtual === talhao && styles.anoChipTextActive]} numberOfLines={1}>
                   {talhao}
                 </Text>
               </TouchableOpacity>
@@ -863,315 +875,62 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       )}
 
-      {temFiltroMapaAtivo && (
-        <TouchableOpacity style={styles.limparFiltrosButton} onPress={limparFiltrosMapas} activeOpacity={0.75}>
-          <Ionicons name="close-circle-outline" size={16} color={colors.primary} />
-          <Text style={styles.limparFiltrosText}>Limpar filtros de mapas</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Ordenação */}
-      <View style={styles.ordenacaoContainer}>
-        <Text style={styles.ordenacaoLabel}>
-          <Ionicons name="swap-vertical-outline" size={14} color={colors.text} /> Ordenar:
-        </Text>
-        <View style={styles.ordenacaoButtons}>
-          {[
-            { key: 'recente', label: 'Recente', icon: 'time-outline' },
-            { key: 'titulo', label: 'Título', icon: 'text-outline' },
-            { key: 'tamanho', label: 'Tamanho', icon: 'document-outline' }
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.key}
-              style={[styles.ordenacaoChip, ordenacao === item.key && styles.ordenacaoChipActive]}
-              onPress={() => setOrdenacao(item.key)}
-              activeOpacity={0.7}
-            >
-              <Ionicons 
-                name={item.icon} 
-                size={14} 
-                color={ordenacao === item.key ? colors.white : colors.primary} 
-              />
-              <Text style={[
-                styles.ordenacaoChipText,
-                ordenacao === item.key && styles.ordenacaoChipTextActive
-              ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <ScrollView 
-        style={styles.scrollContent}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        {/* Filtros de Categoria */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriasContainer}
-          contentContainerStyle={styles.categoriasContent}
-        >
-          {CATEGORIAS.map(cat => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[
-                styles.categoriaChip,
-                categoriaAtiva === cat.id && styles.categoriaChipAtiva
-              ]}
-              onPress={() => setCategoriaAtiva(cat.id)}
-            >
-              <Ionicons 
-                name={cat.icon} 
-                size={18} 
-                color={categoriaAtiva === cat.id ? colors.white : colors.primary} 
-              />
-              <Text style={[
-                styles.categoriaTexto,
-                categoriaAtiva === cat.id && styles.categoriaTextoAtiva
-              ]}>
-                {cat.nome}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Estatísticas */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumero}>{mapasNoContexto.length}</Text>
-            <Text style={styles.statLabel}>No contexto</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumero}>{totalMapasComArquivo}</Text>
-            <Text style={styles.statLabel}>Com arquivo</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumero}>{mapasFiltrados.length}</Text>
-            <Text style={styles.statLabel}>Filtrados</Text>
-          </View>
-        </View>
-
-        {/* Botão Upload (admin/colab) */}
-        {podeAssociarMaterial && (
-          <TouchableOpacity
-            style={styles.uploadButton}
-            onPress={() => abrirAssociacaoMaterial()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="link-outline" size={20} color={colors.white} />
-            <Text style={styles.uploadButtonText}>Associar Material ao Mapa</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Lista de Mapas */}
-        {mapasFiltrados.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons 
-              name={temFiltroMapaAtivo ? 'search-outline' : 'map-outline'} 
-              size={80} 
-              color={colors.muted} 
-            />
-            <Text style={styles.emptyText}>
-              {temFiltroMapaAtivo ? 'Nenhum mapa encontrado' : 'Nenhum mapa disponível'}
-            </Text>
-            <Text style={styles.emptySubtext}>
-              {temFiltroMapaAtivo
-                ? 'Tente ajustar fazenda, safra, talhão, categoria ou busca'
-                : categoriaAtiva === 'todos' 
-                  ? 'Ainda não há mapas cadastrados para esta consulta.'
-                  : 'Não há mapas nesta categoria no momento.'}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.mapasLista}>
-            {categoriaAtiva === 'todos' ? (
-              mapasPorCategoria.map(cat => (
-                <View key={cat.id} style={styles.categoriaSecao}>
-                  <View style={styles.categoriaHeader}>
-                    <Ionicons name={cat.icon} size={28} color={colors.primary} />
-                    <Text style={styles.categoriaTitulo}>{cat.nome}</Text>
-                    <View style={styles.categoriaBadge}>
-                      <Text style={styles.categoriaBadgeTexto}>{cat.mapas.length}</Text>
-                    </View>
-                  </View>
-                  {cat.mapas.map(mapa => renderMapaCard(mapa))}
-                </View>
-              ))
-            ) : (
-              mapasFiltrados.map(mapa => renderMapaCard(mapa))
-            )}
-          </View>
-        )}
-
-        <View style={{ height: spacing.xl * 3 }} />
-      </ScrollView>
-    </>
-  );
-
-  // ──────────────────────────────────────────────
-  // RENDER: ABA LIMITE (SHAPE)
-  // ──────────────────────────────────────────────
-  const renderAbaLimite = () => (
-    <ScrollView
-      style={styles.scrollContent}
-      refreshControl={
-        <RefreshControl 
-          refreshing={refreshing} 
-          onRefresh={onRefresh}
-          colors={[colors.primary]}
-          tintColor={colors.primary}
-        />
-      }
-    >
-      {/* Busca */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar talhão, textura, cultura..."
-            placeholderTextColor={colors.muted}
-            value={buscaLimite}
-            onChangeText={setBuscaLimite}
-          />
-          {buscaLimite.length > 0 && (
-            <TouchableOpacity onPress={() => setBuscaLimite('')} style={styles.clearButton}>
-              <Ionicons name="close-circle" size={20} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {!consultaPorFazenda && fazendaOptions.length > 1 && (
+      {safrasMapas.length > 0 && (
         <View style={styles.anoFilterContainer}>
           <Text style={styles.anoFilterLabel}>
-            <Ionicons name="business-outline" size={14} color={colors.text} /> Contexto da consulta:
+            <Ionicons name="leaf-outline" size={14} color={colors.text} /> Safra dos materiais:
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
             <TouchableOpacity
-              style={[styles.anoChip, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipActive]}
-              onPress={() => setFazendaFiltroOperacional(FILTRO_TODOS)}
+              style={[styles.anoChip, safraFiltroMapas === FILTRO_TODOS && styles.anoChipActive]}
+              onPress={() => setSafraFiltroMapas(FILTRO_TODOS)}
             >
-              <Text style={[styles.anoChipText, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipTextActive]}>
-                Todas
-              </Text>
+              <Text style={[styles.anoChipText, safraFiltroMapas === FILTRO_TODOS && styles.anoChipTextActive]}>Todas</Text>
             </TouchableOpacity>
-            {fazendaOptions.map((fazenda) => (
+            {safrasMapas.map(safra => (
               <TouchableOpacity
-                key={fazenda.id}
-                style={[styles.anoChip, fazendaFiltroOperacional === fazenda.id && styles.anoChipActive]}
-                onPress={() => setFazendaFiltroOperacional(fazenda.id)}
+                key={safra}
+                style={[styles.anoChip, safraFiltroMapas === safra && styles.anoChipActive]}
+                onPress={() => setSafraFiltroMapas(safra)}
               >
-                <Text
-                  style={[styles.anoChipText, fazendaFiltroOperacional === fazenda.id && styles.anoChipTextActive]}
-                  numberOfLines={1}
-                >
-                  {fazenda.label}
-                </Text>
+                <Text style={[styles.anoChipText, safraFiltroMapas === safra && styles.anoChipTextActive]}>{safra}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       )}
 
-      {/* Filtro por Ano */}
-      <View style={styles.anoFilterContainer}>
-        <Text style={styles.anoFilterLabel}>
-          <Ionicons name="calendar-outline" size={14} color={colors.text} /> Ano do levantamento:
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-          <TouchableOpacity
-            style={[styles.anoChip, !anoFiltroLimite && styles.anoChipActive]}
-            onPress={() => setAnoFiltroLimite(null)}
-          >
-            <Text style={[styles.anoChipText, !anoFiltroLimite && styles.anoChipTextActive]}>Todos</Text>
-          </TouchableOpacity>
-          {anosDisponiveis.map(ano => (
-            <TouchableOpacity
-              key={ano}
-              style={[styles.anoChip, anoFiltroLimite === ano && styles.anoChipActive]}
-              onPress={() => setAnoFiltroLimite(ano)}
-            >
-              <Text style={[styles.anoChipText, anoFiltroLimite === ano && styles.anoChipTextActive]}>
-                LT {ano}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {talhoesLimite.length > 0 && (
-        <View style={styles.anoFilterContainer}>
-          <Text style={styles.anoFilterLabel}>
-            <Ionicons name="location-outline" size={14} color={colors.text} /> Talhão:
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-            <TouchableOpacity
-              style={[styles.anoChip, talhaoFiltroLimite === FILTRO_TODOS && styles.anoChipActive]}
-              onPress={() => setTalhaoFiltroLimite(FILTRO_TODOS)}
-            >
-              <Text style={[styles.anoChipText, talhaoFiltroLimite === FILTRO_TODOS && styles.anoChipTextActive]}>Todos</Text>
-            </TouchableOpacity>
-            {talhoesLimite.map(talhao => (
-              <TouchableOpacity
-                key={talhao}
-                style={[styles.anoChip, talhaoFiltroLimite === talhao && styles.anoChipActive]}
-                onPress={() => setTalhaoFiltroLimite(talhao)}
-              >
-                <Text style={[styles.anoChipText, talhaoFiltroLimite === talhao && styles.anoChipTextActive]} numberOfLines={1}>
-                  {talhao}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {temFiltroLimiteAtivo && (
-        <TouchableOpacity style={styles.limparFiltrosButton} onPress={limparFiltrosLimite} activeOpacity={0.75}>
+      {temFiltroPanoramaAtivo && (
+        <TouchableOpacity style={styles.limparFiltrosButton} onPress={limparFiltrosPanorama} activeOpacity={0.75}>
           <Ionicons name="close-circle-outline" size={16} color={colors.primary} />
-          <Text style={styles.limparFiltrosText}>Limpar filtros de limites</Text>
+          <Text style={styles.limparFiltrosText}>Limpar filtros do panorama</Text>
         </TouchableOpacity>
       )}
 
-      {/* Estatísticas Limite */}
+      {/* Estatísticas do panorama */}
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
           <Text style={styles.statNumero}>{limitesFiltrados.length}</Text>
           <Text style={styles.statLabel}>Talhões</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumero}>
-            {limitesFiltrados.reduce((s, l) => s + (l.area_hectares || 0), 0).toFixed(1)}
-          </Text>
-          <Text style={styles.statLabel}>ha Total</Text>
+          <Text style={styles.statNumero}>{areaLimitesFiltrados}</Text>
+          <Text style={styles.statLabel}>ha</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumero}>
-            {limitesFiltrados.filter(l => l.disponivel_offline).length}
-          </Text>
-          <Text style={styles.statLabel}>Offline</Text>
+          <Text style={styles.statNumero}>{mapasNoContexto.length}</Text>
+          <Text style={styles.statLabel}>Materiais</Text>
         </View>
       </View>
 
       {limitesFiltrados.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="git-network-outline" size={80} color={colors.muted} />
-          <Text style={styles.emptyText}>Nenhum limite de área encontrado</Text>
+          <Text style={styles.emptyText}>Nenhuma demarcação carregada</Text>
           <Text style={styles.emptySubtext}>
-            {buscaLimite 
-              ? 'Tente ajustar sua busca ou filtro de ano'
-              : 'Não há shapes de demarcação disponíveis para o período selecionado.'}
+            {temFiltroPanoramaAtivo
+              ? 'Tente ajustar fazenda, talhão, demarcação ou busca.'
+              : 'Suba o arquivo final de demarcação para gerar o panorama da fazenda.'}
           </Text>
         </View>
       ) : (
@@ -1198,8 +957,8 @@ export default function MapasScreen({ route, navigation }) {
               <Text style={styles.btnMapaSateliteTitulo}>Ver no Mapa</Text>
               <Text style={styles.btnMapaSateliteSubtitulo}>
                 {mapaSateliteFazendaInfo
-                  ? `Abrir ${mapaSateliteFazendaInfo.fazendaNome}`
-                  : 'Abrir visão geral dos talhões acessíveis'}
+                  ? `Abrir panorama de ${mapaSateliteFazendaInfo.fazendaNome}`
+                  : 'Abrir panorama dos talhões acessíveis'}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
@@ -1209,7 +968,7 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.shapeSection}>
             <View style={styles.shapeSectionHeader}>
               <Ionicons name="git-network-outline" size={20} color={colors.primary} />
-              <Text style={styles.shapeSectionTitle}>Demarcação dos Talhões</Text>
+              <Text style={styles.shapeSectionTitle}>Panorama dos Talhões</Text>
               {anoFiltroLimite && (
                 <View style={styles.anoTag}>
                   <Text style={styles.anoTagText}>LT {anoFiltroLimite}</Text>
@@ -1229,23 +988,133 @@ export default function MapasScreen({ route, navigation }) {
           {/* Lista de Talhões */}
           <View style={styles.talhaoListSection}>
             <Text style={styles.talhaoListTitle}>
-              <Ionicons name="list-outline" size={18} color={colors.primary} /> Detalhes dos Talhões
+              <Ionicons name="list-outline" size={18} color={colors.primary} /> Talhões do panorama
             </Text>
             {limitesFiltrados.map(talhao => renderTalhaoCard(talhao))}
           </View>
+        </>
+      )}
 
-          {/* Botão Upload Shape (admin/colab) */}
-          {podeAssociarMaterial && (
+      <View style={styles.materiaisSection}>
+        <View style={styles.shapeSectionHeader}>
+          <Ionicons name="folder-open-outline" size={20} color={colors.primary} />
+          <Text style={styles.shapeSectionTitle}>Materiais técnicos associados</Text>
+          <View style={styles.anoTag}>
+            <Text style={styles.anoTagText}>{mapasFiltrados.length}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Filtros de Categoria */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoriasContainer}
+        contentContainerStyle={styles.categoriasContent}
+      >
+        {CATEGORIAS.map(cat => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[
+              styles.categoriaChip,
+              categoriaAtiva === cat.id && styles.categoriaChipAtiva
+            ]}
+            onPress={() => setCategoriaAtiva(cat.id)}
+          >
+            <Ionicons
+              name={cat.icon}
+              size={18}
+              color={categoriaAtiva === cat.id ? colors.white : colors.primary}
+            />
+            <Text style={[
+              styles.categoriaTexto,
+              categoriaAtiva === cat.id && styles.categoriaTextoAtiva
+            ]}>
+              {cat.nome}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Ordenação */}
+      <View style={styles.ordenacaoContainer}>
+        <Text style={styles.ordenacaoLabel}>
+          <Ionicons name="swap-vertical-outline" size={14} color={colors.text} /> Ordenar materiais:
+        </Text>
+        <View style={styles.ordenacaoButtons}>
+          {[
+            { key: 'recente', label: 'Recente', icon: 'time-outline' },
+            { key: 'titulo', label: 'Título', icon: 'text-outline' },
+            { key: 'tamanho', label: 'Tamanho', icon: 'document-outline' }
+          ].map((item) => (
             <TouchableOpacity
-              style={[styles.uploadButton, { marginHorizontal: spacing.md }]}
-              onPress={() => abrirAssociacaoMaterial()}
+              key={item.key}
+              style={[styles.ordenacaoChip, ordenacao === item.key && styles.ordenacaoChipActive]}
+              onPress={() => setOrdenacao(item.key)}
               activeOpacity={0.7}
             >
-              <Ionicons name="cloud-upload-outline" size={20} color={colors.white} />
-              <Text style={styles.uploadButtonText}>Importar Shape (em breve)</Text>
+              <Ionicons
+                name={item.icon}
+                size={14}
+                color={ordenacao === item.key ? colors.white : colors.primary}
+              />
+              <Text style={[
+                styles.ordenacaoChipText,
+                ordenacao === item.key && styles.ordenacaoChipTextActive
+              ]}>
+                {item.label}
+              </Text>
             </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {podeAssociarMaterial && (
+        <TouchableOpacity
+          style={styles.uploadButton}
+          onPress={() => abrirAssociacaoMaterial()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="link-outline" size={20} color={colors.white} />
+          <Text style={styles.uploadButtonText}>Associar arquivo ao panorama</Text>
+        </TouchableOpacity>
+      )}
+
+      {mapasFiltrados.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons
+            name={temFiltroMaterialAtivo ? 'search-outline' : 'folder-open-outline'}
+            size={80}
+            color={colors.muted}
+          />
+          <Text style={styles.emptyText}>
+            {temFiltroMaterialAtivo ? 'Nenhum material encontrado' : 'Nenhum material associado'}
+          </Text>
+          <Text style={styles.emptySubtext}>
+            {temFiltroMaterialAtivo
+              ? 'Tente ajustar safra, talhão, categoria ou busca.'
+              : 'Os arquivos técnicos podem ser associados ao panorama quando houver uma URL abrível.'}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.mapasLista}>
+          {categoriaAtiva === 'todos' ? (
+            mapasPorCategoria.map(cat => (
+              <View key={cat.id} style={styles.categoriaSecao}>
+                <View style={styles.categoriaHeader}>
+                  <Ionicons name={cat.icon} size={28} color={colors.primary} />
+                  <Text style={styles.categoriaTitulo}>{cat.nome}</Text>
+                  <View style={styles.categoriaBadge}>
+                    <Text style={styles.categoriaBadgeTexto}>{cat.mapas.length}</Text>
+                  </View>
+                </View>
+                {cat.mapas.map(mapa => renderMapaCard(mapa))}
+              </View>
+            ))
+          ) : (
+            mapasFiltrados.map(mapa => renderMapaCard(mapa))
           )}
-        </>
+        </View>
       )}
 
       <View style={{ height: spacing.xl * 3 }} />
@@ -1270,7 +1139,7 @@ export default function MapasScreen({ route, navigation }) {
   if (estadoBloqueio) {
     return (
       <View style={styles.container}>
-        <Header title="Mapas & Limites" showBack onBack={() => navigation.goBack()} />
+        <Header title="Panorama de Mapas" showBack onBack={() => navigation.goBack()} />
         <View style={styles.blockedContainer}>
           <Ionicons name={mensagemBloqueio.icon as any} size={64} color={colors.muted} />
           <Text style={styles.blockedTitle}>{mensagemBloqueio.title}</Text>
@@ -1307,44 +1176,8 @@ export default function MapasScreen({ route, navigation }) {
           </Text>
         </View>
       </View>
-      
-      {/* Abas Principais */}
-      <View style={styles.tabContainer}>
-        {ABAS.map(aba => (
-          <TouchableOpacity
-            key={aba.id}
-            style={[styles.tab, abaAtiva === aba.id && styles.tabActive]}
-            onPress={() => setAbaAtiva(aba.id)}
-            activeOpacity={0.7}
-          >
-            <Ionicons 
-              name={aba.icon} 
-              size={20} 
-              color={abaAtiva === aba.id ? colors.white : colors.primary} 
-            />
-            <Text style={[styles.tabText, abaAtiva === aba.id && styles.tabTextActive]}>
-              {aba.label}
-            </Text>
-            {aba.id === 'mapas' && mapasNoContexto.length > 0 && (
-              <View style={[styles.tabBadge, abaAtiva === aba.id && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, abaAtiva === aba.id && styles.tabBadgeTextActive]}>
-                  {mapasNoContexto.length}
-                </Text>
-              </View>
-            )}
-            {aba.id === 'limite' && limitesNoContexto.length > 0 && (
-              <View style={[styles.tabBadge, abaAtiva === aba.id && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, abaAtiva === aba.id && styles.tabBadgeTextActive]}>
-                  {limitesNoContexto.length}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
 
-      {/* Conteúdo da aba ativa */}
-      {abaAtiva === 'mapas' ? renderAbaMapas() : renderAbaLimite()}
+      {renderPanorama()}
 
       {/* Dialog de abertura de material */}
       <ConfirmDialog
@@ -1592,61 +1425,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.textLight,
     marginTop: 2,
-  },
-
-  // ── ABAS ──
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
-    ...shadows.sm,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.sm + 2,
-    borderRadius: spacing.radius,
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    gap: spacing.xs,
-  },
-  tabActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  tabText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-  },
-  tabTextActive: {
-    color: colors.white,
-  },
-  tabBadge: {
-    backgroundColor: colors.primary + '20',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 10,
-    minWidth: 22,
-    alignItems: 'center',
-  },
-  tabBadgeActive: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  tabBadgeText: {
-    fontSize: typography.fontSmall,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-  },
-  tabBadgeTextActive: {
-    color: colors.white,
   },
 
   // ── BUSCA ──
@@ -2247,6 +2025,12 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.primary,
     fontWeight: typography.weightSemibold,
+  },
+
+  materiaisSection: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
 
   // ── SHAPE SECTION ──

@@ -160,3 +160,22 @@ Afeta formulários, escopo funcional e criterio de evolucao do modulo.
 ### Impacto
 
 Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacional real, e nao apenas por desejo de cobertura total do dominio.
+
+---
+
+## 10. Mapas e limites formam uma experiencia unica de panorama no MVP
+
+### Decisao
+
+No MVP, o usuario nao deve navegar por duas experiencias concorrentes de `Mapas` e `Limite` quando o objetivo pratico for visualizar o panorama da fazenda. A interface deve apresentar uma experiencia unica de panorama/mapa da fazenda.
+
+### Alcance
+
+Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingestao de arquivos geoespaciais.
+
+### Impacto
+
+- `LimiteArea` permanece como camada tecnica de demarcacao dos talhoes, vinculada a `fazenda_id`.
+- A tela de mapas deve tratar a demarcacao como base do panorama, e nao como uma aba funcional separada.
+- Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da fazenda.
+- O app deve consumir um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, em vez de carregar no celular o pacote bruto de arquivos `.shp`, `.shx`, `.dbf`, `.prj`, `.kml`, `.kmz` ou metadados auxiliares.

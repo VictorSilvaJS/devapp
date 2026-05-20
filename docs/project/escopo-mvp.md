@@ -31,8 +31,12 @@ O MVP deve contemplar:
 - organizacao de mapas e arquivos por contexto de fazenda
 - consulta dos materiais disponiveis
 - controle de visibilidade por perfil
+- panorama visual unico da fazenda quando houver demarcacao de talhoes
+- uso de limites/shapes como base tecnica de demarcacao, nao como experiencia separada para o usuario final
 
 Nao implica, por si so, que todos os fluxos de upload, download ou processamento avancado ja estejam completos na implementacao atual.
+
+Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 
 ### 4. Visitas tecnicas
 
