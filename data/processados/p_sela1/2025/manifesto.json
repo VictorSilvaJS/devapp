@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "tipo": "importacao_geoespacial",
+  "importacao_id": "p_sela1-2025-limites-talhoes-shp",
+  "fazenda": {
+    "fazenda_id": "p_sela1",
+    "nome": "Fazenda Sela de Prata I"
+  },
+  "recorte": {
+    "ano": 2025,
+    "safra": "2025/2026",
+    "camada": "limites_talhoes"
+  },
+  "pastas": {
+    "padrao_originais": "data/originais/{fazenda_id}/{ano}/{importacao_id}/",
+    "padrao_processados": "data/processados/{fazenda_id}/{ano}/",
+    "origem_atual_amostra": "Sela-de-Prata-I",
+    "processados_atual": "data/processados/p_sela1/2025"
+  },
+  "origem": {
+    "formato": "SHP",
+    "arquivos": [
+      {
+        "caminho": "Sela-de-Prata-I/Fazenda_Sela_de_Prata_I_poly.shp",
+        "papel": "geometria",
+        "obrigatorio": true,
+        "bytes": 116268
+      },
+      {
+        "caminho": "Sela-de-Prata-I/Fazenda_Sela_de_Prata_I_poly.shx",
+        "papel": "indice_geometria",
+        "obrigatorio": true,
+        "bytes": 396
+      },
+      {
+        "caminho": "Sela-de-Prata-I/Fazenda_Sela_de_Prata_I_poly.dbf",
+        "papel": "atributos",
+        "obrigatorio": true,
+        "bytes": 21400
+      },
+      {
+        "caminho": "Sela-de-Prata-I/Fazenda_Sela_de_Prata_I_poly.prj",
+        "papel": "projecao",
+        "obrigatorio": true,
+        "bytes": 145
+      },
+      {
+        "caminho": "Sela-de-Prata-I/Fazenda_Sela_de_Prata_I_poly.cpg",
+        "papel": "codificacao",
+        "obrigatorio": false,
+        "bytes": 5
+      }
+    ],
+    "registros_shp": 37,
+    "registros_dbf": 37,
+    "campos_encontrados": [
+      {
+        "nome": "Campo",
+        "tipo": "C",
+        "tamanho": 254,
+        "decimais": 0
+      },
+      {
+        "nome": "Obj__Id",
+        "tipo": "N",
+        "tamanho": 15,
+        "decimais": 4
+      },
+      {
+        "nome": "Nome_Perim",
+        "tipo": "C",
+        "tamanho": 254,
+        "decimais": 0
+      },
+      {
+        "nome": "lav",
+        "tipo": "C",
+        "tamanho": 50,
+        "decimais": 0
+      }
+    ],
+    "campo_nome_usado": "Campo",
+    "campo_nome_fallback": "Nome_Perim",
+    "regra_nome": "Para SHP, os nomes dos talhoes vem do DBF.",
+    "sistema_referencia": "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]]"
+  },
+  "processamento": {
+    "conversor": "scripts/convertSelaDePrataShape.ps1",
+    "data_processamento": "2026-05-20",
+    "agrupamento": "Registros SHP agrupados pelo campo Campo para formar talhoes com multiplas partes quando necessario.",
+    "app_consumira": "GeoJSON/JSON final normalizado; o app nao consome o pacote bruto SHP/DBF/SHX/PRJ."
+  },
+  "saida": {
+    "geojson": "data/processados/p_sela1/2025/limites_talhoes.geojson",
+    "asset_app_mock": "src/assets/geojson/selaDePrata1Talhoes.ts",
+    "quantidade_talhoes": 15,
+    "quantidade_poligonos": 37,
+    "tipos_geometria": [
+      "MultiPolygon",
+      "Polygon"
+    ],
+    "area_total_hectares": 1888.6
+  },
+  "revisao": {
+    "status": "aprovado_para_amostra_mock",
+    "publicado_no_mock": true,
+    "aprovado_para_producao": false,
+    "requer_previsualizacao_aprovacao_fluxo_real": true,
+    "observacoes": [
+      "Amostra controlada usada para validar a exibicao atual da Fazenda Sela de Prata I no mock.",
+      "O conversor local nao fecha o pipeline produtivo de importacao."
+    ],
+    "etapas_obrigatorias_fluxo_real": [
+      "previsualizacao",
+      "conferencia_de_nomes",
+      "conferencia_de_geometria",
+      "aprovacao_por_equipe_autorizada",
+      "publicacao_do_geojson_json_final"
+    ]
+  }
+}

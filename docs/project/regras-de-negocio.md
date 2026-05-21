@@ -50,6 +50,7 @@ Alias historicos como `cliente` e `proprietario` podem aparecer ao explicar cont
 ## Regra sobre Mapas e Arquivos
 
 - Mapas e arquivos pertencem ao contexto da fazenda.
+- Na primeira versao de testes, cada material tecnico deve estar vinculado ao campo/talhao correspondente e, quando for diagnostico, ao elemento/camada representado, como argila, fosforo, pH ou outro atributo tecnico.
 - A disponibilizacao desses materiais deve respeitar regra de perfil e liberacao.
 - O produtor pode consultar e baixar materiais autorizados.
 - Fluxos de ingestao, upload ou processamento interno devem ficar sob responsabilidade da equipe autorizada, quando existirem.

@@ -4,6 +4,7 @@
  */
 import {
   CATEGORIAS_MAPA_PROVISORIAS,
+  ELEMENTOS_DIAGNOSTICO_MVP,
   normalizeCadernoCampo,
   normalizeLimiteArea,
   normalizeMapa,
@@ -147,6 +148,16 @@ export const validateMapa = (data) => {
   if (normalized.categoria && !CATEGORIAS_MAPA_PROVISORIAS.includes(normalized.categoria as any)) {
     console.warn(
       `Mapa.categoria: "${normalized.categoria}" fora do catálogo provisório (${CATEGORIAS_MAPA_PROVISORIAS.join(', ')}).`
+    );
+  }
+
+  if (normalized.tipo_material === 'diagnostico' && !normalized.elemento && !normalized.subcategoria) {
+    console.warn('Mapa: material diagnóstico sem elemento/subcategoria informado');
+  }
+
+  if (normalized.elemento && !ELEMENTOS_DIAGNOSTICO_MVP.includes(normalized.elemento as any)) {
+    console.warn(
+      `Mapa.elemento: "${normalized.elemento}" fora do catálogo inicial do MVP (${ELEMENTOS_DIAGNOSTICO_MVP.join(', ')}).`
     );
   }
   

@@ -30,6 +30,22 @@ export const CATEGORIAS_MAPA_PROVISORIAS = [
 
 export type CategoriaMapaProvisoria = typeof CATEGORIAS_MAPA_PROVISORIAS[number];
 
+export const ELEMENTOS_DIAGNOSTICO_MVP = [
+  'argila',
+  'ph',
+  'fosforo',
+  'potassio',
+  'materia_organica',
+  'calcio',
+  'magnesio',
+  'ctc',
+  'saturacao_bases',
+  'aluminio',
+  'enxofre',
+] as const;
+
+export type ElementoDiagnosticoMvp = typeof ELEMENTOS_DIAGNOSTICO_MVP[number];
+
 export interface CoordenadaPoligono {
   lat: number;
   lng: number;
@@ -116,6 +132,17 @@ export interface MapaCanonico {
    */
   fazenda_id: string;
   talhao: string;
+  /**
+   * Classificacao operacional do arquivo dentro da biblioteca da fazenda.
+   * No MVP, "diagnostico" cobre mapas como argila, fosforo e pH; outros
+   * valores continuam livres enquanto a taxonomia final nao estiver fechada.
+   */
+  tipo_material?: string;
+  /**
+   * Elemento/camada representado pelo arquivo tecnico, quando aplicavel.
+   * Ex.: argila, fosforo, ph, potassio.
+   */
+  elemento?: string;
   data_criacao?: string;
   safra?: string;
   arquivo_url?: string;
@@ -235,6 +262,8 @@ export interface MapaLegado {
   produtor_id?: string;
   fazenda_id?: string;
   talhao?: string;
+  tipo_material?: string;
+  elemento?: string;
   data_criacao?: string;
   safra?: string;
   arquivo_url?: string;

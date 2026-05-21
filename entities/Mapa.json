@@ -16,7 +16,15 @@
     },
     "subcategoria": {
       "type": "string",
-      "description": "Subcategoria específica do mapa (ex: NDVI, NDRE, pH, P, K)"
+      "description": "Subcategoria específica do mapa. No MVP pode representar o elemento/camada exibido ao produtor, como Argila, pH, Fósforo, Potássio, NDVI ou NDRE."
+    },
+    "tipo_material": {
+      "type": "string",
+      "description": "Classificação operacional do material técnico dentro da biblioteca da fazenda. No MVP, diagnostico cobre mapas como argila, fósforo e pH; outros valores continuam livres enquanto a taxonomia final não estiver fechada."
+    },
+    "elemento": {
+      "type": "string",
+      "description": "Elemento ou camada representado pelo arquivo técnico quando aplicável, como argila, ph, fosforo, potassio ou materia_organica."
     },
     "formato_arquivo": {
       "type": "string",

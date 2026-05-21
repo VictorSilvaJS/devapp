@@ -87,6 +87,30 @@ const getMapaSafra = (mapa: any): string => {
 const getMapaTalhao = (mapa: any): string =>
   typeof mapa?.talhao === 'string' ? mapa.talhao.trim() : '';
 
+const ELEMENTO_LABELS: Record<string, string> = {
+  argila: 'Argila',
+  ph: 'pH',
+  fosforo: 'Fósforo',
+  potassio: 'Potássio',
+  materia_organica: 'Matéria orgânica',
+  calcio: 'Cálcio',
+  magnesio: 'Magnésio',
+  ctc: 'CTC',
+  saturacao_bases: 'Saturação de bases',
+  aluminio: 'Alumínio',
+  enxofre: 'Enxofre',
+};
+
+const getMapaElementoLabel = (mapa: any): string => {
+  const subcategoria = typeof mapa?.subcategoria === 'string' ? mapa.subcategoria.trim() : '';
+  if (subcategoria) return subcategoria;
+
+  const elemento = typeof mapa?.elemento === 'string' ? mapa.elemento.trim() : '';
+  if (!elemento) return '';
+
+  return ELEMENTO_LABELS[elemento] ?? elemento;
+};
+
 const getSafraSortValue = (safra: string): number => {
   const anos = safra.match(/\d{4}/g)?.map((ano) => Number.parseInt(ano, 10)) ?? [];
   return anos.length > 0 ? Math.max(...anos) : 0;
@@ -322,6 +346,8 @@ export default function MapasScreen({ route, navigation }) {
       const textoBusca = [
         m.titulo,
         m.subcategoria,
+        m.elemento,
+        m.tipo_material,
         talhaoMapa,
         safraMapa,
         m.observacoes,
@@ -579,6 +605,11 @@ export default function MapasScreen({ route, navigation }) {
     return new Date(data).toLocaleDateString('pt-BR');
   };
 
+  const hasTamanhoArquivo = (value) => {
+    const tamanho = Number(value);
+    return Number.isFinite(tamanho) && tamanho > 0;
+  };
+
   const getIconeFormato = (formato) => {
     switch (formato) {
       case 'pdf': return 'document-text';
@@ -597,6 +628,7 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   const renderMapaCard = (mapa) => {
     const safraMapa = getMapaSafra(mapa);
+    const elementoLabel = getMapaElementoLabel(mapa);
     const statusDownload = avaliarDownloadMapa(mapa);
     const fazendaMapaInfo = !consultaPorFazenda
       ? fazendaInfoPorId.get(getMapaFazendaId(mapa))
@@ -619,8 +651,8 @@ export default function MapasScreen({ route, navigation }) {
         </View>
         <View style={styles.mapaInfo}>
           <Text style={styles.mapaTitulo} numberOfLines={2}>{mapa.titulo}</Text>
-          {mapa.subcategoria && (
-            <Text style={styles.mapaSubcategoria}>{mapa.subcategoria}</Text>
+          {elementoLabel && (
+            <Text style={styles.mapaSubcategoria}>Elemento/camada: {elementoLabel}</Text>
           )}
           {fazendaMapaInfo && (
             <Text style={styles.mapaContexto} numberOfLines={1}>
@@ -638,7 +670,12 @@ export default function MapasScreen({ route, navigation }) {
             )}
             {mapa.talhao && (
               <Text style={styles.mapaDetalhe}>
-                <Ionicons name="location-outline" size={14} color={colors.secondary} /> {mapa.talhao}
+                <Ionicons name="location-outline" size={14} color={colors.secondary} /> Campo/talhão {mapa.talhao}
+              </Text>
+            )}
+            {mapa.tipo_material && (
+              <Text style={styles.mapaDetalhe}>
+                <Ionicons name="layers-outline" size={14} color={colors.secondary} /> {mapa.tipo_material}
               </Text>
             )}
           </View>
@@ -653,7 +690,7 @@ export default function MapasScreen({ route, navigation }) {
         <View style={styles.mapaFormatoTag}>
           <Text style={styles.mapaFormatoTexto}>{mapa.formato_arquivo?.toUpperCase() || 'ARQ'}</Text>
         </View>
-        {mapa.tamanho_arquivo && (
+        {hasTamanhoArquivo(mapa.tamanho_arquivo) && (
           <Text style={styles.mapaTamanho}>{formatarTamanho(mapa.tamanho_arquivo)}</Text>
         )}
         <View style={[
@@ -1076,7 +1113,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.7}
         >
           <Ionicons name="link-outline" size={20} color={colors.white} />
-          <Text style={styles.uploadButtonText}>Associar arquivo ao panorama</Text>
+          <Text style={styles.uploadButtonText}>Associar arquivo técnico</Text>
         </TouchableOpacity>
       )}
 
@@ -1093,7 +1130,7 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.emptySubtext}>
             {temFiltroMaterialAtivo
               ? 'Tente ajustar safra, talhão, categoria ou busca.'
-              : 'Os arquivos técnicos podem ser associados ao panorama quando houver uma URL abrível.'}
+              : 'Os arquivos técnicos podem ser associados por campo/talhão e elemento quando houver uma URL abrível.'}
           </Text>
         </View>
       ) : (

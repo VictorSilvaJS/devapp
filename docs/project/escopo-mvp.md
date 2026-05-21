@@ -31,10 +31,13 @@ O MVP deve contemplar:
 - organizacao de mapas e arquivos por contexto de fazenda
 - consulta dos materiais disponiveis
 - controle de visibilidade por perfil
+- materiais tecnicos liberaveis para consulta/download, organizados por fazenda, campo/talhao, safra/ano e elemento/camada quando aplicavel
 - panorama visual unico da fazenda quando houver demarcacao de talhoes
 - uso de limites/shapes como base tecnica de demarcacao, nao como experiencia separada para o usuario final
 
 Nao implica, por si so, que todos os fluxos de upload, download ou processamento avancado ja estejam completos na implementacao atual.
+
+Para a primeira versao de testes, o corte funcional da biblioteca de materiais deve priorizar mapas tecnicos que produtor e equipe possam acessar, principalmente diagnosticos como fertilidade por elemento/camada, por exemplo argila, fosforo, pH, potassio e materia organica. Outros arquivos tecnicos disponiveis no acervo, como sementes, linhas de plantio ou materiais operacionais, podem aparecer quando forem liberados, mas nao devem deslocar o foco inicial dos diagnosticos.
 
 Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 

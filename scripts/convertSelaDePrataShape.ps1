@@ -1,17 +1,20 @@
 param(
   [string]$SampleDir = "C:\Users\e_vsjesus\Desktop\devapp\Sela-de-Prata-I",
   [string]$OutGeoJson = "C:\Users\e_vsjesus\Desktop\devapp\data\processados\p_sela1\2025\limites_talhoes.geojson",
-  [string]$OutTs = "C:\Users\e_vsjesus\Desktop\devapp\src\assets\geojson\selaDePrata1Talhoes.ts"
+  [string]$OutTs = "C:\Users\e_vsjesus\Desktop\devapp\src\assets\geojson\selaDePrata1Talhoes.ts",
+  [string]$OutManifest = "C:\Users\e_vsjesus\Desktop\devapp\data\processados\p_sela1\2025\manifesto.json"
 )
 
 $ErrorActionPreference = "Stop"
 
 $baseName = "Fazenda_Sela_de_Prata_I_poly"
 $shpPath = Join-Path $SampleDir "$baseName.shp"
+$shxPath = Join-Path $SampleDir "$baseName.shx"
 $dbfPath = Join-Path $SampleDir "$baseName.dbf"
 $prjPath = Join-Path $SampleDir "$baseName.prj"
+$cpgPath = Join-Path $SampleDir "$baseName.cpg"
 
-foreach ($path in @($shpPath, $dbfPath, $prjPath)) {
+foreach ($path in @($shpPath, $shxPath, $dbfPath, $prjPath)) {
   if (-not (Test-Path $path)) {
     throw "Arquivo obrigatorio nao encontrado: $path"
   }
@@ -56,6 +59,26 @@ function Read-DbfRows([string]$Path) {
   }
 
   return $rows
+}
+
+function Read-DbfFields([string]$Path) {
+  $bytes = [System.IO.File]::ReadAllBytes($Path)
+  $headerLength = [BitConverter]::ToInt16($bytes, 8)
+  $fields = @()
+
+  for ($offset = 32; $offset -lt ($headerLength - 1); $offset += 32) {
+    if ($bytes[$offset] -eq 0x0D) { break }
+    $nameBytes = $bytes[$offset..($offset + 10)] | Where-Object { $_ -ne 0 }
+    $name = [System.Text.Encoding]::ASCII.GetString([byte[]]$nameBytes)
+    $fields += [ordered]@{
+      nome = $name
+      tipo = ([char]$bytes[$offset + 11]).ToString()
+      tamanho = [int]$bytes[$offset + 16]
+      decimais = [int]$bytes[$offset + 17]
+    }
+  }
+
+  return $fields
 }
 
 function Read-ShpPolygons([string]$Path) {
@@ -167,6 +190,34 @@ function Convert-PolygonToGeoJsonRing($polygon) {
   return $ring
 }
 
+function Convert-ToRepoRelativePath([string]$Path) {
+  $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+  $resolved = Resolve-Path -LiteralPath $Path -ErrorAction SilentlyContinue
+  $fullPath = if ($resolved) { $resolved.Path } else { [System.IO.Path]::GetFullPath($Path) }
+
+  if ($fullPath.StartsWith($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    return ($fullPath.Substring($repoRoot.Length).TrimStart([char[]]"\/") -replace '\\','/')
+  }
+
+  return ($fullPath -replace '\\','/')
+}
+
+function New-SourceFileMetadata([string]$Path, [string]$Papel, [bool]$Obrigatorio) {
+  $exists = Test-Path -LiteralPath $Path
+  $bytes = $null
+  if ($exists) {
+    $bytes = [int64](Get-Item -LiteralPath $Path).Length
+  }
+
+  return [ordered]@{
+    caminho = Convert-ToRepoRelativePath $Path
+    papel = $Papel
+    obrigatorio = $Obrigatorio
+    bytes = $bytes
+  }
+}
+
+$dbfFields = Read-DbfFields $dbfPath
 $dbfRows = Read-DbfRows $dbfPath
 $shapeRows = Read-ShpPolygons $shpPath
 if ($dbfRows.Count -ne $shapeRows.Count) {
@@ -268,8 +319,90 @@ $geoJson = [ordered]@{
   features = $features
 }
 
+$polygonCount = 0
+foreach ($shapeRow in $shapeRows) {
+  $polygonCount += @($shapeRow.Parts).Count
+}
+
+$totalAreaHa = 0.0
+foreach ($talhao in $talhoes) {
+  $totalAreaHa += [double]$talhao.area_hectares
+}
+
+$manifest = [ordered]@{
+  schema_version = 1
+  tipo = 'importacao_geoespacial'
+  importacao_id = 'p_sela1-2025-limites-talhoes-shp'
+  fazenda = [ordered]@{
+    fazenda_id = 'p_sela1'
+    nome = 'Fazenda Sela de Prata I'
+  }
+  recorte = [ordered]@{
+    ano = 2025
+    safra = '2025/2026'
+    camada = 'limites_talhoes'
+  }
+  pastas = [ordered]@{
+    padrao_originais = 'data/originais/{fazenda_id}/{ano}/{importacao_id}/'
+    padrao_processados = 'data/processados/{fazenda_id}/{ano}/'
+    origem_atual_amostra = Convert-ToRepoRelativePath $SampleDir
+    processados_atual = Convert-ToRepoRelativePath (Split-Path $OutGeoJson)
+  }
+  origem = [ordered]@{
+    formato = 'SHP'
+    arquivos = @(
+      New-SourceFileMetadata $shpPath 'geometria' $true
+      New-SourceFileMetadata $shxPath 'indice_geometria' $true
+      New-SourceFileMetadata $dbfPath 'atributos' $true
+      New-SourceFileMetadata $prjPath 'projecao' $true
+      New-SourceFileMetadata $cpgPath 'codificacao' $false
+    )
+    registros_shp = $shapeRows.Count
+    registros_dbf = $dbfRows.Count
+    campos_encontrados = $dbfFields
+    campo_nome_usado = 'Campo'
+    campo_nome_fallback = 'Nome_Perim'
+    regra_nome = 'Para SHP, os nomes dos talhoes vem do DBF.'
+    sistema_referencia = (Get-Content -Raw -LiteralPath $prjPath).Trim()
+  }
+  processamento = [ordered]@{
+    conversor = Convert-ToRepoRelativePath $PSCommandPath
+    data_processamento = (Get-Date).ToString('yyyy-MM-dd')
+    agrupamento = 'Registros SHP agrupados pelo campo Campo para formar talhoes com multiplas partes quando necessario.'
+    app_consumira = 'GeoJSON/JSON final normalizado; o app nao consome o pacote bruto SHP/DBF/SHX/PRJ.'
+  }
+  saida = [ordered]@{
+    geojson = Convert-ToRepoRelativePath $OutGeoJson
+    asset_app_mock = Convert-ToRepoRelativePath $OutTs
+    quantidade_talhoes = $talhoes.Count
+    quantidade_poligonos = $polygonCount
+    tipos_geometria = @($features | ForEach-Object { $_.geometry.type } | Sort-Object -Unique)
+    area_total_hectares = [Math]::Round($totalAreaHa, 1)
+  }
+  revisao = [ordered]@{
+    status = 'aprovado_para_amostra_mock'
+    publicado_no_mock = $true
+    aprovado_para_producao = $false
+    requer_previsualizacao_aprovacao_fluxo_real = $true
+    observacoes = @(
+      'Amostra controlada usada para validar a exibicao atual da Fazenda Sela de Prata I no mock.',
+      'O conversor local nao fecha o pipeline produtivo de importacao.'
+    )
+    etapas_obrigatorias_fluxo_real = @(
+      'previsualizacao',
+      'conferencia_de_nomes',
+      'conferencia_de_geometria',
+      'aprovacao_por_equipe_autorizada',
+      'publicacao_do_geojson_json_final'
+    )
+  }
+}
+
 New-Item -ItemType Directory -Path (Split-Path $OutGeoJson) -Force | Out-Null
 $geoJson | ConvertTo-Json -Depth 100 -Compress | Set-Content -Path $OutGeoJson -Encoding UTF8
+
+New-Item -ItemType Directory -Path (Split-Path $OutManifest) -Force | Out-Null
+$manifest | ConvertTo-Json -Depth 100 | Set-Content -Path $OutManifest -Encoding UTF8
 
 New-Item -ItemType Directory -Path (Split-Path $OutTs) -Force | Out-Null
 $jsonForTs = $talhoes | ConvertTo-Json -Depth 100 -Compress
@@ -296,4 +429,5 @@ Write-Host "Convertido com sucesso."
 Write-Host "Talhoes: $($talhoes.Count)"
 Write-Host "Registros SHP: $($shapeRows.Count)"
 Write-Host "GeoJSON: $OutGeoJson"
+Write-Host "Manifesto: $OutManifest"
 Write-Host "TS: $OutTs"

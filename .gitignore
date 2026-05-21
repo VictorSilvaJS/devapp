@@ -16,3 +16,7 @@ yarn-error.log*
 *.log
 *.keystore
 Sela-de-prata-I/
+Sela-de-Prata-I/
+data/originais/**
+!data/originais/
+!data/originais/README.md

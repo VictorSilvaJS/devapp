@@ -52,7 +52,9 @@ Mapas e arquivos sao parte central do produto, mas a classificacao final ainda p
 - tratamento de panorama
 - recorte temporal por safra, ano ou periodo
 
-O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao dentro do panorama da fazenda, nao uma experiencia separada para o usuario. O que permanece pendente e a taxonomia final das categorias de materiais tecnicos e a forma de evoluir panoramas alem da demarcacao basica.
+O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao dentro do panorama da fazenda, nao uma experiencia separada para o usuario. Tambem ja define, para a primeira versao de testes, que os materiais tecnicos liberaveis devem ser organizados por fazenda, campo/talhao, recorte temporal e elemento/camada quando aplicavel, priorizando diagnosticos como fertilidade por argila, fosforo, pH, potassio e materia organica.
+
+O que permanece pendente e a taxonomia final das categorias de materiais tecnicos alem desse corte inicial, os nomes finais de todos os elementos/camadas e a forma de evoluir panoramas alem da demarcacao basica.
 
 ### 5. Experiencia detalhada do produtor
 
@@ -117,15 +119,17 @@ Sem esse fechamento, o projeto corre risco de descrever offline de forma mais am
 
 ### 10. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
-O produto ja depende de mapas e arquivos no contexto da fazenda, mas ainda faltam definicoes sobre:
+O produto ja depende de mapas e arquivos no contexto da fazenda. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
 
-- quais tipos de material entram no fluxo principal
+Ainda faltam definicoes sobre:
+
 - qual o nivel minimo de tratamento desses materiais no MVP
 - como separar consulta simples de manutencao operacional do acervo
+- pipeline produtivo para receber arquivos do acervo/drive, validar, armazenar, liberar e manter historico
 
 Decisao ja assumida para o MVP: o app deve consumir uma demarcacao final normalizada, preferencialmente GeoJSON ou JSON equivalente, e nao carregar o pacote bruto de origem no dispositivo. Ainda falta definir o pipeline de producao para conversao, validacao, armazenamento, permissao e publicacao desses arquivos finais.
 
-Estado atual do teste local: existe uma amostragem da Fazenda Sela de Prata I convertida a partir de shapefile para validar a exibicao dos talhoes no mock. Esse conversor local nao fecha a estrategia produtiva; ele apenas prova o formato de entrada esperado pelo app.
+Estado atual do teste local: existe uma amostragem da Fazenda Sela de Prata I convertida a partir de shapefile para validar a exibicao dos talhoes no mock. Essa amostra possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, mas o conversor local nao fecha a estrategia produtiva; ele apenas prova o formato de entrada esperado pelo app e o registro minimo de revisao.
 
 ## Regra de Governanca
 
