@@ -131,6 +131,18 @@ Decisao ja assumida para o MVP: o app deve consumir uma demarcacao final normali
 
 Estado atual do teste local: existe uma amostragem da Fazenda Sela de Prata I convertida a partir de shapefile para validar a exibicao dos talhoes no mock. Essa amostra possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, mas o conversor local nao fecha a estrategia produtiva; ele apenas prova o formato de entrada esperado pelo app e o registro minimo de revisao.
 
+Estado atual dos anexos visuais: existe uma amostra pequena de PNGs de fertilidade da Fazenda Sela de Prata I cadastrada manualmente no mock como registros da entidade `Mapa`. Esses PNGs sao assets internos do app apenas para validacao visual do MVP. Eles nao representam upload real, cadastro administrativo completo, persistencia em banco/storage, API de anexos, importacao automatica ou gestao completa do acervo.
+
+Permanece pendente definir e implementar:
+
+- fluxo administrativo real para cadastrar/liberar PNGs e outros anexos
+- estrategia de armazenamento persistente dos arquivos
+- API/backend para anexos de mapas
+- regras de permissao por acao para criacao, edicao, remocao, liberacao e download
+- tratamento de versoes, historico e revisao dos materiais
+- pipeline produtivo para receber, validar, armazenar e publicar materiais tecnicos
+- separacao clara entre amostras mockadas e acervo operacional real
+
 ## Regra de Governanca
 
 Uma pendencia deve sair deste documento quando ocorrer uma destas situacoes:
