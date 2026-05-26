@@ -92,6 +92,21 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 
 O estado atual desta frente e um MVP visual/mockado. Ele serve para validar a experiencia minima de consulta dentro do app, mas nao representa uma implementacao completa de insercao, upload, catalogacao ou gestao de arquivos.
 
+Status do teste manual interno em 2026-05-26: a frente visual/mockada de mapas e anexos da Fazenda Sela de Prata I passou no teste manual do MVP.
+
+Fluxo validado:
+
+- login como produtor da Sela de Prata I
+- acesso a fazenda
+- abertura do mapa base dos talhoes
+- toque em talhao com exibicao de nome/codigo
+- abertura da tela de mapas/anexos
+- filtro de Fertilidade
+- abertura dos cinco PNGs da amostra: pH, Argila, Materia Organica, Fosforo e Potassio
+- exibicao da profundidade `10-20 cm`
+
+Esse resultado valida apenas a experiencia visual/mockada prevista para o MVP atual. Ele nao significa que upload, backend, storage, pipeline de importacao, cadastro administrativo real ou gestao completa de arquivos estejam implementados.
+
 O mapa interativo da fazenda usa apenas talhoes/limites vindos de `LimiteArea`, alimentados pelo GeoJSON normalizado de `src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de `data/processados/p_sela1/2025/limites_talhoes.geojson`.
 
 Os mapas de elementos de fertilidade sao registros mockados da entidade `Mapa`. Na amostra atual, os PNGs ficam como anexos visuais internos do app em `src/assets/mapas/sela-prata-i/2025/fertilidade/`. Esses PNGs nao sao camadas georreferenciadas e nao sao sobrepostos ao mapa. Eles devem ser tratados apenas como imagens/anexos para consulta.
@@ -105,6 +120,10 @@ Nao existe ainda:
 - pipeline de importacao automatica
 - leitura/importacao de todos os arquivos da pasta `PANORAMA-DAS-LAVOURAS`
 - gestao completa de versoes, liberacao, historico ou revisao do acervo
+
+A proxima evolucao de arquivos reais permanece pendente e deve tratar fluxo administrativo, persistencia, storage/backend, permissoes por acao e pipeline produtivo de recebimento, validacao e publicacao.
+
+Documento de fechamento: `docs/project/fechamento-mapas-anexos-sela-prata-i.md`.
 
 ## Fechamento Formal Da Fase 2
 
