@@ -97,7 +97,7 @@ const ELEMENTO_LABELS: Record<string, string> = {
   ph: 'pH',
   fosforo: 'Fósforo',
   potassio: 'Potássio',
-  materia_organica: 'Matéria orgânica',
+  materia_organica: 'Matéria orgânica (MO)',
   calcio: 'Cálcio',
   magnesio: 'Magnésio',
   ctc: 'CTC',
@@ -621,6 +621,17 @@ export default function MapasScreen({ route, navigation }) {
   const areaLimitesFiltrados = limitesFiltrados
     .reduce((s, l) => s + (l.area_hectares || 0), 0)
     .toFixed(1);
+  const materiaisSaoFertilidade = categoriaAtiva === 'fertilidade'
+    || (
+      mapasNoContexto.length > 0
+      && mapasNoContexto.every((mapa) => mapa.categoria === 'fertilidade')
+    );
+  const tituloSecaoMateriais = materiaisSaoFertilidade
+    ? 'Anexos de Fertilidade'
+    : 'Anexos e materiais técnicos';
+  const subtituloSecaoMateriais = materiaisSaoFertilidade
+    ? 'Imagens/anexos de fertilidade disponíveis para consulta.'
+    : 'Arquivos técnicos disponíveis para consulta.';
 
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
@@ -653,6 +664,16 @@ export default function MapasScreen({ route, navigation }) {
     return Number.isFinite(tamanho) && tamanho > 0;
   };
 
+  const getFormatoArquivo = (mapa) =>
+    typeof mapa?.formato_arquivo === 'string' ? mapa.formato_arquivo.trim().toLowerCase() : '';
+
+  const isFormatoImagem = (formato) => ['png', 'jpg', 'jpeg'].includes(formato);
+
+  const formatarTipoMaterial = (tipo) => {
+    if (tipo === 'diagnostico') return 'Diagnóstico';
+    return typeof tipo === 'string' && tipo.trim() ? tipo.trim() : '';
+  };
+
   const getIconeFormato = (formato) => {
     switch (formato) {
       case 'pdf': return 'document-text';
@@ -666,6 +687,20 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
+  const renderMapaMetaChip = (icon, label, value) => {
+    if (!value) return null;
+
+    return (
+      <View key={label} style={styles.mapaMetaChip}>
+        <Ionicons name={icon as any} size={13} color={colors.primary} />
+        <View style={styles.mapaMetaTextos}>
+          <Text style={styles.mapaMetaLabel}>{label}</Text>
+          <Text style={styles.mapaMetaValor} numberOfLines={1}>{value}</Text>
+        </View>
+      </View>
+    );
+  };
+
   // ──────────────────────────────────────────────
   // RENDER: Card de Mapa
   // ──────────────────────────────────────────────
@@ -674,9 +709,20 @@ export default function MapasScreen({ route, navigation }) {
     const elementoLabel = getMapaElementoLabel(mapa);
     const profundidadeMapa = getMapaProfundidade(mapa);
     const statusDownload = avaliarDownloadMapa(mapa);
-    const fazendaMapaInfo = !consultaPorFazenda
-      ? fazendaInfoPorId.get(getMapaFazendaId(mapa))
-      : null;
+    const formatoArquivo = getFormatoArquivo(mapa);
+    const formatoLabel = formatoArquivo ? formatoArquivo.toUpperCase() : 'ARQ';
+    const isImagemAnexo = isFormatoImagem(formatoArquivo);
+    const tipoMaterialLabel = formatarTipoMaterial(mapa.tipo_material);
+    const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
+      || fazendaContextoInfo
+      || fazendaFiltroInfo;
+    const mapaMetaChips = [
+      renderMapaMetaChip('flask-outline', 'Elemento', elementoLabel),
+      renderMapaMetaChip('resize-outline', 'Profundidade', profundidadeMapa),
+      renderMapaMetaChip('calendar-outline', 'Safra/ano', safraMapa || formatarData(mapa.data_criacao)),
+      renderMapaMetaChip('location-outline', 'Talhão', mapa.talhao),
+      renderMapaMetaChip('home-outline', 'Fazenda', fazendaMapaInfo?.fazendaNome),
+    ].filter(Boolean);
 
     return (
       <TouchableOpacity 
@@ -688,45 +734,35 @@ export default function MapasScreen({ route, navigation }) {
       <View style={styles.mapaHeader}>
         <View style={styles.mapaIconContainer}>
           <Ionicons 
-            name={getIconeFormato(mapa.formato_arquivo)} 
+            name={getIconeFormato(formatoArquivo)}
             size={28} 
             color={colors.primary} 
           />
         </View>
         <View style={styles.mapaInfo}>
           <Text style={styles.mapaTitulo} numberOfLines={2}>{mapa.titulo}</Text>
-          {elementoLabel && (
-            <Text style={styles.mapaSubcategoria}>Elemento/camada: {elementoLabel}</Text>
-          )}
+          <View style={styles.mapaTipoLinha}>
+            <View style={[styles.mapaTipoTag, isImagemAnexo && styles.mapaTipoTagImagem]}>
+              <Ionicons
+                name={isImagemAnexo ? 'image-outline' : 'document-outline'}
+                size={13}
+                color={isImagemAnexo ? colors.info : colors.primary}
+              />
+              <Text style={[styles.mapaTipoTexto, isImagemAnexo && styles.mapaTipoTextoImagem]}>
+                {isImagemAnexo ? `Imagem/anexo ${formatoLabel}` : `Arquivo ${formatoLabel}`}
+              </Text>
+            </View>
+            {tipoMaterialLabel ? (
+              <Text style={styles.mapaSubcategoria}>{tipoMaterialLabel}</Text>
+            ) : null}
+          </View>
           {fazendaMapaInfo && (
             <Text style={styles.mapaContexto} numberOfLines={1}>
               Fazenda: {fazendaMapaInfo.fazendaNome} • Titular: {fazendaMapaInfo.titularNome || 'Não informado'}
             </Text>
           )}
-          <View style={styles.mapaDetalhes}>
-            <Text style={styles.mapaDetalhe}>
-              <Ionicons name="calendar-outline" size={14} color={colors.secondary} /> {formatarData(mapa.data_criacao)}
-            </Text>
-            {safraMapa && (
-              <Text style={styles.mapaDetalhe}>
-                <Ionicons name="leaf-outline" size={14} color={colors.secondary} /> Safra {safraMapa}
-              </Text>
-            )}
-            {mapa.talhao && (
-              <Text style={styles.mapaDetalhe}>
-                <Ionicons name="location-outline" size={14} color={colors.secondary} /> Campo/talhão {mapa.talhao}
-              </Text>
-            )}
-            {profundidadeMapa && (
-              <Text style={styles.mapaDetalhe}>
-                <Ionicons name="resize-outline" size={14} color={colors.secondary} /> Profundidade {profundidadeMapa}
-              </Text>
-            )}
-            {mapa.tipo_material && (
-              <Text style={styles.mapaDetalhe}>
-                <Ionicons name="layers-outline" size={14} color={colors.secondary} /> {mapa.tipo_material}
-              </Text>
-            )}
+          <View style={styles.mapaMetaGrid}>
+            {mapaMetaChips}
           </View>
         </View>
       </View>
@@ -737,7 +773,7 @@ export default function MapasScreen({ route, navigation }) {
 
       <View style={styles.mapaFooter}>
         <View style={styles.mapaFormatoTag}>
-          <Text style={styles.mapaFormatoTexto}>{mapa.formato_arquivo?.toUpperCase() || 'ARQ'}</Text>
+          <Text style={styles.mapaFormatoTexto}>{isImagemAnexo ? 'ANEXO' : formatoLabel}</Text>
         </View>
         {hasTamanhoArquivo(mapa.tamanho_arquivo) && (
           <Text style={styles.mapaTamanho}>{formatarTamanho(mapa.tamanho_arquivo)}</Text>
@@ -755,7 +791,7 @@ export default function MapasScreen({ route, navigation }) {
             styles.downloadTexto,
             !statusDownload.podeAbrir && styles.downloadTextoIndisponivel,
           ]}>
-            {statusDownload.label}
+            {statusDownload.podeAbrir && isImagemAnexo ? 'Abrir imagem' : statusDownload.label}
           </Text>
         </View>
       </View>
@@ -1012,11 +1048,11 @@ export default function MapasScreen({ route, navigation }) {
       {limitesFiltrados.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="git-network-outline" size={80} color={colors.muted} />
-          <Text style={styles.emptyText}>Nenhuma demarcação carregada</Text>
+          <Text style={styles.emptyText}>Nenhum mapa de talhões disponível</Text>
           <Text style={styles.emptySubtext}>
             {temFiltroPanoramaAtivo
               ? 'Tente ajustar fazenda, talhão, demarcação ou busca.'
-              : 'Suba o arquivo final de demarcação para gerar o panorama da fazenda.'}
+              : 'Quando a demarcação da fazenda estiver liberada, ela aparecerá aqui.'}
           </Text>
         </View>
       ) : (
@@ -1040,11 +1076,11 @@ export default function MapasScreen({ route, navigation }) {
               <Ionicons name="earth" size={22} color={colors.white} />
             </View>
             <View style={styles.btnMapaSateliteTextos}>
-              <Text style={styles.btnMapaSateliteTitulo}>Ver no Mapa</Text>
+              <Text style={styles.btnMapaSateliteTitulo}>Abrir mapa dos talhões</Text>
               <Text style={styles.btnMapaSateliteSubtitulo}>
                 {mapaSateliteFazendaInfo
-                  ? `Abrir panorama de ${mapaSateliteFazendaInfo.fazendaNome}`
-                  : 'Abrir panorama dos talhões acessíveis'}
+                  ? `${mapaSateliteFazendaInfo.fazendaNome}`
+                  : 'Talhões acessíveis no escopo atual'}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.primary} />
@@ -1054,7 +1090,7 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.shapeSection}>
             <View style={styles.shapeSectionHeader}>
               <Ionicons name="git-network-outline" size={20} color={colors.primary} />
-              <Text style={styles.shapeSectionTitle}>Panorama dos Talhões</Text>
+              <Text style={styles.shapeSectionTitle}>Mapa dos Talhões</Text>
               {anoFiltroLimite && (
                 <View style={styles.anoTag}>
                   <Text style={styles.anoTagText}>LT {anoFiltroLimite}</Text>
@@ -1074,7 +1110,7 @@ export default function MapasScreen({ route, navigation }) {
           {/* Lista de Talhões */}
           <View style={styles.talhaoListSection}>
             <Text style={styles.talhaoListTitle}>
-              <Ionicons name="list-outline" size={18} color={colors.primary} /> Talhões do panorama
+              <Ionicons name="list-outline" size={18} color={colors.primary} /> Talhões do mapa
             </Text>
             {limitesFiltrados.map(talhao => renderTalhaoCard(talhao))}
           </View>
@@ -1083,12 +1119,13 @@ export default function MapasScreen({ route, navigation }) {
 
       <View style={styles.materiaisSection}>
         <View style={styles.shapeSectionHeader}>
-          <Ionicons name="folder-open-outline" size={20} color={colors.primary} />
-          <Text style={styles.shapeSectionTitle}>Materiais técnicos associados</Text>
+          <Ionicons name="images-outline" size={20} color={colors.primary} />
+          <Text style={styles.shapeSectionTitle}>{tituloSecaoMateriais}</Text>
           <View style={styles.anoTag}>
             <Text style={styles.anoTagText}>{mapasFiltrados.length}</Text>
           </View>
         </View>
+        <Text style={styles.sectionSubtitle}>{subtituloSecaoMateriais}</Text>
       </View>
 
       {/* Filtros de Categoria */}
@@ -1174,12 +1211,16 @@ export default function MapasScreen({ route, navigation }) {
             color={colors.muted}
           />
           <Text style={styles.emptyText}>
-            {temFiltroMaterialAtivo ? 'Nenhum material encontrado' : 'Nenhum material associado'}
+            {temFiltroMaterialAtivo
+              ? 'Nenhum anexo encontrado'
+              : materiaisSaoFertilidade
+                ? 'Nenhum anexo de fertilidade disponível'
+                : 'Nenhum material disponível'}
           </Text>
           <Text style={styles.emptySubtext}>
             {temFiltroMaterialAtivo
               ? 'Tente ajustar safra, talhão, categoria ou busca.'
-              : 'Os arquivos técnicos podem ser associados por campo/talhão e elemento quando houver uma URL abrível.'}
+              : 'Quando imagens ou arquivos técnicos forem liberados para este contexto, eles aparecerão aqui.'}
           </Text>
         </View>
       ) : (
@@ -2100,12 +2141,44 @@ const styles = StyleSheet.create({
   },
   mapaInfo: {
     flex: 1,
+    minWidth: 0,
   },
   mapaTitulo: {
     fontSize: typography.fontBody + 1,
     fontWeight: typography.weightBold,
     color: colors.text,
     marginBottom: 3,
+  },
+  mapaTipoLinha: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  mapaTipoTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.accent,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
+  mapaTipoTagImagem: {
+    backgroundColor: colors.infoLight,
+    borderColor: colors.info + '40',
+  },
+  mapaTipoTexto: {
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    fontWeight: typography.weightBold,
+  },
+  mapaTipoTextoImagem: {
+    color: colors.info,
   },
   mapaSubcategoria: {
     fontSize: typography.fontCaption + 1,
@@ -2128,6 +2201,39 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.textLight,
     fontWeight: typography.weightSemibold,
+  },
+  mapaMetaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  mapaMetaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    maxWidth: '100%',
+  },
+  mapaMetaTextos: {
+    minWidth: 0,
+    maxWidth: 150,
+  },
+  mapaMetaLabel: {
+    fontSize: typography.fontSmall,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold,
+  },
+  mapaMetaValor: {
+    fontSize: typography.fontCaption,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+    marginTop: 1,
   },
   mapaObservacao: {
     fontSize: typography.fontCaption + 1,
@@ -2208,8 +2314,17 @@ const styles = StyleSheet.create({
 
   materiaisSection: {
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    paddingTop: spacing.lg,
+    marginTop: spacing.sm,
     marginBottom: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  sectionSubtitle: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    lineHeight: 18,
+    marginTop: -spacing.sm,
   },
 
   // ── SHAPE SECTION ──
