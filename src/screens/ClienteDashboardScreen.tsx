@@ -164,6 +164,13 @@ export default function ClienteDashboardScreen() {
     }
   };
 
+  const abrirFazenda = (fazenda) => {
+    const fazendaId = getFazendaId(fazenda);
+    if (fazendaId) {
+      navigation.navigate('ProdutorDetail', { id: fazendaId });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Header title="Minhas Fazendas" />
@@ -213,7 +220,12 @@ export default function ClienteDashboardScreen() {
           const fazendaInfo = getFazendaUiInfo(prop);
 
           return (
-            <View key={getFazendaId(prop)} style={styles.propriedadeCard}>
+            <TouchableOpacity
+              key={getFazendaId(prop)}
+              style={styles.propriedadeCard}
+              onPress={() => abrirFazenda(prop)}
+              activeOpacity={0.86}
+            >
               <View style={styles.propriedadeHeader}>
                 <Ionicons name="home-outline" size={40} color={colors.primary} />
                 <View style={styles.propriedadeInfo}>
@@ -226,7 +238,11 @@ export default function ClienteDashboardScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
+              <View style={styles.propriedadeAction}>
+                <Text style={styles.propriedadeActionText}>Abrir fazenda</Text>
+                <Ionicons name="chevron-forward-outline" size={18} color={colors.primary} />
+              </View>
+            </TouchableOpacity>
           );
         })}
 
@@ -502,6 +518,20 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.textLight,
     fontWeight: typography.weightMedium,
+  },
+  propriedadeAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: spacing.xs,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  propriedadeActionText: {
+    fontSize: typography.fontBody - 1,
+    color: colors.primary,
+    fontWeight: typography.weightBold,
   },
   statsGrid: {
     marginBottom: spacing.lg,
