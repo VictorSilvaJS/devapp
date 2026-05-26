@@ -39,6 +39,8 @@ import {
 } from '../assets/geojson/selaDePrata1Talhoes';
 
 const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
+const SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL =
+  'asset://mapas/sela-prata-i/2025/fertilidade';
 
 // Usuários do sistema
 // NOTA: "produtor" = "cliente" = "proprietário" - mesma pessoa (dono da fazenda)
@@ -184,6 +186,17 @@ const users = [
     telefone: '(55) 95555-5555',
     ativo: true,
     data_cadastro: new Date('2024-05-10').toISOString()
+  },
+  {
+    id: 'u_sela1',
+    nome: 'Fazenda Sela de Prata I',
+    email: 'seladeprataI@agrotche.com',
+    senha: 'prod123',
+    perfil: 'produtor',
+    produtor_id: 'prop_sela1',
+    telefone: '(66) 99000-0001',
+    ativo: true,
+    data_cadastro: new Date('2024-05-15').toISOString()
   }
 ];
 
@@ -1041,80 +1054,101 @@ const mapas: any[] = [
     observacoes: 'Análise de fertilidade do solo - Anápolis.'
   },
   // ─── Materiais técnicos da Fazenda Sela de Prata I ───
-  // MVP: um arquivo técnico por fazenda + talhão/campo + elemento/camada.
+  // MVP: PNGs de fertilidade como anexos visuais; nao sao sobrepostos ao mapa.
   {
-    id: 'm_sela1_t01_argila_2025',
-    titulo: 'Argila - T01 - 230',
-    categoria: 'fertilidade',
-    subcategoria: 'Argila',
-    tipo_material: 'diagnostico',
-    elemento: 'argila',
-    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'T01 - 230',
-    data_criacao: new Date('2025-06-05').toISOString(),
-    safra: '2025/2026',
-    arquivo_url: 'https://drive.google.com/file/d/mock-sela1-t01-argila-2025/view',
-    formato_arquivo: 'pdf',
-    tamanho_arquivo: 1840000,
-    disponivel_download: true,
-    coordenadas: { latitude: -10.3018, longitude: -55.3451 },
-    observacoes: 'Arquivo técnico liberado para consulta/download do produtor.'
-  },
-  {
-    id: 'm_sela1_t01_ph_2025',
-    titulo: 'pH - T01 - 230',
+    id: 'm_sela1_ph_10a20_2025',
+    titulo: 'pH - Fazenda Sela de Prata I',
     categoria: 'fertilidade',
     subcategoria: 'pH',
     tipo_material: 'diagnostico',
     elemento: 'ph',
+    profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'T01 - 230',
+    talhao: 'Fazenda inteira',
     data_criacao: new Date('2025-06-05').toISOString(),
-    safra: '2025/2026',
-    arquivo_url: 'https://drive.google.com/file/d/mock-sela1-t01-ph-2025/view',
-    formato_arquivo: 'pdf',
-    tamanho_arquivo: 1760000,
+    safra: '2025',
+    arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/ph_10a20.png`,
+    formato_arquivo: 'png',
+    tamanho_arquivo: 206215,
     disponivel_download: true,
-    coordenadas: { latitude: -10.3018, longitude: -55.3451 },
-    observacoes: 'Diagnóstico de pH associado ao campo/talhão informado.'
+    observacoes: 'Anexo visual de fertilidade. Arquivo original: PH_10a20.'
   },
   {
-    id: 'm_sela1_t02_fosforo_2025',
-    titulo: 'Fósforo - T02 - Sede Nova',
+    id: 'm_sela1_argila_10a20_2025',
+    titulo: 'Argila - Fazenda Sela de Prata I',
+    categoria: 'fertilidade',
+    subcategoria: 'Argila',
+    tipo_material: 'diagnostico',
+    elemento: 'argila',
+    profundidade: '10-20 cm',
+    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    talhao: 'Fazenda inteira',
+    data_criacao: new Date('2025-06-05').toISOString(),
+    safra: '2025',
+    arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/ar_10a20.png`,
+    formato_arquivo: 'png',
+    tamanho_arquivo: 229387,
+    disponivel_download: true,
+    observacoes: 'Anexo visual de fertilidade. Arquivo original: AR_10a20.'
+  },
+  {
+    id: 'm_sela1_materia_organica_10a20_2025',
+    titulo: 'Matéria Orgânica - Fazenda Sela de Prata I',
+    categoria: 'fertilidade',
+    subcategoria: 'Matéria Orgânica',
+    tipo_material: 'diagnostico',
+    elemento: 'materia_organica',
+    profundidade: '10-20 cm',
+    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    talhao: 'Fazenda inteira',
+    data_criacao: new Date('2025-06-05').toISOString(),
+    safra: '2025',
+    arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/mo_10a20.png`,
+    formato_arquivo: 'png',
+    tamanho_arquivo: 216527,
+    disponivel_download: true,
+    observacoes: 'Anexo visual de fertilidade. Arquivo original: MO_10a20.'
+  },
+  {
+    id: 'm_sela1_fosforo_10a20_2025',
+    titulo: 'Fósforo - Fazenda Sela de Prata I',
     categoria: 'fertilidade',
     subcategoria: 'Fósforo',
     tipo_material: 'diagnostico',
     elemento: 'fosforo',
+    profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'T02 - Sede Nova',
-    data_criacao: new Date('2025-06-06').toISOString(),
-    safra: '2025/2026',
-    arquivo_url: 'https://drive.google.com/file/d/mock-sela1-t02-fosforo-2025/view',
-    formato_arquivo: 'pdf',
-    tamanho_arquivo: 1920000,
+    talhao: 'Fazenda inteira',
+    data_criacao: new Date('2025-06-05').toISOString(),
+    safra: '2025',
+    arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/pp_10a20.png`,
+    formato_arquivo: 'png',
+    tamanho_arquivo: 220223,
     disponivel_download: true,
-    coordenadas: { latitude: -10.3072, longitude: -55.3424 },
-    observacoes: 'Diagnóstico de fósforo disponível para o produtor.'
+    observacoes: 'Anexo visual de fertilidade. Arquivo original: PP_10a20.'
   },
   {
-    id: 'm_sela1_t02_potassio_2025',
-    titulo: 'Potássio - T02 - Sede Nova',
+    id: 'm_sela1_potassio_10a20_2025',
+    titulo: 'Potássio - Fazenda Sela de Prata I',
     categoria: 'fertilidade',
     subcategoria: 'Potássio',
     tipo_material: 'diagnostico',
     elemento: 'potassio',
+    profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'T02 - Sede Nova',
-    data_criacao: new Date('2025-06-06').toISOString(),
-    safra: '2025/2026',
-    disponivel_download: false,
-    formato_arquivo: 'pdf',
-    coordenadas: { latitude: -10.3072, longitude: -55.3424 },
-    observacoes: 'Material identificado, mas ainda sem arquivo liberado pela equipe.'
+    talhao: 'Fazenda inteira',
+    data_criacao: new Date('2025-06-05').toISOString(),
+    safra: '2025',
+    arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/kk_10a20.png`,
+    formato_arquivo: 'png',
+    tamanho_arquivo: 205197,
+    disponivel_download: true,
+    observacoes: 'Anexo visual de fertilidade. Arquivo original: KK_10a20.'
   }
 ];
 

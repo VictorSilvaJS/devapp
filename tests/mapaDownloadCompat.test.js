@@ -26,6 +26,7 @@ const run = async () => {
     assert.equal(isMapaArquivoUrlUsavel('file:///tmp/mapa.pdf'), true);
     assert.equal(isMapaArquivoUrlUsavel('content://downloads/mapa.pdf'), true);
     assert.equal(isMapaArquivoUrlUsavel('data:application/pdf;base64,abc'), true);
+    assert.equal(isMapaArquivoUrlUsavel('asset://mapas/sela-prata-i/2025/fertilidade/mapa.png'), true);
     assert.equal(isMapaArquivoUrlUsavel('mapas/fertilidade_p1.pdf'), false);
     assert.equal(isMapaArquivoUrlUsavel(''), false);
   });
@@ -51,6 +52,7 @@ const run = async () => {
     assert.equal(inferFormatoArquivoFromUrl('https://cdn.exemplo.com/mapa.PDF?token=1'), 'pdf');
     assert.equal(inferFormatoArquivoFromUrl('file:///tmp/panorama.jpeg'), 'jpg');
     assert.equal(inferFormatoArquivoFromUrl('data:application/pdf;base64,abc'), 'pdf');
+    assert.equal(inferFormatoArquivoFromUrl('asset://mapas/sela-prata-i/2025/fertilidade/mapa.png'), 'png');
   });
 
   await test('buildMapaArquivoAssociacaoPayload monta update compatível para URL real', () => {
@@ -74,7 +76,7 @@ const run = async () => {
   await test('buildMapaArquivoAssociacaoPayload rejeita caminho relativo e tamanho inválido', () => {
     assert.deepEqual(buildMapaArquivoAssociacaoPayload({ arquivoUrl: 'mapas/local.pdf' }), {
       ok: false,
-      mensagem: 'Informe uma URL abrível, como https://, file://, content:// ou data:.',
+      mensagem: 'Informe uma URL abrível, como https://, file://, content://, data: ou asset://.',
     });
 
     assert.deepEqual(
@@ -98,6 +100,21 @@ const run = async () => {
     assert.deepEqual(status, {
       podeAbrir: true,
       arquivoUrl: 'https://cdn.exemplo.com/mapa.pdf',
+      motivo: 'disponivel',
+      label: 'Abrir material',
+      descricao: 'Material com URL abrível disponível.',
+    });
+  });
+
+  await test('avaliarDownloadMapa libera asset interno do app', () => {
+    const status = avaliarDownloadMapa({
+      disponivel_download: true,
+      arquivo_url: 'asset://mapas/sela-prata-i/2025/fertilidade/mapa.png',
+    });
+
+    assert.deepEqual(status, {
+      podeAbrir: true,
+      arquivoUrl: 'asset://mapas/sela-prata-i/2025/fertilidade/mapa.png',
       motivo: 'disponivel',
       label: 'Abrir material',
       descricao: 'Material com URL abrível disponível.',

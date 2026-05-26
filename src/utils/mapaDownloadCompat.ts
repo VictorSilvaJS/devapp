@@ -34,7 +34,7 @@ export type MapaArquivoAssociacaoResult =
       mensagem: string;
     };
 
-const URL_SCHEMES_ABRIVEIS = ['http:', 'https:', 'file:', 'content:', 'data:'];
+const URL_SCHEMES_ABRIVEIS = ['http:', 'https:', 'file:', 'content:', 'data:', 'asset:'];
 
 const firstNonEmptyString = (...values: unknown[]): string | undefined => {
   for (const value of values) {
@@ -71,6 +71,10 @@ export const isMapaArquivoUrlUsavel = (value?: unknown): boolean => {
     return false;
   }
 
+  if (arquivoUrl.startsWith('asset://')) {
+    return true;
+  }
+
   try {
     const parsed = new URL(arquivoUrl);
     return URL_SCHEMES_ABRIVEIS.includes(parsed.protocol);
@@ -89,6 +93,11 @@ export const inferFormatoArquivoFromUrl = (value?: unknown): string | undefined 
     const mime = arquivoUrl.match(/^data:([^;,]+)/)?.[1];
     const subtype = mime?.split('/')[1]?.toLowerCase();
     return subtype === 'jpeg' ? 'jpg' : subtype;
+  }
+
+  if (arquivoUrl.startsWith('asset://')) {
+    const extension = arquivoUrl.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+    return extension === 'jpeg' ? 'jpg' : extension;
   }
 
   try {
@@ -116,7 +125,7 @@ export const buildMapaArquivoAssociacaoPayload = (
   if (!isMapaArquivoUrlUsavel(arquivoUrl)) {
     return {
       ok: false,
-      mensagem: 'Informe uma URL abrível, como https://, file://, content:// ou data:.',
+      mensagem: 'Informe uma URL abrível, como https://, file://, content://, data: ou asset://.',
     };
   }
 

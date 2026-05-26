@@ -26,6 +26,10 @@
       "type": "string",
       "description": "Elemento ou camada representado pelo arquivo técnico quando aplicável, como argila, ph, fosforo, potassio ou materia_organica."
     },
+    "profundidade": {
+      "type": "string",
+      "description": "Profundidade da amostra ou medição quando essa informação vier no nome do arquivo, como 10-20 cm."
+    },
     "formato_arquivo": {
       "type": "string",
       "enum": ["pdf", "dwg", "shp", "kml", "geotiff", "png", "jpg"],

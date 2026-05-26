@@ -143,6 +143,11 @@ export interface MapaCanonico {
    * Ex.: argila, fosforo, ph, potassio.
    */
   elemento?: string;
+  /**
+   * Profundidade da amostra/medicao quando ela estiver no nome do arquivo.
+   * Ex.: 10-20 cm.
+   */
+  profundidade?: string;
   data_criacao?: string;
   safra?: string;
   arquivo_url?: string;
@@ -264,6 +269,7 @@ export interface MapaLegado {
   talhao?: string;
   tipo_material?: string;
   elemento?: string;
+  profundidade?: string;
   data_criacao?: string;
   safra?: string;
   arquivo_url?: string;

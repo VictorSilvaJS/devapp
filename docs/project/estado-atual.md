@@ -53,7 +53,9 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - a visualizacao atual prioriza mostrar a demarcacao; quando o mapa-base nao carrega, ha fallback vetorial local para os shapes
 - o mock atual da Fazenda Sela de Prata I usa demarcacao derivada de shapefile real convertida previamente para GeoJSON/JSON em `data/processados/p_sela1/2025/limites_talhoes.geojson` e `src/assets/geojson/selaDePrata1Talhoes.ts`
 - a importacao controlada da Fazenda Sela de Prata I possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, registrando campos de origem, campo de nome usado, contagens e status de revisao da amostra
-- a biblioteca mock de mapas agora aceita material tecnico por `fazenda_id`, campo/talhao e elemento/camada; a Fazenda Sela de Prata I possui exemplos de arquivos de diagnostico de fertilidade por argila, pH, fosforo e um item pendente de potassio
+- a biblioteca mock de mapas agora aceita material tecnico por `fazenda_id`, campo/talhao e elemento/camada; a Fazenda Sela de Prata I possui uma amostra pequena de PNGs de diagnostico de fertilidade como anexos visuais por pH, argila, materia organica, fosforo e potassio
+- a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
+- `MapasScreen.tsx` exibe a profundidade quando informada e pode abrir os PNGs internos da amostra da Fazenda Sela de Prata I como imagem/anexo
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -66,16 +68,43 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - frente funcional de `Produtor` / `Fazenda` concluida no nivel necessario para o MVP atual
 - frente funcional de visitas tecnicas por fazenda e caderno de campo por fazenda validada no nivel necessario para o MVP atual
 - visualizacao de panorama/mapas e detalhe de fazenda
+- mapa base dos talhoes da Fazenda Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
+- clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
+- registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da Fazenda Sela de Prata I
+- exibicao de profundidade em materiais de mapa quando o campo opcional estiver preenchido
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
 - autenticacao real
 - backend real
 - upload real de arquivos
+- cadastro administrativo real de PNGs ou outros anexos tecnicos
+- salvamento persistente de anexos em banco, storage local gerenciado ou storage remoto
+- API/backend para anexos de mapas
+- importacao automatica dos arquivos da pasta de origem
+- gestao completa do acervo de arquivos tecnicos
 - notificacoes push reais
 - sincronizacao offline de verdade
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
+
+## Estado Atual Dos Mapas Da Fazenda Sela De Prata I
+
+O estado atual desta frente e um MVP visual/mockado. Ele serve para validar a experiencia minima de consulta dentro do app, mas nao representa uma implementacao completa de insercao, upload, catalogacao ou gestao de arquivos.
+
+O mapa interativo da fazenda usa apenas talhoes/limites vindos de `LimiteArea`, alimentados pelo GeoJSON normalizado de `src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de `data/processados/p_sela1/2025/limites_talhoes.geojson`.
+
+Os mapas de elementos de fertilidade sao registros mockados da entidade `Mapa`. Na amostra atual, os PNGs ficam como anexos visuais internos do app em `src/assets/mapas/sela-prata-i/2025/fertilidade/`. Esses PNGs nao sao camadas georreferenciadas e nao sao sobrepostos ao mapa. Eles devem ser tratados apenas como imagens/anexos para consulta.
+
+Nao existe ainda:
+
+- upload real de arquivo pelo admin ou colaborador
+- cadastro administrativo persistente de PNG/anexo
+- persistencia real em banco ou storage
+- API/backend para anexos
+- pipeline de importacao automatica
+- leitura/importacao de todos os arquivos da pasta `PANORAMA-DAS-LAVOURAS`
+- gestao completa de versoes, liberacao, historico ou revisao do acervo
 
 ## Fechamento Formal Da Fase 2
 

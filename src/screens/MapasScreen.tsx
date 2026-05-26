@@ -10,7 +10,8 @@ import {
   RefreshControl,
   Modal,
   Dimensions,
-  Linking
+  Linking,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -44,6 +45,7 @@ import {
   avaliarDownloadMapa,
   buildMapaArquivoAssociacaoPayload,
 } from '../utils/mapaDownloadCompat';
+import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -86,6 +88,9 @@ const getMapaSafra = (mapa: any): string => {
 
 const getMapaTalhao = (mapa: any): string =>
   typeof mapa?.talhao === 'string' ? mapa.talhao.trim() : '';
+
+const getMapaProfundidade = (mapa: any): string =>
+  typeof mapa?.profundidade === 'string' ? mapa.profundidade.trim() : '';
 
 const ELEMENTO_LABELS: Record<string, string> = {
   argila: 'Argila',
@@ -155,6 +160,11 @@ export default function MapasScreen({ route, navigation }) {
     visible: false,
     mapa: null,
     status: null,
+  });
+  const [imagePreview, setImagePreview] = useState<any>({
+    visible: false,
+    mapa: null,
+    source: null,
   });
   const [uploadDialog, setUploadDialog] = useState(false);
   const [uploadMapaId, setUploadMapaId] = useState('');
@@ -340,6 +350,7 @@ export default function MapasScreen({ route, navigation }) {
       const fazendaInfo = fazendaInfoPorId.get(getMapaFazendaId(m));
       const safraMapa = getMapaSafra(m);
       const talhaoMapa = getMapaTalhao(m);
+      const profundidadeMapa = getMapaProfundidade(m);
       const matchCategoria = categoriaAtiva === FILTRO_TODOS || m.categoria === categoriaAtiva;
       const matchSafra = safraFiltroMapas === FILTRO_TODOS || safraMapa === safraFiltroMapas;
       const matchTalhao = talhaoFiltroMapas === FILTRO_TODOS || talhaoMapa === talhaoFiltroMapas;
@@ -347,6 +358,7 @@ export default function MapasScreen({ route, navigation }) {
         m.titulo,
         m.subcategoria,
         m.elemento,
+        profundidadeMapa,
         m.tipo_material,
         talhaoMapa,
         safraMapa,
@@ -391,10 +403,16 @@ export default function MapasScreen({ route, navigation }) {
     () => mapasNoContexto.filter((mapa) => avaliarDownloadMapa(mapa).podeAbrir).length,
     [mapasNoContexto]
   );
-  const podeAssociarMaterial = user?.perfil === 'admin' || user?.perfil === 'colaborador';
-  const mapasAssociacaoOptions = useMemo(
-    () => [...mapasNoContexto].sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '')),
+  const mapasPendentesAssociacao = useMemo(
+    () => mapasNoContexto.filter((mapa) => !avaliarDownloadMapa(mapa).podeAbrir),
     [mapasNoContexto]
+  );
+  const podeAssociarMaterial =
+    (user?.perfil === 'admin' || user?.perfil === 'colaborador')
+    && mapasPendentesAssociacao.length > 0;
+  const mapasAssociacaoOptions = useMemo(
+    () => [...mapasPendentesAssociacao].sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '')),
+    [mapasPendentesAssociacao]
   );
   const mapaUploadSelecionado = useMemo(
     () => mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId) ?? null,
@@ -450,6 +468,16 @@ export default function MapasScreen({ route, navigation }) {
       return;
     }
 
+    const assetSource = resolveSelaPrataIFertilidadeAssetSource(status.arquivoUrl);
+    if (assetSource) {
+      setImagePreview({
+        visible: true,
+        mapa,
+        source: assetSource,
+      });
+      return;
+    }
+
     setDownloadDialog({ visible: true, mapa, status });
   };
 
@@ -459,6 +487,21 @@ export default function MapasScreen({ route, navigation }) {
 
     if (!status.podeAbrir || !status.arquivoUrl) {
       toast.showInfo(status.descricao);
+      return;
+    }
+
+    const assetSource = resolveSelaPrataIFertilidadeAssetSource(status.arquivoUrl);
+    if (assetSource) {
+      setImagePreview({
+        visible: true,
+        mapa: downloadDialog.mapa,
+        source: assetSource,
+      });
+      return;
+    }
+
+    if (status.arquivoUrl.startsWith('asset://')) {
+      toast.showError('Não foi possível localizar o asset interno deste material.');
       return;
     }
 
@@ -629,6 +672,7 @@ export default function MapasScreen({ route, navigation }) {
   const renderMapaCard = (mapa) => {
     const safraMapa = getMapaSafra(mapa);
     const elementoLabel = getMapaElementoLabel(mapa);
+    const profundidadeMapa = getMapaProfundidade(mapa);
     const statusDownload = avaliarDownloadMapa(mapa);
     const fazendaMapaInfo = !consultaPorFazenda
       ? fazendaInfoPorId.get(getMapaFazendaId(mapa))
@@ -671,6 +715,11 @@ export default function MapasScreen({ route, navigation }) {
             {mapa.talhao && (
               <Text style={styles.mapaDetalhe}>
                 <Ionicons name="location-outline" size={14} color={colors.secondary} /> Campo/talhão {mapa.talhao}
+              </Text>
+            )}
+            {profundidadeMapa && (
+              <Text style={styles.mapaDetalhe}>
+                <Ionicons name="resize-outline" size={14} color={colors.secondary} /> Profundidade {profundidadeMapa}
               </Text>
             )}
             {mapa.tipo_material && (
@@ -1230,6 +1279,43 @@ export default function MapasScreen({ route, navigation }) {
         onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
       />
 
+      <Modal
+        visible={imagePreview.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImagePreview({ visible: false, mapa: null, source: null })}
+      >
+        <View style={styles.imagePreviewOverlay}>
+          <View style={styles.imagePreviewDialog}>
+            <View style={styles.imagePreviewHeader}>
+              <View style={styles.imagePreviewTitleWrap}>
+                <Text style={styles.imagePreviewTitle} numberOfLines={1}>
+                  {imagePreview.mapa?.titulo || 'Material'}
+                </Text>
+                {imagePreview.mapa?.profundidade ? (
+                  <Text style={styles.imagePreviewSubtitle}>
+                    Profundidade {imagePreview.mapa.profundidade}
+                  </Text>
+                ) : null}
+              </View>
+              <TouchableOpacity
+                onPress={() => setImagePreview({ visible: false, mapa: null, source: null })}
+                style={styles.imagePreviewClose}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            {imagePreview.source ? (
+              <Image
+                source={imagePreview.source}
+                style={styles.imagePreviewImage}
+                resizeMode="contain"
+              />
+            ) : null}
+          </View>
+        </View>
+      </Modal>
+
       {/* Modal de Upload com Data */}
       <Modal
         visible={uploadDialog}
@@ -1286,7 +1372,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.formatosInfo}>
               <Ionicons name="information-circle-outline" size={16} color={colors.info} />
               <Text style={styles.formatosInfoText}>
-                URLs aceitas: https://, file://, content:// ou data:
+                URLs aceitas: https://, file://, content://, data: ou asset://
               </Text>
             </View>
 
@@ -1897,6 +1983,62 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     fontWeight: typography.weightBold,
     color: colors.white,
+  },
+  imagePreviewOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  imagePreviewDialog: {
+    width: '100%',
+    maxWidth: 720,
+    height: '86%',
+    backgroundColor: colors.card,
+    borderRadius: spacing.radiusLg,
+    overflow: 'hidden',
+    ...shadows.lg,
+  },
+  imagePreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  imagePreviewTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  imagePreviewTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  imagePreviewSubtitle: {
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  imagePreviewClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.backgroundAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePreviewImage: {
+    flex: 1,
+    width: '100%',
+    maxWidth: SCREEN_WIDTH - spacing.md * 2,
+    alignSelf: 'center',
+    backgroundColor: colors.background,
   },
 
   // ── MAPAS LISTA ──

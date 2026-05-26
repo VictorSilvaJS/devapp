@@ -135,6 +135,14 @@ export const users = [
     email: 'maria.pereira@email.com',
     senha: 'prod123'
   },
+  {
+    id: 'u_sela1',
+    full_name: 'Fazenda Sela de Prata I',
+    perfil: 'produtor',
+    produtor_id: 'prop_sela1',
+    email: 'seladeprataI@agrotche.com',
+    senha: 'prod123'
+  },
 ];
 
 /**
