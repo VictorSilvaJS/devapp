@@ -4,9 +4,17 @@ Este documento descreve o estado atual do repositorio e do sistema como eles exi
 
 Quando houver conflito entre documentos antigos e o codigo, priorize este arquivo e o proprio codigo-fonte para entender o que esta efetivamente no repositorio atual.
 
-## Convencao Provisoria de Linguagem
+## Convencao Oficial de Linguagem
 
-Na documentacao ativa, o perfil final ligado a fazendas e tratado provisoriamente como `produtor`. Alias historicos como `cliente` e `proprietario` aparecem apenas quando ajudam a explicar inconsistencias ainda existentes no codigo, nos mocks ou em documentos antigos.
+Na linguagem de produto, o termo oficial para a unidade operacional vista pelo usuario e `Propriedade`.
+
+Termos consolidados:
+
+- `Produtor`: usuario/perfil final que consulta sua realidade operacional.
+- `Titular`: responsavel cadastral ou vinculo principal da propriedade.
+- `Talhao`: subdivisao interna da propriedade.
+
+No codigo legado e na documentacao tecnica, nomes como `fazenda`, `fazenda_id`, `getFazendaId`, rotas, arquivos, contratos e campos internos permanecem temporariamente por compatibilidade. Alias historicos como `cliente` e `proprietario` aparecem apenas quando ajudam a explicar inconsistencias ainda existentes no codigo, nos mocks ou em documentos antigos.
 
 ## Objetivo Aparente
 
@@ -14,9 +22,9 @@ Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. 
 
 - `admin`: visao ampla da operacao
 - `colaborador`: atuacao regional
-- `produtor`: acompanhamento da propria fazenda
+- `produtor`: acompanhamento da propria propriedade
 
-O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de campo e mapas.
+O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, caderno de campo e mapas.
 
 ## Arquitetura Identificada
 
@@ -46,16 +54,16 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 
 ### Camada experimental de mapas/offline
 
-- `src/screens/MapasScreen.tsx` apresenta uma experiencia unificada de panorama da fazenda; `LimiteArea` alimenta a demarcacao e nao aparece mais como aba funcional separada
+- `src/screens/MapasScreen.tsx` apresenta uma experiencia unificada de panorama da propriedade; `LimiteArea` alimenta a demarcacao e nao aparece mais como aba funcional separada
 - `src/components/MapaFazendaView.tsx` representa a trilha visual atual do MVP com WebView, Leaflet e tiles OpenStreetMap
-- `src/screens/FazendaMapaScreen.tsx` usa `MapaFazendaView.tsx` para exibir talhoes e limites no contexto da fazenda
+- `src/screens/FazendaMapaScreen.tsx` usa `MapaFazendaView.tsx` para exibir talhoes e limites no contexto da propriedade, mantendo o nome tecnico legado
 - `src/components/MapaFazendaNativoView.tsx` permanece como experimento historico com `react-native-maps`, mas nao e a tela ativa no fluxo atual
 - a visualizacao atual prioriza mostrar a demarcacao; quando o mapa-base nao carrega, ha fallback vetorial local para os shapes
-- o mock atual da Fazenda Sela de Prata I usa demarcacao derivada de shapefile real convertida previamente para GeoJSON/JSON em `data/processados/p_sela1/2025/limites_talhoes.geojson` e `src/assets/geojson/selaDePrata1Talhoes.ts`
-- a importacao controlada da Fazenda Sela de Prata I possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, registrando campos de origem, campo de nome usado, contagens e status de revisao da amostra
-- a biblioteca mock de mapas agora aceita material tecnico por `fazenda_id`, campo/talhao e elemento/camada; a Fazenda Sela de Prata I possui uma amostra pequena de PNGs de diagnostico de fertilidade como anexos visuais por pH, argila, materia organica, fosforo e potassio
+- o mock atual da propriedade Sela de Prata I usa demarcacao derivada de shapefile real convertida previamente para GeoJSON/JSON em `data/processados/p_sela1/2025/limites_talhoes.geojson` e `src/assets/geojson/selaDePrata1Talhoes.ts`
+- a importacao controlada da propriedade Sela de Prata I possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, registrando campos de origem, campo de nome usado, contagens e status de revisao da amostra
+- a biblioteca mock de mapas agora aceita material tecnico por `fazenda_id`, campo/talhao e elemento/camada; esse identificador permanece como chave tecnica interna do contexto de propriedade; a propriedade Sela de Prata I possui uma amostra pequena de PNGs de diagnostico de fertilidade como anexos visuais por pH, argila, materia organica, fosforo e potassio
 - a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
-- `MapasScreen.tsx` exibe a profundidade quando informada e pode abrir os PNGs internos da amostra da Fazenda Sela de Prata I como imagem/anexo
+- `MapasScreen.tsx` exibe a profundidade quando informada e pode abrir os PNGs internos da amostra da propriedade Sela de Prata I como imagem/anexo
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -65,12 +73,12 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - CRUD em memoria para produtores, visitas, caderno e mapas
 - filtros regionais via `FiltroContext`
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
-- frente funcional de `Produtor` / `Fazenda` concluida no nivel necessario para o MVP atual
-- frente funcional de visitas tecnicas por fazenda e caderno de campo por fazenda validada no nivel necessario para o MVP atual
-- visualizacao de panorama/mapas e detalhe de fazenda
-- mapa base dos talhoes da Fazenda Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
+- frente funcional de `Produtor` / `Propriedade` concluida no nivel necessario para o MVP atual, embora codigo e rotas ainda usem nomes tecnicos legados de fazenda
+- frente funcional de visitas tecnicas por propriedade e caderno de campo por propriedade validada no nivel necessario para o MVP atual
+- visualizacao de panorama/mapas e detalhe de propriedade
+- mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
-- registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da Fazenda Sela de Prata I
+- registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade em materiais de mapa quando o campo opcional estiver preenchido
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
@@ -88,16 +96,16 @@ O fluxo principal gira em torno de produtores, visitas tecnicas, caderno de camp
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
 
-## Estado Atual Dos Mapas Da Fazenda Sela De Prata I
+## Estado Atual Dos Mapas Da Propriedade Sela De Prata I
 
 O estado atual desta frente e um MVP visual/mockado. Ele serve para validar a experiencia minima de consulta dentro do app, mas nao representa uma implementacao completa de insercao, upload, catalogacao ou gestao de arquivos.
 
-Status do teste manual interno em 2026-05-26: a frente visual/mockada de mapas e anexos da Fazenda Sela de Prata I passou no teste manual do MVP.
+Status do teste manual interno em 2026-05-26: a frente visual/mockada de mapas e anexos da propriedade Sela de Prata I passou no teste manual do MVP.
 
 Fluxo validado:
 
 - login como produtor da Sela de Prata I
-- acesso a fazenda
+- acesso a propriedade
 - abertura do mapa base dos talhoes
 - toque em talhao com exibicao de nome/codigo
 - abertura da tela de mapas/anexos
@@ -107,7 +115,7 @@ Fluxo validado:
 
 Esse resultado valida apenas a experiencia visual/mockada prevista para o MVP atual. Ele nao significa que upload, backend, storage, pipeline de importacao, cadastro administrativo real ou gestao completa de arquivos estejam implementados.
 
-O mapa interativo da fazenda usa apenas talhoes/limites vindos de `LimiteArea`, alimentados pelo GeoJSON normalizado de `src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de `data/processados/p_sela1/2025/limites_talhoes.geojson`.
+O mapa interativo da propriedade usa apenas talhoes/limites vindos de `LimiteArea`, alimentados pelo GeoJSON normalizado de `src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de `data/processados/p_sela1/2025/limites_talhoes.geojson`.
 
 Os mapas de elementos de fertilidade sao registros mockados da entidade `Mapa`. Na amostra atual, os PNGs ficam como anexos visuais internos do app em `src/assets/mapas/sela-prata-i/2025/fertilidade/`. Esses PNGs nao sao camadas georreferenciadas e nao sao sobrepostos ao mapa. Eles devem ser tratados apenas como imagens/anexos para consulta.
 
@@ -129,31 +137,31 @@ Documento de fechamento: `docs/project/fechamento-mapas-anexos-sela-prata-i.md`.
 
 A Fase 2 pode ser considerada formalmente encerrada.
 
-- O dominio central foi estabilizado com contratos canonicos, compatibilidade de borda controlada e uso explicito de `fazenda_id` como chave operacional quando esse e o significado real.
+- O dominio central foi estabilizado com contratos canonicos, compatibilidade de borda controlada e uso explicito de `fazenda_id` como chave operacional interna quando esse e o significado real do contexto de propriedade.
 - O alinhamento semantico ja cobre dominio, auth, validadores, schemas, mock persistence, acesso, navegacao principal, filtros, formularios e camada offline/sync/cache.
 - As pendencias restantes foram reduzidas a aliases publicos de compatibilidade e nomes historicos localizados na superficie, sem contaminar o nucleo canonico.
 - Esses residuos nao bloqueiam o encerramento da fase porque nao reintroduzem ambiguidade estrutural no miolo do sistema e ja estao isolados para limpeza incremental de baixo risco.
 
-## Fechamento Da Frente Funcional Produtor / Fazenda
+## Fechamento Da Frente Funcional Produtor / Propriedade
 
-Status em 2026-04-21: a frente funcional de `Produtor` / `Fazenda` esta concluida no nivel necessario para o MVP atual.
+Status em 2026-04-21: a frente funcional de `Produtor` / `Propriedade` esta concluida no nivel necessario para o MVP atual. A implementacao ainda usa nomes internos historicos de fazenda em rotas, arquivos, contratos e campos.
 
 Entregas consolidadas:
 
-- cadastro de fazenda com vinculo real ao titular
+- cadastro de propriedade com vinculo real ao titular
 - permissoes defensivas em detalhe e edicao
-- listagem orientada a Fazenda + Titular
-- detalhe com contexto real de fazenda atual e titular
-- edicao de fazenda sem quebrar vinculo com titular
-- exclusao de fazenda com validacao de integridade
+- listagem orientada a Propriedade + Titular
+- detalhe com contexto real de propriedade atual e titular
+- edicao de propriedade sem quebrar vinculo com titular
+- exclusao de propriedade com validacao de integridade
 
 Decisoes funcionais aplicadas:
 
-- a entidade operacional das telas desse fluxo e a fazenda, mesmo que nomes historicos de modulos, rotas e componentes ainda usem `Produtor`
-- o titular e tratado como vinculo da fazenda e nao deve ser alterado acidentalmente em edicao simples
-- mapas, visitas, caderno e limites devem usar `fazenda_id` como contexto operacional
+- a entidade operacional de produto nesse fluxo e a propriedade, mesmo que nomes historicos de modulos, rotas e componentes ainda usem `Produtor` ou `Fazenda`
+- o titular e tratado como vinculo da propriedade e nao deve ser alterado acidentalmente em edicao simples
+- mapas, visitas, caderno e limites devem usar `fazenda_id` como contexto operacional interno enquanto a compatibilidade tecnica for mantida
 - colaborador opera apenas dentro do proprio escopo regional/sub-regional
-- exclusao de fazenda fica bloqueada quando houver mapas, visitas, registros de caderno ou limites vinculados
+- exclusao de propriedade fica bloqueada quando houver mapas, visitas, registros de caderno ou limites vinculados
 
 Limites assumidos para evolucao posterior:
 
@@ -164,9 +172,9 @@ Limites assumidos para evolucao posterior:
 
 Esses limites nao bloqueiam o MVP atual e devem ser tratados como evolucao posterior, nao como pendencia de fechamento desta frente.
 
-## Fechamento Da Frente Visitas / Caderno Por Fazenda
+## Fechamento Da Frente Visitas / Caderno Por Propriedade
 
-Status em 2026-05-19: a frente funcional de visitas tecnicas por fazenda e caderno de campo por fazenda esta concluida no nivel necessario para o MVP atual.
+Status em 2026-05-19: a frente funcional de visitas tecnicas por propriedade e caderno de campo por propriedade esta concluida no nivel necessario para o MVP atual. Internamente, o vinculo ainda e preservado por `fazenda_id`.
 
 Entregas consolidadas:
 
@@ -174,14 +182,14 @@ Entregas consolidadas:
 - bloqueio de produtor para criacao e edicao de visitas
 - bloqueio de colaborador fora do proprio escopo regional/sub-regional
 - preservacao de `fazenda_id` em edicao de visita e caderno
-- criacao de caderno no contexto real da fazenda
-- aba Caderno no detalhe da fazenda com registros da fazenda atual
+- criacao de caderno no contexto real da propriedade
+- aba Caderno no detalhe da propriedade com registros da propriedade atual
 - visibilidade de caderno respeitando restricao para produtor
 
 Durante o smoke foram aplicados dois ajustes pontuais:
 
-- `NovoCadernoScreen` passou a exibir carregamento enquanto valida fazendas autorizadas, evitando flash de formulario antes do bloqueio
-- `ProdutorScreen` passou a recarregar dados ao receber foco, garantindo que cadernos criados pela aba aparecam ao voltar para a fazenda
+- `NovoCadernoScreen` passou a exibir carregamento enquanto valida propriedades autorizadas, evitando flash de formulario antes do bloqueio
+- `ProdutorScreen` passou a recarregar dados ao receber foco, garantindo que cadernos criados pela aba aparecam ao voltar para a propriedade
 
 Decisao funcional pendente para evolucao posterior:
 
@@ -193,7 +201,7 @@ Documento de fechamento: `docs/project/fechamento-visitas-caderno-fazenda.md`.
 
 - O dominio central ja foi estabilizado, mas ainda existem aliases historicos de compatibilidade na superficie publica
 - Ainda existem nomes legados isolados em rotas, wrappers e algumas telas historicas
-- A frente `Produtor` / `Fazenda` ja possui permissoes defensivas e integridade de exclusao; outros fluxos ainda podem exigir a mesma revisao pontual
+- A frente `Produtor` / `Propriedade` ja possui permissoes defensivas e integridade de exclusao; outros fluxos ainda podem exigir a mesma revisao pontual
 - A camada offline-first ja esta alinhada semanticamente, mas ainda nao esta conectada a um backend real
 - A visualizacao atual de mapas usa tiles online OpenStreetMap no MVP; cache/offline de tiles e estrategia de provedor ainda precisam de decisao antes de producao
 - A ingestao ideal de demarcacoes para o app e um GeoJSON/JSON final ja normalizado fora do celular; o conversor local de shapefile e o importador KML sao ferramentas de desenvolvimento, nao pipeline definitivo de producao
@@ -215,7 +223,7 @@ Use estes documentos junto com este retrato do presente:
 
 ## Proximo Passo Recomendado
 
-Com a frente `Produtor` / `Fazenda` fechada para o MVP atual, o proximo trabalho deve escolher uma nova frente funcional ou tecnica sem reabrir a limpeza estrutural ja encerrada.
+Com a frente `Produtor` / `Propriedade` fechada para o MVP atual, o proximo trabalho deve escolher uma nova frente funcional ou tecnica sem reabrir a limpeza estrutural ja encerrada.
 
 Opcoes seguras:
 

@@ -4,29 +4,29 @@ Este documento registra regras de dominio e acesso que devem orientar modelagem,
 
 ## Convencao de Linguagem
 
-Na documentacao ativa, o termo provisório principal para o perfil final ligado as fazendas e `produtor`.
+Na linguagem de produto, `Propriedade` e o termo oficial para a unidade operacional vista pelo usuario. `Produtor` e o usuario/perfil final, `Titular` e o responsavel cadastral ou vinculo principal da propriedade, e `Talhao` e a subdivisao interna.
 
-Alias historicos como `cliente` e `proprietario` podem aparecer ao explicar contexto antigo, inconsistencias ou nomenclatura ainda nao consolidada, mas nao devem substituir `produtor` como linguagem padrao da documentacao ativa nesta fase.
+No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rotas, arquivos, contratos e campos internos podem permanecer temporariamente por compatibilidade. Alias historicos como `cliente` e `proprietario` podem aparecer ao explicar contexto antigo ou inconsistencias, mas nao devem conduzir a linguagem de produto.
 
 ## Regras de Dominio
 
-### Produtor e fazenda
+### Produtor e propriedade
 
-- O sistema deve considerar que um produtor pode estar vinculado a uma ou mais fazendas.
+- O sistema deve considerar que um produtor pode estar vinculado a uma ou mais propriedades.
 - A navegacao, os dados e as permissoes devem respeitar essa relacao.
-- O contexto de fazenda e parte central da leitura do dominio, nao apenas um detalhe cadastral.
+- O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
 
-### Dados ligados ao contexto da fazenda
+### Dados ligados ao contexto da propriedade
 
-- Mapas, arquivos, visitas e registros de campo devem ser entendidos no contexto da fazenda a que pertencem.
-- O sistema nao deve tratar mapas e materiais tecnicos como elementos soltos, desconectados do produtor e da fazenda.
+- Mapas, arquivos, visitas e registros de campo devem ser entendidos no contexto da propriedade a que pertencem.
+- O sistema nao deve tratar mapas e materiais tecnicos como elementos soltos, desconectados do produtor e da propriedade.
 
 ## Regras de Acesso
 
 ### Administracao geral
 
 - Possui visao ampla do sistema.
-- Pode navegar entre regioes, produtores e fazendas.
+- Pode navegar entre regioes, produtores e propriedades.
 - Seu fluxo deve privilegiar leitura consolidada e administracao dos dados autorizados.
 
 ### Colaborador regional
@@ -49,7 +49,7 @@ Alias historicos como `cliente` e `proprietario` podem aparecer ao explicar cont
 
 ## Regra sobre Mapas e Arquivos
 
-- Mapas e arquivos pertencem ao contexto da fazenda.
+- Mapas e arquivos pertencem ao contexto da propriedade.
 - Na primeira versao de testes, cada material tecnico deve estar vinculado ao campo/talhao correspondente e, quando for diagnostico, ao elemento/camada representado, como argila, fosforo, pH ou outro atributo tecnico.
 - A disponibilizacao desses materiais deve respeitar regra de perfil e liberacao.
 - O produtor pode consultar e baixar materiais autorizados.
@@ -57,7 +57,7 @@ Alias historicos como `cliente` e `proprietario` podem aparecer ao explicar cont
 
 ## Regra sobre Visitas Tecnicas
 
-- Visitas devem estar associadas ao produtor e a fazenda atendida.
+- Visitas devem estar associadas ao produtor e a propriedade atendida.
 - Seu registro deve servir ao acompanhamento tecnico e ao historico operacional.
 - Permissoes de criacao, edicao e consulta devem respeitar o perfil do usuario e o escopo de acesso.
 
@@ -79,7 +79,7 @@ Este documento nao fecha ainda todos os campos, obrigatoriedades ou fluxos do ca
 
 Antes de propor mudanca de codigo, modelagem ou UX, use estas regras para verificar se a proposta:
 
-- respeita a relacao entre produtor e fazenda
+- respeita a relacao entre produtor e propriedade
 - respeita os perfis de acesso
 - mantem mapas e arquivos no contexto correto
 - evita transformar hipotese em regra consolidada

@@ -4,15 +4,15 @@ Este documento resume o contexto funcional do projeto sem depender de materiais 
 
 ## Problema Central
 
-As informacoes operacionais da lavoura tendem a ficar espalhadas entre arquivos, relatorios, conversas e rotinas manuais. Isso dificulta localizar mapas, acompanhar visitas, entender o historico de uma fazenda e disponibilizar materiais de forma controlada para quem precisa consultar.
+As informacoes operacionais da lavoura tendem a ficar espalhadas entre arquivos, relatorios, conversas e rotinas manuais. Isso dificulta localizar mapas, acompanhar visitas, entender o historico de uma propriedade e disponibilizar materiais de forma controlada para quem precisa consultar.
 
 O projeto existe para reduzir essa dispersao e organizar o acesso a essas informacoes em um unico fluxo de uso.
 
 ## Proposito do Sistema
 
-O sistema busca centralizar informacoes ligadas ao trabalho tecnico e ao acompanhamento da fazenda, com foco em:
+O sistema busca centralizar informacoes ligadas ao trabalho tecnico e ao acompanhamento da propriedade, com foco em:
 
-- consulta organizada por produtor e por fazenda
+- consulta organizada por produtor e por propriedade
 - acesso a mapas e arquivos tecnicos
 - apoio ao trabalho da equipe de campo
 - historico de visitas e registros operacionais
@@ -22,7 +22,7 @@ O sistema busca centralizar informacoes ligadas ao trabalho tecnico e ao acompan
 
 ### Administracao Geral
 
-Perfil com visao ampla da operacao. Precisa navegar entre regioes, produtores e fazendas sem perder o panorama consolidado do sistema.
+Perfil com visao ampla da operacao. Precisa navegar entre regioes, produtores e propriedades sem perder o panorama consolidado do sistema.
 
 ### Colaborador Regional
 
@@ -30,19 +30,21 @@ Perfil operacional com escopo geografico restrito. Atua na consulta e manutencao
 
 ### Produtor
 
-Perfil final ligado a uma ou mais fazendas. Seu foco principal e consultar materiais, visualizar historico e acessar dados autorizados da sua propria realidade operacional.
+Perfil final ligado a uma ou mais propriedades. Seu foco principal e consultar materiais, visualizar historico e acessar dados autorizados da sua propria realidade operacional.
 
 ## Unidade Central do Dominio
 
-Na documentacao ativa, `produtor` e o termo provisório principal para o papel final ligado as fazendas.
+Na linguagem de produto, `Propriedade` e a unidade principal vista pelo usuario final. `Produtor` e o perfil final, `Titular` e o responsavel cadastral ou vinculo principal, e `Talhao` e a subdivisao interna da propriedade.
+
+No codigo e em documentos tecnicos, nomes como `fazenda`, `fazenda_id` e rotas ou arquivos historicos permanecem temporariamente por compatibilidade.
 
 O dominio deve ser entendido a partir desta relacao central:
 
-- um produtor pode estar vinculado a uma ou mais fazendas
-- cada fazenda concentra mapas, arquivos, visitas e registros associados
-- o acesso aos dados deve respeitar o contexto da fazenda e o perfil do usuario
+- um produtor pode estar vinculado a uma ou mais propriedades
+- cada propriedade concentra mapas, arquivos, visitas e registros associados
+- o acesso aos dados deve respeitar o contexto da propriedade e o perfil do usuario
 
-Isso significa que mapas, arquivos e historicos nao devem ser tratados como elementos soltos. Eles fazem sentido dentro do contexto do produtor e da fazenda a que pertencem.
+Isso significa que mapas, arquivos e historicos nao devem ser tratados como elementos soltos. Eles fazem sentido dentro do contexto do produtor e da propriedade a que pertencem.
 
 ## Restricoes Operacionais Relevantes
 
@@ -51,14 +53,14 @@ O projeto precisa considerar algumas restricoes reais do contexto de uso:
 - internet instavel ou inexistente em campo
 - necessidade de clareza de acesso por perfil sem UX excessivamente burocratica
 - necessidade de organizacao por regiao para a operacao da equipe
-- necessidade de preservar contexto de fazenda ao navegar entre dados
+- necessidade de preservar contexto de propriedade ao navegar entre dados
 
 ## Relacao com o MVP
 
 O nucleo do MVP gira em torno de:
 
 - acesso por perfil
-- consulta por produtor e fazenda
+- consulta por produtor e propriedade
 - mapas e arquivos
 - visitas tecnicas
 - caderno de campo enxuto

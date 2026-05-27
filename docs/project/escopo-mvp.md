@@ -4,7 +4,7 @@ Este documento define o que deve ser tratado como parte do MVP atual, o que fica
 
 ## Objetivo do MVP
 
-Entregar uma base funcional para a operacao principal do produto, priorizando consulta organizada, acesso correto por perfil e suporte ao trabalho tecnico em torno de produtor, fazenda, mapas, visitas e registros de campo.
+Entregar uma base funcional para a operacao principal do produto, priorizando consulta organizada, acesso correto por perfil e suporte ao trabalho tecnico em torno de produtor, propriedade, mapas, visitas e registros de campo.
 
 O MVP nao deve assumir como obrigatorio tudo o que ja foi discutido historicamente para o projeto.
 
@@ -20,19 +20,19 @@ O MVP deve sustentar tres visoes principais:
 
 Isso inclui navegacao coerente com o perfil e restricao de acesso aos dados conforme o escopo de cada usuario.
 
-### 2. Organizacao por produtor e fazenda
+### 2. Organizacao por produtor e propriedade
 
-O MVP deve permitir organizar a consulta a partir de produtor e fazenda, incluindo o caso em que um mesmo produtor esteja ligado a mais de uma fazenda.
+O MVP deve permitir organizar a consulta a partir de produtor e propriedade, incluindo o caso em que um mesmo produtor esteja ligado a mais de uma propriedade. Internamente, a implementacao atual ainda pode usar `fazenda_id` como chave operacional.
 
-### 3. Biblioteca de mapas e arquivos no contexto da fazenda
+### 3. Biblioteca de mapas e arquivos no contexto da propriedade
 
 O MVP deve contemplar:
 
-- organizacao de mapas e arquivos por contexto de fazenda
+- organizacao de mapas e arquivos por contexto de propriedade
 - consulta dos materiais disponiveis
 - controle de visibilidade por perfil
-- materiais tecnicos liberaveis para consulta/download, organizados por fazenda, campo/talhao, safra/ano e elemento/camada quando aplicavel
-- panorama visual unico da fazenda quando houver demarcacao de talhoes
+- materiais tecnicos liberaveis para consulta/download, organizados por propriedade, campo/talhao, safra/ano e elemento/camada quando aplicavel
+- panorama visual unico da propriedade quando houver demarcacao de talhoes
 - uso de limites/shapes como base tecnica de demarcacao, nao como experiencia separada para o usuario final
 
 Nao implica, por si so, que todos os fluxos de upload, download ou processamento avancado ja estejam completos na implementacao atual.
@@ -41,11 +41,11 @@ Para a primeira versao de testes, o corte funcional da biblioteca de materiais d
 
 Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 
-No mock, esse corte pode ser validado com uma amostragem controlada de uma fazenda e um ano. A demarcacao real da Fazenda Sela de Prata I foi convertida a partir de shapefile para um GeoJSON/JSON final, sem incluir analises de solo, NDVI, prescricoes ou dados agronomicos que nao estejam nesse arquivo vetorial.
+No mock, esse corte pode ser validado com uma amostragem controlada de uma propriedade e um ano. A demarcacao real da propriedade Sela de Prata I foi convertida a partir de shapefile para um GeoJSON/JSON final, sem incluir analises de solo, NDVI, prescricoes ou dados agronomicos que nao estejam nesse arquivo vetorial.
 
 ### 4. Visitas tecnicas
 
-O MVP deve incluir o registro e a consulta de visitas tecnicas ligadas ao contexto do produtor e da fazenda.
+O MVP deve incluir o registro e a consulta de visitas tecnicas ligadas ao contexto do produtor e da propriedade.
 
 ### 5. Caderno de campo enxuto
 
@@ -74,7 +74,7 @@ Alguns temas fazem parte do contexto do produto, mas ainda nao devem ser tratado
 - taxonomia final de categorias de mapas
 - detalhamento final do caderno de campo
 - nivel exato de capacidade offline por fluxo
-- experiencia final do produtor ao navegar entre fazendas, historico e materiais
+- experiencia final do produtor ao navegar entre propriedades, historico e materiais
 - fronteira entre consulta simples e operacoes de manutencao mais avancadas
 
 Esses pontos devem ser aprofundados em `pendencias-de-definicao.md`, e nao promovidos automaticamente a requisito fechado.
@@ -85,7 +85,7 @@ Quando houver conflito de prioridade, favorecer o que melhora primeiro:
 
 1. clareza de dominio
 2. acesso correto por perfil
-3. organizacao por produtor e fazenda
+3. organizacao por produtor e propriedade
 4. mapas e arquivos no contexto certo
 5. operacao em campo
 6. navegacao simples e compreensivel

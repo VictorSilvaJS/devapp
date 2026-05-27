@@ -1,13 +1,13 @@
 # Fechamento Mapas E Anexos Sela De Prata I
 
-Status em 2026-05-26: a frente visual/mockada de mapas e anexos da Fazenda Sela de Prata I passou no teste manual interno do MVP.
+Status em 2026-05-26: a frente visual/mockada de mapas e anexos da propriedade Sela de Prata I passou no teste manual interno do MVP.
 
 ## Escopo Validado
 
 O teste validou a experiencia minima de consulta prevista para o MVP visual/mockado:
 
 - login como produtor da Sela de Prata I
-- acesso a fazenda
+- acesso a propriedade
 - abertura do mapa base dos talhoes
 - toque em talhao com exibicao de nome/codigo
 - abertura da tela de mapas/anexos
@@ -24,7 +24,7 @@ O teste validou a experiencia minima de consulta prevista para o MVP visual/mock
 
 O fluxo passou no teste manual interno.
 
-Esse resultado confirma que, para a amostra atual da Fazenda Sela de Prata I, o MVP visual/mockado permite consultar o mapa base dos talhoes e abrir os anexos PNG de fertilidade cadastrados no mock.
+Esse resultado confirma que, para a amostra atual da propriedade Sela de Prata I, o MVP visual/mockado permite consultar o mapa base dos talhoes e abrir os anexos PNG de fertilidade cadastrados no mock.
 
 ## Limites Do Fechamento
 

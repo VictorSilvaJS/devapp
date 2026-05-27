@@ -101,19 +101,19 @@ Quando houver conflito entre histórico e documentos ativos:
 ### 4. Respeitar o domínio do projeto
 As seguintes regras de domínio devem ser preservadas:
 
-- produtor, cliente e proprietário representam o mesmo papel de negócio, salvo documentação ativa em contrário
-- um produtor pode possuir várias fazendas
+- `Produtor` é o termo oficial de produto para o perfil final; `cliente` e `proprietário` são aliases históricos, salvo decisão ativa em contrário
+- um produtor pode estar vinculado a várias propriedades
 - colaboradores possuem escopo regional
 - administradores possuem visão global
-- cliente/produtor visualiza e baixa dados da sua propriedade, mas não gerencia dados estruturais do sistema
-- mapas devem ser tratados no contexto da propriedade/fazenda
+- produtor visualiza e baixa dados da sua propriedade, mas não gerencia dados estruturais do sistema
+- mapas devem ser tratados no contexto da propriedade; `fazenda_id` permanece como chave técnica interna enquanto houver compatibilidade legada
 - o MVP prioriza consulta simples, mapas, arquivos e operação offline ao menos para visualização
 
 ### 5. Antes de sugerir código
 Sempre validar se a proposta:
 - respeita o escopo atual do MVP
 - respeita os perfis de acesso
-- respeita a modelagem de produtor e fazenda
+- respeita a modelagem de produtor e propriedade, preservando `fazenda_id` quando for o contrato técnico existente
 - está sustentada por documentação ativa
 - não depende apenas de conteúdo histórico
 
@@ -195,7 +195,7 @@ npm run typecheck
 npm run test:domain-compat
 ```
 
-Use `docs/project/smoke.md` quando a mudança tocar fluxo funcional, permissão, rota direta, visitas, caderno, fazenda ou preservação de `fazenda_id`.
+Use `docs/project/smoke.md` quando a mudança tocar fluxo funcional, permissão, rota direta, visitas, caderno, propriedade ou preservação de `fazenda_id`.
 
 Se a validação não for executada, explique o motivo no fechamento da tarefa.
 

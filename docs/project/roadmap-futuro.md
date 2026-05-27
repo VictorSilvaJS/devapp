@@ -6,7 +6,7 @@
 
 - Use este arquivo para listar entregas candidatas depois da estabilizacao da base.
 - Use `docs/project/plano-reorganizacao.md` para a ordem tecnica da refatoracao.
-- Na documentacao ativa, o perfil final ligado a fazendas e tratado provisoriamente como `produtor`.
+- Na linguagem de produto, `Propriedade`, `Produtor`, `Titular` e `Talhao` sao os termos oficiais. Nomes internos como `fazenda_id` permanecem temporariamente por compatibilidade tecnica.
 - Quando uma funcionalidade hoje for apenas simulada, isso deve aparecer explicitamente neste backlog.
 
 ## Ponto de Partida
@@ -46,20 +46,20 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
 
 ## Backlog Secundario
 
-### Evolucao posterior de Produtor / Fazenda
+### Evolucao posterior de Produtor / Propriedade
 
-A frente funcional de `Produtor` / `Fazenda` esta fechada para o MVP atual. Os itens abaixo nao bloqueiam o MVP e so devem ser retomados quando houver necessidade funcional clara:
+A frente funcional de `Produtor` / `Propriedade` esta fechada para o MVP atual. Os itens abaixo nao bloqueiam o MVP e so devem ser retomados quando houver necessidade funcional clara:
 
 - reassociacao segura de titular
 - edicao centralizada dos dados compartilhados do titular
-- fluxo assistido para limpar ou reassociar dependencias antes da exclusao de fazenda
+- fluxo assistido para limpar ou reassociar dependencias antes da exclusao de propriedade
 - exclusao em cascata controlada, com confirmacao explicita e regra de integridade bem definida
-- renomeacao ampla de modulos, telas ou rotas historicas que ainda usam `Produtor` para representar fazenda
+- renomeacao ampla de modulos, telas ou rotas historicas que ainda usam `Produtor` ou `Fazenda` para representar propriedade
 
 ### Analise e apoio operacional
 
 - Graficos de evolucao de visitas e mapas
-- Indicadores por talhao e por fazenda
+- Indicadores por talhao e por propriedade
 - Comparacoes historicas simples para apoiar consultoria
 
 ### Experiencia do produto

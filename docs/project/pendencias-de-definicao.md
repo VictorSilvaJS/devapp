@@ -10,16 +10,17 @@ Este documento lista pontos reais ainda abertos no projeto. Seu papel e registra
 
 ## Pendencias de Dominio
 
-### 1. Nomenclatura final do papel hoje tratado como `produtor`
+### 1. Limpeza tecnica futura da nomenclatura interna
 
-A documentacao ativa usa `produtor` como termo provisório, mas ainda falta consolidar formalmente a relacao final entre os alias historicos `produtor`, `cliente` e `proprietario`.
+A nomenclatura de produto foi consolidada em `decisoes-consolidadas.md`: `Propriedade`, `Produtor`, `Titular` e `Talhao` sao os termos oficiais de superficie.
+
+Nao permanece pendente a definicao da linguagem de produto. O que ainda fica para uma fase futura separada e a limpeza tecnica interna de nomes legados como `fazenda`, `fazenda_id`, `getFazendaId`, rotas, arquivos, contratos e campos internos, caso o projeto decida reduzir essa compatibilidade.
 
 **Por que importa**
 
-- afeta contratos
-- afeta nomes de campos
-- afeta linguagem de interface
-- afeta leitura correta das regras de acesso
+- evita refatoracao ampla e arriscada durante o MVP
+- preserva compatibilidade com fluxos e contratos existentes
+- separa decisao de linguagem de produto de renomeacao tecnica interna
 
 ### 2. Contratos centrais do dominio
 
@@ -27,7 +28,7 @@ Ainda falta fechar a forma final de alguns contratos que hoje aparecem com varia
 
 - nomes de campos pessoais e cadastrais
 - contratos de disponibilidade de download
-- relacao entre produtor, fazenda e identificadores associados
+- relacao entre produtor, propriedade e identificadores tecnicos associados, incluindo `fazenda_id` enquanto a compatibilidade for mantida
 
 **Por que importa**
 
@@ -52,7 +53,7 @@ Mapas e arquivos sao parte central do produto, mas a classificacao final ainda p
 - tratamento de panorama
 - recorte temporal por safra, ano ou periodo
 
-O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao dentro do panorama da fazenda, nao uma experiencia separada para o usuario. Tambem ja define, para a primeira versao de testes, que os materiais tecnicos liberaveis devem ser organizados por fazenda, campo/talhao, recorte temporal e elemento/camada quando aplicavel, priorizando diagnosticos como fertilidade por argila, fosforo, pH, potassio e materia organica.
+O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao dentro do panorama da propriedade, nao uma experiencia separada para o usuario. Tambem ja define, para a primeira versao de testes, que os materiais tecnicos liberaveis devem ser organizados por propriedade, campo/talhao, recorte temporal e elemento/camada quando aplicavel, priorizando diagnosticos como fertilidade por argila, fosforo, pH, potassio e materia organica.
 
 O que permanece pendente e a taxonomia final das categorias de materiais tecnicos alem desse corte inicial, os nomes finais de todos os elementos/camadas e a forma de evoluir panoramas alem da demarcacao basica.
 
@@ -60,7 +61,7 @@ O que permanece pendente e a taxonomia final das categorias de materiais tecnico
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
 
-- como navegar entre uma ou mais fazendas
+- como navegar entre uma ou mais propriedades
 - como acessar historico, mapas e arquivos de modo simples
 - onde termina consulta e onde comecam operacoes que exigem permissao da equipe
 
@@ -90,7 +91,7 @@ Esse ponto nao e backlog tecnico generico. Ele e uma pendencia de alinhamento en
 
 ### 8. Remocao do painel temporario `Smoke Dev`
 
-Durante o fechamento da frente de visitas tecnicas por fazenda e caderno de campo por fazenda, foi criado um painel temporario `Smoke Dev` em `src/screens/PerfilScreen.tsx`.
+Durante o fechamento da frente de visitas tecnicas por propriedade e caderno de campo por propriedade, foi criado um painel temporario `Smoke Dev` em `src/screens/PerfilScreen.tsx`.
 
 **Status atual**
 
@@ -119,7 +120,7 @@ Sem esse fechamento, o projeto corre risco de descrever offline de forma mais am
 
 ### 10. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
-O produto ja depende de mapas e arquivos no contexto da fazenda. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
+O produto ja depende de mapas e arquivos no contexto da propriedade. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
 
 Ainda faltam definicoes sobre:
 
@@ -129,9 +130,9 @@ Ainda faltam definicoes sobre:
 
 Decisao ja assumida para o MVP: o app deve consumir uma demarcacao final normalizada, preferencialmente GeoJSON ou JSON equivalente, e nao carregar o pacote bruto de origem no dispositivo. Ainda falta definir o pipeline de producao para conversao, validacao, armazenamento, permissao e publicacao desses arquivos finais.
 
-Estado atual do teste local: existe uma amostragem da Fazenda Sela de Prata I convertida a partir de shapefile para validar a exibicao dos talhoes no mock. Essa amostra possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, mas o conversor local nao fecha a estrategia produtiva; ele apenas prova o formato de entrada esperado pelo app e o registro minimo de revisao.
+Estado atual do teste local: existe uma amostragem da propriedade Sela de Prata I convertida a partir de shapefile para validar a exibicao dos talhoes no mock. Essa amostra possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, mas o conversor local nao fecha a estrategia produtiva; ele apenas prova o formato de entrada esperado pelo app e o registro minimo de revisao.
 
-Estado atual dos anexos visuais: existe uma amostra pequena de PNGs de fertilidade da Fazenda Sela de Prata I cadastrada manualmente no mock como registros da entidade `Mapa`. Esses PNGs sao assets internos do app apenas para validacao visual do MVP. Eles nao representam upload real, cadastro administrativo completo, persistencia em banco/storage, API de anexos, importacao automatica ou gestao completa do acervo.
+Estado atual dos anexos visuais: existe uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I cadastrada manualmente no mock como registros da entidade `Mapa`. Esses PNGs sao assets internos do app apenas para validacao visual do MVP. Eles nao representam upload real, cadastro administrativo completo, persistencia em banco/storage, API de anexos, importacao automatica ou gestao completa do acervo.
 
 Permanece pendente definir e implementar:
 

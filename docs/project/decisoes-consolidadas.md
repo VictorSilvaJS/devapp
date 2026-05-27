@@ -28,27 +28,35 @@ Qualquer proposta de interface, permissao ou modelagem deve partir dessa estrutu
 
 ---
 
-## 2. `produtor` e o termo provisório oficial da documentacao ativa
+## 2. Nomenclatura oficial de produto
 
 ### Decisao
 
-Enquanto a Fase 2 nao consolidar definitivamente a nomenclatura do dominio, a documentacao ativa usa `produtor` como termo provisório principal para o perfil final ligado as fazendas.
+Na interface, na documentacao de produto e em textos visiveis para o usuario, o termo oficial para a unidade operacional do produtor e `Propriedade`.
+
+Tambem ficam consolidados como termos de produto:
+
+- `Produtor`: usuario/perfil final que consulta sua realidade operacional.
+- `Titular`: responsavel cadastral ou vinculo principal da propriedade.
+- `Talhao`: subdivisao interna da propriedade.
+
+No codigo legado e em documentos tecnicos, permanecem temporariamente `fazenda`, `fazenda_id`, `getFazendaId`, nomes de rotas, arquivos, contratos e campos internos quando isso evitar refatoracao arriscada.
 
 ### Alcance
 
-Afeta documentacao ativa, linguagem de produto e interpretacao do dominio.
+Afeta interface, textos visiveis, documentacao de produto, leitura funcional e interpretacao do dominio.
 
 ### Impacto
 
-Alias historicos como `cliente` e `proprietario` podem aparecer apenas para explicar inconsistencias antigas, mas nao devem conduzir a redacao principal dos documentos vivos.
+Novos textos de produto devem usar `Propriedade`, `Produtor`, `Titular` e `Talhao`. A limpeza tecnica interna de `fazenda` para `propriedade`, se acontecer, deve ser uma fase futura separada e planejada.
 
 ---
 
-## 3. Um produtor pode estar ligado a uma ou mais fazendas
+## 3. Um produtor pode estar ligado a uma ou mais propriedades
 
 ### Decisao
 
-O dominio do projeto deve considerar a possibilidade de um mesmo produtor estar vinculado a mais de uma fazenda.
+O dominio do projeto deve considerar a possibilidade de um mesmo produtor estar vinculado a mais de uma propriedade.
 
 ### Alcance
 
@@ -56,15 +64,15 @@ Afeta modelagem, navegacao, filtros, visibilidade e regras de acesso.
 
 ### Impacto
 
-Fluxos de consulta, permissao e organizacao de dados nao devem assumir relacao simples de um produtor para uma unica fazenda.
+Fluxos de consulta, permissao e organizacao de dados nao devem assumir relacao simples de um produtor para uma unica propriedade.
 
 ---
 
-## 4. A fazenda e a unidade central de contexto dos dados
+## 4. A propriedade e a unidade central de contexto dos dados
 
 ### Decisao
 
-Mapas, arquivos, visitas e registros devem ser lidos no contexto da fazenda a que pertencem.
+Mapas, arquivos, visitas e registros devem ser lidos no contexto da propriedade a que pertencem.
 
 ### Alcance
 
@@ -72,7 +80,7 @@ Afeta UX, organizacao das telas, estrutura de dados e regras de visibilidade.
 
 ### Impacto
 
-O sistema nao deve tratar mapas e materiais tecnicos como elementos soltos, desconectados do produtor e da fazenda.
+O sistema nao deve tratar mapas e materiais tecnicos como elementos soltos, desconectados do produtor e da propriedade. Na implementacao atual, `fazenda_id` continua sendo a chave operacional interna desse contexto.
 
 ---
 
@@ -83,7 +91,7 @@ O sistema nao deve tratar mapas e materiais tecnicos como elementos soltos, desc
 O MVP atual prioriza o nucleo operacional do produto:
 
 - acesso por perfil
-- consulta por produtor e fazenda
+- consulta por produtor e propriedade
 - mapas e arquivos
 - visitas tecnicas
 - caderno de campo enxuto
@@ -167,7 +175,7 @@ Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacio
 
 ### Decisao
 
-No MVP, o usuario nao deve navegar por duas experiencias concorrentes de `Mapas` e `Limite` quando o objetivo pratico for visualizar o panorama da fazenda. A interface deve apresentar uma experiencia unica de panorama/mapa da fazenda.
+No MVP, o usuario nao deve navegar por duas experiencias concorrentes de `Mapas` e `Limite` quando o objetivo pratico for visualizar o panorama da propriedade. A interface deve apresentar uma experiencia unica de panorama/mapa da propriedade.
 
 ### Alcance
 
@@ -175,14 +183,14 @@ Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingest
 
 ### Impacto
 
-- `LimiteArea` permanece como camada tecnica de demarcacao dos talhoes, vinculada a `fazenda_id`.
+- `LimiteArea` permanece como camada tecnica de demarcacao dos talhoes, vinculada a `fazenda_id` enquanto essa for a chave interna do contexto de propriedade.
 - A tela de mapas deve tratar a demarcacao como base do panorama, e nao como uma aba funcional separada.
-- Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da fazenda.
+- Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da propriedade.
 - Para a primeira versao de testes, materiais tecnicos devem ser organizados por `fazenda_id`, campo/talhao, recorte temporal e elemento/camada quando aplicavel.
 - O foco inicial dos materiais liberaveis deve ser mapas de diagnostico, especialmente fertilidade por elemento/camada, como argila, fosforo, pH, potassio e materia organica.
 - No MVP atual, o mapa interativo e apenas a base de talhoes/limites. Mapas de elementos, como PNGs de fertilidade, devem ser tratados como anexos visuais da biblioteca de materiais.
 - PNGs de elementos nao devem ser sobrepostos ao mapa interativo nesta etapa. A experiencia esperada e abrir o PNG como imagem/anexo para consulta.
-- Arquivos tecnicos operacionais disponiveis no acervo, como sementes ou linhas de plantio, podem ser anexados e liberados quando fizerem sentido para a fazenda, mas nao devem virar uma experiencia separada da biblioteca de materiais da fazenda.
+- Arquivos tecnicos operacionais disponiveis no acervo, como sementes ou linhas de plantio, podem ser anexados e liberados quando fizerem sentido para a propriedade, mas nao devem virar uma experiencia separada da biblioteca de materiais da propriedade.
 - O app deve consumir um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, em vez de carregar no celular o pacote bruto de arquivos `.shp`, `.shx`, `.dbf`, `.prj`, `.kml`, `.kmz` ou metadados auxiliares.
 - Para acelerar o MVP, a validacao local pode usar um conversor de desenvolvimento que gera o arquivo final a partir dos originais, mas a conversao produtiva futura deve acontecer fora do app, em backend ou processo operacional controlado.
 - Para SHP, nomes de talhoes devem ser obtidos dos campos do `.dbf`; para KML/KMZ, dos elementos `<name>`; para GeoJSON pronto, das `properties`.

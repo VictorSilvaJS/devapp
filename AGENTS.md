@@ -59,8 +59,11 @@ Implemente apenas o necessario para a tarefa atual.
 
 Preserve:
 
-- `produtor` como termo provisorio oficial na documentacao ativa
-- `fazenda_id` como contexto operacional quando o dado pertence a uma fazenda
+- `Propriedade` como termo oficial de produto para a unidade operacional vista pelo usuario
+- `Produtor` como usuario/perfil final
+- `Titular` como responsavel cadastral ou vinculo principal da propriedade
+- `Talhao` como subdivisao interna da propriedade
+- `fazenda_id` como contexto operacional interno temporario quando o dado pertence a uma propriedade
 - escopo regional do colaborador
 - produtor como perfil de consulta da propria realidade operacional
 - MVP focado em consulta organizada, mapas, visitas, caderno e uso em campo
@@ -73,7 +76,7 @@ codigo sem uma decisao explicita em `docs/project/`.
 Antes de encerrar uma tarefa, revise o diff procurando:
 
 - regressao de regra de acesso
-- quebra de contexto de fazenda
+- quebra de contexto de propriedade
 - ampliacao indevida de escopo
 - dependencia em comportamento mock tratado como se fosse produto final
 - documentacao ativa desatualizada
@@ -95,8 +98,8 @@ npm run test:domain-compat
 ```
 
 Use `docs/project/smoke.md` para validacao manual de fluxos funcionais quando
-a mudanca tocar visitas, caderno, fazenda, permissao, rotas diretas ou contexto
-de `fazenda_id`.
+a mudanca tocar visitas, caderno, propriedade, permissao, rotas diretas ou
+contexto de `fazenda_id`.
 
 Se um teste falhar:
 

@@ -16,9 +16,11 @@ Criar uma base previsivel para evolucao do app, reduzindo ambiguidade de dominio
 - Refatoracao por etapas pequenas, com impacto controlado.
 - Nenhuma feature nova importante antes de estabilizar contratos e estrutura.
 
-## Convencao Provisoria de Linguagem
+## Convencao Oficial de Linguagem
 
-Com a Fase 2 encerrada, o dominio tecnico interno ja diferencia explicitamente `produtor` como titular de negocio e `fazenda` como contexto operacional. Alias historicos como `cliente`, `proprietario` e nomes publicos antigos devem aparecer apenas quando forem necessarios para explicar compatibilidades ainda mantidas na borda.
+Com a Fase 2 encerrada, a linguagem de produto esta consolidada: `Propriedade` e a unidade operacional vista pelo usuario, `Produtor` e o perfil final, `Titular` e o responsavel cadastral ou vinculo principal, e `Talhao` e a subdivisao interna.
+
+O dominio tecnico interno ainda mantem `fazenda`, `fazenda_id`, rotas, arquivos, contratos e campos historicos como compatibilidade temporaria. Alias historicos como `cliente`, `proprietario` e nomes publicos antigos devem aparecer apenas quando forem necessarios para explicar compatibilidades ainda mantidas na borda.
 
 ## Ordem Recomendada
 
@@ -37,7 +39,7 @@ Com a Fase 2 encerrada, o dominio tecnico interno ja diferencia explicitamente `
 
 ### Fase 2 - Contratos e Dominio
 
-- Consolidar o padrao oficial para alias hoje tratados provisoriamente como `produtor`, `cliente` e `proprietario`
+- Consolidar o padrao oficial de produto para `Propriedade`, `Produtor`, `Titular` e `Talhao`, preservando compatibilidade tecnica onde necessario
 - Padronizar campos como `nome` vs `full_name`
 - Padronizar contratos como `disponivel_download` vs `disponivel_para_download`
 - Revisar schemas, validadores e mocks para usar o mesmo idioma
@@ -129,4 +131,4 @@ src/
 
 ## Proxima Acao Recomendada
 
-Depois do encerramento da Fase 2, o melhor proximo passo e um lote curto de limpeza nominal controlada na superficie de mapas/fazenda, sem reabrir refatoracao estrutural ampla.
+Depois do encerramento da Fase 2, o melhor proximo passo e um lote curto de limpeza nominal controlada na superficie de mapas/propriedade, sem reabrir refatoracao estrutural ampla.
