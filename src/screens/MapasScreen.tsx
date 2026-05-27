@@ -585,15 +585,15 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const tituloTela = consultaPorFazenda ? 'Panorama da Fazenda' : 'Panorama de Mapas';
+  const tituloTela = consultaPorFazenda ? 'Panorama da Propriedade' : 'Panorama de Mapas';
   const contextoLabel = consultaPorFazenda
-    ? 'Consulta por fazenda'
+    ? 'Consulta por propriedade'
     : fazendaFiltroInfo
       ? 'Visão geral filtrada'
       : 'Visão geral';
   const contextoTitulo = fazendaContextoInfo?.fazendaNome
     || fazendaFiltroInfo?.fazendaNome
-    || 'Todas as fazendas acessíveis';
+    || 'Todas as propriedades acessíveis';
   const contextoSubtitulo = fazendaContextoInfo || fazendaFiltroInfo
     ? [
         (fazendaContextoInfo || fazendaFiltroInfo)?.titularNome
@@ -601,7 +601,7 @@ export default function MapasScreen({ route, navigation }) {
           : null,
         (fazendaContextoInfo || fazendaFiltroInfo)?.localizacao,
       ].filter(Boolean).join(' • ')
-    : `${contextoConsulta.fazendasPermitidas.length} fazenda${contextoConsulta.fazendasPermitidas.length !== 1 ? 's' : ''} no escopo atual`;
+    : `${contextoConsulta.fazendasPermitidas.length} propriedade${contextoConsulta.fazendasPermitidas.length !== 1 ? 's' : ''} no escopo atual`;
   const mapaSateliteFazendaInfo = fazendaContextoInfo || fazendaFiltroInfo;
   const temFiltroPanoramaAtivo = categoriaAtiva !== FILTRO_TODOS
     || safraFiltroMapas !== FILTRO_TODOS
@@ -637,12 +637,12 @@ export default function MapasScreen({ route, navigation }) {
     ? {
         icon: 'lock-closed-outline',
         title: 'Acesso negado',
-        text: 'Esta fazenda não está disponível no seu escopo de acesso.',
+        text: 'Esta propriedade não está disponível no seu escopo de acesso.',
       }
     : {
         icon: 'alert-circle-outline',
-        title: 'Fazenda não encontrada',
-        text: 'Não foi possível localizar a fazenda informada para consultar o panorama.',
+        title: 'Propriedade não encontrada',
+        text: 'Não foi possível localizar a propriedade informada para consultar o panorama.',
       };
 
   // ──────────────────────────────────────────────
@@ -721,7 +721,7 @@ export default function MapasScreen({ route, navigation }) {
       renderMapaMetaChip('resize-outline', 'Profundidade', profundidadeMapa),
       renderMapaMetaChip('calendar-outline', 'Safra/ano', safraMapa || formatarData(mapa.data_criacao)),
       renderMapaMetaChip('location-outline', 'Talhão', mapa.talhao),
-      renderMapaMetaChip('home-outline', 'Fazenda', fazendaMapaInfo?.fazendaNome),
+      renderMapaMetaChip('home-outline', 'Propriedade', fazendaMapaInfo?.fazendaNome),
     ].filter(Boolean);
 
     return (
@@ -758,7 +758,7 @@ export default function MapasScreen({ route, navigation }) {
           </View>
           {fazendaMapaInfo && (
             <Text style={styles.mapaContexto} numberOfLines={1}>
-              Fazenda: {fazendaMapaInfo.fazendaNome} • Titular: {fazendaMapaInfo.titularNome || 'Não informado'}
+              Propriedade: {fazendaMapaInfo.fazendaNome} • Titular: {fazendaMapaInfo.titularNome || 'Não informado'}
             </Text>
           )}
           <View style={styles.mapaMetaGrid}>
@@ -839,7 +839,7 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.talhaoCardSub}>{talhao.nome}</Text>
           {fazendaTalhaoInfo && (
             <Text style={styles.talhaoCardContexto} numberOfLines={1}>
-              Fazenda: {fazendaTalhaoInfo.fazendaNome} • Titular: {fazendaTalhaoInfo.titularNome || 'Não informado'}
+              Propriedade: {fazendaTalhaoInfo.fazendaNome} • Titular: {fazendaTalhaoInfo.titularNome || 'Não informado'}
             </Text>
           )}
         </View>
@@ -898,7 +898,7 @@ export default function MapasScreen({ route, navigation }) {
           <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar mapa, talhão, safra, fazenda..."
+            placeholder="Buscar mapa, talhão, safra, propriedade..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -1051,8 +1051,8 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.emptyText}>Nenhum mapa de talhões disponível</Text>
           <Text style={styles.emptySubtext}>
             {temFiltroPanoramaAtivo
-              ? 'Tente ajustar fazenda, talhão, demarcação ou busca.'
-              : 'Quando a demarcação da fazenda estiver liberada, ela aparecerá aqui.'}
+              ? 'Tente ajustar propriedade, talhão, demarcação ou busca.'
+              : 'Quando a demarcação da propriedade estiver liberada, ela aparecerá aqui.'}
           </Text>
         </View>
       ) : (

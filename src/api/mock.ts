@@ -1065,7 +1065,7 @@ const mapas: any[] = [
     profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'Fazenda inteira',
+    talhao: 'Propriedade inteira',
     data_criacao: new Date('2025-06-05').toISOString(),
     safra: '2025',
     arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/ph_10a20.png`,
@@ -1084,7 +1084,7 @@ const mapas: any[] = [
     profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'Fazenda inteira',
+    talhao: 'Propriedade inteira',
     data_criacao: new Date('2025-06-05').toISOString(),
     safra: '2025',
     arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/ar_10a20.png`,
@@ -1103,7 +1103,7 @@ const mapas: any[] = [
     profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'Fazenda inteira',
+    talhao: 'Propriedade inteira',
     data_criacao: new Date('2025-06-05').toISOString(),
     safra: '2025',
     arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/mo_10a20.png`,
@@ -1122,7 +1122,7 @@ const mapas: any[] = [
     profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'Fazenda inteira',
+    talhao: 'Propriedade inteira',
     data_criacao: new Date('2025-06-05').toISOString(),
     safra: '2025',
     arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/pp_10a20.png`,
@@ -1141,7 +1141,7 @@ const mapas: any[] = [
     profundidade: '10-20 cm',
     produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
     fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
-    talhao: 'Fazenda inteira',
+    talhao: 'Propriedade inteira',
     data_criacao: new Date('2025-06-05').toISOString(),
     safra: '2025',
     arquivo_url: `${SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL}/kk_10a20.png`,
@@ -1763,7 +1763,7 @@ export const Produtor: any = {
     return new Promise((res, rej) => setTimeout(() => {
       const index = produtores.findIndex(p => p.id === id);
       if (index === -1) {
-        rej(new Error('Fazenda não encontrada'));
+        rej(new Error('Propriedade não encontrada'));
       } else {
         const integridade = buildFazendaDeleteIntegrity(produtores[index], {
           mapas,

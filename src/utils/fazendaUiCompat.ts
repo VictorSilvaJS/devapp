@@ -75,7 +75,7 @@ export const buildFazendaConsultaOptions = (
       const info = getFazendaUiInfo(fazenda);
       return {
         ...info,
-        label: info.fazendaNome || 'Fazenda sem nome',
+        label: info.fazendaNome || 'Propriedade sem nome',
         subtitle: joinDefined([info.titularNome, info.localizacao], ' • '),
       };
     })

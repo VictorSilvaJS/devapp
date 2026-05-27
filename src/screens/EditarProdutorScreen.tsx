@@ -52,7 +52,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
     const newErrors: any = {};
 
     if (!validarObrigatorio(form.fazenda_nome)) {
-      newErrors.fazenda_nome = 'Fazenda é obrigatória';
+      newErrors.fazenda_nome = 'Propriedade é obrigatória';
     }
     if (!validarArea(form.area_total)) {
       newErrors.area_total = 'Informe uma área válida';
@@ -69,7 +69,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
     const loadProdutor = async () => {
       const id = route?.params?.id;
       if (!id) {
-        toast.showError('ID da fazenda não fornecido');
+        toast.showError('ID da propriedade não fornecido');
         navigation.goBack();
         return;
       }
@@ -82,7 +82,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
         if (!podeEditarProdutor(user, produtor)) {
           setProdutorAtual(null);
           setAccessDenied(true);
-          toast.showWarning('Você não tem permissão para editar esta fazenda.');
+          toast.showWarning('Você não tem permissão para editar esta propriedade.');
           return;
         }
 
@@ -96,7 +96,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
           estado: produtor.estado || ''
         });
       } catch (error) {
-        toast.showError('Não foi possível carregar os dados da fazenda');
+        toast.showError('Não foi possível carregar os dados da propriedade');
         navigation.goBack();
       } finally {
         setLoading(false);
@@ -108,7 +108,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
   const handleSave = async () => {
     if (!podeEditarProdutor(user, produtorAtual)) {
-      toast.showWarning('Você não tem permissão para editar esta fazenda.');
+      toast.showWarning('Você não tem permissão para editar esta propriedade.');
       return;
     }
 
@@ -122,7 +122,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
       const payload = buildFazendaUpdatePayload(produtorAtual, form);
       await Produtor.update(route.params.id, payload);
       
-      toast.showSuccess('Fazenda atualizada com sucesso!');
+      toast.showSuccess('Propriedade atualizada com sucesso!');
       navigation.goBack();
     } catch (error) {
       toast.showError('Não foi possível salvar as alterações. Tente novamente.');
@@ -135,7 +135,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Fazenda" showBackButton />
+        <Header title="Editar Propriedade" showBackButton />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Carregando...</Text>
@@ -147,10 +147,10 @@ export default function EditarProdutorScreen({ route, navigation }) {
   if (accessDenied) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Fazenda" showBackButton />
+        <Header title="Editar Propriedade" showBackButton />
         <View style={styles.loadingContainer}>
           <Ionicons name="lock-closed-outline" size={42} color={theme.colors.muted} />
-          <Text style={styles.loadingText}>Você não tem permissão para editar esta fazenda.</Text>
+          <Text style={styles.loadingText}>Você não tem permissão para editar esta propriedade.</Text>
         </View>
       </View>
     );
@@ -163,14 +163,14 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Editar Fazenda" showBackButton />
+      <Header title="Editar Propriedade" showBackButton />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Info Box */}
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            Atualize os dados da fazenda mantendo o titular vinculado.
+            Atualize os dados da propriedade mantendo o titular vinculado.
           </Text>
         </View>
 
@@ -207,16 +207,16 @@ export default function EditarProdutorScreen({ route, navigation }) {
           )}
         </View>
 
-        <Text style={styles.sectionTitle}>Dados da Fazenda</Text>
+        <Text style={styles.sectionTitle}>Dados da Propriedade</Text>
 
         {/* Fazenda */}
         <View style={styles.field}>
-          <Text style={styles.label}>Nome da Fazenda *</Text>
+          <Text style={styles.label}>Nome da Propriedade *</Text>
           <TextInput
             style={[styles.input, errors.fazenda_nome && styles.inputError]}
             value={form.fazenda_nome}
             onChangeText={(text) => handleChange('fazenda_nome', text)}
-            placeholder="Nome da fazenda"
+            placeholder="Nome da propriedade"
             placeholderTextColor={theme.colors.textSecondary}
           />
           {errors.fazenda_nome && (

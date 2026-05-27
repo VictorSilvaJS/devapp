@@ -31,7 +31,7 @@ import type { CadastroTitularMode } from '../utils/fazendaCadastroCompat';
 const getScopeErrorMessage = (reason?: string) => {
   switch (reason) {
     case 'perfil_sem_permissao':
-      return 'Seu perfil não permite cadastrar fazendas.';
+      return 'Seu perfil não permite cadastrar propriedades.';
     case 'regiao_fora_escopo':
       return 'A região informada está fora do seu escopo.';
     case 'microregiao_fora_escopo':
@@ -131,7 +131,7 @@ export default function NovoProdutorScreen({ navigation }) {
     const newErrors: any = {};
 
     if (!podeCriarProdutor(user)) {
-      newErrors.escopo = 'Seu perfil não permite cadastrar fazendas.';
+      newErrors.escopo = 'Seu perfil não permite cadastrar propriedades.';
     }
 
     if (titularMode === 'existente') {
@@ -143,7 +143,7 @@ export default function NovoProdutorScreen({ navigation }) {
     }
 
     if (!validarObrigatorio(form.fazenda)) {
-      newErrors.fazenda = 'Fazenda é obrigatória';
+      newErrors.fazenda = 'Propriedade é obrigatória';
     }
 
     if (!validarArea(form.area_total)) {
@@ -184,10 +184,10 @@ export default function NovoProdutorScreen({ navigation }) {
       const dataToSave = buildPayload();
       await Produtor.create(dataToSave);
 
-      toast.showSuccess('Fazenda cadastrada com vínculo do produtor titular!');
+      toast.showSuccess('Propriedade cadastrada com vínculo do produtor titular!');
       navigation.goBack();
     } catch (error) {
-      toast.showError('Não foi possível cadastrar a fazenda. Tente novamente.');
+      toast.showError('Não foi possível cadastrar a propriedade. Tente novamente.');
       console.error(error);
     } finally {
       setSaving(false);
@@ -238,7 +238,7 @@ export default function NovoProdutorScreen({ navigation }) {
                   {titular.nome}
                 </Text>
                 <Text style={[styles.optionSubtitle, selected && styles.optionSubtitleSelected]} numberOfLines={1}>
-                  {(titular.fazendas_nomes || []).join(', ') || 'Sem fazendas vinculadas'}
+                  {(titular.fazendas_nomes || []).join(', ') || 'Sem propriedades vinculadas'}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -256,7 +256,7 @@ export default function NovoProdutorScreen({ navigation }) {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
           <Text style={styles.infoText}>
-            Cadastre a fazenda com um produtor titular vinculado.
+            Cadastre a propriedade com um produtor titular vinculado.
           </Text>
         </View>
 
@@ -322,14 +322,14 @@ export default function NovoProdutorScreen({ navigation }) {
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Dados da fazenda</Text>
+        <Text style={styles.sectionTitle}>Dados da propriedade</Text>
         <View style={styles.field}>
-          <Text style={styles.label}>Fazenda *</Text>
+          <Text style={styles.label}>Propriedade *</Text>
           <TextInput
             style={[styles.input, errors.fazenda && styles.inputError]}
             value={form.fazenda}
             onChangeText={(text) => handleChange('fazenda', text)}
-            placeholder="Nome da fazenda"
+            placeholder="Nome da propriedade"
             placeholderTextColor={theme.colors.textSecondary}
           />
           {errors.fazenda && <Text style={styles.errorText}>{errors.fazenda}</Text>}

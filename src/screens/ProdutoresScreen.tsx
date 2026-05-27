@@ -131,7 +131,7 @@ export default function ProdutoresScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Fazendas" />
+      <Header title="Propriedades" />
       
       {/* Barra de Busca Compacta */}
       <LinearGradient
@@ -145,7 +145,7 @@ export default function ProdutoresScreen() {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Buscar por fazenda, titular, cidade ou região..."
+              placeholder="Buscar por propriedade, titular, cidade ou região..."
               placeholderTextColor={colors.muted}
               value={busca}
               onChangeText={setBusca}
@@ -291,7 +291,7 @@ export default function ProdutoresScreen() {
                 <Ionicons name="business-outline" size={20} color={colors.primary} />
               </View>
               <Text style={styles.metricValue}>{metricasFazendas.totalFazendas}</Text>
-              <Text style={styles.metricLabel}>Fazendas</Text>
+              <Text style={styles.metricLabel}>Propriedades</Text>
             </View>
 
             <View style={styles.metricCard}>
@@ -342,12 +342,12 @@ export default function ProdutoresScreen() {
               />
             </LinearGradient>
             <Text style={styles.emptyText}>
-              {listaSemResultadoPorFiltro ? 'Nenhuma fazenda encontrada' : 'Nenhuma fazenda cadastrada'}
+              {listaSemResultadoPorFiltro ? 'Nenhuma propriedade encontrada' : 'Nenhuma propriedade cadastrada'}
             </Text>
             <Text style={styles.emptySubtext}>
               {listaSemResultadoPorFiltro
                 ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados' 
-                : 'Comece adicionando a primeira fazenda vinculada a um titular'}
+                : 'Comece adicionando a primeira propriedade vinculada a um titular'}
             </Text>
             {!listaSemResultadoPorFiltro && podeCriarProdutor(user) && (
               <TouchableOpacity 
@@ -362,7 +362,7 @@ export default function ProdutoresScreen() {
                   end={{ x: 1, y: 1 }}
                 >
                   <Ionicons name="add-circle" size={22} color={colors.white} />
-                  <Text style={styles.emptyActionText}>Adicionar Primeira Fazenda</Text>
+                  <Text style={styles.emptyActionText}>Adicionar Primeira Propriedade</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -391,7 +391,7 @@ export default function ProdutoresScreen() {
               <View style={styles.fabIconContainer}>
                 <Ionicons name="add" size={26} color={colors.white} />
               </View>
-              <Text style={styles.fabText}>Nova Fazenda</Text>
+              <Text style={styles.fabText}>Nova Propriedade</Text>
             </View>
           </LinearGradient>
           <View style={styles.fabPulse} />
@@ -472,7 +472,7 @@ export default function ProdutoresScreen() {
               <Text style={styles.sectionTitle}>Ordenar por</Text>
               <View style={styles.chipsContainer}>
                 {[
-                  { key: 'nome', label: 'Fazenda', icon: 'business-outline' },
+                  { key: 'nome', label: 'Propriedade', icon: 'business-outline' },
                   { key: 'area', label: 'Área', icon: 'resize-outline' },
                   { key: 'recente', label: 'Mais Recente', icon: 'time-outline' }
                 ].map((item) => (

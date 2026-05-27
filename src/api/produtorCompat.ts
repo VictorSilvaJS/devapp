@@ -239,7 +239,7 @@ export const buildFazendaDeleteIntegrity = (
 ) => {
   const current = readMockFazenda(fazendaAtual);
   const fazendaId = firstNonEmptyString(current.fazenda_id, current.id) ?? '';
-  const fazendaNome = firstNonEmptyString(current.fazenda_nome, current.fazenda) ?? 'esta fazenda';
+  const fazendaNome = firstNonEmptyString(current.fazenda_nome, current.fazenda) ?? 'esta propriedade';
 
   const counts = {
     mapas: countByFazendaId(dependencies.mapas, fazendaId, (item) => normalizeMapa(item).fazenda_id),
@@ -258,7 +258,7 @@ export const buildFazendaDeleteIntegrity = (
   const hasDependencies = dependencyLabels.length > 0;
   const canDelete = Boolean(fazendaId) && !hasDependencies;
   const blockingMessage = !fazendaId
-    ? 'Não foi possível identificar a fazenda para validar a exclusão.'
+    ? 'Não foi possível identificar a propriedade para validar a exclusão.'
     : hasDependencies
       ? `Não é possível excluir ${fazendaNome} porque há ${joinDependencyLabels(dependencyLabels)} vinculados. Remova ou reassocie esses registros antes de excluir.`
       : '';
@@ -271,7 +271,7 @@ export const buildFazendaDeleteIntegrity = (
     counts,
     dependencyLabels,
     blockingMessage,
-    confirmationMessage: `Tem certeza que deseja excluir ${fazendaNome}? Esta ação remove apenas a fazenda e não altera o titular vinculado.`,
+    confirmationMessage: `Tem certeza que deseja excluir ${fazendaNome}? Esta ação remove apenas a propriedade e não altera o titular vinculado.`,
   };
 };
 

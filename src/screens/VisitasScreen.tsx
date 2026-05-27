@@ -237,7 +237,7 @@ export default function VisitasScreen() {
       filtros.push({ tipo: 'data', label: dataLabels[filtroData], remover: () => setFiltroData('todos') });
     }
     if (ordenacao !== 'data') {
-      const ordenacaoLabels = { fazenda: 'Por Fazenda', produtor: 'Por Fazenda', status: 'Por Status' };
+      const ordenacaoLabels = { fazenda: 'Por Propriedade', produtor: 'Por Propriedade', status: 'Por Status' };
       filtros.push({ tipo: 'ordenacao', label: ordenacaoLabels[ordenacao], remover: () => setOrdenacao('data') });
     }
     return filtros;
@@ -262,7 +262,7 @@ export default function VisitasScreen() {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Buscar por fazenda, objetivo ou técnico..."
+              placeholder="Buscar por propriedade, objetivo ou técnico..."
               placeholderTextColor={colors.muted}
               value={busca}
               onChangeText={setBusca}
@@ -449,7 +449,7 @@ export default function VisitasScreen() {
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>
-                        {fazendaInfo.fazendaNome || 'Fazenda não encontrada'}
+                        {fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
                       </Text>
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
                         {fazendaInfo.titularNome || fazendaInfo.localizacao}
@@ -664,7 +664,7 @@ export default function VisitasScreen() {
               <View style={styles.chipsContainer}>
                 {[
                   { key: 'data', label: 'Data', icon: 'calendar-outline' },
-                  { key: 'fazenda', label: 'Fazenda', icon: 'home-outline' },
+                  { key: 'fazenda', label: 'Propriedade', icon: 'home-outline' },
                   { key: 'status', label: 'Status', icon: 'flag-outline' }
                 ].map((item) => (
                   <TouchableOpacity

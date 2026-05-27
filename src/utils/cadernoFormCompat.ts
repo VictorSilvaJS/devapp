@@ -59,7 +59,7 @@ export const resolveCadernoEdicaoFazendaId = (registro: any, fallbackFazendaId =
 
 export const getCadernoFormFazendaLabel = (
   option?: CadernoFazendaOption | null,
-  emptyLabel = 'Selecione uma fazenda'
+  emptyLabel = 'Selecione uma propriedade'
 ): string => {
   if (!option) {
     return emptyLabel;

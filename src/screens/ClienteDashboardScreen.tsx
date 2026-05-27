@@ -120,7 +120,7 @@ export default function ClienteDashboardScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Minhas Fazendas" />
+        <Header title="Minhas Propriedades" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Carregando informações...</Text>
@@ -132,7 +132,7 @@ export default function ClienteDashboardScreen() {
   if (!propriedades || propriedades.length === 0) {
     return (
       <View style={styles.container}>
-        <Header title="Minhas Fazendas" />
+        <Header title="Minhas Propriedades" />
         <View style={styles.emptyContainer}>
           <Ionicons name="alert-circle-outline" size={64} color={colors.muted} />
           <Text style={styles.emptyText}>Nenhuma propriedade vinculada</Text>
@@ -173,7 +173,7 @@ export default function ClienteDashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Minhas Fazendas" />
+      <Header title="Minhas Propriedades" />
 
       {/* Filtro por fazenda */}
       {propriedades.length > 1 && (
@@ -185,7 +185,7 @@ export default function ClienteDashboardScreen() {
             >
               <Ionicons name="globe-outline" size={16} color={filtroFazenda === 'geral' ? colors.white : colors.text} style={{ marginRight: 4 }} />
               <Text style={[styles.filtroFazendaChipText, filtroFazenda === 'geral' && styles.filtroFazendaChipTextAtivo]}>
-                Geral ({propriedades.length} fazendas)
+                Geral ({propriedades.length} propriedades)
               </Text>
             </TouchableOpacity>
             {propriedades.map(prop => (
@@ -239,7 +239,7 @@ export default function ClienteDashboardScreen() {
                 </View>
               </View>
               <View style={styles.propriedadeAction}>
-                <Text style={styles.propriedadeActionText}>Abrir fazenda</Text>
+                <Text style={styles.propriedadeActionText}>Abrir propriedade</Text>
                 <Ionicons name="chevron-forward-outline" size={18} color={colors.primary} />
               </View>
             </TouchableOpacity>
@@ -250,7 +250,7 @@ export default function ClienteDashboardScreen() {
         <View style={styles.statsGrid}>
           <View style={styles.statsRow}>
             <StatCard
-              label="Fazendas"
+              label="Propriedades"
               value={propriedadesExibidas.length}
               icon={<Ionicons name="business-outline" size={24} color={colors.primary} />}
               accent={{
@@ -369,7 +369,7 @@ export default function ClienteDashboardScreen() {
             <View style={styles.emptySecao}>
               <Ionicons name="calendar-outline" size={40} color={colors.muted} />
               <Text style={styles.emptySecaoText}>
-                Ainda não há visitas técnicas registradas para esta fazenda.
+                Ainda não há visitas técnicas registradas para esta propriedade.
               </Text>
             </View>
           ) : (
@@ -400,7 +400,7 @@ export default function ClienteDashboardScreen() {
             <View style={styles.emptySecao}>
               <Ionicons name="document-text-outline" size={40} color={colors.muted} />
               <Text style={styles.emptySecaoText}>
-                Ainda não há registros de caderno de campo para esta fazenda.
+                Ainda não há registros de caderno de campo para esta propriedade.
               </Text>
               <Text style={styles.emptySecaoSubtext}>
                 Mapas e anexos disponíveis continuam acessíveis na seção de mapas.

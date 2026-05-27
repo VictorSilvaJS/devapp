@@ -93,14 +93,14 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
   };
 
   const getTextoFazenda = () => {
-    if (filtros.fazenda === 'todas') return 'Todas as Fazendas';
+    if (filtros.fazenda === 'todas') return 'Todas as Propriedades';
     return filtros.fazenda;
   };
 
   const getTituloModal = () => {
     if (tipoModal === 'regiao') return 'Selecionar Região';
     if (tipoModal === 'microregiao') return 'Selecionar Micro-região';
-    return 'Selecionar Fazenda / Propriedade';
+    return 'Selecionar Propriedade';
   };
 
   // Verificar se colaborador tem filtro ativo (ignora a região fixa)
@@ -219,7 +219,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
           {/* Título */}
           <View style={styles.tituloContainer}>
             <Ionicons name="filter" size={16} color={colors.textLight} />
-            <Text style={styles.titulo}>Selecione a Região e/ou Fazenda</Text>
+            <Text style={styles.titulo}>Selecione a Região e/ou Propriedade</Text>
           </View>
 
           {/* Filtros - Primeira linha: Região + Micro-região */}
@@ -510,7 +510,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
                       styles.modalItemText,
                       filtros.fazenda === 'todas' && styles.modalItemTextSelecionado
                     ]}>
-                      Todas as Fazendas
+                      Todas as Propriedades
                     </Text>
                     {filtros.fazenda === 'todas' && (
                       <Ionicons name="checkmark-circle" size={20} color={colors.white} />
@@ -522,8 +522,8 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
                       <Ionicons name="alert-circle-outline" size={32} color={colors.textLight} />
                       <Text style={styles.emptyText}>
                         {filtros.regiao !== 'todas' 
-                          ? 'Nenhuma fazenda encontrada nesta região'
-                          : 'Nenhuma fazenda cadastrada'
+                          ? 'Nenhuma propriedade encontrada nesta região'
+                          : 'Nenhuma propriedade cadastrada'
                         }
                       </Text>
                     </View>

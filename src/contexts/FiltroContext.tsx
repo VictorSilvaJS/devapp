@@ -165,7 +165,7 @@ export function FiltroProvider({ children }) {
     if (filtrosState.microregiao !== 'todas') parts.push(filtrosState.microregiao);
     if (filtrosState.fazenda !== 'todas') {
       const fazendaInfo = fazendas.find(f => f.id === fazendaIdSelecionada);
-      parts.push(fazendaInfo ? fazendaInfo.nome : 'Fazenda Selecionada');
+      parts.push(fazendaInfo ? fazendaInfo.nome : 'Propriedade Selecionada');
     }
     if (filtrosState.cidade !== 'todas') parts.push(filtrosState.cidade);
     return parts.length > 0 ? parts.join(' • ') : 'Todas as Regiões';

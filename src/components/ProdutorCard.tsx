@@ -7,7 +7,7 @@ import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 export default function ProdutorCard({ produtor, onPress }) {
   const fazendaInfo = getFazendaUiInfo(produtor);
-  const nomeFazenda = fazendaInfo.fazendaNome || 'Fazenda sem nome';
+  const nomeFazenda = fazendaInfo.fazendaNome || 'Propriedade sem nome';
   const nomeTitular = fazendaInfo.titularNome || 'Titular não informado';
   const localizacao = [fazendaInfo.localizacao, produtor.regiao].filter(Boolean).join(' • ');
   const areaTotal = Number(produtor.area_total || 0);

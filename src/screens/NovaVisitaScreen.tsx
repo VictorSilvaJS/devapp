@@ -92,7 +92,7 @@ export default function NovaVisitaScreen() {
       setFazendas(fazendasFiltradas);
     } catch (error) {
       console.error('Erro ao carregar fazendas:', error);
-      toast.showError('Erro ao carregar fazendas');
+      toast.showError('Erro ao carregar propriedades');
     } finally {
       setLoadingFazendas(false);
     }
@@ -102,7 +102,7 @@ export default function NovaVisitaScreen() {
     const newErrors: any = {};
 
     if (!fazendaId) {
-      newErrors.fazendaId = 'Selecione uma fazenda';
+      newErrors.fazendaId = 'Selecione uma propriedade';
     }
 
     if (!dataVisita) {
@@ -149,7 +149,7 @@ export default function NovaVisitaScreen() {
     const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
 
     if (!podeCriarVisitaEmFazenda(user, fazendaSelecionadaData)) {
-      toast.showWarning('Você não tem permissão para criar visita nesta fazenda.');
+      toast.showWarning('Você não tem permissão para criar visita nesta propriedade.');
       return;
     }
 
@@ -246,7 +246,7 @@ export default function NovaVisitaScreen() {
         {/* Fazenda */}
         <View style={styles.field}>
           <Text style={styles.label}>
-            Fazenda <Text style={styles.required}>*</Text>
+            Propriedade <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
             style={[styles.picker, errors.fazendaId && styles.inputError]}
@@ -266,7 +266,7 @@ export default function NovaVisitaScreen() {
             <Text style={styles.errorText}>{errors.fazendaId}</Text>
           )}
           {semFazendasAutorizadas && (
-            <Text style={styles.errorText}>Nenhuma fazenda autorizada disponível para nova visita.</Text>
+            <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para nova visita.</Text>
           )}
 
           {/* Dropdown de fazendas */}
@@ -422,7 +422,7 @@ export default function NovaVisitaScreen() {
             style={[styles.textarea, styles.input]}
             value={recomendacoes}
             onChangeText={setRecomendacoes}
-            placeholder="Recomendações técnicas para a fazenda..."
+            placeholder="Recomendações técnicas para a propriedade..."
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}

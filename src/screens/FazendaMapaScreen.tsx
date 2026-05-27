@@ -359,22 +359,22 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   // ── Título da tela ────────────────────────────────────────────
   const consultaPorFazenda = !!fazendaId && !estadoBloqueio;
   const tituloCabecalho = consultaPorFazenda
-    ? (fazendaNome || 'Limites da Fazenda')
+    ? (fazendaNome || 'Limites da Propriedade')
     : 'Visão geral de limites';
   const contextoCabecalho = consultaPorFazenda
     ? `Titular: ${titularNome || 'Não informado'}`
-    : `${fazendasContexto.length} fazenda${fazendasContexto.length !== 1 ? 's' : ''} no escopo`;
+    : `${fazendasContexto.length} propriedade${fazendasContexto.length !== 1 ? 's' : ''} no escopo`;
   const resumoTalhoes = `${talhoesExibidos.length} talhão${talhoesExibidos.length !== 1 ? 'es' : ''}  ·  ${fmt(areaTotal)} ha`;
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
         icon: 'lock-closed-outline',
         title: 'Acesso negado',
-        text: 'Esta fazenda não está disponível no seu escopo de acesso.',
+        text: 'Esta propriedade não está disponível no seu escopo de acesso.',
       }
     : {
         icon: 'alert-circle-outline',
-        title: 'Fazenda não encontrada',
-        text: 'Não foi possível localizar a fazenda informada para visualizar os limites.',
+        title: 'Propriedade não encontrada',
+        text: 'Não foi possível localizar a propriedade informada para visualizar os limites.',
       };
 
   // ── Estado de Loading ─────────────────────────────────────────

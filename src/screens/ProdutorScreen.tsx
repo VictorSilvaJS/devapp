@@ -114,7 +114,7 @@ export default function ProdutorScreen({ route, navigation }) {
       setDeleteIntegrity(integridadeExclusao);
       setOutrasFazendasTitular(detalheContexto.outrasFazendasTitular);
     } catch (error) {
-      toast.showError('Não foi possível carregar os dados da fazenda');
+      toast.showError('Não foi possível carregar os dados da propriedade');
       console.error(error);
     } finally {
       setLoading(false);
@@ -139,7 +139,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
   const handleEdit = () => {
     if (!podeEditarProdutor(user, produtor)) {
-      toast.showWarning('Você não tem permissão para editar esta fazenda.');
+      toast.showWarning('Você não tem permissão para editar esta propriedade.');
       return;
     }
 
@@ -156,7 +156,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
   const handleDelete = () => {
     if (!podeExcluirProdutor(user, produtor)) {
-      toast.showWarning('Você não tem permissão para excluir esta fazenda.');
+      toast.showWarning('Você não tem permissão para excluir esta propriedade.');
       return;
     }
 
@@ -172,7 +172,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const confirmDelete = async () => {
     if (!podeExcluirProdutor(user, produtor)) {
       setDeleteDialogVisible(false);
-      toast.showWarning('Você não tem permissão para excluir esta fazenda.');
+      toast.showWarning('Você não tem permissão para excluir esta propriedade.');
       return;
     }
 
@@ -188,22 +188,22 @@ export default function ProdutorScreen({ route, navigation }) {
       await Produtor.delete(produtor.id);
       setDeleteDialogVisible(false);
       setDeleting(false);
-      toast.showSuccess('Fazenda excluída com sucesso');
+      toast.showSuccess('Propriedade excluída com sucesso');
       navigation.navigate('Produtores');
     } catch (error) {
       setDeleteDialogVisible(false);
       setDeleting(false);
-      toast.showError(error?.message || 'Não foi possível excluir a fazenda');
+      toast.showError(error?.message || 'Não foi possível excluir a propriedade');
     }
   };
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Fazenda" />
+        <Header title="Propriedade" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Carregando fazenda...</Text>
+          <Text style={styles.loadingText}>Carregando propriedade...</Text>
         </View>
       </View>
     );
@@ -212,10 +212,10 @@ export default function ProdutorScreen({ route, navigation }) {
   if (!produtor) {
     return (
       <View style={styles.container}>
-        <Header title="Fazenda" />
+        <Header title="Propriedade" />
         <View style={styles.loadingContainer}>
           <Text style={styles.body}>
-            {accessDenied ? 'Você não tem permissão para acessar esta fazenda.' : 'Fazenda não encontrada.'}
+            {accessDenied ? 'Você não tem permissão para acessar esta propriedade.' : 'Propriedade não encontrada.'}
           </Text>
         </View>
       </View>
@@ -246,7 +246,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
   const handleNovoCaderno = () => {
     if (!podeCriarCadernoNaFazenda) {
-      toast.showWarning('Você não tem permissão para criar registro nesta fazenda.');
+      toast.showWarning('Você não tem permissão para criar registro nesta propriedade.');
       return;
     }
 
@@ -296,7 +296,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title={fazendaInfo.fazendaNome || 'Fazenda'} />
+      <Header title={fazendaInfo.fazendaNome || 'Propriedade'} />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Cabeçalho com Avatar e Informações Básicas */}
         <View style={styles.profileHeader}>
@@ -307,7 +307,7 @@ export default function ProdutorScreen({ route, navigation }) {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName} numberOfLines={1}>
-              {fazendaInfo.fazendaNome || 'Fazenda sem nome'}
+              {fazendaInfo.fazendaNome || 'Propriedade sem nome'}
             </Text>
             <View style={styles.locationContainer}>
               <Ionicons name="person-outline" size={14} color={colors.muted} />
@@ -340,7 +340,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   end={{ x: 1, y: 1 }}
                 >
                   <Ionicons name="create-outline" size={20} color={colors.white} />
-                  <Text style={styles.editButtonText}>Editar Fazenda</Text>
+                  <Text style={styles.editButtonText}>Editar Propriedade</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -494,13 +494,13 @@ export default function ProdutorScreen({ route, navigation }) {
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Contexto da Fazenda</Text>
+            <Text style={styles.sectionTitle}>Contexto da Propriedade</Text>
             
             <View style={styles.infoSection}>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="home" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Fazenda Atual</Text>
+                  <Text style={styles.infoLabel}>Propriedade Atual</Text>
                 </View>
                 <Text style={styles.infoValue}>{fazendaInfo.fazendaNome || 'Não informado'}</Text>
               </View>
@@ -554,7 +554,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
             {outrasFazendasTitular.length > 0 && (
               <>
-                <Text style={styles.sectionTitle}>Outras Fazendas do Titular</Text>
+                <Text style={styles.sectionTitle}>Outras Propriedades do Titular</Text>
                 <View style={styles.relatedFarmsSection}>
                   {outrasFazendasTitular.map((fazenda) => (
                     <TouchableOpacity
@@ -568,7 +568,7 @@ export default function ProdutorScreen({ route, navigation }) {
                       </View>
                       <View style={styles.relatedFarmInfo}>
                         <Text style={styles.relatedFarmName} numberOfLines={1}>
-                          {fazenda.fazendaNome || 'Fazenda sem nome'}
+                          {fazenda.fazendaNome || 'Propriedade sem nome'}
                         </Text>
                         <Text style={styles.relatedFarmLocation} numberOfLines={1}>
                           {fazenda.localizacao || 'Localização não informada'}
@@ -586,14 +586,14 @@ export default function ProdutorScreen({ route, navigation }) {
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="calendar" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Visitas da Fazenda</Text>
+                  <Text style={styles.infoLabel}>Visitas da Propriedade</Text>
                 </View>
                 <Text style={styles.infoValue}>{visitas.length} visita{visitas.length !== 1 ? 's' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="map" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Mapas da Fazenda</Text>
+                  <Text style={styles.infoLabel}>Mapas da Propriedade</Text>
                 </View>
                 <Text style={styles.infoValue}>{mapas.length} mapa{mapas.length !== 1 ? 's' : ''}</Text>
               </View>
@@ -642,7 +642,7 @@ export default function ProdutorScreen({ route, navigation }) {
                     </Text>
                     <Text style={styles.integrityText}>
                       {integridadeExclusao.canDelete
-                        ? 'Esta fazenda não possui vínculos operacionais relevantes no momento.'
+                        ? 'Esta propriedade não possui vínculos operacionais relevantes no momento.'
                         : integridadeExclusao.blockingMessage}
                     </Text>
                   </View>
@@ -664,7 +664,7 @@ export default function ProdutorScreen({ route, navigation }) {
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Mapas da Fazenda</Text>
+              <Text style={styles.sectionTitle}>Mapas da Propriedade</Text>
               <TouchableOpacity 
                 style={styles.verTodosButton}
                 onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
@@ -677,7 +677,7 @@ export default function ProdutorScreen({ route, navigation }) {
             {mapas.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="map-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>Nenhum mapa cadastrado para esta fazenda</Text>
+                <Text style={styles.emptyText}>Nenhum mapa cadastrado para esta propriedade</Text>
               </View>
             ) : (
               <>
@@ -756,7 +756,7 @@ export default function ProdutorScreen({ route, navigation }) {
               <View style={styles.emptyState}>
                 <Ionicons name="calendar-outline" size={48} color={colors.muted} />
                 <Text style={styles.emptyText}>
-                  Ainda não há visitas técnicas registradas para esta fazenda.
+                  Ainda não há visitas técnicas registradas para esta propriedade.
                 </Text>
                 <Text style={styles.emptySubtext}>
                   Quando uma visita for registrada, ela aparecerá aqui.
@@ -841,7 +841,7 @@ export default function ProdutorScreen({ route, navigation }) {
               <View style={styles.emptyState}>
                 <Ionicons name="book-outline" size={48} color={colors.muted} />
                 <Text style={styles.emptyText}>
-                  Ainda não há registros de caderno de campo para esta fazenda.
+                  Ainda não há registros de caderno de campo para esta propriedade.
                 </Text>
                 <Text style={styles.emptySubtext}>
                   Quando houver registros liberados, eles aparecerão aqui.
@@ -882,7 +882,7 @@ export default function ProdutorScreen({ route, navigation }) {
                           {getCadernoTipoLabel(registro.tipo_atividade)}
                         </Text>
                         <Text style={styles.cadernoSubtitle} numberOfLines={1}>
-                          {[registro.talhao, registro.colaborador_responsavel].filter(Boolean).join(' • ') || 'Registro da fazenda'}
+                          {[registro.talhao, registro.colaborador_responsavel].filter(Boolean).join(' • ') || 'Registro da propriedade'}
                         </Text>
                       </View>
                       <Ionicons name="chevron-forward-outline" size={20} color={colors.muted} />
@@ -934,7 +934,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
       <ConfirmDialog
         visible={deleteDialogVisible}
-        title="Excluir Fazenda"
+        title="Excluir Propriedade"
         message={integridadeExclusao.confirmationMessage}
         type="danger"
         confirmText="Excluir"

@@ -93,7 +93,7 @@ export default function NovoCadernoScreen() {
           setFazendaId('');
           setFazendas([]);
           setAccessDenied(true);
-          toast.showWarning('Você não tem permissão para criar registro nesta fazenda.');
+          toast.showWarning('Você não tem permissão para criar registro nesta propriedade.');
           return;
         }
 
@@ -105,7 +105,7 @@ export default function NovoCadernoScreen() {
       setFazendas(fazendasPermitidas);
     } catch (error) {
       console.error('Erro ao carregar fazendas para caderno:', error);
-      toast.showError('Erro ao carregar fazendas');
+      toast.showError('Erro ao carregar propriedades');
     } finally {
       setLoadingFazendas(false);
     }
@@ -115,7 +115,7 @@ export default function NovoCadernoScreen() {
     const newErrors: any = {};
 
     if (!fazendaId) {
-      newErrors.fazendaId = 'Selecione uma fazenda';
+      newErrors.fazendaId = 'Selecione uma propriedade';
     }
 
     if (!dataAtividade) {
@@ -148,7 +148,7 @@ export default function NovoCadernoScreen() {
     const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
 
     if (!podeIncluirCadernoEmFazenda(user, fazendaSelecionadaData)) {
-      toast.showWarning('Você não tem permissão para criar registro nesta fazenda.');
+      toast.showWarning('Você não tem permissão para criar registro nesta propriedade.');
       return;
     }
 
@@ -190,7 +190,7 @@ export default function NovoCadernoScreen() {
         <Header title="Novo Registro" showBack />
         <View style={styles.blockedContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.blockedSubtext}>Carregando fazendas autorizadas...</Text>
+          <Text style={styles.blockedSubtext}>Carregando propriedades autorizadas...</Text>
         </View>
       </View>
     );
@@ -203,7 +203,7 @@ export default function NovoCadernoScreen() {
         <View style={styles.blockedContainer}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
           <Text style={styles.blockedText}>Acesso restrito</Text>
-          <Text style={styles.blockedSubtext}>Você não tem permissão para criar registro nesta fazenda.</Text>
+          <Text style={styles.blockedSubtext}>Você não tem permissão para criar registro nesta propriedade.</Text>
         </View>
       </View>
     );
@@ -220,7 +220,7 @@ export default function NovoCadernoScreen() {
       >
         <View style={styles.field}>
           <Text style={styles.label}>
-            Fazenda <Text style={styles.required}>*</Text>
+            Propriedade <Text style={styles.required}>*</Text>
           </Text>
           <TouchableOpacity
             style={[styles.picker, errors.fazendaId && styles.inputError]}
@@ -237,11 +237,11 @@ export default function NovoCadernoScreen() {
             />
           </TouchableOpacity>
           {routeFazendaId && (
-            <Text style={styles.contextHint}>Registro vinculado à fazenda informada na rota.</Text>
+            <Text style={styles.contextHint}>Registro vinculado à propriedade informada na rota.</Text>
           )}
           {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
           {semFazendasAutorizadas && (
-            <Text style={styles.errorText}>Nenhuma fazenda autorizada disponível para novo registro.</Text>
+            <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para novo registro.</Text>
           )}
 
           {showFazendaPicker && !routeFazendaId && (
@@ -420,7 +420,7 @@ export default function NovoCadernoScreen() {
                 <Text style={[styles.radioLabel, visivelParaProdutor && styles.radioLabelSelected]}>
                   Visível ao produtor
                 </Text>
-                <Text style={styles.radioDescription}>Aparece no histórico da fazenda.</Text>
+                <Text style={styles.radioDescription}>Aparece no histórico da propriedade.</Text>
               </View>
             </TouchableOpacity>
 
@@ -445,14 +445,14 @@ export default function NovoCadernoScreen() {
             </TouchableOpacity>
           </View>
           {produtorLogado && (
-            <Text style={styles.contextHint}>Registros criados pelo produtor ficam visíveis no histórico da própria fazenda.</Text>
+            <Text style={styles.contextHint}>Registros criados pelo produtor ficam visíveis no histórico da própria propriedade.</Text>
           )}
         </View>
 
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            O registro será salvo no caderno da fazenda selecionada usando fazenda_id como contexto real.
+            O registro será salvo no caderno da propriedade selecionada usando fazenda_id como contexto real.
           </Text>
         </View>
       </ScrollView>

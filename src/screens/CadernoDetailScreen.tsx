@@ -190,7 +190,7 @@ export default function CadernoDetailScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Ionicons name="home-outline" size={24} color={colors.primary} />
-              <Text style={styles.cardTitle}>Fazenda</Text>
+              <Text style={styles.cardTitle}>Propriedade</Text>
             </View>
             <TouchableOpacity
               style={styles.fazendaInfo}

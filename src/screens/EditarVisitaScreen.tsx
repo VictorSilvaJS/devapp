@@ -144,7 +144,7 @@ export default function EditarVisitaScreen() {
     const newErrors: any = {};
 
     if (!resolveVisitaEdicaoFazendaId(visitaOriginal, fazendaId)) {
-      newErrors.fazendaId = 'Visita sem contexto de fazenda';
+      newErrors.fazendaId = 'Visita sem contexto de propriedade';
     }
 
     if (!dataVisita) {
@@ -178,12 +178,12 @@ export default function EditarVisitaScreen() {
     const fazendaSelecionadaData = findFazendaById(fazendas, fazendaContextoId) || fazendaOriginal;
 
     if (!fazendaSelecionadaData) {
-      toast.showWarning('Fazenda selecionada não está disponível para edição.');
+      toast.showWarning('Propriedade selecionada não está disponível para edição.');
       return;
     }
 
     if (!podeEditarVisita(user, { ...visitaOriginal, fazenda_id: fazendaContextoId }, fazendaSelecionadaData)) {
-      toast.showWarning('Você não tem permissão para editar visita nesta fazenda.');
+      toast.showWarning('Você não tem permissão para editar visita nesta propriedade.');
       return;
     }
 
@@ -286,7 +286,7 @@ export default function EditarVisitaScreen() {
 
   const fazendaContextoId = resolveVisitaEdicaoFazendaId(visitaOriginal, fazendaId);
   const fazendaContextoOption = fazendaOptions.find((option) => option.id === fazendaContextoId);
-  const fazendaContextoLabel = getVisitaFormFazendaLabel(fazendaContextoOption, 'Fazenda vinculada não encontrada');
+  const fazendaContextoLabel = getVisitaFormFazendaLabel(fazendaContextoOption, 'Propriedade vinculada não encontrada');
 
   return (
     <View style={styles.container}>
@@ -300,7 +300,7 @@ export default function EditarVisitaScreen() {
         {/* Fazenda */}
         <View style={styles.field}>
           <Text style={styles.label}>
-            Fazenda vinculada
+            Propriedade vinculada
           </Text>
           <View style={[styles.picker, styles.lockedPicker]}>
             <Text style={styles.pickerText}>
@@ -308,7 +308,7 @@ export default function EditarVisitaScreen() {
             </Text>
             <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
           </View>
-          <Text style={styles.contextHint}>A fazenda da visita não é alterada nesta edição.</Text>
+          <Text style={styles.contextHint}>A propriedade da visita não é alterada nesta edição.</Text>
         </View>
 
         {/* Status */}
@@ -423,7 +423,7 @@ export default function EditarVisitaScreen() {
             style={[styles.textarea, styles.input]}
             value={recomendacoes}
             onChangeText={setRecomendacoes}
-            placeholder="Recomendações técnicas para a fazenda..."
+            placeholder="Recomendações técnicas para a propriedade..."
             placeholderTextColor={colors.muted}
             multiline
             numberOfLines={4}

@@ -147,7 +147,7 @@ export default function CadernoCampoScreen() {
           <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por fazenda, atividade ou talhão..."
+            placeholder="Buscar por propriedade, atividade ou talhão..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -185,7 +185,7 @@ export default function CadernoCampoScreen() {
               style={styles.emptyIcon} 
             />
             <Text style={styles.emptyText}>
-              {busca ? 'Nenhum registro encontrado' : 'Ainda não há registros de caderno de campo para esta fazenda.'}
+              {busca ? 'Nenhum registro encontrado' : 'Ainda não há registros de caderno de campo para esta propriedade.'}
             </Text>
             <Text style={styles.emptySubtext}>
               {busca 
@@ -214,7 +214,7 @@ export default function CadernoCampoScreen() {
                     </View>
                     <View style={styles.cardHeaderInfo}>
                       <Text style={styles.cardTitle} numberOfLines={1}>
-                        {fazendaInfo.fazendaNome || 'Fazenda não encontrada'}
+                        {fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
                       </Text>
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
                         {fazendaInfo.titularNome || reg.talhao}

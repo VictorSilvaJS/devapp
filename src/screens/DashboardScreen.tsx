@@ -255,7 +255,7 @@ export default function DashboardScreen() {
       // Produtor / Proprietário
       return [
         {
-          label: 'Minhas Fazendas',
+          label: 'Minhas Propriedades',
           value: stats.produtores,
           icon: <Ionicons name="business-outline" size={24} color={colors.primary} />,
           accent: {

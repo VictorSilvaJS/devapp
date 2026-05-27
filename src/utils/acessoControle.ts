@@ -663,7 +663,7 @@ export const getTituloTela = (user, tela) => {
       dashboard: 'Meu Dashboard',
     },
     produtor: {
-      produtores: 'Minhas Fazendas',
+      produtores: 'Minhas Propriedades',
       visitas: 'Visitas Recebidas',
       caderno: 'Caderno de Campo',
       dashboard: 'Minha Propriedade',

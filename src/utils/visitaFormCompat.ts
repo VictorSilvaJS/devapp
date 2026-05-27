@@ -43,7 +43,7 @@ export const getVisitaFluxoUi = (status?: string | null) => {
       submitLabel: 'Registrar Visita',
       successMessage: 'Visita registrada como realizada!',
       errorMessage: 'Erro ao registrar visita',
-      infoText: 'A visita será salva como realizada no histórico da fazenda selecionada.',
+      infoText: 'A visita será salva como realizada no histórico da propriedade selecionada.',
     };
   }
 
@@ -57,7 +57,7 @@ export const getVisitaFluxoUi = (status?: string | null) => {
       submitLabel: 'Salvar Alterações',
       successMessage: 'Visita atualizada com sucesso!',
       errorMessage: 'Erro ao atualizar visita',
-      infoText: 'A visita será mantida como cancelada no histórico da fazenda selecionada.',
+      infoText: 'A visita será mantida como cancelada no histórico da propriedade selecionada.',
     };
   }
 
@@ -70,7 +70,7 @@ export const getVisitaFluxoUi = (status?: string | null) => {
     submitLabel: 'Agendar Visita',
     successMessage: 'Visita agendada com sucesso!',
     errorMessage: 'Erro ao agendar visita',
-    infoText: 'A visita será salva como agendada para acompanhamento técnico da fazenda selecionada.',
+    infoText: 'A visita será salva como agendada para acompanhamento técnico da propriedade selecionada.',
   };
 };
 
@@ -109,7 +109,7 @@ export const resolveVisitaEdicaoFazendaId = (visita: any, fallbackFazendaId = ''
 
 export const getVisitaFormFazendaLabel = (
   option?: VisitaFazendaOption | null,
-  emptyLabel = 'Selecione uma fazenda'
+  emptyLabel = 'Selecione uma propriedade'
 ): string => {
   if (!option) {
     return emptyLabel;

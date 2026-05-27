@@ -219,7 +219,7 @@ export const MapasPorFazenda = {
       // Fazenda sem mapas
       return toMapaFazendaResponseCompativel({
         fazenda_id: fazendaId,
-        fazenda_nome: 'Fazenda',
+        fazenda_nome: 'Propriedade',
         ano: 2025,
         gerados_em: Date.now(),
         talhoes: [],

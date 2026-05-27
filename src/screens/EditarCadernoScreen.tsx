@@ -121,7 +121,7 @@ export default function EditarCadernoScreen() {
     const newErrors: any = {};
 
     if (!resolveCadernoEdicaoFazendaId(registroOriginal, fazendaId)) {
-      newErrors.fazendaId = 'Registro sem contexto de fazenda';
+      newErrors.fazendaId = 'Registro sem contexto de propriedade';
     }
 
     if (!dataAtividade) {
@@ -226,7 +226,7 @@ export default function EditarCadernoScreen() {
   const fazendaOptions = buildCadernoFazendaOptions(fazenda ? [fazenda] : []);
   const fazendaLabel = getCadernoFormFazendaLabel(
     fazendaOptions.find((option) => option.id === contextoFazendaId),
-    'Fazenda vinculada não encontrada'
+    'Propriedade vinculada não encontrada'
   );
 
   return (
@@ -239,12 +239,12 @@ export default function EditarCadernoScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.field}>
-          <Text style={styles.label}>Fazenda vinculada</Text>
+          <Text style={styles.label}>Propriedade vinculada</Text>
           <View style={[styles.picker, styles.lockedPicker, errors.fazendaId && styles.inputError]}>
             <Text style={styles.pickerText}>{fazendaLabel}</Text>
             <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
           </View>
-          <Text style={styles.contextHint}>A fazenda do registro não é alterada nesta edição.</Text>
+          <Text style={styles.contextHint}>A propriedade do registro não é alterada nesta edição.</Text>
           {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
         </View>
 
@@ -390,7 +390,7 @@ export default function EditarCadernoScreen() {
                 <Text style={[styles.radioLabel, visivelParaProdutor && styles.radioLabelSelected]}>
                   Visível ao produtor
                 </Text>
-                <Text style={styles.radioDescription}>Aparece no histórico da fazenda.</Text>
+                <Text style={styles.radioDescription}>Aparece no histórico da propriedade.</Text>
               </View>
             </TouchableOpacity>
 
@@ -422,7 +422,7 @@ export default function EditarCadernoScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            As alterações serão salvas no registro desta fazenda, preservando o fazenda_id original.
+            As alterações serão salvas no registro desta propriedade, preservando o fazenda_id original.
           </Text>
         </View>
       </ScrollView>
