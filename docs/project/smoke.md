@@ -13,6 +13,23 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 3. Preservação de `fazenda_id` em edição de visita e caderno.
 4. Caderno no detalhe da propriedade: registros corretos por propriedade e visibilidade para produtor.
 5. Criação a partir do detalhe da propriedade: novo caderno nasce vinculado à propriedade atual.
+6. Criação de visita pelo detalhe da propriedade: `NovaVisita` deve pré-selecionar/travar a propriedade contextual e manter bloqueio fora de escopo.
+7. Material Técnico em mapas: botão/modal devem ficar claros como mock visual, sem upload real, storage, Drive ou cadastro persistente.
+
+**Rodada Colaborador - Microfase Para Teste Interno**
+Login principal de teste: `carlos@agrotche.com` / `colab123`.
+
+| ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| C-01 | P0 | Colaborador | Login `carlos@agrotche.com` / `colab123` | Entrar no app | Abre fluxo do colaborador com Home, Propriedades, Visitas, Caderno e Perfil | Reexecutar | Microfase validada tecnicamente; pendente teste manual interno |
+| C-02 | P0 | Colaborador | Home aberta | Abrir listagem principal | Listagem visível favorece `Propriedades`, preservando nomes internos legados | Reexecutar | Não renomear rotas/arquivos/`fazenda_id` |
+| C-03 | P0 | Colaborador | Propriedade dentro do escopo | Abrir detalhe -> Visitas Técnicas -> Nova Visita | `NovaVisita` abre com propriedade pré-selecionada e travada | Reexecutar | Usa `fazendaId` opcional por rota |
+| C-04 | P0 | Colaborador | Nova visita aberta pelo detalhe | Preencher e salvar visita | Visita salva no mock com a propriedade contextual e respeita escopo | Reexecutar | Sem backend real |
+| C-05 | P0 | Colaborador | Aba/listagem Visitas aberta | Tocar em Nova Visita global | Seletor normal de propriedade permanece disponível | Reexecutar | Fluxo global não deve ficar travado |
+| C-06 | P0 | Colaborador | Propriedade fora do escopo | Tentar criar visita por rota/contexto direto | Acesso bloqueado; não cria visita fora do escopo | Reexecutar | Regra por região/sub-região |
+| C-07 | P1 | Colaborador | Panorama/Mapas aberto | Revisar botão/modal de Material Técnico | Interface informa mock/protótipo visual, sem upload/storage/Drive/backend/cadastro real | Reexecutar | Conceito correto: Material Técnico; arquivo é recurso anexado |
+| C-08 | P1 | Colaborador | Mapas sem dados em algum contexto | Ver mensagens vazias | Empty states diferenciam ausência de demarcação/talhões e ausência de materiais técnicos/anexos | Reexecutar | Mensagens simples para teste interno |
+| C-09 | P1 | Produtor | Fluxo do produtor disponível | Conferir detalhe, visitas, mapas e caderno | Produtor não ganha criação de visita nem acesso administrativo a Material Técnico | Reexecutar | Risco de regressão baixo, mas deve ser conferido |
 
 **Rodada Produtor - Fluxo Visual/Mockado Pós-Nomenclatura**
 | ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
@@ -90,3 +107,10 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 - Caderno restrito nunca aparece para produtor.
 - Edição de visita e caderno nunca troca a propriedade.
 - A aba Caderno da propriedade mostra somente registros daquela propriedade e permite criar no contexto correto.
+- No fluxo do colaborador, Nova Visita global mantém seletor normal e Nova Visita contextual trava a propriedade recebida por `fazendaId`.
+- Material Técnico permanece claramente mockado e não deve sugerir upload, storage, Drive, backend ou cadastro real.
+
+**Validações Técnicas Da Microfase Colaborador**
+- `npm run typecheck`: passou.
+- `npm run test:domain-compat`: passou.
+- `git diff --check`: passou; no Windows, podem aparecer apenas avisos normais de LF/CRLF.

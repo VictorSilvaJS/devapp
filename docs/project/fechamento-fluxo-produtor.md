@@ -55,3 +55,77 @@ Permanecem temporariamente por compatibilidade:
 - contratos e campos internos legados
 
 Esses nomes nao devem guiar a linguagem de produto, mas tambem nao devem ser renomeados sem uma fase tecnica separada.
+
+## Complemento Pos-Revisao: Fluxo Do Colaborador
+
+Status em 2026-05-27: apos o fechamento do fluxo do produtor, foi concluida e revisada tecnicamente uma microfase de ajustes finais no fluxo do colaborador para teste manual interno do MVP visual/mockado.
+
+Login principal de teste:
+
+- `carlos@agrotche.com`
+- senha: `colab123`
+
+O colaborador acessa:
+
+- Home
+- Propriedades
+- Visitas
+- Caderno
+- Perfil
+
+A superficie visivel do fluxo favorece `Propriedades`, preservando nomes internos legados como `fazenda`, `fazendaId`, `fazenda_id`, rotas, arquivos e contratos tecnicos.
+
+## Visitas No Fluxo Do Colaborador
+
+O colaborador consegue criar visita por dois caminhos:
+
+- fluxo global: Visitas -> Nova Visita
+- contexto da propriedade: Propriedade -> Visitas Tecnicas -> Nova Visita
+
+No fluxo contextual, `NovaVisitaScreen` aceita `fazendaId` opcional por rota, pre-seleciona a propriedade correspondente e trava a selecao para deixar claro que a propriedade foi definida pelo contexto.
+
+No fluxo global, `NovaVisitaScreen` permanece com o seletor normal de propriedade.
+
+A criacao de visita continua respeitando escopo regional/sub-regional. Colaborador fora do escopo da propriedade permanece bloqueado.
+
+## Material Tecnico Mockado
+
+O fluxo de mapas passa a tratar o conceito visivel como `Material Tecnico`.
+
+Nesta fase, Material Tecnico e apenas mock/prototipo visual. O arquivo e entendido como recurso anexado ao material, mas nao existe:
+
+- upload real
+- backend
+- storage local gerenciado ou remoto
+- integracao com Drive
+- cadastro real persistente
+- pipeline de mapas
+- nova modelagem
+
+Os empty states de mapas foram ajustados para diferenciar:
+
+- ausencia de demarcacao/talhoes no mock
+- ausencia de anexos ou materiais tecnicos disponiveis
+
+## Fora Do Escopo Mantido
+
+Continuam fora desta microfase:
+
+- backend
+- upload real
+- storage
+- Drive
+- pipeline produtivo de mapas
+- nova modelagem
+- permissoes complexas novas
+- renomeacao interna de `fazenda_id`, `fazenda`, rotas, arquivos ou contratos legados
+
+## Validacoes Da Microfase Colaborador
+
+As validacoes tecnicas executadas apos a revisao passaram:
+
+- `npm run typecheck`
+- `npm run test:domain-compat`
+- `git diff --check`
+
+No Windows, `git diff --check` pode emitir apenas avisos normais de LF/CRLF.

@@ -76,11 +76,14 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - frente funcional de `Produtor` / `Propriedade` concluida no nivel necessario para o MVP atual, embora codigo e rotas ainda usem nomes tecnicos legados de fazenda
 - frente funcional de visitas tecnicas por propriedade e caderno de campo por propriedade validada no nivel necessario para o MVP atual
 - fluxo completo do produtor validado no MVP visual/mockado apos a padronizacao da nomenclatura visivel para `Propriedade`
+- fluxo do colaborador pronto para teste manual interno no MVP visual/mockado, com acesso a Home, Propriedades, Visitas, Caderno e Perfil
+- criacao de visita pelo colaborador validada tecnicamente pelo fluxo global e pelo contexto da propriedade, respeitando escopo regional/sub-regional
 - visualizacao de panorama/mapas e detalhe de propriedade
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade em materiais de mapa quando o campo opcional estiver preenchido
+- empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
@@ -96,6 +99,48 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - sincronizacao offline de verdade
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
+
+## Microfase Do Fluxo Do Colaborador
+
+Status em 2026-05-27: o fluxo do colaborador esta pronto para teste manual interno no MVP visual/mockado apos revisao e validacao tecnica.
+
+Login principal de teste:
+
+- `carlos@agrotche.com`
+- senha: `colab123`
+
+Fluxo coberto:
+
+- colaborador acessa Home, Propriedades, Visitas, Caderno e Perfil
+- a interface visivel favorece `Propriedades`, preservando nomes internos legados como rotas, arquivos, `fazenda`, `fazendaId` e `fazenda_id`
+- o colaborador consegue criar visita pelo fluxo global de Visitas -> Nova Visita
+- o colaborador consegue criar visita pelo contexto da propriedade, em Propriedade -> Visitas Tecnicas -> Nova Visita
+- `NovaVisitaScreen` aceita `fazendaId` opcional por rota, pre-seleciona a propriedade contextual e trava a selecao nesse contexto
+- a criacao de visita continua validando o escopo; colaborador fora da regiao/sub-regiao permitida permanece bloqueado
+
+Material Tecnico no fluxo de mapas:
+
+- `Material Tecnico` esta apenas como mock/prototipo visual
+- o botao/modal nao representa upload real, storage, Drive, backend ou cadastro persistente
+- o arquivo e tratado conceitualmente como recurso anexado ao material tecnico
+- os empty states de mapas diferenciam ausencia de demarcacao/talhoes e ausencia de materiais tecnicos/anexos
+
+Fora do escopo desta microfase:
+
+- backend
+- upload real
+- storage local gerenciado ou remoto
+- Drive
+- pipeline de mapas
+- nova modelagem
+- permissoes complexas novas
+- renomeacao interna de `fazenda_id`, `fazenda`, rotas, arquivos ou contratos legados
+
+Validacoes executadas:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou; quando executado no Windows, pode emitir apenas avisos normais de LF/CRLF
 
 ## Estado Atual Dos Mapas Da Propriedade Sela De Prata I
 
