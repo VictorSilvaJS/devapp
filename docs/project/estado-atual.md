@@ -75,6 +75,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
 - frente funcional de `Produtor` / `Propriedade` concluida no nivel necessario para o MVP atual, embora codigo e rotas ainda usem nomes tecnicos legados de fazenda
 - frente funcional de visitas tecnicas por propriedade e caderno de campo por propriedade validada no nivel necessario para o MVP atual
+- fluxo completo do produtor validado no MVP visual/mockado apos a padronizacao da nomenclatura visivel para `Propriedade`
 - visualizacao de panorama/mapas e detalhe de propriedade
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
@@ -132,6 +133,27 @@ Nao existe ainda:
 A proxima evolucao de arquivos reais permanece pendente e deve tratar fluxo administrativo, persistencia, storage/backend, permissoes por acao e pipeline produtivo de recebimento, validacao e publicacao.
 
 Documento de fechamento: `docs/project/fechamento-mapas-anexos-sela-prata-i.md`.
+
+## Fechamento Do Fluxo Do Produtor No MVP Visual/Mockado
+
+Status em 2026-05-27: o fluxo do produtor passou no teste manual do MVP visual/mockado apos a decisao oficial de nomenclatura de produto.
+
+Fluxo validado:
+
+- login produtor
+- entrada em `Minhas Propriedades`
+- abertura da propriedade
+- detalhe da propriedade
+- mapa dos talhoes
+- anexos de fertilidade
+- visitas tecnicas
+- caderno de campo
+- mensagens vazias
+- nomenclatura visivel usando `Propriedade`
+
+Esse resultado valida a experiencia principal de consulta do produtor na propria propriedade. Ele nao altera o estado de backend, upload, storage, pipeline produtivo, permissoes ou modelagem.
+
+Documento de fechamento: `docs/project/fechamento-fluxo-produtor.md`.
 
 ## Fechamento Formal Da Fase 2
 
