@@ -368,7 +368,9 @@ export default function ClienteDashboardScreen() {
           {visitasFiltradas.length === 0 ? (
             <View style={styles.emptySecao}>
               <Ionicons name="calendar-outline" size={40} color={colors.muted} />
-              <Text style={styles.emptySecaoText}>Nenhuma visita registrada</Text>
+              <Text style={styles.emptySecaoText}>
+                Ainda não há visitas técnicas registradas para esta fazenda.
+              </Text>
             </View>
           ) : (
             visitasFiltradas.slice(0, 5).map((visita, index) => (
@@ -397,7 +399,12 @@ export default function ClienteDashboardScreen() {
           {historicoFiltrado.length === 0 ? (
             <View style={styles.emptySecao}>
               <Ionicons name="document-text-outline" size={40} color={colors.muted} />
-              <Text style={styles.emptySecaoText}>Nenhuma atividade registrada</Text>
+              <Text style={styles.emptySecaoText}>
+                Ainda não há registros de caderno de campo para esta fazenda.
+              </Text>
+              <Text style={styles.emptySecaoSubtext}>
+                Mapas e anexos disponíveis continuam acessíveis na seção de mapas.
+              </Text>
             </View>
           ) : (
             historicoFiltrado.slice(0, 5).map((atividade, index) => (
@@ -575,6 +582,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.textLight,
     fontWeight: typography.weightMedium,
+    textAlign: 'center',
+  },
+  emptySecaoSubtext: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontCaption + 1,
+    color: colors.muted,
+    fontWeight: typography.weightMedium,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   mapasHorizontal: {
     flexGrow: 0,

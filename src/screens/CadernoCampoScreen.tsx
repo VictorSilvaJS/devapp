@@ -185,12 +185,12 @@ export default function CadernoCampoScreen() {
               style={styles.emptyIcon} 
             />
             <Text style={styles.emptyText}>
-              {busca ? 'Nenhum registro encontrado' : 'Nenhum registro ainda'}
+              {busca ? 'Nenhum registro encontrado' : 'Ainda não há registros de caderno de campo para esta fazenda.'}
             </Text>
             <Text style={styles.emptySubtext}>
               {busca 
                 ? 'Tente ajustar os filtros de busca' 
-                : 'Os registros de campo aparecerão aqui'}
+                : 'Quando houver registros liberados, eles aparecerão aqui.'}
             </Text>
           </View>
         ) : (

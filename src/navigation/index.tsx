@@ -91,7 +91,7 @@ const ClienteTabs = React.memo(function ClienteTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Minhas Fazendas" component={ClienteDashboardScreen} options={{ title: 'Propriedade' }} />
-      <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
+      <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Caderno', tabBarLabel: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   );

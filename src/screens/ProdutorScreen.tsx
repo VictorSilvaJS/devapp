@@ -755,14 +755,21 @@ export default function ProdutorScreen({ route, navigation }) {
             {visitas.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="calendar-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>Nenhuma visita registrada</Text>
+                <Text style={styles.emptyText}>
+                  Ainda não há visitas técnicas registradas para esta fazenda.
+                </Text>
                 <Text style={styles.emptySubtext}>
-                  As visitas técnicas desta fazenda aparecerão aqui
+                  Quando uma visita for registrada, ela aparecerá aqui.
                 </Text>
               </View>
             ) : (
               visitas.map((v, index) => (
-                <View key={v.id} style={styles.visitCard}>
+                <TouchableOpacity
+                  key={v.id}
+                  style={styles.visitCard}
+                  onPress={() => navigation.navigate('VisitaDetail', { visitaId: v.id })}
+                  activeOpacity={0.85}
+                >
                   <View style={styles.visitNumber}>
                     <Text style={styles.visitNumberText}>#{visitas.length - index}</Text>
                   </View>
@@ -803,7 +810,7 @@ export default function ProdutorScreen({ route, navigation }) {
                       </View>
                     )}
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             )}
           </View>
@@ -833,9 +840,11 @@ export default function ProdutorScreen({ route, navigation }) {
             {cadernos.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="book-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>Nenhum registro de caderno</Text>
+                <Text style={styles.emptyText}>
+                  Ainda não há registros de caderno de campo para esta fazenda.
+                </Text>
                 <Text style={styles.emptySubtext}>
-                  Os registros desta fazenda aparecerão aqui
+                  Quando houver registros liberados, eles aparecerão aqui.
                 </Text>
                 {podeCriarCadernoNaFazenda && (
                   <TouchableOpacity
