@@ -211,7 +211,7 @@ export default function DashboardScreen() {
     } else if (user?.perfil === 'colaborador') {
       return [
         {
-          label: 'Meus Produtores',
+          label: 'Propriedades',
           value: stats.produtores,
           icon: <Ionicons name="people-outline" size={24} color={colors.primary} />,
           accent: {

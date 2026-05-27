@@ -20,6 +20,7 @@ import {
   filtrarMapasPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaId,
+  podeCriarVisitaEmFazenda,
   podeIncluirCadernoEmFazenda,
   podeEditarProdutor,
   podeExcluirProdutor,
@@ -243,6 +244,16 @@ export default function ProdutorScreen({ route, navigation }) {
     ...buildMapaTalhaoRouteSelection(mapa, limites),
   });
   const podeCriarCadernoNaFazenda = podeIncluirCadernoEmFazenda(user, produtor);
+  const podeCriarVisitaNaFazenda = podeCriarVisitaEmFazenda(user, produtor);
+
+  const handleNovaVisita = () => {
+    if (!podeCriarVisitaNaFazenda) {
+      toast.showWarning('Você não tem permissão para criar visita nesta propriedade.');
+      return;
+    }
+
+    navigation.navigate('NovaVisita', { fazendaId: fazendaAtualId });
+  };
 
   const handleNovoCaderno = () => {
     if (!podeCriarCadernoNaFazenda) {
@@ -746,9 +757,21 @@ export default function ProdutorScreen({ route, navigation }) {
         {activeTab === 'visitas' && (
           <View style={styles.tabContent}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Histórico de Visitas</Text>
-              <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{visitas.length}</Text>
+              <Text style={styles.sectionTitle}>Visitas Técnicas</Text>
+              <View style={styles.sectionActions}>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{visitas.length}</Text>
+                </View>
+                {podeCriarVisitaNaFazenda && (
+                  <TouchableOpacity
+                    style={styles.newCadernoButton}
+                    onPress={handleNovaVisita}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="add-outline" size={16} color={colors.white} />
+                    <Text style={styles.newCadernoButtonText}>Nova Visita</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 

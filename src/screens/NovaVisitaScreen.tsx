@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -39,8 +39,10 @@ import {
 
 export default function NovaVisitaScreen() {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const toast = useToast();
   const { user } = useAuth();
+  const routeFazendaId = route.params?.fazendaId || route.params?.produtorId;
 
   // Estados do formulário
   const [fazendaId, setFazendaId] = useState('');
@@ -60,6 +62,7 @@ export default function NovaVisitaScreen() {
   const [fazendas, setFazendas] = useState([]);
   const [loadingFazendas, setLoadingFazendas] = useState(true);
   const [errors, setErrors] = useState<any>({});
+  const [contextAccessDenied, setContextAccessDenied] = useState(false);
 
   // Dropdown de fazendas
   const [showFazendaPicker, setShowFazendaPicker] = useState(false);
@@ -74,10 +77,11 @@ export default function NovaVisitaScreen() {
 
   useEffect(() => {
     loadFazendas();
-  }, [user]);
+  }, [user, routeFazendaId]);
 
   const loadFazendas = async () => {
     setLoadingFazendas(true);
+    setContextAccessDenied(false);
     try {
       if (!podeCriarVisita(user)) {
         setFazendaId('');
@@ -88,6 +92,25 @@ export default function NovaVisitaScreen() {
       const fazendasDisponiveis = await Produtor.list();
 
       const fazendasFiltradas = user ? filtrarProdutoresPorAcesso(fazendasDisponiveis, user) : fazendasDisponiveis;
+
+      if (routeFazendaId) {
+        const fazendaRota = findFazendaById(fazendasFiltradas, routeFazendaId);
+
+        if (!podeCriarVisitaEmFazenda(user, fazendaRota)) {
+          setFazendaId('');
+          setFazendas([]);
+          setContextAccessDenied(true);
+          setErrors((prev) => ({
+            ...prev,
+            fazendaId: 'A propriedade informada não está disponível no seu escopo.',
+          }));
+          toast.showWarning('Você não tem permissão para criar visita nesta propriedade.');
+          return;
+        }
+
+        setFazendaId(routeFazendaId);
+        setErrors((prev) => ({ ...prev, fazendaId: null }));
+      }
       
       setFazendas(fazendasFiltradas);
     } catch (error) {
@@ -234,6 +257,21 @@ export default function NovaVisitaScreen() {
     );
   }
 
+  if (contextAccessDenied) {
+    return (
+      <View style={styles.container}>
+        <Header title="Nova Visita" showBack />
+        <View style={styles.blockedContainer}>
+          <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
+          <Text style={styles.blockedText}>Acesso restrito</Text>
+          <Text style={styles.blockedSubtext}>
+            Você não tem permissão para criar visita nesta propriedade.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title="Nova Visita" showBack />
@@ -251,13 +289,13 @@ export default function NovaVisitaScreen() {
           <TouchableOpacity
             style={[styles.picker, errors.fazendaId && styles.inputError]}
             onPress={() => setShowFazendaPicker(!showFazendaPicker)}
-            disabled={loadingFazendas || semFazendasAutorizadas}
+            disabled={loadingFazendas || semFazendasAutorizadas || !!routeFazendaId}
           >
             <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
               {loadingFazendas ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
             </Text>
             <Ionicons 
-              name={showFazendaPicker ? 'chevron-up' : 'chevron-down'} 
+              name={routeFazendaId ? 'lock-closed-outline' : showFazendaPicker ? 'chevron-up' : 'chevron-down'}
               size={20} 
               color={colors.muted} 
             />
@@ -268,9 +306,12 @@ export default function NovaVisitaScreen() {
           {semFazendasAutorizadas && (
             <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para nova visita.</Text>
           )}
+          {routeFazendaId && !contextAccessDenied && (
+            <Text style={styles.contextHint}>Propriedade definida pelo contexto da propriedade.</Text>
+          )}
 
           {/* Dropdown de fazendas */}
-          {showFazendaPicker && (
+          {showFazendaPicker && !routeFazendaId && (
             <View style={styles.dropdownContainer}>
               <ScrollView style={styles.dropdown} nestedScrollEnabled>
                 {fazendaOptions.map((fazenda) => (
@@ -691,6 +732,11 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: typography.fontSmall,
     color: colors.error,
+    marginTop: spacing.xs,
+  },
+  contextHint: {
+    fontSize: typography.fontSmall,
+    color: colors.textLight,
     marginTop: spacing.xs,
   },
   infoBox: {

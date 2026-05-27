@@ -171,6 +171,9 @@ export default function MapasScreen({ route, navigation }) {
   const [uploadArquivoUrl, setUploadArquivoUrl] = useState('');
   const [uploadFormato, setUploadFormato] = useState('');
   const [uploadTamanho, setUploadTamanho] = useState('');
+  const [materialTipo, setMaterialTipo] = useState('Material técnico');
+  const [materialOrigem, setMaterialOrigem] = useState('URL mockada');
+  const [materialDescricao, setMaterialDescricao] = useState('');
   const [associandoMaterial, setAssociandoMaterial] = useState(false);
 
   // Estado técnico de demarcação/panorama
@@ -418,6 +421,12 @@ export default function MapasScreen({ route, navigation }) {
     () => mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId) ?? null,
     [mapasAssociacaoOptions, uploadMapaId]
   );
+  const materialFazendaSelecionadaInfo = useMemo(() => {
+    if (!mapaUploadSelecionado) return fazendaContextoInfo || fazendaFiltroInfo;
+    return fazendaInfoPorId.get(getMapaFazendaId(mapaUploadSelecionado))
+      || fazendaContextoInfo
+      || fazendaFiltroInfo;
+  }, [mapaUploadSelecionado, fazendaInfoPorId, fazendaContextoInfo, fazendaFiltroInfo]);
 
   // ──────────────────────────────────────────────
   // FILTROS DA DEMARCAÇÃO DO PANORAMA
@@ -523,6 +532,9 @@ export default function MapasScreen({ route, navigation }) {
     setUploadArquivoUrl(status.podeAbrir ? status.arquivoUrl || '' : '');
     setUploadFormato(mapa?.formato_arquivo || '');
     setUploadTamanho(mapa?.tamanho_arquivo ? String(mapa.tamanho_arquivo) : '');
+    setMaterialTipo(formatarTipoMaterial(mapa?.tipo_material) || 'Material técnico');
+    setMaterialOrigem('URL mockada');
+    setMaterialDescricao(mapa?.observacoes || '');
   };
 
   const abrirAssociacaoMaterial = (mapa = null) => {
@@ -560,7 +572,7 @@ export default function MapasScreen({ route, navigation }) {
       const atualizado = await Mapa.update(mapaSelecionado.id, result.payload);
       setMapas((prev) => prev.map((mapa) => mapa.id === atualizado.id ? atualizado : mapa));
       setUploadDialog(false);
-      toast.showSuccess('Material associado ao mapa. A abertura já está disponível.');
+      toast.showSuccess('Material técnico associado ao mapa no mock visual.');
     } catch (error) {
       toast.showError('Não foi possível associar o material ao mapa.');
     } finally {
@@ -807,7 +819,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.75}
         >
           <Ionicons name="link-outline" size={15} color={colors.primary} />
-          <Text style={styles.associarMaterialText}>Associar URL abrível</Text>
+          <Text style={styles.associarMaterialText}>Cadastrar material técnico</Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -1048,11 +1060,19 @@ export default function MapasScreen({ route, navigation }) {
       {limitesFiltrados.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="git-network-outline" size={80} color={colors.muted} />
-          <Text style={styles.emptyText}>Nenhum mapa de talhões disponível</Text>
+          <Text style={styles.emptyText}>
+            {temFiltroPanoramaAtivo
+              ? 'Nenhuma demarcação encontrada'
+              : consultaPorFazenda || fazendaFiltroInfo
+                ? 'Sem demarcação de talhões neste mock'
+                : 'Sem demarcações de talhões no escopo atual'}
+          </Text>
           <Text style={styles.emptySubtext}>
             {temFiltroPanoramaAtivo
               ? 'Tente ajustar propriedade, talhão, demarcação ou busca.'
-              : 'Quando a demarcação da propriedade estiver liberada, ela aparecerá aqui.'}
+              : consultaPorFazenda || fazendaFiltroInfo
+                ? 'Os anexos técnicos podem existir mesmo sem mapa de talhões cadastrado para esta propriedade.'
+                : 'Quando houver demarcações liberadas para as propriedades acessíveis, elas aparecerão aqui.'}
           </Text>
         </View>
       ) : (
@@ -1199,7 +1219,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.7}
         >
           <Ionicons name="link-outline" size={20} color={colors.white} />
-          <Text style={styles.uploadButtonText}>Associar arquivo técnico</Text>
+          <Text style={styles.uploadButtonText}>Cadastrar material técnico (mock)</Text>
         </TouchableOpacity>
       )}
 
@@ -1212,15 +1232,15 @@ export default function MapasScreen({ route, navigation }) {
           />
           <Text style={styles.emptyText}>
             {temFiltroMaterialAtivo
-              ? 'Nenhum anexo encontrado'
+              ? 'Nenhum material técnico encontrado'
               : materiaisSaoFertilidade
                 ? 'Nenhum anexo de fertilidade disponível'
-                : 'Nenhum material disponível'}
+                : 'Nenhum material técnico disponível'}
           </Text>
           <Text style={styles.emptySubtext}>
             {temFiltroMaterialAtivo
               ? 'Tente ajustar safra, talhão, categoria ou busca.'
-              : 'Quando imagens ou arquivos técnicos forem liberados para este contexto, eles aparecerão aqui.'}
+              : 'Quando materiais técnicos forem liberados para este contexto, os arquivos anexados aparecerão aqui.'}
           </Text>
         </View>
       ) : (
@@ -1357,7 +1377,7 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       </Modal>
 
-      {/* Modal de Upload com Data */}
+      {/* Modal de Material Técnico mockado */}
       <Modal
         visible={uploadDialog}
         transparent
@@ -1368,8 +1388,8 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.uploadDialog}>
             <View style={styles.uploadHeader}>
               <View style={styles.uploadHeaderLeft}>
-                <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} />
-                <Text style={styles.uploadTitle}>Associar Material</Text>
+                <Ionicons name="document-attach-outline" size={24} color={colors.primary} />
+                <Text style={styles.uploadTitle} numberOfLines={2}>Cadastrar Material Técnico (mock)</Text>
               </View>
               <TouchableOpacity onPress={() => setUploadDialog(false)} style={styles.uploadClose}>
                 <Ionicons name="close" size={22} color={colors.text} />
@@ -1377,9 +1397,10 @@ export default function MapasScreen({ route, navigation }) {
             </View>
             
             <Text style={styles.uploadDescription}>
-              Informe uma URL abrível para vincular ao mapa. O mock guarda essa associação durante a sessão atual.
+              Protótipo visual/mockado para testar o conceito de material técnico. Não envia arquivo, não integra storage e não cria cadastro real.
             </Text>
 
+            <ScrollView style={styles.uploadBody} showsVerticalScrollIndicator={false}>
             <View style={styles.uploadAnoContainer}>
               <Text style={styles.uploadAnoLabel}>Mapa</Text>
               <ScrollView style={styles.uploadMapaOptions} nestedScrollEnabled>
@@ -1413,12 +1434,64 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.formatosInfo}>
               <Ionicons name="information-circle-outline" size={16} color={colors.info} />
               <Text style={styles.formatosInfoText}>
-                URLs aceitas: https://, file://, content://, data: ou asset://
+                A URL abaixo é apenas mock/dev. URLs aceitas: https://, file://, content://, data: ou asset://
               </Text>
             </View>
 
+            <View style={styles.uploadCamposRow}>
+              <View style={styles.uploadCampoFlex}>
+                <Text style={styles.uploadAnoLabel}>Tipo de material</Text>
+                <TextInput
+                  style={styles.uploadAnoInput}
+                  value={materialTipo}
+                  onChangeText={setMaterialTipo}
+                  placeholder="Diagnóstico"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+              <View style={styles.uploadCampoFlex}>
+                <Text style={styles.uploadAnoLabel}>Origem</Text>
+                <TextInput
+                  style={styles.uploadAnoInput}
+                  value={materialOrigem}
+                  onChangeText={setMaterialOrigem}
+                  placeholder="URL mockada"
+                  placeholderTextColor={colors.muted}
+                />
+              </View>
+            </View>
+
             <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>URL do material</Text>
+              <Text style={styles.uploadAnoLabel}>Propriedade vinculada</Text>
+              <View style={styles.uploadReadonlyBox}>
+                <Ionicons name="business-outline" size={16} color={colors.primary} />
+                <Text style={styles.uploadReadonlyText} numberOfLines={1}>
+                  {materialFazendaSelecionadaInfo?.fazendaNome || 'Propriedade do contexto atual'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.uploadCamposRow}>
+              <View style={styles.uploadCampoFlex}>
+                <Text style={styles.uploadAnoLabel}>Talhão opcional</Text>
+                <View style={styles.uploadReadonlyBox}>
+                  <Text style={styles.uploadReadonlyText} numberOfLines={1}>
+                    {mapaUploadSelecionado?.talhao || 'Não informado'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.uploadCampoFlex}>
+                <Text style={styles.uploadAnoLabel}>Safra/ano</Text>
+                <View style={styles.uploadReadonlyBox}>
+                  <Text style={styles.uploadReadonlyText} numberOfLines={1}>
+                    {mapaUploadSelecionado ? getMapaSafra(mapaUploadSelecionado) || 'Não informado' : 'Não informado'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.uploadAnoContainer}>
+              <Text style={styles.uploadAnoLabel}>URL mockada do arquivo</Text>
               <TextInput
                 style={styles.uploadAnoInput}
                 value={uploadArquivoUrl}
@@ -1444,7 +1517,7 @@ export default function MapasScreen({ route, navigation }) {
                 />
               </View>
               <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Tamanho bytes</Text>
+                <Text style={styles.uploadAnoLabel}>Tamanho em bytes</Text>
                 <TextInput
                   style={styles.uploadAnoInput}
                   value={uploadTamanho}
@@ -1456,11 +1529,26 @@ export default function MapasScreen({ route, navigation }) {
               </View>
             </View>
 
+            <View style={styles.uploadAnoContainer}>
+              <Text style={styles.uploadAnoLabel}>Descrição</Text>
+              <TextInput
+                style={[styles.uploadAnoInput, styles.uploadDescricaoInput]}
+                value={materialDescricao}
+                onChangeText={setMaterialDescricao}
+                placeholder="Descrição breve para o teste interno"
+                placeholderTextColor={colors.muted}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
             {mapaUploadSelecionado && (
               <Text style={styles.uploadMapaSelecionadoInfo}>
-                Após associar, "{mapaUploadSelecionado.titulo}" passará a usar o fluxo honesto de Abrir material.
+                No MVP visual, "{mapaUploadSelecionado.titulo}" passará a usar o fluxo de Abrir material apenas no mock local.
               </Text>
             )}
+            </ScrollView>
 
             <View style={styles.uploadActions}>
               <TouchableOpacity 
@@ -1476,7 +1564,7 @@ export default function MapasScreen({ route, navigation }) {
               >
                 <Ionicons name="link-outline" size={18} color={colors.white} />
                 <Text style={styles.uploadConfirmText}>
-                  {associandoMaterial ? 'Associando...' : 'Associar'}
+                  {associandoMaterial ? 'Associando...' : 'Associar mock'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1861,6 +1949,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     width: '100%',
     maxWidth: 400,
+    maxHeight: '90%',
     ...shadows.lg,
   },
   uploadHeader: {
@@ -1873,8 +1962,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
+    paddingRight: spacing.sm,
   },
   uploadTitle: {
+    flex: 1,
     fontSize: typography.fontSubtitle,
     fontWeight: typography.weightBold,
     color: colors.text,
@@ -1892,6 +1984,10 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     lineHeight: 20,
     marginBottom: spacing.lg,
+  },
+  uploadBody: {
+    maxHeight: 520,
+    marginBottom: spacing.md,
   },
   fileSelectButton: {
     flexDirection: 'row',
@@ -1919,6 +2015,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
   },
   formatosInfoText: {
+    flex: 1,
     fontSize: typography.fontCaption,
     color: colors.info,
     fontWeight: typography.weightSemibold,
@@ -1942,6 +2039,28 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.text,
     textAlign: 'center',
+  },
+  uploadDescricaoInput: {
+    minHeight: 82,
+    textAlign: 'left',
+  },
+  uploadReadonlyBox: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radius,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  uploadReadonlyText: {
+    flex: 1,
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
   },
   uploadMapaOptions: {
     maxHeight: 170,
