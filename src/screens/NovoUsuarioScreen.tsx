@@ -23,10 +23,17 @@ import {
   buildUsuarioAdminPayload,
   buildUsuarioFormFromMock,
   getFazendaOptionLabel,
+  getUsuarioNome,
   getVinculoPropriedadeLabel,
+  getVinculosPropriedadeUsuario,
   normalizeFormVinculosPropriedade,
   parseListaTexto,
 } from '../utils/usuarioAdminCompat';
+import {
+  listarMicroregioesPorRegiao,
+  listarPropriedadesPorMicroregioes,
+  listarRegioes,
+} from '../utils/territorioCompat';
 
 const PERFIS_FORM = [
   { key: 'produtor', label: 'Produtor', icon: 'leaf-outline' },
@@ -183,6 +190,44 @@ export default function NovoUsuarioScreen() {
     [form.subRegioesText]
   );
 
+  const regioesTerritorio = useMemo(() => listarRegioes(propriedades), [propriedades]);
+
+  const microregioesTerritorio = useMemo(
+    () => listarMicroregioesPorRegiao(propriedades, form.regiao),
+    [propriedades, form.regiao]
+  );
+
+  const propriedadesAbrangidasMicroregioes = useMemo(
+    () => listarPropriedadesPorMicroregioes(propriedadesOrdenadas, microRegioesInformadas, form.regiao),
+    [propriedadesOrdenadas, microRegioesInformadas, form.regiao]
+  );
+
+  const selecionarRegiaoColaborador = (regiao: string) => {
+    setForm((prev) => ({
+      ...prev,
+      regiao,
+      subRegioesText: prev.regiao === regiao ? prev.subRegioesText : '',
+    }));
+    setErrors((prev) => ({ ...prev, regiao: null, escopoColaborador: null }));
+  };
+
+  const toggleMicroRegiaoColaborador = (microregiao: string, regiao?: string) => {
+    setForm((prev) => {
+      const atuais = parseListaTexto(prev.subRegioesText);
+      const selected = atuais.includes(microregiao);
+      const next = selected
+        ? atuais.filter((item) => item !== microregiao)
+        : [...atuais, microregiao];
+
+      return {
+        ...prev,
+        regiao: prev.regiao || regiao || '',
+        subRegioesText: next.join(', '),
+      };
+    });
+    setErrors((prev) => ({ ...prev, regiao: null, escopoColaborador: null }));
+  };
+
   const emailEmUso = (email: string) => {
     const normalizedEmail = email.trim().toLowerCase();
     return usuarios.some((usuario) =>
@@ -222,6 +267,14 @@ export default function NovoUsuarioScreen() {
     const option = getFazendaOptionLabel(propriedade);
     const vinculo = getVinculoPropriedade(option.id);
     const active = Boolean(vinculo);
+    const outroProdutorPrincipal = showPrincipal
+      ? usuarios.find((usuario) => {
+          if (usuario?.id === usuarioAtual?.id || usuario?.perfil !== 'produtor') return false;
+          return getVinculosPropriedadeUsuario(usuario, propriedades).some(
+            (item) => item.propriedade_id === option.id && item.principal
+          );
+        })
+      : null;
 
     return (
       <View key={option.id} style={[styles.optionGroup, active && styles.optionRowActive]}>
@@ -276,6 +329,15 @@ export default function NovoUsuarioScreen() {
                   Principal
                 </Text>
               </TouchableOpacity>
+            )}
+
+            {showPrincipal && outroProdutorPrincipal && (
+              <View style={styles.inlineWarning}>
+                <Ionicons name="alert-circle-outline" size={16} color={colors.warning} />
+                <Text style={styles.inlineWarningText}>
+                  Já existe produtor principal vinculado no mock: {getUsuarioNome(outroProdutorPrincipal)}. Este vínculo visual não altera automaticamente o titular cadastral.
+                </Text>
+              </View>
             )}
           </View>
         )}
@@ -515,25 +577,94 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'colaborador' && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Escopo do colaborador</Text>
+            <Text style={styles.sectionHint}>
+              Os vínculos territoriais abaixo são preparação visual/mockada e ainda não alteram o motor efetivo de permissões.
+            </Text>
             <Field
               label="Função/cargo"
               value={form.cargo}
               onChangeText={(value) => updateField('cargo', value)}
               placeholder="Ex: Consultor regional"
             />
-            <Field
-              label="Região"
-              value={form.regiao}
-              onChangeText={(value) => updateField('regiao', value)}
-              placeholder="Ex: Goiás"
-              error={errors.regiao}
-            />
-            <Field
-              label="Micro-regiões/sub-regiões"
-              value={form.subRegioesText}
-              onChangeText={(value) => updateField('subRegioesText', value)}
-              placeholder="Ex: Rio Verde, Jataí"
-            />
+
+            {regioesTerritorio.length > 0 ? (
+              <>
+                <Text style={styles.label}>Região</Text>
+                <View style={styles.miniChipWrap}>
+                  {regioesTerritorio.map((regiao) => {
+                    const selected = form.regiao === regiao.nome;
+                    return (
+                      <TouchableOpacity
+                        key={regiao.id}
+                        style={[styles.miniChip, selected && styles.miniChipActive]}
+                        onPress={() => selecionarRegiaoColaborador(regiao.nome)}
+                        activeOpacity={0.78}
+                      >
+                        <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>
+                          {regiao.nome}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
+              </>
+            ) : (
+              <Field
+                label="Região"
+                value={form.regiao}
+                onChangeText={(value) => updateField('regiao', value)}
+                placeholder="Ex: Goiás"
+                error={errors.regiao}
+              />
+            )}
+
+            {microregioesTerritorio.length > 0 ? (
+              <View style={styles.territoryBlock}>
+                <Text style={styles.label}>Micro-regiões/sub-regiões</Text>
+                <View style={styles.miniChipWrap}>
+                  {microregioesTerritorio.map((microregiao) => {
+                    const selected = microRegioesInformadas.includes(microregiao.nome);
+                    return (
+                      <TouchableOpacity
+                        key={microregiao.id}
+                        style={[styles.miniChip, selected && styles.miniChipActive]}
+                        onPress={() => toggleMicroRegiaoColaborador(microregiao.nome, microregiao.regiao)}
+                        activeOpacity={0.78}
+                      >
+                        <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>
+                          {microregiao.nome}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : (
+              <Field
+                label="Micro-regiões/sub-regiões"
+                value={form.subRegioesText}
+                onChangeText={(value) => updateField('subRegioesText', value)}
+                placeholder="Ex: Rio Verde, Jataí"
+              />
+            )}
+
+            {microRegioesInformadas.length > 0 && (
+              <View style={styles.linkedBox}>
+                <Text style={styles.linkedTitle}>Prévia por micro-região</Text>
+                <Text style={styles.linkedText}>
+                  {propriedadesAbrangidasMicroregioes.length} propriedade{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} abrangida{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} visualmente por essas micro-regiões.
+                </Text>
+                {propriedadesAbrangidasMicroregioes.slice(0, 5).map((propriedade) => {
+                  const option = getFazendaOptionLabel(propriedade);
+                  return (
+                    <Text key={option.id} style={styles.linkedItemText}>
+                      {option.title}
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
 
             <Text style={styles.label}>Propriedades atribuídas no mock</Text>
             <Text style={styles.sectionHint}>
@@ -758,6 +889,10 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     marginTop: 2,
   },
+  territoryBlock: {
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
   linkedBox: {
     marginTop: spacing.md,
     backgroundColor: colors.backgroundAlt,
@@ -787,6 +922,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.sm,
+  },
+  inlineWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    backgroundColor: colors.warningLight + '22',
+    borderRadius: spacing.radiusSm,
+    padding: spacing.sm,
+  },
+  inlineWarningText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 18,
   },
   miniChipWrap: {
     flexDirection: 'row',

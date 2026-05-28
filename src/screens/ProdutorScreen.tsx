@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
-import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea } from '../api/mock';
+import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
 import {
   buildFazendaMapaRouteParams,
@@ -27,6 +27,15 @@ import {
   temAcessoProdutor,
 } from '../utils/acessoControle';
 import { buildFazendaDetailContext, getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import {
+  getColaboradoresRelacionadosAPropriedade,
+  getUsuariosProdutoresDaPropriedade,
+} from '../utils/territorioCompat';
+import {
+  getUsuarioNome,
+  getVinculoPropriedadeLabel,
+  getVinculosPropriedadeUsuario,
+} from '../utils/usuarioAdminCompat';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -43,6 +52,8 @@ export default function ProdutorScreen({ route, navigation }) {
   const [limites, setLimites] = useState([]);
   const [deleteIntegrity, setDeleteIntegrity] = useState(null);
   const [outrasFazendasTitular, setOutrasFazendasTitular] = useState([]);
+  const [todasFazendasMock, setTodasFazendasMock] = useState([]);
+  const [usuariosMock, setUsuariosMock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [activeTab, setActiveTab] = useState('resumo');
@@ -59,6 +70,8 @@ export default function ProdutorScreen({ route, navigation }) {
       setLimites([]);
       setDeleteIntegrity(null);
       setOutrasFazendasTitular([]);
+      setTodasFazendasMock([]);
+      setUsuariosMock([]);
       setLoading(false);
       return;
     }
@@ -77,17 +90,20 @@ export default function ProdutorScreen({ route, navigation }) {
         setLimites([]);
         setDeleteIntegrity(null);
         setOutrasFazendasTitular([]);
+        setTodasFazendasMock([]);
+        setUsuariosMock([]);
         setAccessDenied(true);
         return;
       }
 
       const fazendaAtualId = getFazendaId(p) || id;
-      const [v, todosMapas, todosCadernos, todosLimites, todasFazendas] = await Promise.all([
+      const [v, todosMapas, todosCadernos, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
         Visita.filter({ fazenda_id: fazendaAtualId }),
         Mapa.list(),
         CadernoCampo.list(),
         LimiteArea.list(),
         Produtor.list(),
+        User.list(),
       ]);
       const m = filtrarMapasPorFazendaIds(todosMapas, [fazendaAtualId], {
         somenteDisponiveisDownload: user?.perfil === 'produtor',
@@ -114,6 +130,8 @@ export default function ProdutorScreen({ route, navigation }) {
       setLimites(l);
       setDeleteIntegrity(integridadeExclusao);
       setOutrasFazendasTitular(detalheContexto.outrasFazendasTitular);
+      setTodasFazendasMock(todasFazendas);
+      setUsuariosMock(todosUsuarios);
     } catch (error) {
       toast.showError('Não foi possível carregar os dados da propriedade');
       console.error(error);
@@ -245,6 +263,12 @@ export default function ProdutorScreen({ route, navigation }) {
   });
   const podeCriarCadernoNaFazenda = podeIncluirCadernoEmFazenda(user, produtor);
   const podeCriarVisitaNaFazenda = podeCriarVisitaEmFazenda(user, produtor);
+  const produtoresVinculadosMock = user?.perfil === 'admin'
+    ? getUsuariosProdutoresDaPropriedade(usuariosMock, produtor, todasFazendasMock)
+    : [];
+  const colaboradoresRelacionadosMock = user?.perfil === 'admin'
+    ? getColaboradoresRelacionadosAPropriedade(usuariosMock, produtor, todasFazendasMock)
+    : [];
 
   const handleNovaVisita = () => {
     if (!podeCriarVisitaNaFazenda) {
@@ -562,6 +586,69 @@ export default function ProdutorScreen({ route, navigation }) {
                 </View>
               )}
             </View>
+
+            {user?.perfil === 'admin' && (
+              <>
+                <Text style={styles.sectionTitle}>Vínculos visuais do mock</Text>
+                <View style={styles.infoSection}>
+                  <Text style={styles.mockLinkNote}>
+                    Preparação visual para backend/banco. Estes vínculos não alteram o motor efetivo de permissões nesta fase.
+                  </Text>
+
+                  <View style={styles.mockLinkGroup}>
+                    <Text style={styles.mockLinkGroupTitle}>Usuário produtor vinculado</Text>
+                    {produtoresVinculadosMock.length === 0 ? (
+                      <Text style={styles.mockLinkEmpty}>Nenhum usuário produtor vinculado no mock.</Text>
+                    ) : (
+                      produtoresVinculadosMock.map((usuarioProdutor) => {
+                        const vinculo = getVinculosPropriedadeUsuario(
+                          usuarioProdutor,
+                          todasFazendasMock
+                        ).find((item) => item.propriedade_id === fazendaAtualId);
+
+                        return (
+                          <View key={usuarioProdutor.id} style={styles.mockLinkItem}>
+                            <Ionicons name="person-outline" size={16} color={colors.primary} />
+                            <View style={styles.mockLinkItemText}>
+                              <Text style={styles.mockLinkName}>{getUsuarioNome(usuarioProdutor)}</Text>
+                              <Text style={styles.mockLinkMeta}>
+                                {vinculo?.principal ? 'Principal' : 'Vínculo'} • {getVinculoPropriedadeLabel(vinculo?.tipo_vinculo)}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+
+                  <View style={styles.mockLinkGroup}>
+                    <Text style={styles.mockLinkGroupTitle}>Colaboradores sugeridos ou relacionados</Text>
+                    {colaboradoresRelacionadosMock.length === 0 ? (
+                      <Text style={styles.mockLinkEmpty}>Nenhum colaborador relacionado ao território no mock.</Text>
+                    ) : (
+                      colaboradoresRelacionadosMock.map((colaborador) => {
+                        const temVinculoDireto = getVinculosPropriedadeUsuario(
+                          colaborador,
+                          todasFazendasMock
+                        ).some((item) => item.propriedade_id === fazendaAtualId);
+
+                        return (
+                          <View key={colaborador.id} style={styles.mockLinkItem}>
+                            <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
+                            <View style={styles.mockLinkItemText}>
+                              <Text style={styles.mockLinkName}>{getUsuarioNome(colaborador)}</Text>
+                              <Text style={styles.mockLinkMeta}>
+                                {temVinculoDireto ? 'Propriedade atribuída no mock' : 'Sugerido por região/microrregião'}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
 
             {outrasFazendasTitular.length > 0 && (
               <>
@@ -1294,6 +1381,48 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: typography.weightSemibold,
     lineHeight: 22,
+  },
+  mockLinkNote: {
+    color: colors.textLight,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 19,
+    marginBottom: spacing.md,
+  },
+  mockLinkGroup: {
+    marginBottom: spacing.md,
+  },
+  mockLinkGroupTitle: {
+    color: colors.text,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
+    marginBottom: spacing.sm,
+  },
+  mockLinkEmpty: {
+    color: colors.muted,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 18,
+  },
+  mockLinkItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  mockLinkItemText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  mockLinkName: {
+    color: colors.text,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightSemibold,
+  },
+  mockLinkMeta: {
+    color: colors.muted,
+    fontSize: typography.fontCaption,
+    marginTop: 2,
   },
 
   statusContainer: {

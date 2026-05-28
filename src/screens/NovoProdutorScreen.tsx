@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { useToast } from '../components/Toast';
-import { Produtor } from '../api/mock';
+import { Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import theme from '../theme';
 import {
@@ -27,6 +27,12 @@ import {
   validateCadastroFazendaScope
 } from '../utils/fazendaCadastroCompat';
 import type { CadastroTitularMode } from '../utils/fazendaCadastroCompat';
+import {
+  listarMicroregioesPorRegiao,
+  listarRegioes,
+  sugerirColaboradoresParaMicroregiao,
+} from '../utils/territorioCompat';
+import { getUsuarioNome } from '../utils/usuarioAdminCompat';
 
 const getScopeErrorMessage = (reason?: string) => {
   switch (reason) {
@@ -47,6 +53,8 @@ export default function NovoProdutorScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
   const [loadingTitulares, setLoadingTitulares] = useState(true);
   const [titulares, setTitulares] = useState<any[]>([]);
+  const [fazendasTerritorio, setFazendasTerritorio] = useState<any[]>([]);
+  const [usuariosMock, setUsuariosMock] = useState<any[]>([]);
   const [titularMode, setTitularMode] = useState<CadastroTitularMode>('existente');
   const [titularSelecionadoId, setTitularSelecionadoId] = useState('');
   const [errors, setErrors] = useState<any>({});
@@ -63,6 +71,48 @@ export default function NovoProdutorScreen({ navigation }) {
   });
 
   const microregioesPermitidas = user?.perfil === 'colaborador' ? (user.sub_regioes || []) : [];
+  const regiaoAtual = user?.perfil === 'colaborador' ? (user.regiao || '') : form.regiao;
+
+  const regioesTerritorio = useMemo(
+    () => listarRegioes(fazendasTerritorio),
+    [fazendasTerritorio]
+  );
+
+  const microregioesTerritorio = useMemo(
+    () => (regiaoAtual ? listarMicroregioesPorRegiao(fazendasTerritorio, regiaoAtual) : []),
+    [fazendasTerritorio, regiaoAtual]
+  );
+
+  const microregioesDisponiveis = useMemo(() => {
+    if (user?.perfil !== 'colaborador') return microregioesTerritorio;
+
+    if (microregioesPermitidas.length === 0) return [];
+
+    const permitidas = new Set(microregioesPermitidas);
+    const filtradas = microregioesTerritorio.filter((microregiao) => permitidas.has(microregiao.nome));
+
+    if (filtradas.length > 0) return filtradas;
+
+    return microregioesPermitidas.map((microregiao) => ({
+      id: `microregiao-legada-${microregiao}`,
+      nome: microregiao,
+      regiao: regiaoAtual,
+      regiao_id: `regiao-legada-${regiaoAtual || 'sem-regiao'}`,
+    }));
+  }, [microregioesPermitidas, microregioesTerritorio, regiaoAtual, user?.perfil]);
+
+  const colaboradoresSugeridos = useMemo(
+    () =>
+      form.microregiao
+        ? sugerirColaboradoresParaMicroregiao(
+            usuariosMock,
+            form.microregiao,
+            regiaoAtual,
+            fazendasTerritorio
+          )
+        : [],
+    [fazendasTerritorio, form.microregiao, regiaoAtual, usuariosMock]
+  );
 
   useEffect(() => {
     loadTitulares();
@@ -81,9 +131,14 @@ export default function NovoProdutorScreen({ navigation }) {
   const loadTitulares = async () => {
     try {
       setLoadingTitulares(true);
-      const fazendas = await Produtor.list();
+      const [fazendas, usuarios] = await Promise.all([
+        Produtor.list(),
+        User.list(),
+      ]);
       const options = buildCadastroTitularOptions(fazendas);
       setTitulares(options);
+      setFazendasTerritorio(fazendas as any[]);
+      setUsuariosMock(usuarios as any[]);
 
       if (options.length === 0) {
         setTitularMode('novo');
@@ -104,6 +159,15 @@ export default function NovoProdutorScreen({ navigation }) {
     if (errors[campo]) {
       setErrors(prev => ({ ...prev, [campo]: null }));
     }
+  };
+
+  const handleRegiaoSelect = (regiao: string) => {
+    setForm(prev => ({
+      ...prev,
+      regiao,
+      microregiao: prev.regiao === regiao ? prev.microregiao : '',
+    }));
+    setErrors(prev => ({ ...prev, regiao: null, microregiao: null }));
   };
 
   const handleTitularModeChange = (mode: CadastroTitularMode) => {
@@ -385,56 +449,85 @@ export default function NovoProdutorScreen({ navigation }) {
         </View>
 
         <Text style={styles.sectionTitle}>Escopo operacional</Text>
-        <View style={styles.field}>
-        <Text style={styles.label}>Região *</Text>
-          <TextInput
-            style={[
-              styles.input,
-              user?.perfil === 'colaborador' && styles.inputDisabled,
-              errors.regiao && styles.inputError
-            ]}
-            value={user?.perfil === 'colaborador' ? (user.regiao || '') : form.regiao}
-            onChangeText={(text) => handleChange('regiao', text)}
-            editable={user?.perfil !== 'colaborador'}
-            placeholder="Ex: Sul, Goiás, Mato Grosso"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-          {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
-        </View>
-
         {user?.perfil === 'colaborador' ? (
           <View style={styles.field}>
-            <Text style={styles.label}>Microrregião *</Text>
-            {microregioesPermitidas.length === 0 ? (
-              <Text style={styles.helperText}>Nenhuma microrregião vinculada ao seu usuário.</Text>
-            ) : (
-              <View style={styles.microChips}>
-                {microregioesPermitidas.map((microregiao) => {
-                  const selected = form.microregiao === microregiao;
-                  return (
-                    <TouchableOpacity
-                      key={microregiao}
-                      style={[styles.microChip, selected && styles.microChipActive]}
-                      onPress={() => handleChange('microregiao', microregiao)}
-                    >
-                      <Ionicons
-                        name="location-outline"
-                        size={16}
-                        color={selected ? theme.colors.white : theme.colors.primary}
-                      />
-                      <Text style={[styles.microChipText, selected && styles.microChipTextActive]}>
-                        {microregiao}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-            {errors.microregiao && <Text style={styles.errorText}>{errors.microregiao}</Text>}
+            <Text style={styles.label}>Região *</Text>
+            <TextInput
+              style={[styles.input, styles.inputDisabled, errors.regiao && styles.inputError]}
+              value={user.regiao || ''}
+              editable={false}
+              placeholder="Região do colaborador"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+            {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
+          </View>
+        ) : regioesTerritorio.length > 0 ? (
+          <View style={styles.field}>
+            <Text style={styles.label}>Região *</Text>
+            <View style={styles.microChips}>
+              {regioesTerritorio.map((regiao) => {
+                const selected = form.regiao === regiao.nome;
+                return (
+                  <TouchableOpacity
+                    key={regiao.id}
+                    style={[styles.microChip, selected && styles.microChipActive]}
+                    onPress={() => handleRegiaoSelect(regiao.nome)}
+                  >
+                    <Ionicons
+                      name="map-outline"
+                      size={16}
+                      color={selected ? theme.colors.white : theme.colors.primary}
+                    />
+                    <Text style={[styles.microChipText, selected && styles.microChipTextActive]}>
+                      {regiao.nome}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
           </View>
         ) : (
           <View style={styles.field}>
-            <Text style={styles.label}>Microrregião *</Text>
+            <Text style={styles.label}>Região *</Text>
+            <TextInput
+              style={[styles.input, errors.regiao && styles.inputError]}
+              value={form.regiao}
+              onChangeText={(text) => handleChange('regiao', text)}
+              placeholder="Ex: Sul, Goiás, Mato Grosso"
+              placeholderTextColor={theme.colors.textSecondary}
+            />
+            {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
+          </View>
+        )}
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Microrregião *</Text>
+          {microregioesDisponiveis.length > 0 ? (
+            <View style={styles.microChips}>
+              {microregioesDisponiveis.map((microregiao) => {
+                const selected = form.microregiao === microregiao.nome;
+                return (
+                  <TouchableOpacity
+                    key={microregiao.id}
+                    style={[styles.microChip, selected && styles.microChipActive]}
+                    onPress={() => handleChange('microregiao', microregiao.nome)}
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={16}
+                      color={selected ? theme.colors.white : theme.colors.primary}
+                    />
+                    <Text style={[styles.microChipText, selected && styles.microChipTextActive]}>
+                      {microregiao.nome}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : user?.perfil === 'colaborador' ? (
+            <Text style={styles.helperText}>Nenhuma microrregião vinculada ao seu usuário.</Text>
+          ) : regiaoAtual ? (
             <TextInput
               style={[styles.input, errors.microregiao && styles.inputError]}
               value={form.microregiao}
@@ -442,7 +535,30 @@ export default function NovoProdutorScreen({ navigation }) {
               placeholder="Ex: RS - Norte, Rio Verde, Sorriso"
               placeholderTextColor={theme.colors.textSecondary}
             />
-            {errors.microregiao && <Text style={styles.errorText}>{errors.microregiao}</Text>}
+          ) : (
+            <Text style={styles.helperText}>Selecione uma região para carregar as microrregiões do mock.</Text>
+          )}
+          {errors.microregiao && <Text style={styles.errorText}>{errors.microregiao}</Text>}
+        </View>
+
+        {form.microregiao && (
+          <View style={styles.suggestionBox}>
+            <View style={styles.suggestionHeader}>
+              <Ionicons name="people-outline" size={18} color={theme.colors.primary} />
+              <Text style={styles.suggestionTitle}>Colaboradores sugeridos para a microrregião</Text>
+            </View>
+            {colaboradoresSugeridos.length === 0 ? (
+              <Text style={styles.helperText}>Nenhum colaborador sugerido no mock para esta microrregião.</Text>
+            ) : (
+              colaboradoresSugeridos.slice(0, 5).map((colaborador) => (
+                <Text key={colaborador.id} style={styles.suggestionItem}>
+                  {getUsuarioNome(colaborador)}
+                </Text>
+              ))
+            )}
+            <Text style={styles.suggestionNote}>
+              Sugestão visual/mockada. O cadastro continua salvando região e microrregião textuais para compatibilidade.
+            </Text>
           </View>
         )}
 
@@ -669,6 +785,37 @@ const styles = StyleSheet.create({
   },
   microChipTextActive: {
     color: theme.colors.white,
+  },
+  suggestionBox: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.spacing.radius,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  suggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  suggestionTitle: {
+    flex: 1,
+    color: theme.colors.text,
+    fontSize: theme.typography.fontCaption + 1,
+    fontWeight: theme.typography.weightBold,
+  },
+  suggestionItem: {
+    color: theme.colors.text,
+    fontSize: theme.typography.fontCaption + 1,
+    marginBottom: theme.spacing.xs,
+  },
+  suggestionNote: {
+    color: theme.colors.textSecondary,
+    fontSize: theme.typography.fontCaption,
+    lineHeight: 17,
+    marginTop: theme.spacing.sm,
   },
   footer: {
     flexDirection: 'row',
