@@ -77,6 +77,8 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - frente funcional de visitas tecnicas por propriedade e caderno de campo por propriedade validada no nivel necessario para o MVP atual
 - fluxo completo do produtor validado no MVP visual/mockado apos a padronizacao da nomenclatura visivel para `Propriedade`
 - fluxo do colaborador pronto para teste manual interno no MVP visual/mockado, com acesso a Home, Propriedades, Visitas, Caderno e Perfil
+- modulo administrativo `Admin -> Usuarios` em MVP visual/mockado, com cadastro e edicao de usuarios separados de propriedades
+- mock de usuarios mais proximo do backend futuro, com campos comuns completos, status explicito e relacoes visuais `usuario_propriedade` e `usuario_microregiao`
 - criacao de visita pelo colaborador validada tecnicamente pelo fluxo global e pelo contexto da propriedade, respeitando escopo regional/sub-regional
 - visualizacao de panorama/mapas e detalhe de propriedade
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
@@ -89,6 +91,10 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 
 - autenticacao real
 - backend real
+- banco real, migrations e API real
+- criacao real de login a partir do cadastro administrativo de usuario
+- senha real, convite, reset de senha e sessao real
+- RBAC/permissoes granulares completas
 - upload real de arquivos
 - cadastro administrativo real de PNGs ou outros anexos tecnicos
 - salvamento persistente de anexos em banco, storage local gerenciado ou storage remoto
@@ -99,6 +105,84 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - sincronizacao offline de verdade
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
+
+## Microfase Backend-Ready Do Admin -> Usuarios
+
+Status em 2026-05-28: o modulo `Admin -> Usuarios` continua 100% visual/mockado, mas foi evoluido para reduzir retrabalho futuro quando houver backend, banco e autenticacao real.
+
+O cadastro administrativo de usuario agora trabalha com campos comuns mais completos:
+
+- nome
+- e-mail
+- telefone
+- documento
+- perfil
+- status
+- observacoes
+
+O status do usuario passou a ser explicito no mock:
+
+- `ativo`
+- `inativo`
+- `pendente`
+
+O booleano `ativo` permanece apenas como compatibilidade temporaria quando alguma parte antiga do app ainda precisar desse formato. A origem preferencial para novas leituras do modulo administrativo e `status`.
+
+O mock agora possui relacoes explicitas para preparar o modelo futuro:
+
+- `usuario_propriedade`, representado no mock por vinculos com `usuario_id`, `propriedade_id`, `tipo_vinculo` e `principal`
+- `usuario_microregiao`, representado no mock por vinculos com `usuario_id`, `regiao` e `microregiao`
+
+Com isso:
+
+- produtor pode ter uma ou mais propriedades vinculadas
+- cada vinculo de produtor pode indicar tipo de vinculo, como titular, responsavel ou outro
+- um dos vinculos pode ser marcado como principal
+- colaborador pode ter microregioes/sub-regioes e propriedades atribuidas visualmente
+- admin possui nivel administrativo simples: Global, Operacional ou Suporte
+
+Foram implementadas validacoes no mock administrativo:
+
+- nome obrigatorio
+- e-mail obrigatorio
+- formato simples de e-mail
+- e-mail unico ao criar usuario
+- e-mail unico ao editar usuario, ignorando o proprio usuario
+- perfil obrigatorio
+- status obrigatorio
+- produtor ativo precisa ter ao menos uma propriedade vinculada
+- produtor pendente pode ficar sem propriedade vinculada
+- colaborador ativo precisa ter microregiao/sub-regiao ou propriedade atribuida
+- admin nao exige propriedade nem microregiao
+- `User.update` valida o registro mesclado de forma equivalente ao `User.create`
+
+Limites importantes desta microfase:
+
+- usuario criado ou editado no `Admin -> Usuarios` nao cria login real
+- o login mock atual permanece separado da gestao administrativa visual
+- vinculos visuais de colaborador ainda nao alteram o motor efetivo de permissoes
+- `produtor_id`, `fazenda_id` e nomes internos legados continuam preservados onde ainda sustentam compatibilidade
+
+Fora do escopo mantido:
+
+- backend
+- banco real
+- migrations
+- API real
+- autenticacao real
+- senha real
+- convite por e-mail
+- reset de senha
+- sessao real
+- RBAC/permissoes granulares completas
+- upload/storage
+- Drive
+
+Validacoes executadas na implementacao:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou; quando executado no Windows, pode emitir apenas avisos normais de LF/CRLF
 
 ## Microfase Do Fluxo Do Colaborador
 

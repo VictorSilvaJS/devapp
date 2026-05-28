@@ -23,7 +23,11 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
 
 ### 1. Tirar os fluxos principais do mock
 
-- Backend real para autenticacao, usuarios, produtores, visitas, caderno e mapas
+- Backend real para autenticacao, usuarios, propriedades, visitas, caderno e mapas
+- Persistencia real para `usuarios`, `propriedades`, `usuario_propriedade` e `usuario_microregiao`
+- Migrar o modulo `Admin -> Usuarios` do mock backend-ready para API/banco real
+- Sincronizar cadastro administrativo de usuario com autenticacao real, convites, senha/reset e sessao quando essa frente for definida
+- Definir RBAC/permissoes granulares a partir dos perfis atuais e dos niveis administrativos simples
 - Persistencia real de arquivos de mapas e limites
 - Upload real de mapas e shapes
 - Download real de arquivos para o produtor
@@ -55,6 +59,19 @@ A frente funcional de `Produtor` / `Propriedade` esta fechada para o MVP atual. 
 - fluxo assistido para limpar ou reassociar dependencias antes da exclusao de propriedade
 - exclusao em cascata controlada, com confirmacao explicita e regra de integridade bem definida
 - renomeacao ampla de modulos, telas ou rotas historicas que ainda usam `Produtor` ou `Fazenda` para representar propriedade
+
+### Evolucao posterior de Admin -> Usuarios
+
+O modulo `Admin -> Usuarios` esta em MVP visual/mockado com estrutura preparada para backend, mas ainda nao possui autenticacao real nem persistencia externa. Itens futuros:
+
+- transformar as relacoes mock `usuario_propriedade` e `usuario_microregiao` em tabelas/colecoes reais
+- ligar usuario administrativo a conta/login real sem duplicar dados pessoais
+- definir fluxo de convite, ativacao, reset de senha e bloqueio/desbloqueio
+- consolidar status de usuario em banco como `ativo`, `inativo` ou `pendente`
+- manter `ativo` apenas como campo derivado/compatibilidade enquanto necessario
+- definir como vinculos visuais de colaborador passam a influenciar permissoes efetivas
+- evoluir nivel administrativo simples para um modelo de permissoes quando houver necessidade real
+- migrar validacoes de e-mail unico, vinculo de produtor ativo e escopo de colaborador ativo para backend
 
 ### Analise e apoio operacional
 

@@ -155,7 +155,54 @@ Capacidades offline devem ser descritas com cautela e em termos reais, priorizan
 
 ---
 
-## 9. O caderno de campo deve nascer enxuto
+## 9. Admin separa Usuarios de Propriedades
+
+### Decisao
+
+O fluxo administrativo deve separar conceitualmente `Usuarios` de `Propriedades`.
+
+`Propriedade` representa a unidade operacional. `Usuario` representa a pessoa que acessa ou sera preparada para acessar o sistema. Produtor, colaborador e admin sao perfis/tipos de usuario.
+
+No MVP atual, essa separacao existe em nivel visual/mockado no modulo `Admin -> Usuarios`. Ela nao cria autenticacao real, senha real, convite, reset de acesso ou sessao.
+
+### Alcance
+
+Afeta a organizacao visual do admin, os mocks de dados e a preparacao para backend/banco futuro.
+
+### Impacto
+
+- dados cadastrais de pessoa devem ficar no cadastro de usuario, nao duplicados dentro da propriedade
+- propriedades continuam exibindo `Produtor titular` como vinculo visual/cadastral
+- produtor pode estar vinculado a uma ou mais propriedades por relacao mock explicita `usuario_propriedade`
+- colaborador pode ter microregioes/sub-regioes e propriedades atribuidas visualmente por relacoes mock
+- admin possui visao global e nivel administrativo simples no mock
+- campos internos legados como `produtor_id`, `fazenda_id` e nomes tecnicos permanecem quando necessarios para compatibilidade
+
+---
+
+## 10. Status explicito de usuario no mock administrativo
+
+### Decisao
+
+No modulo administrativo de usuarios, o status de usuario deve ser tratado explicitamente como:
+
+- `ativo`
+- `inativo`
+- `pendente`
+
+O booleano `ativo` permanece apenas como compatibilidade temporaria enquanto partes antigas do app ainda dependem desse shape.
+
+### Alcance
+
+Afeta o mock de usuarios, a listagem, o detalhe, o formulario e as validacoes administrativas.
+
+### Impacto
+
+Produtor pendente pode existir sem propriedade vinculada. Produtor ativo deve ter ao menos uma propriedade vinculada. Colaborador ativo deve ter microregiao/sub-regiao ou propriedade atribuida. Admin nao exige propriedade nem microregiao.
+
+---
+
+## 11. O caderno de campo deve nascer enxuto
 
 ### Decisao
 
@@ -171,7 +218,7 @@ Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacio
 
 ---
 
-## 10. Mapas e limites formam uma experiencia unica de panorama no MVP
+## 12. Mapas e limites formam uma experiencia unica de panorama no MVP
 
 ### Decisao
 

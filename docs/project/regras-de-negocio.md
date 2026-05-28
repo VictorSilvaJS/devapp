@@ -15,6 +15,17 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - O sistema deve considerar que um produtor pode estar vinculado a uma ou mais propriedades.
 - A navegacao, os dados e as permissoes devem respeitar essa relacao.
 - O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
+- No mock administrativo, o vinculo entre usuario produtor e propriedade deve ser representado visualmente por uma relacao explicita `usuario_propriedade`, preservando compatibilidade com `produtor_id`/titular enquanto a base legada existir.
+
+### Usuarios administrativos no mock
+
+- Usuario representa a pessoa cadastrada para acesso presente ou futuro ao sistema.
+- Propriedade representa a unidade produtiva/operacional e nao deve duplicar o cadastro completo da pessoa.
+- Campos comuns de usuario no mock administrativo: nome, e-mail, telefone, documento, perfil, status e observacoes.
+- Status de usuario no mock administrativo deve ser explicito: `ativo`, `inativo` ou `pendente`.
+- O booleano `ativo` e apenas compatibilidade temporaria quando necessario.
+- Admin pode ter nivel administrativo simples: Global, Operacional ou Suporte.
+- O cadastro ou edicao de usuario no MVP visual/mockado nao cria login real, senha real, convite, reset de acesso ou sessao.
 
 ### Dados ligados ao contexto da propriedade
 
@@ -28,18 +39,23 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Possui visao ampla do sistema.
 - Pode navegar entre regioes, produtores e propriedades.
 - Seu fluxo deve privilegiar leitura consolidada e administracao dos dados autorizados.
+- No MVP mockado, pode gerenciar visualmente usuarios, vinculos com propriedades e vinculos com microregioes sem criar autenticacao real.
 
 ### Colaborador regional
 
 - Possui escopo regional ou sub-regional.
 - Nao deve acessar dados fora do seu escopo.
 - Atua na manutencao operacional dos dados conforme permissao.
+- No mock administrativo, pode ter microregioes/sub-regioes e propriedades atribuidas visualmente.
+- Esses vinculos visuais ainda nao alteram o motor efetivo de permissoes enquanto nao houver decisao e implementacao especifica.
 
 ### Produtor
 
 - Acessa os dados da sua propria realidade operacional.
 - Deve conseguir consultar materiais e historicos autorizados.
 - Nao deve ser tratado como responsavel por gerenciar a estrutura geral do sistema.
+- No mock administrativo, produtor ativo deve ter ao menos uma propriedade vinculada.
+- Produtor pendente pode existir sem propriedade vinculada.
 
 ## Regra de Visibilidade
 
@@ -68,6 +84,25 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Seu nivel de visibilidade deve ser controlado por regra de perfil e contexto.
 
 Este documento nao fecha ainda todos os campos, obrigatoriedades ou fluxos do caderno. Esses detalhes pertencem a consolidacao futura das pendencias.
+
+## Regra sobre Validacoes Do Mock Administrativo
+
+Enquanto `Admin -> Usuarios` estiver em MVP visual/mockado, as validacoes minimas esperadas sao:
+
+- nome obrigatorio
+- e-mail obrigatorio
+- formato simples de e-mail
+- e-mail unico ao criar usuario
+- e-mail unico ao editar usuario, ignorando o proprio usuario
+- perfil obrigatorio
+- status obrigatorio
+- produtor ativo com pelo menos uma propriedade vinculada
+- produtor pendente podendo ficar sem propriedade vinculada
+- colaborador ativo com microregiao/sub-regiao ou propriedade atribuida
+- admin sem obrigatoriedade de propriedade ou microregiao
+- `User.update` validando o registro mesclado de forma equivalente ao `User.create`
+
+Essas validacoes continuam sendo regras do mock administrativo e nao substituem validacoes finais de backend, banco, autenticacao ou permissoes futuras.
 
 ## Regra sobre Offline
 
