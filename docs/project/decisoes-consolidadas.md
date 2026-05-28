@@ -218,7 +218,35 @@ Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacio
 
 ---
 
-## 12. Mapas e limites formam uma experiencia unica de panorama no MVP
+## 12. Regiao -> Microregiao -> Propriedade e a leitura territorial visual do mock
+
+### Decisao
+
+No MVP visual/mockado, a sincronizacao territorial deve favorecer a leitura Regiao -> Microregiao -> Propriedade.
+
+Essa leitura e suportada pelo helper `territorioCompat`, que deriva regioes e microregioes a partir das propriedades mockadas e preserva compatibilidade com os campos textuais legados `regiao` e `microregiao`.
+
+### Alcance
+
+Afeta o cadastro administrativo de usuarios, o cadastro de propriedades e o detalhe administrativo da propriedade no MVP visual/mockado.
+
+### Impacto
+
+- colaborador pode selecionar visualmente regioes e uma ou mais microregioes
+- a interface pode exibir previa das propriedades abrangidas pela microregiao
+- colaborador pode ter propriedades atribuidas diretamente no mock visual
+- produtor pode ter multiplas propriedades vinculadas e receber alerta quando a propriedade ja tiver outro produtor principal no mock
+- cadastro de propriedade pode usar selecao de Regiao e Microregiao derivada do mock
+- ao selecionar microregiao, a tela pode sugerir colaboradores compativeis
+- detalhe da propriedade pode mostrar usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio
+- vinculos visuais de colaborador nao alteram o motor efetivo de permissoes nesta fase
+- `produtor_id`, `proprietario_id`, `sub_regioes`, `propriedades_atribuidas`, `regiao`, `microregiao`, `fazenda_id` e `acessoControle` permanecem preservados por compatibilidade
+
+Ficam fora desta decisao nesta fase: backend, banco, migrations, API real, autenticacao real, senha, convite, reset, RBAC completo, upload/storage, Drive, CRUD real de regioes/microregioes e migracao do `acessoControle`.
+
+---
+
+## 13. Mapas e limites formam uma experiencia unica de panorama no MVP
 
 ### Decisao
 

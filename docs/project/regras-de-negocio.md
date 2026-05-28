@@ -16,6 +16,17 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - A navegacao, os dados e as permissoes devem respeitar essa relacao.
 - O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
 - No mock administrativo, o vinculo entre usuario produtor e propriedade deve ser representado visualmente por uma relacao explicita `usuario_propriedade`, preservando compatibilidade com `produtor_id`/titular enquanto a base legada existir.
+- No mock administrativo, produtor pode ter multiplas propriedades vinculadas e deve receber alerta visual quando uma propriedade selecionada ja tiver outro produtor principal no mock.
+
+### Territorio e vinculos visuais no mock
+
+- A leitura territorial do MVP visual/mockado deve favorecer a cadeia Regiao -> Microregiao -> Propriedade.
+- Enquanto nao houver backend/banco real para territorio, `territorioCompat` deriva regioes e microregioes a partir das propriedades mockadas.
+- Os campos textuais legados `regiao` e `microregiao` continuam validos e devem ser preservados para compatibilidade.
+- O cadastro de propriedade pode usar selecao visual de Regiao e Microregiao derivada do mock, mas deve continuar salvando os campos textuais legados.
+- Ao selecionar uma microregiao no cadastro de propriedade, a interface pode sugerir colaboradores compativeis pelo territorio.
+- No detalhe da propriedade, a administracao pode ver vinculos visuais mockados de usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio.
+- Esses vinculos territoriais sao preparacao visual para backend/banco e nao devem ser tratados como permissao efetiva enquanto o motor atual de permissoes nao for migrado.
 
 ### Usuarios administrativos no mock
 
@@ -47,6 +58,8 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Nao deve acessar dados fora do seu escopo.
 - Atua na manutencao operacional dos dados conforme permissao.
 - No mock administrativo, pode ter microregioes/sub-regioes e propriedades atribuidas visualmente.
+- No cadastro visual/mockado, pode selecionar uma ou mais microregioes e ver previa das propriedades abrangidas por essas microregioes.
+- Tambem pode ter propriedades atribuidas diretamente no mock visual.
 - Esses vinculos visuais ainda nao alteram o motor efetivo de permissoes enquanto nao houver decisao e implementacao especifica.
 
 ### Produtor

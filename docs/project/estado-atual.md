@@ -79,6 +79,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - fluxo do colaborador pronto para teste manual interno no MVP visual/mockado, com acesso a Home, Propriedades, Visitas, Caderno e Perfil
 - modulo administrativo `Admin -> Usuarios` em MVP visual/mockado, com cadastro e edicao de usuarios separados de propriedades
 - mock de usuarios mais proximo do backend futuro, com campos comuns completos, status explicito e relacoes visuais `usuario_propriedade` e `usuario_microregiao`
+- sincronizacao territorial visual/mockada entre `Admin -> Usuarios`, propriedades, regioes e microregioes, usando `territorioCompat` para derivar Regiao -> Microregiao -> Propriedade a partir das propriedades mockadas
 - criacao de visita pelo colaborador validada tecnicamente pelo fluxo global e pelo contexto da propriedade, respeitando escopo regional/sub-regional
 - visualizacao de panorama/mapas e detalhe de propriedade
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
@@ -177,6 +178,66 @@ Fora do escopo mantido:
 - RBAC/permissoes granulares completas
 - upload/storage
 - Drive
+
+Validacoes executadas na implementacao:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou; quando executado no Windows, pode emitir apenas avisos normais de LF/CRLF
+
+## Microfase De Sincronizacao Territorial E Vinculos Visuais
+
+Status em 2026-05-28: a frente territorial continua 100% visual/mockada, mas foi sincronizada para reduzir retrabalho futuro na transicao para backend/banco.
+
+Foi criado o helper `territorioCompat`, que deriva regioes e microregioes a partir das propriedades mockadas. A estrutura visual passa a favorecer a leitura:
+
+- Regiao
+- Microregiao
+- Propriedade
+
+Regiao e microregiao ainda preservam compatibilidade com os campos textuais legados `regiao` e `microregiao`. Nao existe cadastro CRUD real de regioes/microregioes nesta fase.
+
+No `Admin -> Usuarios`:
+
+- colaborador pode selecionar visualmente regioes e uma ou mais microregioes
+- a tela mostra uma previa das propriedades abrangidas pelas microregioes escolhidas
+- colaborador tambem pode ter propriedades atribuidas diretamente no mock visual
+- produtor pode ter multiplas propriedades vinculadas
+- ao vincular produtor a uma propriedade que ja tem outro produtor principal no mock, a tela exibe alerta visual
+
+No cadastro de propriedade:
+
+- a tela usa selecao de Regiao e Microregiao derivada do mock quando ha dados suficientes
+- ao escolher uma microregiao, a tela sugere colaboradores compativeis
+- o payload continua salvando `regiao` e `microregiao` textuais para compatibilidade
+
+No detalhe da propriedade, para administracao:
+
+- a tela mostra vinculos visuais mockados de usuario produtor vinculado
+- a tela mostra colaboradores sugeridos ou relacionados ao territorio
+- a interface deixa claro que esses vinculos sao preparacao visual/mockada
+
+Limites importantes desta microfase:
+
+- os vinculos visuais de colaborador ainda nao alteram o motor efetivo de permissoes
+- `acessoControle` nao foi migrado
+- a compatibilidade foi preservada com `produtor_id`, `proprietario_id`, `sub_regioes`, `propriedades_atribuidas`, `regiao`, `microregiao`, `fazenda_id` e o motor atual de permissoes
+
+Fora do escopo mantido:
+
+- backend
+- banco real
+- migrations
+- API real
+- autenticacao real
+- senha real
+- convite
+- reset
+- RBAC/permissoes granulares completas
+- upload/storage
+- Drive
+- CRUD real de regioes/microregioes
+- migracao do `acessoControle`
 
 Validacoes executadas na implementacao:
 
