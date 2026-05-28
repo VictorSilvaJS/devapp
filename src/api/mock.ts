@@ -421,6 +421,41 @@ const produtores: any[] = [
   }
 ];
 
+const usuarioPropriedade: any[] = [
+  { usuario_id: 'u7', propriedade_id: 'p1', tipo_vinculo: 'titular', principal: true },
+  { usuario_id: 'u7', propriedade_id: 'p1b', tipo_vinculo: 'titular', principal: false },
+  { usuario_id: 'u8', propriedade_id: 'p1', tipo_vinculo: 'responsavel', principal: true },
+  { usuario_id: 'u8', propriedade_id: 'p1b', tipo_vinculo: 'responsavel', principal: false },
+  { usuario_id: 'u9', propriedade_id: 'p4', tipo_vinculo: 'titular', principal: true },
+  { usuario_id: 'u9', propriedade_id: 'p4b', tipo_vinculo: 'titular', principal: false },
+  { usuario_id: 'u10', propriedade_id: 'p5', tipo_vinculo: 'titular', principal: true },
+  { usuario_id: 'u10', propriedade_id: 'p5b', tipo_vinculo: 'titular', principal: false },
+  { usuario_id: 'u11', propriedade_id: 'p3', tipo_vinculo: 'titular', principal: true },
+  { usuario_id: 'u12', propriedade_id: 'p2', tipo_vinculo: 'titular', principal: true },
+  { usuario_id: 'u_sela1', propriedade_id: SELA_DEPRATA_1_PRODUTOR_ID, tipo_vinculo: 'titular', principal: true },
+  { usuario_id: 'u2', propriedade_id: 'p4', tipo_vinculo: 'colaborador_atribuido', principal: true },
+  { usuario_id: 'u2', propriedade_id: 'p4b', tipo_vinculo: 'colaborador_atribuido', principal: false },
+  { usuario_id: 'u5', propriedade_id: 'p5', tipo_vinculo: 'colaborador_atribuido', principal: true },
+  { usuario_id: 'u5', propriedade_id: 'p5b', tipo_vinculo: 'colaborador_atribuido', principal: false },
+  { usuario_id: 'u6', propriedade_id: 'p6', tipo_vinculo: 'colaborador_atribuido', principal: true },
+  { usuario_id: 'u6', propriedade_id: 'p6b', tipo_vinculo: 'colaborador_atribuido', principal: false },
+];
+
+const usuarioMicroregiao: any[] = [
+  { usuario_id: 'u2', regiao: 'Goiás', microregiao: 'Goiás 1' },
+  { usuario_id: 'u2', regiao: 'Goiás', microregiao: 'Rio Verde' },
+  { usuario_id: 'u2', regiao: 'Goiás', microregiao: 'Jataí' },
+  { usuario_id: 'u3', regiao: 'Sul', microregiao: 'RS - Norte' },
+  { usuario_id: 'u3', regiao: 'Sul', microregiao: 'RS - Centro' },
+  { usuario_id: 'u3', regiao: 'Sul', microregiao: 'RS - Sul' },
+  { usuario_id: 'u5', regiao: 'Mato Grosso', microregiao: 'MT - Norte' },
+  { usuario_id: 'u5', regiao: 'Mato Grosso', microregiao: 'Sorriso' },
+  { usuario_id: 'u5', regiao: 'Mato Grosso', microregiao: 'Lucas do Rio Verde' },
+  { usuario_id: 'u6', regiao: 'Goiás', microregiao: 'Goiás 2' },
+  { usuario_id: 'u6', regiao: 'Goiás', microregiao: 'Goiânia' },
+  { usuario_id: 'u6', regiao: 'Goiás', microregiao: 'Anápolis' },
+];
+
 // Visitas técnicas
 const visitas: any[] = [
   {
@@ -1650,43 +1685,263 @@ const limitesArea: any[] = [
   })),
 ];
 
+const statusUsuarioMock = new Set(['ativo', 'inativo', 'pendente']);
+const tiposVinculoUsuarioPropriedade = new Set(['titular', 'responsavel', 'colaborador_atribuido', 'outro']);
+
+const hasOwn = (value: any, key: string) =>
+  value && Object.prototype.hasOwnProperty.call(value, key);
+
+const resolveUsuarioStatus = (data: any) => {
+  if (typeof data?.status === 'string' && statusUsuarioMock.has(data.status)) {
+    return data.status;
+  }
+
+  return data?.ativo === false ? 'inativo' : 'ativo';
+};
+
+const stripUsuarioRelations = (usuario: any) => {
+  const { vinculos_propriedades, vinculos_microregioes, ...rest } = usuario || {};
+  return rest;
+};
+
+const normalizeUsuarioPropriedadeLink = (link: any, usuarioId: string) => {
+  const propriedadeId =
+    typeof link?.propriedade_id === 'string'
+      ? link.propriedade_id.trim()
+      : typeof link?.fazenda_id === 'string'
+        ? link.fazenda_id.trim()
+        : '';
+
+  if (!propriedadeId) return null;
+
+  const tipo = tiposVinculoUsuarioPropriedade.has(link?.tipo_vinculo)
+    ? link.tipo_vinculo
+    : 'outro';
+
+  return {
+    usuario_id: usuarioId,
+    propriedade_id: propriedadeId,
+    tipo_vinculo: tipo,
+    principal: link?.principal === true,
+  };
+};
+
+const normalizeUsuarioMicroregiaoLink = (link: any, usuarioId: string, fallbackRegiao = '') => {
+  const microregiao = typeof link?.microregiao === 'string' ? link.microregiao.trim() : '';
+  if (!microregiao) return null;
+
+  return {
+    usuario_id: usuarioId,
+    regiao: typeof link?.regiao === 'string' ? link.regiao.trim() : fallbackRegiao,
+    microregiao,
+  };
+};
+
+const ensurePrincipalUsuarioPropriedade = (links: any[]) => {
+  const hasPrincipal = links.some((link) => link.principal);
+  return links.map((link, index) => ({
+    ...link,
+    principal: hasPrincipal ? link.principal === true : index === 0,
+  }));
+};
+
+const deriveUsuarioPropriedadeLinks = (usuario: any, usuarioId: string) => {
+  if (usuario?.perfil === 'produtor' && usuario?.produtor_id) {
+    return ensurePrincipalUsuarioPropriedade(
+      produtores
+        .filter((propriedade) => propriedade.proprietario_id === usuario.produtor_id || propriedade.produtor_id === usuario.produtor_id)
+        .map((propriedade, index) => ({
+          usuario_id: usuarioId,
+          propriedade_id: propriedade.id,
+          tipo_vinculo: usuario.tipo_vinculo_produtor || 'titular',
+          principal: index === 0,
+        }))
+    );
+  }
+
+  if (usuario?.perfil === 'colaborador' && Array.isArray(usuario?.propriedades_atribuidas)) {
+    return ensurePrincipalUsuarioPropriedade(
+      usuario.propriedades_atribuidas
+        .filter((id) => typeof id === 'string' && id.trim().length > 0)
+        .map((id, index) => ({
+          usuario_id: usuarioId,
+          propriedade_id: id.trim(),
+          tipo_vinculo: 'colaborador_atribuido',
+          principal: index === 0,
+        }))
+    );
+  }
+
+  return [];
+};
+
+const deriveUsuarioMicroregiaoLinks = (usuario: any, usuarioId: string) =>
+  Array.isArray(usuario?.sub_regioes)
+    ? usuario.sub_regioes
+        .filter((microregiao) => typeof microregiao === 'string' && microregiao.trim().length > 0)
+        .map((microregiao) => ({
+          usuario_id: usuarioId,
+          regiao: usuario?.regiao || '',
+          microregiao: microregiao.trim(),
+        }))
+    : [];
+
+const resolveUsuarioPropriedadeLinks = (usuarioId: string, usuario: any, patch: any, creating = false) => {
+  if (hasOwn(patch, 'vinculos_propriedades')) {
+    return ensurePrincipalUsuarioPropriedade(
+      (Array.isArray(patch.vinculos_propriedades) ? patch.vinculos_propriedades : [])
+        .map((link) => normalizeUsuarioPropriedadeLink(link, usuarioId))
+        .filter(Boolean)
+    );
+  }
+
+  const existing = usuarioPropriedade.filter((link) => link.usuario_id === usuarioId);
+  if (!creating && existing.length > 0) {
+    return existing.map((link) => ({ ...link }));
+  }
+
+  return deriveUsuarioPropriedadeLinks(usuario, usuarioId);
+};
+
+const resolveUsuarioMicroregiaoLinks = (usuarioId: string, usuario: any, patch: any, creating = false) => {
+  if (hasOwn(patch, 'vinculos_microregioes')) {
+    return (Array.isArray(patch.vinculos_microregioes) ? patch.vinculos_microregioes : [])
+      .map((link) => normalizeUsuarioMicroregiaoLink(link, usuarioId, usuario?.regiao || ''))
+      .filter(Boolean);
+  }
+
+  const existing = usuarioMicroregiao.filter((link) => link.usuario_id === usuarioId);
+  if (!creating && existing.length > 0) {
+    return existing.map((link) => ({ ...link }));
+  }
+
+  return deriveUsuarioMicroregiaoLinks(usuario, usuarioId);
+};
+
+const replaceUsuarioPropriedadeLinks = (usuarioId: string, links: any[]) => {
+  for (let i = usuarioPropriedade.length - 1; i >= 0; i--) {
+    if (usuarioPropriedade[i].usuario_id === usuarioId) {
+      usuarioPropriedade.splice(i, 1);
+    }
+  }
+
+  usuarioPropriedade.push(...ensurePrincipalUsuarioPropriedade(links).map((link) => ({ ...link, usuario_id: usuarioId })));
+};
+
+const replaceUsuarioMicroregiaoLinks = (usuarioId: string, links: any[]) => {
+  for (let i = usuarioMicroregiao.length - 1; i >= 0; i--) {
+    if (usuarioMicroregiao[i].usuario_id === usuarioId) {
+      usuarioMicroregiao.splice(i, 1);
+    }
+  }
+
+  usuarioMicroregiao.push(...links.map((link) => ({ ...link, usuario_id: usuarioId })));
+};
+
+const ensureUsuarioEmailUnico = (email: string, ignoreId?: string) => {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const duplicated = users.some((usuario) =>
+    usuario.id !== ignoreId && String(usuario.email || '').trim().toLowerCase() === normalizedEmail
+  );
+
+  if (duplicated) {
+    throw new Error('User.email: E-mail já cadastrado no mock');
+  }
+};
+
+const validateUsuarioMock = (
+  usuario: any,
+  {
+    ignoreId,
+    vinculosPropriedades,
+    vinculosMicroregioes,
+  }: { ignoreId?: string; vinculosPropriedades: any[]; vinculosMicroregioes: any[] }
+) => {
+  validateUser(usuario);
+
+  if (!usuario.status || !statusUsuarioMock.has(usuario.status)) {
+    throw new Error('User.status: Status obrigatório');
+  }
+
+  ensureUsuarioEmailUnico(usuario.email, ignoreId);
+
+  if (usuario.perfil === 'produtor' && usuario.status === 'ativo' && vinculosPropriedades.length === 0) {
+    throw new Error('User.produtor: Produtor ativo precisa ter ao menos uma propriedade vinculada');
+  }
+
+  if (
+    usuario.perfil === 'colaborador'
+    && usuario.status === 'ativo'
+    && vinculosMicroregioes.length === 0
+    && vinculosPropriedades.length === 0
+  ) {
+    throw new Error('User.colaborador: Colaborador ativo precisa ter micro-região/sub-região ou propriedade atribuída');
+  }
+
+  return true;
+};
+
+const readUsuarioMock = (usuario: any) => {
+  const status = resolveUsuarioStatus(usuario);
+  return {
+    ...usuario,
+    status,
+    ativo: status === 'ativo',
+    vinculos_propriedades: usuarioPropriedade
+      .filter((link) => link.usuario_id === usuario.id)
+      .map((link) => ({ ...link })),
+    vinculos_microregioes: usuarioMicroregiao
+      .filter((link) => link.usuario_id === usuario.id)
+      .map((link) => ({ ...link })),
+  };
+};
+
 // API para User
 export const User: any = {
   list: async () => {
-    return new Promise((res) => setTimeout(() => res([...users]), 200));
+    return new Promise((res) => setTimeout(() => res(users.map(readUsuarioMock)), 200));
   },
   get: async (id) => {
     return new Promise((res, rej) => setTimeout(() => {
       const user = users.find(u => u.id === id);
-      if (user) res(user); else rej(new Error('Usuário não encontrado'));
+      if (user) res(readUsuarioMock(user)); else rej(new Error('Usuário não encontrado'));
     }, 200));
   },
   getByEmail: async (email) => {
     return new Promise((res, rej) => setTimeout(() => {
       const user = users.find(u => u.email === email);
-      if (user) res(user); else rej(new Error('Usuário não encontrado'));
+      if (user) res(readUsuarioMock(user)); else rej(new Error('Usuário não encontrado'));
     }, 200));
   },
   filter: async (query) => {
     const keys = Object.keys(query || {});
     return new Promise((res) => setTimeout(() => {
-      const result = users.filter(u => keys.every(k => String(u[k]).includes(String(query[k]))));
+      const result = users
+        .map(readUsuarioMock)
+        .filter(u => keys.every(k => String(u[k]).includes(String(query[k]))));
       res(result);
     }, 200));
   },
   create: async (data) => {
     return new Promise((res, rej) => setTimeout(() => {
       try {
-        validateUser(data);
         const id = `u${Date.now()}`;
+        const status = resolveUsuarioStatus(data);
         const novo = { 
           id, 
           ...data,
-          ativo: data.ativo !== undefined ? data.ativo : true,
+          status,
+          ativo: status === 'ativo',
           data_cadastro: new Date().toISOString()
         };
-        users.unshift(novo);
-        res(novo);
+        const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, novo, data, true);
+        const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, novo, data, true);
+
+        validateUsuarioMock(novo, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
+        users.unshift(stripUsuarioRelations(novo));
+        replaceUsuarioPropriedadeLinks(id, vinculosPropriedades);
+        replaceUsuarioMicroregiaoLinks(id, vinculosMicroregioes);
+        res(readUsuarioMock(stripUsuarioRelations(novo)));
       } catch (error) {
         rej(error);
       }
@@ -1698,8 +1953,33 @@ export const User: any = {
       if (index === -1) {
         rej(new Error('Usuário não encontrado'));
       } else {
-        users[index] = { ...users[index], ...data, id };
-        res(users[index]);
+        try {
+          const status = resolveUsuarioStatus({ ...users[index], ...data });
+          const atualizado = {
+            ...users[index],
+            ...data,
+            id,
+            status,
+            ativo: status === 'ativo',
+          };
+          const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, atualizado, data, false);
+          const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, atualizado, data, false);
+
+          validateUsuarioMock(atualizado, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
+          users[index] = stripUsuarioRelations(atualizado);
+
+          if (hasOwn(data, 'vinculos_propriedades') || data.perfil === 'admin' || data.perfil === 'produtor' || data.perfil === 'colaborador') {
+            replaceUsuarioPropriedadeLinks(id, vinculosPropriedades);
+          }
+
+          if (hasOwn(data, 'vinculos_microregioes') || data.perfil === 'admin' || data.perfil === 'produtor' || data.perfil === 'colaborador') {
+            replaceUsuarioMicroregiaoLinks(id, vinculosMicroregioes);
+          }
+
+          res(readUsuarioMock(users[index]));
+        } catch (error) {
+          rej(error);
+        }
       }
     }, 300));
   },
@@ -1710,6 +1990,8 @@ export const User: any = {
         rej(new Error('Usuário não encontrado'));
       } else {
         users.splice(index, 1);
+        replaceUsuarioPropriedadeLinks(id, []);
+        replaceUsuarioMicroregiaoLinks(id, []);
         res({ success: true });
       }
     }, 200));

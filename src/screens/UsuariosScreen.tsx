@@ -32,6 +32,12 @@ const getPerfilColor = (perfil?: string) => {
   return colors.muted;
 };
 
+const getStatusColors = (status: any) => {
+  if (status.key === 'ativo') return { bg: colors.successBg, text: colors.success };
+  if (status.key === 'pendente') return { bg: colors.amberLight, text: colors.warning };
+  return { bg: colors.errorBgLight, text: colors.error };
+};
+
 export default function UsuariosScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuthState();
@@ -107,7 +113,7 @@ export default function UsuariosScreen() {
           <Ionicons name="search-outline" size={20} color={colors.muted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por nome, e-mail, telefone ou escopo..."
+            placeholder="Buscar por nome, e-mail, documento ou escopo..."
             placeholderTextColor={colors.muted}
             value={busca}
             onChangeText={setBusca}
@@ -167,6 +173,7 @@ export default function UsuariosScreen() {
           usuariosFiltrados.map((usuario) => {
             const nome = getUsuarioNome(usuario);
             const status = getUsuarioStatusInfo(usuario);
+            const statusColor = getStatusColors(status);
             const perfilColor = getPerfilColor(usuario.perfil);
             const vinculo = buildUsuarioVinculoPrincipal(usuario, propriedades);
 
@@ -187,8 +194,8 @@ export default function UsuariosScreen() {
                 <View style={styles.userInfo}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.userName} numberOfLines={1}>{nome}</Text>
-                    <View style={[styles.statusBadge, { backgroundColor: status.ativo ? colors.successBg : colors.errorBgLight }]}>
-                      <Text style={[styles.statusText, { color: status.ativo ? colors.success : colors.error }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
+                      <Text style={[styles.statusText, { color: statusColor.text }]}>
                         {status.label}
                       </Text>
                     </View>

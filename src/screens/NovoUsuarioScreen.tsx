@@ -15,12 +15,17 @@ import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { colors, shadows, spacing, typography } from '../theme';
-import { getFazendaId, getTitularIdFazenda } from '../utils/acessoControle';
+import { getFazendaId } from '../utils/acessoControle';
 import {
+  NIVEIS_ADMIN_USUARIO,
   STATUS_USUARIO_ADMIN,
+  TIPOS_VINCULO_PROPRIEDADE_USUARIO,
   buildUsuarioAdminPayload,
   buildUsuarioFormFromMock,
   getFazendaOptionLabel,
+  getVinculoPropriedadeLabel,
+  normalizeFormVinculosPropriedade,
+  parseListaTexto,
 } from '../utils/usuarioAdminCompat';
 
 const PERFIS_FORM = [
@@ -29,25 +34,24 @@ const PERFIS_FORM = [
   { key: 'admin', label: 'Admin', icon: 'shield-checkmark-outline' },
 ];
 
-const TIPOS_VINCULO_PRODUTOR = [
-  { key: 'titular', label: 'Titular' },
-  { key: 'responsavel', label: 'Responsável' },
-];
+const TIPOS_VINCULO_PRODUTOR = TIPOS_VINCULO_PROPRIEDADE_USUARIO.filter((tipo) =>
+  ['titular', 'responsavel', 'outro'].includes(tipo.key)
+);
 
 const emptyForm = {
   nome: '',
   email: '',
   telefone: '',
+  documento: '',
   perfil: 'produtor',
   status: 'ativo',
   observacoes: '',
-  propriedadePrincipalId: '',
   produtor_id: '',
-  tipoVinculoProdutor: 'titular',
+  vinculosPropriedades: [] as any[],
   regiao: '',
   cargo: '',
   subRegioesText: '',
-  propriedadesAtribuidas: [] as string[],
+  nivelAdministrativo: 'global',
 };
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -62,6 +66,7 @@ export default function NovoUsuarioScreen() {
 
   const [form, setForm] = useState<any>(emptyForm);
   const [usuarioAtual, setUsuarioAtual] = useState<any>(null);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
   const [propriedades, setPropriedades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -78,8 +83,12 @@ export default function NovoUsuarioScreen() {
         return;
       }
 
-      const propriedadesData = await Produtor.list();
+      const [propriedadesData, usuariosData] = await Promise.all([
+        Produtor.list(),
+        User.list(),
+      ]);
       setPropriedades(propriedadesData as any[]);
+      setUsuarios(usuariosData as any[]);
 
       if (isEdit) {
         const usuarioData = await User.get(userId);
@@ -109,28 +118,169 @@ export default function NovoUsuarioScreen() {
     [propriedades]
   );
 
-  const propriedadesDoTitularSelecionado = useMemo(() => {
-    const selecionada = propriedades.find((propriedade) => getFazendaId(propriedade) === form.propriedadePrincipalId);
-    const titularId = getTitularIdFazenda(selecionada) || form.produtor_id;
-    if (!titularId) return [];
+  const vinculosPropriedades = useMemo(
+    () => normalizeFormVinculosPropriedade(form.vinculosPropriedades),
+    [form.vinculosPropriedades]
+  );
 
-    return propriedades.filter((propriedade) => getTitularIdFazenda(propriedade) === titularId);
-  }, [form.propriedadePrincipalId, form.produtor_id, propriedades]);
+  const getVinculoPropriedade = (id: string) =>
+    vinculosPropriedades.find((vinculo) => vinculo.propriedade_id === id);
 
-  const togglePropriedadeAtribuida = (id: string) => {
+  const updateVinculosPropriedades = (vinculos: any[]) => {
+    updateField('vinculosPropriedades', normalizeFormVinculosPropriedade(vinculos));
+  };
+
+  const toggleVinculoPropriedade = (id: string, tipoPadrao = 'titular') => {
     setForm((prev) => {
-      const current = new Set(prev.propriedadesAtribuidas || []);
-      if (current.has(id)) {
-        current.delete(id);
-      } else {
-        current.add(id);
-      }
+      const current = normalizeFormVinculosPropriedade(prev.vinculosPropriedades);
+      const exists = current.some((vinculo) => vinculo.propriedade_id === id);
+      const next = exists
+        ? current.filter((vinculo) => vinculo.propriedade_id !== id)
+        : [
+            ...current,
+            {
+              propriedade_id: id,
+              tipo_vinculo: tipoPadrao,
+              principal: current.length === 0,
+            },
+          ];
 
       return {
         ...prev,
-        propriedadesAtribuidas: [...current],
+        vinculosPropriedades: normalizeFormVinculosPropriedade(next),
       };
     });
+
+    if (errors.vinculosPropriedades || errors.escopoColaborador) {
+      setErrors((prev) => ({ ...prev, vinculosPropriedades: null, escopoColaborador: null }));
+    }
+  };
+
+  const updateTipoVinculoPropriedade = (id: string, tipo: string) => {
+    updateVinculosPropriedades(
+      vinculosPropriedades.map((vinculo) =>
+        vinculo.propriedade_id === id ? { ...vinculo, tipo_vinculo: tipo } : vinculo
+      )
+    );
+  };
+
+  const setVinculoPrincipal = (id: string) => {
+    updateVinculosPropriedades(
+      vinculosPropriedades.map((vinculo) => ({
+        ...vinculo,
+        principal: vinculo.propriedade_id === id,
+      }))
+    );
+  };
+
+  const propriedadesSelecionadas = useMemo(() => {
+    const ids = new Set(vinculosPropriedades.map((vinculo) => vinculo.propriedade_id));
+    return propriedadesOrdenadas.filter((propriedade) => ids.has(getFazendaId(propriedade)));
+  }, [propriedadesOrdenadas, vinculosPropriedades]);
+
+  const microRegioesInformadas = useMemo(
+    () => parseListaTexto(form.subRegioesText),
+    [form.subRegioesText]
+  );
+
+  const emailEmUso = (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    return usuarios.some((usuario) =>
+      usuario.id !== userId && String(usuario.email || '').trim().toLowerCase() === normalizedEmail
+    );
+  };
+
+  const getApiErrorMessage = (error: any) => {
+    const message = String(error?.message || '');
+    if (message.includes('E-mail já cadastrado')) {
+      return 'Este e-mail já está cadastrado no mock.';
+    }
+    if (message.includes('Produtor ativo')) {
+      return 'Produtor ativo precisa ter ao menos uma propriedade vinculada.';
+    }
+    if (message.includes('Colaborador ativo')) {
+      return 'Colaborador ativo precisa ter micro-região/sub-região ou propriedade atribuída.';
+    }
+    if (message.includes('Status obrigatório')) {
+      return 'Selecione um status para o usuário.';
+    }
+
+    return 'Não foi possível salvar o usuário no mock.';
+  };
+
+  const renderPropriedadeOption = ({
+    propriedade,
+    tipoPadrao,
+    showTipo = false,
+    showPrincipal = false,
+  }: {
+    propriedade: any;
+    tipoPadrao: string;
+    showTipo?: boolean;
+    showPrincipal?: boolean;
+  }) => {
+    const option = getFazendaOptionLabel(propriedade);
+    const vinculo = getVinculoPropriedade(option.id);
+    const active = Boolean(vinculo);
+
+    return (
+      <View key={option.id} style={[styles.optionGroup, active && styles.optionRowActive]}>
+        <TouchableOpacity
+          style={styles.optionRow}
+          onPress={() => toggleVinculoPropriedade(option.id, tipoPadrao)}
+          activeOpacity={0.78}
+        >
+          <Ionicons
+            name={active ? 'checkbox-outline' : 'square-outline'}
+            size={20}
+            color={active ? colors.primary : colors.muted}
+          />
+          <View style={styles.optionTextWrap}>
+            <Text style={styles.optionTitle} numberOfLines={1}>{option.title}</Text>
+            <Text style={styles.optionSubtitle} numberOfLines={1}>{option.subtitle}</Text>
+          </View>
+        </TouchableOpacity>
+
+        {active && (showTipo || showPrincipal) && (
+          <View style={styles.linkControls}>
+            {showTipo && (
+              <View style={styles.miniChipWrap}>
+                {TIPOS_VINCULO_PRODUTOR.map((tipo) => {
+                  const selected = vinculo.tipo_vinculo === tipo.key;
+                  return (
+                    <TouchableOpacity
+                      key={tipo.key}
+                      style={[styles.miniChip, selected && styles.miniChipActive]}
+                      onPress={() => updateTipoVinculoPropriedade(option.id, tipo.key)}
+                      activeOpacity={0.78}
+                    >
+                      <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>{tipo.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+
+            {showPrincipal && (
+              <TouchableOpacity
+                style={[styles.miniChip, vinculo.principal && styles.miniChipActive]}
+                onPress={() => setVinculoPrincipal(option.id)}
+                activeOpacity={0.78}
+              >
+                <Ionicons
+                  name={vinculo.principal ? 'star' : 'star-outline'}
+                  size={14}
+                  color={vinculo.principal ? colors.white : colors.primary}
+                />
+                <Text style={[styles.miniChipText, vinculo.principal && styles.miniChipTextActive]}>
+                  Principal
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </View>
+    );
   };
 
   const validateForm = () => {
@@ -144,18 +294,33 @@ export default function NovoUsuarioScreen() {
       nextErrors.email = 'Informe o e-mail.';
     } else if (!isValidEmail(form.email.trim())) {
       nextErrors.email = 'Informe um e-mail válido.';
+    } else if (emailEmUso(form.email)) {
+      nextErrors.email = 'Este e-mail já está cadastrado no mock.';
     }
 
     if (!form.perfil) {
       nextErrors.perfil = 'Selecione o perfil.';
     }
 
-    if (form.perfil === 'produtor' && !form.propriedadePrincipalId && !form.produtor_id) {
-      nextErrors.propriedadePrincipalId = 'Selecione uma propriedade para vincular o produtor.';
+    if (!form.status) {
+      nextErrors.status = 'Selecione o status.';
     }
 
-    if (form.perfil === 'colaborador' && !form.regiao.trim()) {
-      nextErrors.regiao = 'Informe a região do colaborador.';
+    if (form.perfil === 'produtor' && form.status === 'ativo' && vinculosPropriedades.length === 0) {
+      nextErrors.vinculosPropriedades = 'Produtor ativo precisa ter ao menos uma propriedade vinculada.';
+    }
+
+    if (form.perfil === 'colaborador') {
+      const temMicroRegiao = microRegioesInformadas.length > 0;
+      const temPropriedade = vinculosPropriedades.length > 0;
+
+      if (temMicroRegiao && !form.regiao.trim()) {
+        nextErrors.regiao = 'Informe a região para organizar as micro-regiões.';
+      }
+
+      if (form.status === 'ativo' && !temMicroRegiao && !temPropriedade) {
+        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter micro-região/sub-região ou propriedade atribuída.';
+      }
     }
 
     setErrors(nextErrors);
@@ -184,7 +349,7 @@ export default function NovoUsuarioScreen() {
       navigation.replace('UsuarioDetail', { userId: saved.id });
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
-      toast.showError('Não foi possível salvar o usuário no mock.');
+      toast.showError(getApiErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -256,6 +421,13 @@ export default function NovoUsuarioScreen() {
             keyboardType="phone-pad"
           />
 
+          <Field
+            label="Documento"
+            value={form.documento}
+            onChangeText={(value) => updateField('documento', value)}
+            placeholder="CPF ou CNPJ"
+          />
+
           <Text style={styles.label}>Perfil</Text>
           <View style={styles.segmented}>
             {PERFIS_FORM.map((perfil) => {
@@ -291,6 +463,7 @@ export default function NovoUsuarioScreen() {
               );
             })}
           </View>
+          {errors.status && <Text style={styles.errorText}>{errors.status}</Text>}
 
           <Field
             label="Observações"
@@ -305,64 +478,35 @@ export default function NovoUsuarioScreen() {
 
         {form.perfil === 'produtor' && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Vínculo do produtor</Text>
+            <Text style={styles.sectionTitle}>Vínculos do produtor</Text>
             <Text style={styles.sectionHint}>
-              Selecione uma propriedade. O mock usa o titular da propriedade para agrupar todos os vínculos deste produtor.
+              Selecione uma ou mais propriedades. O vínculo principal preserva a compatibilidade interna atual.
             </Text>
 
-            <Text style={styles.label}>Tipo de vínculo</Text>
-            <View style={styles.segmented}>
-              {TIPOS_VINCULO_PRODUTOR.map((tipo) => {
-                const active = form.tipoVinculoProdutor === tipo.key;
-                return (
-                  <TouchableOpacity
-                    key={tipo.key}
-                    style={[styles.segmentButton, active && styles.segmentButtonActive]}
-                    onPress={() => updateField('tipoVinculoProdutor', tipo.key)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{tipo.label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Text style={[styles.label, styles.labelSpacing]}>Propriedade de referência</Text>
-            {errors.propriedadePrincipalId && <Text style={styles.errorText}>{errors.propriedadePrincipalId}</Text>}
+            <Text style={styles.label}>Propriedades vinculadas</Text>
+            {errors.vinculosPropriedades && <Text style={styles.errorText}>{errors.vinculosPropriedades}</Text>}
             <View style={styles.optionList}>
-              {propriedadesOrdenadas.map((propriedade) => {
-                const option = getFazendaOptionLabel(propriedade);
-                const active = form.propriedadePrincipalId === option.id;
-                return (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={[styles.optionRow, active && styles.optionRowActive]}
-                    onPress={() => {
-                      updateField('propriedadePrincipalId', option.id);
-                      updateField('produtor_id', getTitularIdFazenda(propriedade));
-                    }}
-                    activeOpacity={0.78}
-                  >
-                    <Ionicons
-                      name={active ? 'checkmark-circle' : 'home-outline'}
-                      size={20}
-                      color={active ? colors.primary : colors.muted}
-                    />
-                    <View style={styles.optionTextWrap}>
-                      <Text style={styles.optionTitle} numberOfLines={1}>{option.title}</Text>
-                      <Text style={styles.optionSubtitle} numberOfLines={1}>{option.subtitle}</Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+              {propriedadesOrdenadas.map((propriedade) =>
+                renderPropriedadeOption({
+                  propriedade,
+                  tipoPadrao: 'titular',
+                  showTipo: true,
+                  showPrincipal: true,
+                })
+              )}
             </View>
 
-            {propriedadesDoTitularSelecionado.length > 0 && (
+            {propriedadesSelecionadas.length > 0 && (
               <View style={styles.linkedBox}>
-                <Text style={styles.linkedTitle}>Vínculo visual resultante</Text>
+                <Text style={styles.linkedTitle}>Resumo dos vínculos</Text>
                 <Text style={styles.linkedText}>
-                  {propriedadesDoTitularSelecionado.length} propriedade{propriedadesDoTitularSelecionado.length === 1 ? '' : 's'} vinculada{propriedadesDoTitularSelecionado.length === 1 ? '' : 's'} ao mesmo titular.
+                  {propriedadesSelecionadas.length} propriedade{propriedadesSelecionadas.length === 1 ? '' : 's'} selecionada{propriedadesSelecionadas.length === 1 ? '' : 's'} para este usuário produtor.
                 </Text>
+                {vinculosPropriedades.map((vinculo) => (
+                  <Text key={vinculo.propriedade_id} style={styles.linkedItemText}>
+                    {vinculo.principal ? 'Principal' : 'Vínculo'} • {getVinculoPropriedadeLabel(vinculo.tipo_vinculo)}
+                  </Text>
+                ))}
               </View>
             )}
           </View>
@@ -395,29 +539,14 @@ export default function NovoUsuarioScreen() {
             <Text style={styles.sectionHint}>
               Opcional. As permissões atuais continuam baseadas no escopo regional existente.
             </Text>
+            {errors.escopoColaborador && <Text style={styles.errorText}>{errors.escopoColaborador}</Text>}
             <View style={styles.optionList}>
-              {propriedadesOrdenadas.map((propriedade) => {
-                const option = getFazendaOptionLabel(propriedade);
-                const active = (form.propriedadesAtribuidas || []).includes(option.id);
-                return (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={[styles.optionRow, active && styles.optionRowActive]}
-                    onPress={() => togglePropriedadeAtribuida(option.id)}
-                    activeOpacity={0.78}
-                  >
-                    <Ionicons
-                      name={active ? 'checkbox-outline' : 'square-outline'}
-                      size={20}
-                      color={active ? colors.primary : colors.muted}
-                    />
-                    <View style={styles.optionTextWrap}>
-                      <Text style={styles.optionTitle} numberOfLines={1}>{option.title}</Text>
-                      <Text style={styles.optionSubtitle} numberOfLines={1}>{option.subtitle}</Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
+              {propriedadesOrdenadas.map((propriedade) =>
+                renderPropriedadeOption({
+                  propriedade,
+                  tipoPadrao: 'colaborador_atribuido',
+                })
+              )}
             </View>
           </View>
         )}
@@ -425,6 +554,22 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'admin' && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Acesso administrativo</Text>
+            <Text style={styles.label}>Nível administrativo</Text>
+            <View style={styles.segmented}>
+              {NIVEIS_ADMIN_USUARIO.map((nivel) => {
+                const active = form.nivelAdministrativo === nivel.key;
+                return (
+                  <TouchableOpacity
+                    key={nivel.key}
+                    style={[styles.segmentButton, active && styles.segmentButtonActive]}
+                    onPress={() => updateField('nivelAdministrativo', nivel.key)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{nivel.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <View style={styles.adminBox}>
               <Ionicons name="earth-outline" size={22} color={colors.primary} />
               <View style={styles.adminBoxText}>
@@ -586,13 +731,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.background,
   },
+  optionGroup: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   optionRowActive: {
     backgroundColor: colors.accent,
@@ -630,6 +777,46 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     lineHeight: 18,
   },
+  linkedItemText: {
+    color: colors.muted,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  linkControls: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  miniChipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  miniChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 5,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    backgroundColor: colors.background,
+  },
+  miniChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  miniChipText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
+  },
+  miniChipTextActive: {
+    color: colors.white,
+  },
   adminBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -637,6 +824,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundAlt,
     borderRadius: spacing.radiusSm,
     padding: spacing.md,
+    marginTop: spacing.md,
   },
   adminBoxText: {
     flex: 1,

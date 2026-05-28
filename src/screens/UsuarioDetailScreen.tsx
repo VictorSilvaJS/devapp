@@ -17,19 +17,33 @@ import { getFazendaId } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import {
   buildUsuarioVinculoPrincipal,
+  getNivelAdminLabel,
   getPropriedadesDoColaborador,
   getPropriedadesDoUsuarioProdutor,
   getPropriedadeIdsAtribuidas,
-  getSubRegioesUsuario,
   getUsuarioNome,
   getUsuarioPerfilLabel,
   getUsuarioStatusInfo,
+  getVinculoPropriedadeLabel,
+  getVinculosMicroregiaoUsuario,
+  getVinculosPropriedadeUsuario,
 } from '../utils/usuarioAdminCompat';
 
 const perfilIcon = (perfil?: string) => {
   if (perfil === 'admin') return 'shield-checkmark-outline';
   if (perfil === 'colaborador') return 'briefcase-outline';
   return 'leaf-outline';
+};
+
+const statusColors = (status: any) => {
+  if (status.key === 'ativo') {
+    return { bg: colors.successBg, text: colors.success };
+  }
+  if (status.key === 'pendente') {
+    return { bg: colors.amberLight, text: colors.warning };
+  }
+
+  return { bg: colors.errorBgLight, text: colors.error };
 };
 
 const InfoRow = ({ icon, label, value }) => (
@@ -42,7 +56,7 @@ const InfoRow = ({ icon, label, value }) => (
   </View>
 );
 
-const PropertyRow = ({ propriedade, onPress }) => {
+const PropertyRow = ({ propriedade, onPress, vinculo }: any) => {
   const info = getFazendaUiInfo(propriedade);
 
   return (
@@ -55,6 +69,11 @@ const PropertyRow = ({ propriedade, onPress }) => {
         <Text style={styles.propertySubtitle} numberOfLines={1}>
           {[info.titularNome, info.localizacao].filter(Boolean).join(' • ') || 'Contexto não informado'}
         </Text>
+        {vinculo && (
+          <Text style={styles.propertyMeta} numberOfLines={1}>
+            {vinculo.principal ? 'Principal • ' : ''}{getVinculoPropriedadeLabel(vinculo.tipo_vinculo)}
+          </Text>
+        )}
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.muted} />
     </TouchableOpacity>
@@ -134,11 +153,15 @@ export default function UsuarioDetailScreen() {
 
   const nome = getUsuarioNome(usuario);
   const status = getUsuarioStatusInfo(usuario);
+  const statusPalette = statusColors(status);
   const vinculo = buildUsuarioVinculoPrincipal(usuario, propriedades);
   const propriedadesProdutor = getPropriedadesDoUsuarioProdutor(usuario, propriedades);
   const propriedadesColaborador = getPropriedadesDoColaborador(usuario, propriedades);
   const propriedadesAtribuidas = getPropriedadeIdsAtribuidas(usuario);
-  const subRegioes = getSubRegioesUsuario(usuario);
+  const vinculosPropriedades = getVinculosPropriedadeUsuario(usuario, propriedades);
+  const vinculosMicroregioes = getVinculosMicroregiaoUsuario(usuario);
+  const getVinculoDaPropriedade = (id: string) =>
+    vinculosPropriedades.find((item) => item.propriedade_id === id);
 
   return (
     <View style={styles.container}>
@@ -156,8 +179,8 @@ export default function UsuarioDetailScreen() {
                 <Ionicons name={perfilIcon(usuario.perfil)} size={14} color={colors.primary} />
                 <Text style={styles.perfilText}>{getUsuarioPerfilLabel(usuario.perfil)}</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: status.ativo ? colors.successBg : colors.errorBgLight }]}>
-                <Text style={[styles.statusText, { color: status.ativo ? colors.success : colors.error }]}>
+              <View style={[styles.statusBadge, { backgroundColor: statusPalette.bg }]}>
+                <Text style={[styles.statusText, { color: statusPalette.text }]}>
                   {status.label}
                 </Text>
               </View>
@@ -170,6 +193,7 @@ export default function UsuarioDetailScreen() {
           <Text style={styles.sectionTitle}>Dados de acesso</Text>
           <InfoRow icon="mail-outline" label="E-mail" value={usuario.email} />
           <InfoRow icon="call-outline" label="Telefone" value={usuario.telefone} />
+          <InfoRow icon="document-text-outline" label="Documento" value={usuario.documento} />
           <InfoRow icon="person-circle-outline" label="Perfil" value={getUsuarioPerfilLabel(usuario.perfil)} />
           <InfoRow icon="checkmark-circle-outline" label="Status" value={status.label} />
         </View>
@@ -177,17 +201,25 @@ export default function UsuarioDetailScreen() {
         {usuario.perfil === 'produtor' && (
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Vínculo do produtor</Text>
-            <InfoRow icon="link-outline" label="Tipo de vínculo" value={usuario.tipo_vinculo_produtor || 'Titular/responsável'} />
-            <InfoRow icon="key-outline" label="Identificador do titular" value={usuario.produtor_id} />
+            <InfoRow
+              icon="link-outline"
+              label="Vínculos registrados"
+              value={`${vinculosPropriedades.length} propriedade${vinculosPropriedades.length === 1 ? '' : 's'}`}
+            />
 
             <Text style={styles.subsectionTitle}>Propriedades vinculadas</Text>
             {propriedadesProdutor.length === 0 ? (
-              <Text style={styles.emptyInline}>Nenhuma propriedade vinculada a este usuário produtor.</Text>
+              <Text style={styles.emptyInline}>
+                {status.key === 'pendente'
+                  ? 'Usuário pendente, ainda sem propriedade vinculada.'
+                  : 'Nenhuma propriedade vinculada a este usuário produtor.'}
+              </Text>
             ) : (
               propriedadesProdutor.map((propriedade) => (
                 <PropertyRow
                   key={getFazendaId(propriedade)}
                   propriedade={propriedade}
+                  vinculo={getVinculoDaPropriedade(getFazendaId(propriedade))}
                   onPress={() => navigation.navigate('ProdutorDetail', { id: getFazendaId(propriedade) })}
                 />
               ))
@@ -202,13 +234,14 @@ export default function UsuarioDetailScreen() {
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
 
             <Text style={styles.subsectionTitle}>Micro-regiões atendidas</Text>
-            {subRegioes.length === 0 ? (
+            {vinculosMicroregioes.length === 0 ? (
               <Text style={styles.emptyInline}>Nenhuma micro-região vinculada.</Text>
             ) : (
               <View style={styles.chipWrap}>
-                {subRegioes.map((subRegiao) => (
-                  <View key={subRegiao} style={styles.infoChip}>
-                    <Text style={styles.infoChipText}>{subRegiao}</Text>
+                {vinculosMicroregioes.map((item) => (
+                  <View key={`${item.regiao}-${item.microregiao}`} style={styles.infoChip}>
+                    <Text style={styles.infoChipText}>{item.microregiao}</Text>
+                    {item.regiao ? <Text style={styles.infoChipMeta}>{item.regiao}</Text> : null}
                   </View>
                 ))}
               </View>
@@ -224,6 +257,7 @@ export default function UsuarioDetailScreen() {
                 <PropertyRow
                   key={getFazendaId(propriedade)}
                   propriedade={propriedade}
+                  vinculo={getVinculoDaPropriedade(getFazendaId(propriedade))}
                   onPress={() => navigation.navigate('ProdutorDetail', { id: getFazendaId(propriedade) })}
                 />
               ))
@@ -235,6 +269,7 @@ export default function UsuarioDetailScreen() {
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Administração</Text>
             <InfoRow icon="earth-outline" label="Acesso" value="Global" />
+            <InfoRow icon="shield-outline" label="Nível administrativo" value={getNivelAdminLabel(usuario.nivel_administrativo)} />
             <InfoRow icon="shield-checkmark-outline" label="Escopo" value={(usuario.regioes_acesso || ['Brasil']).join(', ')} />
             <Text style={styles.emptyInline}>Este perfil representa visão ampla da operação no MVP mockado.</Text>
           </View>
@@ -425,6 +460,12 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     marginTop: 2,
   },
+  propertyMeta: {
+    color: colors.primary,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
+    marginTop: 3,
+  },
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -442,6 +483,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.fontCaption + 1,
     fontWeight: typography.weightSemibold,
+  },
+  infoChipMeta: {
+    color: colors.muted,
+    fontSize: typography.fontCaption,
+    marginTop: 2,
   },
   emptyInline: {
     color: colors.muted,
