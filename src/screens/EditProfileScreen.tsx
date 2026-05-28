@@ -10,6 +10,7 @@ export default function EditProfileScreen({ navigation }) {
   const { user } = useAuthState();
   const { updateProfile } = useAuthActions();
   const toast = useToast();
+  const perfil = user?.perfil;
   const [form, setForm] = useState({
     nome: normalizeNome(user || {}),
     regiao: user?.regiao || '',
@@ -33,11 +34,19 @@ export default function EditProfileScreen({ navigation }) {
         <Text style={styles.label}>Nome completo</Text>
         <TextInput style={styles.input} value={form.nome} onChangeText={(t)=>setForm(s=>({...s,nome:t}))} />
 
-        <Text style={styles.label}>Região</Text>
-        <TextInput style={styles.input} value={form.regiao} onChangeText={(t)=>setForm(s=>({...s,regiao:t}))} />
+        {perfil === 'colaborador' && (
+          <>
+            <Text style={styles.label}>Região</Text>
+            <TextInput style={styles.input} value={form.regiao} onChangeText={(t)=>setForm(s=>({...s,regiao:t}))} />
+          </>
+        )}
 
-        <Text style={styles.label}>Produtor ID</Text>
-        <TextInput style={styles.input} value={form.produtor_id} onChangeText={(t)=>setForm(s=>({...s,produtor_id:t}))} />
+        {perfil === 'produtor' && (
+          <>
+            <Text style={styles.label}>Vínculo técnico do produtor</Text>
+            <TextInput style={styles.input} value={form.produtor_id} onChangeText={(t)=>setForm(s=>({...s,produtor_id:t}))} />
+          </>
+        )}
 
         <TouchableOpacity style={styles.button} onPress={handleSave}>
           <Text style={styles.buttonText}>Salvar</Text>

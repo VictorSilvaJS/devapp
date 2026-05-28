@@ -168,7 +168,7 @@ export default function DashboardScreen() {
     if (user?.perfil === 'admin') {
       return [
         {
-          label: 'Total de Produtores',
+          label: 'Total de Propriedades',
           value: stats.produtores,
           icon: <Ionicons name="people-outline" size={24} color={colors.primary} />,
           accent: {

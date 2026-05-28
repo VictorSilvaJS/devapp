@@ -17,6 +17,9 @@ import VisitaDetailScreen from '../screens/VisitaDetailScreen';
 import EditarVisitaScreen from '../screens/EditarVisitaScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
+import UsuariosScreen from '../screens/UsuariosScreen';
+import UsuarioDetailScreen from '../screens/UsuarioDetailScreen';
+import NovoUsuarioScreen from '../screens/NovoUsuarioScreen';
 import NotificacoesScreen from '../screens/NotificacoesScreen';
 import LoadingScreen from '../components/LoadingScreen';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,7 +38,8 @@ function tabScreenOptions({ route }) {
     headerShown: false,
     tabBarIcon: ({ color, size }) => {
       let name = 'home-outline';
-      if (route.name === 'Produtores' || route.name === 'Meus Produtores' || route.name === 'Minhas Fazendas') name = 'people-outline';
+      if (route.name === 'Produtores' || route.name === 'Meus Produtores' || route.name === 'Minhas Fazendas') name = 'business-outline';
+      if (route.name === 'Usuarios') name = 'people-outline';
       if (route.name === 'Visitas' || route.name === 'Histórico' || route.name === 'Minhas Visitas') name = 'calendar-outline';
       if (route.name === 'Caderno') name = 'book-outline';
       if (route.name === 'Perfil') name = 'person-outline';
@@ -67,7 +71,8 @@ const AdminTabs = React.memo(function AdminTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tab.Screen name="Produtores" component={ProdutoresScreen} options={{ title: 'Produtores' }} />
+      <Tab.Screen name="Produtores" component={ProdutoresScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
+      <Tab.Screen name="Usuarios" component={UsuariosScreen} options={{ title: 'Usuários', tabBarLabel: 'Usuários' }} />
       <Tab.Screen name="Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
       <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
@@ -130,6 +135,9 @@ export default function Navigation() {
           <Stack.Screen name="Mapas" component={MapasScreen} />
           <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
           <Stack.Screen name="EditarProdutor" component={EditarProdutorScreen} />
+          <Stack.Screen name="UsuarioDetail" component={UsuarioDetailScreen} />
+          <Stack.Screen name="NovoUsuario" component={NovoUsuarioScreen} />
+          <Stack.Screen name="EditarUsuario" component={NovoUsuarioScreen} />
           <Stack.Screen name="NovaVisita" component={NovaVisitaScreen} />
           <Stack.Screen name="VisitaDetail" component={VisitaDetailScreen} />
           <Stack.Screen name="EditarVisita" component={EditarVisitaScreen} />

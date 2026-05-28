@@ -422,7 +422,7 @@ export default function EditarCadernoScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            As alterações serão salvas no registro desta propriedade, preservando o fazenda_id original.
+            As alterações serão salvas no registro desta propriedade.
           </Text>
         </View>
       </ScrollView>

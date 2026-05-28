@@ -250,7 +250,7 @@ export default function NovoProdutorScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Novo Produtor" showBackButton />
+      <Header title="Nova Propriedade" showBackButton />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.infoBox}>

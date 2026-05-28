@@ -452,7 +452,7 @@ export default function NovoCadernoScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={styles.infoText}>
-            O registro será salvo no caderno da propriedade selecionada usando fazenda_id como contexto real.
+            O registro será salvo no caderno da propriedade selecionada.
           </Text>
         </View>
       </ScrollView>
