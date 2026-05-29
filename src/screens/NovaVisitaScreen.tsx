@@ -5,9 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  Platform,
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +12,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
@@ -281,230 +283,178 @@ export default function NovaVisitaScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Fazenda */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Propriedade <Text style={styles.required}>*</Text>
-          </Text>
-          <TouchableOpacity
-            style={[styles.picker, errors.fazendaId && styles.inputError]}
-            onPress={() => setShowFazendaPicker(!showFazendaPicker)}
-            disabled={loadingFazendas || semFazendasAutorizadas || !!routeFazendaId}
-          >
-            <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
-              {loadingFazendas ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
+        <SectionCard title="Contexto" subtitle="Defina a propriedade vinculada à visita técnica.">
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Propriedade <Text style={styles.required}>*</Text>
             </Text>
-            <Ionicons 
-              name={routeFazendaId ? 'lock-closed-outline' : showFazendaPicker ? 'chevron-up' : 'chevron-down'}
-              size={20} 
-              color={colors.muted} 
+            <TouchableOpacity
+              style={[styles.picker, errors.fazendaId && styles.inputError]}
+              onPress={() => setShowFazendaPicker(!showFazendaPicker)}
+              disabled={loadingFazendas || semFazendasAutorizadas || !!routeFazendaId}
+            >
+              <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
+                {loadingFazendas ? 'Carregando...' : getVisitaFormFazendaLabel(fazendaSelecionada)}
+              </Text>
+              <Ionicons
+                name={routeFazendaId ? 'lock-closed-outline' : showFazendaPicker ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={colors.muted}
+              />
+            </TouchableOpacity>
+            {errors.fazendaId && (
+              <Text style={styles.errorText}>{errors.fazendaId}</Text>
+            )}
+            {semFazendasAutorizadas && (
+              <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para nova visita.</Text>
+            )}
+            {routeFazendaId && !contextAccessDenied && (
+              <Text style={styles.contextHint}>Propriedade definida pelo contexto da propriedade.</Text>
+            )}
+
+            {showFazendaPicker && !routeFazendaId && (
+              <View style={styles.dropdownContainer}>
+                <ScrollView style={styles.dropdown} nestedScrollEnabled>
+                  {fazendaOptions.map((fazenda) => (
+                    <TouchableOpacity
+                      key={fazenda.id}
+                      style={[
+                        styles.dropdownItem,
+                        fazendaId === fazenda.id && styles.dropdownItemSelected
+                      ]}
+                      onPress={() => {
+                        setFazendaId(fazenda.id);
+                        setShowFazendaPicker(false);
+                        setErrors(prev => ({ ...prev, fazendaId: null }));
+                      }}
+                    >
+                      <Text style={[
+                        styles.dropdownItemText,
+                        fazendaId === fazenda.id && styles.dropdownItemTextSelected
+                      ]}>
+                        {fazenda.fazendaNome}
+                      </Text>
+                      <Text style={styles.dropdownItemSubtext}>
+                        {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+        </SectionCard>
+
+        <SectionCard title="Agenda" subtitle="Informe o fluxo operacional, data e horário da visita.">
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Fluxo da Visita <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={VISITA_FLUXOS_OPERACIONAIS.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+                description: opt.description,
+              }))}
+              value={status}
+              onChange={(value) => {
+                setStatus(value);
+                setErrors(prev => ({ ...prev, dataVisita: null }));
+              }}
             />
-          </TouchableOpacity>
-          {errors.fazendaId && (
-            <Text style={styles.errorText}>{errors.fazendaId}</Text>
-          )}
-          {semFazendasAutorizadas && (
-            <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para nova visita.</Text>
-          )}
-          {routeFazendaId && !contextAccessDenied && (
-            <Text style={styles.contextHint}>Propriedade definida pelo contexto da propriedade.</Text>
-          )}
-
-          {/* Dropdown de fazendas */}
-          {showFazendaPicker && !routeFazendaId && (
-            <View style={styles.dropdownContainer}>
-              <ScrollView style={styles.dropdown} nestedScrollEnabled>
-                {fazendaOptions.map((fazenda) => (
-                  <TouchableOpacity
-                    key={fazenda.id}
-                    style={[
-                      styles.dropdownItem,
-                      fazendaId === fazenda.id && styles.dropdownItemSelected
-                    ]}
-                    onPress={() => {
-                      setFazendaId(fazenda.id);
-                      setShowFazendaPicker(false);
-                      setErrors(prev => ({ ...prev, fazendaId: null }));
-                    }}
-                  >
-                    <Text style={[
-                      styles.dropdownItemText,
-                      fazendaId === fazenda.id && styles.dropdownItemTextSelected
-                    ]}>
-                      {fazenda.fazendaNome}
-                    </Text>
-                    <Text style={styles.dropdownItemSubtext}>
-                      {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-
-        {/* Tipo de registro */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Fluxo da Visita <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {VISITA_FLUXOS_OPERACIONAIS.map(opt => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.radioButton,
-                  status === opt.value && styles.radioButtonSelected
-                ]}
-                onPress={() => {
-                  setStatus(opt.value);
-                  setErrors(prev => ({ ...prev, dataVisita: null }));
-                }}
-              >
-                <View style={styles.radio}>
-                  {status === opt.value && <View style={styles.radioInner} />}
-                </View>
-                <View style={styles.radioContent}>
-                  <Text style={[
-                    styles.radioLabel,
-                    status === opt.value && styles.radioLabelSelected
-                  ]}>
-                    {opt.label}
-                  </Text>
-                  <Text style={styles.radioDescription}>{opt.description}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
           </View>
-        </View>
 
-        {/* Data da Visita */}
-        <DatePicker
-          label={fluxoInfo.dataLabel}
-          value={dataVisita}
-          onChange={(date) => {
-            setDataVisita(date);
-            setErrors(prev => ({ ...prev, dataVisita: null }));
-          }}
-          placeholder={fluxoInfo.dataPlaceholder}
-          error={errors.dataVisita}
-          minimumDate={status === VISITA_STATUS_AGENDADA ? new Date() : undefined}
-          maximumDate={status === VISITA_STATUS_REALIZADA ? new Date() : undefined}
-          mode="date"
-        />
+          <DatePicker
+            label={fluxoInfo.dataLabel}
+            value={dataVisita}
+            onChange={(date) => {
+              setDataVisita(date);
+              setErrors(prev => ({ ...prev, dataVisita: null }));
+            }}
+            placeholder={fluxoInfo.dataPlaceholder}
+            error={errors.dataVisita}
+            minimumDate={status === VISITA_STATUS_AGENDADA ? new Date() : undefined}
+            maximumDate={status === VISITA_STATUS_REALIZADA ? new Date() : undefined}
+            mode="date"
+          />
 
-        {/* Horário da Visita */}
-        <DatePicker
-          label="Horário da Visita"
-          value={horaVisita}
-          onChange={(time) => {
-            setHoraVisita(time);
-            setErrors(prev => ({ ...prev, horaVisita: null }));
-          }}
-          placeholder="Selecione o horário"
-          error={errors.horaVisita}
-          mode="time"
-        />
+          <DatePicker
+            label="Horário da Visita"
+            value={horaVisita}
+            onChange={(time) => {
+              setHoraVisita(time);
+              setErrors(prev => ({ ...prev, horaVisita: null }));
+            }}
+            placeholder="Selecione o horário"
+            error={errors.horaVisita}
+            mode="time"
+          />
+        </SectionCard>
 
-        {/* Objetivo */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Objetivo <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {objetivos.map(obj => (
-              <TouchableOpacity
-                key={obj.value}
-                style={[
-                  styles.radioButton,
-                  objetivo === obj.value && styles.radioButtonSelected
-                ]}
-                onPress={() => {
-                  setObjetivo(obj.value);
-                  setErrors(prev => ({ ...prev, objetivo: null }));
-                }}
-              >
-                <View style={styles.radio}>
-                  {objetivo === obj.value && <View style={styles.radioInner} />}
-                </View>
-                <Text style={[
-                  styles.radioLabel,
-                  objetivo === obj.value && styles.radioLabelSelected
-                ]}>
-                  {obj.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        <SectionCard title="Registro técnico" subtitle="Descreva objetivo, diagnóstico e recomendações da visita.">
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Objetivo <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={objetivos.map((obj) => ({
+                value: obj.value,
+                label: obj.label,
+              }))}
+              value={objetivo}
+              onChange={(value) => {
+                setObjetivo(value);
+                setErrors(prev => ({ ...prev, objetivo: null }));
+              }}
+              error={errors.objetivo}
+            />
           </View>
-          {errors.objetivo && (
-            <Text style={styles.errorText}>{errors.objetivo}</Text>
-          )}
-        </View>
 
-        {/* Observações */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Observações</Text>
-          <TextInput
-            style={[styles.textarea, styles.input]}
+          <FormField
+            label="Observações"
             value={observacoes}
             onChangeText={setObservacoes}
             placeholder={fluxoInfo.observacoesPlaceholder}
-            placeholderTextColor={colors.muted}
-            multiline
+            textarea
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
 
-        {/* Recomendações */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Recomendações Técnicas</Text>
-          <TextInput
-            style={[styles.textarea, styles.input]}
+          <FormField
+            label="Recomendações Técnicas"
             value={recomendacoes}
             onChangeText={setRecomendacoes}
             placeholder="Recomendações técnicas para a propriedade..."
-            placeholderTextColor={colors.muted}
-            multiline
+            textarea
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
 
-        {/* Clima */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{fluxoInfo.climaLabel}</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label={fluxoInfo.climaLabel}
             value={clima}
             onChangeText={setClima}
             placeholder="Ex: Ensolarado, parcialmente nublado..."
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        {/* Próxima Visita */}
-        <DatePicker
-          label="Sugestão de Próxima Visita"
-          value={proximaVisita}
-          onChange={setProximaVisita}
-          placeholder="Selecione uma data (opcional)"
-          minimumDate={dataVisita || new Date()}
-          mode="date"
-        />
+          <DatePicker
+            label="Sugestão de Próxima Visita"
+            value={proximaVisita}
+            onChange={setProximaVisita}
+            placeholder="Selecione uma data (opcional)"
+            minimumDate={dataVisita || new Date()}
+            mode="date"
+          />
+        </SectionCard>
 
-        {/* Fotos */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Fotos da Visita</Text>
+        <SectionCard title="Fotos" subtitle="Anexe imagens simuladas ao registro da visita.">
           <View style={styles.fotoBotoesContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.fotoBotao}
               onPress={() => adicionarFotoSimulada('camera')}
             >
               <Ionicons name="camera-outline" size={24} color={colors.primary} />
               <Text style={styles.fotoBotaoText}>Câmera</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.fotoBotao}
               onPress={() => adicionarFotoSimulada('galeria')}
             >
@@ -517,7 +467,7 @@ export default function NovaVisitaScreen() {
               {fotos.map((foto) => (
                 <View key={foto.id} style={styles.fotoContainer}>
                   <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.fotoRemover}
                     onPress={() => removerFoto(foto.id)}
                   >
@@ -530,46 +480,18 @@ export default function NovaVisitaScreen() {
           {fotos.length > 0 && (
             <Text style={styles.fotosCount}>{fotos.length} foto(s) anexada(s)</Text>
           )}
-        </View>
+        </SectionCard>
 
-        {/* Informações */}
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
-            {fluxoInfo.infoText}
-          </Text>
-        </View>
+        <InfoBox message={fluxoInfo.infoText} />
       </ScrollView>
 
-      {/* Botões de Ação */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
-          disabled={loading}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.button,
-            styles.saveButton,
-            (loading || loadingFazendas || semFazendasAutorizadas) && styles.buttonDisabled
-          ]}
-          onPress={handleSave}
-          disabled={loading || loadingFazendas || semFazendasAutorizadas}
-        >
-          {loading ? (
-            <ActivityIndicator color={colors.card} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={colors.card} />
-              <Text style={styles.saveButtonText}>{fluxoInfo.submitLabel}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel={fluxoInfo.submitLabel}
+        loading={loading}
+        disabled={loadingFazendas || semFazendasAutorizadas}
+      />
 
       <ConfirmDialog
         visible={removePhotoDialog.visible}

@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  TextInput,
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,11 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
@@ -297,174 +301,123 @@ export default function EditarVisitaScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Fazenda */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Propriedade vinculada
-          </Text>
-          <View style={[styles.picker, styles.lockedPicker]}>
-            <Text style={styles.pickerText}>
-              {fazendaContextoLabel}
+        <SectionCard title="Contexto" subtitle="A propriedade vinculada é preservada nesta edição.">
+          <View style={styles.field}>
+            <Text style={styles.label}>Propriedade vinculada</Text>
+            <View style={[styles.picker, styles.lockedPicker]}>
+              <Text style={styles.pickerText}>
+                {fazendaContextoLabel}
+              </Text>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
+            </View>
+            <Text style={styles.contextHint}>A propriedade da visita não é alterada nesta edição.</Text>
+          </View>
+        </SectionCard>
+
+        <SectionCard title="Agenda" subtitle="Atualize status, data e horário da visita.">
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Status <Text style={styles.required}>*</Text>
             </Text>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
+            <RadioCardGroup
+              options={statusOptions.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              }))}
+              value={status}
+              onChange={setStatus}
+            />
           </View>
-          <Text style={styles.contextHint}>A propriedade da visita não é alterada nesta edição.</Text>
-        </View>
 
-        {/* Status */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Status <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {statusOptions.map(opt => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.radioButton,
-                  status === opt.value && styles.radioButtonSelected
-                ]}
-                onPress={() => setStatus(opt.value)}
-              >
-                <View style={styles.radio}>
-                  {status === opt.value && <View style={styles.radioInner} />}
-                </View>
-                <Text style={[
-                  styles.radioLabel,
-                  status === opt.value && styles.radioLabelSelected
-                ]}>
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <DatePicker
+            label={fluxoInfo.dataLabel}
+            value={dataVisita}
+            onChange={(date) => {
+              setDataVisita(date);
+              setErrors(prev => ({ ...prev, dataVisita: null }));
+            }}
+            placeholder="Selecione a data"
+            error={errors.dataVisita}
+            mode="date"
+          />
+
+          <DatePicker
+            label="Horário da Visita"
+            value={horaVisita}
+            onChange={(time) => {
+              setHoraVisita(time);
+              setErrors(prev => ({ ...prev, horaVisita: null }));
+            }}
+            placeholder="Selecione o horário"
+            error={errors.horaVisita}
+            mode="time"
+          />
+        </SectionCard>
+
+        <SectionCard title="Registro técnico" subtitle="Atualize objetivo, diagnóstico e recomendações da visita.">
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Objetivo <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={objetivos.map((obj) => ({
+                value: obj.value,
+                label: obj.label,
+              }))}
+              value={objetivo}
+              onChange={(value) => {
+                setObjetivo(value);
+                setErrors(prev => ({ ...prev, objetivo: null }));
+              }}
+              error={errors.objetivo}
+            />
           </View>
-        </View>
 
-        {/* Data da Visita */}
-        <DatePicker
-          label={fluxoInfo.dataLabel}
-          value={dataVisita}
-          onChange={(date) => {
-            setDataVisita(date);
-            setErrors(prev => ({ ...prev, dataVisita: null }));
-          }}
-          placeholder="Selecione a data"
-          error={errors.dataVisita}
-          mode="date"
-        />
-
-        {/* Horário da Visita */}
-        <DatePicker
-          label="Horário da Visita"
-          value={horaVisita}
-          onChange={(time) => {
-            setHoraVisita(time);
-            setErrors(prev => ({ ...prev, horaVisita: null }));
-          }}
-          placeholder="Selecione o horário"
-          error={errors.horaVisita}
-          mode="time"
-        />
-
-        {/* Objetivo */}
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Objetivo <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {objetivos.map(obj => (
-              <TouchableOpacity
-                key={obj.value}
-                style={[
-                  styles.radioButton,
-                  objetivo === obj.value && styles.radioButtonSelected
-                ]}
-                onPress={() => {
-                  setObjetivo(obj.value);
-                  setErrors(prev => ({ ...prev, objetivo: null }));
-                }}
-              >
-                <View style={styles.radio}>
-                  {objetivo === obj.value && <View style={styles.radioInner} />}
-                </View>
-                <Text style={[
-                  styles.radioLabel,
-                  objetivo === obj.value && styles.radioLabelSelected
-                ]}>
-                  {obj.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          {errors.objetivo && (
-            <Text style={styles.errorText}>{errors.objetivo}</Text>
-          )}
-        </View>
-
-        {/* Observações */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Observações</Text>
-          <TextInput
-            style={[styles.textarea, styles.input]}
+          <FormField
+            label="Observações"
             value={observacoes}
             onChangeText={setObservacoes}
             placeholder="Descreva detalhes da visita..."
-            placeholderTextColor={colors.muted}
-            multiline
+            textarea
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
 
-        {/* Recomendações */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Recomendações Técnicas</Text>
-          <TextInput
-            style={[styles.textarea, styles.input]}
+          <FormField
+            label="Recomendações Técnicas"
             value={recomendacoes}
             onChangeText={setRecomendacoes}
             placeholder="Recomendações técnicas para a propriedade..."
-            placeholderTextColor={colors.muted}
-            multiline
+            textarea
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
 
-        {/* Clima */}
-        <View style={styles.field}>
-          <Text style={styles.label}>{fluxoInfo.climaLabel}</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label={fluxoInfo.climaLabel}
             value={clima}
             onChangeText={setClima}
             placeholder="Ex: Ensolarado, parcialmente nublado..."
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        {/* Próxima Visita */}
-        <DatePicker
-          label="Sugestão de Próxima Visita"
-          value={proximaVisita}
-          onChange={setProximaVisita}
-          placeholder="Selecione uma data (opcional)"
-          minimumDate={new Date()}
-          mode="date"
-        />
+          <DatePicker
+            label="Sugestão de Próxima Visita"
+            value={proximaVisita}
+            onChange={setProximaVisita}
+            placeholder="Selecione uma data (opcional)"
+            minimumDate={new Date()}
+            mode="date"
+          />
+        </SectionCard>
 
-        {/* Fotos */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Fotos da Visita</Text>
+        <SectionCard title="Fotos" subtitle="Anexe imagens simuladas ao registro da visita.">
           <View style={styles.fotoBotoesContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.fotoBotao}
               onPress={() => adicionarFotoSimulada('camera')}
             >
               <Ionicons name="camera-outline" size={24} color={colors.primary} />
               <Text style={styles.fotoBotaoText}>Câmera</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.fotoBotao}
               onPress={() => adicionarFotoSimulada('galeria')}
             >
@@ -477,7 +430,7 @@ export default function EditarVisitaScreen() {
               {fotos.map((foto) => (
                 <View key={foto.id} style={styles.fotoContainer}>
                   <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.fotoRemover}
                     onPress={() => removerFoto(foto.id)}
                   >
@@ -490,42 +443,17 @@ export default function EditarVisitaScreen() {
           {fotos.length > 0 && (
             <Text style={styles.fotosCount}>{fotos.length} foto(s) anexada(s)</Text>
           )}
-        </View>
+        </SectionCard>
 
-        {/* Informações */}
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
-            {fluxoInfo.infoText}
-          </Text>
-        </View>
+        <InfoBox message={fluxoInfo.infoText} />
       </ScrollView>
 
-      {/* Botões de Ação */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
-          disabled={saving}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, styles.saveButton, saving && styles.buttonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color={colors.card} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={colors.card} />
-              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel="Salvar Alterações"
+        loading={saving}
+      />
 
       <ConfirmDialog
         visible={removePhotoDialog.visible}
