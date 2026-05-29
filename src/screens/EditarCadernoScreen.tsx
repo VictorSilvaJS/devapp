@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,6 +11,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
@@ -238,219 +242,136 @@ export default function EditarCadernoScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.field}>
-          <Text style={styles.label}>Propriedade vinculada</Text>
-          <View style={[styles.picker, styles.lockedPicker, errors.fazendaId && styles.inputError]}>
-            <Text style={styles.pickerText}>{fazendaLabel}</Text>
-            <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
+        <SectionCard title="Contexto" subtitle="A propriedade vinculada é preservada nesta edição.">
+          <View style={styles.field}>
+            <Text style={styles.label}>Propriedade vinculada</Text>
+            <View style={[styles.picker, styles.lockedPicker, errors.fazendaId && styles.inputError]}>
+              <Text style={styles.pickerText}>{fazendaLabel}</Text>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
+            </View>
+            <Text style={styles.contextHint}>A propriedade do registro não é alterada nesta edição.</Text>
+            {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
           </View>
-          <Text style={styles.contextHint}>A propriedade do registro não é alterada nesta edição.</Text>
-          {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
-        </View>
+        </SectionCard>
 
-        <DatePicker
-          label="Data da Atividade"
-          value={dataAtividade}
-          onChange={(date) => {
-            setDataAtividade(date);
-            setErrors(prev => ({ ...prev, dataAtividade: null }));
-          }}
-          placeholder="Selecione a data"
-          error={errors.dataAtividade}
-          maximumDate={new Date()}
-          mode="date"
-        />
+        <SectionCard title="Atividade" subtitle="Atualize data, tipo e informações operacionais do caderno.">
+          <DatePicker
+            label="Data da Atividade"
+            value={dataAtividade}
+            onChange={(date) => {
+              setDataAtividade(date);
+              setErrors(prev => ({ ...prev, dataAtividade: null }));
+            }}
+            placeholder="Selecione a data"
+            error={errors.dataAtividade}
+            maximumDate={new Date()}
+            mode="date"
+          />
 
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Tipo de Atividade <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {CADERNO_TIPOS_ATIVIDADE.map((tipo) => (
-              <TouchableOpacity
-                key={tipo.value}
-                style={[
-                  styles.radioButton,
-                  tipoAtividade === tipo.value && styles.radioButtonSelected,
-                ]}
-                onPress={() => {
-                  setTipoAtividade(tipo.value);
-                  setErrors(prev => ({ ...prev, tipoAtividade: null }));
-                }}
-              >
-                <View style={styles.radio}>
-                  {tipoAtividade === tipo.value && <View style={styles.radioInner} />}
-                </View>
-                <Text
-                  style={[
-                    styles.radioLabel,
-                    tipoAtividade === tipo.value && styles.radioLabelSelected,
-                  ]}
-                >
-                  {tipo.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Tipo de Atividade <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={CADERNO_TIPOS_ATIVIDADE.map((tipo) => ({
+                value: tipo.value,
+                label: tipo.label,
+              }))}
+              value={tipoAtividade}
+              onChange={(value) => {
+                setTipoAtividade(value);
+                setErrors(prev => ({ ...prev, tipoAtividade: null }));
+              }}
+              error={errors.tipoAtividade}
+            />
           </View>
-          {errors.tipoAtividade && <Text style={styles.errorText}>{errors.tipoAtividade}</Text>}
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Talhão</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Talhão"
             value={talhao}
             onChangeText={setTalhao}
             placeholder="Ex: Talhão A"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Área Aplicada (ha)</Text>
-          <TextInput
-            style={[styles.input, errors.areaAplicada && styles.inputError]}
+          <FormField
+            label="Área Aplicada (ha)"
             value={areaAplicada}
             onChangeText={(value) => {
               setAreaAplicada(value);
               setErrors(prev => ({ ...prev, areaAplicada: null }));
             }}
             placeholder="Ex: 25,5"
-            placeholderTextColor={colors.muted}
             keyboardType="decimal-pad"
+            error={errors.areaAplicada}
           />
-          {errors.areaAplicada && <Text style={styles.errorText}>{errors.areaAplicada}</Text>}
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Produtos Utilizados</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Produtos Utilizados"
             value={produtosText}
             onChangeText={setProdutosText}
             placeholder="Separe produtos por vírgula"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Dosagem</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Dosagem"
             value={dosagem}
             onChangeText={setDosagem}
             placeholder="Ex: 300 kg/ha"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Condições Climáticas</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Condições Climáticas"
             value={condicoesClima}
             onChangeText={setCondicoesClima}
             placeholder="Ex: Ensolarado, sem vento"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Observações</Text>
-          <TextInput
-            style={[styles.input, styles.textarea]}
+          <FormField
+            label="Observações"
             value={observacoes}
             onChangeText={setObservacoes}
             placeholder="Descreva o registro de campo..."
-            placeholderTextColor={colors.muted}
-            multiline
+            textarea
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
+        </SectionCard>
 
-        <View style={styles.field}>
+        <SectionCard title="Visibilidade" subtitle="Controle se o registro aparece para o produtor.">
           <Text style={styles.label}>
             Visibilidade para Produtor <Text style={styles.required}>*</Text>
           </Text>
-          <View style={styles.radioGroup}>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                visivelParaProdutor && styles.radioButtonSelected,
-                produtorLogado && styles.radioButtonLocked,
-              ]}
-              onPress={() => setVisivelParaProdutor(true)}
-              disabled={produtorLogado}
-            >
-              <View style={styles.radio}>
-                {visivelParaProdutor && <View style={styles.radioInner} />}
-              </View>
-              <View style={styles.radioContent}>
-                <Text style={[styles.radioLabel, visivelParaProdutor && styles.radioLabelSelected]}>
-                  Visível ao produtor
-                </Text>
-                <Text style={styles.radioDescription}>Aparece no histórico da propriedade.</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                !visivelParaProdutor && styles.radioButtonSelected,
-                produtorLogado && styles.radioButtonLocked,
-              ]}
-              onPress={() => setVisivelParaProdutor(false)}
-              disabled={produtorLogado}
-            >
-              <View style={styles.radio}>
-                {!visivelParaProdutor && <View style={styles.radioInner} />}
-              </View>
-              <View style={styles.radioContent}>
-                <Text style={[styles.radioLabel, !visivelParaProdutor && styles.radioLabelSelected]}>
-                  Restrito à equipe
-                </Text>
-                <Text style={styles.radioDescription}>Disponível apenas para admin e colaboradores.</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <RadioCardGroup
+            options={[
+              {
+                value: 'visivel',
+                label: 'Visível ao produtor',
+                description: 'Aparece no histórico da propriedade.',
+                disabled: produtorLogado,
+              },
+              {
+                value: 'restrito',
+                label: 'Restrito à equipe',
+                description: 'Disponível apenas para admin e colaboradores.',
+                disabled: produtorLogado,
+              },
+            ]}
+            value={visivelParaProdutor ? 'visivel' : 'restrito'}
+            onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
+          />
           {produtorLogado && (
             <Text style={styles.contextHint}>Produtor não altera a visibilidade do registro nesta edição.</Text>
           )}
-        </View>
+        </SectionCard>
 
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
-            As alterações serão salvas no registro desta propriedade.
-          </Text>
-        </View>
+        <InfoBox message="As alterações serão salvas no registro desta propriedade." />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
-          disabled={saving}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, styles.saveButton, saving && styles.buttonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color={colors.card} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={colors.card} />
-              <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel="Salvar Alterações"
+        loading={saving}
+      />
     </View>
   );
 }

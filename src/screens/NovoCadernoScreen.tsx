@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -12,6 +11,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
@@ -218,273 +222,187 @@ export default function NovoCadernoScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Propriedade <Text style={styles.required}>*</Text>
-          </Text>
-          <TouchableOpacity
-            style={[styles.picker, errors.fazendaId && styles.inputError]}
-            onPress={() => setShowFazendaPicker(!showFazendaPicker)}
-            disabled={loadingFazendas || semFazendasAutorizadas || !!routeFazendaId}
-          >
-            <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
-              {loadingFazendas ? 'Carregando...' : getCadernoFormFazendaLabel(fazendaSelecionada)}
+        <SectionCard title="Contexto" subtitle="Defina a propriedade onde o registro será salvo.">
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Propriedade <Text style={styles.required}>*</Text>
             </Text>
-            <Ionicons
-              name={routeFazendaId ? 'lock-closed-outline' : showFazendaPicker ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color={colors.muted}
-            />
-          </TouchableOpacity>
-          {routeFazendaId && (
-            <Text style={styles.contextHint}>Registro vinculado à propriedade informada na rota.</Text>
-          )}
-          {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
-          {semFazendasAutorizadas && (
-            <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para novo registro.</Text>
-          )}
+            <TouchableOpacity
+              style={[styles.picker, errors.fazendaId && styles.inputError]}
+              onPress={() => setShowFazendaPicker(!showFazendaPicker)}
+              disabled={loadingFazendas || semFazendasAutorizadas || !!routeFazendaId}
+            >
+              <Text style={[styles.pickerText, !fazendaId && styles.placeholder]}>
+                {loadingFazendas ? 'Carregando...' : getCadernoFormFazendaLabel(fazendaSelecionada)}
+              </Text>
+              <Ionicons
+                name={routeFazendaId ? 'lock-closed-outline' : showFazendaPicker ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={colors.muted}
+              />
+            </TouchableOpacity>
+            {routeFazendaId && (
+              <Text style={styles.contextHint}>Registro vinculado à propriedade informada na rota.</Text>
+            )}
+            {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
+            {semFazendasAutorizadas && (
+              <Text style={styles.errorText}>Nenhuma propriedade autorizada disponível para novo registro.</Text>
+            )}
 
-          {showFazendaPicker && !routeFazendaId && (
-            <View style={styles.dropdownContainer}>
-              <ScrollView style={styles.dropdown} nestedScrollEnabled>
-                {fazendaOptions.map((fazenda) => (
-                  <TouchableOpacity
-                    key={fazenda.id}
-                    style={[
-                      styles.dropdownItem,
-                      fazendaId === fazenda.id && styles.dropdownItemSelected,
-                    ]}
-                    onPress={() => {
-                      setFazendaId(fazenda.id);
-                      setShowFazendaPicker(false);
-                      setErrors(prev => ({ ...prev, fazendaId: null }));
-                    }}
-                  >
-                    <Text
+            {showFazendaPicker && !routeFazendaId && (
+              <View style={styles.dropdownContainer}>
+                <ScrollView style={styles.dropdown} nestedScrollEnabled>
+                  {fazendaOptions.map((fazenda) => (
+                    <TouchableOpacity
+                      key={fazenda.id}
                       style={[
-                        styles.dropdownItemText,
-                        fazendaId === fazenda.id && styles.dropdownItemTextSelected,
+                        styles.dropdownItem,
+                        fazendaId === fazenda.id && styles.dropdownItemSelected,
                       ]}
+                      onPress={() => {
+                        setFazendaId(fazenda.id);
+                        setShowFazendaPicker(false);
+                        setErrors(prev => ({ ...prev, fazendaId: null }));
+                      }}
                     >
-                      {fazenda.fazendaNome}
-                    </Text>
-                    <Text style={styles.dropdownItemSubtext}>
-                      {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-
-        <DatePicker
-          label="Data da Atividade"
-          value={dataAtividade}
-          onChange={(date) => {
-            setDataAtividade(date);
-            setErrors(prev => ({ ...prev, dataAtividade: null }));
-          }}
-          placeholder="Selecione a data"
-          error={errors.dataAtividade}
-          maximumDate={new Date()}
-          mode="date"
-        />
-
-        <View style={styles.field}>
-          <Text style={styles.label}>
-            Tipo de Atividade <Text style={styles.required}>*</Text>
-          </Text>
-          <View style={styles.radioGroup}>
-            {CADERNO_TIPOS_ATIVIDADE.map((tipo) => (
-              <TouchableOpacity
-                key={tipo.value}
-                style={[
-                  styles.radioButton,
-                  tipoAtividade === tipo.value && styles.radioButtonSelected,
-                ]}
-                onPress={() => {
-                  setTipoAtividade(tipo.value);
-                  setErrors(prev => ({ ...prev, tipoAtividade: null }));
-                }}
-              >
-                <View style={styles.radio}>
-                  {tipoAtividade === tipo.value && <View style={styles.radioInner} />}
-                </View>
-                <Text
-                  style={[
-                    styles.radioLabel,
-                    tipoAtividade === tipo.value && styles.radioLabelSelected,
-                  ]}
-                >
-                  {tipo.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          fazendaId === fazenda.id && styles.dropdownItemTextSelected,
+                        ]}
+                      >
+                        {fazenda.fazendaNome}
+                      </Text>
+                      <Text style={styles.dropdownItemSubtext}>
+                        {[fazenda.titularNome, [fazenda.cidade, fazenda.estado].filter(Boolean).join('/')].filter(Boolean).join(' • ')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
-          {errors.tipoAtividade && <Text style={styles.errorText}>{errors.tipoAtividade}</Text>}
-        </View>
+        </SectionCard>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Talhão</Text>
-          <TextInput
-            style={styles.input}
+        <SectionCard title="Atividade" subtitle="Registre data, tipo e informações operacionais do caderno.">
+          <DatePicker
+            label="Data da Atividade"
+            value={dataAtividade}
+            onChange={(date) => {
+              setDataAtividade(date);
+              setErrors(prev => ({ ...prev, dataAtividade: null }));
+            }}
+            placeholder="Selecione a data"
+            error={errors.dataAtividade}
+            maximumDate={new Date()}
+            mode="date"
+          />
+
+          <View style={styles.field}>
+            <Text style={styles.label}>
+              Tipo de Atividade <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={CADERNO_TIPOS_ATIVIDADE.map((tipo) => ({
+                value: tipo.value,
+                label: tipo.label,
+              }))}
+              value={tipoAtividade}
+              onChange={(value) => {
+                setTipoAtividade(value);
+                setErrors(prev => ({ ...prev, tipoAtividade: null }));
+              }}
+              error={errors.tipoAtividade}
+            />
+          </View>
+
+          <FormField
+            label="Talhão"
             value={talhao}
             onChangeText={setTalhao}
             placeholder="Ex: Talhão A"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Área Aplicada (ha)</Text>
-          <TextInput
-            style={[styles.input, errors.areaAplicada && styles.inputError]}
+          <FormField
+            label="Área Aplicada (ha)"
             value={areaAplicada}
             onChangeText={(value) => {
               setAreaAplicada(value);
               setErrors(prev => ({ ...prev, areaAplicada: null }));
             }}
             placeholder="Ex: 25,5"
-            placeholderTextColor={colors.muted}
             keyboardType="decimal-pad"
+            error={errors.areaAplicada}
           />
-          {errors.areaAplicada && <Text style={styles.errorText}>{errors.areaAplicada}</Text>}
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Produtos Utilizados</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Produtos Utilizados"
             value={produtosText}
             onChangeText={setProdutosText}
             placeholder="Separe produtos por vírgula"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Dosagem</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Dosagem"
             value={dosagem}
             onChangeText={setDosagem}
             placeholder="Ex: 300 kg/ha"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Condições Climáticas</Text>
-          <TextInput
-            style={styles.input}
+          <FormField
+            label="Condições Climáticas"
             value={condicoesClima}
             onChangeText={setCondicoesClima}
             placeholder="Ex: Ensolarado, sem vento"
-            placeholderTextColor={colors.muted}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Observações</Text>
-          <TextInput
-            style={[styles.input, styles.textarea]}
+          <FormField
+            label="Observações"
             value={observacoes}
             onChangeText={setObservacoes}
             placeholder="Descreva o registro de campo..."
-            placeholderTextColor={colors.muted}
-            multiline
+            textarea
             numberOfLines={4}
-            textAlignVertical="top"
           />
-        </View>
+        </SectionCard>
 
-        <View style={styles.field}>
+        <SectionCard title="Visibilidade" subtitle="Controle se o registro aparece para o produtor.">
           <Text style={styles.label}>
             Visibilidade para Produtor <Text style={styles.required}>*</Text>
           </Text>
-          <View style={styles.radioGroup}>
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                visivelParaProdutor && styles.radioButtonSelected,
-                produtorLogado && styles.radioButtonLocked,
-              ]}
-              onPress={() => setVisivelParaProdutor(true)}
-              disabled={produtorLogado}
-            >
-              <View style={styles.radio}>
-                {visivelParaProdutor && <View style={styles.radioInner} />}
-              </View>
-              <View style={styles.radioContent}>
-                <Text style={[styles.radioLabel, visivelParaProdutor && styles.radioLabelSelected]}>
-                  Visível ao produtor
-                </Text>
-                <Text style={styles.radioDescription}>Aparece no histórico da propriedade.</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.radioButton,
-                !visivelParaProdutor && styles.radioButtonSelected,
-                produtorLogado && styles.radioButtonLocked,
-              ]}
-              onPress={() => setVisivelParaProdutor(false)}
-              disabled={produtorLogado}
-            >
-              <View style={styles.radio}>
-                {!visivelParaProdutor && <View style={styles.radioInner} />}
-              </View>
-              <View style={styles.radioContent}>
-                <Text style={[styles.radioLabel, !visivelParaProdutor && styles.radioLabelSelected]}>
-                  Restrito à equipe
-                </Text>
-                <Text style={styles.radioDescription}>Disponível apenas para admin e colaboradores.</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <RadioCardGroup
+            options={[
+              {
+                value: 'visivel',
+                label: 'Visível ao produtor',
+                description: 'Aparece no histórico da propriedade.',
+                disabled: produtorLogado,
+              },
+              {
+                value: 'restrito',
+                label: 'Restrito à equipe',
+                description: 'Disponível apenas para admin e colaboradores.',
+                disabled: produtorLogado,
+              },
+            ]}
+            value={visivelParaProdutor ? 'visivel' : 'restrito'}
+            onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
+          />
           {produtorLogado && (
             <Text style={styles.contextHint}>Registros criados pelo produtor ficam visíveis no histórico da própria propriedade.</Text>
           )}
-        </View>
+        </SectionCard>
 
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
-            O registro será salvo no caderno da propriedade selecionada.
-          </Text>
-        </View>
+        <InfoBox message="O registro será salvo no caderno da propriedade selecionada." />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
-          disabled={saving}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.button,
-            styles.saveButton,
-            (saving || loadingFazendas || semFazendasAutorizadas) && styles.buttonDisabled,
-          ]}
-          onPress={handleSave}
-          disabled={saving || loadingFazendas || semFazendasAutorizadas}
-        >
-          {saving ? (
-            <ActivityIndicator color={colors.card} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={colors.card} />
-              <Text style={styles.saveButtonText}>Salvar Registro</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel="Salvar Registro"
+        loading={saving}
+        disabled={loadingFazendas || semFazendasAutorizadas}
+      />
     </View>
   );
 }
