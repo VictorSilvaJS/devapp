@@ -3,13 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { Produtor } from '../api/mock';
 import { buildFazendaUpdatePayload } from '../api/produtorCompat';
@@ -164,35 +166,85 @@ export default function EditarProdutorScreen({ route, navigation }) {
     <View style={styles.container}>
       <Header title="Editar Propriedade" showBackButton />
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Info Box */}
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-          <Text style={styles.infoText}>
-            Atualize os dados da propriedade mantendo o titular vinculado.
-          </Text>
-        </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <InfoBox message="Atualize os dados da propriedade mantendo o titular vinculado." />
 
-        <Text style={styles.sectionTitle}>Titular Vinculado</Text>
-        <View style={styles.linkedBox}>
-          <View style={styles.linkedRow}>
-            <View style={styles.linkedIcon}>
-              <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
+        <SectionCard title="Vínculo cadastral" subtitle="O titular atual permanece vinculado à propriedade.">
+          <View style={styles.linkedRows}>
+            <View style={styles.linkedRow}>
+              <View style={styles.linkedIcon}>
+                <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
+              </View>
+              <View style={styles.linkedInfo}>
+                <Text style={styles.linkedLabel}>Titular atual</Text>
+                <Text style={styles.linkedValue}>{titularNome}</Text>
+              </View>
             </View>
-            <View style={styles.linkedInfo}>
-              <Text style={styles.linkedLabel}>Titular atual</Text>
-              <Text style={styles.linkedValue}>{titularNome}</Text>
+
+            <View style={styles.linkedRow}>
+              <View style={styles.linkedIcon}>
+                <Ionicons name="link-outline" size={18} color={theme.colors.primary} />
+              </View>
+              <View style={styles.linkedInfo}>
+                <Text style={styles.linkedLabel}>Vínculo cadastral</Text>
+                <Text style={styles.linkedValue}>Preservado no mock</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.linkedRow}>
-            <View style={styles.linkedIcon}>
-              <Ionicons name="link-outline" size={18} color={theme.colors.primary} />
-            </View>
-            <View style={styles.linkedInfo}>
-              <Text style={styles.linkedLabel}>Vínculo cadastral</Text>
-              <Text style={styles.linkedValue}>Preservado no mock</Text>
-            </View>
-          </View>
+        </SectionCard>
+
+        <SectionCard title="Dados da propriedade" subtitle="Atualize a identificação e a área total cadastrada.">
+          <FormField
+            label="Nome da Propriedade"
+            required
+            value={form.fazenda_nome}
+            onChangeText={(text) => handleChange('fazenda_nome', text)}
+            placeholder="Nome da propriedade"
+            error={errors.fazenda_nome}
+          />
+
+          <FormField
+            label="Área Total (ha)"
+            required
+            value={form.area_total}
+            onChangeText={(text) => handleChange('area_total', text)}
+            placeholder="Ex: 500"
+            keyboardType="numeric"
+            error={errors.area_total}
+          />
+        </SectionCard>
+
+        <SectionCard title="Produção" subtitle="Mantenha a cultura principal informada para a propriedade.">
+          <FormField
+            label="Cultura Atual"
+            value={form.cultura_atual}
+            onChangeText={(text) => handleChange('cultura_atual', text)}
+            placeholder="Ex: Soja, Milho, Trigo"
+          />
+        </SectionCard>
+
+        <SectionCard title="Localização e escopo" subtitle="Atualize a localização sem alterar o escopo territorial vinculado.">
+          <FormField
+            label="Cidade"
+            value={form.cidade}
+            onChangeText={(text) => handleChange('cidade', text)}
+            placeholder="Nome da cidade"
+          />
+
+          <FormField
+            label="Estado (UF)"
+            value={form.estado}
+            onChangeText={(text) => handleChange('estado', text.toUpperCase())}
+            placeholder="Ex: RS, SP, GO"
+            maxLength={2}
+            autoCapitalize="characters"
+            error={errors.estado}
+          />
+
           {!!escopo && (
             <View style={styles.linkedRow}>
               <View style={styles.linkedIcon}>
@@ -204,110 +256,17 @@ export default function EditarProdutorScreen({ route, navigation }) {
               </View>
             </View>
           )}
-        </View>
-
-        <Text style={styles.sectionTitle}>Dados da Propriedade</Text>
-
-        {/* Fazenda */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Nome da Propriedade *</Text>
-          <TextInput
-            style={[styles.input, errors.fazenda_nome && styles.inputError]}
-            value={form.fazenda_nome}
-            onChangeText={(text) => handleChange('fazenda_nome', text)}
-            placeholder="Nome da propriedade"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-          {errors.fazenda_nome && (
-            <Text style={styles.errorText}>{errors.fazenda_nome}</Text>
-          )}
-        </View>
-
-        {/* Área Total */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Área Total (ha) *</Text>
-          <TextInput
-            style={[styles.input, errors.area_total && styles.inputError]}
-            value={form.area_total}
-            onChangeText={(text) => handleChange('area_total', text)}
-            placeholder="Ex: 500"
-            keyboardType="numeric"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-          {errors.area_total && (
-            <Text style={styles.errorText}>{errors.area_total}</Text>
-          )}
-        </View>
-
-        {/* Cultura Atual */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Cultura Atual</Text>
-          <TextInput
-            style={styles.input}
-            value={form.cultura_atual}
-            onChangeText={(text) => handleChange('cultura_atual', text)}
-            placeholder="Ex: Soja, Milho, Trigo"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-        </View>
-
-        {/* Cidade */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Cidade</Text>
-          <TextInput
-            style={styles.input}
-            value={form.cidade}
-            onChangeText={(text) => handleChange('cidade', text)}
-            placeholder="Nome da cidade"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-        </View>
-
-        {/* Estado */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Estado (UF)</Text>
-          <TextInput
-            style={[styles.input, errors.estado && styles.inputError]}
-            value={form.estado}
-            onChangeText={(text) => handleChange('estado', text.toUpperCase())}
-            placeholder="Ex: RS, SP, GO"
-            maxLength={2}
-            autoCapitalize="characters"
-            placeholderTextColor={theme.colors.textSecondary}
-          />
-          {errors.estado && (
-            <Text style={styles.errorText}>{errors.estado}</Text>
-          )}
-        </View>
+        </SectionCard>
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Footer com botões */}
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.cancelButton}
-          onPress={() => navigation.goBack()}
-          disabled={saving}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color={theme.colors.white} />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={theme.colors.white} />
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel="Salvar"
+        loading={saving}
+      />
     </View>
   );
 }
@@ -317,9 +276,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  content: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
     padding: theme.spacing.md,
+    paddingBottom: theme.spacing.xl * 2,
   },
   loadingContainer: {
     flex: 1,
@@ -332,36 +294,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: theme.typography.fontBody,
   },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primary + '15',
-    padding: theme.spacing.md,
-    borderRadius: theme.spacing.radius,
-    marginBottom: theme.spacing.lg,
-    gap: theme.spacing.sm,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: theme.typography.fontBody,
-    color: theme.colors.text,
-    lineHeight: 20,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontBody + 1,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  linkedBox: {
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.spacing.radius,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+  linkedRows: {
     gap: theme.spacing.md,
   },
   linkedRow: {
@@ -393,77 +326,5 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontBody,
     fontWeight: theme.typography.weightSemibold,
     color: theme.colors.text,
-  },
-  field: {
-    marginBottom: theme.spacing.lg,
-  },
-  label: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightSemibold,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-  },
-  input: {
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.spacing.radius,
-    padding: theme.spacing.md,
-    fontSize: theme.typography.fontBody,
-    color: theme.colors.text,
-  },
-  inputError: {
-    borderColor: theme.colors.error,
-    borderWidth: 2,
-  },
-  errorText: {
-    fontSize: theme.typography.fontCaption,
-    color: theme.colors.error,
-    marginTop: theme.spacing.xs,
-  },
-  footer: {
-    flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    ...theme.shadows.sm,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.spacing.radius,
-    backgroundColor: theme.colors.card,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightSemibold,
-    color: theme.colors.text,
-  },
-  saveButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xs,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.spacing.radius,
-    backgroundColor: theme.colors.primary,
-    ...theme.shadows.md,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.white,
   },
 });
