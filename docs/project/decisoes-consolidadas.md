@@ -246,7 +246,43 @@ Ficam fora desta decisao nesta fase: backend, banco, migrations, API real, auten
 
 ---
 
-## 13. Mapas e limites formam uma experiencia unica de panorama no MVP
+## 13. Cadastro rapido de propriedade no cadastro de usuario produtor
+
+### Decisao
+
+No MVP visual/mockado, o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` pode criar uma propriedade rapida quando a propriedade do produtor ainda nao existir.
+
+O admin pode escolher entre:
+
+- vincular o usuario produtor a uma propriedade existente
+- cadastrar uma nova propriedade rapida no mesmo fluxo
+
+### Alcance
+
+Afeta o cadastro administrativo de usuario produtor, o mock de propriedades e a relacao visual `usuario_propriedade`.
+
+### Impacto
+
+- o cadastro rapido inclui nome da propriedade, municipio, UF/Estado, regiao, micro-regiao, area total, status, tipo de vinculo, vinculo principal e observacoes
+- Regiao e Microregiao usam `territorioCompat` quando houver dados disponiveis, com fallback textual
+- ao escolher micro-regiao, a interface pode sugerir colaboradores apenas visualmente
+- ao salvar, o mock cria a propriedade via `Produtor.create`
+- ao salvar, o mock vincula a propriedade criada ao usuario produtor via `usuario_propriedade`
+- campos legados como `produtor_id`, `proprietario_id`, `regiao`, `microregiao` e `fazenda_id` permanecem preservados
+- produtor ativo exige propriedade existente ou cadastro rapido valido
+- produtor pendente sem propriedade continua permitido
+- o fluxo prepara uma criacao combinada futura de `usuario` + `propriedade` + `usuario_propriedade`
+
+Risco assumido no mock:
+
+- como nao ha transacao no mock, pode haver inconsistencia se uma etapa do salvamento falhar depois da criacao da propriedade
+- no backend futuro, esse fluxo deve ser transacional
+
+Ficam fora desta decisao nesta fase: backend, banco real, API, migrations, autenticacao real, senha, convite, reset, RBAC completo, upload/storage, Drive, CRUD real de regioes/microregioes e migracao do `acessoControle`.
+
+---
+
+## 14. Mapas e limites formam uma experiencia unica de panorama no MVP
 
 ### Decisao
 

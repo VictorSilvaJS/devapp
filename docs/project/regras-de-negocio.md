@@ -17,6 +17,10 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
 - No mock administrativo, o vinculo entre usuario produtor e propriedade deve ser representado visualmente por uma relacao explicita `usuario_propriedade`, preservando compatibilidade com `produtor_id`/titular enquanto a base legada existir.
 - No mock administrativo, produtor pode ter multiplas propriedades vinculadas e deve receber alerta visual quando uma propriedade selecionada ja tiver outro produtor principal no mock.
+- No cadastro visual/mockado de usuario produtor, o admin pode selecionar propriedade existente ou cadastrar uma propriedade rapida quando ela ainda nao existir.
+- O cadastro rapido deve criar a propriedade no mock e vincula-la ao usuario produtor via `usuario_propriedade`, preservando `produtor_id`, `proprietario_id`, `regiao`, `microregiao` e `fazenda_id` quando aplicavel.
+- O fluxo de cadastro rapido e preparacao para uma criacao combinada futura de `usuario` + `propriedade` + `usuario_propriedade`.
+- Enquanto a camada for apenas mockada, o fluxo nao e transacional; no backend futuro, a criacao combinada deve ser transacional para evitar propriedade criada sem usuario/vinculo.
 
 ### Territorio e vinculos visuais no mock
 
@@ -24,7 +28,9 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Enquanto nao houver backend/banco real para territorio, `territorioCompat` deriva regioes e microregioes a partir das propriedades mockadas.
 - Os campos textuais legados `regiao` e `microregiao` continuam validos e devem ser preservados para compatibilidade.
 - O cadastro de propriedade pode usar selecao visual de Regiao e Microregiao derivada do mock, mas deve continuar salvando os campos textuais legados.
+- O cadastro rapido de propriedade dentro do cadastro de produtor tambem pode usar `territorioCompat`, mantendo fallback textual.
 - Ao selecionar uma microregiao no cadastro de propriedade, a interface pode sugerir colaboradores compativeis pelo territorio.
+- Colaboradores sugeridos por microregiao sao apenas indicacao visual nesta fase.
 - No detalhe da propriedade, a administracao pode ver vinculos visuais mockados de usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio.
 - Esses vinculos territoriais sao preparacao visual para backend/banco e nao devem ser tratados como permissao efetiva enquanto o motor atual de permissoes nao for migrado.
 
@@ -110,7 +116,9 @@ Enquanto `Admin -> Usuarios` estiver em MVP visual/mockado, as validacoes minima
 - perfil obrigatorio
 - status obrigatorio
 - produtor ativo com pelo menos uma propriedade vinculada
+- produtor ativo com propriedade existente vinculada ou cadastro rapido de propriedade valido
 - produtor pendente podendo ficar sem propriedade vinculada
+- cadastro rapido de propriedade ativo com campos minimos validos, evitando criacao vazia
 - colaborador ativo com microregiao/sub-regiao ou propriedade atribuida
 - admin sem obrigatoriedade de propriedade ou microregiao
 - `User.update` validando o registro mesclado de forma equivalente ao `User.create`

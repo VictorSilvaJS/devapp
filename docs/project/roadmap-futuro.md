@@ -28,6 +28,7 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
 - Definir tabelas/colecoes reais para `regioes` e `microregioes`, substituindo gradualmente a derivacao visual feita por `territorioCompat`
 - Definir se sera necessario `usuario_regiao` alem de `usuario_microregiao`, sem quebrar escopo regional atual
 - Migrar o modulo `Admin -> Usuarios` do mock backend-ready para API/banco real
+- Implementar criacao combinada transacional de `usuario` + `propriedade` + `usuario_propriedade` para substituir o cadastro rapido mockado de propriedade no usuario produtor
 - Sincronizar cadastro administrativo de usuario com autenticacao real, convites, senha/reset e sessao quando essa frente for definida
 - Definir RBAC/permissoes granulares a partir dos perfis atuais e dos niveis administrativos simples
 - Persistencia real de arquivos de mapas e limites
@@ -67,6 +68,8 @@ A frente funcional de `Produtor` / `Propriedade` esta fechada para o MVP atual. 
 O modulo `Admin -> Usuarios` esta em MVP visual/mockado com estrutura preparada para backend, mas ainda nao possui autenticacao real nem persistencia externa. Itens futuros:
 
 - transformar as relacoes mock `usuario_propriedade` e `usuario_microregiao` em tabelas/colecoes reais
+- transformar o cadastro rapido de propriedade no usuario produtor em operacao transacional de backend
+- garantir rollback/consistencia quando a criacao combinada de usuario, propriedade e vinculo falhar parcialmente
 - transformar a leitura visual Regiao -> Microregiao -> Propriedade em modelo persistente real
 - substituir a derivacao de regioes/microregioes por cadastro ou fonte territorial controlada quando houver backend
 - decidir como propriedades passam a referenciar `regiao_id` e `microregiao_id`, preservando compatibilidade temporaria com `regiao` e `microregiao` textuais

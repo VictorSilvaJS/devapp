@@ -80,6 +80,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - modulo administrativo `Admin -> Usuarios` em MVP visual/mockado, com cadastro e edicao de usuarios separados de propriedades
 - mock de usuarios mais proximo do backend futuro, com campos comuns completos, status explicito e relacoes visuais `usuario_propriedade` e `usuario_microregiao`
 - sincronizacao territorial visual/mockada entre `Admin -> Usuarios`, propriedades, regioes e microregioes, usando `territorioCompat` para derivar Regiao -> Microregiao -> Propriedade a partir das propriedades mockadas
+- cadastro rapido de propriedade dentro do cadastro de usuario produtor, permitindo criar propriedade mockada e vincular via `usuario_propriedade` quando a propriedade ainda nao existe
 - criacao de visita pelo colaborador validada tecnicamente pelo fluxo global e pelo contexto da propriedade, respeitando escopo regional/sub-regional
 - visualizacao de panorama/mapas e detalhe de propriedade
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
@@ -178,6 +179,85 @@ Fora do escopo mantido:
 - RBAC/permissoes granulares completas
 - upload/storage
 - Drive
+
+Validacoes executadas na implementacao:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou; quando executado no Windows, pode emitir apenas avisos normais de LF/CRLF
+
+## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
+
+Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
+
+No cadastro de usuario produtor, o admin pode:
+
+- selecionar uma ou mais propriedades existentes
+- cadastrar uma nova propriedade rapida no mesmo fluxo
+
+O cadastro rapido de propriedade inclui:
+
+- nome da propriedade
+- municipio
+- UF/Estado
+- regiao
+- micro-regiao
+- area total
+- status
+- tipo de vinculo
+- vinculo principal
+- observacoes
+
+Regiao e micro-regiao usam `territorioCompat` quando houver dados suficientes no mock, com fallback textual para preservar compatibilidade. Ao escolher uma micro-regiao, a tela exibe colaboradores sugeridos apenas de forma visual.
+
+Ao salvar:
+
+- o mock cria a propriedade via `Produtor.create`
+- o mock vincula a propriedade ao usuario produtor por `usuario_propriedade`
+- o vinculo usa o tipo escolhido, como titular ou responsavel
+- o vinculo pode ser marcado como principal
+- campos legados como `produtor_id`, `proprietario_id`, `regiao`, `microregiao` e `fazenda_id` continuam preservados
+
+Validacoes mantidas nesta microfase:
+
+- produtor ativo exige propriedade existente ou cadastro rapido valido
+- produtor pendente sem propriedade continua permitido
+- cadastro rapido ativo exige campos minimos validos, evitando criar propriedade vazia
+- cadastro rapido cancelado/limpo nao cria propriedade nem vinculo
+
+Este fluxo prepara a futura criacao combinada:
+
+- `usuario`
+- `propriedade`
+- `usuario_propriedade`
+
+Risco residual conhecido:
+
+- como o mock nao possui transacao, pode haver inconsistencia se a propriedade for criada e uma etapa posterior do salvamento do usuario falhar
+- no backend futuro, esse fluxo deve ser transacional
+
+Limites importantes desta microfase:
+
+- usuario criado ou editado continua nao criando login real
+- colaboradores sugeridos continuam sendo apenas indicacao visual
+- vinculos visuais ainda nao alteram o motor efetivo de permissoes
+- `acessoControle` nao foi migrado
+
+Fora do escopo mantido:
+
+- backend
+- banco real
+- API real
+- migrations
+- autenticacao real
+- senha real
+- convite
+- reset
+- RBAC/permissoes granulares completas
+- upload/storage
+- Drive
+- CRUD real de regioes/microregioes
+- migracao do `acessoControle`
 
 Validacoes executadas na implementacao:
 
