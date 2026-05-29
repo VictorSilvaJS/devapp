@@ -194,7 +194,7 @@ export const buildUsuarioVinculoPrincipal = (usuario: any, propriedades: any[] =
     const propriedadesAtribuidas = getPropriedadeIdsAtribuidas(usuario);
 
     if (subRegioes.length > 0) {
-      return `${usuario?.regiao || 'Região'} • ${subRegioes.length} sub-região${subRegioes.length === 1 ? '' : 's'}`;
+      return `${usuario?.regiao || 'Região'} • ${subRegioes.length} microregião${subRegioes.length === 1 ? '' : 's'}`;
     }
 
     if (propriedadesAtribuidas.length > 0) {

@@ -233,9 +233,9 @@ export default function UsuarioDetailScreen() {
             <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
 
-            <Text style={styles.subsectionTitle}>Micro-regiões atendidas</Text>
+            <Text style={styles.subsectionTitle}>Microregiões atendidas</Text>
             {vinculosMicroregioes.length === 0 ? (
-              <Text style={styles.emptyInline}>Nenhuma micro-região vinculada.</Text>
+              <Text style={styles.emptyInline}>Nenhuma microregião vinculada.</Text>
             ) : (
               <View style={styles.chipWrap}>
                 {vinculosMicroregioes.map((item) => (

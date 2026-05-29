@@ -158,7 +158,6 @@ export default function EditarProdutorScreen({ route, navigation }) {
 
   const fazendaInfo = getFazendaUiInfo(produtorAtual);
   const titularNome = fazendaInfo.titularNome || 'Titular não informado';
-  const titularId = produtorAtual?.produtor_id || produtorAtual?.proprietario_id || 'Vínculo não informado';
   const escopo = [produtorAtual?.regiao, produtorAtual?.microregiao].filter(Boolean).join(' • ');
 
   return (
@@ -190,8 +189,8 @@ export default function EditarProdutorScreen({ route, navigation }) {
               <Ionicons name="link-outline" size={18} color={theme.colors.primary} />
             </View>
             <View style={styles.linkedInfo}>
-              <Text style={styles.linkedLabel}>Vínculo</Text>
-              <Text style={styles.linkedValue}>{titularId}</Text>
+              <Text style={styles.linkedLabel}>Vínculo cadastral</Text>
+              <Text style={styles.linkedValue}>Preservado no mock</Text>
             </View>
           </View>
           {!!escopo && (

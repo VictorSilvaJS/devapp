@@ -638,7 +638,7 @@ export default function ProdutorScreen({ route, navigation }) {
                             <View style={styles.mockLinkItemText}>
                               <Text style={styles.mockLinkName}>{getUsuarioNome(colaborador)}</Text>
                               <Text style={styles.mockLinkMeta}>
-                                {temVinculoDireto ? 'Propriedade atribuída no mock' : 'Sugerido por região/microrregião'}
+                                {temVinculoDireto ? 'Propriedade atribuída no mock' : 'Sugerido por região/microregião'}
                               </Text>
                             </View>
                           </View>

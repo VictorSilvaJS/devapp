@@ -209,12 +209,6 @@ export default function PerfilScreen({ navigation }) {
                 <Text style={styles.infoValue}>{user.regiao}</Text>
               </View>
             )}
-            {user?.produtor_id && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Produtor vinculado:</Text>
-                <Text style={styles.infoValue}>{user.produtor_id}</Text>
-              </View>
-            )}
           </View>
 
           <View style={styles.actionsSection}>

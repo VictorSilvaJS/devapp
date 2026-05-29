@@ -14,7 +14,6 @@ export default function EditProfileScreen({ navigation }) {
   const [form, setForm] = useState({
     nome: normalizeNome(user || {}),
     regiao: user?.regiao || '',
-    produtor_id: user?.produtor_id || '',
   });
 
   const handleSave = async () => {
@@ -38,13 +37,6 @@ export default function EditProfileScreen({ navigation }) {
           <>
             <Text style={styles.label}>Região</Text>
             <TextInput style={styles.input} value={form.regiao} onChangeText={(t)=>setForm(s=>({...s,regiao:t}))} />
-          </>
-        )}
-
-        {perfil === 'produtor' && (
-          <>
-            <Text style={styles.label}>Vínculo técnico do produtor</Text>
-            <TextInput style={styles.input} value={form.produtor_id} onChangeText={(t)=>setForm(s=>({...s,produtor_id:t}))} />
           </>
         )}
 

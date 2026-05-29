@@ -88,7 +88,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
   };
 
   const getTextoMicroregiao = () => {
-    if (filtros.microregiao === 'todas') return 'Todas Micro-regiões';
+    if (filtros.microregiao === 'todas') return 'Todas as Microregiões';
     return filtros.microregiao;
   };
 
@@ -99,7 +99,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
 
   const getTituloModal = () => {
     if (tipoModal === 'regiao') return 'Selecionar Região';
-    if (tipoModal === 'microregiao') return 'Selecionar Micro-região';
+    if (tipoModal === 'microregiao') return 'Selecionar Microregião';
     return 'Selecionar Propriedade';
   };
 
@@ -126,9 +126,9 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
             <Text style={styles.regiaoInfoText}>Região: {fixedRegiao}</Text>
           </View>
 
-          {/* Filtros: Micro-região + Fazenda */}
+          {/* Filtros: Microregião + Fazenda */}
           <View style={styles.filtrosRow}>
-            {/* Filtro Micro-região */}
+            {/* Filtro Microregião */}
             <TouchableOpacity 
               style={[
                 styles.filtroButton, 
@@ -222,7 +222,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
             <Text style={styles.titulo}>Selecione a Região e/ou Propriedade</Text>
           </View>
 
-          {/* Filtros - Primeira linha: Região + Micro-região */}
+          {/* Filtros - Primeira linha: Região + Microregião */}
           <View style={styles.filtrosRow}>
             {/* Filtro Região */}
             <TouchableOpacity 
@@ -254,7 +254,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
               />
             </TouchableOpacity>
 
-            {/* Filtro Micro-região */}
+            {/* Filtro Microregião */}
             <TouchableOpacity 
               style={[
                 styles.filtroButton, 
@@ -447,7 +447,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
                       styles.modalItemText,
                       filtros.microregiao === 'todas' && styles.modalItemTextSelecionado
                     ]}>
-                      Todas as Micro-regiões
+                      Todas as Microregiões
                     </Text>
                     {filtros.microregiao === 'todas' && (
                       <Ionicons name="checkmark-circle" size={20} color={colors.white} />
@@ -458,7 +458,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
                     <View style={styles.emptyState}>
                       <Ionicons name="alert-circle-outline" size={32} color={colors.textLight} />
                       <Text style={styles.emptyText}>
-                        Nenhuma micro-região disponível
+                        Nenhuma microregião disponível
                       </Text>
                     </View>
                   ) : (

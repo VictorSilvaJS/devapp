@@ -41,7 +41,7 @@ const getScopeErrorMessage = (reason?: string) => {
     case 'regiao_fora_escopo':
       return 'A região informada está fora do seu escopo.';
     case 'microregiao_fora_escopo':
-      return 'Selecione uma microrregião dentro do seu escopo.';
+      return 'Selecione uma microregião dentro do seu escopo.';
     default:
       return 'Não foi possível validar seu escopo de criação.';
   }
@@ -224,7 +224,7 @@ export default function NovoProdutorScreen({ navigation }) {
     }
 
     if (!validarObrigatorio(form.microregiao)) {
-      newErrors.microregiao = 'Microrregião é obrigatória';
+      newErrors.microregiao = 'Microregião é obrigatória';
     }
 
     const payload = buildPayload();
@@ -502,7 +502,7 @@ export default function NovoProdutorScreen({ navigation }) {
         )}
 
         <View style={styles.field}>
-          <Text style={styles.label}>Microrregião *</Text>
+          <Text style={styles.label}>Microregião *</Text>
           {microregioesDisponiveis.length > 0 ? (
             <View style={styles.microChips}>
               {microregioesDisponiveis.map((microregiao) => {
@@ -526,7 +526,7 @@ export default function NovoProdutorScreen({ navigation }) {
               })}
             </View>
           ) : user?.perfil === 'colaborador' ? (
-            <Text style={styles.helperText}>Nenhuma microrregião vinculada ao seu usuário.</Text>
+            <Text style={styles.helperText}>Nenhuma microregião vinculada ao seu usuário.</Text>
           ) : regiaoAtual ? (
             <TextInput
               style={[styles.input, errors.microregiao && styles.inputError]}
@@ -536,7 +536,7 @@ export default function NovoProdutorScreen({ navigation }) {
               placeholderTextColor={theme.colors.textSecondary}
             />
           ) : (
-            <Text style={styles.helperText}>Selecione uma região para carregar as microrregiões do mock.</Text>
+            <Text style={styles.helperText}>Selecione uma região para carregar as microregiões do mock.</Text>
           )}
           {errors.microregiao && <Text style={styles.errorText}>{errors.microregiao}</Text>}
         </View>
@@ -545,10 +545,10 @@ export default function NovoProdutorScreen({ navigation }) {
           <View style={styles.suggestionBox}>
             <View style={styles.suggestionHeader}>
               <Ionicons name="people-outline" size={18} color={theme.colors.primary} />
-              <Text style={styles.suggestionTitle}>Colaboradores sugeridos para a microrregião</Text>
+              <Text style={styles.suggestionTitle}>Colaboradores sugeridos para a microregião</Text>
             </View>
             {colaboradoresSugeridos.length === 0 ? (
-              <Text style={styles.helperText}>Nenhum colaborador sugerido no mock para esta microrregião.</Text>
+              <Text style={styles.helperText}>Nenhum colaborador sugerido no mock para esta microregião.</Text>
             ) : (
               colaboradoresSugeridos.slice(0, 5).map((colaborador) => (
                 <Text key={colaborador.id} style={styles.suggestionItem}>
@@ -557,7 +557,7 @@ export default function NovoProdutorScreen({ navigation }) {
               ))
             )}
             <Text style={styles.suggestionNote}>
-              Sugestão visual/mockada. O cadastro continua salvando região e microrregião textuais para compatibilidade.
+              Sugestão visual/mockada. O cadastro continua salvando região e microregião textuais para compatibilidade.
             </Text>
           </View>
         )}

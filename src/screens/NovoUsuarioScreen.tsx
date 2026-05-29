@@ -341,7 +341,7 @@ export default function NovoUsuarioScreen() {
       return 'Produtor ativo precisa ter ao menos uma propriedade vinculada.';
     }
     if (message.includes('Colaborador ativo')) {
-      return 'Colaborador ativo precisa ter micro-região/sub-região ou propriedade atribuída.';
+      return 'Colaborador ativo precisa ter microregião ou propriedade atribuída.';
     }
     if (message.includes('Status obrigatório')) {
       return 'Selecione um status para o usuário.';
@@ -539,7 +539,7 @@ export default function NovoUsuarioScreen() {
       }
 
       if (!propriedadeRapida.microregiao.trim()) {
-        nextErrors.propriedadeRapida_microregiao = 'Informe a micro-região da propriedade.';
+        nextErrors.propriedadeRapida_microregiao = 'Informe a microregião da propriedade.';
       }
 
       if (!propriedadeRapida.status) {
@@ -570,11 +570,11 @@ export default function NovoUsuarioScreen() {
       const temPropriedade = vinculosPropriedades.length > 0;
 
       if (temMicroRegiao && !form.regiao.trim()) {
-        nextErrors.regiao = 'Informe a região para organizar as micro-regiões.';
+        nextErrors.regiao = 'Informe a região para organizar as microregiões.';
       }
 
       if (form.status === 'ativo' && !temMicroRegiao && !temPropriedade) {
-        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter micro-região/sub-região ou propriedade atribuída.';
+        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter microregião ou propriedade atribuída.';
       }
     }
 
@@ -869,7 +869,7 @@ export default function NovoUsuarioScreen() {
 
                 {microregioesPropriedadeRapida.length > 0 ? (
                   <View style={styles.field}>
-                    <Text style={styles.label}>Micro-região</Text>
+                    <Text style={styles.label}>Microregião</Text>
                     <View style={styles.miniChipWrap}>
                       {microregioesPropriedadeRapida.map((microregiao) => {
                         const selected = propriedadeRapida.microregiao === microregiao.nome;
@@ -891,7 +891,7 @@ export default function NovoUsuarioScreen() {
                   </View>
                 ) : (
                   <Field
-                    label="Micro-região"
+                    label="Microregião"
                     value={propriedadeRapida.microregiao}
                     onChangeText={(value) => updatePropriedadeRapida('microregiao', value)}
                     placeholder="Ex: Rio Verde"
@@ -903,7 +903,7 @@ export default function NovoUsuarioScreen() {
                   <View style={styles.linkedBox}>
                     <Text style={styles.linkedTitle}>Colaboradores sugeridos</Text>
                     {colaboradoresSugeridosPropriedadeRapida.length === 0 ? (
-                      <Text style={styles.linkedText}>Nenhum colaborador sugerido para essa micro-região no mock.</Text>
+                      <Text style={styles.linkedText}>Nenhum colaborador sugerido para essa microregião no mock.</Text>
                     ) : (
                       colaboradoresSugeridosPropriedadeRapida.slice(0, 5).map((colaborador) => (
                         <Text key={colaborador.id} style={styles.linkedItemText}>
@@ -1034,7 +1034,7 @@ export default function NovoUsuarioScreen() {
 
             {microregioesTerritorio.length > 0 ? (
               <View style={styles.territoryBlock}>
-                <Text style={styles.label}>Micro-regiões/sub-regiões</Text>
+                <Text style={styles.label}>Microregiões</Text>
                 <View style={styles.miniChipWrap}>
                   {microregioesTerritorio.map((microregiao) => {
                     const selected = microRegioesInformadas.includes(microregiao.nome);
@@ -1055,7 +1055,7 @@ export default function NovoUsuarioScreen() {
               </View>
             ) : (
               <Field
-                label="Micro-regiões/sub-regiões"
+                label="Microregiões"
                 value={form.subRegioesText}
                 onChangeText={(value) => updateField('subRegioesText', value)}
                 placeholder="Ex: Rio Verde, Jataí"
@@ -1064,9 +1064,9 @@ export default function NovoUsuarioScreen() {
 
             {microRegioesInformadas.length > 0 && (
               <View style={styles.linkedBox}>
-                <Text style={styles.linkedTitle}>Prévia por micro-região</Text>
+                <Text style={styles.linkedTitle}>Prévia por microregião</Text>
                 <Text style={styles.linkedText}>
-                  {propriedadesAbrangidasMicroregioes.length} propriedade{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} abrangida{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} visualmente por essas micro-regiões.
+                  {propriedadesAbrangidasMicroregioes.length} propriedade{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} abrangida{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} visualmente por essas microregiões.
                 </Text>
                 {propriedadesAbrangidasMicroregioes.slice(0, 5).map((propriedade) => {
                   const option = getFazendaOptionLabel(propriedade);

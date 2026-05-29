@@ -819,7 +819,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.75}
         >
           <Ionicons name="link-outline" size={15} color={colors.primary} />
-          <Text style={styles.associarMaterialText}>Cadastrar material técnico</Text>
+          <Text style={styles.associarMaterialText}>Cadastrar material técnico (mock)</Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
