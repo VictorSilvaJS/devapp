@@ -6,10 +6,15 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SectionCard from '../components/SectionCard';
+import SegmentedChips from '../components/SegmentedChips';
 import { useToast } from '../components/Toast';
 import { Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
@@ -316,279 +321,196 @@ export default function NovoProdutorScreen({ navigation }) {
     <View style={styles.container}>
       <Header title="Nova Propriedade" showBackButton />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color={theme.colors.primary} />
-          <Text style={styles.infoText}>
-            Cadastre a propriedade com um produtor titular vinculado.
-          </Text>
-        </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <InfoBox message="Cadastre a propriedade com um produtor titular vinculado." />
 
         {errors.escopo && (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={18} color={theme.colors.error} />
-            <Text style={styles.errorBoxText}>{errors.escopo}</Text>
-          </View>
+          <InfoBox variant="error" message={errors.escopo} />
         )}
 
-        <Text style={styles.sectionTitle}>Produtor titular</Text>
-        <View style={styles.modeSelector}>
-          <TouchableOpacity
-            style={[
-              styles.modeButton,
-              titularMode === 'existente' && styles.modeButtonActive,
-              titulares.length === 0 && styles.modeButtonDisabled
-            ]}
-            onPress={() => handleTitularModeChange('existente')}
-            disabled={titulares.length === 0}
-          >
-            <Ionicons
-              name="people-outline"
-              size={18}
-              color={titularMode === 'existente' ? theme.colors.white : theme.colors.primary}
-            />
-            <Text style={[styles.modeButtonText, titularMode === 'existente' && styles.modeButtonTextActive]}>
-              Existente
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.modeButton, titularMode === 'novo' && styles.modeButtonActive]}
-            onPress={() => handleTitularModeChange('novo')}
-          >
-            <Ionicons
-              name="person-add-outline"
-              size={18}
-              color={titularMode === 'novo' ? theme.colors.white : theme.colors.primary}
-            />
-            <Text style={[styles.modeButtonText, titularMode === 'novo' && styles.modeButtonTextActive]}>
-              Novo titular
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {titularMode === 'existente' ? (
-          <>
-            {renderTitularExistente()}
-            {errors.titular && <Text style={styles.errorText}>{errors.titular}</Text>}
-          </>
-        ) : (
+        <SectionCard title="Titular da propriedade" subtitle="Vincule a propriedade a um produtor titular existente ou cadastre um novo titular mínimo.">
           <View style={styles.field}>
-            <Text style={styles.label}>Nome do Produtor Titular *</Text>
-            <TextInput
-              style={[styles.input, errors.nome && styles.inputError]}
+            <RadioCardGroup
+              options={[
+                {
+                  value: 'existente',
+                  label: 'Existente',
+                  description: 'Selecionar um produtor titular já cadastrado.',
+                  icon: 'people-outline',
+                  disabled: titulares.length === 0,
+                },
+                {
+                  value: 'novo',
+                  label: 'Novo titular',
+                  description: 'Cadastrar um produtor titular mínimo junto com a propriedade.',
+                  icon: 'person-add-outline',
+                },
+              ]}
+              value={titularMode}
+              onChange={handleTitularModeChange}
+            />
+          </View>
+
+          {titularMode === 'existente' ? (
+            <>
+              {renderTitularExistente()}
+              {errors.titular && <Text style={styles.errorText}>{errors.titular}</Text>}
+            </>
+          ) : (
+            <FormField
+              label="Nome do Produtor Titular"
+              required
               value={form.nome}
               onChangeText={(text) => handleChange('nome', text)}
               placeholder="Digite o nome completo"
-              placeholderTextColor={theme.colors.textSecondary}
+              error={errors.nome}
             />
-            {errors.nome && <Text style={styles.errorText}>{errors.nome}</Text>}
-          </View>
-        )}
+          )}
+        </SectionCard>
 
-        <Text style={styles.sectionTitle}>Dados da propriedade</Text>
-        <View style={styles.field}>
-          <Text style={styles.label}>Propriedade *</Text>
-          <TextInput
-            style={[styles.input, errors.fazenda && styles.inputError]}
+        <SectionCard title="Dados da propriedade" subtitle="Informe a identificação e a área total da propriedade.">
+          <FormField
+            label="Propriedade"
+            required
             value={form.fazenda}
             onChangeText={(text) => handleChange('fazenda', text)}
             placeholder="Nome da propriedade"
-            placeholderTextColor={theme.colors.textSecondary}
+            error={errors.fazenda}
           />
-          {errors.fazenda && <Text style={styles.errorText}>{errors.fazenda}</Text>}
-        </View>
 
-        <View style={styles.field}>
-        <Text style={styles.label}>Área Total (ha) *</Text>
-          <TextInput
-            style={[styles.input, errors.area_total && styles.inputError]}
+          <FormField
+            label="Área Total (ha)"
+            required
             value={form.area_total}
             onChangeText={(text) => handleChange('area_total', text)}
             placeholder="Ex: 500"
             keyboardType="numeric"
-            placeholderTextColor={theme.colors.textSecondary}
+            error={errors.area_total}
           />
-          {errors.area_total && <Text style={styles.errorText}>{errors.area_total}</Text>}
-        </View>
+        </SectionCard>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Cultura Principal</Text>
-          <TextInput
-            style={styles.input}
+        <SectionCard title="Produção" subtitle="Registre a cultura principal da propriedade.">
+          <FormField
+            label="Cultura Principal"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
-            placeholderTextColor={theme.colors.textSecondary}
           />
-        </View>
+        </SectionCard>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Cidade</Text>
-          <TextInput
-            style={styles.input}
+        <SectionCard title="Localização e escopo" subtitle="Defina a localização e o escopo operacional textual mantido pelo mock.">
+          <FormField
+            label="Cidade"
             value={form.cidade}
             onChangeText={(text) => handleChange('cidade', text)}
             placeholder="Nome da cidade"
-            placeholderTextColor={theme.colors.textSecondary}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Estado (UF)</Text>
-          <TextInput
-            style={[styles.input, errors.estado && styles.inputError]}
+          <FormField
+            label="Estado (UF)"
             value={form.estado}
             onChangeText={(text) => handleChange('estado', text.toUpperCase())}
             placeholder="Ex: RS, SP, GO"
             maxLength={2}
             autoCapitalize="characters"
-            placeholderTextColor={theme.colors.textSecondary}
+            error={errors.estado}
           />
-          {errors.estado && <Text style={styles.errorText}>{errors.estado}</Text>}
-        </View>
 
-        <Text style={styles.sectionTitle}>Escopo operacional</Text>
-        {user?.perfil === 'colaborador' ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>Região *</Text>
-            <TextInput
-              style={[styles.input, styles.inputDisabled, errors.regiao && styles.inputError]}
+          {user?.perfil === 'colaborador' ? (
+            <FormField
+              label="Região"
+              required
               value={user.regiao || ''}
-              editable={false}
+              disabled
               placeholder="Região do colaborador"
-              placeholderTextColor={theme.colors.textSecondary}
+              error={errors.regiao}
             />
-            {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
-          </View>
-        ) : regioesTerritorio.length > 0 ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>Região *</Text>
-            <View style={styles.microChips}>
-              {regioesTerritorio.map((regiao) => {
-                const selected = form.regiao === regiao.nome;
-                return (
-                  <TouchableOpacity
-                    key={regiao.id}
-                    style={[styles.microChip, selected && styles.microChipActive]}
-                    onPress={() => handleRegiaoSelect(regiao.nome)}
-                  >
-                    <Ionicons
-                      name="map-outline"
-                      size={16}
-                      color={selected ? theme.colors.white : theme.colors.primary}
-                    />
-                    <Text style={[styles.microChipText, selected && styles.microChipTextActive]}>
-                      {regiao.nome}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+          ) : regioesTerritorio.length > 0 ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Região <Text style={styles.required}>*</Text></Text>
+              <SegmentedChips
+                options={regioesTerritorio.map((regiao) => ({
+                  value: regiao.nome,
+                  label: regiao.nome,
+                  icon: 'map-outline',
+                }))}
+                value={form.regiao}
+                onChange={handleRegiaoSelect}
+              />
+              {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
             </View>
-            {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
-          </View>
-        ) : (
-          <View style={styles.field}>
-            <Text style={styles.label}>Região *</Text>
-            <TextInput
-              style={[styles.input, errors.regiao && styles.inputError]}
+          ) : (
+            <FormField
+              label="Região"
+              required
               value={form.regiao}
               onChangeText={(text) => handleChange('regiao', text)}
               placeholder="Ex: Sul, Goiás, Mato Grosso"
-              placeholderTextColor={theme.colors.textSecondary}
+              error={errors.regiao}
             />
-            {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
-          </View>
-        )}
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Microregião *</Text>
-          {microregioesDisponiveis.length > 0 ? (
-            <View style={styles.microChips}>
-              {microregioesDisponiveis.map((microregiao) => {
-                const selected = form.microregiao === microregiao.nome;
-                return (
-                  <TouchableOpacity
-                    key={microregiao.id}
-                    style={[styles.microChip, selected && styles.microChipActive]}
-                    onPress={() => handleChange('microregiao', microregiao.nome)}
-                  >
-                    <Ionicons
-                      name="location-outline"
-                      size={16}
-                      color={selected ? theme.colors.white : theme.colors.primary}
-                    />
-                    <Text style={[styles.microChipText, selected && styles.microChipTextActive]}>
-                      {microregiao.nome}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ) : user?.perfil === 'colaborador' ? (
-            <Text style={styles.helperText}>Nenhuma microregião vinculada ao seu usuário.</Text>
-          ) : regiaoAtual ? (
-            <TextInput
-              style={[styles.input, errors.microregiao && styles.inputError]}
-              value={form.microregiao}
-              onChangeText={(text) => handleChange('microregiao', text)}
-              placeholder="Ex: RS - Norte, Rio Verde, Sorriso"
-              placeholderTextColor={theme.colors.textSecondary}
-            />
-          ) : (
-            <Text style={styles.helperText}>Selecione uma região para carregar as microregiões do mock.</Text>
           )}
-          {errors.microregiao && <Text style={styles.errorText}>{errors.microregiao}</Text>}
-        </View>
 
-        {form.microregiao && (
-          <View style={styles.suggestionBox}>
-            <View style={styles.suggestionHeader}>
-              <Ionicons name="people-outline" size={18} color={theme.colors.primary} />
-              <Text style={styles.suggestionTitle}>Colaboradores sugeridos para a microregião</Text>
-            </View>
-            {colaboradoresSugeridos.length === 0 ? (
-              <Text style={styles.helperText}>Nenhum colaborador sugerido no mock para esta microregião.</Text>
+          <View style={styles.field}>
+            <Text style={styles.label}>Microregião <Text style={styles.required}>*</Text></Text>
+            {microregioesDisponiveis.length > 0 ? (
+              <SegmentedChips
+                options={microregioesDisponiveis.map((microregiao) => ({
+                  value: microregiao.nome,
+                  label: microregiao.nome,
+                  icon: 'location-outline',
+                }))}
+                value={form.microregiao}
+                onChange={(value) => handleChange('microregiao', value)}
+              />
+            ) : user?.perfil === 'colaborador' ? (
+              <Text style={styles.helperText}>Nenhuma microregião vinculada ao seu usuário.</Text>
+            ) : regiaoAtual ? (
+              <FormField
+                value={form.microregiao}
+                onChangeText={(text) => handleChange('microregiao', text)}
+                placeholder="Ex: RS - Norte, Rio Verde, Sorriso"
+              />
             ) : (
-              colaboradoresSugeridos.slice(0, 5).map((colaborador) => (
-                <Text key={colaborador.id} style={styles.suggestionItem}>
-                  {getUsuarioNome(colaborador)}
-                </Text>
-              ))
+              <Text style={styles.helperText}>Selecione uma região para carregar as microregiões do mock.</Text>
             )}
-            <Text style={styles.suggestionNote}>
-              Sugestão visual/mockada. O cadastro continua salvando região e microregião textuais para compatibilidade.
-            </Text>
+            {errors.microregiao && <Text style={styles.errorText}>{errors.microregiao}</Text>}
           </View>
-        )}
+
+          {form.microregiao && (
+            <View style={styles.suggestionBox}>
+              <View style={styles.suggestionHeader}>
+                <Ionicons name="people-outline" size={18} color={theme.colors.primary} />
+                <Text style={styles.suggestionTitle}>Colaboradores sugeridos para a microregião</Text>
+              </View>
+              {colaboradoresSugeridos.length === 0 ? (
+                <Text style={styles.helperText}>Nenhum colaborador sugerido no mock para esta microregião.</Text>
+              ) : (
+                colaboradoresSugeridos.slice(0, 5).map((colaborador) => (
+                  <Text key={colaborador.id} style={styles.suggestionItem}>
+                    {getUsuarioNome(colaborador)}
+                  </Text>
+                ))
+              )}
+              <Text style={styles.suggestionNote}>
+                Sugestão visual/mockada. O cadastro continua salvando região e microregião textuais para compatibilidade.
+              </Text>
+            </View>
+          )}
+        </SectionCard>
 
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => navigation.goBack()}
-          disabled={saving}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color={theme.colors.white} />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={theme.colors.white} />
-              <Text style={styles.saveButtonText}>Salvar</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel="Salvar"
+        loading={saving}
+      />
     </View>
   );
 }
@@ -598,82 +520,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  scrollView: {
+    flex: 1,
+  },
   content: {
-    flex: 1,
     padding: theme.spacing.md,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primary + '15',
-    padding: theme.spacing.md,
-    borderRadius: theme.spacing.radius,
-    marginBottom: theme.spacing.md,
-    gap: theme.spacing.sm,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: theme.typography.fontBody,
-    color: theme.colors.text,
-    lineHeight: 20,
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    padding: theme.spacing.md,
-    borderRadius: theme.spacing.radius,
-    backgroundColor: theme.colors.errorBgLight,
-    borderWidth: 1,
-    borderColor: theme.colors.errorBorder,
-    marginBottom: theme.spacing.md,
-  },
-  errorBoxText: {
-    flex: 1,
-    color: theme.colors.error,
-    fontSize: theme.typography.fontCaption + 1,
-    fontWeight: theme.typography.weightSemibold,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
-  },
-  modeSelector: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  modeButton: {
-    flex: 1,
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xs,
-    borderRadius: theme.spacing.radius,
-    borderWidth: 1.5,
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.card,
-    paddingHorizontal: theme.spacing.sm,
-  },
-  modeButtonActive: {
-    backgroundColor: theme.colors.primary,
-  },
-  modeButtonDisabled: {
-    opacity: 0.45,
-  },
-  modeButtonText: {
-    fontSize: theme.typography.fontCaption + 1,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.primary,
-  },
-  modeButtonTextActive: {
-    color: theme.colors.white,
+    paddingBottom: theme.spacing.xl * 2,
   },
   titularesList: {
     gap: theme.spacing.sm,
@@ -737,54 +589,13 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: theme.spacing.xs,
   },
-  input: {
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.spacing.radius,
-    padding: theme.spacing.md,
-    fontSize: theme.typography.fontBody,
-    color: theme.colors.text,
-  },
-  inputDisabled: {
-    backgroundColor: theme.colors.backgroundSoft,
-    color: theme.colors.textLight,
-  },
-  inputError: {
-    borderColor: theme.colors.error,
-    borderWidth: 2,
+  required: {
+    color: theme.colors.error,
   },
   errorText: {
     fontSize: theme.typography.fontCaption,
     color: theme.colors.error,
     marginTop: theme.spacing.xs,
-  },
-  microChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  microChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
-  },
-  microChipActive: {
-    backgroundColor: theme.colors.primary,
-  },
-  microChipText: {
-    color: theme.colors.primary,
-    fontSize: theme.typography.fontCaption + 1,
-    fontWeight: theme.typography.weightSemibold,
-  },
-  microChipTextActive: {
-    color: theme.colors.white,
   },
   suggestionBox: {
     backgroundColor: theme.colors.card,
@@ -816,50 +627,5 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontCaption,
     lineHeight: 17,
     marginTop: theme.spacing.sm,
-  },
-  footer: {
-    flexDirection: 'row',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    ...theme.shadows.sm,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.spacing.radius,
-    backgroundColor: theme.colors.card,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightSemibold,
-    color: theme.colors.text,
-  },
-  saveButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xs,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.spacing.radius,
-    backgroundColor: theme.colors.primary,
-    ...theme.shadows.md,
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.white,
   },
 });
