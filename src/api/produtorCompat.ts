@@ -29,6 +29,7 @@ interface FazendaBoundaryInput {
   microregiao?: string;
   cep?: string;
   ultima_analise?: string;
+  observacoes?: string;
   status?: string;
   data_cadastro?: string;
 }
@@ -160,6 +161,7 @@ const buildCanonicalFazendaFromBoundary = (
     microregiao: data.microregiao !== undefined ? data.microregiao : current?.microregiao,
     cep: data.cep !== undefined ? data.cep : current?.cep,
     ultima_analise: data.ultima_analise !== undefined ? data.ultima_analise : current?.ultima_analise,
+    observacoes: data.observacoes !== undefined ? data.observacoes : current?.observacoes,
     status: data.status !== undefined ? data.status : current?.status ?? 'ativo',
     data_cadastro: data.data_cadastro !== undefined ? data.data_cadastro : current?.data_cadastro,
   });

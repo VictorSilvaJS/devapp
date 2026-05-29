@@ -15,7 +15,11 @@ import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { colors, shadows, spacing, typography } from '../theme';
-import { getFazendaId } from '../utils/acessoControle';
+import { getFazendaId, getTitularIdFazenda } from '../utils/acessoControle';
+import {
+  buildCadastroFazendaPayload,
+  buildCadastroTitularOptions,
+} from '../utils/fazendaCadastroCompat';
 import {
   NIVEIS_ADMIN_USUARIO,
   STATUS_USUARIO_ADMIN,
@@ -33,6 +37,7 @@ import {
   listarMicroregioesPorRegiao,
   listarPropriedadesPorMicroregioes,
   listarRegioes,
+  sugerirColaboradoresParaMicroregiao,
 } from '../utils/territorioCompat';
 
 const PERFIS_FORM = [
@@ -61,6 +66,20 @@ const emptyForm = {
   nivelAdministrativo: 'global',
 };
 
+const emptyPropriedadeRapida = {
+  ativa: false,
+  nome: '',
+  municipio: '',
+  estado: '',
+  regiao: '',
+  microregiao: '',
+  area_total: '',
+  status: 'ativo',
+  observacoes: '',
+  tipo_vinculo: 'titular',
+  principal: true,
+};
+
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export default function NovoUsuarioScreen() {
@@ -72,6 +91,7 @@ export default function NovoUsuarioScreen() {
   const isEdit = Boolean(userId);
 
   const [form, setForm] = useState<any>(emptyForm);
+  const [propriedadeRapida, setPropriedadeRapida] = useState<any>(emptyPropriedadeRapida);
   const [usuarioAtual, setUsuarioAtual] = useState<any>(null);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [propriedades, setPropriedades] = useState<any[]>([]);
@@ -101,9 +121,11 @@ export default function NovoUsuarioScreen() {
         const usuarioData = await User.get(userId);
         setUsuarioAtual(usuarioData);
         setForm(buildUsuarioFormFromMock(usuarioData, propriedadesData as any[]));
+        setPropriedadeRapida(emptyPropriedadeRapida);
       } else {
         setUsuarioAtual(null);
         setForm(emptyForm);
+        setPropriedadeRapida(emptyPropriedadeRapida);
       }
     } finally {
       setLoading(false);
@@ -115,6 +137,32 @@ export default function NovoUsuarioScreen() {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
+  };
+
+  const updatePropriedadeRapida = (field: string, value: any) => {
+    setPropriedadeRapida((prev) => ({ ...prev, [field]: value }));
+    const errorKey = `propriedadeRapida_${field}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => ({ ...prev, [errorKey]: null }));
+    }
+  };
+
+  const togglePropriedadeRapida = () => {
+    setPropriedadeRapida((prev) => (
+      prev.ativa
+        ? emptyPropriedadeRapida
+        : { ...emptyPropriedadeRapida, ativa: true, principal: vinculosPropriedades.length === 0 }
+    ));
+    setErrors((prev) => ({
+      ...prev,
+      vinculosPropriedades: null,
+      propriedadeRapida_nome: null,
+      propriedadeRapida_regiao: null,
+      propriedadeRapida_microregiao: null,
+      propriedadeRapida_area_total: null,
+      propriedadeRapida_status: null,
+      propriedadeRapida_estado: null,
+    }));
   };
 
   const propriedadesOrdenadas = useMemo(
@@ -202,6 +250,29 @@ export default function NovoUsuarioScreen() {
     [propriedadesOrdenadas, microRegioesInformadas, form.regiao]
   );
 
+  const microregioesPropriedadeRapida = useMemo(
+    () => listarMicroregioesPorRegiao(propriedades, propriedadeRapida.regiao),
+    [propriedades, propriedadeRapida.regiao]
+  );
+
+  const colaboradoresSugeridosPropriedadeRapida = useMemo(
+    () =>
+      propriedadeRapida.microregiao
+        ? sugerirColaboradoresParaMicroregiao(
+            usuarios,
+            propriedadeRapida.microregiao,
+            propriedadeRapida.regiao,
+            propriedades
+          )
+        : [],
+    [propriedadeRapida.microregiao, propriedadeRapida.regiao, propriedades, usuarios]
+  );
+
+  const areaPropriedadeRapida = useMemo(
+    () => Number.parseFloat(String(propriedadeRapida.area_total || '').replace(',', '.')),
+    [propriedadeRapida.area_total]
+  );
+
   const selecionarRegiaoColaborador = (regiao: string) => {
     setForm((prev) => ({
       ...prev,
@@ -209,6 +280,32 @@ export default function NovoUsuarioScreen() {
       subRegioesText: prev.regiao === regiao ? prev.subRegioesText : '',
     }));
     setErrors((prev) => ({ ...prev, regiao: null, escopoColaborador: null }));
+  };
+
+  const selecionarRegiaoPropriedadeRapida = (regiao: string) => {
+    setPropriedadeRapida((prev) => ({
+      ...prev,
+      regiao,
+      microregiao: prev.regiao === regiao ? prev.microregiao : '',
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      propriedadeRapida_regiao: null,
+      propriedadeRapida_microregiao: null,
+    }));
+  };
+
+  const selecionarMicroregiaoPropriedadeRapida = (microregiao: string, regiao?: string) => {
+    setPropriedadeRapida((prev) => ({
+      ...prev,
+      regiao: prev.regiao || regiao || '',
+      microregiao,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      propriedadeRapida_regiao: null,
+      propriedadeRapida_microregiao: null,
+    }));
   };
 
   const toggleMicroRegiaoColaborador = (microregiao: string, regiao?: string) => {
@@ -345,6 +442,68 @@ export default function NovoUsuarioScreen() {
     );
   };
 
+  const getProdutorIdCompatParaPropriedadeRapida = () => {
+    if (form.produtor_id?.trim()) return form.produtor_id.trim();
+    if (usuarioAtual?.produtor_id) return usuarioAtual.produtor_id;
+
+    if (!propriedadeRapida.principal) {
+      const vinculoPrincipal = vinculosPropriedades.find((vinculo) => vinculo.principal) || vinculosPropriedades[0];
+      const propriedadePrincipal = propriedades.find(
+        (propriedade) => getFazendaId(propriedade) === vinculoPrincipal?.propriedade_id
+      );
+      const titularId = getTitularIdFazenda(propriedadePrincipal);
+      if (titularId) return titularId;
+    }
+
+    return '';
+  };
+
+  const buildPropriedadeRapidaPayload = () => {
+    const titulares = buildCadastroTitularOptions(propriedades);
+    const payload = buildCadastroFazendaPayload({
+      mode: 'novo',
+      produtorNome: form.nome,
+      fazendaNome: propriedadeRapida.nome,
+      areaTotal: propriedadeRapida.area_total,
+      cidade: propriedadeRapida.municipio,
+      estado: propriedadeRapida.estado,
+      regiao: propriedadeRapida.regiao,
+      microregiao: propriedadeRapida.microregiao,
+      status: propriedadeRapida.status,
+      titulares,
+    });
+    const produtorIdCompat = getProdutorIdCompatParaPropriedadeRapida();
+
+    return {
+      ...payload,
+      produtor_id: produtorIdCompat || payload.produtor_id,
+      proprietario_id: produtorIdCompat || payload.proprietario_id,
+      observacoes: propriedadeRapida.observacoes?.trim() || '',
+    };
+  };
+
+  const buildFormComPropriedadeCriada = (propriedadeCriada: any) => {
+    const propriedadeId = getFazendaId(propriedadeCriada);
+    const quickPrincipal = propriedadeRapida.principal || vinculosPropriedades.length === 0;
+    const vinculosExistentes = quickPrincipal
+      ? vinculosPropriedades.map((vinculo) => ({ ...vinculo, principal: false }))
+      : vinculosPropriedades;
+    const vinculoRapido = {
+      propriedade_id: propriedadeId,
+      tipo_vinculo: propriedadeRapida.tipo_vinculo || 'titular',
+      principal: quickPrincipal,
+    };
+
+    return {
+      ...form,
+      produtor_id: getTitularIdFazenda(propriedadeCriada) || form.produtor_id,
+      vinculosPropriedades: normalizeFormVinculosPropriedade([
+        ...vinculosExistentes,
+        vinculoRapido,
+      ]),
+    };
+  };
+
   const validateForm = () => {
     const nextErrors: any = {};
 
@@ -368,7 +527,41 @@ export default function NovoUsuarioScreen() {
       nextErrors.status = 'Selecione o status.';
     }
 
-    if (form.perfil === 'produtor' && form.status === 'ativo' && vinculosPropriedades.length === 0) {
+    const propriedadeRapidaAtiva = form.perfil === 'produtor' && propriedadeRapida.ativa;
+
+    if (propriedadeRapidaAtiva) {
+      if (!propriedadeRapida.nome.trim()) {
+        nextErrors.propriedadeRapida_nome = 'Informe o nome da propriedade.';
+      }
+
+      if (!propriedadeRapida.regiao.trim()) {
+        nextErrors.propriedadeRapida_regiao = 'Informe a região da propriedade.';
+      }
+
+      if (!propriedadeRapida.microregiao.trim()) {
+        nextErrors.propriedadeRapida_microregiao = 'Informe a micro-região da propriedade.';
+      }
+
+      if (!propriedadeRapida.status) {
+        nextErrors.propriedadeRapida_status = 'Selecione o status da propriedade.';
+      }
+
+      if (!Number.isFinite(areaPropriedadeRapida) || areaPropriedadeRapida <= 0) {
+        nextErrors.propriedadeRapida_area_total = 'Informe uma área total válida.';
+      }
+
+      const estado = propriedadeRapida.estado.trim();
+      if (estado && !/^[A-Za-z]{2}$/.test(estado)) {
+        nextErrors.propriedadeRapida_estado = 'Informe a UF com duas letras.';
+      }
+    }
+
+    if (
+      form.perfil === 'produtor'
+      && form.status === 'ativo'
+      && vinculosPropriedades.length === 0
+      && !propriedadeRapidaAtiva
+    ) {
       nextErrors.vinculosPropriedades = 'Produtor ativo precisa ter ao menos uma propriedade vinculada.';
     }
 
@@ -397,9 +590,18 @@ export default function NovoUsuarioScreen() {
 
     setSaving(true);
     try {
+      let propriedadesParaPayload = propriedades;
+      let formParaPayload = form;
+
+      if (form.perfil === 'produtor' && propriedadeRapida.ativa) {
+        const propriedadeCriada = await Produtor.create(buildPropriedadeRapidaPayload());
+        propriedadesParaPayload = [propriedadeCriada, ...propriedades];
+        formParaPayload = buildFormComPropriedadeCriada(propriedadeCriada);
+      }
+
       const payload = buildUsuarioAdminPayload({
-        form,
-        propriedades,
+        form: formParaPayload,
+        propriedades: propriedadesParaPayload,
         existing: usuarioAtual,
       });
 
@@ -407,7 +609,11 @@ export default function NovoUsuarioScreen() {
         ? await User.update(userId, payload)
         : await User.create(payload);
 
-      toast.showSuccess(isEdit ? 'Usuário atualizado no mock.' : 'Usuário criado no mock.');
+      toast.showSuccess(
+        propriedadeRapida.ativa
+          ? isEdit ? 'Usuário atualizado e propriedade criada no mock.' : 'Usuário e propriedade criados no mock.'
+          : isEdit ? 'Usuário atualizado no mock.' : 'Usuário criado no mock.'
+      );
       navigation.replace('UsuarioDetail', { userId: saved.id });
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
@@ -569,6 +775,213 @@ export default function NovoUsuarioScreen() {
                     {vinculo.principal ? 'Principal' : 'Vínculo'} • {getVinculoPropriedadeLabel(vinculo.tipo_vinculo)}
                   </Text>
                 ))}
+              </View>
+            )}
+
+            <View style={styles.quickPropertyHeader}>
+              <View style={styles.quickPropertyHeaderText}>
+                <Text style={styles.linkedTitle}>Propriedade ainda não cadastrada?</Text>
+                <Text style={styles.linkedText}>
+                  Crie uma propriedade mínima no mock e vincule automaticamente a este produtor.
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.quickPropertyButton, propriedadeRapida.ativa && styles.quickPropertyButtonActive]}
+                onPress={togglePropriedadeRapida}
+                activeOpacity={0.78}
+              >
+                <Ionicons
+                  name={propriedadeRapida.ativa ? 'close-outline' : 'add-outline'}
+                  size={18}
+                  color={propriedadeRapida.ativa ? colors.primary : colors.white}
+                />
+                <Text style={[styles.quickPropertyButtonText, propriedadeRapida.ativa && styles.quickPropertyButtonTextActive]}>
+                  {propriedadeRapida.ativa ? 'Cancelar' : 'Adicionar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {propriedadeRapida.ativa && (
+              <View style={styles.quickPropertyBox}>
+                <View style={styles.infoBoxInline}>
+                  <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                  <Text style={styles.infoBoxInlineText}>
+                    Cadastro rápido visual/mockado. Dados complementares podem ser ajustados depois em Admin {'->'} Propriedades.
+                  </Text>
+                </View>
+
+                <Field
+                  label="Nome da propriedade"
+                  value={propriedadeRapida.nome}
+                  onChangeText={(value) => updatePropriedadeRapida('nome', value)}
+                  placeholder="Ex: Sítio Boa Vista"
+                  error={errors.propriedadeRapida_nome}
+                />
+
+                <Field
+                  label="Município"
+                  value={propriedadeRapida.municipio}
+                  onChangeText={(value) => updatePropriedadeRapida('municipio', value)}
+                  placeholder="Ex: Rio Verde"
+                />
+
+                <Field
+                  label="UF/Estado"
+                  value={propriedadeRapida.estado}
+                  onChangeText={(value) => updatePropriedadeRapida('estado', String(value).toUpperCase())}
+                  placeholder="Ex: GO"
+                  maxLength={2}
+                  autoCapitalize="characters"
+                  error={errors.propriedadeRapida_estado}
+                />
+
+                {regioesTerritorio.length > 0 ? (
+                  <View style={styles.field}>
+                    <Text style={styles.label}>Região</Text>
+                    <View style={styles.miniChipWrap}>
+                      {regioesTerritorio.map((regiao) => {
+                        const selected = propriedadeRapida.regiao === regiao.nome;
+                        return (
+                          <TouchableOpacity
+                            key={regiao.id}
+                            style={[styles.miniChip, selected && styles.miniChipActive]}
+                            onPress={() => selecionarRegiaoPropriedadeRapida(regiao.nome)}
+                            activeOpacity={0.78}
+                          >
+                            <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>
+                              {regiao.nome}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                    {errors.propriedadeRapida_regiao && <Text style={styles.errorText}>{errors.propriedadeRapida_regiao}</Text>}
+                  </View>
+                ) : (
+                  <Field
+                    label="Região"
+                    value={propriedadeRapida.regiao}
+                    onChangeText={(value) => updatePropriedadeRapida('regiao', value)}
+                    placeholder="Ex: Goiás"
+                    error={errors.propriedadeRapida_regiao}
+                  />
+                )}
+
+                {microregioesPropriedadeRapida.length > 0 ? (
+                  <View style={styles.field}>
+                    <Text style={styles.label}>Micro-região</Text>
+                    <View style={styles.miniChipWrap}>
+                      {microregioesPropriedadeRapida.map((microregiao) => {
+                        const selected = propriedadeRapida.microregiao === microregiao.nome;
+                        return (
+                          <TouchableOpacity
+                            key={microregiao.id}
+                            style={[styles.miniChip, selected && styles.miniChipActive]}
+                            onPress={() => selecionarMicroregiaoPropriedadeRapida(microregiao.nome, microregiao.regiao)}
+                            activeOpacity={0.78}
+                          >
+                            <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>
+                              {microregiao.nome}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                    {errors.propriedadeRapida_microregiao && <Text style={styles.errorText}>{errors.propriedadeRapida_microregiao}</Text>}
+                  </View>
+                ) : (
+                  <Field
+                    label="Micro-região"
+                    value={propriedadeRapida.microregiao}
+                    onChangeText={(value) => updatePropriedadeRapida('microregiao', value)}
+                    placeholder="Ex: Rio Verde"
+                    error={errors.propriedadeRapida_microregiao}
+                  />
+                )}
+
+                {propriedadeRapida.microregiao && (
+                  <View style={styles.linkedBox}>
+                    <Text style={styles.linkedTitle}>Colaboradores sugeridos</Text>
+                    {colaboradoresSugeridosPropriedadeRapida.length === 0 ? (
+                      <Text style={styles.linkedText}>Nenhum colaborador sugerido para essa micro-região no mock.</Text>
+                    ) : (
+                      colaboradoresSugeridosPropriedadeRapida.slice(0, 5).map((colaborador) => (
+                        <Text key={colaborador.id} style={styles.linkedItemText}>
+                          {getUsuarioNome(colaborador)}
+                        </Text>
+                      ))
+                    )}
+                  </View>
+                )}
+
+                <Field
+                  label="Área total"
+                  value={propriedadeRapida.area_total}
+                  onChangeText={(value) => updatePropriedadeRapida('area_total', value)}
+                  placeholder="Ex: 500"
+                  keyboardType="numeric"
+                  error={errors.propriedadeRapida_area_total}
+                />
+
+                <Text style={styles.label}>Status da propriedade</Text>
+                <View style={styles.segmented}>
+                  {STATUS_USUARIO_ADMIN.map((status) => {
+                    const active = propriedadeRapida.status === status.key;
+                    return (
+                      <TouchableOpacity
+                        key={status.key}
+                        style={[styles.segmentButton, active && styles.segmentButtonActive]}
+                        onPress={() => updatePropriedadeRapida('status', status.key)}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{status.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                {errors.propriedadeRapida_status && <Text style={styles.errorText}>{errors.propriedadeRapida_status}</Text>}
+
+                <Text style={[styles.label, styles.labelSpacing]}>Tipo de vínculo</Text>
+                <View style={styles.miniChipWrap}>
+                  {TIPOS_VINCULO_PRODUTOR.map((tipo) => {
+                    const selected = propriedadeRapida.tipo_vinculo === tipo.key;
+                    return (
+                      <TouchableOpacity
+                        key={tipo.key}
+                        style={[styles.miniChip, selected && styles.miniChipActive]}
+                        onPress={() => updatePropriedadeRapida('tipo_vinculo', tipo.key)}
+                        activeOpacity={0.78}
+                      >
+                        <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>{tipo.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.miniChip, styles.quickPrincipalChip, propriedadeRapida.principal && styles.miniChipActive]}
+                  onPress={() => updatePropriedadeRapida('principal', !propriedadeRapida.principal)}
+                  activeOpacity={0.78}
+                >
+                  <Ionicons
+                    name={propriedadeRapida.principal ? 'star' : 'star-outline'}
+                    size={14}
+                    color={propriedadeRapida.principal ? colors.white : colors.primary}
+                  />
+                  <Text style={[styles.miniChipText, propriedadeRapida.principal && styles.miniChipTextActive]}>
+                    Marcar como principal
+                  </Text>
+                </TouchableOpacity>
+
+                <Field
+                  label="Observações"
+                  value={propriedadeRapida.observacoes}
+                  onChangeText={(value) => updatePropriedadeRapida('observacoes', value)}
+                  placeholder="Observações da propriedade no mock"
+                  multiline
+                  numberOfLines={3}
+                  style={styles.textarea}
+                />
               </View>
             )}
           </View>
@@ -965,6 +1378,68 @@ const styles = StyleSheet.create({
   },
   miniChipTextActive: {
     color: colors.white,
+  },
+  quickPropertyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radiusSm,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  quickPropertyHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  quickPropertyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: 18,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  quickPropertyButtonActive: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  quickPropertyButtonText: {
+    color: colors.white,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+  },
+  quickPropertyButtonTextActive: {
+    color: colors.primary,
+  },
+  quickPropertyBox: {
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.background,
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  infoBoxInline: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    backgroundColor: colors.accent,
+    borderRadius: spacing.radiusSm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  infoBoxInlineText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 18,
+  },
+  quickPrincipalChip: {
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
   },
   adminBox: {
     flexDirection: 'row',

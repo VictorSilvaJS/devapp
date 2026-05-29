@@ -113,6 +113,7 @@ export interface FazendaCanonica {
   microregiao?: string;
   cep?: string;
   ultima_analise?: string;
+  observacoes?: string;
   status?: string;
   data_cadastro?: string;
 }
