@@ -10,6 +10,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
+import EmptyState from '../components/EmptyState';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import SectionCard from '../components/SectionCard';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { colors, shadows, spacing, typography } from '../theme';
@@ -189,18 +193,16 @@ export default function UsuarioDetailScreen() {
           </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Dados de acesso</Text>
+        <SectionCard title="Dados de acesso">
           <InfoRow icon="mail-outline" label="E-mail" value={usuario.email} />
           <InfoRow icon="call-outline" label="Telefone" value={usuario.telefone} />
           <InfoRow icon="document-text-outline" label="Documento" value={usuario.documento} />
           <InfoRow icon="person-circle-outline" label="Perfil" value={getUsuarioPerfilLabel(usuario.perfil)} />
           <InfoRow icon="checkmark-circle-outline" label="Status" value={status.label} />
-        </View>
+        </SectionCard>
 
         {usuario.perfil === 'produtor' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Vínculo do produtor</Text>
+          <SectionCard title="Vínculo do produtor">
             <InfoRow
               icon="link-outline"
               label="Vínculos registrados"
@@ -209,11 +211,16 @@ export default function UsuarioDetailScreen() {
 
             <Text style={styles.subsectionTitle}>Propriedades vinculadas</Text>
             {propriedadesProdutor.length === 0 ? (
-              <Text style={styles.emptyInline}>
-                {status.key === 'pendente'
-                  ? 'Usuário pendente, ainda sem propriedade vinculada.'
-                  : 'Nenhuma propriedade vinculada a este usuário produtor.'}
-              </Text>
+              <EmptyState
+                icon="home-outline"
+                title={status.key === 'pendente' ? 'Vínculo pendente' : 'Nenhuma propriedade vinculada'}
+                message={
+                  status.key === 'pendente'
+                    ? 'Usuário pendente, ainda sem propriedade vinculada.'
+                    : 'Nenhuma propriedade vinculada a este usuário produtor.'
+                }
+                style={styles.emptyStateCompact}
+              />
             ) : (
               propriedadesProdutor.map((propriedade) => (
                 <PropertyRow
@@ -224,18 +231,21 @@ export default function UsuarioDetailScreen() {
                 />
               ))
             )}
-          </View>
+          </SectionCard>
         )}
 
         {usuario.perfil === 'colaborador' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Escopo do colaborador</Text>
+          <SectionCard title="Escopo do colaborador">
             <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
 
             <Text style={styles.subsectionTitle}>Microregiões atendidas</Text>
             {vinculosMicroregioes.length === 0 ? (
-              <Text style={styles.emptyInline}>Nenhuma microregião vinculada.</Text>
+              <EmptyState
+                icon="location-outline"
+                title="Nenhuma microregião vinculada"
+                style={styles.emptyStateCompact}
+              />
             ) : (
               <View style={styles.chipWrap}>
                 {vinculosMicroregioes.map((item) => (
@@ -251,7 +261,12 @@ export default function UsuarioDetailScreen() {
               {propriedadesAtribuidas.length > 0 ? 'Propriedades atribuídas' : 'Propriedades no escopo visual'}
             </Text>
             {propriedadesColaborador.length === 0 ? (
-              <Text style={styles.emptyInline}>Nenhuma propriedade encontrada para este escopo.</Text>
+              <EmptyState
+                icon="home-outline"
+                title="Nenhuma propriedade encontrada"
+                message="Nenhuma propriedade encontrada para este escopo."
+                style={styles.emptyStateCompact}
+              />
             ) : (
               propriedadesColaborador.map((propriedade) => (
                 <PropertyRow
@@ -262,37 +277,31 @@ export default function UsuarioDetailScreen() {
                 />
               ))
             )}
-          </View>
+          </SectionCard>
         )}
 
         {usuario.perfil === 'admin' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Administração</Text>
+          <SectionCard title="Administração">
             <InfoRow icon="earth-outline" label="Acesso" value="Global" />
             <InfoRow icon="shield-outline" label="Nível administrativo" value={getNivelAdminLabel(usuario.nivel_administrativo)} />
             <InfoRow icon="shield-checkmark-outline" label="Escopo" value={(usuario.regioes_acesso || ['Brasil']).join(', ')} />
-            <Text style={styles.emptyInline}>Este perfil representa visão ampla da operação no MVP mockado.</Text>
-          </View>
+            <InfoBox message="Este perfil representa visão ampla da operação no MVP mockado." style={styles.inlineInfoBox} />
+          </SectionCard>
         )}
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Observações</Text>
-          <Text style={styles.observacoes}>{usuario.observacoes || 'Nenhuma observação registrada.'}</Text>
-        </View>
+        <SectionCard title="Observações">
+          <InfoBox message={usuario.observacoes || 'Nenhuma observação registrada.'} style={styles.inlineInfoBox} />
+        </SectionCard>
 
         <View style={{ height: spacing.xl * 3 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => navigation.navigate('EditarUsuario', { userId: usuario.id })}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="create-outline" size={20} color={colors.white} />
-          <Text style={styles.editButtonText}>Editar Usuário</Text>
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        showCancel={false}
+        onSubmit={() => navigation.navigate('EditarUsuario', { userId: usuario.id })}
+        submitLabel="Editar Usuário"
+        submitIcon="create-outline"
+      />
     </View>
   );
 }
@@ -384,21 +393,6 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontSize: typography.fontBody - 1,
   },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: spacing.radius,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    ...shadows.sm,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.fontBody + 1,
-    fontWeight: typography.weightBold,
-    marginBottom: spacing.md,
-  },
   subsectionTitle: {
     color: colors.text,
     fontSize: typography.fontBody,
@@ -489,35 +483,12 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     marginTop: 2,
   },
-  emptyInline: {
-    color: colors.muted,
-    fontSize: typography.fontBody - 1,
-    lineHeight: 20,
+  emptyStateCompact: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
-  observacoes: {
-    color: colors.textLight,
-    fontSize: typography.fontBody,
-    lineHeight: 22,
-  },
-  footer: {
-    padding: spacing.screen,
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: spacing.radius,
-    paddingVertical: spacing.md + 2,
-  },
-  editButtonText: {
-    color: colors.white,
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
+  inlineInfoBox: {
+    marginBottom: 0,
   },
   blockedContainer: {
     flex: 1,

@@ -65,9 +65,17 @@ O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais f
 - como acessar historico, mapas e arquivos de modo simples
 - onde termina consulta e onde comecam operacoes que exigem permissao da equipe
 
+### 6. Revisao do fluxo de cadastro de Propriedade e Produtor
+
+Ainda falta avaliar se a tela de Nova Propriedade deve permitir criar novo titular/produtor dentro do proprio cadastro.
+
+A tendencia para o MVP e centralizar o cadastro de novos usuarios/produtores em `NovoUsuarioScreen` e deixar `NovoProdutorScreen`/Nova Propriedade apenas para selecionar um produtor/titular ja existente.
+
+Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
+
 ## Pendencias de Regra e Permissao
 
-### 6. Fechamento completo das regras de permissao por acao
+### 7. Fechamento completo das regras de permissao por acao
 
 As diretrizes principais de acesso ja estao claras, mas ainda falta consolidar o detalhamento de permissao por acao em todo o dominio, especialmente quando houver diferenca entre:
 
@@ -77,7 +85,7 @@ As diretrizes principais de acesso ja estao claras, mas ainda falta consolidar o
 - download
 - visibilidade de registros
 
-### 7. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
+### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
 
@@ -89,7 +97,7 @@ Esse ponto nao e backlog tecnico generico. Ele e uma pendencia de alinhamento en
 
 ## Pendencias de Escopo Tecnico-Funcional
 
-### 8. Remocao do painel temporario `Smoke Dev`
+### 9. Remocao do painel temporario `Smoke Dev`
 
 Durante o fechamento da frente de visitas tecnicas por propriedade e caderno de campo por propriedade, foi criado um painel temporario `Smoke Dev` em `src/screens/PerfilScreen.tsx`.
 
@@ -108,7 +116,7 @@ Durante o fechamento da frente de visitas tecnicas por propriedade e caderno de 
 
 O painel esta protegido por `__DEV__`, mas ainda e uma ferramenta interna de teste manual. Ele nao deve ser confundido com funcionalidade do produto.
 
-### 9. Capacidade offline declarada por fluxo
+### 10. Capacidade offline declarada por fluxo
 
 Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda falta declarar com clareza:
 
@@ -118,7 +126,7 @@ Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda fa
 
 Sem esse fechamento, o projeto corre risco de descrever offline de forma mais ampla do que a capacidade real.
 
-### 10. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
+### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
 O produto ja depende de mapas e arquivos no contexto da propriedade. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
 
