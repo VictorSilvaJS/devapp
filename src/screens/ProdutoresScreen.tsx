@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager, RefreshControl, TextInput, Modal, Pressable, Animated } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager, RefreshControl, Modal, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
 import ProdutorCard from '../components/ProdutorCard';
 import StatCard from '../components/StatCard';
+import SearchBar from '../components/SearchBar';
+import SegmentedChips from '../components/SegmentedChips';
 import { Produtor } from '../api/mock';
 import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -128,6 +131,21 @@ export default function ProdutoresScreen() {
   const numFiltrosAtivos = contarFiltrosAtivos();
   const listaSemResultadoPorFiltro =
     busca.trim().length > 0 || filtroStatus !== 'todos' || regiaoSelecionada !== 'todas';
+  const statusOptions = [
+    { value: 'todos', label: 'Todos' },
+    { value: 'ativo', label: 'Ativo' },
+    { value: 'inativo', label: 'Inativo' },
+    { value: 'pendente', label: 'Pendente' },
+  ];
+  const ordenacaoOptions = [
+    { value: 'nome', label: 'Propriedade' },
+    { value: 'area', label: 'Área' },
+    { value: 'recente', label: 'Mais Recente' },
+  ];
+  const regiaoOptions = [
+    { value: 'todas', label: 'Todas' },
+    ...regioes.map((regiao) => ({ value: regiao, label: regiao })),
+  ];
 
   return (
     <View style={styles.container}>
@@ -140,26 +158,25 @@ export default function ProdutoresScreen() {
       >
         {mostrarBusca ? (
           <View style={styles.searchContainerExpanded}>
-            <View style={styles.searchIconContainer}>
-              <Ionicons name="search" size={20} color={colors.primary} />
-            </View>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar por propriedade, titular, cidade ou região..."
-              placeholderTextColor={colors.muted}
+            <SearchBar
               value={busca}
               onChangeText={setBusca}
-              autoFocus
-            />
-            <TouchableOpacity 
-              onPress={() => {
+              onClear={() => {
                 setBusca('');
                 setMostrarBusca(false);
               }}
-              style={styles.closeSearchButton}
-            >
-              <Ionicons name="close-circle" size={24} color={colors.muted} />
-            </TouchableOpacity>
+              placeholder="Buscar por propriedade, titular, cidade ou região..."
+              containerStyle={styles.searchBarExpanded}
+              autoFocus
+            />
+            {!busca && (
+              <TouchableOpacity
+                onPress={() => setMostrarBusca(false)}
+                style={styles.closeSearchButton}
+              >
+                <Ionicons name="close-circle" size={24} color={colors.muted} />
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <>
@@ -330,43 +347,19 @@ export default function ProdutoresScreen() {
 
         {/* Lista de Fazendas + Titular */}
         {produtoresFiltrados.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <LinearGradient
-              colors={[colors.primary + '15', colors.primary + '05']}
-              style={styles.emptyIconContainer}
-            >
-              <Ionicons 
-                name={listaSemResultadoPorFiltro ? 'search' : 'person-add'} 
-                size={64} 
-                color={colors.primary} 
-              />
-            </LinearGradient>
-            <Text style={styles.emptyText}>
-              {listaSemResultadoPorFiltro ? 'Nenhuma propriedade encontrada' : 'Nenhuma propriedade cadastrada'}
-            </Text>
-            <Text style={styles.emptySubtext}>
-              {listaSemResultadoPorFiltro
-                ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados' 
-                : 'Comece adicionando a primeira propriedade vinculada a um titular'}
-            </Text>
-            {!listaSemResultadoPorFiltro && podeCriarProdutor(user) && (
-              <TouchableOpacity 
-                style={styles.emptyActionButton}
-                onPress={() => navigation.navigate('NovoProdutor')}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={[colors.primary, colors.primaryDark]}
-                  style={styles.emptyActionGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons name="add-circle" size={22} color={colors.white} />
-                  <Text style={styles.emptyActionText}>Adicionar Primeira Propriedade</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
-          </View>
+          <EmptyState
+            icon={listaSemResultadoPorFiltro ? 'search-outline' : 'person-add-outline'}
+            title={listaSemResultadoPorFiltro ? 'Nenhuma propriedade encontrada' : 'Nenhuma propriedade cadastrada'}
+            message={
+              listaSemResultadoPorFiltro
+                ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados'
+                : 'Comece adicionando a primeira propriedade vinculada a um titular'
+            }
+            actionLabel={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'Adicionar Primeira Propriedade' : undefined}
+            actionIcon={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'add-circle' : undefined}
+            onActionPress={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? () => navigation.navigate('NovoProdutor') : undefined}
+            style={styles.emptyState}
+          />
         ) : (
           produtoresFiltrados.map(p => (
             <ProdutorCard key={p.id} produtor={p} onPress={() => navigation.navigate('ProdutorDetail', { id: p.id })} />
@@ -438,109 +431,32 @@ export default function ProdutoresScreen() {
             <ScrollView style={styles.sheetContent} showsVerticalScrollIndicator={false}>
               {/* Status */}
               <Text style={styles.sectionTitle}>Status</Text>
-              <View style={styles.chipsContainer}>
-                {[
-                  { key: 'todos', label: 'Todos', icon: 'apps-outline' },
-                  { key: 'ativo', label: 'Ativo', icon: 'checkmark-circle-outline' },
-                  { key: 'inativo', label: 'Inativo', icon: 'close-circle-outline' },
-                  { key: 'pendente', label: 'Pendente', icon: 'time-outline' }
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.key}
-                    style={[
-                      styles.chip,
-                      filtroStatus === item.key && styles.chipActive
-                    ]}
-                    onPress={() => setFiltroStatus(item.key)}
-                  >
-                    <Ionicons 
-                      name={item.icon} 
-                      size={18} 
-                      color={filtroStatus === item.key ? colors.white : colors.primary} 
-                    />
-                    <Text style={[
-                      styles.chipText,
-                      filtroStatus === item.key && styles.chipTextActive
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <SegmentedChips
+                options={statusOptions}
+                value={filtroStatus}
+                onChange={setFiltroStatus}
+                contentStyle={styles.chipsContainer}
+              />
 
               {/* Ordenação */}
               <Text style={styles.sectionTitle}>Ordenar por</Text>
-              <View style={styles.chipsContainer}>
-                {[
-                  { key: 'nome', label: 'Propriedade', icon: 'business-outline' },
-                  { key: 'area', label: 'Área', icon: 'resize-outline' },
-                  { key: 'recente', label: 'Mais Recente', icon: 'time-outline' }
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.key}
-                    style={[
-                      styles.chip,
-                      ordenacao === item.key && styles.chipActive
-                    ]}
-                    onPress={() => setOrdenacao(item.key)}
-                  >
-                    <Ionicons 
-                      name={item.icon} 
-                      size={18} 
-                      color={ordenacao === item.key ? colors.white : colors.primary} 
-                    />
-                    <Text style={[
-                      styles.chipText,
-                      ordenacao === item.key && styles.chipTextActive
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <SegmentedChips
+                options={ordenacaoOptions}
+                value={ordenacao}
+                onChange={setOrdenacao}
+                contentStyle={styles.chipsContainer}
+              />
 
               {/* Região (apenas para admin) */}
               {mostrarFiltroRegiao && (
                 <>
                   <Text style={styles.sectionTitle}>Região</Text>
-                  <View style={styles.chipsContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.chip,
-                        regiaoSelecionada === 'todas' && styles.chipActive
-                      ]}
-                      onPress={() => setRegiaoSelecionada('todas')}
-                    >
-                      <Ionicons 
-                        name="location-outline" 
-                        size={18} 
-                        color={regiaoSelecionada === 'todas' ? colors.white : colors.primary} 
-                      />
-                      <Text style={[
-                        styles.chipText,
-                        regiaoSelecionada === 'todas' && styles.chipTextActive
-                      ]}>
-                        Todas
-                      </Text>
-                    </TouchableOpacity>
-                    {regioes.map((regiao) => (
-                      <TouchableOpacity
-                        key={regiao}
-                        style={[
-                          styles.chip,
-                          regiaoSelecionada === regiao && styles.chipActive
-                        ]}
-                        onPress={() => setRegiaoSelecionada(regiao)}
-                      >
-                        <Text style={[
-                          styles.chipText,
-                          regiaoSelecionada === regiao && styles.chipTextActive
-                        ]}>
-                          {regiao}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  <SegmentedChips
+                    options={regiaoOptions}
+                    value={regiaoSelecionada}
+                    onChange={setRegiaoSelecionada}
+                    contentStyle={styles.chipsContainer}
+                  />
                 </>
               )}
 
@@ -658,30 +574,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
-    paddingLeft: spacing.md,
-    paddingRight: spacing.sm,
-    backgroundColor: colors.white,
-    borderRadius: 24,
     gap: spacing.sm,
-    borderWidth: 2,
+  },
+  searchBarExpanded: {
+    flex: 1,
+    backgroundColor: colors.white,
     borderColor: colors.primary,
     ...shadows.md,
-  },
-  searchIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: typography.fontBody,
-    color: colors.text,
-    paddingVertical: 0,
-    fontWeight: '500',
   },
   closeSearchButton: {
     padding: 4,
@@ -923,29 +822,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    gap: 6,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipText: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightSemibold,
-    color: colors.primary,
-  },
-  chipTextActive: {
-    color: colors.white,
-  },
   clearFiltersButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -985,55 +861,9 @@ const styles = StyleSheet.create({
   },
 
   // Empty State
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  emptyState: {
     paddingVertical: spacing.screen * 3,
     paddingHorizontal: spacing.lg,
     minHeight: 350,
-  },
-  emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    ...shadows.md,
-  },
-  emptyText: {
-    fontSize: typography.fontSubtitle + 2,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-    marginTop: spacing.md,
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  emptySubtext: {
-    fontSize: typography.fontBody,
-    color: colors.textLight,
-    textAlign: 'center',
-    marginTop: spacing.md,
-    lineHeight: 24,
-    maxWidth: 280,
-  },
-  emptyActionButton: {
-    marginTop: spacing.lg + 4,
-    borderRadius: spacing.radius,
-    overflow: 'hidden',
-    ...shadows.lg,
-  },
-  emptyActionGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg + 4,
-    paddingVertical: spacing.md + 2,
-  },
-  emptyActionText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-    color: colors.white,
-    letterSpacing: 0.3,
   },
 });

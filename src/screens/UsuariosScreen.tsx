@@ -5,14 +5,16 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
+import SearchBar from '../components/SearchBar';
+import SegmentedChips from '../components/SegmentedChips';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { colors, shadows, spacing, typography } from '../theme';
@@ -91,6 +93,12 @@ export default function UsuariosScreen() {
     admin: usuarios.filter((usuario) => usuario.perfil === 'admin').length,
   };
 
+  const perfilOptions = PERFIS_USUARIO_ADMIN.map((perfil) => ({
+    value: perfil.key,
+    label: perfil.label,
+    count: totalPorPerfil[perfil.key as keyof typeof totalPorPerfil] || 0,
+  }));
+
   if (user?.perfil !== 'admin') {
     return (
       <View style={styles.container}>
@@ -109,46 +117,21 @@ export default function UsuariosScreen() {
       <Header title="Usuários" />
 
       <View style={styles.searchSection}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={colors.muted} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por nome, e-mail, documento ou escopo..."
-            placeholderTextColor={colors.muted}
-            value={busca}
-            onChangeText={setBusca}
-          />
-          {busca.length > 0 && (
-            <TouchableOpacity onPress={() => setBusca('')} style={styles.clearSearch}>
-              <Ionicons name="close-circle" size={20} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBar
+          value={busca}
+          onChangeText={setBusca}
+          placeholder="Buscar por nome, e-mail, documento ou escopo..."
+        />
       </View>
 
       <View style={styles.filterSection}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
-          {PERFIS_USUARIO_ADMIN.map((perfil) => {
-            const active = perfilFiltro === perfil.key;
-            return (
-              <TouchableOpacity
-                key={perfil.key}
-                style={[styles.filterChip, active && styles.filterChipActive]}
-                onPress={() => setPerfilFiltro(perfil.key)}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                  {perfil.label}
-                </Text>
-                <View style={[styles.filterCount, active && styles.filterCountActive]}>
-                  <Text style={[styles.filterCountText, active && styles.filterCountTextActive]}>
-                    {totalPorPerfil[perfil.key] || 0}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        <SegmentedChips
+          options={perfilOptions}
+          value={perfilFiltro}
+          onChange={setPerfilFiltro}
+          horizontal
+          contentStyle={styles.filterContent}
+        />
       </View>
 
       <ScrollView
@@ -164,11 +147,12 @@ export default function UsuariosScreen() {
             <Text style={styles.loadingText}>Carregando usuários...</Text>
           </View>
         ) : usuariosFiltrados.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name={busca ? 'search-outline' : 'people-outline'} size={72} color={colors.muted} />
-            <Text style={styles.emptyTitle}>Nenhum usuário encontrado</Text>
-            <Text style={styles.emptyText}>Ajuste a busca ou o filtro de perfil para continuar.</Text>
-          </View>
+          <EmptyState
+            icon={busca ? 'search-outline' : 'people-outline'}
+            title="Nenhum usuário encontrado"
+            message="Ajuste a busca ou o filtro de perfil para continuar."
+            style={styles.emptyState}
+          />
         ) : (
           usuariosFiltrados.map((usuario) => {
             const nome = getUsuarioNome(usuario);
@@ -244,25 +228,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: spacing.radius,
-    paddingHorizontal: spacing.md,
-    height: 48,
-    gap: spacing.sm,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: typography.fontBody,
-  },
-  clearSearch: {
-    padding: spacing.xs,
-  },
   filterSection: {
     backgroundColor: colors.card,
     paddingBottom: spacing.md,
@@ -270,49 +235,6 @@ const styles = StyleSheet.create({
   filterContent: {
     paddingHorizontal: spacing.screen,
     gap: spacing.sm,
-  },
-  filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-  },
-  filterChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  filterChipText: {
-    color: colors.text,
-    fontWeight: typography.weightSemibold,
-    fontSize: typography.fontCaption + 1,
-  },
-  filterChipTextActive: {
-    color: colors.white,
-  },
-  filterCount: {
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-    backgroundColor: colors.borderLight,
-  },
-  filterCountActive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-  },
-  filterCountText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-  },
-  filterCountTextActive: {
-    color: colors.white,
   },
   content: {
     padding: spacing.screen,
@@ -401,24 +323,9 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weightBold,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  emptyState: {
     paddingVertical: spacing.xl * 3,
     paddingHorizontal: spacing.lg,
-  },
-  emptyTitle: {
-    color: colors.text,
-    fontSize: typography.fontSubtitle,
-    fontWeight: typography.weightBold,
-    marginTop: spacing.lg,
-    textAlign: 'center',
-  },
-  emptyText: {
-    color: colors.muted,
-    fontSize: typography.fontBody,
-    marginTop: spacing.sm,
-    textAlign: 'center',
   },
   fab: {
     position: 'absolute',
