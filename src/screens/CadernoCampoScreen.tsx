@@ -8,13 +8,14 @@ import {
   Platform, 
   UIManager, 
   RefreshControl,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
+import SearchBar from '../components/SearchBar';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -143,21 +144,11 @@ export default function CadernoCampoScreen() {
       
       {/* Barra de busca */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar por propriedade, atividade ou talhão..."
-            placeholderTextColor={colors.muted}
-            value={busca}
-            onChangeText={setBusca}
-          />
-          {busca.length > 0 && (
-            <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
-              <Ionicons name="close-circle-outline" size={20} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBar
+          value={busca}
+          onChangeText={setBusca}
+          placeholder="Buscar por propriedade, atividade ou talhão..."
+        />
       </View>
 
       <ScrollView 
@@ -177,22 +168,16 @@ export default function CadernoCampoScreen() {
             <Text style={styles.loadingText}>Carregando registros...</Text>
           </View>
         ) : registrosFiltrados.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons 
-              name={busca ? 'search-outline' : 'document-text-outline'} 
-              size={64} 
-              color={colors.muted} 
-              style={styles.emptyIcon} 
-            />
-            <Text style={styles.emptyText}>
-              {busca ? 'Nenhum registro encontrado' : 'Ainda não há registros de caderno de campo para esta propriedade.'}
-            </Text>
-            <Text style={styles.emptySubtext}>
-              {busca 
-                ? 'Tente ajustar os filtros de busca' 
-                : 'Quando houver registros liberados, eles aparecerão aqui.'}
-            </Text>
-          </View>
+          <EmptyState
+            icon={busca ? 'search-outline' : 'document-text-outline'}
+            title={busca ? 'Nenhum registro encontrado' : 'Ainda não há registros de caderno de campo para esta propriedade.'}
+            message={
+              busca
+                ? 'Tente ajustar os filtros de busca'
+                : 'Quando houver registros liberados, eles aparecerão aqui.'
+            }
+            style={styles.emptyState}
+          />
         ) : (
           registrosFiltrados.map(reg => {
             const fazenda = getFazenda(getCadernoFazendaId(reg));
@@ -322,28 +307,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     ...shadows.sm
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: spacing.radiusSm,
-    paddingHorizontal: spacing.gap,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  searchIcon: {
-    marginRight: 8
-  },
-  searchInput: {
-    flex: 1,
-    height: 44,
-    fontSize: typography.fontBody,
-    color: colors.text,
-    paddingVertical: 8
-  },
-  clearButton: {
-    paddingHorizontal: 8
   },
   content: { 
     padding: spacing.screen,
@@ -498,27 +461,9 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     color: colors.muted
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  emptyState: {
     paddingVertical: spacing.screen * 3,
-    paddingHorizontal: spacing.screen * 2
-  },
-  emptyIcon: {
-    marginBottom: spacing.gap
-  },
-  emptyText: {
-    fontSize: typography.fontBody + 2,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-    marginBottom: 8,
-    textAlign: 'center'
-  },
-  emptySubtext: {
-    fontSize: typography.fontBody,
-    color: colors.muted,
-    textAlign: 'center',
-    lineHeight: 22
+    paddingHorizontal: spacing.screen * 2,
   },
   fab: {
     position: 'absolute',
