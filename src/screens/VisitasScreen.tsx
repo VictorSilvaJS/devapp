@@ -8,7 +8,6 @@ import {
   Platform, 
   UIManager, 
   RefreshControl,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
@@ -16,7 +15,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import EmptyState from '../components/EmptyState';
 import Header from '../components/Header';
+import InfoBox from '../components/InfoBox';
+import SearchBar from '../components/SearchBar';
+import SegmentedChips from '../components/SegmentedChips';
 import { Visita, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -245,6 +248,23 @@ export default function VisitasScreen() {
 
   const filtrosAtivos = getFiltrosAtivos();
   const numFiltrosAtivos = contarFiltrosAtivos();
+  const statusOptions = [
+    { value: 'todos', label: 'Todas' },
+    { value: 'agendada', label: 'Agendadas' },
+    { value: 'realizada', label: 'Realizadas' },
+    { value: 'cancelada', label: 'Canceladas' },
+  ];
+  const periodoOptions = [
+    { value: 'todos', label: 'Todas' },
+    { value: 'hoje', label: 'Hoje' },
+    { value: 'semana', label: 'Esta Semana' },
+    { value: 'mes', label: 'Este Mês' },
+  ];
+  const ordenacaoOptions = [
+    { value: 'data', label: 'Data' },
+    { value: 'fazenda', label: 'Propriedade' },
+    { value: 'status', label: 'Status' },
+  ];
 
   return (
     <View style={styles.container}>
@@ -257,26 +277,25 @@ export default function VisitasScreen() {
       >
         {mostrarBusca ? (
           <View style={styles.searchContainerExpanded}>
-            <View style={styles.searchIconContainer}>
-              <Ionicons name="search" size={20} color={colors.primary} />
-            </View>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar por propriedade, objetivo ou técnico..."
-              placeholderTextColor={colors.muted}
+            <SearchBar
               value={busca}
               onChangeText={setBusca}
-              autoFocus
-            />
-            <TouchableOpacity 
-              onPress={() => {
+              onClear={() => {
                 setBusca('');
                 setMostrarBusca(false);
               }}
-              style={styles.closeSearchButton}
-            >
-              <Ionicons name="close-circle" size={24} color={colors.muted} />
-            </TouchableOpacity>
+              placeholder="Buscar por propriedade, objetivo ou técnico..."
+              containerStyle={styles.searchBarExpanded}
+              autoFocus
+            />
+            {!busca && (
+              <TouchableOpacity
+                onPress={() => setMostrarBusca(false)}
+                style={styles.closeSearchButton}
+              >
+                <Ionicons name="close-circle" size={24} color={colors.muted} />
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           <>
@@ -401,29 +420,27 @@ export default function VisitasScreen() {
             <Text style={styles.loadingText}>Carregando visitas...</Text>
           </View>
         ) : visitasFiltradas.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons 
-              name={busca ? 'search-outline' : 'calendar-outline'} 
-              size={80} 
-              color={colors.muted} 
+          <View style={styles.emptyStateWrapper}>
+            <EmptyState
+              icon={busca ? 'search-outline' : 'calendar-outline'}
+              title={busca ? 'Nenhuma visita encontrada' : 'Nenhuma visita agendada'}
+              message={
+                busca
+                  ? 'Tente ajustar sua busca ou aguarde novas visitas'
+                  : 'As visitas técnicas agendadas aparecerão aqui'
+              }
+              style={styles.emptyState}
             />
-            <Text style={styles.emptyText}>
-              {busca ? 'Nenhuma visita encontrada' : 'Nenhuma visita agendada'}
-            </Text>
-            <Text style={styles.emptySubtext}>
-              {busca 
-                ? 'Tente ajustar sua busca ou aguarde novas visitas' 
-                : 'As visitas técnicas agendadas aparecerão aqui'}
-            </Text>
             {!busca && (
-              <View style={styles.emptyTipBox}>
-                <Ionicons name="bulb-outline" size={22} color={colors.primary} />
-                <Text style={styles.emptyTipText}>
-                  {user?.perfil === 'admin' || user?.perfil === 'colaborador'
+              <InfoBox
+                icon="bulb-outline"
+                message={
+                  user?.perfil === 'admin' || user?.perfil === 'colaborador'
                     ? 'Agende visitas para acompanhamento técnico das propriedades'
-                    : 'Aguarde o agendamento de visitas técnicas pela equipe'}
-                </Text>
-              </View>
+                    : 'Aguarde o agendamento de visitas técnicas pela equipe'
+                }
+                style={styles.emptyTipInfo}
+              />
             )}
           </View>
         ) : (
@@ -597,98 +614,30 @@ export default function VisitasScreen() {
             <ScrollView style={styles.sheetContent} showsVerticalScrollIndicator={false}>
               {/* Status */}
               <Text style={styles.sectionTitle}>Status</Text>
-              <View style={styles.chipsContainer}>
-                {[
-                  { key: 'todos', label: 'Todos', icon: 'apps-outline' },
-                  { key: 'agendada', label: 'Agendadas', icon: 'calendar-outline' },
-                  { key: 'realizada', label: 'Realizadas', icon: 'checkmark-circle-outline' },
-                  { key: 'cancelada', label: 'Canceladas', icon: 'close-circle-outline' }
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.key}
-                    style={[
-                      styles.chip,
-                      filtroStatus === item.key && styles.chipActive
-                    ]}
-                    onPress={() => setFiltroStatus(item.key)}
-                  >
-                    <Ionicons 
-                      name={item.icon} 
-                      size={18} 
-                      color={filtroStatus === item.key ? colors.white : colors.primary} 
-                    />
-                    <Text style={[
-                      styles.chipText,
-                      filtroStatus === item.key && styles.chipTextActive
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <SegmentedChips
+                options={statusOptions}
+                value={filtroStatus}
+                onChange={setFiltroStatus}
+                contentStyle={styles.chipsContainer}
+              />
 
               {/* Período */}
               <Text style={styles.sectionTitle}>Período</Text>
-              <View style={styles.chipsContainer}>
-                {[
-                  { key: 'todos', label: 'Todas', icon: 'infinite-outline' },
-                  { key: 'hoje', label: 'Hoje', icon: 'today-outline' },
-                  { key: 'semana', label: 'Esta Semana', icon: 'calendar-outline' },
-                  { key: 'mes', label: 'Este Mês', icon: 'calendar-outline' }
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.key}
-                    style={[
-                      styles.chip,
-                      filtroData === item.key && styles.chipActive
-                    ]}
-                    onPress={() => setFiltroData(item.key)}
-                  >
-                    <Ionicons 
-                      name={item.icon} 
-                      size={18} 
-                      color={filtroData === item.key ? colors.white : colors.primary} 
-                    />
-                    <Text style={[
-                      styles.chipText,
-                      filtroData === item.key && styles.chipTextActive
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <SegmentedChips
+                options={periodoOptions}
+                value={filtroData}
+                onChange={setFiltroData}
+                contentStyle={styles.chipsContainer}
+              />
 
               {/* Ordenação */}
               <Text style={styles.sectionTitle}>Ordenar por</Text>
-              <View style={styles.chipsContainer}>
-                {[
-                  { key: 'data', label: 'Data', icon: 'calendar-outline' },
-                  { key: 'fazenda', label: 'Propriedade', icon: 'home-outline' },
-                  { key: 'status', label: 'Status', icon: 'flag-outline' }
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.key}
-                    style={[
-                      styles.chip,
-                      ordenacao === item.key && styles.chipActive
-                    ]}
-                    onPress={() => setOrdenacao(item.key)}
-                  >
-                    <Ionicons 
-                      name={item.icon} 
-                      size={18} 
-                      color={ordenacao === item.key ? colors.white : colors.primary} 
-                    />
-                    <Text style={[
-                      styles.chipText,
-                      ordenacao === item.key && styles.chipTextActive
-                    ]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <SegmentedChips
+                options={ordenacaoOptions}
+                value={ordenacao}
+                onChange={setOrdenacao}
+                contentStyle={styles.chipsContainer}
+              />
 
               {/* Botão Limpar Filtros */}
               <TouchableOpacity 
@@ -988,43 +937,20 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     color: colors.muted
   },
-  emptyContainer: {
+  emptyStateWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.screen * 3,
     paddingHorizontal: spacing.screen * 2,
     minHeight: 400,
   },
-  emptyText: {
-    fontSize: typography.fontSubtitle,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-    marginTop: spacing.lg,
-    textAlign: 'center',
+  emptyState: {
+    padding: 0,
   },
-  emptySubtext: {
-    fontSize: typography.fontBody,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginTop: spacing.sm,
-  },
-  emptyTipBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.accent + '20',
-    padding: spacing.md,
-    borderRadius: 12,
+  emptyTipInfo: {
     marginTop: spacing.lg,
-    gap: spacing.sm,
+    marginBottom: 0,
     maxWidth: 340,
-  },
-  emptyTipText: {
-    flex: 1,
-    fontSize: typography.fontCaption + 1,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
-    lineHeight: 18,
   },
   fab: {
     position: 'absolute',
@@ -1142,30 +1068,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 48,
-    paddingLeft: spacing.md,
-    paddingRight: spacing.sm,
-    backgroundColor: colors.white,
-    borderRadius: 24,
     gap: spacing.sm,
-    borderWidth: 2,
+  },
+  searchBarExpanded: {
+    flex: 1,
+    backgroundColor: colors.white,
     borderColor: colors.primary,
     ...shadows.md,
-  },
-  searchIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: typography.fontBody,
-    color: colors.text,
-    paddingVertical: 0,
-    fontWeight: '500',
   },
   closeSearchButton: {
     padding: 4,
@@ -1321,29 +1230,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    backgroundColor: colors.background,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    gap: 6,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryDark,
-  },
-  chipText: {
-    fontSize: typography.fontBody - 1,
-    fontWeight: typography.weightSemibold,
-    color: colors.primary,
-  },
-  chipTextActive: {
-    color: colors.white,
   },
   clearFiltersButton: {
     flexDirection: 'row',
