@@ -88,6 +88,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade em materiais de mapa quando o campo opcional estiver preenchido
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
+- base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
@@ -107,6 +108,53 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - sincronizacao offline de verdade
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
+
+## Microfase De Padronizacao Visual Reutilizavel
+
+Status em 2026-05-30: foi criada e aplicada uma base visual reutilizavel em telas de formulario, detalhe e listagem, sem alterar dominio, backend, mocks, rotas, permissoes, payloads ou nomes tecnicos legados.
+
+Componentes-base consolidados nesta microfase:
+
+- `FormField`
+- `FormFooter`
+- `SectionCard`
+- `InfoBox`
+- `EmptyState`
+- `SearchBar`
+- `SegmentedChips`
+- `RadioCardGroup`
+
+Telas padronizadas nesta frente:
+
+- `NovoCadernoScreen`
+- `EditarCadernoScreen`
+- `CadernoCampoScreen`
+- `NovaVisitaScreen`
+- `EditarVisitaScreen`
+- `VisitasScreen`
+- `EditarProdutorScreen`
+- `NovoProdutorScreen`
+- `ProdutorScreen`
+- `UsuarioDetailScreen`
+- `UsuariosScreen`
+- `PerfilScreen`
+- `EditProfileScreen`
+
+Garantias preservadas:
+
+- sem alteracao de backend
+- sem alteracao de mocks
+- sem alteracao de rotas
+- sem alteracao de permissoes
+- sem alteracao de payloads
+- sem renomear legado tecnico `Produtor`/`Fazenda`, arquivos, rotas, helpers ou campos como `fazenda_id`
+- linguagem visivel preservada como `Propriedade` quando aplicavel
+
+Validacoes executadas durante a microfase:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de LF/CRLF
 
 ## Microfase Backend-Ready Do Admin -> Usuarios
 

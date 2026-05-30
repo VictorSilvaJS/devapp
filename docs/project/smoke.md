@@ -15,6 +15,21 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 5. Criação a partir do detalhe da propriedade: novo caderno nasce vinculado à propriedade atual.
 6. Criação de visita pelo detalhe da propriedade: `NovaVisita` deve pré-selecionar/travar a propriedade contextual e manter bloqueio fora de escopo.
 7. Material Técnico em mapas: botão/modal devem ficar claros como mock visual, sem upload real, storage, Drive ou cadastro persistente.
+8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
+
+**Rodada Visual - Padronização Com Componentes-Base**
+
+Observação geral: esta rodada valida apenas consistência visual e preservação de comportamento. Não envolve backend, mocks, rotas, permissões, payloads ou renomeação técnica de `Produtor`/`Fazenda`.
+
+Componentes-base envolvidos: `FormField`, `FormFooter`, `SectionCard`, `InfoBox`, `EmptyState`, `SearchBar`, `SegmentedChips` e `RadioCardGroup`.
+
+| ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| V-01 | P1 | Formulários | Abrir `NovoCadernoScreen`, `EditarCadernoScreen`, `NovaVisitaScreen`, `EditarVisitaScreen`, `EditarProdutorScreen`, `NovoProdutorScreen` e `EditProfileScreen` | Campos, seções e rodapés usam componentes-base sem alterar payloads, permissões ou rotas | Reexecutar | Validar visualmente após mudanças incrementais |
+| V-02 | P1 | Detalhes | Abrir `ProdutorScreen`, `UsuarioDetailScreen`, `PerfilScreen` e telas relacionadas | Seções, avisos e estados vazios usam padrão visual sem expor campo técnico cru como informação principal | Reexecutar | Preservar linguagem `Propriedade` quando aplicável |
+| V-03 | P1 | Listagens | Abrir `CadernoCampoScreen`, `VisitasScreen` e `UsuariosScreen` | Busca, chips/filtros equivalentes e estados vazios usam componentes-base sem mudar filtros existentes | Reexecutar | Preservar navegação para detalhe/novo registro |
+| V-04 | P1 | Propriedades | Abrir `ProdutoresScreen` | Listagem principal continua visível como `Propriedades`, preservando nome técnico legado da tela/rota | Reexecutar | Não criar `PropriedadesScreen`; não renomear rota |
+| V-05 | P0 | Regressão | Exercitar filtros, busca, limpeza de filtros e navegação nas listagens padronizadas | Resultado funcional idêntico ao comportamento anterior, apenas com composição visual padronizada | Reexecutar | Conferir status, período, ordenação e escopo |
 
 **Rodada Colaborador - Microfase Para Teste Interno**
 Login principal de teste: `carlos@agrotche.com` / `colab123`.

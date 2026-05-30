@@ -71,6 +71,8 @@ Ainda falta avaliar se a tela de Nova Propriedade deve permitir criar novo titul
 
 A tendencia para o MVP e centralizar o cadastro de novos usuarios/produtores em `NovoUsuarioScreen` e deixar `NovoProdutorScreen`/Nova Propriedade apenas para selecionar um produtor/titular ja existente.
 
+Status em 2026-05-30: esta pendencia permanece aberta apos a microfase de padronizacao visual. A padronizacao nao alterou fluxo, regra, mock, rota ou payload de cadastro. A recomendacao operacional para o MVP continua sendo manter o cadastro de usuario/produtor centralizado em `Admin -> Usuarios` e usar Nova Propriedade apenas para vincular produtor/titular ja cadastrado, ate haver decisao especifica em uma fase de revisao de fluxos.
+
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 
 ## Pendencias de Regra e Permissao
