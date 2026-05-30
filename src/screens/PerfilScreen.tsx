@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, UIManager, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
@@ -8,6 +9,8 @@ import { useNotificacao } from '../contexts/NotificacaoContext';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
+import InfoBox from '../components/InfoBox';
+import SectionCard from '../components/SectionCard';
 
 const smokeRoutes = [
   {
@@ -164,6 +167,7 @@ export default function PerfilScreen({ navigation }) {
   const toast = useToast();
   const [showLogout, setShowLogout] = useState(false);
   const insets = useSafeAreaInsets();
+  const perfilLabel = user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : '-';
 
   useEffect(() => {
     console.log('[PerfilScreen] mounted');
@@ -193,29 +197,46 @@ export default function PerfilScreen({ navigation }) {
         end={{ x: 1, y: 1 }}
       >
         <ScrollView contentContainerStyle={[styles.content, { paddingTop: spacing.screen + insets.top }]}>
-          <View style={styles.profileSection}>
+          <SectionCard style={styles.profileSection} contentStyle={styles.profileContent}>
             <UserProfile user={user} size="large" showDetails={true} />
-          </View>
+          </SectionCard>
 
-          <View style={styles.infoCard}>
-            <Text style={styles.sectionTitle}>Informações</Text>
+          <SectionCard title="Informações" icon="person-circle-outline">
+            {user?.email && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>E-mail</Text>
+                <Text style={styles.infoValue}>{user.email}</Text>
+              </View>
+            )}
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Perfil:</Text>
-              <Text style={styles.infoValue}>{user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : '-'}</Text>
+              <Text style={styles.infoLabel}>Perfil</Text>
+              <Text style={styles.infoValue}>{perfilLabel}</Text>
             </View>
+            {user?.telefone && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Telefone</Text>
+                <Text style={styles.infoValue}>{user.telefone}</Text>
+              </View>
+            )}
             {user?.regiao && (
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Região:</Text>
+                <Text style={styles.infoLabel}>Região</Text>
                 <Text style={styles.infoValue}>{user.regiao}</Text>
               </View>
             )}
-          </View>
+          </SectionCard>
 
           <View style={styles.actionsSection}>
             {__DEV__ && (
-              <View style={styles.devSmokeCard}>
-                <Text style={styles.devSmokeTitle}>Smoke Dev</Text>
-                <Text style={styles.devSmokeHint}>Atalhos temporários para testar rotas diretas.</Text>
+              <SectionCard
+                title="Smoke Dev"
+                icon="construct-outline"
+                contentStyle={styles.devSmokeContent}
+              >
+                <InfoBox
+                  message="Atalhos temporários para testar rotas diretas."
+                  style={styles.infoBox}
+                />
                 {smokeRoutes.map((item) => (
                   <TouchableOpacity
                     key={item.id}
@@ -229,24 +250,28 @@ export default function PerfilScreen({ navigation }) {
                     </View>
                   </TouchableOpacity>
                 ))}
-              </View>
+              </SectionCard>
             )}
 
-            <TouchableOpacity 
-              style={[styles.actionBtn, styles.editBtn]} 
-              onPress={() => navigation.navigate('EditProfile')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.actionBtnText}>Editar Perfil</Text>
-            </TouchableOpacity>
+            <SectionCard title="Ações" icon="settings-outline" contentStyle={styles.actionsCardContent}>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.editBtn]}
+                onPress={() => navigation.navigate('EditProfile')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="create-outline" size={18} color={colors.white} />
+                <Text style={styles.actionBtnText}>Editar Perfil</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={[styles.actionBtn, styles.logoutBtn]} 
-              onPress={() => setShowLogout(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.actionBtnText, styles.logoutText]}>Sair da Conta</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.logoutBtn]}
+                onPress={() => setShowLogout(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="log-out-outline" size={18} color={colors.white} />
+                <Text style={[styles.actionBtnText, styles.logoutText]}>Sair da Conta</Text>
+              </TouchableOpacity>
+            </SectionCard>
           </View>
         </ScrollView>
       </LinearGradient>
@@ -290,22 +315,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...shadows.md
   },
-  infoCard: {
-    backgroundColor: colors.card,
-    padding: spacing.card * 1.5,
-    borderRadius: spacing.radiusLg,
-    marginBottom: spacing.gap * 1.5,
-    ...shadows.sm
-  },
-  sectionTitle: {
-    fontSize: typography.fontBody + 2,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-    marginBottom: spacing.gap
+  profileContent: {
+    width: '100%',
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.md,
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight
@@ -323,22 +339,11 @@ const styles = StyleSheet.create({
   actionsSection: {
     gap: spacing.gap
   },
-  devSmokeCard: {
-    backgroundColor: colors.card,
-    padding: spacing.card,
-    borderRadius: spacing.radius,
+  infoBox: {
+    marginBottom: spacing.md
+  },
+  devSmokeContent: {
     gap: spacing.sm,
-    ...shadows.sm
-  },
-  devSmokeTitle: {
-    fontSize: typography.fontBody + 1,
-    fontWeight: typography.weightBold,
-    color: colors.text
-  },
-  devSmokeHint: {
-    fontSize: typography.fontSmall,
-    color: colors.muted,
-    marginBottom: spacing.xs
   },
   devSmokeBtn: {
     backgroundColor: colors.backgroundAlt,
@@ -360,10 +365,16 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSmall
   },
   actionBtn: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing.sm,
     padding: 14,
     borderRadius: spacing.radius,
     alignItems: 'center',
     ...shadows.sm
+  },
+  actionsCardContent: {
+    gap: spacing.md,
   },
   editBtn: {
     backgroundColor: colors.primary

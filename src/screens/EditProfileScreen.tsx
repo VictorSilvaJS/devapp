@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import Header from '../components/Header';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import SectionCard from '../components/SectionCard';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
-import { colors, typography, spacing } from '../theme';
+import { colors, spacing } from '../theme';
 import { normalizeNome } from '../domain';
 
 export default function EditProfileScreen({ navigation }) {
@@ -30,29 +33,38 @@ export default function EditProfileScreen({ navigation }) {
     <View style={styles.container}>
       <Header title="Editar Perfil" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.label}>Nome completo</Text>
-        <TextInput style={styles.input} value={form.nome} onChangeText={(t)=>setForm(s=>({...s,nome:t}))} />
+        <SectionCard title="Dados do perfil" icon="person-circle-outline">
+          <FormField
+            label="Nome completo"
+            value={form.nome}
+            onChangeText={(t) => setForm((s) => ({ ...s, nome: t }))}
+            leftIcon="person-outline"
+          />
 
-        {perfil === 'colaborador' && (
-          <>
-            <Text style={styles.label}>Região</Text>
-            <TextInput style={styles.input} value={form.regiao} onChangeText={(t)=>setForm(s=>({...s,regiao:t}))} />
-          </>
-        )}
-
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>Salvar</Text>
-        </TouchableOpacity>
+          {perfil === 'colaborador' && (
+            <FormField
+              label="Região"
+              value={form.regiao}
+              onChangeText={(t) => setForm((s) => ({ ...s, regiao: t }))}
+              leftIcon="location-outline"
+            />
+          )}
+        </SectionCard>
       </ScrollView>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        cancelLabel="Cancelar"
+        submitLabel="Salvar"
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex:1, backgroundColor: colors.background },
-  content: { padding: spacing.screen },
-  label: { color: colors.muted, marginTop: 8 },
-  input: { backgroundColor: colors.card, padding: 10, borderRadius: spacing.radiusSm, marginTop: 6, borderWidth:1, borderColor: colors.borderLight },
-  button: { backgroundColor: colors.primary, padding:12, borderRadius: spacing.radius, marginTop: 20, alignItems:'center' },
-  buttonText: { color: colors.white, fontWeight: typography.weightSemibold }
+  content: {
+    padding: spacing.screen,
+    paddingBottom: spacing.xl,
+  },
 });
