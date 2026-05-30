@@ -4,6 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
+import EmptyState from '../components/EmptyState';
+import InfoBox from '../components/InfoBox';
+import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
@@ -529,9 +532,7 @@ export default function ProdutorScreen({ route, navigation }) {
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>Contexto da Propriedade</Text>
-            
-            <View style={styles.infoSection}>
+            <SectionCard title="Contexto da Propriedade" icon="home-outline">
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="home" size={16} color={colors.primary} />
@@ -585,74 +586,81 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.infoValue}>{produtor.email}</Text>
                 </View>
               )}
-            </View>
+            </SectionCard>
 
             {user?.perfil === 'admin' && (
-              <>
-                <Text style={styles.sectionTitle}>Vínculos visuais do mock</Text>
-                <View style={styles.infoSection}>
-                  <Text style={styles.mockLinkNote}>
-                    Preparação visual para backend/banco. Estes vínculos não alteram o motor efetivo de permissões nesta fase.
-                  </Text>
+              <SectionCard title="Vínculos visuais do mock" icon="link-outline">
+                <InfoBox
+                  message="Preparação visual para backend/banco. Estes vínculos não alteram o motor efetivo de permissões nesta fase."
+                  style={styles.infoBox}
+                />
 
-                  <View style={styles.mockLinkGroup}>
-                    <Text style={styles.mockLinkGroupTitle}>Usuário produtor vinculado</Text>
-                    {produtoresVinculadosMock.length === 0 ? (
-                      <Text style={styles.mockLinkEmpty}>Nenhum usuário produtor vinculado no mock.</Text>
-                    ) : (
-                      produtoresVinculadosMock.map((usuarioProdutor) => {
-                        const vinculo = getVinculosPropriedadeUsuario(
-                          usuarioProdutor,
-                          todasFazendasMock
-                        ).find((item) => item.propriedade_id === fazendaAtualId);
+                <View style={styles.mockLinkGroup}>
+                  <Text style={styles.mockLinkGroupTitle}>Usuário produtor vinculado</Text>
+                  {produtoresVinculadosMock.length === 0 ? (
+                    <EmptyState
+                      icon="person-outline"
+                      title="Nenhum usuário produtor vinculado"
+                      message="Nenhum usuário produtor vinculado no mock."
+                      style={styles.emptyStateCompact}
+                    />
+                  ) : (
+                    produtoresVinculadosMock.map((usuarioProdutor) => {
+                      const vinculo = getVinculosPropriedadeUsuario(
+                        usuarioProdutor,
+                        todasFazendasMock
+                      ).find((item) => item.propriedade_id === fazendaAtualId);
 
-                        return (
-                          <View key={usuarioProdutor.id} style={styles.mockLinkItem}>
-                            <Ionicons name="person-outline" size={16} color={colors.primary} />
-                            <View style={styles.mockLinkItemText}>
-                              <Text style={styles.mockLinkName}>{getUsuarioNome(usuarioProdutor)}</Text>
-                              <Text style={styles.mockLinkMeta}>
-                                {vinculo?.principal ? 'Principal' : 'Vínculo'} • {getVinculoPropriedadeLabel(vinculo?.tipo_vinculo)}
-                              </Text>
-                            </View>
+                      return (
+                        <View key={usuarioProdutor.id} style={styles.mockLinkItem}>
+                          <Ionicons name="person-outline" size={16} color={colors.primary} />
+                          <View style={styles.mockLinkItemText}>
+                            <Text style={styles.mockLinkName}>{getUsuarioNome(usuarioProdutor)}</Text>
+                            <Text style={styles.mockLinkMeta}>
+                              {vinculo?.principal ? 'Principal' : 'Vínculo'} • {getVinculoPropriedadeLabel(vinculo?.tipo_vinculo)}
+                            </Text>
                           </View>
-                        );
-                      })
-                    )}
-                  </View>
-
-                  <View style={styles.mockLinkGroup}>
-                    <Text style={styles.mockLinkGroupTitle}>Colaboradores sugeridos ou relacionados</Text>
-                    {colaboradoresRelacionadosMock.length === 0 ? (
-                      <Text style={styles.mockLinkEmpty}>Nenhum colaborador relacionado ao território no mock.</Text>
-                    ) : (
-                      colaboradoresRelacionadosMock.map((colaborador) => {
-                        const temVinculoDireto = getVinculosPropriedadeUsuario(
-                          colaborador,
-                          todasFazendasMock
-                        ).some((item) => item.propriedade_id === fazendaAtualId);
-
-                        return (
-                          <View key={colaborador.id} style={styles.mockLinkItem}>
-                            <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
-                            <View style={styles.mockLinkItemText}>
-                              <Text style={styles.mockLinkName}>{getUsuarioNome(colaborador)}</Text>
-                              <Text style={styles.mockLinkMeta}>
-                                {temVinculoDireto ? 'Propriedade atribuída no mock' : 'Sugerido por região/microregião'}
-                              </Text>
-                            </View>
-                          </View>
-                        );
-                      })
-                    )}
-                  </View>
+                        </View>
+                      );
+                    })
+                  )}
                 </View>
-              </>
+
+                <View style={styles.mockLinkGroup}>
+                  <Text style={styles.mockLinkGroupTitle}>Colaboradores sugeridos ou relacionados</Text>
+                  {colaboradoresRelacionadosMock.length === 0 ? (
+                    <EmptyState
+                      icon="briefcase-outline"
+                      title="Nenhum colaborador relacionado"
+                      message="Nenhum colaborador relacionado ao território no mock."
+                      style={styles.emptyStateCompact}
+                    />
+                  ) : (
+                    colaboradoresRelacionadosMock.map((colaborador) => {
+                      const temVinculoDireto = getVinculosPropriedadeUsuario(
+                        colaborador,
+                        todasFazendasMock
+                      ).some((item) => item.propriedade_id === fazendaAtualId);
+
+                      return (
+                        <View key={colaborador.id} style={styles.mockLinkItem}>
+                          <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
+                          <View style={styles.mockLinkItemText}>
+                            <Text style={styles.mockLinkName}>{getUsuarioNome(colaborador)}</Text>
+                            <Text style={styles.mockLinkMeta}>
+                              {temVinculoDireto ? 'Propriedade atribuída no mock' : 'Sugerido por região/microregião'}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })
+                  )}
+                </View>
+              </SectionCard>
             )}
 
             {outrasFazendasTitular.length > 0 && (
-              <>
-                <Text style={styles.sectionTitle}>Outras Propriedades do Titular</Text>
+              <SectionCard title="Outras Propriedades do Titular" icon="business-outline">
                 <View style={styles.relatedFarmsSection}>
                   {outrasFazendasTitular.map((fazenda) => (
                     <TouchableOpacity
@@ -676,11 +684,10 @@ export default function ProdutorScreen({ route, navigation }) {
                     </TouchableOpacity>
                   ))}
                 </View>
-              </>
+              </SectionCard>
             )}
 
-            <Text style={styles.sectionTitle}>Estatísticas</Text>
-            <View style={styles.infoSection}>
+            <SectionCard title="Estatísticas" icon="stats-chart-outline">
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="calendar" size={16} color={colors.primary} />
@@ -720,324 +727,310 @@ export default function ProdutorScreen({ route, navigation }) {
                   </Text>
                 </View>
               </View>
-            </View>
+            </SectionCard>
 
             {podeExcluir && (
-              <>
-                <Text style={styles.sectionTitle}>Integridade da Exclusão</Text>
-                <View style={[
-                  styles.integrityBox,
-                  integridadeExclusao.canDelete ? styles.integrityBoxOk : styles.integrityBoxBlocked
-                ]}>
-                  <Ionicons
-                    name={integridadeExclusao.canDelete ? 'checkmark-circle-outline' : 'alert-circle-outline'}
-                    size={22}
-                    color={integridadeExclusao.canDelete ? colors.success : colors.warning}
-                  />
-                  <View style={styles.integrityTextContainer}>
-                    <Text style={styles.integrityTitle}>
-                      {integridadeExclusao.canDelete ? 'Exclusão segura' : 'Exclusão bloqueada'}
-                    </Text>
-                    <Text style={styles.integrityText}>
-                      {integridadeExclusao.canDelete
-                        ? 'Esta propriedade não possui vínculos operacionais relevantes no momento.'
-                        : integridadeExclusao.blockingMessage}
-                    </Text>
-                  </View>
-                </View>
-              </>
+              <SectionCard title="Integridade da Exclusão" icon="shield-checkmark-outline">
+                <InfoBox
+                  variant={integridadeExclusao.canDelete ? 'success' : 'warning'}
+                  title={integridadeExclusao.canDelete ? 'Exclusão segura' : 'Exclusão bloqueada'}
+                  message={
+                    integridadeExclusao.canDelete
+                      ? 'Esta propriedade não possui vínculos operacionais relevantes no momento.'
+                      : integridadeExclusao.blockingMessage
+                  }
+                  style={styles.infoBox}
+                />
+              </SectionCard>
             )}
 
             {produtor.observacoes && (
-              <>
-                <Text style={styles.sectionTitle}>Observações</Text>
-                <View style={styles.infoSection}>
-                  <Text style={styles.observacoesText}>{produtor.observacoes}</Text>
-                </View>
-              </>
+              <SectionCard title="Observações" icon="document-text-outline">
+                <InfoBox message={produtor.observacoes} style={styles.infoBox} />
+              </SectionCard>
             )}
           </View>
         )}
 
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Mapas da Propriedade</Text>
-              <TouchableOpacity 
-                style={styles.verTodosButton}
-                onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
-              >
-                <Text style={styles.verTodosText}>Ver Todos</Text>
-                <Ionicons name="chevron-forward-outline" size={16} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-            
-            {mapas.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="map-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>Nenhum mapa cadastrado para esta propriedade</Text>
-              </View>
-            ) : (
-              <>
-                {mapas.slice(0, 3).map(mapa => (
-                <View key={mapa.id} style={styles.mapaCard}>
-                  <View style={styles.mapaHeader}>
-                    <View style={styles.mapaIconContainer}>
-                      <Ionicons 
-                        name={
-                          mapa.categoria === 'fertilidade' ? 'leaf-outline' : 
-                          mapa.categoria === 'indice_vegetacao' ? 'git-network-outline' : 
-                          mapa.categoria === 'correcao' ? 'flask-outline' : 'map-outline'
-                        }
-                        size={24}
-                        color={colors.primary}
-                      />
+            <SectionCard
+              title="Mapas da Propriedade"
+              icon="map-outline"
+              actionLabel="Ver Todos"
+              actionIcon="chevron-forward-outline"
+              onActionPress={() => navigation.navigate('Mapas', mapasRouteParams)}
+            >
+              {mapas.length === 0 ? (
+                <EmptyState
+                  icon="map-outline"
+                  title="Nenhum mapa cadastrado"
+                  message="Nenhum mapa cadastrado para esta propriedade"
+                  style={styles.emptyStateCompact}
+                />
+              ) : (
+                <>
+                  {mapas.slice(0, 3).map(mapa => (
+                    <View key={mapa.id} style={styles.mapaCard}>
+                      <View style={styles.mapaHeader}>
+                        <View style={styles.mapaIconContainer}>
+                          <Ionicons
+                            name={
+                              mapa.categoria === 'fertilidade' ? 'leaf-outline' :
+                              mapa.categoria === 'indice_vegetacao' ? 'git-network-outline' :
+                              mapa.categoria === 'correcao' ? 'flask-outline' : 'map-outline'
+                            }
+                            size={24}
+                            color={colors.primary}
+                          />
+                        </View>
+                        <View style={styles.mapaInfo}>
+                          <Text style={styles.mapaTitle}>{mapa.titulo}</Text>
+                          <Text style={styles.mapaSubtitle}>
+                            {mapa.talhao} • Safra {mapa.safra}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.mapaDetails}>
+                        <View style={styles.mapaDetailRow}>
+                          <Ionicons name="calendar-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
+                          <Text style={styles.mapaDetailItem}>
+                            {new Date(mapa.data_criacao).toLocaleDateString('pt-BR')}
+                          </Text>
+                        </View>
+                        {mapa.observacoes && (
+                          <Text style={styles.mapaObservacoes} numberOfLines={2}>
+                            {mapa.observacoes}
+                          </Text>
+                        )}
+                      </View>
+                      {(mapa.disponivel_para_download || mapa.disponivel_download) && (
+                        <TouchableOpacity
+                          style={styles.mapaButton}
+                          onPress={() => navigation.navigate('FazendaMapa', getMapaAtualRouteParams(mapa))}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="download-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
+                          <Text style={styles.mapaButtonText}>Visualizar Mapa</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-                    <View style={styles.mapaInfo}>
-                      <Text style={styles.mapaTitle}>{mapa.titulo}</Text>
-                      <Text style={styles.mapaSubtitle}>
-                        {mapa.talhao} • Safra {mapa.safra}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.mapaDetails}>
-                    <View style={styles.mapaDetailRow}>
-                      <Ionicons name="calendar-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
-                      <Text style={styles.mapaDetailItem}>
-                        {new Date(mapa.data_criacao).toLocaleDateString('pt-BR')}
-                      </Text>
-                    </View>
-                    {mapa.observacoes && (
-                      <Text style={styles.mapaObservacoes} numberOfLines={2}>
-                        {mapa.observacoes}
-                      </Text>
-                    )}
-                  </View>
-                  {(mapa.disponivel_para_download || mapa.disponivel_download) && (
+                  ))}
+                  {mapas.length > 3 && (
                     <TouchableOpacity
-                      style={styles.mapaButton}
-                      onPress={() => navigation.navigate('FazendaMapa', getMapaAtualRouteParams(mapa))}
-                      activeOpacity={0.8}
+                      style={styles.verMaisButton}
+                      onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
                     >
-                      <Ionicons name="download-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
-                      <Text style={styles.mapaButtonText}>Visualizar Mapa</Text>
+                      <Text style={styles.verMaisText}>
+                        Ver mais {mapas.length - 3} mapas
+                      </Text>
+                      <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
                     </TouchableOpacity>
                   )}
-                </View>
-              ))}
-              {mapas.length > 3 && (
-                <TouchableOpacity 
-                  style={styles.verMaisButton}
-                  onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
-                >
-                  <Text style={styles.verMaisText}>
-                    Ver mais {mapas.length - 3} mapas
-                  </Text>
-                  <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
-                </TouchableOpacity>
+                </>
               )}
-            </>
-            )}
+            </SectionCard>
           </View>
         )}
 
         {activeTab === 'visitas' && (
           <View style={styles.tabContent}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Visitas Técnicas</Text>
-              <View style={styles.sectionActions}>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countBadgeText}>{visitas.length}</Text>
-                </View>
-                {podeCriarVisitaNaFazenda && (
-                  <TouchableOpacity
-                    style={styles.newCadernoButton}
-                    onPress={handleNovaVisita}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name="add-outline" size={16} color={colors.white} />
-                    <Text style={styles.newCadernoButtonText}>Nova Visita</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-
-            {visitas.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="calendar-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>
-                  Ainda não há visitas técnicas registradas para esta propriedade.
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  Quando uma visita for registrada, ela aparecerá aqui.
-                </Text>
-              </View>
-            ) : (
-              visitas.map((v, index) => (
-                <TouchableOpacity
-                  key={v.id}
-                  style={styles.visitCard}
-                  onPress={() => navigation.navigate('VisitaDetail', { visitaId: v.id })}
-                  activeOpacity={0.85}
-                >
-                  <View style={styles.visitNumber}>
-                    <Text style={styles.visitNumberText}>#{visitas.length - index}</Text>
+            <SectionCard>
+              <View style={styles.detailSectionHeader}>
+                <View style={styles.detailSectionTitleGroup}>
+                  <View style={styles.detailSectionIcon}>
+                    <Ionicons name="calendar-outline" size={20} color={colors.primary} />
                   </View>
-                  <View style={styles.visitContent}>
-                    <View style={styles.visitHeader}>
-                      <View style={styles.visitDateContainer}>
-                        <Ionicons name="calendar-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
-                        <Text style={styles.visitDate}>
-                          {new Date(v.data_visita).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
-                        </Text>
-                      </View>
+                  <Text style={styles.detailSectionTitle}>Visitas Técnicas</Text>
+                </View>
+                <View style={styles.sectionActions}>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>{visitas.length}</Text>
+                  </View>
+                  {podeCriarVisitaNaFazenda && (
+                    <TouchableOpacity
+                      style={styles.newCadernoButton}
+                      onPress={handleNovaVisita}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons name="add-outline" size={16} color={colors.white} />
+                      <Text style={styles.newCadernoButtonText}>Nova Visita</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {visitas.length === 0 ? (
+                <EmptyState
+                  icon="calendar-outline"
+                  title="Nenhuma visita técnica registrada"
+                  message="Quando uma visita for registrada para esta propriedade, ela aparecerá aqui."
+                  style={styles.emptyStateCompact}
+                />
+              ) : (
+                visitas.map((v, index) => (
+                  <TouchableOpacity
+                    key={v.id}
+                    style={styles.visitCard}
+                    onPress={() => navigation.navigate('VisitaDetail', { visitaId: v.id })}
+                    activeOpacity={0.85}
+                  >
+                    <View style={styles.visitNumber}>
+                      <Text style={styles.visitNumberText}>#{visitas.length - index}</Text>
                     </View>
-                    <View style={styles.visitTecnicoContainer}>
-                      <Text style={styles.visitTecnicoLabel}>Técnico Responsável:</Text>
-                      <View style={styles.visitTecnicoRow}>
-                        <Ionicons name="person-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                        <Text style={styles.visitTecnico}>{v.tecnico_responsavel}</Text>
+                    <View style={styles.visitContent}>
+                      <View style={styles.visitHeader}>
+                        <View style={styles.visitDateContainer}>
+                          <Ionicons name="calendar-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                          <Text style={styles.visitDate}>
+                            {new Date(v.data_visita).toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                    <View style={styles.visitDetailRow}>
-                      <View style={styles.visitLabelContainer}>
-                        <Ionicons name="flag-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                        <Text style={styles.visitLabel}>Objetivo:</Text>
+                      <View style={styles.visitTecnicoContainer}>
+                        <Text style={styles.visitTecnicoLabel}>Técnico Responsável:</Text>
+                        <View style={styles.visitTecnicoRow}>
+                          <Ionicons name="person-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
+                          <Text style={styles.visitTecnico}>{v.tecnico_responsavel}</Text>
+                        </View>
                       </View>
-                      <Text style={styles.visitObjetivo}>{v.objetivo}</Text>
-                    </View>
-                    {v.observacoes && (
                       <View style={styles.visitDetailRow}>
                         <View style={styles.visitLabelContainer}>
-                          <Ionicons name="document-text-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                          <Text style={styles.visitLabel}>Observações:</Text>
+                          <Ionicons name="flag-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
+                          <Text style={styles.visitLabel}>Objetivo:</Text>
                         </View>
-                        <Text style={styles.visitObservacoes}>{v.observacoes}</Text>
+                        <Text style={styles.visitObjetivo}>{v.objetivo}</Text>
                       </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              ))
-            )}
+                      {v.observacoes && (
+                        <View style={styles.visitDetailRow}>
+                          <View style={styles.visitLabelContainer}>
+                            <Ionicons name="document-text-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
+                            <Text style={styles.visitLabel}>Observações:</Text>
+                          </View>
+                          <Text style={styles.visitObservacoes}>{v.observacoes}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
+            </SectionCard>
           </View>
         )}
 
         {activeTab === 'caderno' && (
           <View style={styles.tabContent}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Caderno de Campo</Text>
-              <View style={styles.sectionActions}>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countBadgeText}>{cadernos.length}</Text>
+            <SectionCard>
+              <View style={styles.detailSectionHeader}>
+                <View style={styles.detailSectionTitleGroup}>
+                  <View style={styles.detailSectionIcon}>
+                    <Ionicons name="book-outline" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={styles.detailSectionTitle}>Caderno de Campo</Text>
                 </View>
-                {podeCriarCadernoNaFazenda && (
-                  <TouchableOpacity
-                    style={styles.newCadernoButton}
-                    onPress={handleNovoCaderno}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="add" size={16} color={colors.white} />
-                    <Text style={styles.newCadernoButtonText}>Novo</Text>
-                  </TouchableOpacity>
-                )}
+                <View style={styles.sectionActions}>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>{cadernos.length}</Text>
+                  </View>
+                  {podeCriarCadernoNaFazenda && (
+                    <TouchableOpacity
+                      style={styles.newCadernoButton}
+                      onPress={handleNovoCaderno}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="add" size={16} color={colors.white} />
+                      <Text style={styles.newCadernoButtonText}>Novo</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-            </View>
 
-            {cadernos.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Ionicons name="book-outline" size={48} color={colors.muted} />
-                <Text style={styles.emptyText}>
-                  Ainda não há registros de caderno de campo para esta propriedade.
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  Quando houver registros liberados, eles aparecerão aqui.
-                </Text>
-                {podeCriarCadernoNaFazenda && (
-                  <TouchableOpacity
-                    style={styles.emptyActionButton}
-                    onPress={handleNovoCaderno}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="add" size={18} color={colors.white} />
-                    <Text style={styles.emptyActionButtonText}>Novo Registro</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : (
-              cadernos.map((registro) => {
-                const tipoColor = getCadernoTipoColor(registro.tipo_atividade);
-                const areaFormatada = formatarAreaCaderno(registro.area_aplicada);
-                const produtos = Array.isArray(registro.produtos_utilizados)
-                  ? registro.produtos_utilizados
-                  : [];
-                const visivelParaProdutor = registro.visivel_para_produtor === true;
+              {cadernos.length === 0 ? (
+                <EmptyState
+                  icon="book-outline"
+                  title="Nenhum registro de caderno"
+                  message="Quando houver registros liberados para esta propriedade, eles aparecerão aqui."
+                  actionLabel={podeCriarCadernoNaFazenda ? 'Novo Registro' : undefined}
+                  actionIcon={podeCriarCadernoNaFazenda ? 'add' : undefined}
+                  onActionPress={podeCriarCadernoNaFazenda ? handleNovoCaderno : undefined}
+                  style={styles.emptyStateCompact}
+                />
+              ) : (
+                cadernos.map((registro) => {
+                  const tipoColor = getCadernoTipoColor(registro.tipo_atividade);
+                  const areaFormatada = formatarAreaCaderno(registro.area_aplicada);
+                  const produtos = Array.isArray(registro.produtos_utilizados)
+                    ? registro.produtos_utilizados
+                    : [];
+                  const visivelParaProdutor = registro.visivel_para_produtor === true;
 
-                return (
-                  <TouchableOpacity
-                    key={registro.id}
-                    style={styles.cadernoCard}
-                    activeOpacity={0.85}
-                    onPress={() => navigation.navigate('CadernoDetail', { cadernoId: registro.id })}
-                  >
-                    <View style={styles.cadernoHeader}>
-                      <View style={[styles.cadernoIcon, { backgroundColor: tipoColor + '20' }]}>
-                        <Ionicons name="book-outline" size={22} color={tipoColor} />
-                      </View>
-                      <View style={styles.cadernoHeaderInfo}>
-                        <Text style={styles.cadernoTitle} numberOfLines={1}>
-                          {getCadernoTipoLabel(registro.tipo_atividade)}
-                        </Text>
-                        <Text style={styles.cadernoSubtitle} numberOfLines={1}>
-                          {[registro.talhao, registro.colaborador_responsavel].filter(Boolean).join(' • ') || 'Registro da propriedade'}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward-outline" size={20} color={colors.muted} />
-                    </View>
-
-                    <View style={styles.cadernoMeta}>
-                      <View style={styles.cadernoMetaItem}>
-                        <Ionicons name="calendar-outline" size={15} color={colors.textLight} />
-                        <Text style={styles.cadernoMetaText}>{formatarDataCaderno(registro.data_atividade)}</Text>
-                      </View>
-                      {areaFormatada && (
-                        <View style={styles.cadernoMetaItem}>
-                          <Ionicons name="resize-outline" size={15} color={colors.textLight} />
-                          <Text style={styles.cadernoMetaText}>{areaFormatada}</Text>
+                  return (
+                    <TouchableOpacity
+                      key={registro.id}
+                      style={styles.cadernoCard}
+                      activeOpacity={0.85}
+                      onPress={() => navigation.navigate('CadernoDetail', { cadernoId: registro.id })}
+                    >
+                      <View style={styles.cadernoHeader}>
+                        <View style={[styles.cadernoIcon, { backgroundColor: tipoColor + '20' }]}>
+                          <Ionicons name="book-outline" size={22} color={tipoColor} />
                         </View>
-                      )}
-                      {user?.perfil !== 'produtor' && (
-                        <View style={styles.cadernoMetaItem}>
-                          <Ionicons
-                            name={visivelParaProdutor ? 'eye-outline' : 'lock-closed-outline'}
-                            size={15}
-                            color={visivelParaProdutor ? colors.success : colors.warning}
-                          />
-                          <Text style={styles.cadernoMetaText}>
-                            {visivelParaProdutor ? 'Visível ao produtor' : 'Restrito à equipe'}
+                        <View style={styles.cadernoHeaderInfo}>
+                          <Text style={styles.cadernoTitle} numberOfLines={1}>
+                            {getCadernoTipoLabel(registro.tipo_atividade)}
+                          </Text>
+                          <Text style={styles.cadernoSubtitle} numberOfLines={1}>
+                            {[registro.talhao, registro.colaborador_responsavel].filter(Boolean).join(' • ') || 'Registro da propriedade'}
                           </Text>
                         </View>
+                        <Ionicons name="chevron-forward-outline" size={20} color={colors.muted} />
+                      </View>
+
+                      <View style={styles.cadernoMeta}>
+                        <View style={styles.cadernoMetaItem}>
+                          <Ionicons name="calendar-outline" size={15} color={colors.textLight} />
+                          <Text style={styles.cadernoMetaText}>{formatarDataCaderno(registro.data_atividade)}</Text>
+                        </View>
+                        {areaFormatada && (
+                          <View style={styles.cadernoMetaItem}>
+                            <Ionicons name="resize-outline" size={15} color={colors.textLight} />
+                            <Text style={styles.cadernoMetaText}>{areaFormatada}</Text>
+                          </View>
+                        )}
+                        {user?.perfil !== 'produtor' && (
+                          <View style={styles.cadernoMetaItem}>
+                            <Ionicons
+                              name={visivelParaProdutor ? 'eye-outline' : 'lock-closed-outline'}
+                              size={15}
+                              color={visivelParaProdutor ? colors.success : colors.warning}
+                            />
+                            <Text style={styles.cadernoMetaText}>
+                              {visivelParaProdutor ? 'Visível ao produtor' : 'Restrito à equipe'}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {produtos.length > 0 && (
+                        <Text style={styles.cadernoProdutos} numberOfLines={2}>
+                          Produtos: {produtos.join(', ')}
+                        </Text>
                       )}
-                    </View>
 
-                    {produtos.length > 0 && (
-                      <Text style={styles.cadernoProdutos} numberOfLines={2}>
-                        Produtos: {produtos.join(', ')}
-                      </Text>
-                    )}
-
-                    {registro.observacoes && (
-                      <Text style={styles.cadernoObservacoes} numberOfLines={2}>
-                        {registro.observacoes}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })
-            )}
+                      {registro.observacoes && (
+                        <Text style={styles.cadernoObservacoes} numberOfLines={2}>
+                          {registro.observacoes}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </SectionCard>
           </View>
         )}
       </ScrollView>
@@ -1233,11 +1226,43 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightBold
   },
   tabContent: {
-    backgroundColor: colors.card,
-    borderRadius: spacing.radius,
-    padding: spacing.card,
-    borderWidth: 2,
-    borderColor: colors.border
+    gap: spacing.md
+  },
+  detailSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  detailSectionTitleGroup: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  detailSectionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+  },
+  detailSectionTitle: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: typography.fontBody + 1,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  infoBox: {
+    marginBottom: spacing.md,
+  },
+  emptyStateCompact: {
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1267,6 +1292,7 @@ const styles = StyleSheet.create({
   sectionActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     gap: spacing.sm,
   },
   newCadernoButton: {
