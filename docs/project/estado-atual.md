@@ -135,10 +135,13 @@ Telas padronizadas nesta frente:
 - `EditarProdutorScreen`
 - `NovoProdutorScreen`
 - `ProdutorScreen`
+- `NovoUsuarioScreen`
 - `UsuarioDetailScreen`
 - `UsuariosScreen`
 - `PerfilScreen`
 - `EditProfileScreen`
+
+Atualizacao em 2026-05-31: apos diagnostico especifico, `NovoUsuarioScreen` tambem foi padronizada visualmente. A tela passou a usar `SectionCard`, `FormField`, `FormFooter`, `InfoBox` e `SegmentedChips` nos grupos equivalentes, preservando a tela como fluxo sensivel de cadastro administrativo de usuario, perfil, status, vinculos com propriedade, vinculos territoriais, nivel administrativo e cadastro rapido de propriedade mockada para produtor.
 
 Garantias preservadas:
 
@@ -147,8 +150,12 @@ Garantias preservadas:
 - sem alteracao de rotas
 - sem alteracao de permissoes
 - sem alteracao de payloads
+- sem alteracao de helpers, schemas, validacoes ou regras de negocio
+- sem alteracao de `buildUsuarioAdminPayload`, `buildUsuarioFormFromMock`, `Produtor.create`, `vinculos_propriedades`, `vinculos_microregioes`, `produtor_id`, `fazenda_id` ou `proprietario_id`
 - sem renomear legado tecnico `Produtor`/`Fazenda`, arquivos, rotas, helpers ou campos como `fazenda_id`
 - linguagem visivel preservada como `Propriedade` quando aplicavel
+
+O cadastro rapido de propriedade dentro do cadastro de usuario produtor permanece mockado. Sua revisao funcional continua reservada para uma etapa futura de fluxos de cadastro, sem mudanca de regra nesta padronizacao visual.
 
 Validacoes executadas durante a microfase:
 

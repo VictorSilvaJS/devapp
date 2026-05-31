@@ -4,17 +4,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
 import Header from '../components/Header';
+import InfoBox from '../components/InfoBox';
+import SectionCard from '../components/SectionCard';
+import SegmentedChips from '../components/SegmentedChips';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
-import { colors, shadows, spacing, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import { getFazendaId, getTitularIdFazenda } from '../utils/acessoControle';
 import {
   buildCadastroFazendaPayload,
@@ -394,21 +398,14 @@ export default function NovoUsuarioScreen() {
         {active && (showTipo || showPrincipal) && (
           <View style={styles.linkControls}>
             {showTipo && (
-              <View style={styles.miniChipWrap}>
-                {TIPOS_VINCULO_PRODUTOR.map((tipo) => {
-                  const selected = vinculo.tipo_vinculo === tipo.key;
-                  return (
-                    <TouchableOpacity
-                      key={tipo.key}
-                      style={[styles.miniChip, selected && styles.miniChipActive]}
-                      onPress={() => updateTipoVinculoPropriedade(option.id, tipo.key)}
-                      activeOpacity={0.78}
-                    >
-                      <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>{tipo.label}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <SegmentedChips
+                options={TIPOS_VINCULO_PRODUTOR.map((tipo) => ({
+                  value: tipo.key,
+                  label: tipo.label,
+                }))}
+                value={vinculo.tipo_vinculo}
+                onChange={(value) => updateTipoVinculoPropriedade(option.id, value)}
+              />
             )}
 
             {showPrincipal && (
@@ -653,17 +650,10 @@ export default function NovoUsuarioScreen() {
       <Header title={isEdit ? 'Editar Usuário' : 'Novo Usuário'} showBack />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-          <Text style={styles.infoText}>
-            Este cadastro é visual/mockado. Não cria senha real, convite, reset de acesso ou autenticação em backend.
-          </Text>
-        </View>
+        <InfoBox message="Este cadastro é visual/mockado. Não cria senha real, convite, reset de acesso ou autenticação em backend." />
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Dados comuns</Text>
-
-          <Field
+        <SectionCard title="Dados comuns">
+          <FormField
             label="Nome"
             value={form.nome}
             onChangeText={(value) => updateField('nome', value)}
@@ -671,7 +661,7 @@ export default function NovoUsuarioScreen() {
             error={errors.nome}
           />
 
-          <Field
+          <FormField
             label="E-mail"
             value={form.email}
             onChangeText={(value) => updateField('email', value)}
@@ -681,7 +671,7 @@ export default function NovoUsuarioScreen() {
             error={errors.email}
           />
 
-          <Field
+          <FormField
             label="Telefone"
             value={form.telefone}
             onChangeText={(value) => updateField('telefone', value)}
@@ -689,7 +679,7 @@ export default function NovoUsuarioScreen() {
             keyboardType="phone-pad"
           />
 
-          <Field
+          <FormField
             label="Documento"
             value={form.documento}
             onChangeText={(value) => updateField('documento', value)}
@@ -697,60 +687,46 @@ export default function NovoUsuarioScreen() {
           />
 
           <Text style={styles.label}>Perfil</Text>
-          <View style={styles.segmented}>
-            {PERFIS_FORM.map((perfil) => {
-              const active = form.perfil === perfil.key;
-              return (
-                <TouchableOpacity
-                  key={perfil.key}
-                  style={[styles.segmentButton, active && styles.segmentButtonActive]}
-                  onPress={() => updateField('perfil', perfil.key)}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons name={perfil.icon} size={16} color={active ? colors.white : colors.primary} />
-                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{perfil.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <SegmentedChips
+            options={PERFIS_FORM.map((perfil) => ({
+              value: perfil.key,
+              label: perfil.label,
+              icon: perfil.icon as any,
+            }))}
+            value={form.perfil}
+            onChange={(value) => updateField('perfil', value)}
+            style={styles.segmentedField}
+          />
           {errors.perfil && <Text style={styles.errorText}>{errors.perfil}</Text>}
 
           <Text style={[styles.label, styles.labelSpacing]}>Status</Text>
-          <View style={styles.segmented}>
-            {STATUS_USUARIO_ADMIN.map((status) => {
-              const active = form.status === status.key;
-              return (
-                <TouchableOpacity
-                  key={status.key}
-                  style={[styles.segmentButton, active && styles.segmentButtonActive]}
-                  onPress={() => updateField('status', status.key)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{status.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <SegmentedChips
+            options={STATUS_USUARIO_ADMIN.map((status) => ({
+              value: status.key,
+              label: status.label,
+            }))}
+            value={form.status}
+            onChange={(value) => updateField('status', value)}
+            style={styles.segmentedField}
+          />
           {errors.status && <Text style={styles.errorText}>{errors.status}</Text>}
 
-          <Field
+          <FormField
             label="Observações"
             value={form.observacoes}
             onChangeText={(value) => updateField('observacoes', value)}
             placeholder="Observações internas do mock"
             multiline
             numberOfLines={3}
-            style={styles.textarea}
+            textarea
           />
-        </View>
+        </SectionCard>
 
         {form.perfil === 'produtor' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Vínculos do produtor</Text>
-            <Text style={styles.sectionHint}>
-              Selecione uma ou mais propriedades. O vínculo principal preserva a compatibilidade interna atual.
-            </Text>
-
+          <SectionCard
+            title="Vínculos do produtor"
+            subtitle="Selecione uma ou mais propriedades. O vínculo principal preserva a compatibilidade interna atual."
+          >
             <Text style={styles.label}>Propriedades vinculadas</Text>
             {errors.vinculosPropriedades && <Text style={styles.errorText}>{errors.vinculosPropriedades}</Text>}
             <View style={styles.optionList}>
@@ -803,14 +779,12 @@ export default function NovoUsuarioScreen() {
 
             {propriedadeRapida.ativa && (
               <View style={styles.quickPropertyBox}>
-                <View style={styles.infoBoxInline}>
-                  <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-                  <Text style={styles.infoBoxInlineText}>
-                    Cadastro rápido visual/mockado. Dados complementares podem ser ajustados depois em Admin {'->'} Propriedades.
-                  </Text>
-                </View>
+                <InfoBox
+                  message="Cadastro rápido visual/mockado. Dados complementares podem ser ajustados depois em Admin -> Propriedades."
+                  style={styles.infoBoxInline}
+                />
 
-                <Field
+                <FormField
                   label="Nome da propriedade"
                   value={propriedadeRapida.nome}
                   onChangeText={(value) => updatePropriedadeRapida('nome', value)}
@@ -818,14 +792,14 @@ export default function NovoUsuarioScreen() {
                   error={errors.propriedadeRapida_nome}
                 />
 
-                <Field
+                <FormField
                   label="Município"
                   value={propriedadeRapida.municipio}
                   onChangeText={(value) => updatePropriedadeRapida('municipio', value)}
                   placeholder="Ex: Rio Verde"
                 />
 
-                <Field
+                <FormField
                   label="UF/Estado"
                   value={propriedadeRapida.estado}
                   onChangeText={(value) => updatePropriedadeRapida('estado', String(value).toUpperCase())}
@@ -858,7 +832,7 @@ export default function NovoUsuarioScreen() {
                     {errors.propriedadeRapida_regiao && <Text style={styles.errorText}>{errors.propriedadeRapida_regiao}</Text>}
                   </View>
                 ) : (
-                  <Field
+                  <FormField
                     label="Região"
                     value={propriedadeRapida.regiao}
                     onChangeText={(value) => updatePropriedadeRapida('regiao', value)}
@@ -890,7 +864,7 @@ export default function NovoUsuarioScreen() {
                     {errors.propriedadeRapida_microregiao && <Text style={styles.errorText}>{errors.propriedadeRapida_microregiao}</Text>}
                   </View>
                 ) : (
-                  <Field
+                  <FormField
                     label="Microregião"
                     value={propriedadeRapida.microregiao}
                     onChangeText={(value) => updatePropriedadeRapida('microregiao', value)}
@@ -914,7 +888,7 @@ export default function NovoUsuarioScreen() {
                   </View>
                 )}
 
-                <Field
+                <FormField
                   label="Área total"
                   value={propriedadeRapida.area_total}
                   onChangeText={(value) => updatePropriedadeRapida('area_total', value)}
@@ -924,39 +898,27 @@ export default function NovoUsuarioScreen() {
                 />
 
                 <Text style={styles.label}>Status da propriedade</Text>
-                <View style={styles.segmented}>
-                  {STATUS_USUARIO_ADMIN.map((status) => {
-                    const active = propriedadeRapida.status === status.key;
-                    return (
-                      <TouchableOpacity
-                        key={status.key}
-                        style={[styles.segmentButton, active && styles.segmentButtonActive]}
-                        onPress={() => updatePropriedadeRapida('status', status.key)}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{status.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                <SegmentedChips
+                  options={STATUS_USUARIO_ADMIN.map((status) => ({
+                    value: status.key,
+                    label: status.label,
+                  }))}
+                  value={propriedadeRapida.status}
+                  onChange={(value) => updatePropriedadeRapida('status', value)}
+                  style={styles.segmentedField}
+                />
                 {errors.propriedadeRapida_status && <Text style={styles.errorText}>{errors.propriedadeRapida_status}</Text>}
 
                 <Text style={[styles.label, styles.labelSpacing]}>Tipo de vínculo</Text>
-                <View style={styles.miniChipWrap}>
-                  {TIPOS_VINCULO_PRODUTOR.map((tipo) => {
-                    const selected = propriedadeRapida.tipo_vinculo === tipo.key;
-                    return (
-                      <TouchableOpacity
-                        key={tipo.key}
-                        style={[styles.miniChip, selected && styles.miniChipActive]}
-                        onPress={() => updatePropriedadeRapida('tipo_vinculo', tipo.key)}
-                        activeOpacity={0.78}
-                      >
-                        <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>{tipo.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                <SegmentedChips
+                  options={TIPOS_VINCULO_PRODUTOR.map((tipo) => ({
+                    value: tipo.key,
+                    label: tipo.label,
+                  }))}
+                  value={propriedadeRapida.tipo_vinculo}
+                  onChange={(value) => updatePropriedadeRapida('tipo_vinculo', value)}
+                  style={styles.segmentedField}
+                />
 
                 <TouchableOpacity
                   style={[styles.miniChip, styles.quickPrincipalChip, propriedadeRapida.principal && styles.miniChipActive]}
@@ -973,27 +935,26 @@ export default function NovoUsuarioScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <Field
+                <FormField
                   label="Observações"
                   value={propriedadeRapida.observacoes}
                   onChangeText={(value) => updatePropriedadeRapida('observacoes', value)}
                   placeholder="Observações da propriedade no mock"
                   multiline
                   numberOfLines={3}
-                  style={styles.textarea}
+                  textarea
                 />
               </View>
             )}
-          </View>
+          </SectionCard>
         )}
 
         {form.perfil === 'colaborador' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Escopo do colaborador</Text>
-            <Text style={styles.sectionHint}>
-              Os vínculos territoriais abaixo são preparação visual/mockada e ainda não alteram o motor efetivo de permissões.
-            </Text>
-            <Field
+          <SectionCard
+            title="Escopo do colaborador"
+            subtitle="Os vínculos territoriais abaixo são preparação visual/mockada e ainda não alteram o motor efetivo de permissões."
+          >
+            <FormField
               label="Função/cargo"
               value={form.cargo}
               onChangeText={(value) => updateField('cargo', value)}
@@ -1023,7 +984,7 @@ export default function NovoUsuarioScreen() {
                 {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
               </>
             ) : (
-              <Field
+              <FormField
                 label="Região"
                 value={form.regiao}
                 onChangeText={(value) => updateField('regiao', value)}
@@ -1054,7 +1015,7 @@ export default function NovoUsuarioScreen() {
                 </View>
               </View>
             ) : (
-              <Field
+              <FormField
                 label="Microregiões"
                 value={form.subRegioesText}
                 onChangeText={(value) => updateField('subRegioesText', value)}
@@ -1092,28 +1053,21 @@ export default function NovoUsuarioScreen() {
                 })
               )}
             </View>
-          </View>
+          </SectionCard>
         )}
 
         {form.perfil === 'admin' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Acesso administrativo</Text>
+          <SectionCard title="Acesso administrativo">
             <Text style={styles.label}>Nível administrativo</Text>
-            <View style={styles.segmented}>
-              {NIVEIS_ADMIN_USUARIO.map((nivel) => {
-                const active = form.nivelAdministrativo === nivel.key;
-                return (
-                  <TouchableOpacity
-                    key={nivel.key}
-                    style={[styles.segmentButton, active && styles.segmentButtonActive]}
-                    onPress={() => updateField('nivelAdministrativo', nivel.key)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{nivel.label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <SegmentedChips
+              options={NIVEIS_ADMIN_USUARIO.map((nivel) => ({
+                value: nivel.key,
+                label: nivel.label,
+              }))}
+              value={form.nivelAdministrativo}
+              onChange={(value) => updateField('nivelAdministrativo', value)}
+              style={styles.segmentedField}
+            />
             <View style={styles.adminBox}>
               <Ionicons name="earth-outline" size={22} color={colors.primary} />
               <View style={styles.adminBoxText}>
@@ -1121,43 +1075,20 @@ export default function NovoUsuarioScreen() {
                 <Text style={styles.adminBoxSubtitle}>Visão ampla das regiões, usuários e propriedades no MVP mockado.</Text>
               </View>
             </View>
-          </View>
+          </SectionCard>
         )}
 
         <View style={{ height: spacing.xl * 4 }} />
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()} disabled={saving}>
-          <Text style={styles.cancelText}>Cancelar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={handleSave} disabled={saving}>
-          {saving ? (
-            <ActivityIndicator color={colors.white} size="small" />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={20} color={colors.white} />
-              <Text style={styles.saveText}>Salvar</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        loading={saving}
+      />
     </View>
   );
 }
-
-const Field = ({ label, error, style, ...props }: any) => (
-  <View style={styles.field}>
-    <Text style={styles.label}>{label}</Text>
-    <TextInput
-      {...props}
-      style={[styles.input, error && styles.inputError, style]}
-      placeholderTextColor={colors.muted}
-      textAlignVertical={props.multiline ? 'top' : 'center'}
-    />
-    {error && <Text style={styles.errorText}>{error}</Text>}
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -1167,44 +1098,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.screen,
     paddingBottom: spacing.xl * 2,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    backgroundColor: colors.accent,
-    borderRadius: spacing.radius,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  infoText: {
-    flex: 1,
-    color: colors.text,
-    fontSize: typography.fontBody - 1,
-    lineHeight: 20,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: spacing.radius,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    ...shadows.sm,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.fontBody + 1,
-    fontWeight: typography.weightBold,
-    marginBottom: spacing.md,
-  },
-  sectionHint: {
-    color: colors.muted,
-    fontSize: typography.fontCaption + 1,
-    lineHeight: 19,
-    marginBottom: spacing.md,
   },
   field: {
     marginBottom: spacing.md,
@@ -1218,55 +1111,19 @@ const styles = StyleSheet.create({
   labelSpacing: {
     marginTop: spacing.md,
   },
-  input: {
-    backgroundColor: colors.background,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: spacing.radiusSm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    minHeight: 48,
-    color: colors.text,
-    fontSize: typography.fontBody,
-  },
-  textarea: {
-    minHeight: 92,
-  },
-  inputError: {
-    borderColor: colors.error,
+  sectionHint: {
+    color: colors.muted,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 19,
+    marginBottom: spacing.md,
   },
   errorText: {
     color: colors.error,
     fontSize: typography.fontCaption + 1,
     marginTop: spacing.xs,
   },
-  segmented: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  segmentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: colors.background,
-  },
-  segmentButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  segmentText: {
-    color: colors.primary,
-    fontSize: typography.fontCaption + 1,
-    fontWeight: typography.weightBold,
-  },
-  segmentTextActive: {
-    color: colors.white,
+  segmentedField: {
+    marginBottom: spacing.md,
   },
   optionList: {
     borderWidth: 1,
@@ -1423,19 +1280,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   infoBoxInline: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    backgroundColor: colors.accent,
     borderRadius: spacing.radiusSm,
-    padding: spacing.md,
     marginBottom: spacing.md,
-  },
-  infoBoxInlineText: {
-    flex: 1,
-    color: colors.text,
-    fontSize: typography.fontCaption + 1,
-    lineHeight: 18,
   },
   quickPrincipalChip: {
     marginTop: spacing.md,

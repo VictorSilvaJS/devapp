@@ -25,11 +25,12 @@ Componentes-base envolvidos: `FormField`, `FormFooter`, `SectionCard`, `InfoBox`
 
 | ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|
-| V-01 | P1 | Formulários | Abrir `NovoCadernoScreen`, `EditarCadernoScreen`, `NovaVisitaScreen`, `EditarVisitaScreen`, `EditarProdutorScreen`, `NovoProdutorScreen` e `EditProfileScreen` | Campos, seções e rodapés usam componentes-base sem alterar payloads, permissões ou rotas | Reexecutar | Validar visualmente após mudanças incrementais |
+| V-01 | P1 | Formulários | Abrir `NovoCadernoScreen`, `EditarCadernoScreen`, `NovaVisitaScreen`, `EditarVisitaScreen`, `EditarProdutorScreen`, `NovoProdutorScreen`, `NovoUsuarioScreen` e `EditProfileScreen` | Campos, seções e rodapés usam componentes-base sem alterar payloads, permissões ou rotas | Reexecutar | Em `NovoUsuarioScreen`, conferir `SectionCard`, `FormField`, `FormFooter`, `InfoBox` e `SegmentedChips` nos grupos equivalentes |
 | V-02 | P1 | Detalhes | Abrir `ProdutorScreen`, `UsuarioDetailScreen`, `PerfilScreen` e telas relacionadas | Seções, avisos e estados vazios usam padrão visual sem expor campo técnico cru como informação principal | Reexecutar | Preservar linguagem `Propriedade` quando aplicável |
 | V-03 | P1 | Listagens | Abrir `CadernoCampoScreen`, `VisitasScreen` e `UsuariosScreen` | Busca, chips/filtros equivalentes e estados vazios usam componentes-base sem mudar filtros existentes | Reexecutar | Preservar navegação para detalhe/novo registro |
 | V-04 | P1 | Propriedades | Abrir `ProdutoresScreen` | Listagem principal continua visível como `Propriedades`, preservando nome técnico legado da tela/rota | Reexecutar | Não criar `PropriedadesScreen`; não renomear rota |
 | V-05 | P0 | Regressão | Exercitar filtros, busca, limpeza de filtros e navegação nas listagens padronizadas | Resultado funcional idêntico ao comportamento anterior, apenas com composição visual padronizada | Reexecutar | Conferir status, período, ordenação e escopo |
+| V-06 | P0 | Admin/Usuários | Abrir `NovoUsuarioScreen` e alternar entre perfis produtor, colaborador e admin | Blocos condicionais, validações e salvamento permanecem iguais; muda apenas a composição visual | Reexecutar | Preservar `buildUsuarioAdminPayload`, `buildUsuarioFormFromMock`, `Produtor.create`, `vinculos_propriedades`, `vinculos_microregioes` e campos legados |
 
 **Rodada Colaborador - Microfase Para Teste Interno**
 Login principal de teste: `carlos@agrotche.com` / `colab123`.
@@ -91,6 +92,8 @@ Observacao geral: esta rodada valida apenas a sincronizacao visual/mockada Regia
 Login principal de teste: usuario admin mockado disponivel no app.
 
 Observacao geral: esta rodada valida apenas o MVP visual/mockado. O cadastro rapido nao cria login real, nao usa backend, banco, API, migrations, RBAC completo, upload/storage, Drive, CRUD real de regioes/microregioes ou migracao do `acessoControle`.
+
+Atualizacao visual em 2026-05-31: `NovoUsuarioScreen` foi padronizada com componentes-base, preservando payload, mocks, helpers, schemas, validacoes, permissoes, regras, relacoes visuais e campos legados. O cadastro rapido de propriedade dentro de usuario produtor permanece mockado e deve ser revisado futuramente na etapa de fluxos de cadastro.
 
 | ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
