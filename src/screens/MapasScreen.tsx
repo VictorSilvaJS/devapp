@@ -19,6 +19,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import ShapeRenderer from '../components/ShapeRenderer';
 import TalhaoDetailModal from '../components/TalhaoDetailModal';
 import { useToast } from '../components/Toast';
+import { EmptyState, InfoBox, SearchBar, SectionCard, SegmentedChips } from '../components';
 import { Mapa, Produtor, LimiteArea } from '../api/mock';
 import {
   buildFazendaMapaRouteParams,
@@ -62,6 +63,12 @@ const CATEGORIAS = [
 ];
 
 const FILTRO_TODOS = 'todos';
+
+const ORDENACOES_MATERIAIS = [
+  { key: 'recente', label: 'Recente', icon: 'time-outline' },
+  { key: 'titulo', label: 'Título', icon: 'text-outline' },
+  { key: 'tamanho', label: 'Tamanho', icon: 'document-outline' },
+];
 
 const normalizarBusca = (value: unknown): string =>
   typeof value === 'string'
@@ -644,6 +651,52 @@ export default function MapasScreen({ route, navigation }) {
   const subtituloSecaoMateriais = materiaisSaoFertilidade
     ? 'Imagens/anexos de fertilidade disponíveis para consulta.'
     : 'Arquivos técnicos disponíveis para consulta.';
+  const categoriaOptions = useMemo(
+    () => CATEGORIAS.map((cat) => ({
+      value: cat.id,
+      label: cat.nome,
+      icon: cat.icon as any,
+    })),
+    []
+  );
+  const ordenacaoOptions = useMemo(
+    () => ORDENACOES_MATERIAIS.map((item) => ({
+      value: item.key,
+      label: item.label,
+      icon: item.icon as any,
+    })),
+    []
+  );
+  const fazendaFiltroOptions = useMemo(
+    () => [
+      { value: FILTRO_TODOS, label: 'Todas' },
+      ...fazendaOptions.map((fazenda) => ({
+        value: fazenda.id,
+        label: fazenda.label,
+      })),
+    ],
+    [fazendaOptions]
+  );
+  const talhaoFiltroOptions = useMemo(
+    () => [
+      { value: FILTRO_TODOS, label: 'Todos' },
+      ...talhoesPanorama.map((talhao) => ({
+        value: talhao,
+        label: talhao,
+      })),
+    ],
+    [talhoesPanorama]
+  );
+  const safraFiltroOptions = useMemo(
+    () => [
+      { value: FILTRO_TODOS, label: 'Todas' },
+      ...safrasMapas.map((safra) => ({
+        value: safra,
+        label: safra,
+      })),
+    ],
+    [safrasMapas]
+  );
 
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
@@ -906,21 +959,12 @@ export default function MapasScreen({ route, navigation }) {
     >
       {/* Busca */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={20} color={colors.muted} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar mapa, talhão, safra, propriedade..."
-            placeholderTextColor={colors.muted}
-            value={busca}
-            onChangeText={setBusca}
-          />
-          {busca.length > 0 && (
-            <TouchableOpacity onPress={() => setBusca('')} style={styles.clearButton}>
-              <Ionicons name="close-circle" size={20} color={colors.muted} />
-            </TouchableOpacity>
-          )}
-        </View>
+        <SearchBar
+          value={busca}
+          onChangeText={setBusca}
+          onClear={() => setBusca('')}
+          placeholder="Buscar mapa, talhão, safra, propriedade..."
+        />
       </View>
 
       {!consultaPorFazenda && fazendaOptions.length > 1 && (
@@ -928,30 +972,13 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.anoFilterLabel}>
             <Ionicons name="business-outline" size={14} color={colors.text} /> Contexto da consulta:
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-            <TouchableOpacity
-              style={[styles.anoChip, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipActive]}
-              onPress={() => setFazendaFiltroOperacional(FILTRO_TODOS)}
-            >
-              <Text style={[styles.anoChipText, fazendaFiltroOperacional === FILTRO_TODOS && styles.anoChipTextActive]}>
-                Todas
-              </Text>
-            </TouchableOpacity>
-            {fazendaOptions.map((fazenda) => (
-              <TouchableOpacity
-                key={fazenda.id}
-                style={[styles.anoChip, fazendaFiltroOperacional === fazenda.id && styles.anoChipActive]}
-                onPress={() => setFazendaFiltroOperacional(fazenda.id)}
-              >
-                <Text
-                  style={[styles.anoChipText, fazendaFiltroOperacional === fazenda.id && styles.anoChipTextActive]}
-                  numberOfLines={1}
-                >
-                  {fazenda.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <SegmentedChips
+            options={fazendaFiltroOptions}
+            value={fazendaFiltroOperacional}
+            onChange={setFazendaFiltroOperacional}
+            horizontal
+            contentStyle={styles.anoFilterContent}
+          />
         </View>
       )}
 
@@ -987,25 +1014,13 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.anoFilterLabel}>
             <Ionicons name="location-outline" size={14} color={colors.text} /> Talhão:
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-            <TouchableOpacity
-              style={[styles.anoChip, talhaoFiltroAtual === FILTRO_TODOS && styles.anoChipActive]}
-              onPress={() => handleTalhaoFiltroChange(FILTRO_TODOS)}
-            >
-              <Text style={[styles.anoChipText, talhaoFiltroAtual === FILTRO_TODOS && styles.anoChipTextActive]}>Todos</Text>
-            </TouchableOpacity>
-            {talhoesPanorama.map(talhao => (
-              <TouchableOpacity
-                key={talhao}
-                style={[styles.anoChip, talhaoFiltroAtual === talhao && styles.anoChipActive]}
-                onPress={() => handleTalhaoFiltroChange(talhao)}
-              >
-                <Text style={[styles.anoChipText, talhaoFiltroAtual === talhao && styles.anoChipTextActive]} numberOfLines={1}>
-                  {talhao}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <SegmentedChips
+            options={talhaoFiltroOptions}
+            value={talhaoFiltroAtual}
+            onChange={handleTalhaoFiltroChange}
+            horizontal
+            contentStyle={styles.anoFilterContent}
+          />
         </View>
       )}
 
@@ -1014,23 +1029,13 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.anoFilterLabel}>
             <Ionicons name="leaf-outline" size={14} color={colors.text} /> Safra dos materiais:
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-            <TouchableOpacity
-              style={[styles.anoChip, safraFiltroMapas === FILTRO_TODOS && styles.anoChipActive]}
-              onPress={() => setSafraFiltroMapas(FILTRO_TODOS)}
-            >
-              <Text style={[styles.anoChipText, safraFiltroMapas === FILTRO_TODOS && styles.anoChipTextActive]}>Todas</Text>
-            </TouchableOpacity>
-            {safrasMapas.map(safra => (
-              <TouchableOpacity
-                key={safra}
-                style={[styles.anoChip, safraFiltroMapas === safra && styles.anoChipActive]}
-                onPress={() => setSafraFiltroMapas(safra)}
-              >
-                <Text style={[styles.anoChipText, safraFiltroMapas === safra && styles.anoChipTextActive]}>{safra}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <SegmentedChips
+            options={safraFiltroOptions}
+            value={safraFiltroMapas}
+            onChange={setSafraFiltroMapas}
+            horizontal
+            contentStyle={styles.anoFilterContent}
+          />
         </View>
       )}
 
@@ -1058,23 +1063,24 @@ export default function MapasScreen({ route, navigation }) {
       </View>
 
       {limitesFiltrados.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="git-network-outline" size={80} color={colors.muted} />
-          <Text style={styles.emptyText}>
-            {temFiltroPanoramaAtivo
+        <EmptyState
+          icon="git-network-outline"
+          title={
+            temFiltroPanoramaAtivo
               ? 'Nenhuma demarcação encontrada'
               : consultaPorFazenda || fazendaFiltroInfo
                 ? 'Sem demarcação de talhões neste mock'
-                : 'Sem demarcações de talhões no escopo atual'}
-          </Text>
-          <Text style={styles.emptySubtext}>
-            {temFiltroPanoramaAtivo
+                : 'Sem demarcações de talhões no escopo atual'
+          }
+          message={
+            temFiltroPanoramaAtivo
               ? 'Tente ajustar propriedade, talhão, demarcação ou busca.'
               : consultaPorFazenda || fazendaFiltroInfo
                 ? 'Os anexos técnicos podem existir mesmo sem mapa de talhões cadastrado para esta propriedade.'
-                : 'Quando houver demarcações liberadas para as propriedades acessíveis, elas aparecerão aqui.'}
-          </Text>
-        </View>
+                : 'Quando houver demarcações liberadas para as propriedades acessíveis, elas aparecerão aqui.'
+          }
+          style={styles.emptyContainer}
+        />
       ) : (
         <>
           {/* ── Botão Ver no Mapa ────────────────────── */}
@@ -1137,79 +1143,40 @@ export default function MapasScreen({ route, navigation }) {
         </>
       )}
 
-      <View style={styles.materiaisSection}>
-        <View style={styles.shapeSectionHeader}>
-          <Ionicons name="images-outline" size={20} color={colors.primary} />
-          <Text style={styles.shapeSectionTitle}>{tituloSecaoMateriais}</Text>
+      <SectionCard
+        title={tituloSecaoMateriais}
+        subtitle={subtituloSecaoMateriais}
+        icon="images-outline"
+        style={styles.materiaisSection}
+      >
+        <View style={styles.materiaisCountRow}>
           <View style={styles.anoTag}>
             <Text style={styles.anoTagText}>{mapasFiltrados.length}</Text>
           </View>
         </View>
-        <Text style={styles.sectionSubtitle}>{subtituloSecaoMateriais}</Text>
-      </View>
+      </SectionCard>
 
       {/* Filtros de Categoria */}
-      <ScrollView
+      <SegmentedChips
+        options={categoriaOptions}
+        value={categoriaAtiva}
+        onChange={setCategoriaAtiva}
         horizontal
-        showsHorizontalScrollIndicator={false}
         style={styles.categoriasContainer}
-        contentContainerStyle={styles.categoriasContent}
-      >
-        {CATEGORIAS.map(cat => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoriaChip,
-              categoriaAtiva === cat.id && styles.categoriaChipAtiva
-            ]}
-            onPress={() => setCategoriaAtiva(cat.id)}
-          >
-            <Ionicons
-              name={cat.icon}
-              size={18}
-              color={categoriaAtiva === cat.id ? colors.white : colors.primary}
-            />
-            <Text style={[
-              styles.categoriaTexto,
-              categoriaAtiva === cat.id && styles.categoriaTextoAtiva
-            ]}>
-              {cat.nome}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        contentStyle={styles.categoriasContent}
+      />
 
       {/* Ordenação */}
       <View style={styles.ordenacaoContainer}>
         <Text style={styles.ordenacaoLabel}>
           <Ionicons name="swap-vertical-outline" size={14} color={colors.text} /> Ordenar materiais:
         </Text>
-        <View style={styles.ordenacaoButtons}>
-          {[
-            { key: 'recente', label: 'Recente', icon: 'time-outline' },
-            { key: 'titulo', label: 'Título', icon: 'text-outline' },
-            { key: 'tamanho', label: 'Tamanho', icon: 'document-outline' }
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.key}
-              style={[styles.ordenacaoChip, ordenacao === item.key && styles.ordenacaoChipActive]}
-              onPress={() => setOrdenacao(item.key)}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={item.icon}
-                size={14}
-                color={ordenacao === item.key ? colors.white : colors.primary}
-              />
-              <Text style={[
-                styles.ordenacaoChipText,
-                ordenacao === item.key && styles.ordenacaoChipTextActive
-              ]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <SegmentedChips
+          options={ordenacaoOptions}
+          value={ordenacao}
+          onChange={setOrdenacao}
+          contentStyle={styles.ordenacaoButtons}
+        />
       </View>
 
       {podeAssociarMaterial && (
@@ -1224,25 +1191,22 @@ export default function MapasScreen({ route, navigation }) {
       )}
 
       {mapasFiltrados.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons
-            name={temFiltroMaterialAtivo ? 'search-outline' : 'folder-open-outline'}
-            size={80}
-            color={colors.muted}
-          />
-          <Text style={styles.emptyText}>
-            {temFiltroMaterialAtivo
+        <EmptyState
+          icon={temFiltroMaterialAtivo ? 'search-outline' : 'folder-open-outline'}
+          title={
+            temFiltroMaterialAtivo
               ? 'Nenhum material técnico encontrado'
               : materiaisSaoFertilidade
                 ? 'Nenhum anexo de fertilidade disponível'
-                : 'Nenhum material técnico disponível'}
-          </Text>
-          <Text style={styles.emptySubtext}>
-            {temFiltroMaterialAtivo
+                : 'Nenhum material técnico disponível'
+          }
+          message={
+            temFiltroMaterialAtivo
               ? 'Tente ajustar safra, talhão, categoria ou busca.'
-              : 'Quando materiais técnicos forem liberados para este contexto, os arquivos anexados aparecerão aqui.'}
-          </Text>
-        </View>
+              : 'Quando materiais técnicos forem liberados para este contexto, os arquivos anexados aparecerão aqui.'
+          }
+          style={styles.emptyContainer}
+        />
       ) : (
         <View style={styles.mapasLista}>
           {categoriaAtiva === 'todos' ? (
@@ -1396,9 +1360,10 @@ export default function MapasScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
             
-            <Text style={styles.uploadDescription}>
-              Protótipo visual/mockado para testar o conceito de material técnico. Não envia arquivo, não integra storage e não cria cadastro real.
-            </Text>
+            <InfoBox
+              message="Protótipo visual/mockado para testar o conceito de material técnico. Não envia arquivo, não integra storage e não cria cadastro real."
+              style={styles.uploadDescription}
+            />
 
             <ScrollView style={styles.uploadBody} showsVerticalScrollIndicator={false}>
             <View style={styles.uploadAnoContainer}>
@@ -1980,9 +1945,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   uploadDescription: {
-    fontSize: typography.fontBody - 1,
-    color: colors.textLight,
-    lineHeight: 20,
     marginBottom: spacing.lg,
   },
   uploadBody: {
@@ -2432,18 +2394,12 @@ const styles = StyleSheet.create({
   },
 
   materiaisSection: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
   },
-  sectionSubtitle: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.textLight,
-    lineHeight: 18,
-    marginTop: -spacing.sm,
+  materiaisCountRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
   },
 
   // ── SHAPE SECTION ──
