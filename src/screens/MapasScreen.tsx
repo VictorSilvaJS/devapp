@@ -179,7 +179,7 @@ export default function MapasScreen({ route, navigation }) {
   const [uploadFormato, setUploadFormato] = useState('');
   const [uploadTamanho, setUploadTamanho] = useState('');
   const [materialTipo, setMaterialTipo] = useState('Material técnico');
-  const [materialOrigem, setMaterialOrigem] = useState('URL mockada');
+  const [materialOrigem, setMaterialOrigem] = useState('Referência mockada');
   const [materialDescricao, setMaterialDescricao] = useState('');
   const [associandoMaterial, setAssociandoMaterial] = useState(false);
 
@@ -540,7 +540,7 @@ export default function MapasScreen({ route, navigation }) {
     setUploadFormato(mapa?.formato_arquivo || '');
     setUploadTamanho(mapa?.tamanho_arquivo ? String(mapa.tamanho_arquivo) : '');
     setMaterialTipo(formatarTipoMaterial(mapa?.tipo_material) || 'Material técnico');
-    setMaterialOrigem('URL mockada');
+    setMaterialOrigem('Referência mockada');
     setMaterialDescricao(mapa?.observacoes || '');
   };
 
@@ -579,7 +579,7 @@ export default function MapasScreen({ route, navigation }) {
       const atualizado = await Mapa.update(mapaSelecionado.id, result.payload);
       setMapas((prev) => prev.map((mapa) => mapa.id === atualizado.id ? atualizado : mapa));
       setUploadDialog(false);
-      toast.showSuccess('Material técnico associado ao mapa no mock visual.');
+      toast.showSuccess('Referência de material preparada associada no mock visual.');
     } catch (error) {
       toast.showError('Não foi possível associar o material ao mapa.');
     } finally {
@@ -872,7 +872,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.75}
         >
           <Ionicons name="link-outline" size={15} color={colors.primary} />
-          <Text style={styles.associarMaterialText}>Cadastrar material técnico (mock)</Text>
+          <Text style={styles.associarMaterialText}>Associar material preparado (mock)</Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -1154,6 +1154,10 @@ export default function MapasScreen({ route, navigation }) {
             <Text style={styles.anoTagText}>{mapasFiltrados.length}</Text>
           </View>
         </View>
+        <InfoBox
+          message="Neste MVP de campo, os materiais já vêm preparados no app ou apontam para uma referência mockada. A tela apenas permite consultar ou abrir esses materiais."
+          style={styles.uploadDescription}
+        />
       </SectionCard>
 
       {/* Filtros de Categoria */}
@@ -1186,7 +1190,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.7}
         >
           <Ionicons name="link-outline" size={20} color={colors.white} />
-          <Text style={styles.uploadButtonText}>Cadastrar material técnico (mock)</Text>
+          <Text style={styles.uploadButtonText}>Associar material preparado (mock)</Text>
         </TouchableOpacity>
       )}
 
@@ -1203,7 +1207,7 @@ export default function MapasScreen({ route, navigation }) {
           message={
             temFiltroMaterialAtivo
               ? 'Tente ajustar safra, talhão, categoria ou busca.'
-              : 'Quando materiais técnicos forem liberados para este contexto, os arquivos anexados aparecerão aqui.'
+              : 'Quando materiais previamente preparados forem liberados para este contexto, eles aparecerão aqui para consulta.'
           }
           style={styles.emptyContainer}
         />
@@ -1290,15 +1294,15 @@ export default function MapasScreen({ route, navigation }) {
 
       {renderPanorama()}
 
-      {/* Dialog de abertura de material */}
+      {/* Dialog de visualização de material */}
       <ConfirmDialog
         visible={downloadDialog.visible}
-        title="Abrir material"
+        title="Visualizar material"
         message={downloadDialog.mapa 
-          ? `Abrir o material "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'ARQ'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}\nOrigem: ${downloadDialog.status?.arquivoUrl || 'URL não informada'}` 
+          ? `Abrir para consulta o material "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'ARQ'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}\nReferência: ${downloadDialog.status?.arquivoUrl || 'URL não informada'}`
           : ''}
         type="info"
-        confirmText="Abrir"
+        confirmText="Visualizar"
         cancelText="Cancelar"
         onConfirm={confirmDownload}
         onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
@@ -1341,7 +1345,7 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       </Modal>
 
-      {/* Modal de Material Técnico mockado */}
+      {/* Modal de referência de material preparado */}
       <Modal
         visible={uploadDialog}
         transparent
@@ -1353,7 +1357,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.uploadHeader}>
               <View style={styles.uploadHeaderLeft}>
                 <Ionicons name="document-attach-outline" size={24} color={colors.primary} />
-                <Text style={styles.uploadTitle} numberOfLines={2}>Cadastrar Material Técnico (mock)</Text>
+                <Text style={styles.uploadTitle} numberOfLines={2}>Associar material preparado (mock)</Text>
               </View>
               <TouchableOpacity onPress={() => setUploadDialog(false)} style={styles.uploadClose}>
                 <Ionicons name="close" size={22} color={colors.text} />
@@ -1361,7 +1365,7 @@ export default function MapasScreen({ route, navigation }) {
             </View>
             
             <InfoBox
-              message="Protótipo visual/mockado para testar o conceito de material técnico. Não envia arquivo, não integra storage e não cria cadastro real."
+              message="Neste MVP, os materiais técnicos são previamente carregados no app ou associados por referência mockada. Esta ação não envia arquivos, não integra storage e não cria cadastro real."
               style={styles.uploadDescription}
             />
 
@@ -1399,7 +1403,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.formatosInfo}>
               <Ionicons name="information-circle-outline" size={16} color={colors.info} />
               <Text style={styles.formatosInfoText}>
-                A URL abaixo é apenas mock/dev. URLs aceitas: https://, file://, content://, data: ou asset://
+                A referência abaixo é apenas mock/dev. Formatos aceitos: https://, file://, content://, data: ou asset://
               </Text>
             </View>
 
@@ -1420,7 +1424,7 @@ export default function MapasScreen({ route, navigation }) {
                   style={styles.uploadAnoInput}
                   value={materialOrigem}
                   onChangeText={setMaterialOrigem}
-                  placeholder="URL mockada"
+                  placeholder="Referência mockada"
                   placeholderTextColor={colors.muted}
                 />
               </View>
@@ -1456,7 +1460,7 @@ export default function MapasScreen({ route, navigation }) {
             </View>
 
             <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>URL mockada do arquivo</Text>
+              <Text style={styles.uploadAnoLabel}>Referência do material preparado</Text>
               <TextInput
                 style={styles.uploadAnoInput}
                 value={uploadArquivoUrl}
@@ -1464,7 +1468,7 @@ export default function MapasScreen({ route, navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
-                placeholder="https://exemplo.com/mapa.pdf"
+                placeholder="asset://... ou https://exemplo.com/mapa.pdf"
                 placeholderTextColor={colors.muted}
               />
             </View>
@@ -1510,7 +1514,7 @@ export default function MapasScreen({ route, navigation }) {
 
             {mapaUploadSelecionado && (
               <Text style={styles.uploadMapaSelecionadoInfo}>
-                No MVP visual, "{mapaUploadSelecionado.titulo}" passará a usar o fluxo de Abrir material apenas no mock local.
+                No MVP visual, "{mapaUploadSelecionado.titulo}" passará a usar o fluxo de visualizar material apenas no mock local.
               </Text>
             )}
             </ScrollView>
@@ -1529,7 +1533,7 @@ export default function MapasScreen({ route, navigation }) {
               >
                 <Ionicons name="link-outline" size={18} color={colors.white} />
                 <Text style={styles.uploadConfirmText}>
-                  {associandoMaterial ? 'Associando...' : 'Associar mock'}
+                  {associandoMaterial ? 'Associando...' : 'Associar referência'}
                 </Text>
               </TouchableOpacity>
             </View>

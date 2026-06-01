@@ -164,7 +164,7 @@ export const avaliarDownloadMapa = (
       podeAbrir: false,
       motivo: 'nao_liberado',
       label: 'Indisponível',
-      descricao: 'Material ainda não liberado para consulta ou download.',
+      descricao: 'Material ainda não liberado para consulta.',
     };
   }
 
@@ -193,7 +193,7 @@ export const avaliarDownloadMapa = (
     podeAbrir: true,
     arquivoUrl,
     motivo: 'disponivel',
-    label: 'Abrir material',
-    descricao: 'Material com URL abrível disponível.',
+    label: 'Visualizar material',
+    descricao: 'Material com referência abrível disponível.',
   };
 };

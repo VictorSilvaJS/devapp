@@ -101,8 +101,8 @@ const run = async () => {
       podeAbrir: true,
       arquivoUrl: 'https://cdn.exemplo.com/mapa.pdf',
       motivo: 'disponivel',
-      label: 'Abrir material',
-      descricao: 'Material com URL abrível disponível.',
+      label: 'Visualizar material',
+      descricao: 'Material com referência abrível disponível.',
     });
   });
 
@@ -116,8 +116,8 @@ const run = async () => {
       podeAbrir: true,
       arquivoUrl: 'asset://mapas/sela-prata-i/2025/fertilidade/mapa.png',
       motivo: 'disponivel',
-      label: 'Abrir material',
-      descricao: 'Material com URL abrível disponível.',
+      label: 'Visualizar material',
+      descricao: 'Material com referência abrível disponível.',
     });
   });
 
