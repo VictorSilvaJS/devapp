@@ -34,6 +34,11 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
     }
   };
 
+  const getPerfilLabel = () => {
+    if (user?.perfil === 'admin') return 'Administrador';
+    return user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : 'Produtor';
+  };
+
   return (
     <View style={[styles.container, !showDetails && styles.containerCompact]}>
       <LinearGradient
@@ -61,7 +66,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
           </Text>
           <View style={styles.badge}>
             <Text style={styles.perfil}>
-              {user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : 'Produtor'}
+              {getPerfilLabel()}
             </Text>
           </View>
         </View>

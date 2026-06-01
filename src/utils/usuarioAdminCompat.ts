@@ -6,7 +6,7 @@ export const PERFIS_USUARIO_ADMIN = [
   { key: 'todos', label: 'Todos' },
   { key: 'produtor', label: 'Produtores' },
   { key: 'colaborador', label: 'Colaboradores' },
-  { key: 'admin', label: 'Admins' },
+  { key: 'admin', label: 'Administradores' },
 ];
 
 export const STATUS_USUARIO_ADMIN = [
@@ -40,7 +40,7 @@ export const getUsuarioNome = (usuario: any) => normalizeNome(usuario || {}) || 
 
 export const getUsuarioPerfilLabel = (perfil?: string) => {
   const labels = {
-    admin: 'Admin',
+    admin: 'Administrador',
     colaborador: 'Colaborador',
     produtor: 'Produtor',
   };

@@ -13,7 +13,7 @@ const NOTIFICACOES_INICIAIS = [
     id: '1',
     tipo: 'visita',
     titulo: 'Visita Agendada',
-    mensagem: 'Nova visita técnica agendada para Fazenda Santa Maria',
+    mensagem: 'Nova visita técnica agendada para Propriedade Santa Maria',
     data: new Date().toISOString(),
     lida: false,
     prioridade: 'normal',
@@ -59,7 +59,7 @@ export const NotificacaoProvider = ({ children }) => {
       id: '1',
       tipo: 'visita',
       titulo: 'Visita Agendada',
-      mensagem: 'Nova visita técnica agendada para Fazenda Santa Maria',
+      mensagem: 'Nova visita técnica agendada para Propriedade Santa Maria',
       data: new Date().toISOString(),
       lida: false,
       prioridade: 'normal', // baixa, normal, alta

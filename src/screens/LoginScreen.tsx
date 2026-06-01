@@ -169,7 +169,7 @@ export default function LoginScreen({ navigation }) {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
-                      <Text style={styles.devBtnText}>Admin (Bruna)</Text>
+                      <Text style={styles.devBtnText}>Administrador (Bruna)</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 

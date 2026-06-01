@@ -47,7 +47,7 @@ import {
 const PERFIS_FORM = [
   { key: 'produtor', label: 'Produtor', icon: 'leaf-outline' },
   { key: 'colaborador', label: 'Colaborador', icon: 'briefcase-outline' },
-  { key: 'admin', label: 'Admin', icon: 'shield-checkmark-outline' },
+  { key: 'admin', label: 'Administrador', icon: 'shield-checkmark-outline' },
 ];
 
 const TIPOS_VINCULO_PRODUTOR = TIPOS_VINCULO_PROPRIEDADE_USUARIO.filter((tipo) =>
@@ -780,7 +780,7 @@ export default function NovoUsuarioScreen() {
             {propriedadeRapida.ativa && (
               <View style={styles.quickPropertyBox}>
                 <InfoBox
-                  message="Cadastro rápido visual/mockado. Dados complementares podem ser ajustados depois em Admin -> Propriedades."
+                  message="Cadastro rápido visual/mockado. Dados complementares podem ser ajustados depois em Administrador -> Propriedades."
                   style={styles.infoBoxInline}
                 />
 
