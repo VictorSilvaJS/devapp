@@ -174,8 +174,8 @@ export const avaliarDownloadMapa = (
     return {
       podeAbrir: false,
       motivo: 'sem_arquivo',
-      label: 'Sem arquivo',
-      descricao: 'Este mapa não possui arquivo ou URL anexado no mock atual.',
+      label: 'Referência pendente',
+      descricao: 'Material não disponível no MVP demonstrável.',
     };
   }
 
@@ -184,8 +184,8 @@ export const avaliarDownloadMapa = (
       podeAbrir: false,
       arquivoUrl,
       motivo: 'arquivo_nao_usavel',
-      label: 'Arquivo pendente',
-      descricao: 'O mock informa um caminho de arquivo, mas ele não aponta para um material abrível.',
+      label: 'Referência pendente',
+      descricao: 'Material cadastrado como referência no mock, mas sem arquivo abrível neste APK.',
     };
   }
 

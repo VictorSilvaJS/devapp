@@ -179,7 +179,7 @@ export default function LoginScreen({ navigation }) {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="people-outline" size={18} color={colors.secondary} />
-                      <Text style={styles.devBtnText}>Colab. (Carlos)</Text>
+                      <Text style={styles.devBtnText}>Colab. (Marcos)</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
@@ -189,7 +189,7 @@ export default function LoginScreen({ navigation }) {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="leaf-outline" size={18} color={colors.success} />
-                      <Text style={styles.devBtnText}>Produtor (João)</Text>
+                      <Text style={styles.devBtnText}>Produtor (Sela)</Text>
                     </TouchableOpacity>
                   </View>
                 )}

@@ -174,9 +174,9 @@ export const authLoginByProfile = async (profileKey) => {
       const profileMap = {
         'admin': users.find(u => u.id === 'u1'),
         'admin2': users.find(u => u.id === 'u1b'),
-        'colaborador': users.find(u => u.id === 'u2'),
+        'colaborador': users.find(u => u.id === 'u5'),
         'colaborador2': users.find(u => u.id === 'u3'),
-        'produtor': users.find(u => u.id === 'u7'),
+        'produtor': users.find(u => u.id === 'u_sela1'),
         'produtor2': users.find(u => u.id === 'u9'),
       };
       const u = profileMap[profileKey];

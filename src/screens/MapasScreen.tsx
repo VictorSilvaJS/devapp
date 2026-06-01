@@ -872,7 +872,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.75}
         >
           <Ionicons name="link-outline" size={15} color={colors.primary} />
-          <Text style={styles.associarMaterialText}>Associar material preparado (mock)</Text>
+          <Text style={styles.associarMaterialText}>Mock interno: associar referência</Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>
@@ -1190,7 +1190,7 @@ export default function MapasScreen({ route, navigation }) {
           activeOpacity={0.7}
         >
           <Ionicons name="link-outline" size={20} color={colors.white} />
-          <Text style={styles.uploadButtonText}>Associar material preparado (mock)</Text>
+          <Text style={styles.uploadButtonText}>Mock interno: associar referência</Text>
         </TouchableOpacity>
       )}
 
@@ -1357,7 +1357,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.uploadHeader}>
               <View style={styles.uploadHeaderLeft}>
                 <Ionicons name="document-attach-outline" size={24} color={colors.primary} />
-                <Text style={styles.uploadTitle} numberOfLines={2}>Associar material preparado (mock)</Text>
+                <Text style={styles.uploadTitle} numberOfLines={2}>Mock interno: associar referência</Text>
               </View>
               <TouchableOpacity onPress={() => setUploadDialog(false)} style={styles.uploadClose}>
                 <Ionicons name="close" size={22} color={colors.text} />
