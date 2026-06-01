@@ -179,7 +179,7 @@ export default function LoginScreen({ navigation }) {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="people-outline" size={18} color={colors.secondary} />
-                      <Text style={styles.devBtnText}>Colab. (Marcos)</Text>
+                      <Text style={styles.devBtnText}>Colaborador (Marcos)</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 

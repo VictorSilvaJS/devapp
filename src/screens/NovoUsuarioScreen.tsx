@@ -32,6 +32,7 @@ import {
   buildUsuarioFormFromMock,
   getFazendaOptionLabel,
   getUsuarioNome,
+  getUsuarioPerfilLabel,
   getVinculoPropriedadeLabel,
   getVinculosPropriedadeUsuario,
   normalizeFormVinculosPropriedade,
@@ -45,9 +46,9 @@ import {
 } from '../utils/territorioCompat';
 
 const PERFIS_FORM = [
-  { key: 'produtor', label: 'Produtor', icon: 'leaf-outline' },
-  { key: 'colaborador', label: 'Colaborador', icon: 'briefcase-outline' },
-  { key: 'admin', label: 'Administrador', icon: 'shield-checkmark-outline' },
+  { key: 'produtor', label: getUsuarioPerfilLabel('produtor'), icon: 'leaf-outline' },
+  { key: 'colaborador', label: getUsuarioPerfilLabel('colaborador'), icon: 'briefcase-outline' },
+  { key: 'admin', label: getUsuarioPerfilLabel('admin'), icon: 'shield-checkmark-outline' },
 ];
 
 const TIPOS_VINCULO_PRODUTOR = TIPOS_VINCULO_PROPRIEDADE_USUARIO.filter((tipo) =>
@@ -724,7 +725,7 @@ export default function NovoUsuarioScreen() {
 
         {form.perfil === 'produtor' && (
           <SectionCard
-            title="Vínculos do produtor"
+            title="Vínculos do Produtor"
             subtitle="Selecione uma ou mais propriedades. O vínculo principal preserva a compatibilidade interna atual."
           >
             <Text style={styles.label}>Propriedades vinculadas</Text>
@@ -951,7 +952,7 @@ export default function NovoUsuarioScreen() {
 
         {form.perfil === 'colaborador' && (
           <SectionCard
-            title="Escopo do colaborador"
+            title="Escopo do Colaborador"
             subtitle="Os vínculos territoriais abaixo são preparação visual/mockada e ainda não alteram o motor efetivo de permissões."
           >
             <FormField

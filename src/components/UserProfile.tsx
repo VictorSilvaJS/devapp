@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, shadows } from '../theme';
 import { normalizeNome } from '../domain';
+import { getUsuarioPerfilLabel } from '../utils/usuarioAdminCompat';
 
 export default function UserProfile({ user, size = 'medium', showDetails = true }) {
   const sizeStyles = {
@@ -35,8 +36,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
   };
 
   const getPerfilLabel = () => {
-    if (user?.perfil === 'admin') return 'Administrador';
-    return user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : 'Produtor';
+    return user?.perfil ? getUsuarioPerfilLabel(user.perfil) : 'Produtor';
   };
 
   return (

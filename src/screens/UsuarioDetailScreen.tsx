@@ -202,7 +202,7 @@ export default function UsuarioDetailScreen() {
         </SectionCard>
 
         {usuario.perfil === 'produtor' && (
-          <SectionCard title="Vínculo do produtor">
+          <SectionCard title="Vínculo do Produtor">
             <InfoRow
               icon="link-outline"
               label="Vínculos registrados"
@@ -235,7 +235,7 @@ export default function UsuarioDetailScreen() {
         )}
 
         {usuario.perfil === 'colaborador' && (
-          <SectionCard title="Escopo do colaborador">
+          <SectionCard title="Escopo do Colaborador">
             <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
 

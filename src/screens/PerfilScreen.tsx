@@ -11,6 +11,7 @@ import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
+import { getUsuarioPerfilLabel } from '../utils/usuarioAdminCompat';
 
 const smokeRoutes = [
   {
@@ -71,7 +72,7 @@ const smokeRoutes = [
   {
     id: 'S-09',
     label: 'CadernoDetail c3',
-    description: 'Admin abre caderno restrito ao produtor',
+    description: 'Administrador abre caderno restrito ao Produtor',
     route: 'CadernoDetail',
     params: { cadernoId: 'c3' },
   },
@@ -85,14 +86,14 @@ const smokeRoutes = [
   {
     id: 'S-11',
     label: 'EditarVisita v1',
-    description: 'Admin edita visita e confere propriedade travada',
+    description: 'Administrador edita visita e confere propriedade travada',
     route: 'EditarVisita',
     params: { visitaId: 'v1' },
   },
   {
     id: 'S-12',
     label: 'EditarCaderno c1',
-    description: 'Admin edita caderno e confere propriedade travada',
+    description: 'Administrador edita caderno e confere propriedade travada',
     route: 'EditarCaderno',
     params: { cadernoId: 'c1' },
   },
@@ -106,13 +107,13 @@ const smokeRoutes = [
   {
     id: 'S-15/S-16',
     label: 'NovaVisita',
-    description: 'Admin/colaborador cria visita em propriedade autorizada',
+    description: 'Administrador/Colaborador cria visita em propriedade autorizada',
     route: 'NovaVisita',
   },
   {
     id: 'S-17',
     label: 'NovoCaderno',
-    description: 'Admin cria caderno pela listagem',
+    description: 'Administrador cria caderno pela listagem',
     route: 'NovoCaderno',
   },
   {
@@ -132,7 +133,7 @@ const smokeRoutes = [
   {
     id: 'S-20/S-22',
     label: 'Propriedade p1',
-    description: 'Admin abre detalhe da propriedade para testar aba Caderno e novo registro',
+    description: 'Administrador abre detalhe da propriedade para testar aba Caderno e novo registro',
     route: 'ProdutorDetail',
     params: { id: 'p1' },
   },
@@ -167,7 +168,7 @@ export default function PerfilScreen({ navigation }) {
   const toast = useToast();
   const [showLogout, setShowLogout] = useState(false);
   const insets = useSafeAreaInsets();
-  const perfilLabel = user?.perfil ? user.perfil.charAt(0).toUpperCase() + user.perfil.slice(1) : '-';
+  const perfilLabel = user?.perfil ? getUsuarioPerfilLabel(user.perfil) : '-';
 
   useEffect(() => {
     console.log('[PerfilScreen] mounted');
