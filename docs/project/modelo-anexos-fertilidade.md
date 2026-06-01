@@ -186,11 +186,18 @@ No mock atual:
 
 - anexos de fertilidade podem continuar representados dentro de `Mapa`
 - `fazenda_id` pode continuar por compatibilidade
+- os cinco PNGs da Sela de Prata I ja possuem metadados conceituais adicionados de forma aditiva: `propriedade_id`, `tipo_anexo`, `elemento_label`, `talhao_id`, `talhao_nome`, `arquivo_nome_original`, `origem`, `status` e `visivel_para_produtor`
+- campos legados como `fazenda_id`, `produtor_id`, `talhao`, `subcategoria`, `data_criacao` e `disponivel_download` foram preservados para compatibilidade
 - `arquivo_url`, `formato_arquivo`, `tamanho_arquivo`, `elemento`, `profundidade`, `talhao`, `safra` e `observacoes` ja ajudam a indicar o contrato futuro
+- `src/types/anexoFertilidade.ts` existe como contrato futuro isolado, mas ainda nao esta integrado a telas, mocks estruturais, contratos de dominio, filtros, download ou permissoes
+- `MapasScreen` usa nomenclatura visual padronizada para diferenciar `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade` e `Material tecnico`
 - nao existe upload real
 - nao existe storage real
 - nao existe backend real
 - nao existe publicacao persistente real
+- nao existe importacao automatica do Drive
+- nao existe fluxo real de confirmacao manual dos metadados
 
 No modelo futuro, o nome preferencial para o vinculo operacional deve ser `propriedade_id`.
 
+Cada PNG, PDF, KML, KMZ ou GeoJSON devera virar um registro tecnico com metadados confirmados manualmente antes da publicacao. O arquivo fisico deve ficar em storage/backend, enquanto o app consome os metadados e a URL.

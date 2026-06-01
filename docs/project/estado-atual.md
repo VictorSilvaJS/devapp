@@ -63,7 +63,8 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - a importacao controlada da propriedade Sela de Prata I possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, registrando campos de origem, campo de nome usado, contagens e status de revisao da amostra
 - a biblioteca mock de mapas agora aceita material tecnico por `fazenda_id`, campo/talhao e elemento/camada; esse identificador permanece como chave tecnica interna do contexto de propriedade; a propriedade Sela de Prata I possui uma amostra pequena de PNGs de diagnostico de fertilidade como anexos visuais por pH, argila, materia organica, fosforo e potassio
 - a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
-- `MapasScreen.tsx` exibe a profundidade quando informada e pode abrir os PNGs internos da amostra da propriedade Sela de Prata I como imagem/anexo
+- `MapasScreen.tsx` usa nomenclatura visual padronizada para a area de materiais, incluindo `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`
+- `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -86,7 +87,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
-- exibicao de profundidade em materiais de mapa quando o campo opcional estiver preenchido
+- exibicao de profundidade, elemento, safra, talhao/propriedade inteira e nome original em materiais/anexos quando esses campos estiverem preenchidos
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 - base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
@@ -103,6 +104,8 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - salvamento persistente de anexos em banco, storage local gerenciado ou storage remoto
 - API/backend para anexos de mapas
 - importacao automatica dos arquivos da pasta de origem
+- importacao automatica do Drive
+- fluxo de aprovacao/publicacao real para anexos tecnicos
 - gestao completa do acervo de arquivos tecnicos
 - notificacoes push reais
 - sincronizacao offline de verdade
@@ -449,7 +452,32 @@ Esse resultado valida apenas a experiencia visual/mockada prevista para o MVP at
 
 O mapa interativo da propriedade usa apenas talhoes/limites vindos de `LimiteArea`, alimentados pelo GeoJSON normalizado de `src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de `data/processados/p_sela1/2025/limites_talhoes.geojson`.
 
-Os mapas de elementos de fertilidade sao registros mockados da entidade `Mapa`. Na amostra atual, os PNGs ficam como anexos visuais internos do app em `src/assets/mapas/sela-prata-i/2025/fertilidade/`. Esses PNGs nao sao camadas georreferenciadas e nao sao sobrepostos ao mapa. Eles devem ser tratados apenas como imagens/anexos para consulta.
+Os mapas de elementos de fertilidade sao registros mockados da entidade `Mapa`. Na amostra atual, os PNGs ficam como anexos visuais internos do app em `src/assets/mapas/sela-prata-i/2025/fertilidade/`. Esses PNGs nao sao camadas georreferenciadas e nao sao sobrepostos ao mapa. Eles devem ser tratados como anexos de fertilidade para consulta.
+
+Atualizacao em 2026-06-01: a nomenclatura visual da `MapasScreen` foi padronizada para diferenciar anexos de fertilidade, mapas de fertilidade e materiais tecnicos genericos. A tela passou a exibir textos como `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`, sem alterar filtros, download, permissao, rotas ou contratos.
+
+Os cinco PNGs de fertilidade da Sela de Prata I foram enriquecidos no mock com metadados conceituais do modelo futuro:
+
+- `propriedade_id`
+- `tipo_anexo`
+- `elemento_label`
+- `talhao_id`
+- `talhao_nome`
+- `arquivo_nome_original`
+- `origem`
+- `status`
+- `visivel_para_produtor`
+
+Os campos legados foram preservados para compatibilidade:
+
+- `fazenda_id`
+- `produtor_id`
+- `talhao`
+- `subcategoria`
+- `data_criacao`
+- `disponivel_download`
+
+O tipo `src/types/anexoFertilidade.ts` existe como contrato futuro isolado, mas ainda nao esta integrado a telas, mocks estruturais, contratos de dominio, filtros, download ou permissoes.
 
 Nao existe ainda:
 
@@ -458,8 +486,12 @@ Nao existe ainda:
 - persistencia real em banco ou storage
 - API/backend para anexos
 - pipeline de importacao automatica
+- importacao automatica do Drive
 - leitura/importacao de todos os arquivos da pasta `PANORAMA-DAS-LAVOURAS`
+- fluxo real de aprovacao/publicacao
 - gestao completa de versoes, liberacao, historico ou revisao do acervo
+
+No futuro, cada PNG, PDF, KML, KMZ ou GeoJSON devera virar um registro tecnico com metadados confirmados manualmente antes da publicacao. O arquivo fisico deve ficar em storage/backend, enquanto o app deve consumir metadados, URL e regras de visibilidade/publicacao.
 
 A proxima evolucao de arquivos reais permanece pendente e deve tratar fluxo administrativo, persistencia, storage/backend, permissoes por acao e pipeline produtivo de recebimento, validacao e publicacao.
 

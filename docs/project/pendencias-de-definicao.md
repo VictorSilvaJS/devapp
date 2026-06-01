@@ -144,14 +144,21 @@ Estado atual do teste local: existe uma amostragem da propriedade Sela de Prata 
 
 Estado atual dos anexos visuais: existe uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I cadastrada manualmente no mock como registros da entidade `Mapa`. Esses PNGs sao assets internos do app apenas para validacao visual do MVP. Eles nao representam upload real, cadastro administrativo completo, persistencia em banco/storage, API de anexos, importacao automatica ou gestao completa do acervo.
 
+Atualizacao em 2026-06-01: os cinco PNGs da Sela de Prata I foram enriquecidos de forma aditiva no mock com metadados conceituais do futuro `AnexoFertilidade`, preservando campos legados como `fazenda_id`, `produtor_id`, `talhao`, `subcategoria`, `data_criacao` e `disponivel_download`. Tambem existe o tipo isolado `src/types/anexoFertilidade.ts`, ainda nao integrado ao dominio real.
+
 Permanece pendente definir e implementar:
 
+- integracao futura de `AnexoFertilidade` ao dominio real, sem quebrar a compatibilidade atual
 - fluxo administrativo real para cadastrar/liberar PNGs e outros anexos
 - estrategia de armazenamento persistente dos arquivos
+- backend/storage/upload para anexos e materiais tecnicos
 - API/backend para anexos de mapas
+- fluxo de confirmacao manual dos metadados antes da publicacao
+- status real de publicacao/liberacao dos anexos
 - regras de permissao por acao para criacao, edicao, remocao, liberacao e download
 - tratamento de versoes, historico e revisao dos materiais
 - pipeline produtivo para receber, validar, armazenar e publicar materiais tecnicos
+- migracao futura de `fazenda_id` para `propriedade_id`, preservando compatibilidade durante a transicao
 - separacao clara entre amostras mockadas e acervo operacional real
 
 ## Regra de Governanca

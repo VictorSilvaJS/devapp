@@ -93,8 +93,12 @@ const getMapaSafra = (mapa: any): string => {
   return ano ? String(ano) : '';
 };
 
-const getMapaTalhao = (mapa: any): string =>
-  typeof mapa?.talhao === 'string' ? mapa.talhao.trim() : '';
+const getMapaTalhao = (mapa: any): string => {
+  const talhaoNome = typeof mapa?.talhao_nome === 'string' ? mapa.talhao_nome.trim() : '';
+  if (talhaoNome) return talhaoNome;
+
+  return typeof mapa?.talhao === 'string' ? mapa.talhao.trim() : '';
+};
 
 const getMapaProfundidade = (mapa: any): string =>
   typeof mapa?.profundidade === 'string' ? mapa.profundidade.trim() : '';
@@ -114,6 +118,9 @@ const ELEMENTO_LABELS: Record<string, string> = {
 };
 
 const getMapaElementoLabel = (mapa: any): string => {
+  const elementoLabel = typeof mapa?.elemento_label === 'string' ? mapa.elemento_label.trim() : '';
+  if (elementoLabel) return elementoLabel;
+
   const subcategoria = typeof mapa?.subcategoria === 'string' ? mapa.subcategoria.trim() : '';
   if (subcategoria) return subcategoria;
 
@@ -122,6 +129,9 @@ const getMapaElementoLabel = (mapa: any): string => {
 
   return ELEMENTO_LABELS[elemento] ?? elemento;
 };
+
+const getMapaArquivoNomeOriginal = (mapa: any): string =>
+  typeof mapa?.arquivo_nome_original === 'string' ? mapa.arquivo_nome_original.trim() : '';
 
 const getSafraSortValue = (safra: string): number => {
   const anos = safra.match(/\d{4}/g)?.map((ano) => Number.parseInt(ano, 10)) ?? [];
@@ -547,7 +557,7 @@ export default function MapasScreen({ route, navigation }) {
   const abrirAssociacaoMaterial = (mapa = null) => {
     const mapaBase = mapa || mapasFiltrados[0] || mapasAssociacaoOptions[0];
     if (!mapaBase) {
-      toast.showInfo('Não há mapas no contexto atual para associar material.');
+      toast.showInfo('Não há materiais técnicos no contexto atual para associar referência.');
       return;
     }
 
@@ -559,7 +569,7 @@ export default function MapasScreen({ route, navigation }) {
     const mapaSelecionado = mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId);
 
     if (!mapaSelecionado) {
-      toast.showError('Selecione um mapa para associar o material.');
+      toast.showError('Selecione um material técnico para associar a referência.');
       return;
     }
 
@@ -581,7 +591,7 @@ export default function MapasScreen({ route, navigation }) {
       setUploadDialog(false);
       toast.showSuccess('Referência de material preparada associada no mock visual.');
     } catch (error) {
-      toast.showError('Não foi possível associar o material ao mapa.');
+      toast.showError('Não foi possível associar a referência ao material técnico.');
     } finally {
       setAssociandoMaterial(false);
     }
@@ -646,11 +656,11 @@ export default function MapasScreen({ route, navigation }) {
       && mapasNoContexto.every((mapa) => mapa.categoria === 'fertilidade')
     );
   const tituloSecaoMateriais = materiaisSaoFertilidade
-    ? 'Anexos de Fertilidade'
+    ? 'Anexos de fertilidade'
     : 'Anexos e materiais técnicos';
   const subtituloSecaoMateriais = materiaisSaoFertilidade
-    ? 'Imagens/anexos de fertilidade disponíveis para consulta.'
-    : 'Arquivos técnicos disponíveis para consulta.';
+    ? 'Anexos de fertilidade disponíveis para consulta.'
+    : 'Materiais técnicos disponíveis para consulta.';
   const categoriaOptions = useMemo(
     () => CATEGORIAS.map((cat) => ({
       value: cat.id,
@@ -773,10 +783,23 @@ export default function MapasScreen({ route, navigation }) {
     const safraMapa = getMapaSafra(mapa);
     const elementoLabel = getMapaElementoLabel(mapa);
     const profundidadeMapa = getMapaProfundidade(mapa);
+    const talhaoMapa = getMapaTalhao(mapa);
+    const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
     const statusDownload = avaliarDownloadMapa(mapa);
     const formatoArquivo = getFormatoArquivo(mapa);
     const formatoLabel = formatoArquivo ? formatoArquivo.toUpperCase() : 'ARQ';
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
+    const isAnexoFertilidade = mapa?.tipo_anexo === 'anexo_fertilidade';
+    const tipoArquivoLabel = isAnexoFertilidade
+      ? `Anexo de fertilidade ${formatoLabel}`
+      : mapa?.categoria === 'fertilidade'
+        ? `Mapa de fertilidade ${formatoLabel}`
+        : `Material técnico ${formatoLabel}`;
+    const abrirMaterialLabel = statusDownload.podeAbrir
+      ? isAnexoFertilidade
+        ? 'Abrir anexo'
+        : 'Visualizar material'
+      : statusDownload.label;
     const tipoMaterialLabel = formatarTipoMaterial(mapa.tipo_material);
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
@@ -785,8 +808,9 @@ export default function MapasScreen({ route, navigation }) {
       renderMapaMetaChip('flask-outline', 'Elemento', elementoLabel),
       renderMapaMetaChip('resize-outline', 'Profundidade', profundidadeMapa),
       renderMapaMetaChip('calendar-outline', 'Safra/ano', safraMapa || formatarData(mapa.data_criacao)),
-      renderMapaMetaChip('location-outline', 'Talhão', mapa.talhao),
+      renderMapaMetaChip('location-outline', 'Talhão', talhaoMapa),
       renderMapaMetaChip('home-outline', 'Propriedade', fazendaMapaInfo?.fazendaNome),
+      renderMapaMetaChip('document-attach-outline', 'Nome original', arquivoNomeOriginal),
     ].filter(Boolean);
 
     return (
@@ -814,7 +838,7 @@ export default function MapasScreen({ route, navigation }) {
                 color={isImagemAnexo ? colors.info : colors.primary}
               />
               <Text style={[styles.mapaTipoTexto, isImagemAnexo && styles.mapaTipoTextoImagem]}>
-                {isImagemAnexo ? `Imagem/anexo ${formatoLabel}` : `Arquivo ${formatoLabel}`}
+                {tipoArquivoLabel}
               </Text>
             </View>
             {tipoMaterialLabel ? (
@@ -856,7 +880,7 @@ export default function MapasScreen({ route, navigation }) {
             styles.downloadTexto,
             !statusDownload.podeAbrir && styles.downloadTextoIndisponivel,
           ]}>
-            {statusDownload.podeAbrir && isImagemAnexo ? 'Abrir imagem' : statusDownload.label}
+            {abrirMaterialLabel}
           </Text>
         </View>
       </View>
@@ -963,7 +987,7 @@ export default function MapasScreen({ route, navigation }) {
           value={busca}
           onChangeText={setBusca}
           onClear={() => setBusca('')}
-          placeholder="Buscar mapa, talhão, safra, propriedade..."
+          placeholder="Buscar material, talhão, safra, propriedade..."
         />
       </View>
 
@@ -1076,7 +1100,7 @@ export default function MapasScreen({ route, navigation }) {
             temFiltroPanoramaAtivo
               ? 'Tente ajustar propriedade, talhão, demarcação ou busca.'
               : consultaPorFazenda || fazendaFiltroInfo
-                ? 'Os anexos técnicos podem existir mesmo sem mapa de talhões cadastrado para esta propriedade.'
+                ? 'Os anexos de fertilidade e materiais técnicos podem existir mesmo sem mapa de talhões cadastrado para esta propriedade.'
                 : 'Quando houver demarcações liberadas para as propriedades acessíveis, elas aparecerão aqui.'
           }
           style={styles.emptyContainer}
@@ -1319,11 +1343,14 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.imagePreviewHeader}>
               <View style={styles.imagePreviewTitleWrap}>
                 <Text style={styles.imagePreviewTitle} numberOfLines={1}>
-                  {imagePreview.mapa?.titulo || 'Material'}
+                  {imagePreview.mapa?.titulo || 'Material técnico'}
                 </Text>
-                {imagePreview.mapa?.profundidade ? (
+                {imagePreview.mapa && (getMapaElementoLabel(imagePreview.mapa) || imagePreview.mapa?.profundidade) ? (
                   <Text style={styles.imagePreviewSubtitle}>
-                    Profundidade {imagePreview.mapa.profundidade}
+                    {[
+                      getMapaElementoLabel(imagePreview.mapa),
+                      imagePreview.mapa?.profundidade ? `Profundidade ${imagePreview.mapa.profundidade}` : null,
+                    ].filter(Boolean).join(' • ')}
                   </Text>
                 ) : null}
               </View>
@@ -1365,13 +1392,13 @@ export default function MapasScreen({ route, navigation }) {
             </View>
             
             <InfoBox
-              message="Neste MVP, os materiais técnicos são previamente carregados no app ou associados por referência mockada. Esta ação não envia arquivos, não integra storage e não cria cadastro real."
+              message="Neste MVP, os materiais técnicos são previamente carregados no app ou associados por referência mockada. Esta ação não envia materiais, não integra storage e não cria cadastro real."
               style={styles.uploadDescription}
             />
 
             <ScrollView style={styles.uploadBody} showsVerticalScrollIndicator={false}>
             <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>Mapa</Text>
+              <Text style={styles.uploadAnoLabel}>Material técnico</Text>
               <ScrollView style={styles.uploadMapaOptions} nestedScrollEnabled>
                 {mapasAssociacaoOptions.map((mapa) => {
                   const ativo = uploadMapaId === mapa.id;
@@ -1389,7 +1416,7 @@ export default function MapasScreen({ route, navigation }) {
                           {mapa.titulo}
                         </Text>
                         <Text style={styles.uploadMapaOptionSubtitulo} numberOfLines={1}>
-                          {mapa.talhao || 'Talhão não informado'} • {getMapaSafra(mapa) || 'Safra não informada'} • {status.label}
+                          {getMapaTalhao(mapa) || 'Talhão não informado'} • {getMapaSafra(mapa) || 'Safra não informada'} • {status.label}
                         </Text>
                       </View>
                       {ativo && <Ionicons name="checkmark-circle" size={18} color={colors.primary} />}
@@ -1445,7 +1472,7 @@ export default function MapasScreen({ route, navigation }) {
                 <Text style={styles.uploadAnoLabel}>Talhão opcional</Text>
                 <View style={styles.uploadReadonlyBox}>
                   <Text style={styles.uploadReadonlyText} numberOfLines={1}>
-                    {mapaUploadSelecionado?.talhao || 'Não informado'}
+                    {mapaUploadSelecionado ? getMapaTalhao(mapaUploadSelecionado) || 'Não informado' : 'Não informado'}
                   </Text>
                 </View>
               </View>
@@ -1468,7 +1495,7 @@ export default function MapasScreen({ route, navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
-                placeholder="asset://... ou https://exemplo.com/mapa.pdf"
+                placeholder="asset://... ou https://exemplo.com/material.pdf"
                 placeholderTextColor={colors.muted}
               />
             </View>
