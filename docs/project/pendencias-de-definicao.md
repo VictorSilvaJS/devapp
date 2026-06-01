@@ -16,11 +16,23 @@ A nomenclatura de produto foi consolidada em `decisoes-consolidadas.md`: `Propri
 
 Nao permanece pendente a definicao da linguagem de produto. O que ainda fica para uma fase futura separada e a limpeza tecnica interna de nomes legados como `fazenda`, `fazenda_id`, `getFazendaId`, rotas, arquivos, contratos e campos internos, caso o projeto decida reduzir essa compatibilidade.
 
+Termos tecnicos legados atualmente permitidos por compatibilidade incluem `fazenda_id`, `fazendaId`, `fazendaNome`, `FazendaMapa`, `FazendaMapaScreen`, `MapaFazendaView`, `getFazenda*`, `fazendaUiCompat`, `fazendaCadastroCompat`, `FazendaCanonica` e `FazendaLegada`.
+
+Esses termos permanecem porque ainda estao ligados a rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. Uma migracao tecnica deve planejar leitura dupla quando necessario, preferindo `propriedade_id` para modelos novos sem remover `fazenda_id` antes de validar todos os fluxos afetados.
+
 **Por que importa**
 
 - evita refatoracao ampla e arriscada durante o MVP
 - preserva compatibilidade com fluxos e contratos existentes
 - separa decisao de linguagem de produto de renomeacao tecnica interna
+- reduz risco de quebrar navegacao, permissoes, filtros e dados mockados
+
+**Pendencia futura**
+
+- planejar migracao tecnica controlada de `fazenda_id` para `propriedade_id`
+- criar compatibilidade de leitura dupla se necessario
+- testar fluxos de produtor, colaborador, admin, mapas, visitas, caderno e filtros antes de remover legado
+- manter `fazenda*` apenas para compatibilidade existente ate a migracao estar validada
 
 ### 2. Contratos centrais do dominio
 

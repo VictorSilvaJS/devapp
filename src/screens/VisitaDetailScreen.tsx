@@ -259,7 +259,7 @@ export default function VisitaDetailScreen() {
           </View>
         </View>
 
-        {/* Informações da Fazenda */}
+        {/* Informações da Propriedade */}
         {fazenda && fazendaInfo && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>

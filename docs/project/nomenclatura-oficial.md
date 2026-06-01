@@ -5,6 +5,7 @@ Este documento resume a linguagem oficial de produto para evitar ambiguidade dur
 ## Termos Principais
 
 - `Propriedade`: unidade operacional vista pelo usuario.
+- `Propriedades`: plural oficial para a unidade operacional vista pelo usuario.
 - `Produtor`: usuario/perfil final que consulta sua realidade operacional.
 - `Titular`: responsavel cadastral ou vinculo principal da propriedade.
 - `Colaborador`: usuario regional com escopo operacional restrito.
@@ -23,9 +24,34 @@ Os valores internos de perfil continuam:
 - `colaborador`
 - `admin`
 
-Campos, rotas, helpers e contratos legados como `fazenda`, `fazenda_id`, `fazendaId`, `getFazendaId` e `FazendaMapa` podem permanecer temporariamente por compatibilidade.
+Campos, rotas, helpers, arquivos, componentes e contratos legados podem permanecer temporariamente por compatibilidade quando estiverem ligados a comportamento existente.
+
+Termos tecnicos legados permitidos no codigo:
+
+- `fazenda_id`
+- `fazendaId`
+- `fazendaNome`
+- `FazendaMapa`
+- `FazendaMapaScreen`
+- `MapaFazendaView`
+- `getFazenda*`
+- `fazendaUiCompat`
+- `fazendaCadastroCompat`
+- `FazendaCanonica`
+- `FazendaLegada`
 
 Na interface e em documentacao de produto, a linguagem preferencial e `Propriedade`. No modelo futuro de anexos, `propriedade_id` deve ser o nome preferencial, preservando `fazenda_id` enquanto o mock e os contratos existentes dependerem dele.
+
+### Motivo Da Compatibilidade
+
+Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. Renomear essa base agora tem alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
+
+### Regra Para Novas Implementacoes
+
+- Novos textos visiveis devem usar `Propriedade` ou `Propriedades`.
+- Novos documentos ativos devem usar `Propriedade` ou `Propriedades`.
+- Novos modelos futuros devem preferir `propriedade_id`.
+- Use `fazenda*` apenas quando estiver lidando com compatibilidade existente.
 
 ## Anexos Tecnicos
 
@@ -42,4 +68,3 @@ Arquivos tecnicos nao devem ser entendidos como anexos soltos. Sempre que possiv
 - visibilidade para produtor
 
 O modelo conceitual detalhado para fertilidade esta em `modelo-anexos-fertilidade.md`.
-

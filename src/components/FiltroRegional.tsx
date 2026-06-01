@@ -126,7 +126,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
             <Text style={styles.regiaoInfoText}>Região: {fixedRegiao}</Text>
           </View>
 
-          {/* Filtros: Microregião + Fazenda */}
+          {/* Filtros: Microregião + Propriedade */}
           <View style={styles.filtrosRow}>
             {/* Filtro Microregião */}
             <TouchableOpacity 
@@ -158,7 +158,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
               />
             </TouchableOpacity>
 
-            {/* Filtro Fazenda */}
+            {/* Filtro Propriedade */}
             <TouchableOpacity 
               style={[
                 styles.filtroButton,
@@ -285,9 +285,9 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
             </TouchableOpacity>
           </View>
 
-          {/* Filtros - Segunda linha: Fazenda + Limpar */}
+          {/* Filtros - Segunda linha: Propriedade + Limpar */}
           <View style={[styles.filtrosRow, { marginTop: spacing.xs }]}>
-            {/* Filtro Fazenda */}
+            {/* Filtro Propriedade */}
             <TouchableOpacity 
               style={[
                 styles.filtroButton,
@@ -538,7 +538,7 @@ export default function FiltroRegional({ fixedRegiao, microregiaoOptions }: Filt
                             {fazsProp.length} {fazsProp.length === 1 ? 'propriedade' : 'propriedades'}
                           </Text>
                         </View>
-                        {/* Fazendas do proprietário */}
+                        {/* Propriedades do proprietário */}
                         {fazsProp.map((fazenda) => (
                           <TouchableOpacity
                             key={fazenda.id}

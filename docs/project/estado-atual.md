@@ -6,7 +6,7 @@ Quando houver conflito entre documentos antigos e o codigo, priorize este arquiv
 
 ## Convencao Oficial de Linguagem
 
-Na linguagem de produto, o termo oficial para a unidade operacional vista pelo usuario e `Propriedade`.
+Na linguagem de produto, o termo oficial para a unidade operacional vista pelo usuario e `Propriedade`. No plural, usar `Propriedades`.
 
 Termos consolidados:
 
@@ -14,7 +14,11 @@ Termos consolidados:
 - `Titular`: responsavel cadastral ou vinculo principal da propriedade.
 - `Talhao`: subdivisao interna da propriedade.
 
-No codigo legado e na documentacao tecnica, nomes como `fazenda`, `fazenda_id`, `getFazendaId`, rotas, arquivos, contratos e campos internos permanecem temporariamente por compatibilidade. Alias historicos como `cliente` e `proprietario` aparecem apenas quando ajudam a explicar inconsistencias ainda existentes no codigo, nos mocks ou em documentos antigos.
+No codigo legado e na documentacao tecnica, nomes como `fazenda`, `fazenda_id`, `fazendaId`, `fazendaNome`, `getFazenda*`, `FazendaMapa`, `FazendaMapaScreen`, `MapaFazendaView`, `fazendaUiCompat`, `fazendaCadastroCompat`, `FazendaCanonica` e `FazendaLegada` permanecem temporariamente por compatibilidade. Alias historicos como `cliente` e `proprietario` aparecem apenas quando ajudam a explicar inconsistencias ainda existentes no codigo, nos mocks ou em documentos antigos.
+
+Esses nomes tecnicos continuam vinculados a rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. A limpeza visual feita ate aqui nao renomeia essa base porque isso teria alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
+
+Para novas implementacoes, novos textos visiveis e novos documentos ativos devem usar `Propriedade`/`Propriedades`. Novos modelos futuros devem preferir `propriedade_id`. O uso de `fazenda*` deve ficar restrito a compatibilidade com codigo existente.
 
 ## Objetivo Aparente
 

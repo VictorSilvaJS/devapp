@@ -90,7 +90,7 @@ export default function ProdutoresScreen() {
     return 0;
   });
 
-  // Calcular estatísticas da listagem Fazenda + Titular
+  // Calcular estatísticas da listagem Propriedade + Titular
   const metricasFazendas = buildFazendaListMetrics(produtores);
 
   // Formata área para exibição compacta
@@ -345,7 +345,7 @@ export default function ProdutoresScreen() {
           </ScrollView>
         )}
 
-        {/* Lista de Fazendas + Titular */}
+        {/* Lista de Propriedades + Titular */}
         {produtoresFiltrados.length === 0 ? (
           <EmptyState
             icon={listaSemResultadoPorFiltro ? 'search-outline' : 'person-add-outline'}
