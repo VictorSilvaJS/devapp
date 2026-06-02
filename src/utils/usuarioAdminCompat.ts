@@ -1,6 +1,12 @@
 import { normalizeNome } from '../domain';
 import { getFazendaId, getTitularIdFazenda } from './acessoControle';
 import { getFazendaUiInfo } from './fazendaUiCompat';
+import {
+  getPropriedadeId,
+  getPropriedadeNome,
+  getTitularId,
+  getTitularNome,
+} from './propriedadeCompat';
 
 export const PERFIS_USUARIO_ADMIN = [
   { key: 'todos', label: 'Todos' },
@@ -36,6 +42,12 @@ const statusLabels = {
 
 const validStatus = new Set(Object.keys(statusLabels));
 
+const resolvePropriedadeId = (propriedade: any): string =>
+  getFazendaId(propriedade) || getPropriedadeId(propriedade) || '';
+
+const resolveTitularId = (propriedade: any): string =>
+  getTitularIdFazenda(propriedade) || getTitularId(propriedade) || '';
+
 export const getUsuarioNome = (usuario: any) => normalizeNome(usuario || {}) || 'Usuário sem nome';
 
 export const getUsuarioPerfilLabel = (perfil?: string) => {
@@ -69,12 +81,7 @@ export const getUsuarioProdutorId = (usuario: any) =>
   typeof usuario?.produtor_id === 'string' ? usuario.produtor_id.trim() : '';
 
 const normalizeVinculoPropriedade = (vinculo: any, usuarioId?: string) => {
-  const propriedadeId =
-    typeof vinculo?.propriedade_id === 'string'
-      ? vinculo.propriedade_id.trim()
-      : typeof vinculo?.fazenda_id === 'string'
-        ? vinculo.fazenda_id.trim()
-        : '';
+  const propriedadeId = getPropriedadeId(vinculo) || '';
 
   if (!propriedadeId) return null;
 
@@ -98,10 +105,10 @@ export const getVinculosPropriedadeUsuario = (usuario: any, propriedades: any[] 
     if (!produtorId) return [];
 
     return propriedades
-      .filter((propriedade) => getTitularIdFazenda(propriedade) === produtorId)
+      .filter((propriedade) => resolveTitularId(propriedade) === produtorId)
       .map((propriedade, index) => ({
         usuario_id: usuario?.id || '',
-        propriedade_id: getFazendaId(propriedade),
+        propriedade_id: resolvePropriedadeId(propriedade),
         tipo_vinculo: usuario?.tipo_vinculo_produtor || 'titular',
         principal: index === 0,
       }));
@@ -157,19 +164,19 @@ export const getPropriedadesDoUsuarioProdutor = (usuario: any, propriedades: any
   const vinculos = getVinculosPropriedadeUsuario(usuario, propriedades);
   if (vinculos.length > 0 || Array.isArray(usuario?.vinculos_propriedades)) {
     const ids = new Set(vinculos.map((vinculo) => vinculo.propriedade_id));
-    return propriedades.filter((propriedade) => ids.has(getFazendaId(propriedade)));
+    return propriedades.filter((propriedade) => ids.has(resolvePropriedadeId(propriedade)));
   }
 
   const produtorId = getUsuarioProdutorId(usuario);
   if (!produtorId) return [];
 
-  return propriedades.filter((propriedade) => getTitularIdFazenda(propriedade) === produtorId);
+  return propriedades.filter((propriedade) => resolveTitularId(propriedade) === produtorId);
 };
 
 export const getPropriedadesDoColaborador = (usuario: any, propriedades: any[] = []) => {
   const idsAtribuidos = new Set(getPropriedadeIdsAtribuidas(usuario));
   if (idsAtribuidos.size > 0) {
-    return propriedades.filter((propriedade) => idsAtribuidos.has(getFazendaId(propriedade)));
+    return propriedades.filter((propriedade) => idsAtribuidos.has(resolvePropriedadeId(propriedade)));
   }
 
   const subRegioes = new Set(getSubRegioesUsuario(usuario));
@@ -266,10 +273,10 @@ export const buildUsuarioAdminPayload = ({
   if (perfil === 'produtor') {
     const vinculoPrincipal = vinculosPropriedades.find((vinculo) => vinculo.principal) || vinculosPropriedades[0];
     const propriedadePrincipal = (propriedades || []).find(
-      (propriedade) => getFazendaId(propriedade) === vinculoPrincipal?.propriedade_id
+      (propriedade) => resolvePropriedadeId(propriedade) === vinculoPrincipal?.propriedade_id
     );
     const produtorId =
-      getTitularIdFazenda(propriedadePrincipal)
+      resolveTitularId(propriedadePrincipal)
       || form.produtor_id?.trim()
       || existing?.produtor_id
       || '';
@@ -379,8 +386,8 @@ export const getFazendaOptionLabel = (propriedade: any) => {
   const info = getFazendaUiInfo(propriedade);
   return {
     id: info.id,
-    title: info.fazendaNome || 'Propriedade sem nome',
-    subtitle: [info.titularNome, info.localizacao].filter(Boolean).join(' • '),
+    title: info.fazendaNome || getPropriedadeNome(propriedade) || 'Propriedade sem nome',
+    subtitle: [info.titularNome || getTitularNome(propriedade), info.localizacao].filter(Boolean).join(' • '),
   };
 };
 
