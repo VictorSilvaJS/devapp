@@ -10,6 +10,7 @@ Este documento resume a linguagem oficial de produto para evitar ambiguidade dur
 - `Titular`: responsavel cadastral ou vinculo principal da propriedade.
 - `Colaborador`: usuario regional com escopo operacional restrito.
 - `Administrador`: texto visivel para o perfil interno `admin`.
+- `Vinculo`: relacao cadastral entre usuario e propriedade ou entre usuario e territorio.
 - `Talhao`: subdivisao interna da propriedade.
 - `Safra`: periodo agricola.
 - `Regiao`: agrupamento territorial amplo.
@@ -30,7 +31,14 @@ Termos tecnicos legados permitidos no codigo:
 
 - `fazenda_id`
 - `fazendaId`
+- `fazenda_nome`
 - `fazendaNome`
+- `produtor_id`
+- `proprietario_id`
+- `produtores`
+- `NovoProdutorScreen`
+- `EditarProdutorScreen`
+- `ProdutoresScreen`
 - `FazendaMapa`
 - `FazendaMapaScreen`
 - `MapaFazendaView`
@@ -68,3 +76,10 @@ Arquivos tecnicos nao devem ser entendidos como anexos soltos. Sempre que possiv
 - visibilidade para produtor
 
 O modelo conceitual detalhado para fertilidade esta em `modelo-anexos-fertilidade.md`.
+
+## Cadastros Do MVP
+
+A matriz oficial de campos, obrigatoriedades, vinculos e riscos dos cadastros
+do MVP esta em `matriz-cadastros-mvp.md`. Ela separa Usuario, Produtor,
+Colaborador, Administrador, Propriedade, Titular e Vinculo sem alterar codigo,
+mock, rotas, permissoes ou contratos.

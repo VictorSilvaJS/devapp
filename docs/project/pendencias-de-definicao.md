@@ -85,6 +85,8 @@ A tendencia para o MVP e centralizar o cadastro de novos usuarios/produtores em 
 
 Status em 2026-05-30: esta pendencia permanece aberta apos a microfase de padronizacao visual. A padronizacao nao alterou fluxo, regra, mock, rota ou payload de cadastro. A recomendacao operacional para o MVP continua sendo manter o cadastro de usuario/produtor centralizado em `Admin -> Usuarios` e usar Nova Propriedade apenas para vincular produtor/titular ja cadastrado, ate haver decisao especifica em uma fase de revisao de fluxos.
 
+Status em 2026-06-01: a matriz oficial de cadastros do MVP foi criada em `docs/project/matriz-cadastros-mvp.md`. Ela consolida os conceitos, campos obrigatorios, campos opcionais/mockados, nomes legados preservados, riscos e ordem futura recomendada. A pendencia funcional continua aberta porque a matriz nao altera fluxo, regra, mock, rota, payload ou permissao.
+
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 
 ## Pendencias de Regra e Permissao

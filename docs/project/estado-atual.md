@@ -95,6 +95,26 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 - base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
+## Matriz De Cadastros Do MVP
+
+Status em 2026-06-01: foi criada a matriz oficial de cadastros do MVP em
+`docs/project/matriz-cadastros-mvp.md`, apenas como documentacao.
+
+A matriz consolida a separacao entre:
+
+- `Usuario` como pessoa/acesso
+- `Produtor` como perfil de usuario
+- `Colaborador` como usuario com escopo territorial/propriedades
+- `Administrador` como usuario gestor
+- `Propriedade` como unidade rural/operacional
+- `Titular` como produtor vinculado a propriedade
+- `Vinculo` como relacao entre usuario, propriedade e/ou territorio
+
+O documento tambem registra campos obrigatorios do MVP, campos opcionais ou
+mockados, nomes legados preservados e riscos conhecidos dos fluxos de cadastro.
+Esta etapa nao alterou codigo, mock, telas, rotas, permissoes, contratos ou
+nomes de arquivos.
+
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
 - autenticacao real
@@ -605,6 +625,7 @@ Use estes documentos junto com este retrato do presente:
 - `docs/project/escopo-mvp.md` para o limite atual do MVP
 - `docs/project/regras-de-negocio.md` para regras de dominio e acesso
 - `docs/project/decisoes-consolidadas.md` para direcoes ja assumidas pelo projeto
+- `docs/project/matriz-cadastros-mvp.md` para campos, obrigatoriedades e riscos dos cadastros do MVP
 - `docs/project/pendencias-de-definicao.md` para pontos reais ainda em aberto
 - `docs/project/plano-reorganizacao.md` para a ordem tecnica do trabalho
 - `docs/project/roadmap-futuro.md` para backlog de evolucao apos a estabilizacao da base
