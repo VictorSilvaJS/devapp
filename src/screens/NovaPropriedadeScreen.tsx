@@ -52,7 +52,7 @@ const getScopeErrorMessage = (reason?: string) => {
   }
 };
 
-export default function NovoProdutorScreen({ navigation }) {
+export default function NovaPropriedadeScreen({ navigation }) {
   const toast = useToast();
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);

@@ -81,7 +81,7 @@ O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais f
 
 Ainda falta avaliar se a tela de Nova Propriedade deve permitir criar novo titular/produtor dentro do proprio cadastro.
 
-A tendencia para o MVP e centralizar o cadastro de novos usuarios/produtores em `NovoUsuarioScreen` e deixar `NovoProdutorScreen`/Nova Propriedade apenas para selecionar um produtor/titular ja existente.
+A tendencia para o MVP e centralizar o cadastro de novos usuarios/produtores em `NovoUsuarioScreen` e deixar `NovaPropriedadeScreen` apenas para selecionar um produtor/titular ja existente.
 
 Status em 2026-05-30: esta pendencia permanece aberta apos a microfase de padronizacao visual. A padronizacao nao alterou fluxo, regra, mock, rota ou payload de cadastro. A recomendacao operacional para o MVP continua sendo manter o cadastro de usuario/produtor centralizado em `Admin -> Usuarios` e usar Nova Propriedade apenas para vincular produtor/titular ja cadastrado, ate haver decisao especifica em uma fase de revisao de fluxos.
 
@@ -97,6 +97,16 @@ Status em 2026-06-02: o reforco visual do Bloco 6B deixou explicitos os limites 
 Status em 2026-06-02 (Bloco 6C): o fechamento documental registrou esse estado
 em `estado-atual.md`, `matriz-cadastros-mvp.md` e `smoke.md`. A pendencia segue
 aberta para revisao futura de fluxo, backend, transacao e integridade real.
+
+Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
+Propriedade foram renomeados para `PropriedadesScreen`,
+`NovaPropriedadeScreen` e `EditarPropriedadeScreen`, mas as rotas internas
+permanecem legadas temporariamente: `Produtores`, `Meus Produtores`,
+`NovoProdutor` e `EditarProdutor`. Pendencia futura: criar fase de migracao ou
+aliases de rotas, avaliando `Produtores -> Propriedades`, `Meus Produtores ->
+Minhas Propriedades` ou outra decisao de produto, `NovoProdutor ->
+NovaPropriedade` e `EditarProdutor -> EditarPropriedade`; depois atualizar
+`RootParamList` e `navigation.navigate(...)` com smoke completo.
 
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 

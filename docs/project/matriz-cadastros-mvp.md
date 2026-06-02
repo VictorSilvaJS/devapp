@@ -129,9 +129,8 @@ payloads existentes.
 - `produtor_id`
 - `proprietario_id`
 - `produtores` no mock representando propriedades/fazendas legadas
-- `NovoProdutorScreen` como nome tecnico legado para Nova Propriedade
-- `EditarProdutorScreen` como nome tecnico legado para Editar Propriedade
-- `ProdutoresScreen` como nome tecnico legado para listagem de Propriedades
+- rotas internas `NovoProdutor` e `EditarProdutor`
+- rotas internas `Produtores` e `Meus Produtores`
 
 ## Riscos Conhecidos
 
@@ -153,12 +152,31 @@ payloads existentes.
 ## Leitura Do Estado Atual Das Telas
 
 - `NovoUsuarioScreen` representa cadastro de pessoa/usuario.
-- `NovoProdutorScreen`, apesar do nome tecnico, representa Nova Propriedade.
-- `EditarProdutorScreen` representa edicao de Propriedade.
-- `ProdutoresScreen` representa listagem de Propriedades.
+- `NovaPropriedadeScreen` representa Nova Propriedade.
+- `EditarPropriedadeScreen` representa edicao de Propriedade.
+- `PropriedadesScreen` representa listagem de Propriedades.
 - Produtor como perfil e diferente de Titular da propriedade.
 - Propriedade e a unidade rural/operacional.
 - Titular e o produtor vinculado a propriedade.
+
+## Transicao Tecnica De Telas E Rotas
+
+Status em 2026-06-02: os arquivos/componentes das telas de Propriedade foram
+renomeados para `PropriedadesScreen`, `NovaPropriedadeScreen` e
+`EditarPropriedadeScreen`. Os arquivos legados `ProdutoresScreen.tsx`,
+`NovoProdutorScreen.tsx` e `EditarProdutorScreen.tsx` foram
+renomeados/removidos como arquivos atuais.
+
+As rotas internas ainda permanecem legadas temporariamente:
+
+- `Produtores`
+- `Meus Produtores`
+- `NovoProdutor`
+- `EditarProdutor`
+
+Motivo: rotas sao contratos de navegacao por string e ainda aparecem em
+`RootParamList` e `navigation.navigate(...)`. A migracao de rotas deve ocorrer
+em fase propria, com aliases e smoke completo.
 
 ## Fechamento Do Estado Atual
 

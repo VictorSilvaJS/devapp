@@ -140,7 +140,7 @@ Nao fazem parte deste teste:
 
 - `LoginScreen`
 - `ClienteDashboardScreen`
-- `ProdutoresScreen`
+- `PropriedadesScreen`
 - `ProdutorScreen`
 - `MapasScreen`
 - `FazendaMapaScreen`
@@ -167,7 +167,7 @@ Podem ficar como estao por enquanto, desde que passem no fluxo basico do teste:
 - `CadernoDetailScreen`
 - `UsuariosScreen`
 - `UsuarioDetailScreen`
-- `EditarProdutorScreen`
+- `EditarPropriedadeScreen`
 - `EditarVisitaScreen`
 - `EditarCadernoScreen`
 

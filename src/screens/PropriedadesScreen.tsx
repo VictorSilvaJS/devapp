@@ -21,7 +21,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function ProdutoresScreen() {
+export default function PropriedadesScreen() {
   const [produtores, setProdutores] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');

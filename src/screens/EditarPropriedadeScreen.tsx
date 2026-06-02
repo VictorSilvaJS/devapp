@@ -25,7 +25,7 @@ import {
 import { podeEditarProdutor } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
-export default function EditarProdutorScreen({ route, navigation }) {
+export default function EditarPropriedadeScreen({ route, navigation }) {
   const toast = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);

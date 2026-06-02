@@ -128,6 +128,33 @@ atribuidas` ao colaborador ainda nao representam RBAC final por propriedade; a
 integridade referencial real entre usuarios, propriedades, titulares e vinculos
 fica para backend.
 
+## Transicao Tecnica Das Telas De Propriedade
+
+Status em 2026-06-02: os arquivos e componentes das telas que representam
+Propriedades foram renomeados tecnicamente para a linguagem oficial de produto:
+
+- `src/screens/PropriedadesScreen.tsx`
+- `src/screens/NovaPropriedadeScreen.tsx`
+- `src/screens/EditarPropriedadeScreen.tsx`
+
+Os arquivos legados `ProdutoresScreen.tsx`, `NovoProdutorScreen.tsx` e
+`EditarProdutorScreen.tsx` foram renomeados/removidos como arquivos atuais.
+As rotas internas, porem, permanecem temporariamente legadas por
+compatibilidade:
+
+- `Produtores`
+- `Meus Produtores`
+- `NovoProdutor`
+- `EditarProdutor`
+
+Motivo: essas rotas sao contratos de navegacao por string e ainda aparecem em
+`RootParamList` e em chamadas `navigation.navigate(...)`. Renomea-las exige
+fase propria com aliases, atualizacao de tipos, chamadas de navegacao e smoke
+manual completo.
+
+Regra atual: produto/interface usa `Propriedade`; arquivos e componentes novos
+usam `Propriedade`; rotas legadas permanecem ate migracao controlada.
+
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
 - autenticacao real
@@ -175,9 +202,10 @@ Telas padronizadas nesta frente:
 - `NovaVisitaScreen`
 - `EditarVisitaScreen`
 - `VisitasScreen`
-- `EditarProdutorScreen`
-- `NovoProdutorScreen`
+- `EditarPropriedadeScreen`
+- `NovaPropriedadeScreen`
 - `ProdutorScreen`
+- `PropriedadesScreen`
 - `NovoUsuarioScreen`
 - `UsuarioDetailScreen`
 - `UsuariosScreen`

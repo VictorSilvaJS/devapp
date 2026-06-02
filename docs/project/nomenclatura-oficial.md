@@ -36,9 +36,6 @@ Termos tecnicos legados permitidos no codigo:
 - `produtor_id`
 - `proprietario_id`
 - `produtores`
-- `NovoProdutorScreen`
-- `EditarProdutorScreen`
-- `ProdutoresScreen`
 - `FazendaMapa`
 - `FazendaMapaScreen`
 - `MapaFazendaView`
@@ -48,18 +45,33 @@ Termos tecnicos legados permitidos no codigo:
 - `FazendaCanonica`
 - `FazendaLegada`
 
+Arquivos e componentes atuais das telas de Propriedade:
+
+- `PropriedadesScreen`
+- `NovaPropriedadeScreen`
+- `EditarPropriedadeScreen`
+
+Rotas internas que permanecem legadas temporariamente:
+
+- `Produtores`
+- `Meus Produtores`
+- `NovoProdutor`
+- `EditarProdutor`
+
 Na interface e em documentacao de produto, a linguagem preferencial e `Propriedade`. No modelo futuro de anexos, `propriedade_id` deve ser o nome preferencial, preservando `fazenda_id` enquanto o mock e os contratos existentes dependerem dele.
 
 ### Motivo Da Compatibilidade
 
-Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. Renomear essa base agora tem alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
+Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. As rotas sao contratos de navegacao por string e ainda aparecem em `RootParamList` e `navigation.navigate(...)`. Renomear essa base agora tem alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
 
 ### Regra Para Novas Implementacoes
 
 - Novos textos visiveis devem usar `Propriedade` ou `Propriedades`.
 - Novos documentos ativos devem usar `Propriedade` ou `Propriedades`.
+- Novos arquivos e componentes de telas de propriedade devem usar `Propriedade`.
 - Novos modelos futuros devem preferir `propriedade_id`.
 - Use `fazenda*` apenas quando estiver lidando com compatibilidade existente.
+- Preserve as rotas legadas ate uma fase especifica de migracao ou aliases.
 
 ## Anexos Tecnicos
 

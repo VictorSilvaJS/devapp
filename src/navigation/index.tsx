@@ -2,7 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import DashboardScreen from '../screens/DashboardScreen';
-import ProdutoresScreen from '../screens/ProdutoresScreen';
+import PropriedadesScreen from '../screens/PropriedadesScreen';
 import ProdutorScreen from '../screens/ProdutorScreen';
 import MapasScreen from '../screens/MapasScreen';
 import CadernoCampoScreen from '../screens/CadernoCampoScreen';
@@ -10,8 +10,8 @@ import CadernoDetailScreen from '../screens/CadernoDetailScreen';
 import NovoCadernoScreen from '../screens/NovoCadernoScreen';
 import EditarCadernoScreen from '../screens/EditarCadernoScreen';
 import VisitasScreen from '../screens/VisitasScreen';
-import NovoProdutorScreen from '../screens/NovoProdutorScreen';
-import EditarProdutorScreen from '../screens/EditarProdutorScreen';
+import NovaPropriedadeScreen from '../screens/NovaPropriedadeScreen';
+import EditarPropriedadeScreen from '../screens/EditarPropriedadeScreen';
 import NovaVisitaScreen from '../screens/NovaVisitaScreen';
 import VisitaDetailScreen from '../screens/VisitaDetailScreen';
 import EditarVisitaScreen from '../screens/EditarVisitaScreen';
@@ -71,7 +71,7 @@ const AdminTabs = React.memo(function AdminTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tab.Screen name="Produtores" component={ProdutoresScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
+      <Tab.Screen name="Produtores" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Usuarios" component={UsuariosScreen} options={{ title: 'Usuários', tabBarLabel: 'Usuários' }} />
       <Tab.Screen name="Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
       <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
@@ -84,7 +84,7 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tab.Screen name="Meus Produtores" component={ProdutoresScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
+      <Tab.Screen name="Meus Produtores" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Minhas Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
       <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
@@ -133,8 +133,8 @@ export default function Navigation() {
           <Stack.Screen name="Main" component={MemoMainTabs} />
           <Stack.Screen name="ProdutorDetail" component={ProdutorScreen} />
           <Stack.Screen name="Mapas" component={MapasScreen} />
-          <Stack.Screen name="NovoProdutor" component={NovoProdutorScreen} />
-          <Stack.Screen name="EditarProdutor" component={EditarProdutorScreen} />
+          <Stack.Screen name="NovoProdutor" component={NovaPropriedadeScreen} />
+          <Stack.Screen name="EditarProdutor" component={EditarPropriedadeScreen} />
           <Stack.Screen name="UsuarioDetail" component={UsuarioDetailScreen} />
           <Stack.Screen name="NovoUsuario" component={NovoUsuarioScreen} />
           <Stack.Screen name="EditarUsuario" component={NovoUsuarioScreen} />

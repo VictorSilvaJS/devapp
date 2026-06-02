@@ -80,7 +80,7 @@ O dominio tecnico interno ainda mantem `fazenda`, `fazenda_id`, rotas, arquivos,
 - Organizar `screen`, `components`, `hooks` e `types` por feature
 
 **Definicao de pronto**
-- `MapasScreen`, `VisitasScreen`, `ProdutoresScreen` e `DashboardScreen` deixam de concentrar muitas responsabilidades
+- `MapasScreen`, `VisitasScreen`, `PropriedadesScreen` e `DashboardScreen` deixam de concentrar muitas responsabilidades
 
 ### Fase 6 - Infra Real
 
