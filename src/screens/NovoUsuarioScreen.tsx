@@ -343,10 +343,10 @@ export default function NovoUsuarioScreen() {
       return 'Este e-mail já está cadastrado no mock.';
     }
     if (message.includes('Produtor ativo')) {
-      return 'Produtor ativo precisa ter ao menos uma propriedade vinculada.';
+      return 'Produtor ativo é perfil de usuário e precisa ter ao menos uma Propriedade vinculada no mock.';
     }
     if (message.includes('Colaborador ativo')) {
-      return 'Colaborador ativo precisa ter microregião ou propriedade atribuída.';
+      return 'Colaborador ativo precisa ter Microregião ou Propriedade atribuída como escopo de trabalho no mock.';
     }
     if (message.includes('Status obrigatório')) {
       return 'Selecione um status para o usuário.';
@@ -560,7 +560,7 @@ export default function NovoUsuarioScreen() {
       && vinculosPropriedades.length === 0
       && !propriedadeRapidaAtiva
     ) {
-      nextErrors.vinculosPropriedades = 'Produtor ativo precisa ter ao menos uma propriedade vinculada.';
+      nextErrors.vinculosPropriedades = 'Produtor ativo é perfil de usuário e precisa ter ao menos uma Propriedade vinculada no mock.';
     }
 
     if (form.perfil === 'colaborador') {
@@ -572,7 +572,7 @@ export default function NovoUsuarioScreen() {
       }
 
       if (form.status === 'ativo' && !temMicroRegiao && !temPropriedade) {
-        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter microregião ou propriedade atribuída.';
+        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter Microregião ou Propriedade atribuída como escopo de trabalho no mock.';
       }
     }
 
@@ -690,7 +690,7 @@ export default function NovoUsuarioScreen() {
 
         <SectionCard
           title="Perfil de acesso"
-          subtitle="Defina se este usuário acessa como Produtor, Colaborador ou Administrador."
+          subtitle="Defina se este usuário acessa como Produtor, Colaborador ou Administrador, sem expor valores técnicos internos."
         >
           <Text style={styles.label}>Perfil de acesso</Text>
           <SegmentedChips
@@ -733,7 +733,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'produtor' && (
           <SectionCard
             title="Vínculos do Produtor"
-            subtitle="Produtor é o perfil de usuário. Selecione aqui as Propriedades vinculadas a este usuário produtor."
+            subtitle="Produtor é perfil de usuário. Quando estiver ativo, deve ter ao menos uma Propriedade vinculada no mock."
           >
             <Text style={styles.label}>Propriedades vinculadas</Text>
             {errors.vinculosPropriedades && <Text style={styles.errorText}>{errors.vinculosPropriedades}</Text>}
@@ -766,7 +766,7 @@ export default function NovoUsuarioScreen() {
               <View style={styles.quickPropertyHeaderText}>
                 <Text style={styles.linkedTitle}>Propriedade ainda não cadastrada?</Text>
                 <Text style={styles.linkedText}>
-                  Crie uma Propriedade mínima no mock e vincule automaticamente a este usuário produtor.
+                  Crie uma Propriedade mínima no mock e tente vinculá-la a este usuário produtor. Este fluxo não é transação real de backend.
                 </Text>
               </View>
               <TouchableOpacity
@@ -788,7 +788,7 @@ export default function NovoUsuarioScreen() {
             {propriedadeRapida.ativa && (
               <View style={styles.quickPropertyBox}>
                 <InfoBox
-                  message="Cadastro rápido visual/mockado de Propriedade. O titular será inferido pelo usuário produtor deste cadastro."
+                  message="Cadastro rápido visual/mockado de Propriedade. O titular será inferido pelo usuário produtor deste cadastro; não cria autenticação real nem garante transação de backend."
                   style={styles.infoBoxInline}
                 />
 
@@ -960,7 +960,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'colaborador' && (
           <SectionCard
             title="Escopo do Colaborador"
-            subtitle="Defina o escopo visual por Região, Microregião ou Propriedades atribuídas. Esses vínculos ainda não alteram o motor efetivo de permissões."
+            subtitle="Defina o escopo de trabalho por Região, Microregião ou Propriedades atribuídas. Parte desse vínculo ainda é visual/mockada no MVP."
           >
             <FormField
               label="Função/cargo"
@@ -1050,7 +1050,7 @@ export default function NovoUsuarioScreen() {
 
             <Text style={styles.label}>Propriedades atribuídas no mock</Text>
             <Text style={styles.sectionHint}>
-              Opcional. Use quando o colaborador atuar em Propriedades específicas; as permissões atuais continuam baseadas no escopo regional existente.
+              Opcional. Use quando o colaborador atuar em Propriedades específicas; isso não representa RBAC final por propriedade. As permissões efetivas continuam baseadas principalmente no escopo regional/sub-regional existente.
             </Text>
             {errors.escopoColaborador && <Text style={styles.errorText}>{errors.escopoColaborador}</Text>}
             <View style={styles.optionList}>
@@ -1067,7 +1067,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'admin' && (
           <SectionCard
             title="Dados administrativos"
-            subtitle="O perfil Administrador mantém visão ampla da operação no MVP mockado."
+            subtitle="Administrador é o perfil gestor da operação no MVP mockado."
           >
             <Text style={styles.label}>Nível administrativo</Text>
             <SegmentedChips
@@ -1083,7 +1083,7 @@ export default function NovoUsuarioScreen() {
               <Ionicons name="earth-outline" size={22} color={colors.primary} />
               <View style={styles.adminBoxText}>
                 <Text style={styles.adminBoxTitle}>Administrador</Text>
-                <Text style={styles.adminBoxSubtitle}>Visão ampla das regiões, usuários e propriedades no MVP mockado.</Text>
+                <Text style={styles.adminBoxSubtitle}>Perfil gestor com visão ampla das regiões, usuários e propriedades no MVP mockado.</Text>
               </View>
             </View>
           </SectionCard>

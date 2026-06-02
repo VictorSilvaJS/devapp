@@ -171,9 +171,9 @@ export default function EditarProdutorScreen({ route, navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoBox message="Atualize a Propriedade mantendo o Titular vinculado." />
+        <InfoBox message="Atualize a Propriedade mantendo o Titular vinculado. Titular é o produtor responsável já associado no mock." />
 
-        <SectionCard title="Titular preservado" subtitle="O Titular atual permanece vinculado à Propriedade.">
+        <SectionCard title="Titular preservado" subtitle="O Titular atual permanece vinculado à Propriedade; esta edição não troca o vínculo cadastral.">
           <View style={styles.linkedRows}>
             <View style={styles.linkedRow}>
               <View style={styles.linkedIcon}>
@@ -191,7 +191,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
               </View>
               <View style={styles.linkedInfo}>
                 <Text style={styles.linkedLabel}>Vínculo</Text>
-                <Text style={styles.linkedValue}>Titular preservado no mock</Text>
+                <Text style={styles.linkedValue}>Titular/produtor preservado no mock</Text>
               </View>
             </View>
           </View>

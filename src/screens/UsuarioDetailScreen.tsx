@@ -219,8 +219,8 @@ export default function UsuarioDetailScreen() {
                 title={status.key === 'pendente' ? 'Vínculo pendente' : 'Nenhuma propriedade vinculada'}
                 message={
                   status.key === 'pendente'
-                    ? 'Usuário pendente, ainda sem propriedade vinculada.'
-                    : 'Nenhuma propriedade vinculada a este usuário produtor.'
+                    ? 'Usuário produtor pendente, ainda sem Propriedade vinculada.'
+                    : 'Nenhuma Propriedade vinculada a este usuário produtor; produtor ativo deve ter ao menos uma Propriedade no mock.'
                 }
                 style={styles.emptyStateCompact}
               />
@@ -241,6 +241,10 @@ export default function UsuarioDetailScreen() {
           <SectionCard title="Escopo do Colaborador">
             <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
+            <InfoBox
+              message="Região, Microregião e Propriedades atribuídas representam escopo de trabalho no MVP. Propriedades atribuídas ainda não são RBAC final por propriedade."
+              style={styles.inlineInfoBox}
+            />
 
             <Text style={styles.subsectionTitle}>Microregiões atendidas</Text>
             {vinculosMicroregioes.length === 0 ? (
@@ -288,7 +292,7 @@ export default function UsuarioDetailScreen() {
             <InfoRow icon="earth-outline" label="Perfil administrativo" value="Administrador" />
             <InfoRow icon="shield-outline" label="Nível administrativo" value={getNivelAdminLabel(usuario.nivel_administrativo)} />
             <InfoRow icon="shield-checkmark-outline" label="Escopo" value={(usuario.regioes_acesso || ['Brasil']).join(', ')} />
-            <InfoBox message="Este perfil representa visão ampla da operação no MVP mockado." style={styles.inlineInfoBox} />
+            <InfoBox message="Administrador é perfil gestor e representa visão ampla da operação no MVP mockado." style={styles.inlineInfoBox} />
           </SectionCard>
         )}
 

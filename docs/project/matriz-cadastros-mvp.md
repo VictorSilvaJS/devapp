@@ -159,3 +159,19 @@ payloads existentes.
 - Produtor como perfil e diferente de Titular da propriedade.
 - Propriedade e a unidade rural/operacional.
 - Titular e o produtor vinculado a propriedade.
+
+## Fechamento Do Estado Atual
+
+Status em 2026-06-02: apos os Blocos 5A-5D e 6A-6B, os cadastros do MVP
+estao padronizados visualmente conforme esta matriz. A interface diferencia
+`Usuario`, `Produtor`, `Colaborador`, `Administrador`, `Propriedade` e
+`Titular`, mas os fluxos continuam mockados e preservam payloads, contratos,
+rotas, permissoes e campos legados.
+
+Limitacoes conhecidas que permanecem fora do escopo desta matriz:
+
+- fluxo combinado `Usuario + Propriedade` ainda nao e transacional;
+- novo titular minimo nao cria login real;
+- `Propriedades atribuidas` ao colaborador ainda nao representam RBAC final por propriedade;
+- integridade referencial real fica para backend;
+- campos como `fazenda_id`, `produtor_id` e `proprietario_id` permanecem por compatibilidade.

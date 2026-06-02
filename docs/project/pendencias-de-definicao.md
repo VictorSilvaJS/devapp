@@ -87,6 +87,17 @@ Status em 2026-05-30: esta pendencia permanece aberta apos a microfase de padron
 
 Status em 2026-06-01: a matriz oficial de cadastros do MVP foi criada em `docs/project/matriz-cadastros-mvp.md`. Ela consolida os conceitos, campos obrigatorios, campos opcionais/mockados, nomes legados preservados, riscos e ordem futura recomendada. A pendencia funcional continua aberta porque a matriz nao altera fluxo, regra, mock, rota, payload ou permissao.
 
+Status em 2026-06-02: o reforco visual do Bloco 6B deixou explicitos os limites atuais dos cadastros, sem alterar fluxo, mock estrutural, rota, payload, contrato, permissao ou helper tecnico. Permanecem como pendencias:
+
+- fluxo combinado `Usuario + Propriedade` ainda nao e transacional;
+- cadastro de novo titular minimo cria apenas vinculo mockado/preparatorio e nao cria login ou autenticacao real;
+- `Propriedades atribuidas` ao colaborador ainda nao devem ser tratadas como RBAC final por propriedade;
+- integridade referencial real entre usuarios, propriedades, titulares e vinculos fica para backend.
+
+Status em 2026-06-02 (Bloco 6C): o fechamento documental registrou esse estado
+em `estado-atual.md`, `matriz-cadastros-mvp.md` e `smoke.md`. A pendencia segue
+aberta para revisao futura de fluxo, backend, transacao e integridade real.
+
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 
 ## Pendencias de Regra e Permissao

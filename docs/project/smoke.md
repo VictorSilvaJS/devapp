@@ -42,6 +42,12 @@ autenticação ou backend.
 | CAD-13 | P0 | Todos | Regressão rápida | Executar login produtor, colaborador e administrador | Três logins continuam funcionando nos fluxos esperados | Reexecutar | Usar usuários mockados existentes |
 | CAD-14 | P0 | Todos | Regressão rápida | Abrir Mapas, Anexos de fertilidade, Visitas, Caderno e Perfil | Fluxos continuam abrindo e preservam linguagem principal de Propriedade quando aplicável | Reexecutar | Não deve haver regressão por padronização textual |
 
+Cobertura confirmada em 2026-06-02: este checklist cobre criacao/edicao de
+usuario Produtor, Colaborador e Administrador; Nova Propriedade; Editar
+Propriedade; vinculos do Produtor; e escopo do Colaborador. A rodada continua
+limitada a validacao manual dos fluxos mockados, sem assumir backend,
+transacao real, RBAC final por propriedade ou integridade referencial real.
+
 **Rodada Visual - Padronização Com Componentes-Base**
 
 Observação geral: esta rodada valida apenas consistência visual e preservação de comportamento. Não envolve backend, mocks, rotas, permissões, payloads ou renomeação técnica de `Produtor`/`Fazenda`.

@@ -326,7 +326,7 @@ export default function NovoProdutorScreen({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoBox message="Cadastre a Propriedade e vincule um Titular responsável." />
+        <InfoBox message="Cadastre a Propriedade e vincule um Titular responsável. Titular é o produtor vinculado à Propriedade no mock." />
 
         {errors.escopo && (
           <InfoBox variant="error" message={errors.escopo} />
@@ -353,21 +353,21 @@ export default function NovoProdutorScreen({ navigation }) {
           />
         </SectionCard>
 
-        <SectionCard title="Titular da Propriedade" subtitle="Vincule a Propriedade a um Titular existente ou cadastre um titular mínimo.">
+        <SectionCard title="Titular da Propriedade" subtitle="Vincule a Propriedade a um produtor existente ou cadastre um titular mínimo apenas para o vínculo mockado.">
           <View style={styles.field}>
             <RadioCardGroup
               options={[
                 {
                   value: 'existente',
                   label: 'Existente',
-                  description: 'Selecionar um Titular já cadastrado.',
+                  description: 'Selecionar um Titular/produtor já cadastrado.',
                   icon: 'people-outline',
                   disabled: titulares.length === 0,
                 },
                 {
                   value: 'novo',
                   label: 'Novo Titular',
-                  description: 'Cadastrar um Titular mínimo junto com a Propriedade.',
+                  description: 'Cadastrar um Titular mínimo para vínculo mockado, sem criar login real.',
                   icon: 'person-add-outline',
                 },
               ]}

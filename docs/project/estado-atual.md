@@ -115,6 +115,19 @@ mockados, nomes legados preservados e riscos conhecidos dos fluxos de cadastro.
 Esta etapa nao alterou codigo, mock, telas, rotas, permissoes, contratos ou
 nomes de arquivos.
 
+Status em 2026-06-02: apos os Blocos 5A-5D e 6A-6B, os cadastros estao
+padronizados visualmente conforme a matriz do MVP. A interface diferencia
+`Usuario`, `Produtor`, `Colaborador`, `Administrador`, `Propriedade` e
+`Titular`, preservando os fluxos mockados, payloads, contratos, rotas,
+permissoes e campos legados como `fazenda_id`, `produtor_id` e
+`proprietario_id`.
+
+Limitacoes logicas conhecidas: o fluxo combinado `Usuario + Propriedade` nao e
+transacional; novo titular minimo nao cria login real; `Propriedades
+atribuidas` ao colaborador ainda nao representam RBAC final por propriedade; a
+integridade referencial real entre usuarios, propriedades, titulares e vinculos
+fica para backend.
+
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
 - autenticacao real
@@ -123,6 +136,9 @@ nomes de arquivos.
 - criacao real de login a partir do cadastro administrativo de usuario
 - senha real, convite, reset de senha e sessao real
 - RBAC/permissoes granulares completas
+- RBAC final por propriedade atribuida ao colaborador
+- transacao real no fluxo combinado `Usuario + Propriedade`
+- integridade referencial real entre usuarios, propriedades, titulares e vinculos
 - upload real de arquivos
 - cadastro administrativo real de PNGs ou outros anexos tecnicos
 - salvamento persistente de anexos em banco, storage local gerenciado ou storage remoto
