@@ -653,7 +653,7 @@ export default function NovoUsuarioScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <InfoBox message="Este cadastro é visual/mockado. Não cria senha real, convite, reset de acesso ou autenticação em backend." />
 
-        <SectionCard title="Dados comuns">
+        <SectionCard title="Dados do usuário">
           <FormField
             label="Nome"
             value={form.nome}
@@ -686,8 +686,13 @@ export default function NovoUsuarioScreen() {
             onChangeText={(value) => updateField('documento', value)}
             placeholder="CPF ou CNPJ"
           />
+        </SectionCard>
 
-          <Text style={styles.label}>Perfil</Text>
+        <SectionCard
+          title="Perfil de acesso"
+          subtitle="Defina se este usuário acessa como Produtor, Colaborador ou Administrador."
+        >
+          <Text style={styles.label}>Perfil de acesso</Text>
           <SegmentedChips
             options={PERFIS_FORM.map((perfil) => ({
               value: perfil.key,
@@ -711,7 +716,9 @@ export default function NovoUsuarioScreen() {
             style={styles.segmentedField}
           />
           {errors.status && <Text style={styles.errorText}>{errors.status}</Text>}
+        </SectionCard>
 
+        <SectionCard title="Observações">
           <FormField
             label="Observações"
             value={form.observacoes}
@@ -726,7 +733,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'produtor' && (
           <SectionCard
             title="Vínculos do Produtor"
-            subtitle="Selecione uma ou mais propriedades. O vínculo principal preserva a compatibilidade interna atual."
+            subtitle="Produtor é o perfil de usuário. Selecione aqui as Propriedades vinculadas a este usuário produtor."
           >
             <Text style={styles.label}>Propriedades vinculadas</Text>
             {errors.vinculosPropriedades && <Text style={styles.errorText}>{errors.vinculosPropriedades}</Text>}
@@ -759,7 +766,7 @@ export default function NovoUsuarioScreen() {
               <View style={styles.quickPropertyHeaderText}>
                 <Text style={styles.linkedTitle}>Propriedade ainda não cadastrada?</Text>
                 <Text style={styles.linkedText}>
-                  Crie uma propriedade mínima no mock e vincule automaticamente a este produtor.
+                  Crie uma Propriedade mínima no mock e vincule automaticamente a este usuário produtor.
                 </Text>
               </View>
               <TouchableOpacity
@@ -781,7 +788,7 @@ export default function NovoUsuarioScreen() {
             {propriedadeRapida.ativa && (
               <View style={styles.quickPropertyBox}>
                 <InfoBox
-                  message="Cadastro rápido visual/mockado. Dados complementares podem ser ajustados depois em Administrador -> Propriedades."
+                  message="Cadastro rápido visual/mockado de Propriedade. O titular será inferido pelo usuário produtor deste cadastro."
                   style={styles.infoBoxInline}
                 />
 
@@ -953,7 +960,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'colaborador' && (
           <SectionCard
             title="Escopo do Colaborador"
-            subtitle="Os vínculos territoriais abaixo são preparação visual/mockada e ainda não alteram o motor efetivo de permissões."
+            subtitle="Defina o escopo visual por Região, Microregião ou Propriedades atribuídas. Esses vínculos ainda não alteram o motor efetivo de permissões."
           >
             <FormField
               label="Função/cargo"
@@ -1043,7 +1050,7 @@ export default function NovoUsuarioScreen() {
 
             <Text style={styles.label}>Propriedades atribuídas no mock</Text>
             <Text style={styles.sectionHint}>
-              Opcional. As permissões atuais continuam baseadas no escopo regional existente.
+              Opcional. Use quando o colaborador atuar em Propriedades específicas; as permissões atuais continuam baseadas no escopo regional existente.
             </Text>
             {errors.escopoColaborador && <Text style={styles.errorText}>{errors.escopoColaborador}</Text>}
             <View style={styles.optionList}>
@@ -1058,7 +1065,10 @@ export default function NovoUsuarioScreen() {
         )}
 
         {form.perfil === 'admin' && (
-          <SectionCard title="Acesso administrativo">
+          <SectionCard
+            title="Dados administrativos"
+            subtitle="O perfil Administrador mantém visão ampla da operação no MVP mockado."
+          >
             <Text style={styles.label}>Nível administrativo</Text>
             <SegmentedChips
               options={NIVEIS_ADMIN_USUARIO.map((nivel) => ({
@@ -1072,7 +1082,7 @@ export default function NovoUsuarioScreen() {
             <View style={styles.adminBox}>
               <Ionicons name="earth-outline" size={22} color={colors.primary} />
               <View style={styles.adminBoxText}>
-                <Text style={styles.adminBoxTitle}>Acesso global</Text>
+                <Text style={styles.adminBoxTitle}>Administrador</Text>
                 <Text style={styles.adminBoxSubtitle}>Visão ampla das regiões, usuários e propriedades no MVP mockado.</Text>
               </View>
             </View>

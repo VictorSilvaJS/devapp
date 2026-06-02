@@ -165,7 +165,7 @@ export default function ProdutoresScreen() {
                 setBusca('');
                 setMostrarBusca(false);
               }}
-              placeholder="Buscar por propriedade, titular, cidade ou região..."
+              placeholder="Buscar por propriedade, titular, cidade, região ou microregião..."
               containerStyle={styles.searchBarExpanded}
               autoFocus
             />
@@ -355,7 +355,7 @@ export default function ProdutoresScreen() {
                 ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados'
                 : 'Comece adicionando a primeira propriedade vinculada a um titular'
             }
-            actionLabel={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'Adicionar Primeira Propriedade' : undefined}
+            actionLabel={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'Nova Propriedade' : undefined}
             actionIcon={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'add-circle' : undefined}
             onActionPress={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? () => navigation.navigate('NovoProdutor') : undefined}
             style={styles.emptyState}
@@ -417,7 +417,7 @@ export default function ProdutoresScreen() {
                 </View>
                 <View>
                   <Text style={styles.sheetTitle}>Filtros e Ordenação</Text>
-                  <Text style={styles.sheetSubtitle}>Personalize sua visualização</Text>
+                  <Text style={styles.sheetSubtitle}>Filtre Propriedades por status, Região e ordenação</Text>
                 </View>
               </View>
               <TouchableOpacity 

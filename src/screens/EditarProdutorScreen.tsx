@@ -171,16 +171,16 @@ export default function EditarProdutorScreen({ route, navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoBox message="Atualize os dados da propriedade mantendo o titular vinculado." />
+        <InfoBox message="Atualize a Propriedade mantendo o Titular vinculado." />
 
-        <SectionCard title="Vínculo cadastral" subtitle="O titular atual permanece vinculado à propriedade.">
+        <SectionCard title="Titular preservado" subtitle="O Titular atual permanece vinculado à Propriedade.">
           <View style={styles.linkedRows}>
             <View style={styles.linkedRow}>
               <View style={styles.linkedIcon}>
                 <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
               </View>
               <View style={styles.linkedInfo}>
-                <Text style={styles.linkedLabel}>Titular atual</Text>
+                <Text style={styles.linkedLabel}>Titular</Text>
                 <Text style={styles.linkedValue}>{titularNome}</Text>
               </View>
             </View>
@@ -190,14 +190,14 @@ export default function EditarProdutorScreen({ route, navigation }) {
                 <Ionicons name="link-outline" size={18} color={theme.colors.primary} />
               </View>
               <View style={styles.linkedInfo}>
-                <Text style={styles.linkedLabel}>Vínculo cadastral</Text>
-                <Text style={styles.linkedValue}>Preservado no mock</Text>
+                <Text style={styles.linkedLabel}>Vínculo</Text>
+                <Text style={styles.linkedValue}>Titular preservado no mock</Text>
               </View>
             </View>
           </View>
         </SectionCard>
 
-        <SectionCard title="Dados da propriedade" subtitle="Atualize a identificação e a área total cadastrada.">
+        <SectionCard title="Dados da Propriedade" subtitle="Atualize a identificação e a área total cadastrada.">
           <FormField
             label="Nome da Propriedade"
             required
@@ -208,7 +208,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
           />
 
           <FormField
-            label="Área Total (ha)"
+            label="Área total (ha)"
             required
             value={form.area_total}
             onChangeText={(text) => handleChange('area_total', text)}
@@ -218,16 +218,16 @@ export default function EditarProdutorScreen({ route, navigation }) {
           />
         </SectionCard>
 
-        <SectionCard title="Produção" subtitle="Mantenha a cultura principal informada para a propriedade.">
+        <SectionCard title="Dados produtivos" subtitle="Mantenha a cultura principal informada para a Propriedade.">
           <FormField
-            label="Cultura Atual"
+            label="Cultura atual"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
           />
         </SectionCard>
 
-        <SectionCard title="Localização e escopo" subtitle="Atualize a localização sem alterar o escopo territorial vinculado.">
+        <SectionCard title="Localização preservada" subtitle="Atualize cidade e UF sem alterar Região ou Microregião vinculadas.">
           <FormField
             label="Cidade"
             value={form.cidade}
@@ -236,7 +236,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
           />
 
           <FormField
-            label="Estado (UF)"
+            label="UF"
             value={form.estado}
             onChangeText={(text) => handleChange('estado', text.toUpperCase())}
             placeholder="Ex: RS, SP, GO"
@@ -251,7 +251,7 @@ export default function EditarProdutorScreen({ route, navigation }) {
                 <Ionicons name="location-outline" size={18} color={theme.colors.primary} />
               </View>
               <View style={styles.linkedInfo}>
-                <Text style={styles.linkedLabel}>Escopo</Text>
+                <Text style={styles.linkedLabel}>Região/Microregião</Text>
                 <Text style={styles.linkedValue}>{escopo}</Text>
               </View>
             </View>

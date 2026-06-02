@@ -326,27 +326,48 @@ export default function NovoProdutorScreen({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoBox message="Cadastre a propriedade com um produtor titular vinculado." />
+        <InfoBox message="Cadastre a Propriedade e vincule um Titular responsável." />
 
         {errors.escopo && (
           <InfoBox variant="error" message={errors.escopo} />
         )}
 
-        <SectionCard title="Titular da propriedade" subtitle="Vincule a propriedade a um produtor titular existente ou cadastre um novo titular mínimo.">
+        <SectionCard title="Dados da Propriedade" subtitle="Informe a identificação e a área total da unidade rural.">
+          <FormField
+            label="Nome da Propriedade"
+            required
+            value={form.fazenda}
+            onChangeText={(text) => handleChange('fazenda', text)}
+            placeholder="Nome da propriedade"
+            error={errors.fazenda}
+          />
+
+          <FormField
+            label="Área total (ha)"
+            required
+            value={form.area_total}
+            onChangeText={(text) => handleChange('area_total', text)}
+            placeholder="Ex: 500"
+            keyboardType="numeric"
+            error={errors.area_total}
+          />
+        </SectionCard>
+
+        <SectionCard title="Titular da Propriedade" subtitle="Vincule a Propriedade a um Titular existente ou cadastre um titular mínimo.">
           <View style={styles.field}>
             <RadioCardGroup
               options={[
                 {
                   value: 'existente',
                   label: 'Existente',
-                  description: 'Selecionar um produtor titular já cadastrado.',
+                  description: 'Selecionar um Titular já cadastrado.',
                   icon: 'people-outline',
                   disabled: titulares.length === 0,
                 },
                 {
                   value: 'novo',
-                  label: 'Novo titular',
-                  description: 'Cadastrar um produtor titular mínimo junto com a propriedade.',
+                  label: 'Novo Titular',
+                  description: 'Cadastrar um Titular mínimo junto com a Propriedade.',
                   icon: 'person-add-outline',
                 },
               ]}
@@ -362,7 +383,7 @@ export default function NovoProdutorScreen({ navigation }) {
             </>
           ) : (
             <FormField
-              label="Nome do Produtor Titular"
+              label="Nome do Titular"
               required
               value={form.nome}
               onChangeText={(text) => handleChange('nome', text)}
@@ -372,37 +393,16 @@ export default function NovoProdutorScreen({ navigation }) {
           )}
         </SectionCard>
 
-        <SectionCard title="Dados da propriedade" subtitle="Informe a identificação e a área total da propriedade.">
+        <SectionCard title="Dados produtivos" subtitle="Registre a cultura principal da Propriedade.">
           <FormField
-            label="Propriedade"
-            required
-            value={form.fazenda}
-            onChangeText={(text) => handleChange('fazenda', text)}
-            placeholder="Nome da propriedade"
-            error={errors.fazenda}
-          />
-
-          <FormField
-            label="Área Total (ha)"
-            required
-            value={form.area_total}
-            onChangeText={(text) => handleChange('area_total', text)}
-            placeholder="Ex: 500"
-            keyboardType="numeric"
-            error={errors.area_total}
-          />
-        </SectionCard>
-
-        <SectionCard title="Produção" subtitle="Registre a cultura principal da propriedade.">
-          <FormField
-            label="Cultura Principal"
+            label="Cultura principal"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
           />
         </SectionCard>
 
-        <SectionCard title="Localização e escopo" subtitle="Defina a localização e o escopo operacional textual mantido pelo mock.">
+        <SectionCard title="Localização e Região" subtitle="Defina cidade, UF, Região e Microregião preservando os campos textuais do mock.">
           <FormField
             label="Cidade"
             value={form.cidade}
@@ -411,7 +411,7 @@ export default function NovoProdutorScreen({ navigation }) {
           />
 
           <FormField
-            label="Estado (UF)"
+            label="UF"
             value={form.estado}
             onChangeText={(text) => handleChange('estado', text.toUpperCase())}
             placeholder="Ex: RS, SP, GO"

@@ -193,16 +193,19 @@ export default function UsuarioDetailScreen() {
           </View>
         </View>
 
-        <SectionCard title="Dados de acesso">
+        <SectionCard title="Dados do usuário">
           <InfoRow icon="mail-outline" label="E-mail" value={usuario.email} />
           <InfoRow icon="call-outline" label="Telefone" value={usuario.telefone} />
           <InfoRow icon="document-text-outline" label="Documento" value={usuario.documento} />
-          <InfoRow icon="person-circle-outline" label="Perfil" value={getUsuarioPerfilLabel(usuario.perfil)} />
+        </SectionCard>
+
+        <SectionCard title="Perfil de acesso">
+          <InfoRow icon="person-circle-outline" label="Perfil de acesso" value={getUsuarioPerfilLabel(usuario.perfil)} />
           <InfoRow icon="checkmark-circle-outline" label="Status" value={status.label} />
         </SectionCard>
 
         {usuario.perfil === 'produtor' && (
-          <SectionCard title="Vínculo do Produtor">
+          <SectionCard title="Vínculos do Produtor">
             <InfoRow
               icon="link-outline"
               label="Vínculos registrados"
@@ -281,8 +284,8 @@ export default function UsuarioDetailScreen() {
         )}
 
         {usuario.perfil === 'admin' && (
-          <SectionCard title="Administração">
-            <InfoRow icon="earth-outline" label="Acesso" value="Global" />
+          <SectionCard title="Dados administrativos">
+            <InfoRow icon="earth-outline" label="Perfil administrativo" value="Administrador" />
             <InfoRow icon="shield-outline" label="Nível administrativo" value={getNivelAdminLabel(usuario.nivel_administrativo)} />
             <InfoRow icon="shield-checkmark-outline" label="Escopo" value={(usuario.regioes_acesso || ['Brasil']).join(', ')} />
             <InfoBox message="Este perfil representa visão ampla da operação no MVP mockado." style={styles.inlineInfoBox} />
