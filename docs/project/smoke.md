@@ -32,7 +32,7 @@ autenticação ou backend.
 | CAD-03 | P0 | Admin | Cadastro rápido | No usuário Produtor, acionar cadastro rápido de propriedade quando disponível | Cadastro rápido aparece como propriedade visual/mockada; campos da propriedade ficam separados dos dados do usuário | Reexecutar | Não criar interpretação de backend, login real ou transação real |
 | CAD-04 | P0 | Admin | Usuário Colaborador | Criar/editar usuário com perfil Colaborador | Seção `Escopo do Colaborador` aparece com Região, Microregião e Propriedades atribuídas; texto indica escopo territorial/propriedades | Reexecutar | Conferir que a tela não promete alteração da permissão real |
 | CAD-05 | P0 | Admin | Usuário Administrador | Criar/editar usuário com perfil Administrador | Seção `Dados administrativos` aparece; label visível usa `Administrador`; valor interno `admin` não aparece para o usuário | Reexecutar | Não alterar valor interno do perfil |
-| CAD-06 | P0 | Admin | Propriedades | Acessar listagem de propriedades | Tela/listagem aparece como `Propriedades`; ação principal aparece como `Nova Propriedade`; conferir leitura de Titular, Região, Microregião, Área e Status quando disponíveis | Reexecutar | Arquivo/componente atual: `PropriedadesScreen`; rota interna ainda legada: `Produtores` |
+| CAD-06 | P0 | Admin | Propriedades | Acessar listagem de propriedades | Tela/listagem aparece como `Propriedades`; ação principal aparece como `Nova Propriedade`; conferir leitura de Titular, Região, Microregião, Área e Status quando disponíveis | Reexecutar | Arquivo/componente atual: `PropriedadesScreen`; rota técnica admin: `Propriedades` |
 | CAD-07 | P0 | Admin | Nova Propriedade | Abrir cadastro de Nova Propriedade | Tela não aparece como `Novo Produtor`; seções `Dados da Propriedade`, `Titular da Propriedade`, `Localização e Região` e `Dados produtivos` aparecem | Reexecutar | Titular é produtor vinculado, não nome da propriedade |
 | CAD-08 | P0 | Admin | Nova Propriedade | Preencher e salvar Nova Propriedade com dados válidos | Salvamento continua funcionando com os campos técnicos antigos preservados | Reexecutar | Preservar `fazenda_id`, `produtor_id`, `proprietario_id`, `fazendaNome` e `fazendaId` |
 | CAD-09 | P0 | Admin | Editar Propriedade | Abrir edição de propriedade existente | Tela aparece como `Editar Propriedade`; seções `Dados da Propriedade`, `Titular preservado`, `Localização preservada` e `Dados produtivos` aparecem | Reexecutar | Titular e localização territorial devem ser lidos como preservados |
@@ -49,8 +49,9 @@ limitada a validacao manual dos fluxos mockados, sem assumir backend,
 transacao real, RBAC final por propriedade ou integridade referencial real.
 
 Atualizacao tecnica em 2026-06-02: as rotas de stack de criacao/edicao foram
-migradas para `NovaPropriedade` e `EditarPropriedade`. As tabs `Produtores` e
-`Meus Produtores` permanecem legadas temporariamente.
+migradas para `NovaPropriedade` e `EditarPropriedade`. As rotas tecnicas das
+tabs foram migradas para `Propriedades` e `PropriedadesColaborador`, mantendo o
+label visual `Propriedades` nas duas tabs.
 
 **Rodada Visual - Padronização Com Componentes-Base**
 
@@ -63,7 +64,7 @@ Componentes-base envolvidos: `FormField`, `FormFooter`, `SectionCard`, `InfoBox`
 | V-01 | P1 | Formulários | Abrir `NovoCadernoScreen`, `EditarCadernoScreen`, `NovaVisitaScreen`, `EditarVisitaScreen`, `EditarPropriedadeScreen`, `NovaPropriedadeScreen`, `NovoUsuarioScreen` e `EditProfileScreen` | Campos, seções e rodapés usam componentes-base sem alterar payloads, permissões ou rotas | Reexecutar | Em `NovoUsuarioScreen`, conferir `SectionCard`, `FormField`, `FormFooter`, `InfoBox` e `SegmentedChips` nos grupos equivalentes |
 | V-02 | P1 | Detalhes | Abrir `ProdutorScreen`, `UsuarioDetailScreen`, `PerfilScreen` e telas relacionadas | Seções, avisos e estados vazios usam padrão visual sem expor campo técnico cru como informação principal | Reexecutar | Preservar linguagem `Propriedade` quando aplicável |
 | V-03 | P1 | Listagens | Abrir `CadernoCampoScreen`, `VisitasScreen`, `UsuariosScreen` e `MapasScreen` | Busca, chips/filtros equivalentes e estados vazios usam componentes-base sem mudar filtros existentes | Reexecutar | Em `MapasScreen`, conferir `SearchBar`, `EmptyState`, `SegmentedChips`, `SectionCard` e `InfoBox`; preservar navegação para detalhe/novo registro |
-| V-04 | P1 | Propriedades | Abrir `PropriedadesScreen` pela rota `Produtores` | Listagem principal continua visível como `Propriedades`, preservando a rota técnica legada | Reexecutar | Não renomear rota; manter `Produtores` e `Meus Produtores` até fase de aliases/migração |
+| V-04 | P1 | Propriedades | Abrir `PropriedadesScreen` pelas rotas `Propriedades` e `PropriedadesColaborador` | Listagem principal continua visível como `Propriedades` para admin e colaborador | Reexecutar | `PropriedadesColaborador` é rota técnica; label visual permanece `Propriedades` |
 | V-05 | P0 | Regressão | Exercitar filtros, busca, limpeza de filtros e navegação nas listagens padronizadas | Resultado funcional idêntico ao comportamento anterior, apenas com composição visual padronizada | Reexecutar | Conferir status, período, ordenação e escopo |
 | V-06 | P0 | Admin/Usuários | Abrir `NovoUsuarioScreen` e alternar entre perfis produtor, colaborador e admin | Blocos condicionais, validações e salvamento permanecem iguais; muda apenas a composição visual | Reexecutar | Preservar `buildUsuarioAdminPayload`, `buildUsuarioFormFromMock`, `Produtor.create`, `vinculos_propriedades`, `vinculos_microregioes` e campos legados |
 | V-07 | P0 | Mapas | Abrir `MapasScreen`, exercitar busca, categoria, ordenação, safra, talhão, contexto de propriedade, mapa dos talhões e anexos | Padronização é apenas visual; materiais, demarcações, previews e navegação mantêm comportamento anterior | Reexecutar | Preservar `ShapeRenderer`, `FazendaMapaScreen`, `MapaFazendaView`, `buildFazendaMapaRouteParams`, `avaliarDownloadMapa`, `Mapa.update`, `ConfirmDialog`, preview de asset interno, permissões, filtros de acesso, mocks, rotas, payloads e campos legados |
@@ -86,7 +87,7 @@ Login principal de teste: `carlos@agrotche.com` / `colab123`.
 | ID | Criticidade | Perfil | Pré-condição | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
 | C-01 | P0 | Colaborador | Login `carlos@agrotche.com` / `colab123` | Entrar no app | Abre fluxo do colaborador com Home, Propriedades, Visitas, Caderno e Perfil | Reexecutar | Microfase validada tecnicamente; pendente teste manual interno |
-| C-02 | P0 | Colaborador | Home aberta | Abrir listagem principal | Listagem visível favorece `Propriedades`, preservando nomes internos legados | Reexecutar | Não renomear rotas/arquivos/`fazenda_id` |
+| C-02 | P0 | Colaborador | Home aberta | Abrir listagem principal | Listagem visível favorece `Propriedades` pela rota técnica `PropriedadesColaborador` | Reexecutar | Preservar `fazenda_id` e motor de permissões |
 | C-03 | P0 | Colaborador | Propriedade dentro do escopo | Abrir detalhe -> Visitas Técnicas -> Nova Visita | `NovaVisita` abre com propriedade pré-selecionada e travada | Reexecutar | Usa `fazendaId` opcional por rota |
 | C-04 | P0 | Colaborador | Nova visita aberta pelo detalhe | Preencher e salvar visita | Visita salva no mock com a propriedade contextual e respeita escopo | Reexecutar | Sem backend real |
 | C-05 | P0 | Colaborador | Aba/listagem Visitas aberta | Tocar em Nova Visita global | Seletor normal de propriedade permanece disponível | Reexecutar | Fluxo global não deve ficar travado |

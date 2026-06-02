@@ -129,7 +129,8 @@ payloads existentes.
 - `produtor_id`
 - `proprietario_id`
 - `produtores` no mock representando propriedades/fazendas legadas
-- rotas internas de tabs `Produtores` e `Meus Produtores`
+- rota tecnica de tab `Propriedades`
+- rota tecnica de tab `PropriedadesColaborador`
 
 ## Riscos Conhecidos
 
@@ -171,14 +172,15 @@ As rotas internas de stack para criacao/edicao foram migradas para:
 - `NovaPropriedade`
 - `EditarPropriedade`
 
-As rotas internas de tabs ainda permanecem legadas temporariamente:
+As rotas internas de tabs foram migradas para:
 
-- `Produtores`
-- `Meus Produtores`
+- `Propriedades`
+- `PropriedadesColaborador`
 
-Motivo: tabs sao contratos de navegacao por string e ainda aparecem em
-`RootParamList`. A migracao das tabs deve ocorrer em fase propria, com aliases
-e smoke completo.
+`PropriedadesColaborador` e a rota tecnica da tab de Propriedades no fluxo do
+colaborador. O label visual das duas tabs permanece `Propriedades`. A migracao
+nao alterou motor de permissoes, mocks, payloads, contratos de dados, helpers
+tecnicos ou logica de listagem/filtro.
 
 ## Fechamento Do Estado Atual
 

@@ -38,7 +38,7 @@ function tabScreenOptions({ route }) {
     headerShown: false,
     tabBarIcon: ({ color, size }) => {
       let name = 'home-outline';
-      if (route.name === 'Produtores' || route.name === 'Meus Produtores' || route.name === 'Minhas Fazendas') name = 'business-outline';
+      if (route.name === 'Propriedades' || route.name === 'PropriedadesColaborador' || route.name === 'Minhas Fazendas') name = 'business-outline';
       if (route.name === 'Usuarios') name = 'people-outline';
       if (route.name === 'Visitas' || route.name === 'Histórico' || route.name === 'Minhas Visitas') name = 'calendar-outline';
       if (route.name === 'Caderno') name = 'book-outline';
@@ -71,7 +71,7 @@ const AdminTabs = React.memo(function AdminTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tab.Screen name="Produtores" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
+      <Tab.Screen name="Propriedades" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Usuarios" component={UsuariosScreen} options={{ title: 'Usuários', tabBarLabel: 'Usuários' }} />
       <Tab.Screen name="Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
       <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
@@ -84,7 +84,7 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
   return (
     <Tab.Navigator screenOptions={tabScreenOptions}>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
-      <Tab.Screen name="Meus Produtores" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
+      <Tab.Screen name="PropriedadesColaborador" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Minhas Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
       <Tab.Screen name="Caderno" component={CadernoCampoScreen} options={{ title: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />

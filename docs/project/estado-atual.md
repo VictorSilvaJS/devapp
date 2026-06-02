@@ -144,19 +144,20 @@ As rotas internas de stack para criacao/edicao tambem foram migradas:
 - `NovaPropriedade`
 - `EditarPropriedade`
 
-As rotas internas de tabs, porem, permanecem temporariamente legadas por
-compatibilidade:
+As rotas internas de tabs tambem foram migradas:
 
-- `Produtores`
-- `Meus Produtores`
+- `Propriedades`
+- `PropriedadesColaborador`
 
-Motivo: as tabs sao contratos de navegacao por string e ainda aparecem em
-`RootParamList`. Renomea-las exige fase propria com aliases, atualizacao de
-tipos, chamadas de navegacao quando existirem e smoke manual completo.
+`PropriedadesColaborador` e a rota tecnica da tab de Propriedades no fluxo do
+colaborador. O label visual das duas tabs permanece `Propriedades`. Esta
+migracao nao alterou o motor de permissoes, mocks, payloads, contratos de
+dados, helpers tecnicos ou logica de listagem/filtro.
 
 Regra atual: produto/interface usa `Propriedade`; arquivos e componentes novos
 usam `Propriedade`; rotas de stack usam `NovaPropriedade` e
-`EditarPropriedade`; rotas de tabs legadas permanecem ate migracao controlada.
+`EditarPropriedade`; rotas de tabs usam `Propriedades` e
+`PropriedadesColaborador`.
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 
@@ -472,7 +473,7 @@ Login principal de teste:
 Fluxo coberto:
 
 - colaborador acessa Home, Propriedades, Visitas, Caderno e Perfil
-- a interface visivel favorece `Propriedades`, preservando nomes internos legados como rotas, arquivos, `fazenda`, `fazendaId` e `fazenda_id`
+- a interface visivel favorece `Propriedades`; a rota tecnica da tab do colaborador e `PropriedadesColaborador`, preservando campos internos legados como `fazenda`, `fazendaId` e `fazenda_id`
 - o colaborador consegue criar visita pelo fluxo global de Visitas -> Nova Visita
 - o colaborador consegue criar visita pelo contexto da propriedade, em Propriedade -> Visitas Tecnicas -> Nova Visita
 - `NovaVisitaScreen` aceita `fazendaId` opcional por rota, pre-seleciona a propriedade contextual e trava a selecao nesse contexto

@@ -51,10 +51,13 @@ Arquivos e componentes atuais das telas de Propriedade:
 - `NovaPropriedadeScreen`
 - `EditarPropriedadeScreen`
 
-Rotas internas que permanecem legadas temporariamente:
+Rotas internas atuais das tabs de Propriedades:
 
-- `Produtores`
-- `Meus Produtores`
+- `Propriedades`
+- `PropriedadesColaborador`
+
+`PropriedadesColaborador` e a rota tecnica para a tab de Propriedades no fluxo
+do colaborador. O label visual permanece `Propriedades`.
 
 Rotas internas de stack ja migradas:
 
@@ -65,7 +68,7 @@ Na interface e em documentacao de produto, a linguagem preferencial e `Proprieda
 
 ### Motivo Da Compatibilidade
 
-Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. As tabs legadas sao contratos de navegacao por string e ainda aparecem em `RootParamList`. Renomear essa base agora tem alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
+Esses termos ainda sustentam mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. A migracao tecnica das tabs de Propriedades nao alterou motor de permissoes, mocks, payloads, contratos de dados, helpers tecnicos ou logica de listagem/filtro.
 
 ### Regra Para Novas Implementacoes
 
@@ -74,7 +77,7 @@ Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade
 - Novos arquivos e componentes de telas de propriedade devem usar `Propriedade`.
 - Novos modelos futuros devem preferir `propriedade_id`.
 - Use `fazenda*` apenas quando estiver lidando com compatibilidade existente.
-- Preserve as rotas legadas ate uma fase especifica de migracao ou aliases.
+- Rotas novas de Propriedade devem usar nomes tecnicos baseados em `Propriedade`.
 
 ## Anexos Tecnicos
 

@@ -100,18 +100,18 @@ aberta para revisao futura de fluxo, backend, transacao e integridade real.
 
 Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
 Propriedade foram renomeados para `PropriedadesScreen`,
-`NovaPropriedadeScreen` e `EditarPropriedadeScreen`. Apos a Fase 12E,
-permanecem legadas temporariamente apenas as rotas de tabs `Produtores` e
-`Meus Produtores`. Pendencia futura: criar fase de migracao ou aliases de
-rotas, avaliando `Produtores -> Propriedades` e `Meus Produtores -> Minhas
-Propriedades` ou outra decisao de produto; depois atualizar `RootParamList` e
-smoke completo.
+`NovaPropriedadeScreen` e `EditarPropriedadeScreen`.
 
 Status em 2026-06-02 (Fase 12E): as rotas de stack de criacao/edicao foram
 migradas para `NovaPropriedade` e `EditarPropriedade`, preservando os params de
-edicao. Permanecem como pendencia futura apenas as tabs legadas `Produtores` e
-`Meus Produtores`, que devem ser migradas em fase propria com decisao de nome,
-aliases se necessario, atualizacao de `RootParamList` e smoke completo.
+edicao.
+
+Status em 2026-06-02 (Fase 12G): as rotas tecnicas das tabs foram migradas para
+`Propriedades` no fluxo admin e `PropriedadesColaborador` no fluxo colaborador,
+preservando o label visual `Propriedades` nas duas tabs. Esta migracao nao
+alterou motor de permissoes, mocks, payloads, contratos de dados, helpers
+tecnicos ou logica de listagem/filtro. Permanece pendente apenas validar o
+smoke manual completo da navegacao apos a migracao.
 
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 

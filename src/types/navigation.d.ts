@@ -25,11 +25,11 @@ declare global {
       EditProfile: undefined;
       FazendaMapa: FazendaMapaRouteParams | undefined;
       Home: undefined;
-      Produtores: undefined;
+      Propriedades: undefined;
       Visitas: undefined;
       Caderno: undefined;
       Perfil: undefined;
-      'Meus Produtores': undefined;
+      PropriedadesColaborador: undefined;
       'Minhas Visitas': undefined;
       'Minhas Fazendas': undefined;
       Histórico: undefined;

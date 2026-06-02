@@ -211,7 +211,7 @@ export default function ProdutorScreen({ route, navigation }) {
       setDeleteDialogVisible(false);
       setDeleting(false);
       toast.showSuccess('Propriedade excluída com sucesso');
-      navigation.navigate('Produtores');
+      navigation.navigate('Propriedades');
     } catch (error) {
       setDeleteDialogVisible(false);
       setDeleting(false);
