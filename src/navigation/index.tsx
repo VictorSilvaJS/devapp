@@ -133,8 +133,8 @@ export default function Navigation() {
           <Stack.Screen name="Main" component={MemoMainTabs} />
           <Stack.Screen name="ProdutorDetail" component={ProdutorScreen} />
           <Stack.Screen name="Mapas" component={MapasScreen} />
-          <Stack.Screen name="NovoProdutor" component={NovaPropriedadeScreen} />
-          <Stack.Screen name="EditarProdutor" component={EditarPropriedadeScreen} />
+          <Stack.Screen name="NovaPropriedade" component={NovaPropriedadeScreen} />
+          <Stack.Screen name="EditarPropriedade" component={EditarPropriedadeScreen} />
           <Stack.Screen name="UsuarioDetail" component={UsuarioDetailScreen} />
           <Stack.Screen name="NovoUsuario" component={NovoUsuarioScreen} />
           <Stack.Screen name="EditarUsuario" component={NovoUsuarioScreen} />

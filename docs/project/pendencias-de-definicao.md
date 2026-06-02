@@ -100,13 +100,18 @@ aberta para revisao futura de fluxo, backend, transacao e integridade real.
 
 Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
 Propriedade foram renomeados para `PropriedadesScreen`,
-`NovaPropriedadeScreen` e `EditarPropriedadeScreen`, mas as rotas internas
-permanecem legadas temporariamente: `Produtores`, `Meus Produtores`,
-`NovoProdutor` e `EditarProdutor`. Pendencia futura: criar fase de migracao ou
-aliases de rotas, avaliando `Produtores -> Propriedades`, `Meus Produtores ->
-Minhas Propriedades` ou outra decisao de produto, `NovoProdutor ->
-NovaPropriedade` e `EditarProdutor -> EditarPropriedade`; depois atualizar
-`RootParamList` e `navigation.navigate(...)` com smoke completo.
+`NovaPropriedadeScreen` e `EditarPropriedadeScreen`. Apos a Fase 12E,
+permanecem legadas temporariamente apenas as rotas de tabs `Produtores` e
+`Meus Produtores`. Pendencia futura: criar fase de migracao ou aliases de
+rotas, avaliando `Produtores -> Propriedades` e `Meus Produtores -> Minhas
+Propriedades` ou outra decisao de produto; depois atualizar `RootParamList` e
+smoke completo.
+
+Status em 2026-06-02 (Fase 12E): as rotas de stack de criacao/edicao foram
+migradas para `NovaPropriedade` e `EditarPropriedade`, preservando os params de
+edicao. Permanecem como pendencia futura apenas as tabs legadas `Produtores` e
+`Meus Produtores`, que devem ser migradas em fase propria com decisao de nome,
+aliases se necessario, atualizacao de `RootParamList` e smoke completo.
 
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 

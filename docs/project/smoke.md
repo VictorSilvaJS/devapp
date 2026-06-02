@@ -48,6 +48,10 @@ Propriedade; vinculos do Produtor; e escopo do Colaborador. A rodada continua
 limitada a validacao manual dos fluxos mockados, sem assumir backend,
 transacao real, RBAC final por propriedade ou integridade referencial real.
 
+Atualizacao tecnica em 2026-06-02: as rotas de stack de criacao/edicao foram
+migradas para `NovaPropriedade` e `EditarPropriedade`. As tabs `Produtores` e
+`Meus Produtores` permanecem legadas temporariamente.
+
 **Rodada Visual - Padronização Com Componentes-Base**
 
 Observação geral: esta rodada valida apenas consistência visual e preservação de comportamento. Não envolve backend, mocks, rotas, permissões, payloads ou renomeação técnica de `Produtor`/`Fazenda`.

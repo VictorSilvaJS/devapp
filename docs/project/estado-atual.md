@@ -139,21 +139,24 @@ Propriedades foram renomeados tecnicamente para a linguagem oficial de produto:
 
 Os arquivos legados `ProdutoresScreen.tsx`, `NovoProdutorScreen.tsx` e
 `EditarProdutorScreen.tsx` foram renomeados/removidos como arquivos atuais.
-As rotas internas, porem, permanecem temporariamente legadas por
+As rotas internas de stack para criacao/edicao tambem foram migradas:
+
+- `NovaPropriedade`
+- `EditarPropriedade`
+
+As rotas internas de tabs, porem, permanecem temporariamente legadas por
 compatibilidade:
 
 - `Produtores`
 - `Meus Produtores`
-- `NovoProdutor`
-- `EditarProdutor`
 
-Motivo: essas rotas sao contratos de navegacao por string e ainda aparecem em
-`RootParamList` e em chamadas `navigation.navigate(...)`. Renomea-las exige
-fase propria com aliases, atualizacao de tipos, chamadas de navegacao e smoke
-manual completo.
+Motivo: as tabs sao contratos de navegacao por string e ainda aparecem em
+`RootParamList`. Renomea-las exige fase propria com aliases, atualizacao de
+tipos, chamadas de navegacao quando existirem e smoke manual completo.
 
 Regra atual: produto/interface usa `Propriedade`; arquivos e componentes novos
-usam `Propriedade`; rotas legadas permanecem ate migracao controlada.
+usam `Propriedade`; rotas de stack usam `NovaPropriedade` e
+`EditarPropriedade`; rotas de tabs legadas permanecem ate migracao controlada.
 
 ## O Que Ainda E Mock, Parcial Ou Incompleto
 

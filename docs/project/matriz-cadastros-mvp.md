@@ -129,8 +129,7 @@ payloads existentes.
 - `produtor_id`
 - `proprietario_id`
 - `produtores` no mock representando propriedades/fazendas legadas
-- rotas internas `NovoProdutor` e `EditarProdutor`
-- rotas internas `Produtores` e `Meus Produtores`
+- rotas internas de tabs `Produtores` e `Meus Produtores`
 
 ## Riscos Conhecidos
 
@@ -167,16 +166,19 @@ renomeados para `PropriedadesScreen`, `NovaPropriedadeScreen` e
 `NovoProdutorScreen.tsx` e `EditarProdutorScreen.tsx` foram
 renomeados/removidos como arquivos atuais.
 
-As rotas internas ainda permanecem legadas temporariamente:
+As rotas internas de stack para criacao/edicao foram migradas para:
+
+- `NovaPropriedade`
+- `EditarPropriedade`
+
+As rotas internas de tabs ainda permanecem legadas temporariamente:
 
 - `Produtores`
 - `Meus Produtores`
-- `NovoProdutor`
-- `EditarProdutor`
 
-Motivo: rotas sao contratos de navegacao por string e ainda aparecem em
-`RootParamList` e `navigation.navigate(...)`. A migracao de rotas deve ocorrer
-em fase propria, com aliases e smoke completo.
+Motivo: tabs sao contratos de navegacao por string e ainda aparecem em
+`RootParamList`. A migracao das tabs deve ocorrer em fase propria, com aliases
+e smoke completo.
 
 ## Fechamento Do Estado Atual
 

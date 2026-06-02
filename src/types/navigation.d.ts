@@ -13,8 +13,8 @@ declare global {
       Main: undefined;
       ProdutorDetail: { id: string } | undefined;
       Mapas: MapasRouteParams | undefined;
-      NovoProdutor: undefined;
-      EditarProdutor: { id: string } | undefined;
+      NovaPropriedade: undefined;
+      EditarPropriedade: { id: string } | undefined;
       NovaVisita: { fazendaId?: string; produtorId?: string } | undefined;
       VisitaDetail: { id?: string; visitaId?: string } | undefined;
       EditarVisita: { id?: string; visitaId?: string } | undefined;

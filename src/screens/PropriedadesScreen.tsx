@@ -357,7 +357,7 @@ export default function PropriedadesScreen() {
             }
             actionLabel={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'Nova Propriedade' : undefined}
             actionIcon={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'add-circle' : undefined}
-            onActionPress={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? () => navigation.navigate('NovoProdutor') : undefined}
+            onActionPress={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? () => navigation.navigate('NovaPropriedade') : undefined}
             style={styles.emptyState}
           />
         ) : (
@@ -371,7 +371,7 @@ export default function PropriedadesScreen() {
       {podeCriarProdutor(user) && (
         <TouchableOpacity 
           style={styles.fab}
-          onPress={() => navigation.navigate('NovoProdutor')}
+          onPress={() => navigation.navigate('NovaPropriedade')}
           activeOpacity={0.85}
         >
           <LinearGradient

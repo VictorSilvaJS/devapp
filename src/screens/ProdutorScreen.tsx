@@ -165,7 +165,7 @@ export default function ProdutorScreen({ route, navigation }) {
       return;
     }
 
-    navigation.navigate('EditarProdutor', { id: produtor.id });
+    navigation.navigate('EditarPropriedade', { id: produtor.id });
   };
 
   const getCurrentDeleteIntegrity = () =>

@@ -55,14 +55,17 @@ Rotas internas que permanecem legadas temporariamente:
 
 - `Produtores`
 - `Meus Produtores`
-- `NovoProdutor`
-- `EditarProdutor`
+
+Rotas internas de stack ja migradas:
+
+- `NovaPropriedade`
+- `EditarPropriedade`
 
 Na interface e em documentacao de produto, a linguagem preferencial e `Propriedade`. No modelo futuro de anexos, `propriedade_id` deve ser o nome preferencial, preservando `fazenda_id` enquanto o mock e os contratos existentes dependerem dele.
 
 ### Motivo Da Compatibilidade
 
-Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. As rotas sao contratos de navegacao por string e ainda aparecem em `RootParamList` e `navigation.navigate(...)`. Renomear essa base agora tem alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
+Esses termos ainda sustentam rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. As tabs legadas sao contratos de navegacao por string e ainda aparecem em `RootParamList`. Renomear essa base agora tem alto risco de quebrar navegacao, permissoes, filtros e dados mockados.
 
 ### Regra Para Novas Implementacoes
 
