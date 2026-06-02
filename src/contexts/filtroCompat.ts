@@ -1,3 +1,5 @@
+import { getPropriedadeId, getPropriedadeNome } from '../utils/propriedadeCompat';
+
 type MaybeString = string | null | undefined;
 
 export type FiltrosCanonicos = {
@@ -11,6 +13,19 @@ export type FiltrosCanonicos = {
 export type FiltrosCompativeis = FiltrosCanonicos & {
   produtorId: string | null;
 };
+
+type FiltrosInput = Partial<
+  FiltrosCanonicos & {
+    produtorId?: MaybeString;
+    propriedade_id?: MaybeString;
+    propriedadeId?: MaybeString;
+    propriedade_nome?: MaybeString;
+    propriedadeNome?: MaybeString;
+    fazenda_id?: MaybeString;
+    fazenda_nome?: MaybeString;
+    fazendaNome?: MaybeString;
+  }
+>;
 
 const firstNonEmptyString = (...values: unknown[]): string | undefined => {
   for (const value of values) {
@@ -28,18 +43,24 @@ const firstNonEmptyString = (...values: unknown[]): string | undefined => {
 const normalizeFilterValue = (value: MaybeString, fallback = 'todas'): string =>
   firstNonEmptyString(value) ?? fallback;
 
+const resolveFiltroPropriedadeId = (raw: FiltrosInput): string | undefined =>
+  firstNonEmptyString(getPropriedadeId(raw), raw.fazendaId, raw.produtorId);
+
+const resolveFiltroFazendaNome = (raw: FiltrosInput): string =>
+  normalizeFilterValue(raw.fazenda ?? getPropriedadeNome(raw));
+
 export const normalizeFiltrosState = (
-  raw: Partial<FiltrosCanonicos & { produtorId?: MaybeString }> = {}
+  raw: FiltrosInput = {}
 ): FiltrosCanonicos => ({
   regiao: normalizeFilterValue(raw.regiao),
   microregiao: normalizeFilterValue(raw.microregiao),
-  fazenda: normalizeFilterValue(raw.fazenda),
-  fazendaId: firstNonEmptyString(raw.fazendaId, raw.produtorId) ?? null,
+  fazenda: resolveFiltroFazendaNome(raw),
+  fazendaId: resolveFiltroPropriedadeId(raw) ?? null,
   cidade: normalizeFilterValue(raw.cidade),
 });
 
 export const toFiltrosCompativeis = (
-  raw: Partial<FiltrosCanonicos & { produtorId?: MaybeString }> = {}
+  raw: FiltrosInput = {}
 ): FiltrosCompativeis => {
   const filtros = normalizeFiltrosState(raw);
 
@@ -50,5 +71,5 @@ export const toFiltrosCompativeis = (
 };
 
 export const resolveFiltroFazendaId = (
-  raw: Partial<FiltrosCanonicos & { produtorId?: MaybeString }> | null | undefined
+  raw: FiltrosInput | null | undefined
 ): string | null => normalizeFiltrosState(raw ?? {}).fazendaId;
