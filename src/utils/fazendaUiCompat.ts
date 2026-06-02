@@ -4,6 +4,12 @@ import {
   getNomeTitularFazenda,
   getTitularIdFazenda,
 } from './acessoControle';
+import {
+  getPropriedadeId,
+  getPropriedadeNome,
+  getTitularId,
+  getTitularNome,
+} from './propriedadeCompat';
 
 const toSearchableText = (value: unknown): string =>
   typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -13,6 +19,37 @@ const joinDefined = (values: unknown[], separator: string): string =>
     .filter((value) => typeof value === 'string' && value.trim().length > 0)
     .map((value) => String(value).trim())
     .join(separator);
+
+const hasOwn = (value: unknown, key: string): boolean =>
+  typeof value === 'object' && value !== null && Object.prototype.hasOwnProperty.call(value, key);
+
+const hasAnyOwn = (value: unknown, keys: string[]): boolean =>
+  keys.some((key) => hasOwn(value, key));
+
+const resolveFazendaUiId = (fazenda: any): string =>
+  getFazendaId(fazenda) || getPropriedadeId(fazenda) || '';
+
+const resolveFazendaUiNome = (fazenda: any): string => {
+  const hasExplicitPropertyName = hasAnyOwn(fazenda, [
+    'propriedade_nome',
+    'propriedadeNome',
+    'fazenda_nome',
+    'fazendaNome',
+  ]);
+
+  const compatNome = getPropriedadeNome(fazenda);
+  const legadoNome = getNomeFazenda(fazenda);
+
+  return hasExplicitPropertyName
+    ? compatNome || legadoNome || ''
+    : legadoNome || compatNome || '';
+};
+
+const resolveTitularUiId = (fazenda: any): string =>
+  getTitularId(fazenda) || getTitularIdFazenda(fazenda) || '';
+
+const resolveTitularUiNome = (fazenda: any): string =>
+  getTitularNome(fazenda) || getNomeTitularFazenda(fazenda) || '';
 
 export type FazendaUiInfo = {
   id: string;
@@ -41,8 +78,8 @@ export type FazendaConsultaOption = FazendaUiInfo & {
 };
 
 export const getFazendaUiInfo = (fazenda: any): FazendaUiInfo => {
-  const fazendaNome = getNomeFazenda(fazenda);
-  const titularNome = getNomeTitularFazenda(fazenda);
+  const fazendaNome = resolveFazendaUiNome(fazenda);
+  const titularNome = resolveTitularUiNome(fazenda);
   const localizacao = joinDefined([fazenda?.cidade, fazenda?.estado], '/');
   const buscaTexto = joinDefined(
     [fazendaNome, titularNome, fazenda?.cidade, fazenda?.estado, fazenda?.regiao, fazenda?.microregiao],
@@ -50,7 +87,7 @@ export const getFazendaUiInfo = (fazenda: any): FazendaUiInfo => {
   ).toLowerCase();
 
   return {
-    id: getFazendaId(fazenda),
+    id: resolveFazendaUiId(fazenda),
     fazendaNome,
     titularNome,
     localizacao,
@@ -104,7 +141,7 @@ export const buildFazendaListMetrics = (fazendas: any[] = []): FazendaListMetric
 
   const totals = fazendas.reduce(
     (acc, fazenda) => {
-      const titularKey = getTitularIdFazenda(fazenda) || getNomeTitularFazenda(fazenda);
+      const titularKey = resolveTitularUiId(fazenda) || resolveTitularUiNome(fazenda);
       if (titularKey) {
         titulares.add(titularKey);
       }
@@ -143,13 +180,13 @@ export const buildFazendaDetailContext = (
   fazendasDisponiveis: any[] = []
 ): FazendaDetailContext => {
   const info = getFazendaUiInfo(fazendaAtual);
-  const titularId = getTitularIdFazenda(fazendaAtual);
+  const titularId = resolveTitularUiId(fazendaAtual);
 
   const outrasFazendasTitular = titularId
     ? fazendasDisponiveis
         .filter((fazenda) => {
-          const mesmoTitular = getTitularIdFazenda(fazenda) === titularId;
-          const mesmaFazenda = getFazendaId(fazenda) === info.id;
+          const mesmoTitular = resolveTitularUiId(fazenda) === titularId;
+          const mesmaFazenda = resolveFazendaUiId(fazenda) === info.id;
           return mesmoTitular && !mesmaFazenda;
         })
         .map(getFazendaUiInfo)
