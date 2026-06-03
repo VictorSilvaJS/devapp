@@ -66,6 +66,19 @@ API/backend. Não deve ser executada como smoke funcional do MVP mockado.
 | RBACH-05 | P0 | Negativos | Conferir casos negativos | Não autenticado, sem permissão, outro titular, sem vínculo, inativo/pendente, payload inválido, conflito e inexistente estão cobertos | Reexecutar | Futuro backend |
 | RBACH-06 | P1 | Escopo | Conferir classificação dos testes | Documento separa automatizados de backend, smoke/manual e casos fora do MVP mockado | Reexecutar | Não transformar em requisito funcional atual |
 
+**Rodada Fase 14I - Fechamento RBAC**
+
+Observação geral: esta rodada é documental. Ela confere se
+`docs/project/fechamento-fase-14-rbac.md` serve como índice curto da Fase 14 e
+não deve ser executada como smoke funcional do MVP mockado.
+
+| ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| RBACI-01 | P0 | Documento | Abrir `docs/project/fechamento-fase-14-rbac.md` | Documento resume objetivo, diagnóstico, regra atual, regra futura e pendências | Reexecutar | Índice de consulta |
+| RBACI-02 | P0 | MVP atual | Conferir regra atual | Admin vê tudo, Produtor vê por vínculo compatível, Colaborador vê por `sub_regioes` ou fallback `vinculos_microregioes` | Reexecutar | `propriedades_atribuidas` segue visual/preparatório |
+| RBACI-03 | P0 | Futuro backend | Conferir regra futura | Admin global, Produtor por vínculo/titularidade, Colaborador por microregião OU Propriedade atribuída | Reexecutar | Regra aditiva |
+| RBACI-04 | P1 | Navegação | Conferir arquivos listados | Matriz RBAC, contrato API, testes de contrato/API, pendências, roadmap e smoke estão referenciados | Reexecutar | Roteiro consolidado |
+
 **Rodada Cadastros - Padronização Visual/Textual Do Bloco 5C**
 
 Observação geral: esta rodada valida apenas rótulos, títulos, subtítulos, seções,

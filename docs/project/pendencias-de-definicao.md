@@ -206,6 +206,11 @@ contrato/API por endpoint, perfil, pre-condicao, payload, status HTTP esperado
 e regra validada. A pendencia permanece transformar essa matriz em testes
 automatizados quando houver backend real.
 
+Status em 2026-06-03 (Fase 14I): foi criado
+`docs/project/fechamento-fase-14-rbac.md` como indice consolidado da Fase 14.
+Ele facilita consulta, mas nao fecha as pendencias de backend, autenticacao,
+RBAC real, API, persistencia e testes automatizados.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:

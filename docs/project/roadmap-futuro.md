@@ -42,6 +42,8 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
   respostas esperadas antes de implementar API real de RBAC/backend
 - Usar `docs/project/testes-contrato-api-rbac.md` como matriz de testes por
   endpoint, status HTTP e permissao antes de liberar API real
+- Usar `docs/project/fechamento-fase-14-rbac.md` como indice de consulta para
+  retomar decisoes, riscos e pendencias da Fase 14 antes de iniciar backend
 - Persistencia real de arquivos de mapas e limites
 - Upload real de mapas e shapes
 - Download real de arquivos para o produtor
@@ -101,6 +103,8 @@ O modulo `Admin -> Usuarios` esta em MVP visual/mockado com estrutura preparada 
   acesso permitido, acesso negado, conflito e payload invalido
 - transformar `testes-contrato-api-rbac.md` em suite automatizada de contrato,
   cobrindo cenarios positivos e negativos por perfil
+- revisar `fechamento-fase-14-rbac.md` antes de abrir nova frente de RBAC para
+  evitar reabrir decisoes ja documentadas no MVP mockado
 - evoluir nivel administrativo simples para um modelo de permissoes quando houver necessidade real
 - migrar validacoes de e-mail unico, vinculo de produtor ativo e escopo de colaborador ativo para backend
 

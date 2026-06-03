@@ -145,6 +145,12 @@ positivos e negativos, estrategia `403`/`404` e separacao entre testes
 automatizados futuros, smoke/manual e itens fora do MVP mockado. Essa matriz
 nao altera comportamento funcional.
 
+Status em 2026-06-03 (Fase 14I): foi criado
+`docs/project/fechamento-fase-14-rbac.md` como indice consolidado da Fase 14.
+Ele reune diagnostico, regra atual do MVP, fallback implementado, contrato
+futuro de RBAC/backend, matriz de aceite, contrato de API, matriz de testes/API
+e pendencias para backend.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:
