@@ -138,6 +138,13 @@ esperadas e regras de permissao para uma API futura de RBAC/backend. Esse
 contrato nao implementa backend, autenticacao real, RBAC ou mudanca funcional;
 o app continua operando com o MVP mockado.
 
+Status em 2026-06-03 (Fase 14H): foi criado
+`docs/project/testes-contrato-api-rbac.md` com matriz futura de testes de
+contrato/API para RBAC. Ela cobre endpoints, status HTTP esperados, cenarios
+positivos e negativos, estrategia `403`/`404` e separacao entre testes
+automatizados futuros, smoke/manual e itens fora do MVP mockado. Essa matriz
+nao altera comportamento funcional.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:

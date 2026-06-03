@@ -51,6 +51,21 @@ backend.
 | RBACF-05 | P0 | Casos negativos | Conferir casos negativos | Produtor fora do titular, Colaborador sem vínculo, usuário inativo/pendente e rota direta fora de escopo estão cobertos | Reexecutar | Backend deve negar de forma segura |
 | RBACF-06 | P0 | Aceite backend | Conferir critérios de backend | Validação no backend, ids canônicos, vínculos persistentes, auditoria, status de vínculo e testes automatizados estão registrados | Reexecutar | Não substituir por validação só de frontend |
 
+**Rodada Fase 14H - Testes De Contrato/API RBAC**
+
+Observação geral: esta rodada é documental. Ela confere se
+`docs/project/testes-contrato-api-rbac.md` cobre a matriz futura de testes de
+API/backend. Não deve ser executada como smoke funcional do MVP mockado.
+
+| ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| RBACH-01 | P0 | Documento | Abrir `docs/project/testes-contrato-api-rbac.md` | Documento declara que não implementa backend e que o MVP continua mockado | Reexecutar | Separar contrato futuro de comportamento atual |
+| RBACH-02 | P0 | Endpoints | Conferir grupos de endpoints | Auth, usuários, propriedades, vínculos, permissões, mapas/anexos, visitas e caderno estão cobertos | Reexecutar | Mesmos grupos de `contrato-api-rbac.md` |
+| RBACH-03 | P0 | Status HTTP | Conferir estratégia de status | `200`, `201`, `400`, `401`, `403`, `404` e `409` aparecem com uso esperado | Reexecutar | Inclui regra de `404` para não revelar recurso |
+| RBACH-04 | P0 | Positivos | Conferir casos positivos | Admin global, Produtor vinculado, Colaborador por microregião, Colaborador por atribuição direta e `/me/permissoes` estão cobertos | Reexecutar | Futuro backend |
+| RBACH-05 | P0 | Negativos | Conferir casos negativos | Não autenticado, sem permissão, outro titular, sem vínculo, inativo/pendente, payload inválido, conflito e inexistente estão cobertos | Reexecutar | Futuro backend |
+| RBACH-06 | P1 | Escopo | Conferir classificação dos testes | Documento separa automatizados de backend, smoke/manual e casos fora do MVP mockado | Reexecutar | Não transformar em requisito funcional atual |
+
 **Rodada Cadastros - Padronização Visual/Textual Do Bloco 5C**
 
 Observação geral: esta rodada valida apenas rótulos, títulos, subtítulos, seções,

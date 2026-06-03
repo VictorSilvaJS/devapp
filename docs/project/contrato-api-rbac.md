@@ -5,6 +5,11 @@ minimos e respostas esperadas para um backend/RBAC futuro. Ele nao implementa
 backend, autenticacao real, RBAC, mocks, telas, rotas ou comportamento
 funcional. O MVP atual continua mockado.
 
+Status em 2026-06-03 (Fase 14H): a matriz tecnica de testes de contrato/API
+derivada deste contrato foi registrada em `testes-contrato-api-rbac.md`. Ela
+deve orientar testes automatizados futuros de backend/API, mas tambem nao
+implementa backend nem altera o MVP mockado.
+
 ## Decisoes De Base
 
 - Backend valida permissao por acao e por Propriedade.

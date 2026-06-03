@@ -200,6 +200,12 @@ payloads minimos, respostas padrao e regras de permissao por endpoint. A
 pendencia permanece implementar backend real, autenticacao real, RBAC e testes
 automatizados de API; o documento apenas prepara o contrato esperado.
 
+Status em 2026-06-03 (Fase 14H): foi criado
+`docs/project/testes-contrato-api-rbac.md` com matriz tecnica de testes de
+contrato/API por endpoint, perfil, pre-condicao, payload, status HTTP esperado
+e regra validada. A pendencia permanece transformar essa matriz em testes
+automatizados quando houver backend real.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
