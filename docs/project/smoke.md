@@ -18,6 +18,27 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
 9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Material técnico`, sem alterar download, filtros, permissões ou contratos.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
+11. APK demonstrável: não entregar build em modo `__DEV__`; alinhar que login rápido, usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
+
+**Rodada Fase 16A - APK Demonstrável Para Campo**
+
+Observação geral: esta rodada valida a entrega demonstrável em celular Android.
+O diagnóstico completo, riscos e checklists estão em
+`docs/project/fase-16a-apk-demonstravel.md`. Não implementar backend, RBAC real,
+refatoração de rotas/payloads ou remoção de compatibilidade legada durante esta
+rodada.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| APK16A-01 | P0 | Todos | Build | Instalar APK em aparelho Android físico | App abre sem painel `Smoke Dev` e sem erro inicial | Reexecutar | Build deve ser de entrega, não modo `__DEV__` |
+| APK16A-02 | P0 | Todos | Login | Entrar como Admin, Colaborador e Produtor | Três perfis entram e navegam para tabs corretas | Reexecutar | Login continua mockado |
+| APK16A-03 | P0 | Produtor | Fluxo principal | Abrir Propriedade Sela de Prata I, mapa de talhões, anexos, visitas e caderno | Fluxo de consulta funciona e textos usam `Propriedade` | Reexecutar | Validar PNGs internos de fertilidade |
+| APK16A-04 | P0 | Colaborador | Campo | Abrir Propriedades do escopo, criar visita contextual e criar caderno | Registros salvam no mock preservando contexto de Propriedade | Reexecutar | Sem prometer persistência real |
+| APK16A-05 | P0 | Admin | Cadastros | Criar/editar Propriedade e criar usuários Produtor, Colaborador e Administrador | Cadastros funcionam como MVP visual/mockado | Reexecutar | Usuário criado não vira login real |
+| APK16A-06 | P0 | Admin/Colaborador | Mapas | Abrir Panorama, filtrar Fertilidade/Safra/Talhão e abrir anexo | Consulta visual funciona; associação de material permanece mockada | Reexecutar | Sem upload/storage/Drive real |
+| APK16A-07 | P0 | Todos | LGPD | Conferir dados mockados visíveis durante demonstração | Nenhum dado pessoal real sensível é exposto sem autorização | Reexecutar | Ver nomes, e-mails, telefones, endereços e coordenadas |
+| APK16A-08 | P1 | Todos | Conectividade | Testar com internet instável ou desligada | App mantém consulta de assets internos; recursos online podem degradar sem parecer erro de produto final | Reexecutar | Tiles externos e URLs mockadas podem depender de rede |
+| APK16A-09 | P1 | Todos | Comunicação | Explicar ao tester o que é mock antes do uso | Tester entende que APK é demonstrável e não sistema produtivo | Reexecutar | Evita coleta real indevida |
 
 **Rodada Fase 14D - Semântica De Propriedades Atribuídas**
 

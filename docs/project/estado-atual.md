@@ -316,6 +316,33 @@ usam `Propriedade`; rotas de stack usam `NovaPropriedade` e
 - download real de mapas
 - suite de testes automatizados integrada ao projeto
 
+## Fase 16A - Preparacao Do APK Demonstravel
+
+Status em 2026-06-03: foi iniciado o congelamento operacional para preparar um
+APK demonstravel de teste em campo, registrado em
+`docs/project/fase-16a-apk-demonstravel.md`.
+
+Esta fase nao continua refatoracao de rotas/payloads, nao implementa backend,
+nao implementa RBAC real, nao remove compatibilidade legada e nao altera
+contratos `fazenda_id`/`fazendaId`. O objetivo e estabilizar a demonstracao,
+separar fluxos liberados de fluxos mockados/preparatorios, revisar dados
+mockados sob LGPD/privacidade e definir checklists de geracao e smoke manual no
+celular.
+
+Diagnostico da Fase 16A: o app esta tecnicamente apto para uma rodada de APK
+demonstravel desde que seja comunicado como MVP visual/mockado. Os principais
+cuidados antes de entregar o APK sao evitar build em modo `__DEV__`, decidir se
+o login rapido de desenvolvimento permanece visivel, confirmar autorizacao dos
+dados reais/semi-reais usados na Sela de Prata I e deixar claro que Admin
+Usuarios, fotos, anexos, uploads, downloads, autenticacao e permissoes continuam
+mockados ou preparatorios.
+
+Validacoes automaticas executadas nesta abertura:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou
+
 ## Microfase De Padronizacao Visual Reutilizavel
 
 Status em 2026-05-30: foi criada e aplicada uma base visual reutilizavel em telas de formulario, detalhe e listagem, sem alterar dominio, backend, mocks, rotas, permissoes, payloads ou nomes tecnicos legados.
