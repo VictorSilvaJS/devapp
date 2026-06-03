@@ -35,6 +35,22 @@ efetivo por propriedade.
 | RBAC-05 | P0 | Admin/Colaborador | Usuários/Propriedades | Atribuir ou conferir `propriedades_atribuidas` no Admin e depois validar acesso efetivo do colaborador | Propriedade atribuída aparece como vínculo visual/admin, mas não restringe nem amplia acesso efetivo | Reexecutar | Risco principal: confundir Admin visual com RBAC real |
 | RBAC-06 | P1 | Colaborador | Visitas/Caderno | Abrir visitas e caderno dentro e fora do escopo regional | Acesso respeita escopo regional efetivo; propriedade atribuída direta não deve liberar fora do escopo | Reexecutar | Conferir rotas diretas quando possível |
 
+**Rodada Fase 14F - Matriz Futura De Aceite RBAC/Backend**
+
+Observação geral: esta rodada não é execução funcional do MVP. Ela serve para
+conferir se a documentação futura de RBAC/backend cobre os critérios mínimos
+antes de uma implementação real. O MVP atual continua mockado e sem RBAC de
+backend.
+
+| ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| RBACF-01 | P0 | Documento | Abrir `docs/project/matriz-rbac-backend.md` | Documento separa regra atual do MVP, regra futura e fora de escopo | Reexecutar | Não deve prometer implementação atual |
+| RBACF-02 | P0 | Perfis | Conferir matriz por perfil | Admin, Produtor e Colaborador têm escopo futuro descrito | Reexecutar | Colaborador deve ser microregião OU atribuição direta |
+| RBACF-03 | P0 | Ações | Conferir matriz por ação | Listar, detalhe, mapas/anexos, visitas, caderno, cadastro e usuários/vínculos aparecem na matriz | Reexecutar | Critério de aceite futuro |
+| RBACF-04 | P0 | Casos positivos | Conferir casos positivos | Admin global, Produtor vinculado, Colaborador por microregião e Colaborador por atribuição direta estão cobertos | Reexecutar | Inclui fora da microregião por atribuição direta futura |
+| RBACF-05 | P0 | Casos negativos | Conferir casos negativos | Produtor fora do titular, Colaborador sem vínculo, usuário inativo/pendente e rota direta fora de escopo estão cobertos | Reexecutar | Backend deve negar de forma segura |
+| RBACF-06 | P0 | Aceite backend | Conferir critérios de backend | Validação no backend, ids canônicos, vínculos persistentes, auditoria, status de vínculo e testes automatizados estão registrados | Reexecutar | Não substituir por validação só de frontend |
+
 **Rodada Cadastros - Padronização Visual/Textual Do Bloco 5C**
 
 Observação geral: esta rodada valida apenas rótulos, títulos, subtítulos, seções,

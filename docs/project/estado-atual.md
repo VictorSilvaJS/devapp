@@ -126,6 +126,12 @@ Ela nao deve restringir automaticamente o acesso regional. Qualquer regra
 restritiva deve ser politica explicita futura, nao inferencia implicita do
 campo.
 
+Status em 2026-06-03 (Fase 14F): foi criada
+`docs/project/matriz-rbac-backend.md` como matriz tecnica futura de testes e
+criterios de aceite para RBAC/backend. Ela registra permissoes por perfil,
+matriz por acao, casos positivos, casos negativos, criterios de aceite e riscos
+fora do MVP. Essa matriz nao altera o motor atual de acesso do MVP mockado.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:

@@ -36,6 +36,8 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
   Propriedade atribuida diretamente
 - Tratar `propriedades_atribuidas` no backend como ampliacao direta de acesso
   do colaborador, nao como restricao implicita do acesso regional
+- Usar `docs/project/matriz-rbac-backend.md` como criterio de aceite para
+  testes positivos e negativos de backend/RBAC antes de liberar a migracao
 - Persistencia real de arquivos de mapas e limites
 - Upload real de mapas e shapes
 - Download real de arquivos para o produtor
@@ -89,6 +91,8 @@ O modulo `Admin -> Usuarios` esta em MVP visual/mockado com estrutura preparada 
 - manter `ativo` apenas como campo derivado/compatibilidade enquanto necessario
 - definir como vinculos visuais de colaborador passam a influenciar permissoes efetivas, preservando a diferenca entre acesso regional e acesso direto
 - migrar o `acessoControle` apenas em fase propria, depois de decidir o modelo territorial e as permissoes efetivas
+- transformar a matriz `matriz-rbac-backend.md` em testes automatizados de API,
+  dominio e rotas diretas quando houver backend
 - evoluir nivel administrativo simples para um modelo de permissoes quando houver necessidade real
 - migrar validacoes de e-mail unico, vinculo de produtor ativo e escopo de colaborador ativo para backend
 

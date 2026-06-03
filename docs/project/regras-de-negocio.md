@@ -103,6 +103,11 @@ atual continua usando `sub_regioes` e fallback `vinculos_microregioes` para o
 colaborador; `propriedades_atribuidas` continua visual/preparatorio ate haver
 backend.
 
+Status em 2026-06-03 (Fase 14F): a matriz tecnica de testes e criterios de
+aceite deste contrato foi registrada em `matriz-rbac-backend.md`. Ela deve
+orientar a futura implementacao de backend/RBAC, mas nao implementa permissao
+nova no MVP mockado.
+
 ### Matriz futura por perfil
 
 | Perfil | Escopo de Propriedades | Leitura | Operacao |

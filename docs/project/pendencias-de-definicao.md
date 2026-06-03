@@ -187,6 +187,13 @@ Ainda precisam ser definidos:
 - validacao de permissao no backend para rotas diretas e operacoes por
   Propriedade.
 
+Status em 2026-06-03 (Fase 14F): foi criada
+`docs/project/matriz-rbac-backend.md` com matriz tecnica de permissoes por
+perfil, matriz por acao, casos positivos/negativos e criterios de aceite para
+backend. A pendencia agora nao e mais documentar o formato inicial da matriz,
+mas implementar backend/RBAC real e transformar esses criterios em testes
+automatizados de API e dominio quando a frente de backend existir.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
