@@ -16,6 +16,35 @@ export type PropriedadeContextRouteParams = FazendaIdRouteParams & {
   propriedadeId: string;
 };
 
+type PropriedadeRouteIdSource = 'fazendaId' | 'produtorId' | 'id';
+
+export type PropriedadeRouteContextParams = FazendaIdRouteParams & {
+  id?: string;
+};
+
+export type PropriedadeRouteContext = {
+  fazendaId?: string;
+  produtorId?: string;
+  id?: string;
+  propriedadeId?: string;
+  propriedadeIdAlias?: string;
+  effectiveFazendaId?: string;
+  source?: PropriedadeRouteIdSource;
+};
+
+const firstNonEmptyString = (...values: unknown[]): string | undefined => {
+  for (const value of values) {
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      if (normalized.length > 0) {
+        return normalized;
+      }
+    }
+  }
+
+  return undefined;
+};
+
 export const buildPropriedadeDetailRouteParams = (
   propriedade?: Record<string, any> | null
 ): PropriedadeDetailRouteParams | undefined => {
@@ -36,4 +65,37 @@ export const buildPropriedadeContextRouteParams = (
         propriedadeId: info.id,
       }
     : undefined;
+};
+
+export const resolvePropriedadeRouteContext = (
+  params?: PropriedadeRouteContextParams | null,
+  options?: { allowIdAsFazendaId?: boolean }
+): PropriedadeRouteContext => {
+  const fazendaId = firstNonEmptyString(params?.fazendaId);
+  const produtorId = firstNonEmptyString(params?.produtorId);
+  const id = firstNonEmptyString(params?.id);
+  const propriedadeId = firstNonEmptyString(params?.propriedadeId);
+
+  let effectiveFazendaId = fazendaId;
+  let source: PropriedadeRouteIdSource | undefined = fazendaId ? 'fazendaId' : undefined;
+
+  if (!effectiveFazendaId && produtorId) {
+    effectiveFazendaId = produtorId;
+    source = 'produtorId';
+  }
+
+  if (!effectiveFazendaId && options?.allowIdAsFazendaId && id) {
+    effectiveFazendaId = id;
+    source = 'id';
+  }
+
+  return {
+    fazendaId,
+    produtorId,
+    id,
+    propriedadeId,
+    propriedadeIdAlias: propriedadeId,
+    effectiveFazendaId,
+    source,
+  };
 };

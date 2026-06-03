@@ -27,6 +27,7 @@ const {
 const {
   buildPropriedadeContextRouteParams,
   buildPropriedadeDetailRouteParams,
+  resolvePropriedadeRouteContext,
 } = require('../.tmp-domain-compat/src/navigation/propriedadeRouteCompat');
 
 let failed = 0;
@@ -310,6 +311,61 @@ const run = async () => {
       fazendaId: 'prop_rota',
       produtorId: 'prop_rota',
       propriedadeId: 'prop_rota',
+    });
+  });
+
+  await test('diagnostico: resolver de rota nao promove propriedadeId sozinho no MVP', () => {
+    assert.deepEqual(resolvePropriedadeRouteContext({
+      fazendaId: 'faz_rota',
+      produtorId: 'produtor_legado_rota',
+      id: 'id_legado_rota',
+      propriedadeId: 'prop_futura_rota',
+    }), {
+      fazendaId: 'faz_rota',
+      produtorId: 'produtor_legado_rota',
+      id: 'id_legado_rota',
+      propriedadeId: 'prop_futura_rota',
+      propriedadeIdAlias: 'prop_futura_rota',
+      effectiveFazendaId: 'faz_rota',
+      source: 'fazendaId',
+    });
+
+    assert.deepEqual(resolvePropriedadeRouteContext({
+      produtorId: 'faz_produtor_alias',
+      propriedadeId: 'prop_futura_rota',
+    }), {
+      fazendaId: undefined,
+      produtorId: 'faz_produtor_alias',
+      id: undefined,
+      propriedadeId: 'prop_futura_rota',
+      propriedadeIdAlias: 'prop_futura_rota',
+      effectiveFazendaId: 'faz_produtor_alias',
+      source: 'produtorId',
+    });
+
+    assert.deepEqual(resolvePropriedadeRouteContext({
+      id: 'faz_id_legado',
+      propriedadeId: 'prop_futura_rota',
+    }, { allowIdAsFazendaId: true }), {
+      fazendaId: undefined,
+      produtorId: undefined,
+      id: 'faz_id_legado',
+      propriedadeId: 'prop_futura_rota',
+      propriedadeIdAlias: 'prop_futura_rota',
+      effectiveFazendaId: 'faz_id_legado',
+      source: 'id',
+    });
+
+    assert.deepEqual(resolvePropriedadeRouteContext({
+      propriedadeId: 'prop_sozinha',
+    }), {
+      fazendaId: undefined,
+      produtorId: undefined,
+      id: undefined,
+      propriedadeId: 'prop_sozinha',
+      propriedadeIdAlias: 'prop_sozinha',
+      effectiveFazendaId: undefined,
+      source: undefined,
     });
   });
 
