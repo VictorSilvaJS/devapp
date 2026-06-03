@@ -32,7 +32,11 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Ao selecionar uma microregiao no cadastro de propriedade, a interface pode sugerir colaboradores compativeis pelo territorio.
 - Colaboradores sugeridos por microregiao sao apenas indicacao visual nesta fase.
 - No detalhe da propriedade, a administracao pode ver vinculos visuais mockados de usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio.
-- Esses vinculos territoriais sao preparacao visual para backend/banco e nao devem ser tratados como permissao efetiva enquanto o motor atual de permissoes nao for migrado.
+- O escopo regional efetivo do colaborador usa `sub_regioes`; se
+  `sub_regioes` estiver ausente ou vazio, usa `vinculos_microregioes` como
+  fallback.
+- `propriedades_atribuidas` representa vinculo direto visual/admin
+  preparatorio e nao deve ser tratado como permissao efetiva no MVP mockado.
 
 ### Usuarios administrativos no mock
 
@@ -57,6 +61,8 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Pode navegar entre regioes, produtores e propriedades.
 - Seu fluxo deve privilegiar leitura consolidada e administracao dos dados autorizados.
 - No MVP mockado, pode gerenciar visualmente usuarios, vinculos com propriedades e vinculos com microregioes sem criar autenticacao real.
+- No MVP mockado, Admin ve todas as Propriedades; edicoes visuais de
+  `propriedades_atribuidas` nao alteram acesso efetivo do colaborador.
 
 ### Colaborador regional
 
@@ -66,7 +72,11 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - No mock administrativo, pode ter microregioes/sub-regioes e propriedades atribuidas visualmente.
 - No cadastro visual/mockado, pode selecionar uma ou mais microregioes e ver previa das propriedades abrangidas por essas microregioes.
 - Tambem pode ter propriedades atribuidas diretamente no mock visual.
-- Esses vinculos visuais ainda nao alteram o motor efetivo de permissoes enquanto nao houver decisao e implementacao especifica.
+- A regra efetiva atual usa `sub_regioes` como fonte prioritaria do escopo.
+- Se `sub_regioes` estiver ausente ou vazio, a regra efetiva usa
+  `vinculos_microregioes` como fallback.
+- `propriedades_atribuidas` continua sendo vinculo direto preparatorio e nao
+  restringe nem amplia acesso efetivo nesta fase.
 
 ### Produtor
 
@@ -75,12 +85,22 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - Nao deve ser tratado como responsavel por gerenciar a estrutura geral do sistema.
 - No mock administrativo, produtor ativo deve ter ao menos uma propriedade vinculada.
 - Produtor pendente pode existir sem propriedade vinculada.
+- No MVP mockado, o acesso efetivo do Produtor a Propriedades ocorre por
+  vinculo de titular/produtor compativel.
 
 ## Regra de Visibilidade
 
 - A visualizacao do produtor deve ser a mais restrita entre os perfis principais.
-- A visualizacao do colaborador deve respeitar seu escopo geografico.
+- A visualizacao do colaborador deve respeitar seu escopo geografico por
+  `sub_regioes` ou fallback `vinculos_microregioes`.
 - A administracao geral deve conseguir enxergar o panorama consolidado da operacao.
+
+## Decisao Futura De Backend/RBAC
+
+O backend/RBAC futuro ainda deve decidir se o acesso do colaborador sera por
+microregiao, por propriedade atribuida ou por uma combinacao das duas regras.
+Quando essa decisao for implementada, o sistema deve persistir vinculos reais
+usuario-propriedade e validar permissoes por acao e por Propriedade no backend.
 
 ## Regra sobre Mapas e Arquivos
 

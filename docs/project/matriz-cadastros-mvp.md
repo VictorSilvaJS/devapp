@@ -21,10 +21,12 @@ propriedade.
 
 ### Colaborador
 
-Usuario com atuacao operacional restrita por territorio e/ou propriedades
-atribuidas. No MVP visual/mockado, seus vinculos territoriais ajudam a
-representar Regiao -> Microregiao -> Propriedade, mas ainda nao substituem o
-motor efetivo de permissoes.
+Usuario com atuacao operacional restrita por territorio. No MVP
+visual/mockado, `sub_regioes` define o escopo regional efetivo e
+`vinculos_microregioes` e fallback quando `sub_regioes` estiver ausente ou
+vazio. `propriedades_atribuidas` representa vinculo direto visual/admin
+preparatorio, mas ainda nao substitui nem altera o motor efetivo de
+permissoes.
 
 ### Administrador
 
@@ -48,7 +50,9 @@ da propriedade.
 Relacao entre usuario e propriedade ou entre usuario e territorio. No MVP
 visual/mockado, o vinculo de produtor com propriedade aparece em
 `usuario_propriedade`; o vinculo territorial do colaborador aparece em
-`usuario_microregiao` e campos legados equivalentes.
+`usuario_microregiao`, `vinculos_microregioes` e campos legados equivalentes.
+Vinculos diretos em `propriedades_atribuidas` sao preparatorios para backend,
+sem efeito de RBAC por propriedade no MVP atual.
 
 ## Regra Principal
 
@@ -76,7 +80,10 @@ visual/mockado, o vinculo de produtor com propriedade aparece em
 ### Colaborador
 
 - usuario com perfil colaborador
-- microregiao, regiao ou propriedade atribuida quando ativo
+- microregiao, regiao ou propriedade atribuida quando ativo no mock
+  administrativo
+- acesso efetivo por `sub_regioes` ou, se ausente/vazio, por
+  `vinculos_microregioes`
 
 ### Administrador
 
@@ -153,6 +160,22 @@ e persistencia mockada. Codigo novo deve preferir os resolvers de
 explicita. Payloads de visita, caderno e cadastro ainda podem continuar usando
 `fazenda_id` enquanto a compatibilidade legada estiver ativa.
 
+## Semantica Atual De Acesso Por Perfil
+
+Status em 2026-06-03 (Fase 14D): para o MVP mockado, a leitura oficial da
+matriz e:
+
+- Administrador ve todas as Propriedades.
+- Produtor ve Propriedades por vinculo de titular/produtor compativel.
+- Colaborador ve Propriedades por `sub_regioes`.
+- Colaborador sem `sub_regioes` usa `vinculos_microregioes` como fallback.
+- `propriedades_atribuidas` nao restringe nem amplia acesso efetivo.
+
+Escopo regional e diferente de propriedade atribuida. Escopo regional e a base
+territorial usada pelo motor atual. Propriedade atribuida e um vinculo direto
+visual/admin preparatorio, util para desenhar o futuro modelo de
+usuario-propriedade, mas ainda sem efeito de permissao.
+
 ## Riscos Conhecidos
 
 - misturar nome de usuario com nome de propriedade
@@ -161,6 +184,8 @@ explicita. Payloads de visita, caderno e cadastro ainda podem continuar usando
 - quebrar colaborador por regiao/microregiao
 - quebrar permissoes de acesso
 - duplicar cadastro rapido de propriedade
+- assumir que `propriedades_atribuidas` no Admin altera acesso real do
+  colaborador
 
 ## Ordem Futura Recomendada
 
@@ -216,6 +241,8 @@ Limitacoes conhecidas que permanecem fora do escopo desta matriz:
 - fluxo combinado `Usuario + Propriedade` ainda nao e transacional;
 - novo titular minimo nao cria login real;
 - `Propriedades atribuidas` ao colaborador ainda nao representam RBAC final por propriedade;
+- `propriedades_atribuidas` e visual/admin preparatorio e nao altera acesso
+  efetivo no MVP mockado;
 - integridade referencial real fica para backend;
 - campos como `fazenda_id`, `produtor_id` e `proprietario_id` permanecem por compatibilidade.
 - aliases futuros de Propriedade/Titular existem no mock e na borda de

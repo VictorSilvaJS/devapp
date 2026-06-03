@@ -17,6 +17,23 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 7. Material Técnico em mapas: botão/modal devem ficar claros como mock visual, sem upload real, storage, Drive ou cadastro persistente.
 8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
 9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Material técnico`, sem alterar download, filtros, permissões ou contratos.
+10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
+
+**Rodada Fase 14D - Semântica De Propriedades Atribuídas**
+
+Observação geral: esta rodada valida a decisão documental do MVP mockado. Não
+deve alterar mocks, telas, rotas, permissões ou comportamento funcional.
+`propriedades_atribuidas` é vínculo visual/admin preparatório e não RBAC
+efetivo por propriedade.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| RBAC-01 | P0 | Admin | Propriedades | Entrar como admin e abrir a listagem de Propriedades | Admin vê todas as Propriedades disponíveis no mock | Reexecutar | Regra efetiva atual: acesso amplo |
+| RBAC-02 | P0 | Produtor | Minhas Propriedades | Entrar como produtor e abrir suas Propriedades | Produtor vê apenas Propriedades vinculadas por titular/produtor compatível | Reexecutar | Preservar compatibilidade com `produtor_id`, `proprietario_id` e aliases de titular |
+| RBAC-03 | P0 | Colaborador | Propriedades | Entrar como colaborador com `sub_regioes` e abrir Propriedades | Colaborador vê Propriedades do escopo regional de `sub_regioes` | Reexecutar | `sub_regioes` tem prioridade |
+| RBAC-04 | P0 | Colaborador | Propriedades | Validar colaborador sem `sub_regioes` e com `vinculos_microregioes` por teste diagnóstico ou cenário mockado controlado | Colaborador vê Propriedades da microregião de fallback | Reexecutar | Fallback coberto por teste automatizado quando não houver login manual correspondente |
+| RBAC-05 | P0 | Admin/Colaborador | Usuários/Propriedades | Atribuir ou conferir `propriedades_atribuidas` no Admin e depois validar acesso efetivo do colaborador | Propriedade atribuída aparece como vínculo visual/admin, mas não restringe nem amplia acesso efetivo | Reexecutar | Risco principal: confundir Admin visual com RBAC real |
+| RBAC-06 | P1 | Colaborador | Visitas/Caderno | Abrir visitas e caderno dentro e fora do escopo regional | Acesso respeita escopo regional efetivo; propriedade atribuída direta não deve liberar fora do escopo | Reexecutar | Conferir rotas diretas quando possível |
 
 **Rodada Cadastros - Padronização Visual/Textual Do Bloco 5C**
 
@@ -38,7 +55,7 @@ autenticação ou backend.
 | CAD-09 | P0 | Admin | Editar Propriedade | Abrir edição de propriedade existente | Tela aparece como `Editar Propriedade`; seções `Dados da Propriedade`, `Titular preservado`, `Localização preservada` e `Dados produtivos` aparecem | Reexecutar | Titular e localização territorial devem ser lidos como preservados |
 | CAD-10 | P0 | Admin | Editar Propriedade | Alterar dados permitidos e salvar | Salvamento continua funcionando sem trocar titular, rota, mock, payload ou permissão | Reexecutar | Validar apenas comportamento existente |
 | CAD-11 | P1 | Produtor | Fluxo produtor | Entrar como produtor e abrir suas propriedades | Produtor vê suas `Propriedades`; não aparece `Fazenda` como texto principal; detalhe, mapa, anexos e caderno continuam acessíveis | Reexecutar | Nomes próprios como `Fazenda Sela de Prata I` podem permanecer |
-| CAD-12 | P1 | Colaborador | Fluxo colaborador | Entrar como colaborador e abrir propriedades do escopo | Colaborador vê propriedades do escopo; Nova Visita continua funcionando; textos de escopo visual não prometem regra ainda inexistente | Reexecutar | Vinculos visuais não devem ampliar permissão efetiva |
+| CAD-12 | P1 | Colaborador | Fluxo colaborador | Entrar como colaborador e abrir propriedades do escopo | Colaborador vê propriedades do escopo; Nova Visita continua funcionando; textos de escopo visual não prometem RBAC por propriedade atribuída | Reexecutar | `sub_regioes` ou fallback `vinculos_microregioes`; `propriedades_atribuidas` não amplia permissão efetiva |
 | CAD-13 | P0 | Todos | Regressão rápida | Executar login produtor, colaborador e administrador | Três logins continuam funcionando nos fluxos esperados | Reexecutar | Usar usuários mockados existentes |
 | CAD-14 | P0 | Todos | Regressão rápida | Abrir Mapas, Anexos de fertilidade, Visitas, Caderno e Perfil | Fluxos continuam abrindo e preservam linguagem principal de Propriedade quando aplicável | Reexecutar | Não deve haver regressão por padronização textual |
 
@@ -150,7 +167,7 @@ Observacao geral: esta rodada valida apenas a sincronizacao visual/mockada Regia
 | T-06 | P1 | Admin | Nova Propriedade com microregiao selecionada | Conferir colaboradores sugeridos | Tela sugere colaboradores compativeis com a microregiao | Reexecutar | Sugestao visual por `sub_regioes`/`usuario_microregiao` |
 | T-07 | P0 | Admin | Novo Usuario com perfil Produtor | Selecionar propriedade que ja possui produtor principal no mock | Tela exibe alerta de outro produtor principal/titularizacao existente | Reexecutar | Nao reassocia titular automaticamente |
 | T-08 | P1 | Admin | Detalhe de propriedade aberto | Conferir bloco de vinculos visuais | Detalhe mostra usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio | Reexecutar | Bloco administrativo/mockado |
-| T-09 | P0 | Admin/Colaborador | Colaborador com vinculo visual novo | Entrar no fluxo efetivo do colaborador e tentar acessar fora do escopo atual | Vinculo visual nao altera permissao efetiva nem amplia acesso fora do motor atual | Reexecutar | `acessoControle` nao foi migrado |
+| T-09 | P0 | Admin/Colaborador | Colaborador com propriedade atribuida visual nova | Entrar no fluxo efetivo do colaborador e tentar acessar fora do escopo regional | Propriedade atribuida visual nao altera permissao efetiva nem amplia acesso fora do escopo regional | Reexecutar | Regra efetiva: `sub_regioes` ou fallback `vinculos_microregioes` |
 
 **Rodada Admin - Cadastro Rapido De Propriedade No Usuario Produtor**
 

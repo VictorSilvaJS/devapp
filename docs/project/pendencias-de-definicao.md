@@ -43,7 +43,11 @@ e nao fecha a migracao real de backend.
 
 - planejar migracao tecnica controlada de `fazenda_id` para `propriedade_id`
 - avaliar `acessoControle.ts` e o motor de permissoes antes de qualquer remocao de legado
-- avaliar `sub_regioes` e `propriedades_atribuidas`
+- manter documentada a regra efetiva atual: Admin ve todas as Propriedades,
+  Produtor ve por vinculo titular/produtor compativel e Colaborador ve por
+  `sub_regioes` com fallback para `vinculos_microregioes`
+- avaliar `propriedades_atribuidas` apenas como decisao futura de RBAC por
+  propriedade, nao como regra efetiva do MVP mockado
 - avaliar `usuario_propriedade`
 - planejar migracao real de contrato/backend
 - testar fluxos de produtor, colaborador, admin, mapas, visitas, caderno e filtros antes de remover legado
@@ -114,6 +118,14 @@ Status em 2026-06-02 (Bloco 6C): o fechamento documental registrou esse estado
 em `estado-atual.md`, `matriz-cadastros-mvp.md` e `smoke.md`. A pendencia segue
 aberta para revisao futura de fluxo, backend, transacao e integridade real.
 
+Status em 2026-06-03 (Fase 14D): para o MVP mockado, ficou documentado que
+`propriedades_atribuidas` e vinculo visual/admin preparatorio e ainda nao e
+regra efetiva de RBAC. A regra efetiva do colaborador permanece regional:
+`sub_regioes` primeiro e `vinculos_microregioes` como fallback quando
+`sub_regioes` estiver ausente ou vazio. A pendencia futura e decidir no
+backend/RBAC se acesso sera por microregiao, por propriedade atribuida ou por
+combinacao das duas.
+
 Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
 Propriedade foram renomeados para `PropriedadesScreen`,
 `NovaPropriedadeScreen` e `EditarPropriedadeScreen`.
@@ -142,6 +154,12 @@ As diretrizes principais de acesso ja estao claras, mas ainda falta consolidar o
 - edicao
 - download
 - visibilidade de registros
+
+Status em 2026-06-03 (Fase 14D): a semantica de
+`propriedades_atribuidas` foi fechada apenas para o MVP mockado. Ela nao
+restringe nem amplia acesso efetivo. Permanece pendente a regra final de
+backend/RBAC, incluindo persistencia de vinculos reais usuario-propriedade e
+validacao de permissao por acao e por Propriedade.
 
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 

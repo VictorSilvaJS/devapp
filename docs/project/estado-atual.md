@@ -75,6 +75,38 @@ intencao for compatibilidade explicita. Campos legados nao devem ser removidos
 nesta fase. Payloads de visitas, caderno e cadastro ainda podem continuar
 usando `fazenda_id` por compatibilidade.
 
+## Regra Efetiva Atual De Acesso A Propriedades
+
+Status em 2026-06-03 (Fase 14D): no MVP mockado, a regra efetiva de acesso a
+Propriedades permanece concentrada em `src/utils/acessoControle.ts` e segue
+este corte:
+
+- Admin ve todas as Propriedades.
+- Produtor ve Propriedades pelo vinculo de titular/produtor compativel,
+  preservando campos legados como `produtor_id` e `proprietario_id` e aliases
+  futuros como `titular_id` quando passarem pela borda de compatibilidade.
+- Colaborador ve Propriedades pelo escopo territorial de `sub_regioes`.
+- Quando `sub_regioes` estiver ausente ou vazio, Colaborador usa
+  `vinculos_microregioes` como fallback territorial.
+- Quando `sub_regioes` e `vinculos_microregioes` existirem ao mesmo tempo, a
+  prioridade continua sendo `sub_regioes`.
+- `propriedades_atribuidas` representa vinculo direto visual/admin
+  preparatorio no MVP mockado, mas ainda nao restringe nem amplia acesso
+  efetivo.
+
+Escopo regional e diferente de propriedade atribuida. O escopo regional e o
+conjunto de microregioes usado pelo motor atual para filtrar Propriedades do
+colaborador. A propriedade atribuida e um vinculo direto planejado para
+administracao futura, exibido no mock como preparacao para backend/RBAC, mas
+sem efeito de permissao nesta fase.
+
+Risco conhecido: se alguem interpretar o bloco visual de propriedades
+atribuidas no Admin como permissao real, pode esperar que ele altere o acesso
+do colaborador. Isso nao ocorre no MVP atual. A decisao futura de backend/RBAC
+deve escolher se o acesso sera por microregiao, por propriedade atribuida ou
+por combinacao das duas, persistindo vinculos reais usuario-propriedade e
+validando permissoes por acao e por Propriedade no backend.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:
@@ -180,8 +212,9 @@ permissoes e campos legados como `fazenda_id`, `produtor_id` e
 Limitacoes logicas conhecidas: o fluxo combinado `Usuario + Propriedade` nao e
 transacional; novo titular minimo nao cria login real; `Propriedades
 atribuidas` ao colaborador ainda nao representam RBAC final por propriedade; a
-integridade referencial real entre usuarios, propriedades, titulares e vinculos
-fica para backend.
+regra efetiva do colaborador continua territorial por `sub_regioes`, com
+fallback para `vinculos_microregioes`; a integridade referencial real entre
+usuarios, propriedades, titulares e vinculos fica para backend.
 
 ## Transicao Tecnica Das Telas De Propriedade
 
@@ -353,7 +386,8 @@ Limites importantes desta microfase:
 
 - usuario criado ou editado no `Admin -> Usuarios` nao cria login real
 - o login mock atual permanece separado da gestao administrativa visual
-- vinculos visuais de colaborador ainda nao alteram o motor efetivo de permissoes
+- propriedades atribuidas ao colaborador continuam como vinculo visual/admin
+  preparatorio e ainda nao alteram o motor efetivo de permissoes
 - `produtor_id`, `fazenda_id` e nomes internos legados continuam preservados onde ainda sustentam compatibilidade
 
 Fora do escopo mantido:
@@ -431,8 +465,10 @@ Limites importantes desta microfase:
 
 - usuario criado ou editado continua nao criando login real
 - colaboradores sugeridos continuam sendo apenas indicacao visual
-- vinculos visuais ainda nao alteram o motor efetivo de permissoes
-- `acessoControle` nao foi migrado
+- propriedades atribuidas diretamente ao colaborador continuam sem efeito de
+  permissao no motor atual
+- o motor atual ja usa `sub_regioes` e, quando elas estiverem vazias ou
+  ausentes, `vinculos_microregioes` como fallback territorial do colaborador
 
 Fora do escopo mantido:
 
@@ -448,7 +484,7 @@ Fora do escopo mantido:
 - upload/storage
 - Drive
 - CRUD real de regioes/microregioes
-- migracao do `acessoControle`
+- RBAC final por propriedade atribuida
 
 Validacoes executadas na implementacao:
 
@@ -490,8 +526,10 @@ No detalhe da propriedade, para administracao:
 
 Limites importantes desta microfase:
 
-- os vinculos visuais de colaborador ainda nao alteram o motor efetivo de permissoes
-- `acessoControle` nao foi migrado
+- `vinculos_microregioes` agora e fallback territorial efetivo quando
+  `sub_regioes` estiver vazio ou ausente
+- `propriedades_atribuidas` continua sendo vinculo visual/admin preparatorio,
+  sem restringir nem ampliar acesso efetivo
 - a compatibilidade foi preservada com `produtor_id`, `proprietario_id`, `sub_regioes`, `propriedades_atribuidas`, `regiao`, `microregiao`, `fazenda_id` e o motor atual de permissoes
 
 Fora do escopo mantido:
@@ -508,7 +546,7 @@ Fora do escopo mantido:
 - upload/storage
 - Drive
 - CRUD real de regioes/microregioes
-- migracao do `acessoControle`
+- RBAC final por propriedade atribuida
 
 Validacoes executadas na implementacao:
 

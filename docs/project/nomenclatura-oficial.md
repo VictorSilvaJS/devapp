@@ -102,6 +102,29 @@ emite os aliases em leitura e persistencia mockada.
 
 Esses termos ainda sustentam mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. A migracao tecnica das tabs de Propriedades nao alterou motor de permissoes, mocks, payloads, contratos de dados, helpers tecnicos ou logica de listagem/filtro.
 
+### Semantica De Escopo Do Colaborador
+
+No MVP mockado, `sub_regioes` e `vinculos_microregioes` pertencem ao escopo
+regional efetivo do colaborador:
+
+- `sub_regioes`: fonte prioritaria do escopo territorial.
+- `vinculos_microregioes`: fallback quando `sub_regioes` estiver ausente ou
+  vazio.
+
+`propriedades_atribuidas` tem outra semantica: representa um vinculo direto
+visual/admin preparatorio com uma Propriedade, planejado para backend/RBAC
+futuro. Nesta fase, esse campo nao restringe nem amplia acesso efetivo.
+
+A diferenca operacional e:
+
+- escopo regional decide quais Propriedades o colaborador pode ver hoje;
+- propriedade atribuida documenta um vinculo direto previsto, mas ainda sem
+  efeito de permissao no MVP mockado.
+
+Se o Admin visual exibir ou editar propriedades atribuidas, isso nao deve ser
+interpretado como alteracao real de acesso enquanto nao houver decisao e
+implementacao de RBAC/backend por propriedade.
+
 ### Regra Para Novas Implementacoes
 
 - Novos textos visiveis devem usar `Propriedade` ou `Propriedades`.
