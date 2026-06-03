@@ -1,14 +1,8 @@
 import {
   getCadernoFazendaId,
-  getFazendaId,
-  getNomeFazenda,
-  getNomeTitularFazenda,
 } from './acessoControle';
-import {
-  getPropriedadeId,
-  getPropriedadeNome,
-  getTitularNome,
-} from './propriedadeCompat';
+import { getFazendaUiInfo } from './fazendaUiCompat';
+import { getPropriedadeId } from './propriedadeCompat';
 
 export type CadernoFazendaOption = {
   id: string;
@@ -43,23 +37,18 @@ type BuildCadernoPayloadInput = {
   criadoPorUserId?: string;
 };
 
-const resolveCadernoFazendaOptionId = (fazenda: any): string =>
-  getFazendaId(fazenda) || getPropriedadeId(fazenda) || '';
-
-const resolveCadernoFazendaOptionNome = (fazenda: any): string =>
-  getNomeFazenda(fazenda) || getPropriedadeNome(fazenda) || '';
-
-const resolveCadernoTitularOptionNome = (fazenda: any): string =>
-  getNomeTitularFazenda(fazenda) || getTitularNome(fazenda) || '';
-
 export const buildCadernoFazendaOptions = (fazendas: any[] = []): CadernoFazendaOption[] =>
-  (fazendas || []).map((fazenda) => ({
-    id: resolveCadernoFazendaOptionId(fazenda),
-    fazendaNome: resolveCadernoFazendaOptionNome(fazenda),
-    titularNome: resolveCadernoTitularOptionNome(fazenda),
-    cidade: fazenda?.cidade,
-    estado: fazenda?.estado,
-  }));
+  (fazendas || []).map((fazenda) => {
+    const fazendaInfo = getFazendaUiInfo(fazenda);
+
+    return {
+      id: fazendaInfo.id,
+      fazendaNome: fazendaInfo.fazendaNome,
+      titularNome: fazendaInfo.titularNome,
+      cidade: fazenda?.cidade,
+      estado: fazenda?.estado,
+    };
+  });
 
 export const findCadernoFazendaOption = (
   options: CadernoFazendaOption[] = [],

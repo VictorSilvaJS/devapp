@@ -46,6 +46,28 @@ const run = async () => {
     ]);
   });
 
+  await test('buildVisitaFazendaOptions usa aliases futuros em nomes visuais', () => {
+    const options = buildVisitaFazendaOptions([
+      {
+        propriedade_id: 'prop_alias',
+        propriedade_nome: 'Propriedade Alias',
+        titular_nome: 'Titular Alias',
+        cidade: 'Jataí',
+        estado: 'GO',
+      },
+    ]);
+
+    assert.deepEqual(options, [
+      {
+        id: 'prop_alias',
+        fazendaNome: 'Propriedade Alias',
+        titularNome: 'Titular Alias',
+        cidade: 'Jataí',
+        estado: 'GO',
+      },
+    ]);
+  });
+
   await test('getVisitaFormFazendaId resolve fazenda_id canônico e produtor_id legado', () => {
     assert.equal(getVisitaFormFazendaId({ fazenda_id: 'faz_a' }), 'faz_a');
     assert.equal(getVisitaFormFazendaId({ produtor_id: 'faz_b' }), 'faz_b');

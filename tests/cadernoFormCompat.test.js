@@ -46,6 +46,28 @@ const run = async () => {
     ]);
   });
 
+  await test('buildCadernoFazendaOptions usa aliases futuros em nomes visuais', () => {
+    const options = buildCadernoFazendaOptions([
+      {
+        propriedade_id: 'prop_alias',
+        propriedade_nome: 'Propriedade Alias',
+        titular_nome: 'Titular Alias',
+        cidade: 'Jataí',
+        estado: 'GO',
+      },
+    ]);
+
+    assert.deepEqual(options, [
+      {
+        id: 'prop_alias',
+        fazendaNome: 'Propriedade Alias',
+        titularNome: 'Titular Alias',
+        cidade: 'Jataí',
+        estado: 'GO',
+      },
+    ]);
+  });
+
   await test('findCadernoFazendaOption e getCadernoFormFazendaLabel mantêm seleção legível', () => {
     const option = findCadernoFazendaOption(
       [

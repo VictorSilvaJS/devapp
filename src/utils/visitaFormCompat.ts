@@ -1,14 +1,8 @@
 import {
-  getFazendaId,
-  getNomeFazenda,
-  getNomeTitularFazenda,
   getVisitaFazendaId,
 } from './acessoControle';
-import {
-  getPropriedadeId,
-  getPropriedadeNome,
-  getTitularNome,
-} from './propriedadeCompat';
+import { getFazendaUiInfo } from './fazendaUiCompat';
+import { getPropriedadeId } from './propriedadeCompat';
 
 export type VisitaFazendaOption = {
   id: string;
@@ -93,23 +87,18 @@ type BuildVisitaPayloadInput = {
   tecnicoResponsavel?: string;
 };
 
-const resolveVisitaFazendaOptionId = (fazenda: any): string =>
-  getFazendaId(fazenda) || getPropriedadeId(fazenda) || '';
-
-const resolveVisitaFazendaOptionNome = (fazenda: any): string =>
-  getNomeFazenda(fazenda) || getPropriedadeNome(fazenda) || '';
-
-const resolveVisitaTitularOptionNome = (fazenda: any): string =>
-  getNomeTitularFazenda(fazenda) || getTitularNome(fazenda) || '';
-
 export const buildVisitaFazendaOptions = (fazendas: any[] = []): VisitaFazendaOption[] =>
-  (fazendas || []).map((fazenda) => ({
-    id: resolveVisitaFazendaOptionId(fazenda),
-    fazendaNome: resolveVisitaFazendaOptionNome(fazenda),
-    titularNome: resolveVisitaTitularOptionNome(fazenda),
-    cidade: fazenda?.cidade,
-    estado: fazenda?.estado,
-  }));
+  (fazendas || []).map((fazenda) => {
+    const fazendaInfo = getFazendaUiInfo(fazenda);
+
+    return {
+      id: fazendaInfo.id,
+      fazendaNome: fazendaInfo.fazendaNome,
+      titularNome: fazendaInfo.titularNome,
+      cidade: fazenda?.cidade,
+      estado: fazenda?.estado,
+    };
+  });
 
 export const findVisitaFazendaOption = (
   options: VisitaFazendaOption[] = [],
