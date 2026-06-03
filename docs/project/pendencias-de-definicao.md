@@ -194,6 +194,12 @@ backend. A pendencia agora nao e mais documentar o formato inicial da matriz,
 mas implementar backend/RBAC real e transformar esses criterios em testes
 automatizados de API e dominio quando a frente de backend existir.
 
+Status em 2026-06-03 (Fase 14G): foi criado
+`docs/project/contrato-api-rbac.md` com contrato futuro de endpoints,
+payloads minimos, respostas padrao e regras de permissao por endpoint. A
+pendencia permanece implementar backend real, autenticacao real, RBAC e testes
+automatizados de API; o documento apenas prepara o contrato esperado.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
