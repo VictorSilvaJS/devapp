@@ -4,6 +4,11 @@ import {
   getNomeFazenda,
   getNomeTitularFazenda,
 } from './acessoControle';
+import {
+  getPropriedadeId,
+  getPropriedadeNome,
+  getTitularNome,
+} from './propriedadeCompat';
 
 export type CadernoFazendaOption = {
   id: string;
@@ -38,11 +43,20 @@ type BuildCadernoPayloadInput = {
   criadoPorUserId?: string;
 };
 
+const resolveCadernoFazendaOptionId = (fazenda: any): string =>
+  getFazendaId(fazenda) || getPropriedadeId(fazenda) || '';
+
+const resolveCadernoFazendaOptionNome = (fazenda: any): string =>
+  getNomeFazenda(fazenda) || getPropriedadeNome(fazenda) || '';
+
+const resolveCadernoTitularOptionNome = (fazenda: any): string =>
+  getNomeTitularFazenda(fazenda) || getTitularNome(fazenda) || '';
+
 export const buildCadernoFazendaOptions = (fazendas: any[] = []): CadernoFazendaOption[] =>
   (fazendas || []).map((fazenda) => ({
-    id: getFazendaId(fazenda),
-    fazendaNome: getNomeFazenda(fazenda),
-    titularNome: getNomeTitularFazenda(fazenda),
+    id: resolveCadernoFazendaOptionId(fazenda),
+    fazendaNome: resolveCadernoFazendaOptionNome(fazenda),
+    titularNome: resolveCadernoTitularOptionNome(fazenda),
     cidade: fazenda?.cidade,
     estado: fazenda?.estado,
   }));
@@ -52,7 +66,8 @@ export const findCadernoFazendaOption = (
   fazendaId?: string | null
 ): CadernoFazendaOption | null => options.find((option) => option.id === fazendaId) ?? null;
 
-export const getCadernoFormFazendaId = (registro: any): string => getCadernoFazendaId(registro);
+export const getCadernoFormFazendaId = (registro: any): string =>
+  getCadernoFazendaId(registro) || getPropriedadeId(registro) || '';
 
 export const resolveCadernoEdicaoFazendaId = (registro: any, fallbackFazendaId = ''): string =>
   getCadernoFormFazendaId(registro) || fallbackFazendaId;
