@@ -62,6 +62,24 @@ const firstNonEmptyString = (...values) => {
 const buildAllowedIds = (ids = []) =>
   new Set((ids || []).filter((value) => typeof value === 'string' && value.trim().length > 0));
 
+const normalizeStringList = (values = []) =>
+  (Array.isArray(values) ? values : [])
+    .filter((value) => typeof value === 'string')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+const getMicroregioesEfetivasColaborador = (user) => {
+  const subRegioes = normalizeStringList(user?.sub_regioes);
+  if (subRegioes.length > 0) {
+    return subRegioes;
+  }
+
+  return normalizeStringList(
+    (Array.isArray(user?.vinculos_microregioes) ? user.vinculos_microregioes : [])
+      .map((vinculo) => vinculo?.microregiao)
+  );
+};
+
 const filterByFazendaIds = (items, getId, fazendaIds) => {
   if (!items) return [];
 
@@ -234,21 +252,17 @@ export const getFazendasPorAcesso = (fazendas, user) => {
 export const getFazendaIdsPorAcesso = (user, fazendas) => getFazendaIds(getFazendasPorAcesso(fazendas, user));
 
 /**
- * Verifica se o produtor/fazenda pertence às sub-regiões do colaborador
- * Usa APENAS sub_regioes para evitar sobreposição entre colaboradores da mesma região
- * Ex: Carlos (sub_regioes: ['Goiás 1', 'Rio Verde', 'Jataí']) não vê produtores de Patrícia (sub_regioes: ['Goiás 2', 'Goiânia', 'Anápolis'])
+ * Verifica se o produtor/fazenda pertence às microregiões efetivas do colaborador.
+ * Prioriza sub_regioes para preservar o motor atual e usa vinculos_microregioes
+ * apenas como fallback quando sub_regioes estiver ausente ou vazio.
  */
 export const produtorNaRegiao = (user, produtor) => {
   if (!user || !produtor) return false;
   if (isAdmin(user)) return true;
   if (!isColaborador(user)) return false;
 
-  // Verificar sub-regiões do colaborador contra microregiao do produtor
-  if (user.sub_regioes && produtor.microregiao) {
-    return user.sub_regioes.includes(produtor.microregiao);
-  }
-
-  return false;
+  const microregioes = getMicroregioesEfetivasColaborador(user);
+  return Boolean(produtor.microregiao) && microregioes.includes(produtor.microregiao);
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -482,9 +496,7 @@ export const getRegioesDisponiveis = (user, produtores = []) => {
   if (isColaborador(user)) {
     // Retorna região principal e sub-regiões
     const regioes = [user.regiao];
-    if (user.sub_regioes) {
-      regioes.push(...user.sub_regioes);
-    }
+    regioes.push(...getMicroregioesEfetivasColaborador(user));
     return [...new Set(regioes)];
   }
 
@@ -496,7 +508,7 @@ export const getRegioesDisponiveis = (user, produtores = []) => {
  */
 export const getSubRegioes = (user) => {
   if (!user || !isColaborador(user)) return [];
-  return user.sub_regioes || [];
+  return getMicroregioesEfetivasColaborador(user);
 };
 
 // ────────────────────────────────────────────────────────────────

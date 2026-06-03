@@ -105,6 +105,38 @@ const run = async () => {
     ]);
   });
 
+  await test('diagnostico: colaborador sem sub_regioes usa vinculos_microregioes como fallback', () => {
+    const colaborador = {
+      id: 'u_colaborador_vinculos_microregioes',
+      perfil: 'colaborador',
+      regiao: 'Sul',
+      vinculos_microregioes: [
+        { usuario_id: 'u_colaborador_vinculos_microregioes', regiao: 'Sul', microregiao: 'Micro B' },
+      ],
+    };
+
+    assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
+      'faz_micro_b_1',
+    ]);
+  });
+
+  await test('diagnostico: sub_regioes tem prioridade quando tambem existem vinculos_microregioes', () => {
+    const colaborador = {
+      id: 'u_colaborador_prioridade_subregioes',
+      perfil: 'colaborador',
+      regiao: 'Sul',
+      sub_regioes: ['Micro A'],
+      vinculos_microregioes: [
+        { usuario_id: 'u_colaborador_prioridade_subregioes', regiao: 'Sul', microregiao: 'Micro B' },
+      ],
+    };
+
+    assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
+      'faz_micro_a_1',
+      'faz_micro_a_2',
+    ]);
+  });
+
   await test('diagnostico: authMock alimenta colaborador com sub_regioes efetivas', () => {
     const carlos = authUsers.find((user) => user.id === 'u2');
     const fazendasGoias = [
@@ -171,7 +203,7 @@ const run = async () => {
     ]);
   });
 
-  await test('diagnostico: colaborador com propriedades_atribuidas mas sem sub_regioes fica sem acesso efetivo', () => {
+  await test('diagnostico: colaborador com propriedades_atribuidas mas sem microregioes efetivas fica sem acesso efetivo', () => {
     const colaborador = {
       id: 'u_colaborador_sem_subregiao',
       perfil: 'colaborador',
