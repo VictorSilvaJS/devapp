@@ -176,6 +176,44 @@ territorial usada pelo motor atual. Propriedade atribuida e um vinculo direto
 visual/admin preparatorio, util para desenhar o futuro modelo de
 usuario-propriedade, mas ainda sem efeito de permissao.
 
+## Contrato Futuro De RBAC/Backend
+
+Status em 2026-06-03 (Fase 14E): a direcao futura recomendada para backend e
+RBAC e manter uma regra combinada/aditiva para o colaborador. Esta secao nao
+altera o MVP mockado atual.
+
+Matriz futura de escopo:
+
+| Perfil | Fonte de acesso futura | Regra recomendada |
+|---|---|---|
+| Administrador | Papel administrativo | Acesso global, limitado apenas por politica organizacional futura |
+| Produtor | `usuario_propriedade` e titularidade | Acesso as Propriedades vinculadas ao usuario/produtor/titular |
+| Colaborador | `usuario_microregiao` OU `usuario_propriedade` | Acesso por microregiao vinculada somado a Propriedade atribuida diretamente |
+
+Entidades minimas esperadas no backend:
+
+- `usuarios`
+- `propriedades`
+- `usuario_propriedade`
+- `usuario_microregiao`
+- `perfis`/`papeis`
+
+No backend, a propriedade atribuida diretamente ao colaborador deve ampliar
+acesso direto. Ela nao deve restringir automaticamente o acesso regional por
+microregiao. Qualquer regra restritiva futura precisa ser politica explicita,
+documentada e testada.
+
+Leitura futura recomendada:
+
+- listar e abrir detalhe de Propriedades usando a uniao dos escopos permitidos
+  para o perfil;
+- ver mapas/anexos apenas quando houver acesso a Propriedade e liberacao do
+  material para o perfil/acao;
+- criar visita apenas para Admin/Colaborador com permissao de acao e escopo da
+  Propriedade;
+- editar cadastro apenas para Admin ou papel explicitamente autorizado;
+- manter Produtor como perfil de consulta da propria realidade operacional.
+
 ## Riscos Conhecidos
 
 - misturar nome de usuario com nome de propriedade
@@ -186,6 +224,10 @@ usuario-propriedade, mas ainda sem efeito de permissao.
 - duplicar cadastro rapido de propriedade
 - assumir que `propriedades_atribuidas` no Admin altera acesso real do
   colaborador
+- backend implementar `propriedades_atribuidas` como restricao implicita e
+  cortar acesso regional esperado
+- backend ignorar vinculo direto de Propriedade atribuida e manter o Admin
+  visual sem efeito operacional
 
 ## Ordem Futura Recomendada
 
@@ -193,7 +235,9 @@ usuario-propriedade, mas ainda sem efeito de permissao.
 2. Revisar validacoes visuais.
 3. Revisar cadastro rapido de propriedade.
 4. Revisar vinculos do colaborador.
-5. So depois planejar migracao tecnica dos nomes legados.
+5. Definir contrato real de backend/RBAC para `usuario_propriedade` e
+   `usuario_microregiao`.
+6. So depois planejar migracao tecnica dos nomes legados.
 
 ## Leitura Do Estado Atual Das Telas
 

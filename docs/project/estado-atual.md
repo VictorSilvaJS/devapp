@@ -107,6 +107,25 @@ deve escolher se o acesso sera por microregiao, por propriedade atribuida ou
 por combinacao das duas, persistindo vinculos reais usuario-propriedade e
 validando permissoes por acao e por Propriedade no backend.
 
+Status em 2026-06-03 (Fase 14E): o contrato futuro recomendado de
+backend/RBAC foi documentado em `regras-de-negocio.md`,
+`matriz-cadastros-mvp.md`, `pendencias-de-definicao.md` e
+`roadmap-futuro.md`. Essa documentacao nao altera o comportamento funcional do
+MVP mockado.
+
+A direcao futura recomendada e:
+
+- Admin com acesso global.
+- Produtor por vinculo com Propriedade/Titular.
+- Colaborador por regra combinada/aditiva: microregiao vinculada OU
+  Propriedade atribuida diretamente.
+
+No backend futuro, `propriedades_atribuidas` deve ampliar acesso direto do
+colaborador quando houver uma Propriedade atribuida fora do escopo regional.
+Ela nao deve restringir automaticamente o acesso regional. Qualquer regra
+restritiva deve ser politica explicita futura, nao inferencia implicita do
+campo.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:
@@ -255,7 +274,8 @@ usam `Propriedade`; rotas de stack usam `NovaPropriedade` e
 - criacao real de login a partir do cadastro administrativo de usuario
 - senha real, convite, reset de senha e sessao real
 - RBAC/permissoes granulares completas
-- RBAC final por propriedade atribuida ao colaborador
+- implementacao do contrato futuro de RBAC/backend com escopo aditivo do
+  colaborador por microregiao OU Propriedade atribuida
 - transacao real no fluxo combinado `Usuario + Propriedade`
 - integridade referencial real entre usuarios, propriedades, titulares e vinculos
 - upload real de arquivos

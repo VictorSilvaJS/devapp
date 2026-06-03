@@ -95,12 +95,95 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
   `sub_regioes` ou fallback `vinculos_microregioes`.
 - A administracao geral deve conseguir enxergar o panorama consolidado da operacao.
 
-## Decisao Futura De Backend/RBAC
+## Contrato Futuro De Backend/RBAC
 
-O backend/RBAC futuro ainda deve decidir se o acesso do colaborador sera por
-microregiao, por propriedade atribuida ou por uma combinacao das duas regras.
-Quando essa decisao for implementada, o sistema deve persistir vinculos reais
-usuario-propriedade e validar permissoes por acao e por Propriedade no backend.
+Status em 2026-06-03 (Fase 14E): este contrato e direcao futura recomendada
+para backend/RBAC e nao altera o comportamento funcional do MVP mockado. O MVP
+atual continua usando `sub_regioes` e fallback `vinculos_microregioes` para o
+colaborador; `propriedades_atribuidas` continua visual/preparatorio ate haver
+backend.
+
+### Matriz futura por perfil
+
+| Perfil | Escopo de Propriedades | Leitura | Operacao |
+|---|---|---|---|
+| Admin | Global | Lista e abre todas as Propriedades autorizadas pela organizacao | Pode administrar cadastros e vinculos conforme papel administrativo |
+| Produtor | Vinculo com Propriedade/Titular | Lista e abre Propriedades em que possui vinculo ativo | Consulta mapas/anexos, visitas e caderno autorizados; nao administra estrutura geral |
+| Colaborador | Microregiao vinculada OU Propriedade atribuida diretamente | Lista e abre Propriedades dentro do escopo combinado/aditivo | Atua operacionalmente conforme permissoes por acao |
+
+### Entidades minimas de backend
+
+- `usuarios`: pessoa/acesso, perfil principal, status e dados de autenticacao.
+- `propriedades`: unidade operacional, titular principal, regiao,
+  microregiao, status e dados cadastrais.
+- `usuario_propriedade`: vinculos diretos entre usuario e Propriedade, com
+  tipo de vinculo, status, principal quando aplicavel e origem do vinculo.
+- `usuario_microregiao`: vinculos territoriais entre usuario e microregiao,
+  com status e periodo de validade quando necessario.
+- `perfis`/`papeis`: definicao de capacidades por perfil e, se necessario,
+  papeis administrativos mais granulares.
+
+### Regras futuras de leitura e acao
+
+- Listar Propriedades: Admin lista tudo; Produtor lista por
+  `usuario_propriedade`/titularidade; Colaborador lista por
+  `usuario_microregiao` ou por `usuario_propriedade` direto.
+- Abrir detalhe de Propriedade: permitido quando a Propriedade estiver dentro
+  do escopo do perfil, seguindo a mesma precedencia de listagem.
+- Ver mapas/anexos: permitido quando o usuario tem acesso a Propriedade e o
+  material esta liberado para o perfil/acao correspondente.
+- Criar visita: Admin e Colaborador podem criar conforme permissao de acao e
+  escopo da Propriedade; Produtor nao deve criar visita tecnica por padrao.
+- Editar cadastro: Admin pode editar conforme papel administrativo;
+  Colaborador so deve editar se houver permissao explicita por acao e escopo;
+  Produtor nao deve editar estrutura cadastral da Propriedade por padrao.
+
+### Precedencia futura recomendada
+
+1. Admin tem acesso global.
+2. Produtor tem acesso por titularidade/vinculo direto com a Propriedade.
+3. Colaborador tem acesso aditivo por microregiao vinculada OU Propriedade
+   atribuida diretamente.
+
+Para Colaborador, `propriedades_atribuidas` no backend deve ampliar acesso
+direto quando a Propriedade nao estiver na microregiao vinculada. Ela nao deve
+restringir automaticamente o acesso regional. Qualquer politica restritiva,
+como "somente propriedades atribuidas dentro da microregiao", deve ser uma
+decisao futura explicita e implementada como regra propria, nao inferida do
+campo.
+
+### Diferenca entre acesso regional e acesso direto
+
+- Acesso regional: deriva de `usuario_microregiao` e cobre todas as
+  Propriedades ativas daquela microregiao conforme regra da organizacao.
+- Acesso direto: deriva de `usuario_propriedade` e concede acesso a uma
+  Propriedade especifica, mesmo que ela esteja fora das microregioes
+  vinculadas ao colaborador, quando a politica permitir.
+
+### Riscos de divergencia
+
+- Se o backend tratar `propriedades_atribuidas` como restricao implicita, o
+  colaborador pode perder acesso regional que hoje e esperado no MVP.
+- Se o backend ignorar o acesso direto por Propriedade atribuida, o Admin
+  pode cadastrar vinculos que nao produzem efeito real.
+- Se mapas, visitas e caderno nao validarem permissao por Propriedade no
+  backend, rotas diretas podem expor dados fora do escopo.
+- Se `fazenda_id`, `propriedade_id`, titularidade e vinculos forem migrados sem
+  leitura dupla, Produtor pode deixar de ver Propriedades vinculadas.
+
+### Pendencias para modelagem real
+
+- Definir ids canonicos para Propriedade, microregiao e usuario.
+- Definir status e validade dos vinculos `usuario_propriedade` e
+  `usuario_microregiao`.
+- Definir se existe escopo por regiao alem de microregiao.
+- Definir matriz de permissoes por acao: listar, abrir detalhe, criar visita,
+  editar visita, criar caderno, editar caderno, liberar/download de anexos e
+  editar cadastro.
+- Definir como auditar alteracoes de vinculos e permissoes.
+- Definir estrategia de migracao a partir de `sub_regioes`,
+  `vinculos_microregioes`, `propriedades_atribuidas`, `produtor_id`,
+  `proprietario_id`, `titular_id`, `fazenda_id` e `propriedade_id`.
 
 ## Regra sobre Mapas e Arquivos
 

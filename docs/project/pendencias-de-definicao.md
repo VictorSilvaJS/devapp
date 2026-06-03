@@ -126,6 +126,13 @@ regra efetiva de RBAC. A regra efetiva do colaborador permanece regional:
 backend/RBAC se acesso sera por microregiao, por propriedade atribuida ou por
 combinacao das duas.
 
+Status em 2026-06-03 (Fase 14E): a direcao futura recomendada para
+backend/RBAC foi documentada como regra combinada/aditiva para colaborador:
+acesso por microregiao vinculada OU por Propriedade atribuida diretamente.
+`propriedades_atribuidas` no backend deve ampliar acesso direto, nao restringir
+automaticamente o acesso regional. Permanece pendente transformar essa direcao
+em modelagem real, politicas por acao, API, persistencia e testes de backend.
+
 Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
 Propriedade foram renomeados para `PropriedadesScreen`,
 `NovaPropriedadeScreen` e `EditarPropriedadeScreen`.
@@ -160,6 +167,25 @@ Status em 2026-06-03 (Fase 14D): a semantica de
 restringe nem amplia acesso efetivo. Permanece pendente a regra final de
 backend/RBAC, incluindo persistencia de vinculos reais usuario-propriedade e
 validacao de permissao por acao e por Propriedade.
+
+Status em 2026-06-03 (Fase 14E): a proposta futura recomendada agora esta
+registrada: Admin com acesso global, Produtor por vinculo com
+Propriedade/Titular e Colaborador por microregiao OU Propriedade atribuida.
+Ainda precisam ser definidos:
+
+- ids canonicos e contratos de `usuarios`, `propriedades`,
+  `usuario_propriedade`, `usuario_microregiao` e `perfis`/`papeis`;
+- status, validade, origem e auditoria dos vinculos;
+- matriz por acao para listar, abrir detalhe, ver mapas/anexos, criar visita,
+  editar visita, criar/editar caderno, editar cadastro e liberar/download de
+  anexos;
+- politica explicita caso a organizacao queira uma regra restritiva em vez da
+  regra aditiva recomendada;
+- migracao controlada de `sub_regioes`, `vinculos_microregioes`,
+  `propriedades_atribuidas`, `produtor_id`, `proprietario_id`, `titular_id`,
+  `fazenda_id` e `propriedade_id`;
+- validacao de permissao no backend para rotas diretas e operacoes por
+  Propriedade.
 
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 

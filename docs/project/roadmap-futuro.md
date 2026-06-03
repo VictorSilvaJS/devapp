@@ -31,6 +31,11 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
 - Implementar criacao combinada transacional de `usuario` + `propriedade` + `usuario_propriedade` para substituir o cadastro rapido mockado de propriedade no usuario produtor
 - Sincronizar cadastro administrativo de usuario com autenticacao real, convites, senha/reset e sessao quando essa frente for definida
 - Definir RBAC/permissoes granulares a partir dos perfis atuais e dos niveis administrativos simples
+- Implementar contrato futuro de escopo por perfil: Admin global, Produtor por
+  vinculo com Propriedade/Titular e Colaborador por microregiao vinculada OU
+  Propriedade atribuida diretamente
+- Tratar `propriedades_atribuidas` no backend como ampliacao direta de acesso
+  do colaborador, nao como restricao implicita do acesso regional
 - Persistencia real de arquivos de mapas e limites
 - Upload real de mapas e shapes
 - Download real de arquivos para o produtor
@@ -74,11 +79,15 @@ O modulo `Admin -> Usuarios` esta em MVP visual/mockado com estrutura preparada 
 - substituir a derivacao de regioes/microregioes por cadastro ou fonte territorial controlada quando houver backend
 - decidir como propriedades passam a referenciar `regiao_id` e `microregiao_id`, preservando compatibilidade temporaria com `regiao` e `microregiao` textuais
 - definir se colaboradores poderao ser vinculados a regioes inteiras, microregioes e/ou propriedades especificas no backend
+- adotar, como direcao recomendada, escopo aditivo para colaborador:
+  microregiao vinculada somada a Propriedade atribuida diretamente
+- definir politica explicita caso a organizacao queira restringir colaborador
+  apenas a propriedades atribuidas, em vez de usar a regra aditiva recomendada
 - ligar usuario administrativo a conta/login real sem duplicar dados pessoais
 - definir fluxo de convite, ativacao, reset de senha e bloqueio/desbloqueio
 - consolidar status de usuario em banco como `ativo`, `inativo` ou `pendente`
 - manter `ativo` apenas como campo derivado/compatibilidade enquanto necessario
-- definir como vinculos visuais de colaborador passam a influenciar permissoes efetivas
+- definir como vinculos visuais de colaborador passam a influenciar permissoes efetivas, preservando a diferenca entre acesso regional e acesso direto
 - migrar o `acessoControle` apenas em fase propria, depois de decidir o modelo territorial e as permissoes efetivas
 - evoluir nivel administrativo simples para um modelo de permissoes quando houver necessidade real
 - migrar validacoes de e-mail unico, vinculo de produtor ativo e escopo de colaborador ativo para backend
