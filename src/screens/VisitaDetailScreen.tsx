@@ -22,6 +22,7 @@ import {
   podeEditarVisita,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -268,7 +269,10 @@ export default function VisitaDetailScreen() {
             </View>
             <TouchableOpacity
               style={styles.fazendaInfo}
-              onPress={() => navigation.navigate('ProdutorDetail', { id: fazenda.id })}
+              onPress={() => {
+                const params = buildPropriedadeDetailRouteParams(fazenda);
+                if (params) navigation.navigate('ProdutorDetail', params);
+              }}
             >
               <View style={styles.fazendaDetails}>
                 <Text style={styles.fazendaNome}>{fazendaInfo.fazendaNome}</Text>

@@ -15,6 +15,10 @@ import {
   buildMapaTalhaoRouteSelection,
   buildMapasRouteParams,
 } from '../navigation/mapaRouteCompat';
+import {
+  buildPropriedadeContextRouteParams,
+  buildPropriedadeDetailRouteParams,
+} from '../navigation/propriedadeRouteCompat';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -276,7 +280,10 @@ export default function ProdutorScreen({ route, navigation }) {
       return;
     }
 
-    navigation.navigate('NovaVisita', { fazendaId: fazendaAtualId });
+    const params = buildPropriedadeContextRouteParams(produtor);
+    if (params) {
+      navigation.navigate('NovaVisita', params);
+    }
   };
 
   const handleNovoCaderno = () => {
@@ -285,7 +292,10 @@ export default function ProdutorScreen({ route, navigation }) {
       return;
     }
 
-    navigation.navigate('NovoCaderno', { fazendaId: fazendaAtualId });
+    const params = buildPropriedadeContextRouteParams(produtor);
+    if (params) {
+      navigation.navigate('NovoCaderno', params);
+    }
   };
 
   const getCadernoTipoColor = (tipo) => {
@@ -663,7 +673,10 @@ export default function ProdutorScreen({ route, navigation }) {
                     <TouchableOpacity
                       key={fazenda.id}
                       style={styles.relatedFarmRow}
-                      onPress={() => navigation.navigate('ProdutorDetail', { id: fazenda.id })}
+                      onPress={() => {
+                        const params = buildPropriedadeDetailRouteParams(fazenda);
+                        if (params) navigation.navigate('ProdutorDetail', params);
+                      }}
                       activeOpacity={0.75}
                     >
                       <View style={styles.relatedFarmIcon}>

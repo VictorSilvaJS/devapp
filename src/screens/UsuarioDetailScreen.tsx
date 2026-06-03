@@ -19,6 +19,7 @@ import { useAuthState } from '../auth/AuthContext';
 import { colors, shadows, spacing, typography } from '../theme';
 import { getFazendaId } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import {
   buildUsuarioVinculoPrincipal,
   getNivelAdminLabel,
@@ -166,6 +167,12 @@ export default function UsuarioDetailScreen() {
   const vinculosMicroregioes = getVinculosMicroregiaoUsuario(usuario);
   const getVinculoDaPropriedade = (id: string) =>
     vinculosPropriedades.find((item) => item.propriedade_id === id);
+  const abrirPropriedade = (propriedade: any) => {
+    const params = buildPropriedadeDetailRouteParams(propriedade);
+    if (params) {
+      navigation.navigate('ProdutorDetail', params);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -230,7 +237,7 @@ export default function UsuarioDetailScreen() {
                   key={getFazendaId(propriedade)}
                   propriedade={propriedade}
                   vinculo={getVinculoDaPropriedade(getFazendaId(propriedade))}
-                  onPress={() => navigation.navigate('ProdutorDetail', { id: getFazendaId(propriedade) })}
+                  onPress={() => abrirPropriedade(propriedade)}
                 />
               ))
             )}
@@ -280,7 +287,7 @@ export default function UsuarioDetailScreen() {
                   key={getFazendaId(propriedade)}
                   propriedade={propriedade}
                   vinculo={getVinculoDaPropriedade(getFazendaId(propriedade))}
-                  onPress={() => navigation.navigate('ProdutorDetail', { id: getFazendaId(propriedade) })}
+                  onPress={() => abrirPropriedade(propriedade)}
                 />
               ))
             )}

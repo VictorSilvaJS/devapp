@@ -14,6 +14,7 @@ import Header from '../components/Header';
 import StatCard from '../components/StatCard';
 import { Produtor, Mapa, Visita, CadernoCampo } from '../api/mock';
 import { buildMapasRouteParams } from '../navigation/mapaRouteCompat';
+import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { colors, typography, spacing, shadows, border } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -165,9 +166,9 @@ export default function ClienteDashboardScreen() {
   };
 
   const abrirFazenda = (fazenda) => {
-    const fazendaId = getFazendaId(fazenda);
-    if (fazendaId) {
-      navigation.navigate('ProdutorDetail', { id: fazendaId });
+    const params = buildPropriedadeDetailRouteParams(fazenda);
+    if (params) {
+      navigation.navigate('ProdutorDetail', params);
     }
   };
 

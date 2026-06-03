@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../auth/AuthContext';
 import { filtrarProdutoresPorAcesso, podeCriarProdutor, getRegioesDisponiveis } from '../utils/acessoControle';
 import { useFiltros } from '../contexts/FiltroContext';
+import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { buildFazendaListMetrics, getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
 // enable LayoutAnimation on Android
@@ -362,7 +363,14 @@ export default function PropriedadesScreen() {
           />
         ) : (
           produtoresFiltrados.map(p => (
-            <ProdutorCard key={p.id} produtor={p} onPress={() => navigation.navigate('ProdutorDetail', { id: p.id })} />
+            <ProdutorCard
+              key={p.id}
+              produtor={p}
+              onPress={() => {
+                const params = buildPropriedadeDetailRouteParams(p);
+                if (params) navigation.navigate('ProdutorDetail', params);
+              }}
+            />
           ))
         )}
       </ScrollView>

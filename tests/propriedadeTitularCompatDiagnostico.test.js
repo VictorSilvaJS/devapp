@@ -24,6 +24,10 @@ const {
   withPropriedadeCompat,
   withTitularCompat,
 } = require('../.tmp-domain-compat/src/utils/propriedadeCompat');
+const {
+  buildPropriedadeContextRouteParams,
+  buildPropriedadeDetailRouteParams,
+} = require('../.tmp-domain-compat/src/navigation/propriedadeRouteCompat');
 
 let failed = 0;
 
@@ -289,6 +293,23 @@ const run = async () => {
       talhao: 'T1',
       poligono: [{ lat: -10, lng: -50 }],
     }).fazenda_id, 'faz_contexto_limite');
+  });
+
+  await test('diagnostico: helpers de rota preservam params atuais e aceitam aliases futuros', () => {
+    const propriedade = {
+      propriedade_id: 'prop_rota',
+      propriedade_nome: 'Propriedade Rota',
+      titular_nome: 'Titular Rota',
+    };
+
+    assert.deepEqual(buildPropriedadeDetailRouteParams(propriedade), {
+      id: 'prop_rota',
+    });
+
+    assert.deepEqual(buildPropriedadeContextRouteParams(propriedade), {
+      fazendaId: 'prop_rota',
+      produtorId: 'prop_rota',
+    });
   });
 
   if (failed > 0) {
