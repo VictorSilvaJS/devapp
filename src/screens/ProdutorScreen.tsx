@@ -11,7 +11,7 @@ import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
 import {
-  buildFazendaMapaRouteParams,
+  buildFazendaMapaRouteParamsFromPropriedade,
   buildMapaTalhaoRouteSelection,
   buildMapasRouteParams,
 } from '../navigation/mapaRouteCompat';
@@ -258,10 +258,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const podeExcluir = podeExcluirProdutor(user, produtor);
   const integridadeExclusao = deleteIntegrity || getCurrentDeleteIntegrity();
   const exclusaoBloqueadaPorIntegridade = podeExcluir && !integridadeExclusao.canDelete;
-  const getMapaAtualRouteParams = (mapa) => buildFazendaMapaRouteParams({
-    fazendaId: fazendaAtualId,
-    fazendaNome: fazendaInfo.fazendaNome,
-    titularNome: fazendaInfo.titularNome,
+  const getMapaAtualRouteParams = (mapa) => buildFazendaMapaRouteParamsFromPropriedade(produtor, {
     ...buildMapaTalhaoRouteSelection(mapa, limites),
   });
   const podeCriarCadernoNaFazenda = podeIncluirCadernoEmFazenda(user, produtor);

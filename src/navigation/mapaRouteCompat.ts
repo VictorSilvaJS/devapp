@@ -1,3 +1,5 @@
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+
 type ParamContextoFazenda = {
   fazendaId?: string;
   produtorId?: string;
@@ -274,4 +276,18 @@ export const buildFazendaMapaRouteParams = (
   withDefinedString(routeParams, 'talhaoAno', params?.talhaoAno);
 
   return Object.keys(routeParams).length > 0 ? routeParams : undefined;
+};
+
+export const buildFazendaMapaRouteParamsFromPropriedade = (
+  propriedade?: Record<string, any> | null,
+  params?: FazendaMapaRouteParams | null
+): FazendaMapaRouteParams | undefined => {
+  const info = getFazendaUiInfo(propriedade);
+
+  return buildFazendaMapaRouteParams({
+    ...params,
+    fazendaId: info.id || params?.fazendaId,
+    fazendaNome: info.fazendaNome || params?.fazendaNome,
+    titularNome: info.titularNome || params?.titularNome,
+  });
 };

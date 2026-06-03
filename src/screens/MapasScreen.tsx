@@ -22,7 +22,7 @@ import { useToast } from '../components/Toast';
 import { EmptyState, InfoBox, SearchBar, SectionCard, SegmentedChips } from '../components';
 import { Mapa, Produtor, LimiteArea } from '../api/mock';
 import {
-  buildFazendaMapaRouteParams,
+  buildFazendaMapaRouteParamsFromPropriedade,
   resolveRouteFazendaId,
 } from '../navigation/mapaRouteCompat';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -1113,11 +1113,7 @@ export default function MapasScreen({ route, navigation }) {
             onPress={() =>
               navigation.navigate(
                 'FazendaMapa',
-                buildFazendaMapaRouteParams({
-                  fazendaId: mapaSateliteFazendaInfo?.id,
-                  fazendaNome: mapaSateliteFazendaInfo?.fazendaNome,
-                  titularNome: mapaSateliteFazendaInfo?.titularNome,
-                })
+                buildFazendaMapaRouteParamsFromPropriedade(mapaSateliteFazendaInfo)
               )
             }
             activeOpacity={0.8}

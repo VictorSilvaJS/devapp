@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const {
   buildFazendaMapaRouteParams,
+  buildFazendaMapaRouteParamsFromPropriedade,
   buildMapaTalhaoRouteSelection,
   buildMapasRouteParams,
   resolveRouteFazendaId,
@@ -71,6 +72,34 @@ const run = async () => {
       talhaoNome: 'Talhão 7',
       talhao: 'Talhão 7',
       talhaoAno: '2025',
+    });
+  });
+
+  await test('buildFazendaMapaRouteParamsFromPropriedade usa aliases futuros sem mudar fazendaId efetivo', () => {
+    const params = buildFazendaMapaRouteParamsFromPropriedade(
+      {
+        propriedade_id: 'prop_alias',
+        propriedade_nome: 'Propriedade Alias',
+        titular_nome: 'Titular Alias',
+      },
+      {
+        talhaoId: 'talhao_1',
+        talhaoNome: 'Talhão 1',
+        talhao: 'Talhão 1',
+        talhaoAno: '2026',
+      }
+    );
+
+    assert.deepEqual(params, {
+      fazendaId: 'prop_alias',
+      produtorId: 'prop_alias',
+      fazendaNome: 'Propriedade Alias',
+      titularNome: 'Titular Alias',
+      produtorNome: 'Titular Alias',
+      talhaoId: 'talhao_1',
+      talhaoNome: 'Talhão 1',
+      talhao: 'Talhão 1',
+      talhaoAno: '2026',
     });
   });
 
