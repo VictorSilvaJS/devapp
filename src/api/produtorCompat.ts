@@ -11,13 +11,24 @@ import type { FazendaCanonica, FazendaCompativelBorda, FazendaLegada } from '../
 
 interface FazendaBoundaryInput {
   id?: string;
+  propriedade_id?: string;
+  propriedadeId?: string;
   fazenda_id?: string;
+  fazendaId?: string;
   produtor_id?: string;
   proprietario_id?: string;
+  titular_id?: string;
+  titularId?: string;
   nome?: string;
   fazenda?: string;
   fazenda_nome?: string;
+  fazendaNome?: string;
+  propriedade_nome?: string;
+  propriedadeNome?: string;
   produtor_nome?: string;
+  proprietario_nome?: string;
+  titular_nome?: string;
+  titularNome?: string;
   area_total?: number;
   cultura_atual?: string;
   telefone?: string;
@@ -115,37 +126,134 @@ const joinDependencyLabels = (labels: string[]) => {
   return `${labels.slice(0, -1).join(', ')} e ${labels[labels.length - 1]}`;
 };
 
+const buildFazendaFutureAliases = (
+  record: FazendaBoundaryInput,
+  canonical: FazendaCanonica
+) => {
+  const hasLegacyFarmField = hasOwn(record, 'fazenda');
+  const propriedadeId = firstNonEmptyString(
+    record.propriedade_id,
+    record.propriedadeId,
+    record.fazenda_id,
+    record.fazendaId,
+    canonical.id,
+    record.id
+  );
+  const propriedadeNome = firstNonEmptyString(
+    record.propriedade_nome,
+    record.propriedadeNome,
+    record.fazenda_nome,
+    record.fazendaNome,
+    record.fazenda,
+    canonical.nome,
+    record.nome
+  );
+  const titularId = firstNonEmptyString(
+    record.titular_id,
+    record.titularId,
+    record.proprietario_id,
+    canonical.produtor_id,
+    record.produtor_id
+  );
+  const titularNome = firstNonEmptyString(
+    record.titular_nome,
+    record.titularNome,
+    record.produtor_nome,
+    record.proprietario_nome,
+    canonical.produtor_nome,
+    hasLegacyFarmField ? record.nome : undefined
+  );
+
+  return {
+    ...(propriedadeId
+      ? {
+          propriedade_id: propriedadeId,
+          propriedadeId,
+        }
+      : {}),
+    ...(propriedadeNome
+      ? {
+          propriedade_nome: propriedadeNome,
+          propriedadeNome,
+        }
+      : {}),
+    ...(titularId
+      ? {
+          titular_id: titularId,
+          titularId,
+        }
+      : {}),
+    ...(titularNome
+      ? {
+          titular_nome: titularNome,
+        }
+      : {}),
+  };
+};
+
 const buildCanonicalFazendaFromBoundary = (
   data: FazendaBoundaryInput = {},
   existing?: FazendaBoundaryInput
 ) => {
-  const current = existing ? readMockProdutor(existing) : null;
+  const current = existing ? (readMockProdutor(existing) as FazendaBoundaryInput) : null;
   const hasLegacyFarmField = hasOwn(data, 'fazenda');
   const hasCanonicalFarmName = hasOwn(data, 'fazenda_nome') || (hasOwn(data, 'nome') && !hasLegacyFarmField);
 
   const fazendaId =
-    firstNonEmptyString(data.fazenda_id, data.id, current?.fazenda_id, current?.id) ?? '';
+    firstNonEmptyString(
+      data.propriedade_id,
+      data.propriedadeId,
+      data.fazenda_id,
+      data.fazendaId,
+      data.id,
+      current?.propriedade_id,
+      current?.propriedadeId,
+      current?.fazenda_id,
+      current?.fazendaId,
+      current?.id
+    ) ?? '';
 
   const produtorId =
-    firstNonEmptyString(data.produtor_id, data.proprietario_id, current?.produtor_id, current?.proprietario_id) ?? '';
+    firstNonEmptyString(
+      data.titular_id,
+      data.titularId,
+      data.produtor_id,
+      data.proprietario_id,
+      current?.titular_id,
+      current?.titularId,
+      current?.produtor_id,
+      current?.proprietario_id
+    ) ?? '';
 
   const fazendaNome =
     firstNonEmptyString(
+      data.propriedade_nome,
+      data.propriedadeNome,
       data.fazenda_nome,
+      data.fazendaNome,
       data.fazenda,
       hasCanonicalFarmName ? data.nome : undefined,
+      current?.propriedade_nome,
+      current?.propriedadeNome,
       current?.fazenda_nome,
+      current?.fazendaNome,
       current?.fazenda
     ) ?? '';
 
   const produtorNome = firstNonEmptyString(
+    data.titular_nome,
+    data.titularNome,
     data.produtor_nome,
+    data.proprietario_nome,
     hasLegacyFarmField ? data.nome : undefined,
+    current?.titular_nome,
+    current?.titularNome,
     current?.produtor_nome,
+    current?.proprietario_nome,
     current?.nome
   );
 
-  return normalizeFazenda({
+  const canonical = normalizeFazenda({
     id: fazendaId,
     produtor_id: produtorId,
     nome: fazendaNome,
@@ -165,6 +273,17 @@ const buildCanonicalFazendaFromBoundary = (
     status: data.status !== undefined ? data.status : current?.status ?? 'ativo',
     data_cadastro: data.data_cadastro !== undefined ? data.data_cadastro : current?.data_cadastro,
   });
+
+  return normalizeFazenda({
+    ...canonical,
+    ...buildFazendaFutureAliases(
+      {
+        ...(current || {}),
+        ...(data || {}),
+      },
+      canonical
+    ),
+  });
 };
 
 export const normalizeMockFazendaInput = (data: FazendaBoundaryInput, existing?: FazendaBoundaryInput) =>
@@ -173,9 +292,11 @@ export const normalizeMockFazendaInput = (data: FazendaBoundaryInput, existing?:
 export const readMockFazenda = (record: FazendaBoundaryInput) => {
   const canonical = normalizeFazenda(record as FazendaLegada | FazendaCanonica | FazendaCompativelBorda);
   const legacy = toFazendaCompativelBorda(canonical);
+  const futureAliases = buildFazendaFutureAliases(record, canonical);
 
   return {
     ...legacy,
+    ...futureAliases,
     fazenda_id: canonical.id,
     fazenda_nome: canonical.nome,
     produtor_nome: canonical.produtor_nome ?? legacy.nome,

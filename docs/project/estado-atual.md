@@ -20,6 +20,61 @@ Esses nomes tecnicos continuam vinculados a rotas, mocks, contratos, helpers de 
 
 Para novas implementacoes, novos textos visiveis e novos documentos ativos devem usar `Propriedade`/`Propriedades`. Novos modelos futuros devem preferir `propriedade_id`. O uso de `fazenda*` deve ficar restrito a compatibilidade com codigo existente.
 
+## Compatibilidade Dupla De Propriedade E Titular
+
+Status em 2026-06-03: o projeto possui compatibilidade dupla aditiva para
+Propriedade e Titular no mock e na borda de compatibilidade, sem remover campos
+legados.
+
+Os helpers centrais de leitura ficam em `src/utils/propriedadeCompat.ts`:
+
+- `getPropriedadeId`
+- `getPropriedadeNome`
+- `getTitularId`
+- `getTitularNome`
+- `withPropriedadeCompat`
+- `withTitularCompat`
+
+Helpers de compatibilidade ja usam esses resolvers em leituras de borda e UI:
+
+- `fazendaUiCompat.ts`
+- `filtroCompat.ts`
+- `usuarioAdminCompat.ts`
+- `visitaFormCompat.ts`
+- `cadernoFormCompat.ts`
+
+Os 11 registros estaticos de produtores/propriedades em `src/api/mock.ts`
+foram enriquecidos com aliases futuros:
+
+- `propriedade_id`
+- `propriedadeId`
+- `propriedade_nome`
+- `propriedadeNome`
+- `titular_id`
+- `titularId`
+- `titular_nome`
+
+A borda `src/api/produtorCompat.ts` preserva e emite esses aliases em leitura
+e persistencia mockada de Propriedade.
+
+Legados preservados:
+
+- `fazenda_id`
+- `fazendaId`
+- `fazenda_nome`
+- `fazendaNome`
+- `produtor_id`
+- `proprietario_id`
+- `produtor_nome`
+- nomes publicos antigos de helpers com `Fazenda`
+
+Regra atual: codigo novo deve preferir os resolvers de
+`src/utils/propriedadeCompat.ts`. Novas telas e novos helpers nao devem acessar
+diretamente `fazenda_id`, `produtor_id` ou `proprietario_id`, salvo quando a
+intencao for compatibilidade explicita. Campos legados nao devem ser removidos
+nesta fase. Payloads de visitas, caderno e cadastro ainda podem continuar
+usando `fazenda_id` por compatibilidade.
+
 ## Objetivo Aparente
 
 Aplicativo mobile em React Native + Expo para operacao de consultoria agricola. O foco aparente e atender tres perfis:

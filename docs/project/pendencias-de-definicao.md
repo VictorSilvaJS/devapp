@@ -16,9 +16,21 @@ A nomenclatura de produto foi consolidada em `decisoes-consolidadas.md`: `Propri
 
 Nao permanece pendente a definicao da linguagem de produto. O que ainda fica para uma fase futura separada e a limpeza tecnica interna de nomes legados como `fazenda`, `fazenda_id`, `getFazendaId`, rotas, arquivos, contratos e campos internos, caso o projeto decida reduzir essa compatibilidade.
 
-Termos tecnicos legados atualmente permitidos por compatibilidade incluem `fazenda_id`, `fazendaId`, `fazendaNome`, `FazendaMapa`, `FazendaMapaScreen`, `MapaFazendaView`, `getFazenda*`, `fazendaUiCompat`, `fazendaCadastroCompat`, `FazendaCanonica` e `FazendaLegada`.
+Termos tecnicos legados atualmente permitidos por compatibilidade incluem `fazenda_id`, `fazendaId`, `fazenda_nome`, `fazendaNome`, `produtor_id`, `proprietario_id`, `produtor_nome`, `FazendaMapa`, `FazendaMapaScreen`, `MapaFazendaView`, `getFazenda*`, `fazendaUiCompat`, `fazendaCadastroCompat`, `FazendaCanonica` e `FazendaLegada`.
 
 Esses termos permanecem porque ainda estao ligados a rotas, mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. Uma migracao tecnica deve planejar leitura dupla quando necessario, preferindo `propriedade_id` para modelos novos sem remover `fazenda_id` antes de validar todos os fluxos afetados.
+
+Status em 2026-06-03: foi criada compatibilidade dupla aditiva para
+Propriedade/Titular. Os helpers centrais ficam em
+`src/utils/propriedadeCompat.ts`, e os helpers `fazendaUiCompat.ts`,
+`filtroCompat.ts`, `usuarioAdminCompat.ts`, `visitaFormCompat.ts` e
+`cadernoFormCompat.ts` ja usam esses resolvers em leituras de borda. Os 11
+registros estaticos de produtores/propriedades do mock foram enriquecidos com
+`propriedade_id`, `propriedadeId`, `propriedade_nome`, `propriedadeNome`,
+`titular_id`, `titularId` e `titular_nome`; `src/api/produtorCompat.ts`
+preserva e emite esses aliases em leitura e persistencia mockada. Essa etapa
+nao remove legado, nao altera contratos, nao altera payloads de visita/caderno
+e nao fecha a migracao real de backend.
 
 **Por que importa**
 
@@ -30,8 +42,12 @@ Esses termos permanecem porque ainda estao ligados a rotas, mocks, contratos, he
 **Pendencia futura**
 
 - planejar migracao tecnica controlada de `fazenda_id` para `propriedade_id`
-- criar compatibilidade de leitura dupla se necessario
+- avaliar `acessoControle.ts` e o motor de permissoes antes de qualquer remocao de legado
+- avaliar `sub_regioes` e `propriedades_atribuidas`
+- avaliar `usuario_propriedade`
+- planejar migracao real de contrato/backend
 - testar fluxos de produtor, colaborador, admin, mapas, visitas, caderno e filtros antes de remover legado
+- remover legado somente em fase futura, depois de backend, contratos e testes
 - manter `fazenda*` apenas para compatibilidade existente ate a migracao estar validada
 
 ### 2. Contratos centrais do dominio

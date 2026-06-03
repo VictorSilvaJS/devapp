@@ -66,6 +66,38 @@ Rotas internas de stack ja migradas:
 
 Na interface e em documentacao de produto, a linguagem preferencial e `Propriedade`. No modelo futuro de anexos, `propriedade_id` deve ser o nome preferencial, preservando `fazenda_id` enquanto o mock e os contratos existentes dependerem dele.
 
+### Compatibilidade Dupla De Campos
+
+Status em 2026-06-03: a base possui compatibilidade dupla aditiva para
+Propriedade e Titular. Os helpers centrais ficam em
+`src/utils/propriedadeCompat.ts` e devem ser a primeira escolha para leituras
+novas:
+
+- `getPropriedadeId`
+- `getPropriedadeNome`
+- `getTitularId`
+- `getTitularNome`
+- `withPropriedadeCompat`
+- `withTitularCompat`
+
+Os helpers `fazendaUiCompat.ts`, `filtroCompat.ts`, `usuarioAdminCompat.ts`,
+`visitaFormCompat.ts` e `cadernoFormCompat.ts` ja usam esses resolvers em suas
+leituras de compatibilidade.
+
+Campos futuros ja emitidos/preservados na borda mockada de Propriedade:
+
+- `propriedade_id`
+- `propriedadeId`
+- `propriedade_nome`
+- `propriedadeNome`
+- `titular_id`
+- `titularId`
+- `titular_nome`
+
+Os 11 registros estaticos de produtores/propriedades em `src/api/mock.ts`
+foram enriquecidos com esses aliases, e `src/api/produtorCompat.ts` preserva e
+emite os aliases em leitura e persistencia mockada.
+
 ### Motivo Da Compatibilidade
 
 Esses termos ainda sustentam mocks, contratos, helpers de compatibilidade, filtros, visitas, caderno, mapas e regras de acesso. A migracao tecnica das tabs de Propriedades nao alterou motor de permissoes, mocks, payloads, contratos de dados, helpers tecnicos ou logica de listagem/filtro.
@@ -76,7 +108,11 @@ Esses termos ainda sustentam mocks, contratos, helpers de compatibilidade, filtr
 - Novos documentos ativos devem usar `Propriedade` ou `Propriedades`.
 - Novos arquivos e componentes de telas de propriedade devem usar `Propriedade`.
 - Novos modelos futuros devem preferir `propriedade_id`.
+- Codigo novo deve preferir os resolvers de `src/utils/propriedadeCompat.ts`.
 - Use `fazenda*` apenas quando estiver lidando com compatibilidade existente.
+- Nao acesse diretamente `fazenda_id`, `produtor_id` ou `proprietario_id` em novas telas/helpers, salvo compatibilidade explicita.
+- Nao remova campos legados enquanto payloads, mocks, permissoes, visitas, caderno, mapas e contratos dependerem deles.
+- Payloads de visita, caderno e cadastro ainda podem usar `fazenda_id` por compatibilidade.
 - Rotas novas de Propriedade devem usar nomes tecnicos baseados em `Propriedade`.
 
 ## Anexos Tecnicos

@@ -126,11 +126,32 @@ payloads existentes.
 - `fazenda_id`
 - `fazendaId`
 - `fazenda_nome`
+- `fazendaNome`
 - `produtor_id`
 - `proprietario_id`
+- `produtor_nome`
 - `produtores` no mock representando propriedades/fazendas legadas
 - rota tecnica de tab `Propriedades`
 - rota tecnica de tab `PropriedadesColaborador`
+
+Status em 2026-06-03: a migração aditiva de Propriedade/Titular adicionou
+compatibilidade dupla sem remover os legados acima. Os 11 registros estaticos
+de produtores/propriedades em `src/api/mock.ts` foram enriquecidos com:
+
+- `propriedade_id`
+- `propriedadeId`
+- `propriedade_nome`
+- `propriedadeNome`
+- `titular_id`
+- `titularId`
+- `titular_nome`
+
+A borda `src/api/produtorCompat.ts` preserva e emite esses aliases em leitura
+e persistencia mockada. Codigo novo deve preferir os resolvers de
+`src/utils/propriedadeCompat.ts` em vez de acessar diretamente
+`fazenda_id`, `produtor_id` ou `proprietario_id`, salvo compatibilidade
+explicita. Payloads de visita, caderno e cadastro ainda podem continuar usando
+`fazenda_id` enquanto a compatibilidade legada estiver ativa.
 
 ## Riscos Conhecidos
 
@@ -197,3 +218,5 @@ Limitacoes conhecidas que permanecem fora do escopo desta matriz:
 - `Propriedades atribuidas` ao colaborador ainda nao representam RBAC final por propriedade;
 - integridade referencial real fica para backend;
 - campos como `fazenda_id`, `produtor_id` e `proprietario_id` permanecem por compatibilidade.
+- aliases futuros de Propriedade/Titular existem no mock e na borda de
+  compatibilidade, mas nao substituem contratos, backend ou payloads legados.

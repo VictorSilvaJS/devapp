@@ -53,6 +53,22 @@ migradas para `NovaPropriedade` e `EditarPropriedade`. As rotas tecnicas das
 tabs foram migradas para `Propriedades` e `PropriedadesColaborador`, mantendo o
 label visual `Propriedades` nas duas tabs.
 
+**Rodada Compatibilidade - Aliases De Propriedade E Titular**
+
+Observação geral: esta rodada valida apenas que a compatibilidade dupla
+aditiva de Propriedade/Titular não quebrou fluxos existentes. Não deve validar
+backend, contrato real, migração definitiva, remoção de legados ou mudança de
+permissão.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| ALIAS-01 | P0 | Admin | Nova Propriedade | Criar Nova Propriedade com dados válidos e voltar para a listagem | Propriedade criada continua aparecendo e abrindo na listagem de `Propriedades` | Reexecutar | Aliases futuros não devem quebrar `fazenda_id`, `produtor_id` ou `proprietario_id` |
+| ALIAS-02 | P0 | Admin | Editar Propriedade | Editar propriedade existente e abrir o detalhe após salvar | Detalhe continua abrindo com leitura correta de Propriedade e Titular | Reexecutar | Aliases não devem trocar titular, rota, payload ou permissão |
+| ALIAS-03 | P0 | Produtor | Propriedades vinculadas | Entrar como produtor e abrir suas propriedades | Produtor continua vendo somente suas `Propriedades` vinculadas | Reexecutar | Preservar leitura por vínculo/titular legado |
+| ALIAS-04 | P0 | Colaborador | Propriedades do escopo | Entrar como colaborador e abrir propriedades do escopo | Colaborador continua vendo propriedades dentro do escopo esperado | Reexecutar | Não tratar `propriedades_atribuidas` como RBAC final |
+| ALIAS-05 | P0 | Todos | Visitas e Caderno | Abrir/criar quando aplicável Visitas e Caderno no contexto da propriedade | Fluxos continuam funcionando com `fazenda_id` preservado | Reexecutar | Payloads de visita/caderno ainda podem usar `fazenda_id` |
+| ALIAS-06 | P0 | Todos | Mapas e anexos | Abrir Mapas, mapa dos talhões e anexos de fertilidade | Mapas/anexos continuam abrindo sem regressão de filtros, permissões ou download | Reexecutar | Preservar `fazenda_id` e compatibilidade de mapas/anexos |
+
 **Rodada Visual - Padronização Com Componentes-Base**
 
 Observação geral: esta rodada valida apenas consistência visual e preservação de comportamento. Não envolve backend, mocks, rotas, permissões, payloads ou renomeação técnica de `Produtor`/`Fazenda`.
