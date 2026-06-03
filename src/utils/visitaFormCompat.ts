@@ -4,6 +4,11 @@ import {
   getNomeTitularFazenda,
   getVisitaFazendaId,
 } from './acessoControle';
+import {
+  getPropriedadeId,
+  getPropriedadeNome,
+  getTitularNome,
+} from './propriedadeCompat';
 
 export type VisitaFazendaOption = {
   id: string;
@@ -88,11 +93,20 @@ type BuildVisitaPayloadInput = {
   tecnicoResponsavel?: string;
 };
 
+const resolveVisitaFazendaOptionId = (fazenda: any): string =>
+  getFazendaId(fazenda) || getPropriedadeId(fazenda) || '';
+
+const resolveVisitaFazendaOptionNome = (fazenda: any): string =>
+  getNomeFazenda(fazenda) || getPropriedadeNome(fazenda) || '';
+
+const resolveVisitaTitularOptionNome = (fazenda: any): string =>
+  getNomeTitularFazenda(fazenda) || getTitularNome(fazenda) || '';
+
 export const buildVisitaFazendaOptions = (fazendas: any[] = []): VisitaFazendaOption[] =>
   (fazendas || []).map((fazenda) => ({
-    id: getFazendaId(fazenda),
-    fazendaNome: getNomeFazenda(fazenda),
-    titularNome: getNomeTitularFazenda(fazenda),
+    id: resolveVisitaFazendaOptionId(fazenda),
+    fazendaNome: resolveVisitaFazendaOptionNome(fazenda),
+    titularNome: resolveVisitaTitularOptionNome(fazenda),
     cidade: fazenda?.cidade,
     estado: fazenda?.estado,
   }));
@@ -102,7 +116,8 @@ export const findVisitaFazendaOption = (
   fazendaId?: string | null
 ): VisitaFazendaOption | null => options.find((option) => option.id === fazendaId) ?? null;
 
-export const getVisitaFormFazendaId = (visita: any): string => getVisitaFazendaId(visita);
+export const getVisitaFormFazendaId = (visita: any): string =>
+  getVisitaFazendaId(visita) || getPropriedadeId(visita) || '';
 
 export const resolveVisitaEdicaoFazendaId = (visita: any, fallbackFazendaId = ''): string =>
   getVisitaFormFazendaId(visita) || fallbackFazendaId;
