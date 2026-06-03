@@ -4,9 +4,16 @@ export type PropriedadeDetailRouteParams = {
   id: string;
 };
 
-export type PropriedadeContextRouteParams = {
+export type FazendaIdRouteParams = {
+  fazendaId?: string;
+  produtorId?: string;
+  propriedadeId?: string;
+};
+
+export type PropriedadeContextRouteParams = FazendaIdRouteParams & {
   fazendaId: string;
   produtorId: string;
+  propriedadeId: string;
 };
 
 export const buildPropriedadeDetailRouteParams = (
@@ -26,6 +33,7 @@ export const buildPropriedadeContextRouteParams = (
     ? {
         fazendaId: info.id,
         produtorId: info.id,
+        propriedadeId: info.id,
       }
     : undefined;
 };

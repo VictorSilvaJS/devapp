@@ -309,6 +309,7 @@ const run = async () => {
     assert.deepEqual(buildPropriedadeContextRouteParams(propriedade), {
       fazendaId: 'prop_rota',
       produtorId: 'prop_rota',
+      propriedadeId: 'prop_rota',
     });
   });
 
