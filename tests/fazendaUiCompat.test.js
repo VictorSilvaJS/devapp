@@ -40,6 +40,25 @@ const run = async () => {
     });
   });
 
+  await test('getFazendaUiInfo aceita aliases futuros de Propriedade e Titular', () => {
+    const info = getFazendaUiInfo({
+      propriedade_id: 'prop_alias',
+      propriedade_nome: 'Propriedade Alias',
+      titular_id: 'tit_alias',
+      titular_nome: 'Titular Alias',
+      cidade: 'Jatai',
+      estado: 'GO',
+    });
+
+    assert.deepEqual(info, {
+      id: 'prop_alias',
+      fazendaNome: 'Propriedade Alias',
+      titularNome: 'Titular Alias',
+      localizacao: 'Jatai/GO',
+      buscaTexto: 'propriedade alias titular alias jatai go',
+    });
+  });
+
   await test('matchesFazendaUiBusca usa helper centralizado e aceita contexto extra', () => {
     const fazenda = {
       id: 'faz_02',

@@ -188,18 +188,24 @@ export default function ClienteDashboardScreen() {
                 Geral ({propriedades.length} propriedades)
               </Text>
             </TouchableOpacity>
-            {propriedades.map(prop => (
-              <TouchableOpacity
-                key={getFazendaId(prop)}
-                style={[styles.filtroFazendaChip, filtroFazenda === getFazendaId(prop) && styles.filtroFazendaChipAtivo]}
-                onPress={() => setFiltroFazenda(getFazendaId(prop))}
-              >
-                <Ionicons name="home-outline" size={16} color={filtroFazenda === getFazendaId(prop) ? colors.white : colors.text} style={{ marginRight: 4 }} />
-                <Text style={[styles.filtroFazendaChipText, filtroFazenda === getFazendaId(prop) && styles.filtroFazendaChipTextAtivo]} numberOfLines={1}>
-                  {prop.fazenda}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {propriedades.map(prop => {
+              const fazendaInfo = getFazendaUiInfo(prop);
+              const fazendaId = getFazendaId(prop);
+              const chipAtivo = filtroFazenda === fazendaId;
+
+              return (
+                <TouchableOpacity
+                  key={fazendaId}
+                  style={[styles.filtroFazendaChip, chipAtivo && styles.filtroFazendaChipAtivo]}
+                  onPress={() => setFiltroFazenda(fazendaId)}
+                >
+                  <Ionicons name="home-outline" size={16} color={chipAtivo ? colors.white : colors.text} style={{ marginRight: 4 }} />
+                  <Text style={[styles.filtroFazendaChipText, chipAtivo && styles.filtroFazendaChipTextAtivo]} numberOfLines={1}>
+                    {fazendaInfo.fazendaNome || 'Propriedade sem nome'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
       )}

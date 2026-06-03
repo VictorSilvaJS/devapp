@@ -6,7 +6,8 @@ import {
   resolveFiltroFazendaId,
   toFiltrosCompativeis,
 } from './filtroCompat';
-import { getFazendaId, getNomeFazenda, getNomeTitularFazenda } from '../utils/acessoControle';
+import { getFazendaId } from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 const FiltroContext = createContext<any>(null);
 
@@ -107,15 +108,19 @@ export function FiltroProvider({ children }) {
 
       // Extrair fazendas com seus IDs
       const fazendasDisponiveis = produtoresFiltrados
-        .filter(p => p.fazenda)
-        .map(p => ({
-          id: getFazendaId(p),
-          nome: getNomeFazenda(p),
-          produtor: getNomeTitularFazenda(p),
-          cidade: p.cidade,
-          regiao: p.regiao,
-          microregiao: p.microregiao,
-        }))
+        .map(p => {
+          const fazendaInfo = getFazendaUiInfo(p);
+
+          return {
+            id: fazendaInfo.id,
+            nome: fazendaInfo.fazendaNome,
+            produtor: fazendaInfo.titularNome,
+            cidade: p.cidade,
+            regiao: p.regiao,
+            microregiao: p.microregiao,
+          };
+        })
+        .filter(fazenda => fazenda.id && fazenda.nome)
         .sort((a, b) => a.nome.localeCompare(b.nome));
 
       setFazendas(fazendasDisponiveis);
