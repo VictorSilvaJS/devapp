@@ -36,9 +36,8 @@ import {
   filtrarLimitesPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaIds,
-  getNomeFazenda,
-  getNomeTitularFazenda,
 } from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -229,12 +228,13 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         const fazendaAtual = avaliacao.fazenda;
         idsPermitidos = [avaliacao.fazendaId];
         fazendasNoContexto = [fazendaAtual];
+        const fazendaInfo = getFazendaUiInfo(fazendaAtual);
 
         if (!titularNomeParam) {
-          setTitularNome(getNomeTitularFazenda(fazendaAtual));
+          setTitularNome(fazendaInfo.titularNome);
         }
         if (!fazendaNomeParam) {
-          setFazendaNome(getNomeFazenda(fazendaAtual));
+          setFazendaNome(fazendaInfo.fazendaNome);
         }
       } else {
         setTitularNome('');
