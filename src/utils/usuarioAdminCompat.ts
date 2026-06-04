@@ -48,6 +48,42 @@ const resolvePropriedadeId = (propriedade: any): string =>
 const resolveTitularId = (propriedade: any): string =>
   getTitularIdFazenda(propriedade) || getTitularId(propriedade) || '';
 
+const normalizeTerritorio = (value: any): string =>
+  String(value || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+export const buildVinculosPropriedadesPorMicroregioes = ({
+  propriedades = [],
+  regiao,
+  microregioes = [],
+}: {
+  propriedades?: any[];
+  regiao?: string;
+  microregioes?: string[];
+}) => {
+  const regiaoNormalizada = normalizeTerritorio(regiao);
+  const microregioesNormalizadas = new Set(microregioes.map(normalizeTerritorio).filter(Boolean));
+
+  if (microregioesNormalizadas.size === 0) return [];
+
+  return propriedades
+    .filter((propriedade) => {
+      const mesmaMicroregiao = microregioesNormalizadas.has(normalizeTerritorio(propriedade?.microregiao));
+      const mesmaRegiao =
+        !regiaoNormalizada || normalizeTerritorio(propriedade?.regiao) === regiaoNormalizada;
+      return mesmaMicroregiao && mesmaRegiao;
+    })
+    .map((propriedade, index) => ({
+      propriedade_id: resolvePropriedadeId(propriedade),
+      tipo_vinculo: 'colaborador_atribuido',
+      principal: index === 0,
+    }))
+    .filter((vinculo) => Boolean(vinculo.propriedade_id));
+};
+
 export const getUsuarioNome = (usuario: any) => normalizeNome(usuario || {}) || 'Usuário sem nome';
 
 export const getUsuarioPerfilLabel = (perfil?: string) => {
@@ -299,23 +335,24 @@ export const buildUsuarioAdminPayload = ({
 
   if (perfil === 'colaborador') {
     const subRegioes = parseListaTexto(form.subRegioesText);
-    const vinculosColaborador = vinculosPropriedades.map((vinculo, index) => ({
-      ...vinculo,
-      tipo_vinculo: 'colaborador_atribuido',
-      principal: index === 0 ? vinculo.principal || true : vinculo.principal === true,
-    }));
+    const regiao = form.regiao?.trim() || '';
+    const vinculosColaborador = buildVinculosPropriedadesPorMicroregioes({
+      propriedades,
+      regiao,
+      microregioes: subRegioes,
+    });
 
     return {
       ...base,
       produtor_id: '',
       tipo_vinculo_produtor: '',
-      regiao: form.regiao?.trim() || '',
+      regiao,
       cargo: form.cargo?.trim() || '',
       sub_regioes: subRegioes,
       propriedades_atribuidas: vinculosColaborador.map((vinculo) => vinculo.propriedade_id),
       vinculos_propriedades: vinculosColaborador,
       vinculos_microregioes: subRegioes.map((microregiao) => ({
-        regiao: form.regiao?.trim() || '',
+        regiao,
         microregiao,
       })),
       regioes_acesso: [],

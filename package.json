@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js && node tests/validatorsCompat.test.js && node tests/mockCompat.test.js && node tests/produtorFazendaCompat.test.js && node tests/acessoControleCompat.test.js && node tests/acessoEscopoPerfilDiagnostico.test.js && node tests/propriedadeTitularCompatDiagnostico.test.js && node tests/mapaOfflineCompat.test.js && node tests/mapaRouteCompat.test.js && node tests/mapaDownloadCompat.test.js && node tests/filtroCompat.test.js && node tests/visitaFormCompat.test.js && node tests/cadernoFormCompat.test.js && node tests/fazendaUiCompat.test.js && node tests/fazendaCadastroCompat.test.js"
+    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js && node tests/validatorsCompat.test.js && node tests/mockCompat.test.js && node tests/produtorFazendaCompat.test.js && node tests/acessoControleCompat.test.js && node tests/acessoEscopoPerfilDiagnostico.test.js && node tests/propriedadeTitularCompatDiagnostico.test.js && node tests/mapaOfflineCompat.test.js && node tests/mapaRouteCompat.test.js && node tests/mapaDownloadCompat.test.js && node tests/filtroCompat.test.js && node tests/visitaFormCompat.test.js && node tests/cadernoFormCompat.test.js && node tests/fazendaUiCompat.test.js && node tests/fazendaCadastroCompat.test.js && node tests/usuarioAdminCompat.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",

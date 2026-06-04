@@ -218,8 +218,8 @@ export default function UsuarioDetailScreen() {
         </SectionCard>
 
         <SectionCard title="Perfil demonstrativo">
-          <InfoRow icon="person-circle-outline" label="Perfil demonstrativo" value={getUsuarioPerfilLabel(usuario.perfil)} />
-          <InfoRow icon="checkmark-circle-outline" label="Status local" value={status.label} />
+          <InfoRow icon="person-circle-outline" label="Perfil" value={getUsuarioPerfilLabel(usuario.perfil)} />
+          <InfoRow icon="checkmark-circle-outline" label="Status" value={status.label} />
         </SectionCard>
 
         {usuario.perfil === 'produtor' && (
@@ -264,7 +264,7 @@ export default function UsuarioDetailScreen() {
             <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
             <InfoBox
-              message="Região, Microregião e Propriedades atribuídas são vínculos demonstrativos. Propriedades atribuídas não são RBAC final e não alteram sozinhas o acesso efetivo."
+              message="Região, Microrregião e Propriedades atribuídas automaticamente são vínculos demonstrativos. Eles não são RBAC final e não alteram sozinhos o acesso efetivo."
               style={styles.inlineInfoBox}
             />
 
@@ -287,7 +287,7 @@ export default function UsuarioDetailScreen() {
             )}
 
             <Text style={styles.subsectionTitle}>
-              {propriedadesAtribuidas.length > 0 ? 'Propriedades atribuídas' : 'Propriedades no escopo visual'}
+              {propriedadesAtribuidas.length > 0 ? 'Propriedades atribuídas por microrregião' : 'Propriedades no escopo visual'}
             </Text>
             {propriedadesColaborador.length === 0 ? (
               <EmptyState
