@@ -14,7 +14,7 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 4. Caderno no detalhe da propriedade: registros corretos por propriedade e visibilidade para produtor.
 5. Criação a partir do detalhe da propriedade: novo caderno nasce vinculado à propriedade atual.
 6. Criação de visita pelo detalhe da propriedade: `NovaVisita` deve pré-selecionar/travar a propriedade contextual e manter bloqueio fora de escopo.
-7. Material Técnico em mapas: botão/modal devem ficar claros como mock visual, sem upload real, storage, Drive ou cadastro persistente.
+7. Mapas/Arquivos técnicos: consulta deve ser priorizada e a associação interna de referência não deve aparecer no fluxo de campo.
 8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
 9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Material técnico`, sem alterar download, filtros, permissões ou contratos.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
@@ -30,6 +30,10 @@ Na 16B.2, Usuario, vinculos, Propriedade, Visita, Caderno e metadados de Mapa
 passaram a usar persistencia local em `AsyncStorage`. Arquivos, limites/talhoes,
 autenticacao e sincronizacao continuam fora do snapshot.
 
+Na 16B.3, `MapasScreen` passou a priorizar titulo, descricao e consulta dos
+materiais preparados. A associacao interna de referencia e os campos visiveis
+de URL, formato, tamanho e origem foram removidos da experiencia de campo.
+
 Credenciais principais alinhadas na 16B.1:
 
 - Admin Demonstração: `admin.demonstracao@example.com` / `admin123`
@@ -43,13 +47,13 @@ Credenciais principais alinhadas na 16B.1:
 | APK16B-03 | P0 | Todos | Sela de Prata I | Conferir área cadastrada e área coberta pelos talhões | Diferença entre área total e área mapeada está confirmada/explicada ou registrada como pendência | Reexecutar | Mock atual: 6200 ha; manifesto: 1888,6 ha |
 | APK16B-04 | P0 | Produtor/Colaborador/Admin | Fluxo principal | Abrir mapa, anexos, visitas e caderno da Sela de Prata I | Os quatro grupos possuem dados coerentes no contexto de `p_sela1` | Reexecutar | Seed e teste automatizado preparados; preservar `fazenda_id` |
 | APK16B-05 | P0 | Todos | Visitas/Caderno | Conferir os exemplos principais | Datas são estáveis, textos são neutros, talhões são coerentes e fotos externas não são necessárias | Reexecutar | Registros principais adicionados na 16B.1; não tratar conteúdo mock como recomendação real |
-| APK16B-06 | P0 | Admin/Colaborador | Mapas/Arquivos técnicos | Abrir a biblioteca no APK de campo | Consulta é priorizada e nenhuma ação central promete upload/download real | Reexecutar | Ocultar associação técnica de referência no fluxo de campo |
+| APK16B-06 | P0 | Admin/Colaborador | Mapas/Arquivos técnicos | Abrir a biblioteca no APK de campo | Consulta é priorizada, título/descrição têm destaque e nenhuma ação sugere associação, upload/download real, Drive ou storage | Reexecutar | Implementado na 16B.3; conferir ausência da ação interna |
 | APK16B-07 | P0 | Admin | Nova Propriedade | Criar Propriedade com Titular existente e campos mínimos | Salva no mock preservando Titular, Região, Microregião e contratos legados | Reexecutar | Novo Titular fica fora do fluxo principal |
 | APK16B-08 | P1 | Admin | Usuários | Abrir Novo Usuario e detalhe | Fluxo permanece assistido/mockado; telefone/documento são opcionais; Usuario criado não autentica | Reexecutar | Cadastro rápido fora do fluxo principal |
 | APK16B-09 | P0 | Todos | LGPD | Revisar telas e detalhes do pacote principal | Nenhum dado pessoal real não autorizado, foto imprevisível ou endereço sensível aparece | Reexecutar | Cadastros seed minimizados; confirmar autorização de nome, limites, localização e anexos da Sela de Prata I |
 | APK16B-10 | P0 | Todos | Persistência local | Criar Usuario, Propriedade, Visita e Caderno; fechar e abrir o app | Cadastros continuam disponíveis, preservando ids, vínculos e `fazenda_id` sem sincronização | Reexecutar | Implementado na 16B.2; validar em Android físico |
 | APK16B-11 | P0 | Admin/Dev controlado | Restaurar demonstração | Executar `MockLocalData.restoreSeed()` em ambiente controlado e reabrir o app | Alterações locais são removidas e Sela de Prata I volta ao pacote inicial | Reexecutar | Sem botão visual nesta fase; ação destrutiva controlada |
-| APK16B-12 | P1 | Todos | Mapas locais | Alterar associação/metadado mockado de Mapa, fechar e abrir o app | Metadado continua disponível; nenhum arquivo físico é copiado ou enviado | Reexecutar | Persistência cobre somente metadados estruturados |
+| APK16B-12 | P1 | Admin/Dev controlado | Mapas locais | Alterar metadado mockado de Mapa pela camada controlada, fechar e abrir o app | Metadado continua disponível; nenhum arquivo físico é copiado ou enviado | Reexecutar | Persistência cobre somente metadados estruturados; associação interna não aparece na tela |
 
 **Rodada Fase 16A - APK Demonstrável Para Campo**
 
@@ -66,7 +70,7 @@ rodada.
 | APK16A-03 | P0 | Produtor | Fluxo principal | Abrir Propriedade Sela de Prata I, mapa de talhões, anexos, visitas e caderno | Fluxo de consulta funciona e textos usam `Propriedade` | Reexecutar | Validar PNGs internos de fertilidade |
 | APK16A-04 | P0 | Colaborador | Campo | Abrir Propriedades do escopo, criar visita contextual e criar caderno | Registros salvam no mock preservando contexto de Propriedade | Reexecutar | Sem prometer persistência real |
 | APK16A-05 | P0 | Admin | Cadastros | Criar/editar Propriedade e criar usuários Produtor, Colaborador e Administrador | Cadastros funcionam como MVP visual/mockado | Reexecutar | Usuário criado não vira login real |
-| APK16A-06 | P0 | Admin/Colaborador | Mapas | Abrir Panorama, filtrar Fertilidade/Safra/Talhão e abrir anexo | Consulta visual funciona; associação de material permanece mockada | Reexecutar | Sem upload/storage/Drive real |
+| APK16A-06 | P0 | Admin/Colaborador | Mapas | Abrir Mapas/Arquivos técnicos, filtrar Fertilidade/Safra/Talhão e abrir anexo | Consulta visual funciona; associação interna não aparece no fluxo de campo | Reexecutar | Sem upload/storage/Drive real |
 | APK16A-07 | P0 | Todos | LGPD | Conferir dados mockados visíveis durante demonstração | Nenhum dado pessoal real sensível é exposto sem autorização | Reexecutar | Ver nomes, e-mails, telefones, endereços e coordenadas |
 | APK16A-08 | P1 | Todos | Conectividade | Testar com internet instável ou desligada | App mantém consulta de assets internos; recursos online podem degradar sem parecer erro de produto final | Reexecutar | Tiles externos e URLs mockadas podem depender de rede |
 | APK16A-09 | P1 | Todos | Comunicação | Explicar ao tester o que é mock antes do uso | Tester entende que APK é demonstrável e não sistema produtivo | Reexecutar | Evita coleta real indevida |
@@ -196,7 +200,7 @@ Componentes-base envolvidos: `FormField`, `FormFooter`, `SectionCard`, `InfoBox`
 | V-04 | P1 | Propriedades | Abrir `PropriedadesScreen` pelas rotas `Propriedades` e `PropriedadesColaborador` | Listagem principal continua visível como `Propriedades` para admin e colaborador | Reexecutar | `PropriedadesColaborador` é rota técnica; label visual permanece `Propriedades` |
 | V-05 | P0 | Regressão | Exercitar filtros, busca, limpeza de filtros e navegação nas listagens padronizadas | Resultado funcional idêntico ao comportamento anterior, apenas com composição visual padronizada | Reexecutar | Conferir status, período, ordenação e escopo |
 | V-06 | P0 | Admin/Usuários | Abrir `NovoUsuarioScreen` e alternar entre perfis produtor, colaborador e admin | Blocos condicionais, validações e salvamento permanecem iguais; muda apenas a composição visual | Reexecutar | Preservar `buildUsuarioAdminPayload`, `buildUsuarioFormFromMock`, `Produtor.create`, `vinculos_propriedades`, `vinculos_microregioes` e campos legados |
-| V-07 | P0 | Mapas | Abrir `MapasScreen`, exercitar busca, categoria, ordenação, safra, talhão, contexto de propriedade, mapa dos talhões e anexos | Padronização é apenas visual; materiais, demarcações, previews e navegação mantêm comportamento anterior | Reexecutar | Preservar `ShapeRenderer`, `FazendaMapaScreen`, `MapaFazendaView`, `buildFazendaMapaRouteParams`, `avaliarDownloadMapa`, `Mapa.update`, `ConfirmDialog`, preview de asset interno, permissões, filtros de acesso, mocks, rotas, payloads e campos legados |
+| V-07 | P0 | Mapas | Abrir `MapasScreen`, exercitar busca, categoria, ordenação, safra, talhão, contexto de propriedade, mapa dos talhões e anexos | Materiais, demarcações, previews e navegação mantêm comportamento; ação interna de associação não aparece | Reexecutar | Preservar `ShapeRenderer`, `FazendaMapaScreen`, `MapaFazendaView`, `buildFazendaMapaRouteParams`, `avaliarDownloadMapa`, `ConfirmDialog`, preview de asset interno, permissões, filtros de acesso, mocks, rotas, payloads e campos legados |
 
 **Rodada Mapas - Anexos De Fertilidade**
 
@@ -205,7 +209,7 @@ Observacao geral: esta rodada valida apenas a nomenclatura visual e a leitura de
 | ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
 | M-01 | P0 | Produtor/Admin/Colaborador | Propriedade Sela de Prata I acessivel | Abrir `MapasScreen` no contexto da propriedade | A secao de fertilidade aparece como `Anexos de fertilidade` quando aplicavel | Reexecutar | Nao deve alterar permissao nem filtro |
-| M-02 | P0 | Produtor/Admin/Colaborador | `MapasScreen` com filtro Fertilidade | Conferir os cinco PNGs da Sela de Prata I | Itens aparecem como `Anexo de fertilidade PNG` e mostram elemento, profundidade, safra, talhao/propriedade inteira e nome original quando existir | Reexecutar | Usa `elemento_label`, `talhao_nome` e `arquivo_nome_original` com fallback |
+| M-02 | P0 | Produtor/Admin/Colaborador | `MapasScreen` com filtro Fertilidade | Conferir os cinco PNGs da Sela de Prata I | Itens aparecem como `Anexo de fertilidade`, priorizam título/descrição e mostram contexto operacional sem destacar formato ou tamanho | Reexecutar | Usa metadados existentes com fallback; URL e origem não ficam visíveis |
 | M-03 | P0 | Produtor/Admin/Colaborador | Anexo de fertilidade disponivel | Tocar em `Abrir anexo` | Preview/abertura do anexo continua funcionando como antes | Reexecutar | Preservar `avaliarDownloadMapa` e preview de asset interno |
 | M-04 | P1 | Produtor/Admin/Colaborador | Existem materiais de categorias diferentes | Alternar categorias/filtros | Materiais tecnicos genericos continuam separados dos anexos de fertilidade | Reexecutar | `Material tecnico` nao deve substituir `Anexo de fertilidade` |
 | M-05 | P1 | Produtor/Admin/Colaborador | Lista de materiais aberta | Exercitar busca por elemento, safra, talhao/propriedade e nome original | Busca e filtros continuam com comportamento anterior | Reexecutar | Sem mudanca de contrato ou payload |

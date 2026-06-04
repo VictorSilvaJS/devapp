@@ -365,8 +365,9 @@ Principais achados da abertura:
   Propriedade, confundindo pessoa/perfil com unidade operacional;
 - `area_total: 6200` e a soma mapeada de `1888,6 ha` podem representar area
   total e area mapeada, mas essa semantica ainda precisa ser confirmada;
-- MapasScreen ainda possui associacao interna de referencia com URL, formato e
-  tamanho, superficie tecnica demais para o APK de campo;
+- na abertura da Fase 16B, MapasScreen ainda possuia associacao interna de
+  referencia com URL, formato e tamanho; esse achado foi tratado no Bloco
+  16B.3;
 - na abertura, o CRUD mockado ainda era somente em memoria; esse achado foi
   tratado no Bloco 16B.2 sem implementar sincronizacao ou backend;
 - nomes, contatos, enderecos, credenciais e fotos externas do mock precisam de
@@ -420,7 +421,28 @@ Atualizacao do Bloco 16B.2 em 2026-06-04:
 O Bloco 16B.2 nao implementa backend, login real, RBAC real, sincronizacao,
 upload ou storage remoto.
 
-Validacoes executadas na abertura e reexecutadas para os Blocos 16B.1/16B.2:
+Atualizacao do Bloco 16B.3 em 2026-06-04:
+
+- `MapasScreen` passou a usar o titulo visivel `Mapas/Arquivos tecnicos`;
+- cards priorizam titulo, descricao, contexto da Propriedade e metadados
+  operacionais ja existentes;
+- formato, tamanho, origem e URL nao aparecem mais como informacao principal;
+- a acao e o modal internos de associacao de referencia foram removidos da
+  experiencia de campo;
+- confirmacoes e mensagens nao prometem upload, download, publicacao, Drive
+  ou storage;
+- filtros por Propriedade, categoria, safra, talhao e busca foram preservados;
+- ordenacao por tamanho foi removida por nao ser relevante para a consulta de
+  campo; ordenacao por recencia e titulo permanece;
+- abertura dos PNGs da Sela de Prata I, mapa de talhoes,
+  `FazendaMapaScreen`, contratos, rotas, permissao, pipeline, persistencia de
+  metadados e `fazenda_id`/`fazendaId` foram preservados.
+
+O Bloco 16B.3 nao altera `src/api/mock.ts`, `mockLocalPersistence.ts`,
+`FazendaMapaScreen`, backend, RBAC, rotas, pipeline ou arquivos persistidos.
+
+Validacoes executadas na abertura e reexecutadas para os Blocos
+16B.1/16B.2/16B.3:
 
 - `npm run typecheck` passou
 - `npm run test:domain-compat` passou

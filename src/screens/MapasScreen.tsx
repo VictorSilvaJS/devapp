@@ -6,7 +6,6 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ActivityIndicator,
-  TextInput,
   RefreshControl,
   Modal,
   Dimensions,
@@ -42,10 +41,7 @@ import {
   buildFazendaUiInfoMap,
   getFazendaUiInfo,
 } from '../utils/fazendaUiCompat';
-import {
-  avaliarDownloadMapa,
-  buildMapaArquivoAssociacaoPayload,
-} from '../utils/mapaDownloadCompat';
+import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -67,7 +63,6 @@ const FILTRO_TODOS = 'todos';
 const ORDENACOES_MATERIAIS = [
   { key: 'recente', label: 'Recente', icon: 'time-outline' },
   { key: 'titulo', label: 'Título', icon: 'text-outline' },
-  { key: 'tamanho', label: 'Tamanho', icon: 'document-outline' },
 ];
 
 const normalizarBusca = (value: unknown): string =>
@@ -183,16 +178,6 @@ export default function MapasScreen({ route, navigation }) {
     mapa: null,
     source: null,
   });
-  const [uploadDialog, setUploadDialog] = useState(false);
-  const [uploadMapaId, setUploadMapaId] = useState('');
-  const [uploadArquivoUrl, setUploadArquivoUrl] = useState('');
-  const [uploadFormato, setUploadFormato] = useState('');
-  const [uploadTamanho, setUploadTamanho] = useState('');
-  const [materialTipo, setMaterialTipo] = useState('Material técnico');
-  const [materialOrigem, setMaterialOrigem] = useState('Referência mockada');
-  const [materialDescricao, setMaterialDescricao] = useState('');
-  const [associandoMaterial, setAssociandoMaterial] = useState(false);
-
   // Estado técnico de demarcação/panorama
   const [limites, setLimites] = useState([]);
   const [anosDisponiveis, setAnosDisponiveis] = useState([]);
@@ -394,8 +379,6 @@ export default function MapasScreen({ route, navigation }) {
         return new Date(b.data_criacao || 0).getTime() - new Date(a.data_criacao || 0).getTime();
       } else if (ordenacao === 'titulo') {
         return (a.titulo || '').localeCompare(b.titulo || '');
-      } else if (ordenacao === 'tamanho') {
-        return (b.tamanho_arquivo || 0) - (a.tamanho_arquivo || 0);
       }
       return 0;
     });
@@ -418,32 +401,6 @@ export default function MapasScreen({ route, navigation }) {
       }))
       .filter(cat => cat.mapas.length > 0);
   }, [mapasFiltrados]);
-
-  const totalMapasComArquivo = useMemo(
-    () => mapasNoContexto.filter((mapa) => avaliarDownloadMapa(mapa).podeAbrir).length,
-    [mapasNoContexto]
-  );
-  const mapasPendentesAssociacao = useMemo(
-    () => mapasNoContexto.filter((mapa) => !avaliarDownloadMapa(mapa).podeAbrir),
-    [mapasNoContexto]
-  );
-  const podeAssociarMaterial =
-    (user?.perfil === 'admin' || user?.perfil === 'colaborador')
-    && mapasPendentesAssociacao.length > 0;
-  const mapasAssociacaoOptions = useMemo(
-    () => [...mapasPendentesAssociacao].sort((a, b) => (a.titulo || '').localeCompare(b.titulo || '')),
-    [mapasPendentesAssociacao]
-  );
-  const mapaUploadSelecionado = useMemo(
-    () => mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId) ?? null,
-    [mapasAssociacaoOptions, uploadMapaId]
-  );
-  const materialFazendaSelecionadaInfo = useMemo(() => {
-    if (!mapaUploadSelecionado) return fazendaContextoInfo || fazendaFiltroInfo;
-    return fazendaInfoPorId.get(getMapaFazendaId(mapaUploadSelecionado))
-      || fazendaContextoInfo
-      || fazendaFiltroInfo;
-  }, [mapaUploadSelecionado, fazendaInfoPorId, fazendaContextoInfo, fazendaFiltroInfo]);
 
   // ──────────────────────────────────────────────
   // FILTROS DA DEMARCAÇÃO DO PANORAMA
@@ -543,60 +500,6 @@ export default function MapasScreen({ route, navigation }) {
     setTalhaoDetailVisible(true);
   }, []);
 
-  const preencherUploadComMapa = (mapa) => {
-    const status = avaliarDownloadMapa(mapa);
-    setUploadMapaId(mapa?.id || '');
-    setUploadArquivoUrl(status.podeAbrir ? status.arquivoUrl || '' : '');
-    setUploadFormato(mapa?.formato_arquivo || '');
-    setUploadTamanho(mapa?.tamanho_arquivo ? String(mapa.tamanho_arquivo) : '');
-    setMaterialTipo(formatarTipoMaterial(mapa?.tipo_material) || 'Material técnico');
-    setMaterialOrigem('Referência mockada');
-    setMaterialDescricao(mapa?.observacoes || '');
-  };
-
-  const abrirAssociacaoMaterial = (mapa = null) => {
-    const mapaBase = mapa || mapasFiltrados[0] || mapasAssociacaoOptions[0];
-    if (!mapaBase) {
-      toast.showInfo('Não há materiais técnicos no contexto atual para associar referência.');
-      return;
-    }
-
-    preencherUploadComMapa(mapaBase);
-    setUploadDialog(true);
-  };
-
-  const handleAssociarMaterial = async () => {
-    const mapaSelecionado = mapasAssociacaoOptions.find((mapa) => mapa.id === uploadMapaId);
-
-    if (!mapaSelecionado) {
-      toast.showError('Selecione um material técnico para associar a referência.');
-      return;
-    }
-
-    const result = buildMapaArquivoAssociacaoPayload({
-      arquivoUrl: uploadArquivoUrl,
-      formatoArquivo: uploadFormato,
-      tamanhoArquivo: uploadTamanho,
-    });
-
-    if (result.ok === false) {
-      toast.showError(result.mensagem);
-      return;
-    }
-
-    setAssociandoMaterial(true);
-    try {
-      const atualizado = await Mapa.update(mapaSelecionado.id, result.payload);
-      setMapas((prev) => prev.map((mapa) => mapa.id === atualizado.id ? atualizado : mapa));
-      setUploadDialog(false);
-      toast.showSuccess('Referência de material preparada associada no mock visual.');
-    } catch (error) {
-      toast.showError('Não foi possível associar a referência ao material técnico.');
-    } finally {
-      setAssociandoMaterial(false);
-    }
-  };
-
   const handleTalhaoFiltroChange = (talhao) => {
     setTalhaoFiltroMapas(talhao);
     setTalhaoFiltroLimite(talhao);
@@ -614,7 +517,7 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const tituloTela = consultaPorFazenda ? 'Panorama da Propriedade' : 'Panorama de Mapas';
+  const tituloTela = 'Mapas/Arquivos técnicos';
   const contextoLabel = consultaPorFazenda
     ? 'Consulta por propriedade'
     : fazendaFiltroInfo
@@ -657,7 +560,7 @@ export default function MapasScreen({ route, navigation }) {
     );
   const tituloSecaoMateriais = materiaisSaoFertilidade
     ? 'Anexos de fertilidade'
-    : 'Anexos e materiais técnicos';
+    : 'Mapas/Arquivos técnicos';
   const subtituloSecaoMateriais = materiaisSaoFertilidade
     ? 'Anexos de fertilidade disponíveis para consulta.'
     : 'Materiais técnicos disponíveis para consulta.';
@@ -723,20 +626,9 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   // FORMATADORES
   // ──────────────────────────────────────────────
-  const formatarTamanho = (bytes) => {
-    if (!bytes) return 'N/A';
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   const formatarData = (data) => {
     if (!data) return 'N/A';
     return new Date(data).toLocaleDateString('pt-BR');
-  };
-
-  const hasTamanhoArquivo = (value) => {
-    const tamanho = Number(value);
-    return Number.isFinite(tamanho) && tamanho > 0;
   };
 
   const getFormatoArquivo = (mapa) =>
@@ -787,19 +679,18 @@ export default function MapasScreen({ route, navigation }) {
     const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
     const statusDownload = avaliarDownloadMapa(mapa);
     const formatoArquivo = getFormatoArquivo(mapa);
-    const formatoLabel = formatoArquivo ? formatoArquivo.toUpperCase() : 'ARQ';
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
     const isAnexoFertilidade = mapa?.tipo_anexo === 'anexo_fertilidade';
     const tipoArquivoLabel = isAnexoFertilidade
-      ? `Anexo de fertilidade ${formatoLabel}`
+      ? 'Anexo de fertilidade'
       : mapa?.categoria === 'fertilidade'
-        ? `Mapa de fertilidade ${formatoLabel}`
-        : `Material técnico ${formatoLabel}`;
+        ? 'Mapa de fertilidade'
+        : 'Arquivo técnico';
     const abrirMaterialLabel = statusDownload.podeAbrir
       ? isAnexoFertilidade
         ? 'Abrir anexo'
-        : 'Visualizar material'
-      : statusDownload.label;
+        : 'Abrir material'
+      : 'Arquivo não disponível';
     const tipoMaterialLabel = formatarTipoMaterial(mapa.tipo_material);
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
@@ -845,6 +736,9 @@ export default function MapasScreen({ route, navigation }) {
               <Text style={styles.mapaSubcategoria}>{tipoMaterialLabel}</Text>
             ) : null}
           </View>
+          {mapa.observacoes && (
+            <Text style={styles.mapaObservacao} numberOfLines={2}>{mapa.observacoes}</Text>
+          )}
           {fazendaMapaInfo && (
             <Text style={styles.mapaContexto} numberOfLines={1}>
               Propriedade: {fazendaMapaInfo.fazendaNome} • Titular: {fazendaMapaInfo.titularNome || 'Não informado'}
@@ -855,18 +749,8 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         </View>
       </View>
-      
-      {mapa.observacoes && (
-        <Text style={styles.mapaObservacao} numberOfLines={2}>{mapa.observacoes}</Text>
-      )}
 
       <View style={styles.mapaFooter}>
-        <View style={styles.mapaFormatoTag}>
-          <Text style={styles.mapaFormatoTexto}>{isImagemAnexo ? 'ANEXO' : formatoLabel}</Text>
-        </View>
-        {hasTamanhoArquivo(mapa.tamanho_arquivo) && (
-          <Text style={styles.mapaTamanho}>{formatarTamanho(mapa.tamanho_arquivo)}</Text>
-        )}
         <View style={[
           styles.downloadIndicator,
           statusDownload.podeAbrir ? styles.downloadIndicatorDisponivel : styles.downloadIndicatorIndisponivel,
@@ -886,18 +770,8 @@ export default function MapasScreen({ route, navigation }) {
       </View>
       {!statusDownload.podeAbrir && (
         <Text style={styles.materialIndisponivelTexto}>
-          {statusDownload.descricao}
+          Este material ainda não possui arquivo disponível para consulta.
         </Text>
-      )}
-      {podeAssociarMaterial && !statusDownload.podeAbrir && (
-        <TouchableOpacity
-          style={styles.associarMaterialButton}
-          onPress={() => abrirAssociacaoMaterial(mapa)}
-          activeOpacity={0.75}
-        >
-          <Ionicons name="link-outline" size={15} color={colors.primary} />
-          <Text style={styles.associarMaterialText}>Mock interno: associar referência</Text>
-        </TouchableOpacity>
       )}
     </TouchableOpacity>
     );
@@ -1175,8 +1049,8 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         </View>
         <InfoBox
-          message="Neste MVP de campo, os materiais já vêm preparados no app ou apontam para uma referência mockada. A tela apenas permite consultar ou abrir esses materiais."
-          style={styles.uploadDescription}
+          message="Consulte os mapas e arquivos técnicos já preparados para esta demonstração. Esta tela não envia, baixa ou publica arquivos."
+          style={styles.materiaisDescription}
         />
       </SectionCard>
 
@@ -1202,17 +1076,6 @@ export default function MapasScreen({ route, navigation }) {
           contentStyle={styles.ordenacaoButtons}
         />
       </View>
-
-      {podeAssociarMaterial && (
-        <TouchableOpacity
-          style={styles.uploadButton}
-          onPress={() => abrirAssociacaoMaterial()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="link-outline" size={20} color={colors.white} />
-          <Text style={styles.uploadButtonText}>Mock interno: associar referência</Text>
-        </TouchableOpacity>
-      )}
 
       {mapasFiltrados.length === 0 ? (
         <EmptyState
@@ -1274,7 +1137,7 @@ export default function MapasScreen({ route, navigation }) {
   if (estadoBloqueio) {
     return (
       <View style={styles.container}>
-        <Header title="Panorama de Mapas" showBack onBack={() => navigation.goBack()} />
+        <Header title={tituloTela} showBack onBack={() => navigation.goBack()} />
         <View style={styles.blockedContainer}>
           <Ionicons name={mensagemBloqueio.icon as any} size={64} color={colors.muted} />
           <Text style={styles.blockedTitle}>{mensagemBloqueio.title}</Text>
@@ -1317,12 +1180,12 @@ export default function MapasScreen({ route, navigation }) {
       {/* Dialog de visualização de material */}
       <ConfirmDialog
         visible={downloadDialog.visible}
-        title="Visualizar material"
+        title="Abrir material"
         message={downloadDialog.mapa 
-          ? `Abrir para consulta o material "${downloadDialog.mapa.titulo}"?\n\nFormato: ${downloadDialog.mapa.formato_arquivo?.toUpperCase() || 'ARQ'}\nTamanho: ${formatarTamanho(downloadDialog.mapa.tamanho_arquivo)}\nReferência: ${downloadDialog.status?.arquivoUrl || 'URL não informada'}`
+          ? `Abrir para consulta o material "${downloadDialog.mapa.titulo}"?`
           : ''}
         type="info"
-        confirmText="Visualizar"
+        confirmText="Abrir"
         cancelText="Cancelar"
         onConfirm={confirmDownload}
         onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
@@ -1364,202 +1227,6 @@ export default function MapasScreen({ route, navigation }) {
                 resizeMode="contain"
               />
             ) : null}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal de referência de material preparado */}
-      <Modal
-        visible={uploadDialog}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setUploadDialog(false)}
-      >
-        <View style={styles.uploadOverlay}>
-          <View style={styles.uploadDialog}>
-            <View style={styles.uploadHeader}>
-              <View style={styles.uploadHeaderLeft}>
-                <Ionicons name="document-attach-outline" size={24} color={colors.primary} />
-                <Text style={styles.uploadTitle} numberOfLines={2}>Mock interno: associar referência</Text>
-              </View>
-              <TouchableOpacity onPress={() => setUploadDialog(false)} style={styles.uploadClose}>
-                <Ionicons name="close" size={22} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <InfoBox
-              message="Neste MVP, os materiais técnicos são previamente carregados no app ou associados por referência mockada. Esta ação não envia materiais, não integra storage e não cria cadastro real."
-              style={styles.uploadDescription}
-            />
-
-            <ScrollView style={styles.uploadBody} showsVerticalScrollIndicator={false}>
-            <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>Material técnico</Text>
-              <ScrollView style={styles.uploadMapaOptions} nestedScrollEnabled>
-                {mapasAssociacaoOptions.map((mapa) => {
-                  const ativo = uploadMapaId === mapa.id;
-                  const status = avaliarDownloadMapa(mapa);
-
-                  return (
-                    <TouchableOpacity
-                      key={mapa.id}
-                      style={[styles.uploadMapaOption, ativo && styles.uploadMapaOptionActive]}
-                      onPress={() => preencherUploadComMapa(mapa)}
-                      activeOpacity={0.75}
-                    >
-                      <View style={styles.uploadMapaOptionTextos}>
-                        <Text style={[styles.uploadMapaOptionTitulo, ativo && styles.uploadMapaOptionTituloActive]} numberOfLines={1}>
-                          {mapa.titulo}
-                        </Text>
-                        <Text style={styles.uploadMapaOptionSubtitulo} numberOfLines={1}>
-                          {getMapaTalhao(mapa) || 'Talhão não informado'} • {getMapaSafra(mapa) || 'Safra não informada'} • {status.label}
-                        </Text>
-                      </View>
-                      {ativo && <Ionicons name="checkmark-circle" size={18} color={colors.primary} />}
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            {/* Formatos suportados */}
-            <View style={styles.formatosInfo}>
-              <Ionicons name="information-circle-outline" size={16} color={colors.info} />
-              <Text style={styles.formatosInfoText}>
-                A referência abaixo é apenas mock/dev. Formatos aceitos: https://, file://, content://, data: ou asset://
-              </Text>
-            </View>
-
-            <View style={styles.uploadCamposRow}>
-              <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Tipo de material</Text>
-                <TextInput
-                  style={styles.uploadAnoInput}
-                  value={materialTipo}
-                  onChangeText={setMaterialTipo}
-                  placeholder="Diagnóstico"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-              <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Origem</Text>
-                <TextInput
-                  style={styles.uploadAnoInput}
-                  value={materialOrigem}
-                  onChangeText={setMaterialOrigem}
-                  placeholder="Referência mockada"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-            </View>
-
-            <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>Propriedade vinculada</Text>
-              <View style={styles.uploadReadonlyBox}>
-                <Ionicons name="business-outline" size={16} color={colors.primary} />
-                <Text style={styles.uploadReadonlyText} numberOfLines={1}>
-                  {materialFazendaSelecionadaInfo?.fazendaNome || 'Propriedade do contexto atual'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.uploadCamposRow}>
-              <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Talhão opcional</Text>
-                <View style={styles.uploadReadonlyBox}>
-                  <Text style={styles.uploadReadonlyText} numberOfLines={1}>
-                    {mapaUploadSelecionado ? getMapaTalhao(mapaUploadSelecionado) || 'Não informado' : 'Não informado'}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Safra/ano</Text>
-                <View style={styles.uploadReadonlyBox}>
-                  <Text style={styles.uploadReadonlyText} numberOfLines={1}>
-                    {mapaUploadSelecionado ? getMapaSafra(mapaUploadSelecionado) || 'Não informado' : 'Não informado'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>Referência do material preparado</Text>
-              <TextInput
-                style={styles.uploadAnoInput}
-                value={uploadArquivoUrl}
-                onChangeText={setUploadArquivoUrl}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-                placeholder="asset://... ou https://exemplo.com/material.pdf"
-                placeholderTextColor={colors.muted}
-              />
-            </View>
-
-            <View style={styles.uploadCamposRow}>
-              <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Formato</Text>
-                <TextInput
-                  style={styles.uploadAnoInput}
-                  value={uploadFormato}
-                  onChangeText={setUploadFormato}
-                  autoCapitalize="none"
-                  placeholder="pdf"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-              <View style={styles.uploadCampoFlex}>
-                <Text style={styles.uploadAnoLabel}>Tamanho em bytes</Text>
-                <TextInput
-                  style={styles.uploadAnoInput}
-                  value={uploadTamanho}
-                  onChangeText={setUploadTamanho}
-                  keyboardType="numeric"
-                  placeholder="opcional"
-                  placeholderTextColor={colors.muted}
-                />
-              </View>
-            </View>
-
-            <View style={styles.uploadAnoContainer}>
-              <Text style={styles.uploadAnoLabel}>Descrição</Text>
-              <TextInput
-                style={[styles.uploadAnoInput, styles.uploadDescricaoInput]}
-                value={materialDescricao}
-                onChangeText={setMaterialDescricao}
-                placeholder="Descrição breve para o teste interno"
-                placeholderTextColor={colors.muted}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-            </View>
-
-            {mapaUploadSelecionado && (
-              <Text style={styles.uploadMapaSelecionadoInfo}>
-                No MVP visual, "{mapaUploadSelecionado.titulo}" passará a usar o fluxo de visualizar material apenas no mock local.
-              </Text>
-            )}
-            </ScrollView>
-
-            <View style={styles.uploadActions}>
-              <TouchableOpacity 
-                style={styles.uploadCancelBtn} 
-                onPress={() => setUploadDialog(false)}
-              >
-                <Text style={styles.uploadCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.uploadConfirmBtn} 
-                onPress={handleAssociarMaterial}
-                disabled={associandoMaterial}
-              >
-                <Ionicons name="link-outline" size={18} color={colors.white} />
-                <Text style={styles.uploadConfirmText}>
-                  {associandoMaterial ? 'Associando...' : 'Associar referência'}
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       </Modal>
@@ -1909,229 +1576,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  // ── UPLOAD ──
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.secondary,
-    borderRadius: spacing.radius,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-    ...shadows.md,
-  },
-  uploadButtonText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-    color: colors.white,
-  },
-  uploadOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  uploadDialog: {
-    backgroundColor: colors.card,
-    borderRadius: spacing.radiusLg,
-    padding: spacing.xl,
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '90%',
-    ...shadows.lg,
-  },
-  uploadHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  uploadHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
-    paddingRight: spacing.sm,
-  },
-  uploadTitle: {
-    flex: 1,
-    fontSize: typography.fontSubtitle,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-  },
-  uploadClose: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.backgroundAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadDescription: {
+  materiaisDescription: {
     marginBottom: spacing.lg,
-  },
-  uploadBody: {
-    maxHeight: 520,
-    marginBottom: spacing.md,
-  },
-  fileSelectButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: spacing.radius,
-    padding: spacing.lg,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  fileSelectText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightSemibold,
-    color: colors.primary,
-  },
-  formatosInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.xs,
-  },
-  formatosInfoText: {
-    flex: 1,
-    fontSize: typography.fontCaption,
-    color: colors.info,
-    fontWeight: typography.weightSemibold,
-  },
-  uploadAnoContainer: {
-    marginBottom: spacing.lg,
-  },
-  uploadAnoLabel: {
-    fontSize: typography.fontBody - 1,
-    fontWeight: typography.weightSemibold,
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  uploadAnoInput: {
-    backgroundColor: colors.background,
-    borderRadius: spacing.radius,
-    borderWidth: 2,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: typography.fontBody,
-    color: colors.text,
-    textAlign: 'center',
-  },
-  uploadDescricaoInput: {
-    minHeight: 82,
-    textAlign: 'left',
-  },
-  uploadReadonlyBox: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: spacing.radius,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  uploadReadonlyText: {
-    flex: 1,
-    fontSize: typography.fontBody - 1,
-    color: colors.textLight,
-    fontWeight: typography.weightSemibold,
-  },
-  uploadMapaOptions: {
-    maxHeight: 170,
-  },
-  uploadMapaOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: spacing.radiusSm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  uploadMapaOptionActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.accent,
-  },
-  uploadMapaOptionTextos: {
-    flex: 1,
-    minWidth: 0,
-  },
-  uploadMapaOptionTitulo: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.text,
-    fontWeight: typography.weightBold,
-  },
-  uploadMapaOptionTituloActive: {
-    color: colors.primary,
-  },
-  uploadMapaOptionSubtitulo: {
-    fontSize: typography.fontSmall,
-    color: colors.textLight,
-    marginTop: 2,
-  },
-  uploadCamposRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  uploadCampoFlex: {
-    flex: 1,
-  },
-  uploadMapaSelecionadoInfo: {
-    fontSize: typography.fontCaption,
-    color: colors.textLight,
-    lineHeight: 18,
-    marginBottom: spacing.md,
-  },
-  uploadActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  uploadCancelBtn: {
-    flex: 1,
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: spacing.radius,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  uploadCancelText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightSemibold,
-    color: colors.text,
-  },
-  uploadConfirmBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: colors.primary,
-    borderRadius: spacing.radius,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-  },
-  uploadConfirmText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-    color: colors.white,
   },
   imagePreviewOverlay: {
     flex: 1,
@@ -2352,26 +1798,10 @@ const styles = StyleSheet.create({
   mapaFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-  },
-  mapaFormatoTag: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: spacing.radiusSm,
-  },
-  mapaFormatoTexto: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightBold,
-    color: colors.white,
-  },
-  mapaTamanho: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightSemibold,
-    color: colors.textLight,
   },
   downloadIndicator: {
     flexDirection: 'row',
@@ -2401,25 +1831,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: spacing.sm,
   },
-  associarMaterialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: spacing.radiusSm,
-    backgroundColor: colors.accent,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  associarMaterialText: {
-    fontSize: typography.fontCaption,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
-  },
-
   materiaisSection: {
     marginHorizontal: spacing.md,
     marginTop: spacing.lg,

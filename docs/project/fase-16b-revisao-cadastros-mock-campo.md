@@ -1,7 +1,7 @@
 # Fase 16B - Revisao De Cadastros E Mock Realista Para APK De Campo
 
-Status em 2026-06-04: diagnostico documental concluido e Bloco 16B.1
-implementado no seed/mock principal.
+Status em 2026-06-04: diagnostico documental concluido e Blocos 16B.1, 16B.2
+e 16B.3 implementados.
 
 A 16B.1 altera somente seed/mock demonstrativo, testes e documentacao. Nao
 altera telas, contratos, rotas, permissoes ou persistencia e preserva
@@ -82,7 +82,36 @@ Restauracao controlada:
 
 A numeracao foi ajustada pela solicitacao de implementacao: a persistencia
 local passa a ser o Bloco 16B.2 e a simplificacao de Mapas/Arquivos tecnicos
-fica recomendada para o Bloco 16B.3.
+foi executada no Bloco 16B.3.
+
+## Entrega Do Bloco 16B.3
+
+Status em 2026-06-04: experiencia visual de Mapas/Arquivos tecnicos
+simplificada para consulta no APK de campo.
+
+Alteracoes aplicadas em `MapasScreen`:
+
+- titulo visivel unificado como `Mapas/Arquivos tecnicos`;
+- cards priorizam titulo, descricao e contexto operacional;
+- formato, tamanho, origem e URL deixaram de aparecer como informacao
+  principal;
+- confirmacao de abertura nao expoe URL, formato ou tamanho;
+- acao e modal internos de associacao de referencia foram removidos da tela;
+- mensagens nao prometem upload, download, publicacao, Drive ou storage;
+- ordenacao por tamanho foi retirada porque o tamanho deixou de ser relevante
+  para a consulta de campo.
+
+Pontos preservados:
+
+- filtros por propriedade, categoria, safra, talhao, busca e ordenacao por
+  recencia/titulo;
+- abertura dos cinco PNGs da Sela de Prata I e das referencias ja preparadas;
+- mapa de talhoes e navegacao para `FazendaMapaScreen`;
+- contratos, rotas, permissao, pipeline de mapas e `fazenda_id`/`fazendaId`;
+- persistencia local de metadados estruturados, sem persistir arquivos.
+
+O suporte interno de metadados de Mapa permanece na camada mock para
+compatibilidade, mas nao e apresentado como fluxo de campo.
 
 ## Objetivo
 
@@ -581,10 +610,12 @@ Criterio de aceite:
 
 ### Bloco 16B.3 - Simplificar Mapas/Arquivos Tecnicos
 
+Status em 2026-06-04: implementado na experiencia visual de `MapasScreen`.
+
 - ocultar a associacao de referencia tecnica no APK de campo;
 - manter consulta dos materiais preparados;
-- se houver formulario interno, reduzir superficie visivel a Titulo e
-  Descricao;
+- remover da tela de campo o formulario interno de URL, formato, tamanho e
+  origem;
 - preservar metadados e contratos atuais internamente.
 
 Criterio de aceite:
@@ -633,6 +664,8 @@ Executadas em 2026-06-04:
 - `npm run typecheck`: passou.
 - `npm run test:domain-compat`: passou.
 - `mockCompat` cobre persistencia, recarga controlada e restauracao do seed.
+- `mapaDownloadCompat` continua cobrindo abertura de referencias e assets
+  internos preservados pela 16B.3.
 - `git diff --check`: passou; no Windows, emitiu apenas avisos normais de
   conversao LF/CRLF.
-- smoke em Android fisico: pendente.
+- smoke visual e abertura dos PNGs em Android fisico: pendentes.
