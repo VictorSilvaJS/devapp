@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import { Produtor } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import {
@@ -23,7 +23,7 @@ export function FiltroProvider({ children }) {
   const [microregioes, setMicroregioes] = useState([]);
   const [fazendas, setFazendas] = useState([]);
   const [cidades, setCidades] = useState([]);
-  const filtros = toFiltrosCompativeis(filtrosState);
+  const filtros = useMemo(() => toFiltrosCompativeis(filtrosState), [filtrosState]);
 
   const updateFiltros = (patch) => {
     setFiltrosState((prev) => normalizeFiltrosState({ ...prev, ...patch }));

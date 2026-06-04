@@ -4,9 +4,6 @@ import {
   Text, 
   ScrollView, 
   StyleSheet, 
-  LayoutAnimation, 
-  Platform, 
-  UIManager, 
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator
@@ -31,11 +28,6 @@ import {
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
-// enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 export default function CadernoCampoScreen() {
   const navigation = useNavigation<any>();
   const [registros, setRegistros] = useState([]);
@@ -46,8 +38,7 @@ export default function CadernoCampoScreen() {
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
 
-  const load = async () => {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       // Simula lógica de permissões por perfil
       let registrosData = [];
@@ -84,7 +75,6 @@ export default function CadernoCampoScreen() {
         ]);
       }
 
-      try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
       setRegistros(registrosData);
       setFazendas(fazendasData);
     } catch (error) {
@@ -92,18 +82,21 @@ export default function CadernoCampoScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtros, user]);
 
   useFocusEffect(
     useCallback(() => {
-      load();
-    }, [user, filtros])
+      void load();
+    }, [load])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await load();
-    setRefreshing(false);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};

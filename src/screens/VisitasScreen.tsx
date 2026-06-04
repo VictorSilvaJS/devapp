@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { 
   View, 
   Text, 
   ScrollView, 
   StyleSheet, 
-  LayoutAnimation, 
-  Platform, 
-  UIManager, 
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
@@ -36,11 +33,6 @@ import {
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 
-// enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 export default function VisitasScreen() {
   const navigation = useNavigation();
   const [visitas, setVisitas] = useState([]);
@@ -56,17 +48,7 @@ export default function VisitasScreen() {
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
 
-  useEffect(() => { load(); }, [filtros]);
-  
-  // Recarrega quando retorna para a tela
-  useFocusEffect(
-    React.useCallback(() => {
-      load();
-    }, [filtros])
-  );
-  
-  const load = async () => {
-    setLoading(true);
+  const load = useCallback(async () => {
     try {
       // Simula lógica de permissões por perfil
       let visitasData = [];
@@ -101,7 +83,6 @@ export default function VisitasScreen() {
         ]);
       }
 
-      try { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); } catch(e) {}
       setVisitas(visitasData);
       setFazendas(fazendasData);
     } catch (error) {
@@ -109,12 +90,22 @@ export default function VisitasScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filtros, user]);
+
+  // Recarrega ao abrir, ao retornar para a tela ou quando os filtros mudam.
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await load();
-    setRefreshing(false);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};
