@@ -485,6 +485,24 @@ Validacoes executadas na abertura e reexecutadas para os Blocos
 - `git diff --check` passou; no Windows, emitiu apenas avisos normais de
   conversao LF/CRLF
 
+## Fase 16C - Build E Smoke Final Do APK
+
+Status em 2026-06-04: foi gerado um APK Android local na variante `release`,
+sem `__DEV__`, registrado em
+`docs/project/fase-16c-build-smoke-final-apk.md`.
+
+O projeto permanece Expo managed, sem `eas.json`. O build usou `expo prebuild`
+e Gradle local para gerar um APK universal com pacote `com.tcheagro.mobile`,
+versao `1.0.0`, `versionCode` 1 e icone derivado do logo existente.
+
+O primeiro build revelou ausencia da cor de splash gerada; o bloqueio foi
+corrigido somente com configuracao minima de splash branco em `app.json`.
+Nenhum fluxo funcional, contrato, mock, permissao ou persistencia foi alterado.
+
+O APK foi gerado e inspecionado, mas a instalacao e o smoke completo em Android
+fisico continuam pendentes porque nenhum aparelho estava conectado/autorizado
+no `adb`. A decisao atual e nao liberar o APK para campo antes desse smoke.
+
 ## Microfase De Padronizacao Visual Reutilizavel
 
 Status em 2026-05-30: foi criada e aplicada uma base visual reutilizavel em telas de formulario, detalhe e listagem, sem alterar dominio, backend, mocks, rotas, permissoes, payloads ou nomes tecnicos legados.

@@ -20,6 +20,25 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 16C - Build E Smoke Final Do APK**
+
+Observacao geral em 2026-06-04: o APK `release` foi gerado e inspecionado, mas
+nenhum Android fisico estava conectado/autorizado no `adb`. Casos de aparelho
+permanecem em `Reexecutar`; nao liberar para campo antes da aprovacao completa.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| APK16C-01 | P0 | Todos | Build | Gerar e inspecionar APK release | APK universal, nao debuggable, pacote e versao corretos | Passou | `com.tcheagro.mobile`, `1.0.0`/`1`, SHA-256 registrado |
+| APK16C-02 | P0 | Todos | Instalacao | Instalar e abrir em Android fisico | App inicia sem painel `Smoke Dev` e sem erro | Reexecutar | `adb`: `no devices/emulators found` |
+| APK16C-03 | P0 | Todos | Login | Entrar manualmente com as tres credenciais | Cada persona entra no perfil esperado | Reexecutar | Depende de aparelho |
+| APK16C-04 | P0 | Todos | Acesso rapido | Testar as tres opcoes demonstrativas | Cada opcao entra no perfil esperado | Reexecutar | Depende de aparelho |
+| APK16C-05 | P0 | Admin | Propriedade | Criar, fechar e reabrir app | Propriedade continua salva localmente | Reexecutar | Depende de aparelho |
+| APK16C-06 | P0 | Admin | Usuario | Criar, fechar e reabrir app | Usuario continua salvo e nao autentica | Reexecutar | Depende de aparelho |
+| APK16C-07 | P0 | Admin/Colaborador | Visita/Caderno | Criar registros, fechar e reabrir app | Registros continuam salvos com `fazenda_id` | Reexecutar | Depende de aparelho |
+| APK16C-08 | P0 | Todos | Sela de Prata I | Abrir propriedade, mapa e talhoes | Consulta principal funciona | Reexecutar | Depende de aparelho |
+| APK16C-09 | P0 | Todos | Mapas/Arquivos tecnicos | Abrir biblioteca e PNGs internos | Materiais preparados abrem sem sugerir upload/storage | Reexecutar | Depende de aparelho |
+| APK16C-10 | P0 | Todos | Offline | Repetir consulta e cadastros sem internet | Dados locais e assets internos continuam disponiveis | Reexecutar | Tiles online podem degradar; depende de aparelho |
+
 **Rodada Fase 16B - Cadastros E Mock Realista Para Campo**
 
 Observação geral: esta rodada valida o pacote demonstrativo da Fase 16B. Ela
