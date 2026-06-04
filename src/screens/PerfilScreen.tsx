@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, Platform, UIManager, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,150 +11,159 @@ import { colors, typography, spacing, shadows } from '../theme';
 import UserProfile from '../components/UserProfile';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
-import { getUsuarioPerfilLabel } from '../utils/usuarioAdminCompat';
+import { Produtor, User } from '../api/mock';
+import { normalizeNome } from '../domain';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import {
+  getPropriedadesDoColaborador,
+  getPropriedadesDoUsuarioProdutor,
+  getSubRegioesUsuario,
+  getUsuarioStatusInfo,
+  getVinculosMicroregiaoUsuario,
+} from '../utils/usuarioAdminCompat';
 
 const smokeRoutes = [
   {
     id: 'S-01',
     label: 'NovaVisita',
-    description: 'Produtor tenta criar visita por rota direta',
+    description: 'Teste de criação de visita por rota direta',
     route: 'NovaVisita',
   },
   {
     id: 'S-02',
     label: 'EditarVisita v1',
-    description: 'Produtor tenta editar visita por rota direta',
+    description: 'Teste de edição de visita por rota direta',
     route: 'EditarVisita',
     params: { visitaId: 'v1' },
   },
   {
     id: 'S-03',
     label: 'CadernoDetail c3',
-    description: 'Produtor tenta abrir caderno restrito',
+    description: 'Teste de abertura de caderno restrito',
     route: 'CadernoDetail',
     params: { cadernoId: 'c3' },
   },
   {
     id: 'S-04',
     label: 'EditarCaderno c1',
-    description: 'Produtor tenta editar registro de outro autor',
+    description: 'Teste de edição de registro de outro autor',
     route: 'EditarCaderno',
     params: { cadernoId: 'c1' },
   },
   {
     id: 'S-05',
     label: 'VisitaDetail v8',
-    description: 'Colaborador tenta abrir visita fora do escopo',
+    description: 'Teste de abertura de visita fora do escopo',
     route: 'VisitaDetail',
     params: { visitaId: 'v8' },
   },
   {
     id: 'S-06',
     label: 'EditarVisita v8',
-    description: 'Colaborador tenta editar visita fora do escopo',
+    description: 'Teste de edição de visita fora do escopo',
     route: 'EditarVisita',
     params: { visitaId: 'v8' },
   },
   {
     id: 'S-07',
     label: 'CadernoDetail c9',
-    description: 'Colaborador tenta abrir caderno fora do escopo',
+    description: 'Teste de abertura de caderno fora do escopo',
     route: 'CadernoDetail',
     params: { cadernoId: 'c9' },
   },
   {
     id: 'S-08',
     label: 'CadernoDetail c6',
-    description: 'Produtor tenta abrir caderno de outra propriedade',
+    description: 'Teste de abertura de caderno de outra propriedade',
     route: 'CadernoDetail',
     params: { cadernoId: 'c6' },
   },
   {
     id: 'S-09',
     label: 'CadernoDetail c3',
-    description: 'Administrador abre caderno restrito ao Produtor',
+    description: 'Teste de abertura de caderno restrito',
     route: 'CadernoDetail',
     params: { cadernoId: 'c3' },
   },
   {
     id: 'S-10',
     label: 'CadernoDetail c7',
-    description: 'Colaborador abre caderno dentro do escopo',
+    description: 'Teste de abertura de caderno dentro do escopo',
     route: 'CadernoDetail',
     params: { cadernoId: 'c7' },
   },
   {
     id: 'S-11',
     label: 'EditarVisita v1',
-    description: 'Administrador edita visita e confere propriedade travada',
+    description: 'Teste de edição de visita com propriedade travada',
     route: 'EditarVisita',
     params: { visitaId: 'v1' },
   },
   {
     id: 'S-12',
     label: 'EditarCaderno c1',
-    description: 'Administrador edita caderno e confere propriedade travada',
+    description: 'Teste de edição de caderno com propriedade travada',
     route: 'EditarCaderno',
     params: { cadernoId: 'c1' },
   },
   {
     id: 'S-13',
     label: 'EditarCaderno c7',
-    description: 'Colaborador edita caderno dentro do escopo',
+    description: 'Teste de edição de caderno dentro do escopo',
     route: 'EditarCaderno',
     params: { cadernoId: 'c7' },
   },
   {
     id: 'S-15/S-16',
     label: 'NovaVisita',
-    description: 'Administrador/Colaborador cria visita em propriedade autorizada',
+    description: 'Teste de criação de visita em propriedade autorizada',
     route: 'NovaVisita',
   },
   {
     id: 'S-17',
     label: 'NovoCaderno',
-    description: 'Administrador cria caderno pela listagem',
+    description: 'Teste de criação de caderno pela listagem',
     route: 'NovoCaderno',
   },
   {
     id: 'S-18',
     label: 'NovoCaderno p1',
-    description: 'Produtor cria caderno na própria propriedade',
+    description: 'Teste de criação de caderno na propriedade vinculada',
     route: 'NovoCaderno',
     params: { fazendaId: 'p1' },
   },
   {
     id: 'S-19',
     label: 'NovoCaderno p3',
-    description: 'Produtor tenta criar caderno em propriedade de outro titular',
+    description: 'Teste de criação de caderno em propriedade de outro titular',
     route: 'NovoCaderno',
     params: { fazendaId: 'p3' },
   },
   {
     id: 'S-20/S-22',
     label: 'Propriedade p1',
-    description: 'Administrador abre detalhe da propriedade para testar aba Caderno e novo registro',
+    description: 'Teste de detalhe da propriedade com aba Caderno e novo registro',
     route: 'ProdutorDetail',
     params: { id: 'p1' },
   },
   {
     id: 'S-21/S-23',
     label: 'Propriedade p4',
-    description: 'Colaborador abre propriedade do escopo para testar aba Caderno e novo registro',
+    description: 'Teste de propriedade do escopo com aba Caderno e novo registro',
     route: 'ProdutorDetail',
     params: { id: 'p4' },
   },
   {
     id: 'S-24',
     label: 'Propriedade p1',
-    description: 'Produtor abre própria propriedade e confere aba Caderno visível',
+    description: 'Teste de propriedade vinculada com aba Caderno visível',
     route: 'ProdutorDetail',
     params: { id: 'p1' },
   },
   {
     id: 'S-30',
     label: 'VisitaDetail v1',
-    description: 'Produtor abre detalhe de visita própria',
+    description: 'Teste de abertura de detalhe de visita vinculada',
     route: 'VisitaDetail',
     params: { visitaId: 'v1' },
   },
@@ -167,13 +176,52 @@ export default function PerfilScreen({ navigation }) {
   const { limparNotificacoes } = useNotificacao();
   const toast = useToast();
   const [showLogout, setShowLogout] = useState(false);
+  const [usuarioDetalhado, setUsuarioDetalhado] = useState<any>(null);
+  const [propriedades, setPropriedades] = useState<any[]>([]);
   const insets = useSafeAreaInsets();
-  const perfilLabel = user?.perfil ? getUsuarioPerfilLabel(user.perfil) : '-';
 
   useEffect(() => {
     console.log('[PerfilScreen] mounted');
     return () => console.log('[PerfilScreen] unmounted');
   }, []);
+
+  const loadProfileData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const [propriedadesData, usuarioData] = await Promise.all([
+        Produtor.list(),
+        user.id ? User.get(user.id).catch(() => null) : Promise.resolve(null),
+      ]);
+      setPropriedades(propriedadesData as any[]);
+      setUsuarioDetalhado(usuarioData ? { ...usuarioData, ...user } : user);
+    } catch (error) {
+      console.warn('Não foi possível carregar dados complementares do perfil:', error);
+      setUsuarioDetalhado(user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [loadProfileData]);
+
+  const usuarioPerfil = usuarioDetalhado || user || {};
+  const nome = normalizeNome(usuarioPerfil) || 'Usuário';
+  const telefone = usuarioPerfil.telefone || usuarioPerfil.phone || '';
+  const documento = usuarioPerfil.documento || usuarioPerfil.cpf || usuarioPerfil.cnpj || '';
+  const status = getUsuarioStatusInfo(usuarioPerfil);
+  const subRegioes = getSubRegioesUsuario(usuarioPerfil);
+  const vinculosMicroregioes = getVinculosMicroregiaoUsuario(usuarioPerfil);
+  const propriedadesProdutor = useMemo(
+    () => getPropriedadesDoUsuarioProdutor(usuarioPerfil, propriedades),
+    [usuarioPerfil, propriedades]
+  );
+  const propriedadesColaborador = useMemo(
+    () => getPropriedadesDoColaborador(usuarioPerfil, propriedades),
+    [usuarioPerfil, propriedades]
+  );
+  const propriedadesVisiveis =
+    usuarioPerfil.perfil === 'produtor' ? propriedadesProdutor : propriedadesColaborador;
 
   const handleLogoutConfirm = async () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -199,33 +247,123 @@ export default function PerfilScreen({ navigation }) {
       >
         <ScrollView contentContainerStyle={[styles.content, { paddingTop: spacing.screen + insets.top }]}>
           <SectionCard style={styles.profileSection} contentStyle={styles.profileContent}>
-            <UserProfile user={user} size="large" showDetails={true} />
+            <UserProfile user={usuarioPerfil} size="large" showDetails={true} showPerfilBadge={false} />
           </SectionCard>
 
-          <SectionCard title="Informações" icon="person-circle-outline">
-            {user?.email && (
+          <SectionCard title="Dados cadastrais" icon="person-circle-outline">
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nome</Text>
+              <Text style={styles.infoValue}>{nome}</Text>
+            </View>
+            {usuarioPerfil?.email && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>E-mail</Text>
-                <Text style={styles.infoValue}>{user.email}</Text>
+                <Text style={styles.infoValue}>{usuarioPerfil.email}</Text>
               </View>
             )}
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Perfil</Text>
-              <Text style={styles.infoValue}>{perfilLabel}</Text>
-            </View>
-            {user?.telefone && (
+            {telefone ? (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Telefone</Text>
-                <Text style={styles.infoValue}>{user.telefone}</Text>
+                <Text style={styles.infoValue}>{telefone}</Text>
               </View>
-            )}
-            {user?.regiao && (
+            ) : null}
+            {documento ? (
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Região</Text>
-                <Text style={styles.infoValue}>{user.regiao}</Text>
+                <Text style={styles.infoLabel}>Documento</Text>
+                <Text style={styles.infoValue}>{documento}</Text>
               </View>
-            )}
+            ) : null}
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Status</Text>
+              <Text style={styles.infoValue}>{status.label}</Text>
+            </View>
+            {usuarioPerfil?.observacoes ? (
+              <InfoBox message={usuarioPerfil.observacoes} style={styles.infoBoxInline} />
+            ) : null}
           </SectionCard>
+
+          {usuarioPerfil.perfil === 'produtor' && (
+            <SectionCard
+              title="Minhas Propriedades"
+              icon="business-outline"
+              subtitle={propriedadesVisiveis.length > 0 ? 'Propriedades vinculadas ao seu cadastro local.' : 'Nenhuma propriedade vinculada.'}
+            >
+              {propriedadesVisiveis.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhuma propriedade vinculada</Text>
+              ) : (
+                propriedadesVisiveis.map((propriedade) => {
+                  const info = getFazendaUiInfo(propriedade);
+                  return (
+                    <View key={info.id} style={styles.propertyRow}>
+                      <Ionicons name="home-outline" size={18} color={colors.primary} />
+                      <View style={styles.propertyText}>
+                        <Text style={styles.propertyTitle}>{info.fazendaNome || 'Propriedade sem nome'}</Text>
+                        <Text style={styles.propertySubtitle}>
+                          {info.localizacao || 'Localização não informada'}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+              <InfoBox
+                variant="warning"
+                message="Para alterar seus dados cadastrais, solicite atualização ao administrador ou colaborador responsável."
+                style={styles.infoBoxInline}
+              />
+            </SectionCard>
+          )}
+
+          {usuarioPerfil.perfil === 'colaborador' && (
+            <SectionCard
+              title="Escopo territorial"
+              icon="location-outline"
+              subtitle="Dados demonstrativos do seu escopo local."
+            >
+              {usuarioPerfil.regiao ? (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Região</Text>
+                  <Text style={styles.infoValue}>{usuarioPerfil.regiao}</Text>
+                </View>
+              ) : null}
+
+              <Text style={styles.subsectionTitle}>Microrregiões</Text>
+              {vinculosMicroregioes.length === 0 && subRegioes.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhuma microrregião informada</Text>
+              ) : (
+                <View style={styles.chipWrap}>
+                  {(vinculosMicroregioes.length > 0
+                    ? vinculosMicroregioes.map((item) => item.microregiao)
+                    : subRegioes
+                  ).map((microregiao) => (
+                    <View key={microregiao} style={styles.infoChip}>
+                      <Text style={styles.infoChipText}>{microregiao}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <Text style={styles.subsectionTitle}>Propriedades atribuídas</Text>
+              {propriedadesVisiveis.length === 0 ? (
+                <Text style={styles.emptyText}>Nenhuma propriedade atribuída</Text>
+              ) : (
+                propriedadesVisiveis.map((propriedade) => {
+                  const info = getFazendaUiInfo(propriedade);
+                  return (
+                    <View key={info.id} style={styles.propertyRow}>
+                      <Ionicons name="home-outline" size={18} color={colors.primary} />
+                      <View style={styles.propertyText}>
+                        <Text style={styles.propertyTitle}>{info.fazendaNome || 'Propriedade sem nome'}</Text>
+                        <Text style={styles.propertySubtitle}>
+                          {info.localizacao || 'Localização não informada'}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </SectionCard>
+          )}
 
           <View style={styles.actionsSection}>
             {__DEV__ && (
@@ -255,14 +393,16 @@ export default function PerfilScreen({ navigation }) {
             )}
 
             <SectionCard title="Ações" icon="settings-outline" contentStyle={styles.actionsCardContent}>
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.editBtn]}
-                onPress={() => navigation.navigate('EditProfile')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="create-outline" size={18} color={colors.white} />
-                <Text style={styles.actionBtnText}>Editar Perfil</Text>
-              </TouchableOpacity>
+              {usuarioPerfil.perfil !== 'produtor' ? (
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.editBtn]}
+                  onPress={() => navigation.navigate('EditProfile')}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="create-outline" size={18} color={colors.white} />
+                  <Text style={styles.actionBtnText}>Editar dados</Text>
+                </TouchableOpacity>
+              ) : null}
 
               <TouchableOpacity
                 style={[styles.actionBtn, styles.logoutBtn]}
@@ -333,8 +473,66 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold
   },
   infoValue: {
+    flex: 1,
     fontSize: typography.fontBody,
     color: colors.text,
+    fontWeight: typography.weightBold,
+    textAlign: 'right'
+  },
+  infoBoxInline: {
+    marginTop: spacing.md,
+    marginBottom: 0
+  },
+  subsectionTitle: {
+    color: colors.text,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm
+  },
+  propertyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight
+  },
+  propertyText: {
+    flex: 1,
+    minWidth: 0
+  },
+  propertyTitle: {
+    color: colors.text,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold
+  },
+  propertySubtitle: {
+    color: colors.muted,
+    fontSize: typography.fontCaption + 1,
+    marginTop: 2
+  },
+  emptyText: {
+    color: colors.muted,
+    fontSize: typography.fontBody - 1,
+    lineHeight: 20
+  },
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm
+  },
+  infoChip: {
+    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: colors.accent,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  infoChipText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption + 1,
     fontWeight: typography.weightBold
   },
   actionsSection: {

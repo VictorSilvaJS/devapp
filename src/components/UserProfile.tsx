@@ -3,9 +3,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, shadows } from '../theme';
 import { normalizeNome } from '../domain';
-import { getUsuarioPerfilLabel } from '../utils/usuarioAdminCompat';
 
-export default function UserProfile({ user, size = 'medium', showDetails = true }) {
+export default function UserProfile({ user, size = 'medium', showDetails = true, showPerfilBadge = true }) {
   const sizeStyles = {
     small: { width: 36, height: 36, fontSize: 16 },
     medium: { width: 48, height: 48, fontSize: 20 },
@@ -35,10 +34,6 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
     }
   };
 
-  const getPerfilLabel = () => {
-    return user?.perfil ? getUsuarioPerfilLabel(user.perfil) : 'Produtor';
-  };
-
   return (
     <View style={[styles.container, !showDetails && styles.containerCompact]}>
       <LinearGradient
@@ -64,11 +59,11 @@ export default function UserProfile({ user, size = 'medium', showDetails = true 
           <Text style={styles.name} numberOfLines={1}>
             {displayName}
           </Text>
-          <View style={styles.badge}>
-            <Text style={styles.perfil}>
-              {getPerfilLabel()}
-            </Text>
-          </View>
+          {showPerfilBadge && (
+            <View style={styles.badge}>
+              <Text style={styles.perfil}>Acesso demonstrativo</Text>
+            </View>
+          )}
         </View>
       )}
     </View>

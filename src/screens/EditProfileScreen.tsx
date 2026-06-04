@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import Header from '../components/Header';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
 import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
@@ -22,18 +23,32 @@ export default function EditProfileScreen({ navigation }) {
   const handleSave = async () => {
     try {
       await updateProfile(form);
-      toast.showSuccess('Perfil atualizado');
+      toast.showSuccess('Dados atualizados');
       navigation.goBack();
     } catch (err) {
       toast.showError('Não foi possível atualizar o perfil');
     }
   };
 
+  if (perfil === 'produtor') {
+    return (
+      <View style={styles.container}>
+        <Header title="Dados cadastrais" />
+        <ScrollView contentContainerStyle={styles.content}>
+          <InfoBox
+            variant="warning"
+            message="Para alterar seus dados cadastrais, solicite atualização ao administrador ou colaborador responsável."
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Header title="Editar Perfil" />
+      <Header title="Editar dados" />
       <ScrollView contentContainerStyle={styles.content}>
-        <SectionCard title="Dados do perfil" icon="person-circle-outline">
+        <SectionCard title="Dados cadastrais" icon="person-circle-outline">
           <FormField
             label="Nome completo"
             value={form.nome}
