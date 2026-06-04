@@ -125,6 +125,10 @@ const run = async () => {
       cultura_atual: 'Soja',
       cidade: 'Rio Verde',
       estado: 'go',
+      documento: 'CNPJ-TESTE',
+      colaborador_responsavel_id: 'u2',
+      colaborador_responsavel: 'Colaborador Campo',
+      status: 'inativo',
     });
 
     assert.equal(payload.nome, undefined);
@@ -134,6 +138,10 @@ const run = async () => {
     assert.equal(payload.fazenda_nome, 'Fazenda Raiz Norte');
     assert.equal(payload.area_total, 240.5);
     assert.equal(payload.estado, 'GO');
+    assert.equal(payload.documento, 'CNPJ-TESTE');
+    assert.equal(payload.colaborador_responsavel_id, 'u2');
+    assert.equal(payload.colaborador_responsavel, 'Colaborador Campo');
+    assert.equal(payload.status, 'inativo');
 
     const atualizado = await Produtor.update(base.id, payload);
     const outraFazenda = await Produtor.get(outraFazendaMesmoTitular.id);
@@ -144,6 +152,10 @@ const run = async () => {
     assert.equal(atualizado.proprietario_id, 'prop_helena');
     assert.equal(atualizado.produtor_nome, 'Helena Campos');
     assert.equal(atualizado.nome, 'Helena Campos');
+    assert.equal(atualizado.documento, 'CNPJ-TESTE');
+    assert.equal(atualizado.colaborador_responsavel_id, 'u2');
+    assert.equal(atualizado.colaborador_responsavel, 'Colaborador Campo');
+    assert.equal(atualizado.status, 'inativo');
     assert.equal(outraFazenda.produtor_id, 'prop_helena');
     assert.equal(outraFazenda.produtor_nome, 'Helena Campos');
   });

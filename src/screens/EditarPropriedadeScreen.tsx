@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
+import SelectField from '../components/SelectField';
+import SegmentedChips from '../components/SegmentedChips';
 import { useToast } from '../components/Toast';
-import { Produtor } from '../api/mock';
+import { Produtor, User } from '../api/mock';
 import { buildFazendaUpdatePayload } from '../api/produtorCompat';
 import { useAuth } from '../auth/AuthContext';
 import theme from '../theme';
@@ -22,8 +24,15 @@ import {
   validarUF, 
   validarObrigatorio
 } from '../utils/validacoes';
-import { podeEditarProdutor } from '../utils/acessoControle';
+import { getTitularIdFazenda, podeEditarProdutor } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { getUsuarioNome, getUsuarioProdutorId } from '../utils/usuarioAdminCompat';
+
+const STATUS_PROPRIEDADE = [
+  { value: 'ativo', label: 'Ativo', icon: 'checkmark-circle-outline' as const },
+  { value: 'pendente', label: 'Pendente', icon: 'time-outline' as const },
+  { value: 'inativo', label: 'Inativo', icon: 'pause-circle-outline' as const },
+];
 
 export default function EditarPropriedadeScreen({ route, navigation }) {
   const toast = useToast();
@@ -31,15 +40,36 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [produtorAtual, setProdutorAtual] = useState(null);
+  const [usuariosMock, setUsuariosMock] = useState<any[]>([]);
   const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [form, setForm] = useState({
     fazenda_nome: '',
     area_total: '',
+    documento: '',
     cultura_atual: '',
     cidade: '',
-    estado: ''
+    estado: '',
+    regiao: '',
+    microregiao: '',
+    colaborador_responsavel_id: '',
+    colaborador_responsavel: '',
+    status: 'ativo',
   });
+
+  const produtoresUsuarios = useMemo(
+    () => usuariosMock
+      .filter((usuario) => usuario?.perfil === 'produtor' && getUsuarioProdutorId(usuario))
+      .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b))),
+    [usuariosMock]
+  );
+
+  const colaboradores = useMemo(
+    () => usuariosMock
+      .filter((usuario) => usuario?.perfil === 'colaborador')
+      .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b))),
+    [usuariosMock]
+  );
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -79,7 +109,10 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       try {
         setLoading(true);
         setAccessDenied(false);
-        const produtor = await Produtor.get(id);
+        const [produtor, usuarios] = await Promise.all([
+          Produtor.get(id),
+          User.list(),
+        ]);
 
         if (!podeEditarProdutor(user, produtor)) {
           setProdutorAtual(null);
@@ -89,13 +122,20 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
         }
 
         setProdutorAtual(produtor);
+        setUsuariosMock(usuarios);
         const fazendaInfo = getFazendaUiInfo(produtor);
         setForm({
           fazenda_nome: fazendaInfo.fazendaNome || '',
           area_total: String(produtor.area_total || ''),
+          documento: produtor.documento || '',
           cultura_atual: produtor.cultura_atual || '',
           cidade: produtor.cidade || '',
-          estado: produtor.estado || ''
+          estado: produtor.estado || '',
+          regiao: produtor.regiao || '',
+          microregiao: produtor.microregiao || '',
+          colaborador_responsavel_id: produtor.colaborador_responsavel_id || '',
+          colaborador_responsavel: produtor.colaborador_responsavel || '',
+          status: produtor.status || 'ativo',
         });
       } catch (error) {
         toast.showError('Não foi possível carregar os dados da propriedade');
@@ -160,7 +200,47 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
 
   const fazendaInfo = getFazendaUiInfo(produtorAtual);
   const titularNome = fazendaInfo.titularNome || 'Titular não informado';
-  const escopo = [produtorAtual?.regiao, produtorAtual?.microregiao].filter(Boolean).join(' • ');
+  const titularId = getTitularIdFazenda(produtorAtual);
+  const titularOptions = produtoresUsuarios.some((usuario) => getUsuarioProdutorId(usuario) === titularId)
+    ? produtoresUsuarios.map((usuario) => ({
+        value: getUsuarioProdutorId(usuario),
+        label: getUsuarioNome(usuario),
+        description: usuario.email,
+      }))
+    : [
+        {
+          value: titularId,
+          label: titularNome,
+          description: 'Titular preservado por compatibilidade local',
+        },
+        ...produtoresUsuarios.map((usuario) => ({
+          value: getUsuarioProdutorId(usuario),
+          label: getUsuarioNome(usuario),
+          description: usuario.email,
+        })),
+      ];
+  const colaboradorOptions = colaboradores.some(
+    (colaborador) => colaborador.id === form.colaborador_responsavel_id
+  )
+    ? colaboradores.map((colaborador) => ({
+        value: colaborador.id,
+        label: getUsuarioNome(colaborador),
+        description: [colaborador.regiao, colaborador.email].filter(Boolean).join(' • '),
+      }))
+    : [
+        ...(form.colaborador_responsavel_id
+          ? [{
+              value: form.colaborador_responsavel_id,
+              label: form.colaborador_responsavel || 'Colaborador preservado',
+              description: 'Vínculo local preservado por compatibilidade',
+            }]
+          : []),
+        ...colaboradores.map((colaborador) => ({
+          value: colaborador.id,
+          label: getUsuarioNome(colaborador),
+          description: [colaborador.regiao, colaborador.email].filter(Boolean).join(' • '),
+        })),
+      ];
 
   return (
     <View style={styles.container}>
@@ -173,31 +253,36 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       >
         <InfoBox
           title="Edição local demonstrativa"
-          message="As alterações ficam salvas somente neste aparelho. Titular, Região e Microregião permanecem vinculados e não podem ser trocados nesta fase."
+          message="As alterações ficam salvas somente neste aparelho. Titular, Região e Microregião permanecem vinculados para evitar reassociação acidental."
         />
 
-        <SectionCard title="Titular preservado" subtitle="O Titular atual permanece vinculado à Propriedade; esta edição não troca o vínculo cadastral.">
-          <View style={styles.linkedRows}>
-            <View style={styles.linkedRow}>
-              <View style={styles.linkedIcon}>
-                <Ionicons name="person-outline" size={18} color={theme.colors.primary} />
-              </View>
-              <View style={styles.linkedInfo}>
-                <Text style={styles.linkedLabel}>Titular</Text>
-                <Text style={styles.linkedValue}>{titularNome}</Text>
-              </View>
-            </View>
+        <SectionCard title="Responsáveis" subtitle="O Titular permanece preservado; o Colaborador responsável é um vínculo cadastral local sem efeito em permissões.">
+          <SelectField
+            label="Titular / Produtor"
+            value={titularId}
+            options={titularOptions}
+            onChange={() => undefined}
+            disabled
+            helperText="Para evitar troca acidental de titular, este vínculo permanece somente leitura na edição."
+          />
 
-            <View style={styles.linkedRow}>
-              <View style={styles.linkedIcon}>
-                <Ionicons name="link-outline" size={18} color={theme.colors.primary} />
-              </View>
-              <View style={styles.linkedInfo}>
-                <Text style={styles.linkedLabel}>Vínculo</Text>
-                <Text style={styles.linkedValue}>Titular/produtor preservado no mock</Text>
-              </View>
-            </View>
-          </View>
+          <SelectField
+            label="Colaborador responsável"
+            value={form.colaborador_responsavel_id}
+            options={[
+              { value: '', label: 'Nenhum colaborador selecionado' },
+              ...colaboradorOptions,
+            ]}
+            onChange={(value) => {
+              const colaborador = colaboradores.find((item) => item.id === value);
+              setForm(prev => ({
+                ...prev,
+                colaborador_responsavel_id: value,
+                colaborador_responsavel: colaborador ? getUsuarioNome(colaborador) : '',
+              }));
+            }}
+            helperText="A seleção não altera o escopo regional nem o RBAC."
+          />
         </SectionCard>
 
         <SectionCard title="Dados da Propriedade" subtitle="Atualize a identificação e a Área total informada no cadastro local.">
@@ -211,7 +296,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
           />
 
           <FormField
-            label="Área total informada (ha)"
+            label="Área em hectares"
             required
             value={form.area_total}
             onChangeText={(text) => handleChange('area_total', text)}
@@ -220,18 +305,25 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
             error={errors.area_total}
             helperText="Valor cadastral informado; não representa necessariamente a área coberta pelos talhões."
           />
+
+          <FormField
+            label="CNPJ ou inscrição"
+            value={form.documento}
+            onChangeText={(text) => handleChange('documento', text)}
+            placeholder="CNPJ, inscrição estadual ou cadastro equivalente"
+          />
         </SectionCard>
 
         <SectionCard title="Dados produtivos" subtitle="Campo opcional para facilitar a identificação durante o teste.">
           <FormField
-            label="Cultura atual (opcional)"
+            label="Cultura principal"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
           />
         </SectionCard>
 
-        <SectionCard title="Localização preservada" subtitle="Cidade e UF são opcionais. Região e Microregião vinculadas permanecem bloqueadas nesta fase.">
+        <SectionCard title="Localização preservada" subtitle="Cidade e UF podem ser atualizadas. Região e Microregião vinculadas permanecem bloqueadas nesta fase.">
           <FormField
             label="Cidade (opcional)"
             value={form.cidade}
@@ -249,17 +341,19 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
             error={errors.estado}
           />
 
-          {!!escopo && (
-            <View style={styles.linkedRow}>
-              <View style={styles.linkedIcon}>
-                <Ionicons name="location-outline" size={18} color={theme.colors.primary} />
-              </View>
-              <View style={styles.linkedInfo}>
-                <Text style={styles.linkedLabel}>Região/Microregião</Text>
-                <Text style={styles.linkedValue}>{escopo}</Text>
-              </View>
-            </View>
-          )}
+          <FormField label="Região" value={form.regiao} disabled />
+          <FormField label="Microrregião" value={form.microregiao} disabled />
+        </SectionCard>
+
+        <SectionCard title="Status" subtitle="Atualize como a Propriedade aparece nas listagens locais.">
+          <View style={styles.statusField}>
+            <Text style={styles.statusLabel}>Status da propriedade <Text style={styles.required}>*</Text></Text>
+            <SegmentedChips
+              options={STATUS_PROPRIEDADE}
+              value={form.status}
+              onChange={(value) => handleChange('status', value)}
+            />
+          </View>
         </SectionCard>
 
         <View style={{ height: 100 }} />
@@ -298,37 +392,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: theme.typography.fontBody,
   },
-  linkedRows: {
-    gap: theme.spacing.md,
+  statusField: {
+    marginBottom: theme.spacing.md,
   },
-  linkedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  linkedIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary + '15',
-  },
-  linkedInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
-  linkedLabel: {
-    fontSize: theme.typography.fontCaption,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 2,
-  },
-  linkedValue: {
+  statusLabel: {
+    color: theme.colors.text,
     fontSize: theme.typography.fontBody,
     fontWeight: theme.typography.weightSemibold,
-    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  required: {
+    color: theme.colors.error,
   },
 });

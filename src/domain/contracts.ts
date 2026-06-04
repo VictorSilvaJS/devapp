@@ -114,6 +114,9 @@ export interface FazendaCanonica {
   cep?: string;
   ultima_analise?: string;
   observacoes?: string;
+  documento?: string;
+  colaborador_responsavel_id?: string;
+  colaborador_responsavel?: string;
   status?: string;
   data_cadastro?: string;
 }

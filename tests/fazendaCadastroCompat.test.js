@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {
   buildCadastroFazendaPayload,
   buildCadastroTitularOptions,
+  buildCadastroTitularOptionsFromUsers,
   buildNovoTitularId,
   validateCadastroFazendaScope,
 } = require('../.tmp-domain-compat/src/utils/fazendaCadastroCompat');
@@ -62,6 +63,22 @@ const run = async () => {
     assert.deepEqual(titulares[0].fazendas_ids, ['fz1']);
   });
 
+  await test('buildCadastroTitularOptionsFromUsers lista somente usuarios produtores por nome', () => {
+    const titulares = buildCadastroTitularOptionsFromUsers(
+      [
+        { id: 'u1', nome: 'Ana Usuária', perfil: 'produtor', produtor_id: 'prop1' },
+        { id: 'u2', nome: 'Carlos Campo', perfil: 'colaborador' },
+        { id: 'u3', nome: 'Produtor Pendente', perfil: 'produtor', produtor_id: '' },
+      ],
+      fazendasBase
+    );
+
+    assert.deepEqual(titulares.map((titular) => titular.id), ['prop1']);
+    assert.equal(titulares[0].nome, 'Ana Usuária');
+    assert.equal(titulares[0].usuario_id, 'u1');
+    assert.deepEqual(titulares[0].fazendas_nomes, ['Fazenda Sol']);
+  });
+
   await test('buildCadastroFazendaPayload vincula nova fazenda a titular existente', () => {
     const titulares = buildCadastroTitularOptions(fazendasBase);
     const payload = buildCadastroFazendaPayload({
@@ -74,6 +91,10 @@ const run = async () => {
       estado: 'rs',
       regiao: 'Sul',
       microregiao: 'Sul 1',
+      documento: 'IE-123',
+      colaboradorResponsavelId: 'u_colab',
+      colaboradorResponsavelNome: 'Carlos Campo',
+      status: 'pendente',
       titulares,
     });
 
@@ -87,6 +108,10 @@ const run = async () => {
     assert.equal(payload.estado, 'RS');
     assert.equal(payload.regiao, 'Sul');
     assert.equal(payload.microregiao, 'Sul 1');
+    assert.equal(payload.documento, 'IE-123');
+    assert.equal(payload.colaborador_responsavel_id, 'u_colab');
+    assert.equal(payload.colaborador_responsavel, 'Carlos Campo');
+    assert.equal(payload.status, 'pendente');
   });
 
   await test('buildCadastroFazendaPayload cria titular minimo quando nao ha titular existente', () => {

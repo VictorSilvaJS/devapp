@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
@@ -12,15 +11,14 @@ import Header from '../components/Header';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
-import RadioCardGroup from '../components/RadioCardGroup';
 import SectionCard from '../components/SectionCard';
+import SelectField from '../components/SelectField';
 import SegmentedChips from '../components/SegmentedChips';
 import { useToast } from '../components/Toast';
 import { Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import theme from '../theme';
 import {
-  validarNome,
   validarArea,
   validarUF,
   validarObrigatorio
@@ -28,16 +26,21 @@ import {
 import { podeCriarProdutor } from '../utils/acessoControle';
 import {
   buildCadastroFazendaPayload,
-  buildCadastroTitularOptions,
+  buildCadastroTitularOptionsFromUsers,
   validateCadastroFazendaScope
 } from '../utils/fazendaCadastroCompat';
-import type { CadastroTitularMode } from '../utils/fazendaCadastroCompat';
 import {
   listarMicroregioesPorRegiao,
   listarRegioes,
   sugerirColaboradoresParaMicroregiao,
 } from '../utils/territorioCompat';
 import { getUsuarioNome } from '../utils/usuarioAdminCompat';
+
+const STATUS_PROPRIEDADE = [
+  { value: 'ativo', label: 'Ativo', icon: 'checkmark-circle-outline' as const },
+  { value: 'pendente', label: 'Pendente', icon: 'time-outline' as const },
+  { value: 'inativo', label: 'Inativo', icon: 'pause-circle-outline' as const },
+];
 
 const getScopeErrorMessage = (reason?: string) => {
   switch (reason) {
@@ -60,13 +63,13 @@ export default function NovaPropriedadeScreen({ navigation }) {
   const [titulares, setTitulares] = useState<any[]>([]);
   const [fazendasTerritorio, setFazendasTerritorio] = useState<any[]>([]);
   const [usuariosMock, setUsuariosMock] = useState<any[]>([]);
-  const [titularMode, setTitularMode] = useState<CadastroTitularMode>('existente');
   const [titularSelecionadoId, setTitularSelecionadoId] = useState('');
+  const [colaboradorSelecionadoId, setColaboradorSelecionadoId] = useState('');
   const [errors, setErrors] = useState<any>({});
   const [form, setForm] = useState({
-    nome: '',
     fazenda: '',
     area_total: '',
+    documento: '',
     cultura_atual: '',
     cidade: '',
     estado: '',
@@ -74,6 +77,18 @@ export default function NovaPropriedadeScreen({ navigation }) {
     microregiao: '',
     status: 'ativo'
   });
+
+  const colaboradores = useMemo(
+    () => usuariosMock
+      .filter((usuario) => usuario?.perfil === 'colaborador')
+      .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b))),
+    [usuariosMock]
+  );
+
+  const colaboradorSelecionado = useMemo(
+    () => colaboradores.find((colaborador) => colaborador.id === colaboradorSelecionadoId),
+    [colaboradorSelecionadoId, colaboradores]
+  );
 
   const microregioesPermitidas = user?.perfil === 'colaborador' ? (user.sub_regioes || []) : [];
   const regiaoAtual = user?.perfil === 'colaborador' ? (user.regiao || '') : form.regiao;
@@ -140,17 +155,14 @@ export default function NovaPropriedadeScreen({ navigation }) {
         Produtor.list(),
         User.list(),
       ]);
-      const options = buildCadastroTitularOptions(fazendas);
+      const options = buildCadastroTitularOptionsFromUsers(usuarios, fazendas);
       setTitulares(options);
       setFazendasTerritorio(fazendas as any[]);
       setUsuariosMock(usuarios as any[]);
 
-      if (options.length === 0) {
-        setTitularMode('novo');
-        setTitularSelecionadoId('');
-      } else {
-        setTitularSelecionadoId(prev => prev || options[0].id);
-      }
+      setTitularSelecionadoId(prev =>
+        options.some((option) => option.id === prev) ? prev : ''
+      );
     } catch (error) {
       toast.showError('Não foi possível carregar produtores titulares');
       console.error(error);
@@ -175,24 +187,23 @@ export default function NovaPropriedadeScreen({ navigation }) {
     setErrors(prev => ({ ...prev, regiao: null, microregiao: null }));
   };
 
-  const handleTitularModeChange = (mode: CadastroTitularMode) => {
-    setTitularMode(mode);
-    setErrors(prev => ({ ...prev, nome: null, titular: null }));
-  };
-
   const buildPayload = () =>
     buildCadastroFazendaPayload({
-      mode: titularMode,
+      mode: 'existente',
       titularId: titularSelecionadoId,
-      produtorNome: form.nome,
       fazendaNome: form.fazenda,
       areaTotal: form.area_total,
+      documento: form.documento,
       culturaAtual: form.cultura_atual,
       cidade: form.cidade,
       estado: form.estado,
       regiao: user?.perfil === 'colaborador' ? user.regiao : form.regiao,
       microregiao: form.microregiao,
       status: form.status,
+      colaboradorResponsavelId: colaboradorSelecionado?.id,
+      colaboradorResponsavelNome: colaboradorSelecionado
+        ? getUsuarioNome(colaboradorSelecionado)
+        : '',
       titulares,
     });
 
@@ -203,12 +214,8 @@ export default function NovaPropriedadeScreen({ navigation }) {
       newErrors.escopo = 'Seu perfil não permite cadastrar propriedades.';
     }
 
-    if (titularMode === 'existente') {
-      if (!titularSelecionadoId) {
-        newErrors.titular = 'Selecione um produtor titular';
-      }
-    } else if (!validarNome(form.nome)) {
-      newErrors.nome = 'Nome deve ter pelo menos 3 caracteres';
+    if (!titularSelecionadoId) {
+      newErrors.titular = 'Selecione um produtor titular';
     }
 
     if (!validarObrigatorio(form.fazenda)) {
@@ -263,60 +270,6 @@ export default function NovaPropriedadeScreen({ navigation }) {
     }
   };
 
-  const renderTitularExistente = () => {
-    if (loadingTitulares) {
-      return (
-        <View style={styles.loadingTitulares}>
-          <ActivityIndicator color={theme.colors.primary} />
-          <Text style={styles.helperText}>Carregando produtores titulares...</Text>
-        </View>
-      );
-    }
-
-    if (titulares.length === 0) {
-      return (
-        <Text style={styles.helperText}>
-          Nenhum produtor titular encontrado. Cadastre um novo titular mínimo.
-        </Text>
-      );
-    }
-
-    return (
-      <View style={styles.titularesList}>
-        {titulares.map((titular) => {
-          const selected = titularSelecionadoId === titular.id;
-          return (
-            <TouchableOpacity
-              key={titular.id}
-              style={[styles.titularOption, selected && styles.titularOptionSelected]}
-              onPress={() => {
-                setTitularSelecionadoId(titular.id);
-                setErrors(prev => ({ ...prev, titular: null }));
-              }}
-              activeOpacity={0.8}
-            >
-              <View style={styles.optionIcon}>
-                <Ionicons
-                  name={selected ? 'checkmark-circle' : 'person-outline'}
-                  size={20}
-                  color={selected ? theme.colors.white : theme.colors.primary}
-                />
-              </View>
-              <View style={styles.optionTextContent}>
-                <Text style={[styles.optionTitle, selected && styles.optionTitleSelected]}>
-                  {titular.nome}
-                </Text>
-                <Text style={[styles.optionSubtitle, selected && styles.optionSubtitleSelected]} numberOfLines={1}>
-                  {(titular.fazendas_nomes || []).join(', ') || 'Sem propriedades vinculadas'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
       <Header title="Nova Propriedade" showBackButton />
@@ -346,7 +299,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
           />
 
           <FormField
-            label="Área total informada (ha)"
+            label="Área em hectares"
             required
             value={form.area_total}
             onChangeText={(text) => handleChange('area_total', text)}
@@ -355,55 +308,81 @@ export default function NovaPropriedadeScreen({ navigation }) {
             error={errors.area_total}
             helperText="Valor cadastral informado para a demonstração; não representa necessariamente a área mapeada."
           />
+
+          <FormField
+            label="CNPJ ou inscrição"
+            value={form.documento}
+            onChangeText={(text) => handleChange('documento', text)}
+            placeholder="CNPJ, inscrição estadual ou cadastro equivalente"
+            helperText="Campo opcional para identificação cadastral da Propriedade."
+          />
         </SectionCard>
 
-        <SectionCard title="Titular da Propriedade" subtitle="Titular existente é o caminho principal. Novo Titular é apenas uma alternativa demonstrativa e não cria login.">
-          <View style={styles.field}>
-            <RadioCardGroup
-              options={[
-                {
-                  value: 'existente',
-                  label: 'Titular existente',
-                  description: 'Caminho recomendado: selecionar um Titular/produtor já cadastrado.',
-                  icon: 'people-outline',
-                  disabled: titulares.length === 0,
-                },
-                {
-                  value: 'novo',
-                  label: 'Novo Titular demonstrativo',
-                  description: 'Alternativa local: cria somente um vínculo mínimo, sem usuário ou login real.',
-                  icon: 'person-add-outline',
-                },
-              ]}
-              value={titularMode}
-              onChange={handleTitularModeChange}
-            />
-          </View>
-
-          {titularMode === 'existente' ? (
-            <>
-              {renderTitularExistente()}
-              {errors.titular && <Text style={styles.errorText}>{errors.titular}</Text>}
-            </>
+        <SectionCard title="Responsáveis" subtitle="Selecione usuários já cadastrados. Este formulário não cria Produtor ou Colaborador.">
+          {loadingTitulares ? (
+            <View style={styles.loadingTitulares}>
+              <ActivityIndicator color={theme.colors.primary} />
+              <Text style={styles.helperText}>Carregando usuários cadastrados...</Text>
+            </View>
           ) : (
-            <FormField
-              label="Nome do Titular"
+            <SelectField
+              label="Titular / Produtor"
               required
-              value={form.nome}
-              onChangeText={(text) => handleChange('nome', text)}
-              placeholder="Digite o nome completo"
-              error={errors.nome}
+              value={titularSelecionadoId}
+              options={titulares.map((titular) => ({
+                value: titular.id,
+                label: titular.nome,
+                description: titular.fazendas_nomes?.join(', ') || 'Produtor cadastrado sem Propriedade vinculada',
+              }))}
+              onChange={(value) => {
+                setTitularSelecionadoId(value);
+                setErrors(prev => ({ ...prev, titular: null }));
+              }}
+              placeholder="Selecione um usuário produtor"
+              error={errors.titular}
+              helperText={
+                titulares.length === 0
+                  ? 'Nenhum usuário produtor com vínculo compatível foi encontrado. Cadastre o Produtor em Usuários.'
+                  : 'A interface mostra o nome; o vínculo compatível continua salvo pelo identificador do Produtor.'
+              }
             />
           )}
+
+          <SelectField
+            label="Colaborador responsável"
+            value={colaboradorSelecionadoId}
+            options={[
+              { value: '', label: 'Nenhum colaborador selecionado' },
+              ...colaboradores.map((colaborador) => ({
+                value: colaborador.id,
+                label: getUsuarioNome(colaborador),
+                description: [colaborador.regiao, colaborador.email].filter(Boolean).join(' • '),
+              })),
+            ]}
+            onChange={setColaboradorSelecionadoId}
+            placeholder="Selecione um usuário colaborador"
+            helperText="Vínculo cadastral local; não altera permissões ou escopo regional."
+          />
         </SectionCard>
 
         <SectionCard title="Dados produtivos" subtitle="Campo opcional para facilitar a identificação durante o teste.">
           <FormField
-            label="Cultura principal (opcional)"
+            label="Cultura principal"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
           />
+        </SectionCard>
+
+        <SectionCard title="Status" subtitle="Define como a Propriedade aparece nas listagens locais.">
+          <View style={styles.field}>
+            <Text style={styles.label}>Status da propriedade <Text style={styles.required}>*</Text></Text>
+            <SegmentedChips
+              options={STATUS_PROPRIEDADE}
+              value={form.status}
+              onChange={(value) => handleChange('status', value)}
+            />
+          </View>
         </SectionCard>
 
         <SectionCard title="Localização e Região" subtitle="Cidade e UF são opcionais. Região e Microregião mantêm o escopo territorial atual do mock.">
@@ -530,47 +509,6 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.md,
     paddingBottom: theme.spacing.xl * 2,
-  },
-  titularesList: {
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  titularOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-    borderRadius: theme.spacing.radius,
-    borderWidth: 1.5,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.card,
-    gap: theme.spacing.sm,
-  },
-  titularOptionSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary,
-  },
-  optionIcon: {
-    width: 28,
-    alignItems: 'center',
-  },
-  optionTextContent: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: theme.typography.fontBody,
-    fontWeight: theme.typography.weightBold,
-    color: theme.colors.text,
-  },
-  optionTitleSelected: {
-    color: theme.colors.white,
-  },
-  optionSubtitle: {
-    fontSize: theme.typography.fontCaption,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
-  },
-  optionSubtitleSelected: {
-    color: theme.colors.whiteTranslucent,
   },
   loadingTitulares: {
     flexDirection: 'row',

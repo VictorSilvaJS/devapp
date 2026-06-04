@@ -1,4 +1,5 @@
 import { listMockProdutoresTitulares } from '../api/produtorCompat';
+import { getUsuarioNome, getUsuarioProdutorId } from './usuarioAdminCompat';
 
 export type CadastroTitularMode = 'existente' | 'novo';
 
@@ -7,6 +8,7 @@ export type CadastroTitularOption = {
   nome: string;
   fazendas_ids: string[];
   fazendas_nomes: string[];
+  usuario_id?: string;
 };
 
 export type CadastroFazendaPayload = {
@@ -23,6 +25,9 @@ export type CadastroFazendaPayload = {
   regiao?: string;
   microregiao?: string;
   status?: string;
+  documento?: string;
+  colaborador_responsavel_id?: string;
+  colaborador_responsavel?: string;
 };
 
 type BuildCadastroFazendaPayloadInput = {
@@ -37,6 +42,9 @@ type BuildCadastroFazendaPayloadInput = {
   regiao?: string | null;
   microregiao?: string | null;
   status?: string | null;
+  documento?: string | null;
+  colaboradorResponsavelId?: string | null;
+  colaboradorResponsavelNome?: string | null;
   titulares?: CadastroTitularOption[];
 };
 
@@ -103,6 +111,34 @@ export const buildCadastroTitularOptions = (fazendas: any[] = []): CadastroTitul
     .filter((titular) => titular.id && titular.nome)
     .sort((a, b) => a.nome.localeCompare(b.nome));
 
+export const buildCadastroTitularOptionsFromUsers = (
+  usuarios: any[] = [],
+  fazendas: any[] = []
+): CadastroTitularOption[] => {
+  const propriedadesPorTitular = new Map(
+    buildCadastroTitularOptions(fazendas).map((titular) => [titular.id, titular])
+  );
+  const options = new Map<string, CadastroTitularOption>();
+
+  usuarios
+    .filter((usuario) => usuario?.perfil === 'produtor')
+    .forEach((usuario) => {
+      const produtorId = getUsuarioProdutorId(usuario);
+      if (!produtorId || options.has(produtorId)) return;
+
+      const propriedades = propriedadesPorTitular.get(produtorId);
+      options.set(produtorId, {
+        id: produtorId,
+        nome: getUsuarioNome(usuario),
+        usuario_id: trimString(usuario?.id),
+        fazendas_ids: propriedades?.fazendas_ids || [],
+        fazendas_nomes: propriedades?.fazendas_nomes || [],
+      });
+    });
+
+  return Array.from(options.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+};
+
 export const buildNovoTitularId = (
   produtorNome: string,
   existingTitularIds: string[] = []
@@ -132,6 +168,9 @@ export const buildCadastroFazendaPayload = ({
   regiao,
   microregiao,
   status,
+  documento,
+  colaboradorResponsavelId,
+  colaboradorResponsavelNome,
   titulares = [],
 }: BuildCadastroFazendaPayloadInput): CadastroFazendaPayload => {
   const titularSelecionado = titulares.find((titular) => titular.id === titularId);
@@ -161,6 +200,9 @@ export const buildCadastroFazendaPayload = ({
   setOptionalString(payload, 'estado', trimString(estado).toUpperCase());
   setOptionalString(payload, 'regiao', regiao);
   setOptionalString(payload, 'microregiao', microregiao);
+  setOptionalString(payload, 'documento', documento);
+  setOptionalString(payload, 'colaborador_responsavel_id', colaboradorResponsavelId);
+  setOptionalString(payload, 'colaborador_responsavel', colaboradorResponsavelNome);
 
   return payload;
 };
@@ -195,4 +237,3 @@ export const validateCadastroFazendaScope = (
 
   return { ok: true };
 };
-

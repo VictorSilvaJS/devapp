@@ -71,6 +71,18 @@
       "type": "string",
       "description": "Sub-região específica - ex: Goiás 1, Goiás 2, Goiânia, Rio Verde, RS - Norte"
     },
+    "documento": {
+      "type": "string",
+      "description": "CNPJ ou inscrição cadastral da propriedade"
+    },
+    "colaborador_responsavel_id": {
+      "type": "string",
+      "description": "ID do usuário colaborador responsável no mock local"
+    },
+    "colaborador_responsavel": {
+      "type": "string",
+      "description": "Nome visível do colaborador responsável no mock local"
+    },
     "cep": {
       "type": "string",
       "description": "CEP"

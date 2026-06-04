@@ -273,6 +273,11 @@ export default function ProdutorScreen({ route, navigation }) {
   const colaboradoresRelacionadosMock = user?.perfil === 'admin'
     ? getColaboradoresRelacionadosAPropriedade(usuariosMock, produtor, todasFazendasMock)
     : [];
+  const statusInfo = produtor.status === 'ativo'
+    ? { label: 'Ativo', color: colors.success, icon: 'checkmark-circle' as const }
+    : produtor.status === 'inativo'
+      ? { label: 'Inativo', color: colors.muted, icon: 'close-circle' as const }
+      : { label: 'Pendente', color: colors.warning, icon: 'time' as const };
 
   const handleNovaVisita = () => {
     if (!podeCriarVisitaNaFazenda) {
@@ -564,10 +569,28 @@ export default function ProdutorScreen({ route, navigation }) {
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="leaf-outline" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Cultura Atual</Text>
+                  <Text style={styles.infoLabel}>Cultura principal</Text>
                 </View>
                 <Text style={styles.infoValue}>{produtor.cultura_atual || 'Não informado'}</Text>
               </View>
+              {produtor.documento ? (
+                <View style={styles.infoRow}>
+                  <View style={styles.infoLabelContainer}>
+                    <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+                    <Text style={styles.infoLabel}>CNPJ ou inscrição</Text>
+                  </View>
+                  <Text style={styles.infoValue}>{produtor.documento}</Text>
+                </View>
+              ) : null}
+              {produtor.colaborador_responsavel ? (
+                <View style={styles.infoRow}>
+                  <View style={styles.infoLabelContainer}>
+                    <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
+                    <Text style={styles.infoLabel}>Colaborador responsável</Text>
+                  </View>
+                  <Text style={styles.infoValue}>{produtor.colaborador_responsavel}</Text>
+                </View>
+              ) : null}
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="location" size={16} color={colors.primary} />
@@ -728,12 +751,12 @@ export default function ProdutorScreen({ route, navigation }) {
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
-                  <Ionicons name="checkmark-circle" size={16} color={produtor.status === 'ativo' ? colors.success : colors.warning} />
+                  <Ionicons name={statusInfo.icon} size={16} color={statusInfo.color} />
                   <Text style={styles.infoLabel}>Status</Text>
                 </View>
-                <View style={[styles.statusBadgeInline, { backgroundColor: produtor.status === 'ativo' ? colors.success + '20' : colors.warning + '20' }]}>
-                  <Text style={[styles.statusTextInline, { color: produtor.status === 'ativo' ? colors.success : colors.warning }]}>
-                    {produtor.status === 'ativo' ? 'Ativo' : 'Pendente'}
+                <View style={[styles.statusBadgeInline, { backgroundColor: statusInfo.color + '20' }]}>
+                  <Text style={[styles.statusTextInline, { color: statusInfo.color }]}>
+                    {statusInfo.label}
                   </Text>
                 </View>
               </View>

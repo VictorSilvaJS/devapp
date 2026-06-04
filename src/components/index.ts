@@ -10,6 +10,8 @@ export { default as RadioCardGroup } from './RadioCardGroup';
 export { default as SearchBar } from './SearchBar';
 export { default as SectionCard } from './SectionCard';
 export { default as SegmentedChips } from './SegmentedChips';
+export { default as SelectField } from './SelectField';
 
 export type { RadioCardOption } from './RadioCardGroup';
 export type { SegmentedChipOption } from './SegmentedChips';
+export type { SelectFieldOption } from './SelectField';

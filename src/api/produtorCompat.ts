@@ -41,6 +41,9 @@ interface FazendaBoundaryInput {
   cep?: string;
   ultima_analise?: string;
   observacoes?: string;
+  documento?: string;
+  colaborador_responsavel_id?: string;
+  colaborador_responsavel?: string;
   status?: string;
   data_cadastro?: string;
 }
@@ -52,6 +55,10 @@ interface FazendaUpdateFormInput {
   cultura_atual?: string;
   cidade?: string;
   estado?: string;
+  documento?: string;
+  colaborador_responsavel_id?: string;
+  colaborador_responsavel?: string;
+  status?: string;
 }
 
 interface FazendaDeleteDependenciesInput {
@@ -270,6 +277,15 @@ const buildCanonicalFazendaFromBoundary = (
     cep: data.cep !== undefined ? data.cep : current?.cep,
     ultima_analise: data.ultima_analise !== undefined ? data.ultima_analise : current?.ultima_analise,
     observacoes: data.observacoes !== undefined ? data.observacoes : current?.observacoes,
+    documento: data.documento !== undefined ? data.documento : current?.documento,
+    colaborador_responsavel_id:
+      data.colaborador_responsavel_id !== undefined
+        ? data.colaborador_responsavel_id
+        : current?.colaborador_responsavel_id,
+    colaborador_responsavel:
+      data.colaborador_responsavel !== undefined
+        ? data.colaborador_responsavel
+        : current?.colaborador_responsavel,
     status: data.status !== undefined ? data.status : current?.status ?? 'ativo',
     data_cadastro: data.data_cadastro !== undefined ? data.data_cadastro : current?.data_cadastro,
   });
@@ -351,6 +367,16 @@ export const buildFazendaUpdatePayload = (
     cultura_atual: normalizeStringField(form.cultura_atual, current.cultura_atual),
     cidade: normalizeStringField(form.cidade, current.cidade),
     estado: normalizeStringField(form.estado, current.estado)?.toUpperCase(),
+    documento: normalizeStringField(form.documento, current.documento),
+    colaborador_responsavel_id: normalizeStringField(
+      form.colaborador_responsavel_id,
+      current.colaborador_responsavel_id
+    ),
+    colaborador_responsavel: normalizeStringField(
+      form.colaborador_responsavel,
+      current.colaborador_responsavel
+    ),
+    status: normalizeStringField(form.status, current.status) || 'ativo',
     regiao: current.regiao,
     microregiao: current.microregiao,
   };
