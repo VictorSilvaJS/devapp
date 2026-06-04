@@ -26,6 +26,10 @@ Observação geral: esta rodada valida o pacote demonstrativo da Fase 16B. Ela
 nao implementa backend, login real, RBAC real, upload remoto, sincronizacao ou
 migracao de `fazenda_id`/`fazendaId`.
 
+Na 16B.2, Usuario, vinculos, Propriedade, Visita, Caderno e metadados de Mapa
+passaram a usar persistencia local em `AsyncStorage`. Arquivos, limites/talhoes,
+autenticacao e sincronizacao continuam fora do snapshot.
+
 Credenciais principais alinhadas na 16B.1:
 
 - Admin Demonstração: `admin.demonstracao@example.com` / `admin123`
@@ -43,7 +47,9 @@ Credenciais principais alinhadas na 16B.1:
 | APK16B-07 | P0 | Admin | Nova Propriedade | Criar Propriedade com Titular existente e campos mínimos | Salva no mock preservando Titular, Região, Microregião e contratos legados | Reexecutar | Novo Titular fica fora do fluxo principal |
 | APK16B-08 | P1 | Admin | Usuários | Abrir Novo Usuario e detalhe | Fluxo permanece assistido/mockado; telefone/documento são opcionais; Usuario criado não autentica | Reexecutar | Cadastro rápido fora do fluxo principal |
 | APK16B-09 | P0 | Todos | LGPD | Revisar telas e detalhes do pacote principal | Nenhum dado pessoal real não autorizado, foto imprevisível ou endereço sensível aparece | Reexecutar | Cadastros seed minimizados; confirmar autorização de nome, limites, localização e anexos da Sela de Prata I |
-| APK16B-10 | P1 | Todos | Persistência local futura | Revisar comportamento após reinício do app | Limite atual de persistência está comunicado; implementação futura preservará APIs e `fazenda_id` sem sincronização | Reexecutar | Nesta abertura, CRUD ainda é somente memória |
+| APK16B-10 | P0 | Todos | Persistência local | Criar Usuario, Propriedade, Visita e Caderno; fechar e abrir o app | Cadastros continuam disponíveis, preservando ids, vínculos e `fazenda_id` sem sincronização | Reexecutar | Implementado na 16B.2; validar em Android físico |
+| APK16B-11 | P0 | Admin/Dev controlado | Restaurar demonstração | Executar `MockLocalData.restoreSeed()` em ambiente controlado e reabrir o app | Alterações locais são removidas e Sela de Prata I volta ao pacote inicial | Reexecutar | Sem botão visual nesta fase; ação destrutiva controlada |
+| APK16B-12 | P1 | Todos | Mapas locais | Alterar associação/metadado mockado de Mapa, fechar e abrir o app | Metadado continua disponível; nenhum arquivo físico é copiado ou enviado | Reexecutar | Persistência cobre somente metadados estruturados |
 
 **Rodada Fase 16A - APK Demonstrável Para Campo**
 

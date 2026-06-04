@@ -41,6 +41,49 @@ Como a 16B.1 nao altera telas, os rotulos hardcoded do acesso rapido em
 `LoginScreen` ainda exibem nomes legados; as credenciais e os usuarios
 autenticados, porem, usam as personas novas.
 
+## Entrega Do Bloco 16B.2
+
+Status em 2026-06-04: persistencia local minima implementada para os cadastros
+estruturados do APK demonstravel.
+
+Estrategia aplicada:
+
+- `AsyncStorage` ja existente no projeto;
+- snapshot versionado na chave `@tche:mock-mvp:v1`;
+- seed demonstrativo mantido separado do snapshot salvo;
+- hidratacao local antes da primeira operacao da API mock;
+- primeira abertura sem snapshot salva e utiliza o seed;
+- cada `create`, `update` e `delete` persistido atualiza o snapshot;
+- escritas locais sao enfileiradas para evitar gravacao fora de ordem;
+- snapshot invalido ou de outra versao volta ao seed atual.
+
+Entidades persistidas:
+
+- `User`;
+- vinculos `usuarioPropriedade` e `usuarioMicroregiao`;
+- `Produtor`/Propriedade;
+- `Visita`;
+- `CadernoCampo`;
+- metadados estruturados de `Mapa`.
+
+Nao sao persistidos nesta fase:
+
+- usuarios de login de `authMock` ou autenticacao real;
+- arquivos, imagens, PNGs ou conteudo binario;
+- limites/talhoes e GeoJSON, que continuam vindo do seed/assets;
+- cache de mapas, tiles, sincronizacao ou dados remotos.
+
+Restauracao controlada:
+
+- `MockLocalData.restoreSeed()` restaura o seed demonstrativo no estado atual e
+  no `AsyncStorage`;
+- nao foi adicionado botao visivel nesta fase para evitar uma acao destrutiva
+  sem confirmacao e sem fluxo administrativo definido.
+
+A numeracao foi ajustada pela solicitacao de implementacao: a persistencia
+local passa a ser o Bloco 16B.2 e a simplificacao de Mapas/Arquivos tecnicos
+fica recomendada para o Bloco 16B.3.
+
 ## Objetivo
 
 Preparar uma base demonstrativa coerente para o APK de campo, com:
@@ -50,8 +93,8 @@ Preparar uma base demonstrativa coerente para o APK de campo, com:
   caderno;
 - dados pessoais ficticios ou autorizados;
 - materiais tecnicos apresentados de forma simples;
-- caminho preparado para persistencia local futura, sem implementar backend,
-  login real, RBAC real, upload remoto ou sincronizacao.
+- persistencia local minima dos cadastros estruturados, sem implementar
+  backend, login real, RBAC real, upload remoto ou sincronizacao.
 
 ## Documentos E Codigo Considerados
 
@@ -443,31 +486,33 @@ Controles minimos para o APK:
 - remover dependencia de `picsum.photos` do pacote principal;
 - comunicar visualmente e verbalmente que o conteudo e mock/demonstrativo.
 
-## Preparacao Para Persistencia Local
+## Persistencia Local Minima
 
 Estado atual:
 
 - AuthContext persiste somente a sessao mockada em `AsyncStorage`;
 - o cache de mapas possui trilha propria e parcial;
-- CRUD de Usuario, Propriedade, Visita, Caderno e Mapa altera arrays em memoria;
-- reinicio/reload perde os cadastros criados;
+- CRUD de Usuario, Propriedade, Visita, Caderno e metadados de Mapa persiste
+  snapshot local versionado em `AsyncStorage`;
+- reinicio/reload controlado restaura os cadastros salvos;
 - reinstalacao/limpeza do app perde todos os dados locais.
 
-Preparacao minima recomendada, sem implementar sincronizacao:
+Implementacao aplicada, sem sincronizacao:
 
-1. Separar seed demonstrativo imutavel dos registros criados/editados no
+1. Separar seed demonstrativo dos registros criados/editados no
    dispositivo.
-2. Criar uma interface local de leitura e escrita por entidade, mantendo as
+2. Usar uma interface local de leitura e escrita, mantendo as
    APIs publicas atuais (`User`, `Produtor`, `Visita`, `CadernoCampo`, `Mapa`).
-3. Hidratar o estado local na abertura e fazer escrita apos create/update/delete.
-4. Versionar o schema local para permitir reset/migracao simples do mock.
+3. Hidratar o estado local antes da primeira operacao e fazer escrita apos
+   create/update/delete.
+4. Versionar o snapshot local para permitir reset simples do mock.
 5. Manter ids estaveis e metadados `data_cadastro`/`data_atualizacao`.
-6. Criar acao controlada de `Restaurar dados demonstrativos`.
+6. Expor acao controlada de `Restaurar dados demonstrativos`.
 7. Preservar `fazenda_id` em todos os registros ligados a Propriedade.
 8. Persistir apenas metadados de arquivos preparados; arquivo local real fica
    para bloco separado, sem upload remoto.
 
-Nao preparar agora:
+Limites atuais:
 
 - fila de sincronizacao;
 - resolucao de conflito;
@@ -475,6 +520,9 @@ Nao preparar agora:
 - status de envio;
 - upload em segundo plano;
 - migracao para `propriedade_id`.
+- migracao automatica entre versoes do snapshot;
+- criptografia ou protecao para dados pessoais reais;
+- transacao entre criacao rapida de Propriedade, Usuario e vinculos.
 
 ## Itens Para Backend Futuro
 
@@ -511,7 +559,27 @@ Criterio de aceite:
 - mapa, anexos, visita e caderno existem no mesmo contexto de `fazenda_id`;
 - nenhum dado pessoal real nao autorizado aparece.
 
-### Bloco 16B.2 - Simplificar Mapas/Arquivos Tecnicos
+### Bloco 16B.2 - Persistencia Local Minima
+
+Status em 2026-06-04: implementado com `AsyncStorage`, snapshot versionado e
+restauracao controlada do seed.
+
+- persistir Usuario, vinculos, Propriedade, Visita, Caderno e metadados de
+  Mapa;
+- carregar snapshot local antes da primeira leitura;
+- usar seed na primeira abertura ou quando nao houver snapshot valido;
+- salvar depois de `create`, `update` e `delete`;
+- preservar ids, aliases e `fazenda_id`;
+- nao persistir arquivos, limites/talhoes, autenticacao ou sincronizacao.
+
+Criterio de aceite:
+
+- cadastros permanecem apos reinicio controlado;
+- Sela de Prata I continua disponivel no seed;
+- restauracao controlada volta ao pacote demonstrativo;
+- contratos e testes atuais permanecem validos.
+
+### Bloco 16B.3 - Simplificar Mapas/Arquivos Tecnicos
 
 - ocultar a associacao de referencia tecnica no APK de campo;
 - manter consulta dos materiais preparados;
@@ -525,7 +593,7 @@ Criterio de aceite:
 - materiais continuam abrindo;
 - filtros e `fazenda_id` continuam preservados.
 
-### Bloco 16B.3 - Ajustar Apresentacao Dos Cadastros
+### Bloco 16B.4 - Ajustar Apresentacao Dos Cadastros
 
 - manter Nova/Editar Propriedade com o conjunto atual de baixo risco;
 - deixar Novo Titular e cadastro rapido fora do fluxo principal;
@@ -537,19 +605,6 @@ Criterio de aceite:
 - formulario de Propriedade continua salvando;
 - Usuario continua validando perfis/vinculos mockados;
 - demonstracao nao mistura pessoa e Propriedade.
-
-### Bloco 16B.4 - Preparar Persistencia Local
-
-- introduzir borda local sem mudar contratos publicos;
-- persistir metadados e cadastros demonstrativos;
-- incluir restauracao do seed;
-- nao implementar sincronizacao ou backend.
-
-Criterio de aceite:
-
-- registro criado permanece apos reinicio controlado do app;
-- restauracao retorna ao pacote demonstrativo;
-- `fazenda_id` permanece preservado.
 
 ### Bloco 16B.5 - Smoke Em Android Fisico
 
@@ -577,5 +632,7 @@ Executadas em 2026-06-04:
 
 - `npm run typecheck`: passou.
 - `npm run test:domain-compat`: passou.
+- `mockCompat` cobre persistencia, recarga controlada e restauracao do seed.
 - `git diff --check`: passou; no Windows, emitiu apenas avisos normais de
   conversao LF/CRLF.
+- smoke em Android fisico: pendente.

@@ -206,7 +206,8 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 
 - navegacao por perfil com tabs diferentes para `admin`, `colaborador` e `produtor`
 - login mock com persistencia local
-- CRUD em memoria para produtores, visitas, caderno e mapas
+- CRUD local persistente para usuarios, propriedades, visitas, caderno e
+  metadados de mapas; limites/talhoes continuam no seed/assets
 - filtros regionais via `FiltroContext`
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
 - frente funcional de `Produtor` / `Propriedade` concluida no nivel necessario para o MVP atual, embora codigo e rotas ainda usem nomes tecnicos legados de fazenda
@@ -366,8 +367,8 @@ Principais achados da abertura:
   total e area mapeada, mas essa semantica ainda precisa ser confirmada;
 - MapasScreen ainda possui associacao interna de referencia com URL, formato e
   tamanho, superficie tecnica demais para o APK de campo;
-- CRUD mockado continua somente em memoria; persistencia local deve ser
-  preparada sem implementar sincronizacao ou backend;
+- na abertura, o CRUD mockado ainda era somente em memoria; esse achado foi
+  tratado no Bloco 16B.2 sem implementar sincronizacao ou backend;
 - nomes, contatos, enderecos, credenciais e fotos externas do mock precisam de
   minimizacao para reduzir risco de LGPD/confusao.
 
@@ -396,7 +397,30 @@ Atualizacao do Bloco 16B.1 em 2026-06-04:
 O Bloco 16B.1 nao implementa backend, login real, RBAC real, persistencia
 local, upload remoto ou sincronizacao.
 
-Validacoes executadas na abertura e reexecutadas para o Bloco 16B.1:
+Atualizacao do Bloco 16B.2 em 2026-06-04:
+
+- os cadastros estruturados do mock agora usam persistencia local versionada
+  em `AsyncStorage`, na chave `@tche:mock-mvp:v1`;
+- a API mock hidrata o snapshot salvo antes da primeira operacao e usa/salva o
+  seed demonstrativo quando ainda nao existe estado local valido;
+- `User`, vinculos administrativos, `Produtor`/Propriedade, `Visita`,
+  `CadernoCampo` e metadados de `Mapa` sao salvos apos `create`, `update` e
+  `delete`;
+- `MockLocalData.restoreSeed()` restaura de forma controlada o pacote
+  demonstrativo inicial;
+- limites/talhoes, GeoJSON, arquivos, imagens, PNGs, cache, autenticacao e
+  dados de sincronizacao nao entram nesse snapshot;
+- usuarios criados no Admin continuam sem virar login em `authMock`;
+- ids, aliases futuros, `fazenda_id`, `fazendaId`, `produtor_id` e
+  `proprietario_id` continuam preservados;
+- nao foi criado botao visual de restauracao nesta fase;
+- a simplificacao de Mapas/Arquivos tecnicos passa a ser a recomendacao para o
+  Bloco 16B.3.
+
+O Bloco 16B.2 nao implementa backend, login real, RBAC real, sincronizacao,
+upload ou storage remoto.
+
+Validacoes executadas na abertura e reexecutadas para os Blocos 16B.1/16B.2:
 
 - `npm run typecheck` passou
 - `npm run test:domain-compat` passou

@@ -37,6 +37,8 @@ import {
   talhoesSelaDePrata1Shape,
   SELA_DE_PRATA_1_SHAPE_FAZENDA_ID,
 } from '../assets/geojson/selaDePrata1Talhoes';
+import { createMockLocalPersistence } from './mockLocalPersistence';
+import type { MockLocalState, MockLocalStorageAdapter } from './mockLocalPersistence';
 
 const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
 const SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL =
@@ -1850,6 +1852,142 @@ const limitesArea: any[] = [
   })),
 ];
 
+const cloneMockRecords = <T>(records: T[]): T[] =>
+  JSON.parse(JSON.stringify(records));
+
+const seedMockLocalState: MockLocalState = {
+  users: cloneMockRecords(users),
+  produtores: cloneMockRecords(produtores),
+  usuarioPropriedade: cloneMockRecords(usuarioPropriedade),
+  usuarioMicroregiao: cloneMockRecords(usuarioMicroregiao),
+  visitas: cloneMockRecords(visitas),
+  cadernos: cloneMockRecords(cadernos),
+  mapas: cloneMockRecords(mapas),
+};
+
+const mockLocalPersistence = createMockLocalPersistence();
+let mockLocalHydration: Promise<void> | null = null;
+let mockLocalSaveQueue: Promise<void> = Promise.resolve();
+let mockLocalMutationQueue: Promise<void> = Promise.resolve();
+
+const replaceMockRecords = (target: any[], records: any[]) => {
+  target.splice(0, target.length, ...cloneMockRecords(records));
+};
+
+const readCurrentMockLocalState = (): MockLocalState => ({
+  users: cloneMockRecords(users),
+  produtores: cloneMockRecords(produtores),
+  usuarioPropriedade: cloneMockRecords(usuarioPropriedade),
+  usuarioMicroregiao: cloneMockRecords(usuarioMicroregiao),
+  visitas: cloneMockRecords(visitas),
+  cadernos: cloneMockRecords(cadernos),
+  mapas: cloneMockRecords(mapas),
+});
+
+const applyMockLocalState = (state: MockLocalState) => {
+  replaceMockRecords(users, state.users);
+  replaceMockRecords(produtores, state.produtores);
+  replaceMockRecords(usuarioPropriedade, state.usuarioPropriedade);
+  replaceMockRecords(usuarioMicroregiao, state.usuarioMicroregiao);
+  replaceMockRecords(visitas, state.visitas);
+  replaceMockRecords(cadernos, state.cadernos);
+  replaceMockRecords(mapas, state.mapas);
+};
+
+const ensureMockLocalHydrated = async () => {
+  if (!mockLocalHydration) {
+    mockLocalHydration = (async () => {
+      const saved = await mockLocalPersistence.load();
+      if (saved) {
+        applyMockLocalState(saved);
+        return;
+      }
+
+      applyMockLocalState(seedMockLocalState);
+      await mockLocalPersistence.save(readCurrentMockLocalState());
+    })();
+  }
+
+  await mockLocalHydration;
+};
+
+const persistCurrentMockLocalState = async () => {
+  const state = readCurrentMockLocalState();
+  const save = mockLocalSaveQueue.then(async () => {
+    await mockLocalPersistence.save(state);
+  });
+
+  mockLocalSaveQueue = save.catch(() => undefined);
+  await save;
+};
+
+const waitMockDelay = (delayMs: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+
+const readHydratedMock = async <T>(delayMs: number, read: () => T | Promise<T>): Promise<T> => {
+  await ensureMockLocalHydrated();
+  await waitMockDelay(delayMs);
+  return read();
+};
+
+const mutateHydratedMock = async <T>(delayMs: number, mutate: () => T | Promise<T>): Promise<T> => {
+  await ensureMockLocalHydrated();
+  await waitMockDelay(delayMs);
+
+  const mutation = mockLocalMutationQueue.then(async () => {
+    const previousState = readCurrentMockLocalState();
+
+    try {
+      const result = await mutate();
+      await persistCurrentMockLocalState();
+      return result;
+    } catch (error) {
+      applyMockLocalState(previousState);
+      throw error;
+    }
+  });
+
+  mockLocalMutationQueue = mutation.then(() => undefined, () => undefined);
+  return mutation;
+};
+
+const mutateHydratedRuntime = async <T>(delayMs: number, mutate: () => T | Promise<T>): Promise<T> => {
+  await ensureMockLocalHydrated();
+  await waitMockDelay(delayMs);
+  return mutate();
+};
+
+export const MockLocalData = {
+  async restoreSeed() {
+    await ensureMockLocalHydrated();
+    await mockLocalMutationQueue;
+    applyMockLocalState(seedMockLocalState);
+    await persistCurrentMockLocalState();
+    return readCurrentMockLocalState();
+  },
+
+  async reloadFromLocal() {
+    await mockLocalMutationQueue;
+    await mockLocalSaveQueue;
+    mockLocalHydration = null;
+    await ensureMockLocalHydrated();
+    return readCurrentMockLocalState();
+  },
+
+  async readLocalSnapshot() {
+    await ensureMockLocalHydrated();
+    return mockLocalPersistence.load();
+  },
+
+  __setStorageForTests(storage: MockLocalStorageAdapter) {
+    mockLocalPersistence.setStorageAdapter(storage);
+    applyMockLocalState(seedMockLocalState);
+    mockLocalHydration = null;
+    mockLocalSaveQueue = Promise.resolve();
+    mockLocalMutationQueue = Promise.resolve();
+  },
+};
+
 const statusUsuarioMock = new Set(['ativo', 'inativo', 'pendente']);
 const tiposVinculoUsuarioPropriedade = new Set(['titular', 'responsavel', 'colaborador_atribuido', 'outro']);
 
@@ -2063,422 +2201,312 @@ const readUsuarioMock = (usuario: any) => {
 
 // API para User
 export const User: any = {
-  list: async () => {
-    return new Promise((res) => setTimeout(() => res(users.map(readUsuarioMock)), 200));
-  },
-  get: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+  list: async () =>
+    readHydratedMock(200, () => users.map(readUsuarioMock)),
+  get: async (id) =>
+    readHydratedMock(200, () => {
       const user = users.find(u => u.id === id);
-      if (user) res(readUsuarioMock(user)); else rej(new Error('Usuário não encontrado'));
-    }, 200));
-  },
-  getByEmail: async (email) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (!user) throw new Error('Usuário não encontrado');
+      return readUsuarioMock(user);
+    }),
+  getByEmail: async (email) =>
+    readHydratedMock(200, () => {
       const user = users.find(u => u.email === email);
-      if (user) res(readUsuarioMock(user)); else rej(new Error('Usuário não encontrado'));
-    }, 200));
-  },
+      if (!user) throw new Error('Usuário não encontrado');
+      return readUsuarioMock(user);
+    }),
   filter: async (query) => {
     const keys = Object.keys(query || {});
-    return new Promise((res) => setTimeout(() => {
-      const result = users
+    return readHydratedMock(200, () =>
+      users
         .map(readUsuarioMock)
-        .filter(u => keys.every(k => String(u[k]).includes(String(query[k]))));
-      res(result);
-    }, 200));
+        .filter(u => keys.every(k => String(u[k]).includes(String(query[k]))))
+    );
   },
-  create: async (data) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      try {
-        const id = `u${Date.now()}`;
-        const status = resolveUsuarioStatus(data);
-        const novo = { 
-          id, 
-          ...data,
-          status,
-          ativo: status === 'ativo',
-          data_cadastro: new Date().toISOString()
-        };
-        const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, novo, data, true);
-        const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, novo, data, true);
+  create: async (data) =>
+    mutateHydratedMock(200, () => {
+      const id = `u${Date.now()}`;
+      const status = resolveUsuarioStatus(data);
+      const novo = {
+        id,
+        ...data,
+        status,
+        ativo: status === 'ativo',
+        data_cadastro: new Date().toISOString()
+      };
+      const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, novo, data, true);
+      const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, novo, data, true);
 
-        validateUsuarioMock(novo, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
-        users.unshift(stripUsuarioRelations(novo));
+      validateUsuarioMock(novo, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
+      users.unshift(stripUsuarioRelations(novo));
+      replaceUsuarioPropriedadeLinks(id, vinculosPropriedades);
+      replaceUsuarioMicroregiaoLinks(id, vinculosMicroregioes);
+      return readUsuarioMock(stripUsuarioRelations(novo));
+    }),
+  update: async (id, data) =>
+    mutateHydratedMock(300, () => {
+      const index = users.findIndex(u => u.id === id);
+      if (index === -1) throw new Error('Usuário não encontrado');
+
+      const status = resolveUsuarioStatus({ ...users[index], ...data });
+      const atualizado = {
+        ...users[index],
+        ...data,
+        id,
+        status,
+        ativo: status === 'ativo',
+      };
+      const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, atualizado, data, false);
+      const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, atualizado, data, false);
+
+      validateUsuarioMock(atualizado, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
+      users[index] = stripUsuarioRelations(atualizado);
+
+      if (hasOwn(data, 'vinculos_propriedades') || data.perfil === 'admin' || data.perfil === 'produtor' || data.perfil === 'colaborador') {
         replaceUsuarioPropriedadeLinks(id, vinculosPropriedades);
+      }
+
+      if (hasOwn(data, 'vinculos_microregioes') || data.perfil === 'admin' || data.perfil === 'produtor' || data.perfil === 'colaborador') {
         replaceUsuarioMicroregiaoLinks(id, vinculosMicroregioes);
-        res(readUsuarioMock(stripUsuarioRelations(novo)));
-      } catch (error) {
-        rej(error);
       }
-    }, 200));
-  },
-  update: async (id, data) => {
-    return new Promise((res, rej) => setTimeout(() => {
+
+      return readUsuarioMock(users[index]);
+    }),
+  delete: async (id) =>
+    mutateHydratedMock(200, () => {
       const index = users.findIndex(u => u.id === id);
-      if (index === -1) {
-        rej(new Error('Usuário não encontrado'));
-      } else {
-        try {
-          const status = resolveUsuarioStatus({ ...users[index], ...data });
-          const atualizado = {
-            ...users[index],
-            ...data,
-            id,
-            status,
-            ativo: status === 'ativo',
-          };
-          const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, atualizado, data, false);
-          const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, atualizado, data, false);
+      if (index === -1) throw new Error('Usuário não encontrado');
 
-          validateUsuarioMock(atualizado, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
-          users[index] = stripUsuarioRelations(atualizado);
-
-          if (hasOwn(data, 'vinculos_propriedades') || data.perfil === 'admin' || data.perfil === 'produtor' || data.perfil === 'colaborador') {
-            replaceUsuarioPropriedadeLinks(id, vinculosPropriedades);
-          }
-
-          if (hasOwn(data, 'vinculos_microregioes') || data.perfil === 'admin' || data.perfil === 'produtor' || data.perfil === 'colaborador') {
-            replaceUsuarioMicroregiaoLinks(id, vinculosMicroregioes);
-          }
-
-          res(readUsuarioMock(users[index]));
-        } catch (error) {
-          rej(error);
-        }
-      }
-    }, 300));
-  },
-  delete: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      const index = users.findIndex(u => u.id === id);
-      if (index === -1) {
-        rej(new Error('Usuário não encontrado'));
-      } else {
-        users.splice(index, 1);
-        replaceUsuarioPropriedadeLinks(id, []);
-        replaceUsuarioMicroregiaoLinks(id, []);
-        res({ success: true });
-      }
-    }, 200));
-  }
+      users.splice(index, 1);
+      replaceUsuarioPropriedadeLinks(id, []);
+      replaceUsuarioMicroregiaoLinks(id, []);
+      return { success: true };
+    })
 };
 
 // API para Produtor
 export const Produtor: any = {
-  list: async (order?: any) => {
-    return new Promise((res) => setTimeout(() => res(listMockProdutores(produtores)), 300));
-  },
-  get: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+  list: async (order?: any) =>
+    readHydratedMock(300, () => listMockProdutores(produtores)),
+  get: async (id) =>
+    readHydratedMock(200, () => {
       const p = produtores.find(x => x.id === id);
-      if (p) res(readMockProdutor(p)); else rej(new Error('Produtor não encontrado'));
-    }, 200));
-  },
-  filter: async (query) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = filterMockProdutores(produtores, query);
-      res(result);
-    }, 200));
-  },
-  create: async (data) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      try {
-        validateProdutor(data);
-        const id = `p${Date.now()}`;
-        const novo = persistMockProdutor({ id, data });
-        produtores.unshift(novo);
-        res(readMockProdutor(novo));
-      } catch (error) {
-        rej(error);
-      }
-    }, 200));
-  },
-  update: async (id, data) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (!p) throw new Error('Produtor não encontrado');
+      return readMockProdutor(p);
+    }),
+  filter: async (query) =>
+    readHydratedMock(200, () => filterMockProdutores(produtores, query)),
+  create: async (data) =>
+    mutateHydratedMock(200, () => {
+      validateProdutor(data);
+      const id = `p${Date.now()}`;
+      const novo = persistMockProdutor({ id, data });
+      produtores.unshift(novo);
+      return readMockProdutor(novo);
+    }),
+  update: async (id, data) =>
+    mutateHydratedMock(300, () => {
       const index = produtores.findIndex(p => p.id === id);
-      if (index === -1) {
-        rej(new Error('Produtor não encontrado'));
-      } else {
-        const atualizado = persistMockProdutor({ id, data, existing: produtores[index] });
-        validateProdutor(atualizado);
-        produtores[index] = atualizado;
-        res(readMockProdutor(produtores[index]));
-      }
-    }, 300));
-  },
-  delete: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (index === -1) throw new Error('Produtor não encontrado');
+
+      const atualizado = persistMockProdutor({ id, data, existing: produtores[index] });
+      validateProdutor(atualizado);
+      produtores[index] = atualizado;
+      return readMockProdutor(produtores[index]);
+    }),
+  delete: async (id) =>
+    mutateHydratedMock(200, () => {
       const index = produtores.findIndex(p => p.id === id);
-      if (index === -1) {
-        rej(new Error('Propriedade não encontrada'));
-      } else {
-        const integridade = buildFazendaDeleteIntegrity(produtores[index], {
-          mapas,
-          visitas,
-          cadernos,
-          limites: limitesArea,
-        });
+      if (index === -1) throw new Error('Propriedade não encontrada');
 
-        if (!integridade.canDelete) {
-          const error: any = new Error(integridade.blockingMessage);
-          error.code = 'FAZENDA_DELETE_BLOCKED';
-          error.integridade = integridade;
-          rej(error);
-          return;
-        }
+      const integridade = buildFazendaDeleteIntegrity(produtores[index], {
+        mapas,
+        visitas,
+        cadernos,
+        limites: limitesArea,
+      });
 
-        produtores.splice(index, 1);
-        res({ success: true });
+      if (!integridade.canDelete) {
+        const error: any = new Error(integridade.blockingMessage);
+        error.code = 'FAZENDA_DELETE_BLOCKED';
+        error.integridade = integridade;
+        throw error;
       }
-    }, 200));
-  }
+
+      produtores.splice(index, 1);
+      return { success: true };
+    })
 };
 
 // API para Visita
 export const Visita: any = {
-  list: async () => {
-    return new Promise((res) => setTimeout(() => res(listMockVisitas(visitas)), 200));
-  },
-  get: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+  list: async () =>
+    readHydratedMock(200, () => listMockVisitas(visitas)),
+  get: async (id) =>
+    readHydratedMock(200, () => {
       const visita = visitas.find(v => v.id === id);
-      if (visita) res(readMockVisita(visita)); else rej(new Error('Visita não encontrada'));
-    }, 200));
-  },
-  filter: async (query) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = filterMockVisitas(visitas, query);
-      res(result);
-    }, 200));
-  },
-  create: async (data) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      try {
-        validateVisita(data);
-        const id = `v${Date.now()}`;
-        const novo = persistMockVisita({ id, data });
-        visitas.unshift(novo);
-        res(readMockVisita(novo));
-      } catch (error) {
-        rej(error);
-      }
-    }, 200));
-  },
-  update: async (id, data) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (!visita) throw new Error('Visita não encontrada');
+      return readMockVisita(visita);
+    }),
+  filter: async (query) =>
+    readHydratedMock(200, () => filterMockVisitas(visitas, query)),
+  create: async (data) =>
+    mutateHydratedMock(200, () => {
+      validateVisita(data);
+      const id = `v${Date.now()}`;
+      const novo = persistMockVisita({ id, data });
+      visitas.unshift(novo);
+      return readMockVisita(novo);
+    }),
+  update: async (id, data) =>
+    mutateHydratedMock(300, () => {
       const index = visitas.findIndex(v => v.id === id);
-      if (index === -1) {
-        rej(new Error('Visita não encontrada'));
-      } else {
-        const atualizado = persistMockVisita({ id, data, existing: visitas[index] });
-        validateVisita(atualizado);
-        visitas[index] = atualizado;
-        res(readMockVisita(visitas[index]));
-      }
-    }, 300));
-  },
-  delete: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (index === -1) throw new Error('Visita não encontrada');
+
+      const atualizado = persistMockVisita({ id, data, existing: visitas[index] });
+      validateVisita(atualizado);
+      visitas[index] = atualizado;
+      return readMockVisita(visitas[index]);
+    }),
+  delete: async (id) =>
+    mutateHydratedMock(200, () => {
       const index = visitas.findIndex(v => v.id === id);
-      if (index === -1) {
-        rej(new Error('Visita não encontrada'));
-      } else {
-        visitas.splice(index, 1);
-        res({ success: true });
-      }
-    }, 200));
-  }
+      if (index === -1) throw new Error('Visita não encontrada');
+
+      visitas.splice(index, 1);
+      return { success: true };
+    })
 };
 
 // API para CadernoCampo
 export const CadernoCampo: any = {
-  list: async () => {
-    return new Promise((res) => setTimeout(() => res(listMockCadernosCampo(cadernos)), 200));
-  },
-  get: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+  list: async () =>
+    readHydratedMock(200, () => listMockCadernosCampo(cadernos)),
+  get: async (id) =>
+    readHydratedMock(200, () => {
       const caderno = cadernos.find(c => c.id === id);
-      if (caderno) res(readMockCadernoCampo(caderno)); else rej(new Error('Registro não encontrado'));
-    }, 200));
-  },
-  filter: async (query) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = filterMockCadernosCampo(cadernos, query);
-      res(result);
-    }, 200));
-  },
-  create: async (data) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      try {
-        validateCadernoCampo(data);
-        const id = `c${Date.now()}`;
-        const novo = persistMockCadernoCampo({ id, data });
-        cadernos.unshift(novo);
-        res(readMockCadernoCampo(novo));
-      } catch (error) {
-        rej(error);
-      }
-    }, 200));
-  },
-  update: async (id, data) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (!caderno) throw new Error('Registro não encontrado');
+      return readMockCadernoCampo(caderno);
+    }),
+  filter: async (query) =>
+    readHydratedMock(200, () => filterMockCadernosCampo(cadernos, query)),
+  create: async (data) =>
+    mutateHydratedMock(200, () => {
+      validateCadernoCampo(data);
+      const id = `c${Date.now()}`;
+      const novo = persistMockCadernoCampo({ id, data });
+      cadernos.unshift(novo);
+      return readMockCadernoCampo(novo);
+    }),
+  update: async (id, data) =>
+    mutateHydratedMock(300, () => {
       const index = cadernos.findIndex(c => c.id === id);
-      if (index === -1) {
-        rej(new Error('Registro não encontrado'));
-      } else {
-        const atualizado = persistMockCadernoCampo({ id, data, existing: cadernos[index] });
-        validateCadernoCampo(atualizado);
-        cadernos[index] = atualizado;
-        res(readMockCadernoCampo(cadernos[index]));
-      }
-    }, 300));
-  },
-  delete: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (index === -1) throw new Error('Registro não encontrado');
+
+      const atualizado = persistMockCadernoCampo({ id, data, existing: cadernos[index] });
+      validateCadernoCampo(atualizado);
+      cadernos[index] = atualizado;
+      return readMockCadernoCampo(cadernos[index]);
+    }),
+  delete: async (id) =>
+    mutateHydratedMock(200, () => {
       const index = cadernos.findIndex(c => c.id === id);
-      if (index === -1) {
-        rej(new Error('Registro não encontrado'));
-      } else {
-        cadernos.splice(index, 1);
-        res({ success: true });
-      }
-    }, 200));
-  }
+      if (index === -1) throw new Error('Registro não encontrado');
+
+      cadernos.splice(index, 1);
+      return { success: true };
+    })
 };
 
 // API para Mapa
 export const Mapa: any = {
-  list: async () => {
-    return new Promise((res) => setTimeout(() => res(listMockMapas(mapas)), 200));
-  },
-  get: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+  list: async () =>
+    readHydratedMock(200, () => listMockMapas(mapas)),
+  get: async (id) =>
+    readHydratedMock(200, () => {
       const mapa = mapas.find(m => m.id === id);
-      if (mapa) res(readMockMapa(mapa)); else rej(new Error('Mapa não encontrado'));
-    }, 200));
-  },
-  filter: async (query) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = filterMockMapas(mapas, query);
-      res(result);
-    }, 200));
-  },
-  create: async (data) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      try {
-        validateMapa(data);
-        const id = `m${Date.now()}`;
-        const novo = persistMockMapa({ id, data });
-        mapas.unshift(novo);
-        res(readMockMapa(novo));
-      } catch (error) {
-        rej(error);
-      }
-    }, 200));
-  },
-  update: async (id, data) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (!mapa) throw new Error('Mapa não encontrado');
+      return readMockMapa(mapa);
+    }),
+  filter: async (query) =>
+    readHydratedMock(200, () => filterMockMapas(mapas, query)),
+  create: async (data) =>
+    mutateHydratedMock(200, () => {
+      validateMapa(data);
+      const id = `m${Date.now()}`;
+      const novo = persistMockMapa({ id, data });
+      mapas.unshift(novo);
+      return readMockMapa(novo);
+    }),
+  update: async (id, data) =>
+    mutateHydratedMock(300, () => {
       const index = mapas.findIndex(m => m.id === id);
-      if (index === -1) {
-        rej(new Error('Mapa não encontrado'));
-      } else {
-        const atualizado = persistMockMapa({ id, data, existing: mapas[index] });
-        validateMapa(atualizado);
-        mapas[index] = atualizado;
-        res(readMockMapa(mapas[index]));
-      }
-    }, 300));
-  },
-  delete: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (index === -1) throw new Error('Mapa não encontrado');
+
+      const atualizado = persistMockMapa({ id, data, existing: mapas[index] });
+      validateMapa(atualizado);
+      mapas[index] = atualizado;
+      return readMockMapa(mapas[index]);
+    }),
+  delete: async (id) =>
+    mutateHydratedMock(200, () => {
       const index = mapas.findIndex(m => m.id === id);
-      if (index === -1) {
-        rej(new Error('Mapa não encontrado'));
-      } else {
-        mapas.splice(index, 1);
-        res({ success: true });
-      }
-    }, 200));
-  }
+      if (index === -1) throw new Error('Mapa não encontrado');
+
+      mapas.splice(index, 1);
+      return { success: true };
+    })
 };
 
 // API para LimiteArea (Shape / Demarcação)
 export const LimiteArea: any = {
-  list: async () => {
-    return new Promise((res) => setTimeout(() => res(listMockLimitesArea(limitesArea)), 200));
-  },
-  get: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+  list: async () =>
+    readHydratedMock(200, () => listMockLimitesArea(limitesArea)),
+  get: async (id) =>
+    readHydratedMock(200, () => {
       const limite = limitesArea.find(l => l.id === id);
-      if (limite) res(readMockLimiteArea(limite)); else rej(new Error('Limite não encontrado'));
-    }, 200));
-  },
-  filter: async (query) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = filterMockLimitesArea(limitesArea, query);
-      res(result);
-    }, 200));
-  },
-  getByAno: async (ano) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = listMockLimitesArea(limitesArea).filter(l => l.ano === ano);
-      res(result);
-    }, 200));
-  },
-  getByFazenda: async (fazendaId) => {
-    return new Promise((res) => setTimeout(() => {
-      const result = filterMockLimitesArea(limitesArea, { fazenda_id: fazendaId });
-      res(result);
-    }, 200));
-  },
-  getByProdutor: async (fazendaId) => {
-    return new Promise((res) => setTimeout(() => {
+      if (!limite) throw new Error('Limite não encontrado');
+      return readMockLimiteArea(limite);
+    }),
+  filter: async (query) =>
+    readHydratedMock(200, () => filterMockLimitesArea(limitesArea, query)),
+  getByAno: async (ano) =>
+    readHydratedMock(200, () => listMockLimitesArea(limitesArea).filter(l => l.ano === ano)),
+  getByFazenda: async (fazendaId) =>
+    readHydratedMock(200, () => filterMockLimitesArea(limitesArea, { fazenda_id: fazendaId })),
+  getByProdutor: async (fazendaId) =>
+    readHydratedMock(200, () => {
       // Alias legado mantido enquanto consumidores antigos ainda pedem "produtor".
-      const result = filterMockLimitesArea(limitesArea, { fazenda_id: fazendaId });
-      res(result);
-    }, 200));
-  },
-  create: async (data) => {
-    return new Promise((res, rej) => setTimeout(() => {
-      try {
-        validateLimiteArea(data);
-        const id = `lt${Date.now()}`;
-        const novo = persistMockLimiteArea({ id, data });
-        limitesArea.unshift(novo);
-        res(readMockLimiteArea(novo));
-      } catch (error) {
-        rej(error);
-      }
-    }, 200));
-  },
-  update: async (id, data) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      return filterMockLimitesArea(limitesArea, { fazenda_id: fazendaId });
+    }),
+  create: async (data) =>
+    mutateHydratedRuntime(200, () => {
+      validateLimiteArea(data);
+      const id = `lt${Date.now()}`;
+      const novo = persistMockLimiteArea({ id, data });
+      limitesArea.unshift(novo);
+      return readMockLimiteArea(novo);
+    }),
+  update: async (id, data) =>
+    mutateHydratedRuntime(300, () => {
       const index = limitesArea.findIndex(l => l.id === id);
-      if (index === -1) {
-        rej(new Error('Limite não encontrado'));
-      } else {
-        const atualizado = persistMockLimiteArea({ id, data, existing: limitesArea[index] });
-        validateLimiteArea(atualizado);
-        limitesArea[index] = atualizado;
-        res(readMockLimiteArea(limitesArea[index]));
-      }
-    }, 300));
-  },
-  delete: async (id) => {
-    return new Promise((res, rej) => setTimeout(() => {
+      if (index === -1) throw new Error('Limite não encontrado');
+
+      const atualizado = persistMockLimiteArea({ id, data, existing: limitesArea[index] });
+      validateLimiteArea(atualizado);
+      limitesArea[index] = atualizado;
+      return readMockLimiteArea(limitesArea[index]);
+    }),
+  delete: async (id) =>
+    mutateHydratedRuntime(200, () => {
       const index = limitesArea.findIndex(l => l.id === id);
-      if (index === -1) {
-        rej(new Error('Limite não encontrado'));
-      } else {
-        limitesArea.splice(index, 1);
-        res({ success: true });
-      }
-    }, 200));
-  },
-  getAnosDisponiveis: async () => {
-    return new Promise((res) => setTimeout(() => {
-      const anos = [...new Set(limitesArea.map(l => l.ano))].sort((a, b) => b - a);
-      res(anos);
-    }, 100));
-  }
+      if (index === -1) throw new Error('Limite não encontrado');
+
+      limitesArea.splice(index, 1);
+      return { success: true };
+    }),
+  getAnosDisponiveis: async () =>
+    readHydratedMock(100, () =>
+      [...new Set(limitesArea.map(l => l.ano))].sort((a, b) => b - a)
+    )
 };

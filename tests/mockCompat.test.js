@@ -6,6 +6,7 @@ const {
   Visita,
   CadernoCampo,
   LimiteArea,
+  MockLocalData,
 } = require('../.tmp-domain-compat/src/api/mock');
 const { avaliarDownloadMapa } = require('../.tmp-domain-compat/src/utils/mapaDownloadCompat');
 
@@ -22,7 +23,21 @@ const test = async (name, fn) => {
   }
 };
 
+const localStorageValues = new Map();
+const localStorageAdapter = {
+  getItem: async (key) => localStorageValues.get(key) ?? null,
+  setItem: async (key, value) => {
+    localStorageValues.set(key, value);
+  },
+  removeItem: async (key) => {
+    localStorageValues.delete(key);
+  },
+};
+
 const run = async () => {
+  MockLocalData.__setStorageForTests(localStorageAdapter);
+  await MockLocalData.restoreSeed();
+
   await test('mock 16B.1 alinha personas e Propriedade principal sem alterar contratos', async () => {
     const admin = await User.get('u1');
     const colaborador = await User.get('u5');
@@ -269,6 +284,84 @@ const run = async () => {
 
     assert.ok(encontradosCanonicos.some((item) => item.id === limite.id));
     assert.ok(encontradosLegados.some((item) => item.id === limite.id));
+  });
+
+  await test('mock 16B.2 persiste cadastros, recarrega estado local e restaura seed', async () => {
+    const propriedade = await Produtor.create({
+      fazenda_nome: 'Propriedade Persistência Local',
+      produtor_id: 'titular_persistencia_local',
+      produtor_nome: 'Titular Persistência Local',
+      area_total: 42,
+      regiao: 'Mato Grosso',
+      microregiao: 'MT - Norte',
+    });
+    const usuario = await User.create({
+      nome: 'Admin Persistência Local',
+      email: 'admin.persistencia.local@example.com',
+      senha: 'admin123',
+      perfil: 'admin',
+      status: 'ativo',
+    });
+    const visita = await Visita.create({
+      fazenda_id: 'p_sela1',
+      tecnico_responsavel: 'Colaborador de Campo',
+      data_visita: '2026-06-15T14:00:00.000Z',
+      objetivo: 'outro',
+      observacoes: 'Registro local demonstrativo.',
+    });
+    const caderno = await CadernoCampo.create({
+      fazenda_id: 'p_sela1',
+      colaborador_responsavel: 'Colaborador de Campo',
+      data_atividade: '2026-06-15T15:00:00.000Z',
+      tipo_atividade: 'vistoria',
+      observacoes: 'Registro local demonstrativo.',
+    });
+    const mapa = await Mapa.create({
+      titulo: 'Metadado local demonstrativo',
+      categoria: 'panorama',
+      fazenda_id: 'p_sela1',
+      talhao: 'Propriedade inteira',
+    });
+    const visitaRemovida = await Visita.create({
+      fazenda_id: 'p_sela1',
+      tecnico_responsavel: 'Colaborador de Campo',
+      data_visita: '2026-06-16T14:00:00.000Z',
+      objetivo: 'outro',
+    });
+
+    await Produtor.update(propriedade.id, {
+      fazenda_nome: 'Propriedade Persistência Local Atualizada',
+    });
+    await Visita.delete(visitaRemovida.id);
+
+    const snapshot = await MockLocalData.readLocalSnapshot();
+    assert.ok(snapshot.produtores.some((item) => (
+      item.id === propriedade.id
+      && item.fazenda_nome === 'Propriedade Persistência Local Atualizada'
+    )));
+    assert.ok(snapshot.users.some((item) => item.id === usuario.id));
+    assert.ok(snapshot.visitas.some((item) => item.id === visita.id));
+    assert.ok(snapshot.visitas.every((item) => item.id !== visitaRemovida.id));
+    assert.ok(snapshot.cadernos.some((item) => item.id === caderno.id));
+    assert.ok(snapshot.mapas.some((item) => item.id === mapa.id));
+    assert.equal(Object.prototype.hasOwnProperty.call(snapshot, 'limitesArea'), false);
+
+    MockLocalData.__setStorageForTests(localStorageAdapter);
+
+    assert.equal(
+      (await Produtor.get(propriedade.id)).fazenda_nome,
+      'Propriedade Persistência Local Atualizada'
+    );
+    assert.equal((await User.get(usuario.id)).email, usuario.email);
+    assert.equal((await Visita.get(visita.id)).fazenda_id, 'p_sela1');
+    assert.equal((await CadernoCampo.get(caderno.id)).fazenda_id, 'p_sela1');
+    assert.equal((await Mapa.get(mapa.id)).fazenda_id, 'p_sela1');
+
+    await MockLocalData.restoreSeed();
+
+    await assert.rejects(() => Produtor.get(propriedade.id), /Produtor não encontrado/);
+    await assert.rejects(() => User.get(usuario.id), /Usuário não encontrado/);
+    assert.equal((await Produtor.get('p_sela1')).fazenda_id, 'p_sela1');
   });
 
   if (failed > 0) {

@@ -261,11 +261,13 @@ Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda fa
 Sem esse fechamento, o projeto corre risco de descrever offline de forma mais ampla do que a capacidade real.
 
 Status em 2026-06-04 (Fase 16B): alem da capacidade offline de consulta,
-permanece pendente definir o corte minimo de persistencia local para Usuario,
-Propriedade, Visita, Caderno e metadados de Mapa. O CRUD atual desses cadastros
-altera arrays em memoria e se perde ao reiniciar/recarregar o app. A direcao
-recomendada e preparar uma borda local versionada, com restauracao do seed
+o Bloco 16B.2 implementou o corte minimo de persistencia local para Usuario,
+vinculos administrativos, Propriedade, Visita, Caderno e metadados de Mapa. A
+borda usa snapshot versionado em `AsyncStorage`, restauracao controlada do seed
 demonstrativo e preservacao de `fazenda_id`, sem implementar sincronizacao.
+Permanecem pendentes a validacao em Android fisico, politica de migracao entre
+versoes do snapshot, tratamento de limite/cota de armazenamento, criptografia
+quando houver dado real e estrategia produtiva futura com backend.
 
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
