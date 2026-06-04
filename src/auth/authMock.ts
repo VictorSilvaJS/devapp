@@ -3,7 +3,7 @@
  * 
  * ESTRUTURA DE PERFIS:
  * 
- * 1. ADMINISTRADOR (admin): Bruna e César
+ * 1. ADMINISTRADOR (admin): personas demonstrativas
  *    - Acesso TOTAL ao Brasil
  *    - Todas as funcionalidades
  * 
@@ -30,17 +30,17 @@ export const users = [
   // ─── ADMINISTRADORES ─ Acesso total ao Brasil ──────────────────
   { 
     id: 'u1', 
-    full_name: 'Bruna Administradora', 
+    full_name: 'Admin Demonstração',
     perfil: 'admin',
-    email: 'bruna@agrotche.com',
+    email: 'admin.demonstracao@example.com',
     senha: 'admin123',
     regioes_acesso: ['Brasil']
   },
   { 
     id: 'u1b', 
-    full_name: 'César Administrador', 
+    full_name: 'Admin Apoio Demonstração',
     perfil: 'admin',
-    email: 'cesar@agrotche.com',
+    email: 'admin.apoio@example.com',
     senha: 'admin123',
     regioes_acesso: ['Brasil']
   },
@@ -48,38 +48,38 @@ export const users = [
   // ─── COLABORADORES ─ Acesso regional (mesmas funções do admin, limitado à região) ──
   { 
     id: 'u2', 
-    full_name: 'Carlos Silva', 
+    full_name: 'Colaborador Campo Goiás',
     perfil: 'colaborador', 
     regiao: 'Goiás',
     sub_regioes: ['Goiás 1', 'Rio Verde', 'Jataí'],
-    email: 'carlos@agrotche.com',
+    email: 'colaborador.goias@example.com',
     senha: 'colab123'
   },
   { 
     id: 'u3', 
-    full_name: 'Ana Santos', 
+    full_name: 'Colaborador Campo Sul',
     perfil: 'colaborador', 
     regiao: 'Sul',
     sub_regioes: ['RS - Norte', 'RS - Centro', 'RS - Sul'],
-    email: 'ana@agrotche.com',
+    email: 'colaborador.sul@example.com',
     senha: 'colab123'
   },
   { 
     id: 'u5', 
-    full_name: 'Marcos Ferreira', 
+    full_name: 'Colaborador de Campo',
     perfil: 'colaborador', 
     regiao: 'Mato Grosso',
     sub_regioes: ['MT - Norte', 'Sorriso', 'Lucas do Rio Verde'],
-    email: 'marcos@agrotche.com',
+    email: 'colaborador.campo@example.com',
     senha: 'colab123'
   },
   { 
     id: 'u6', 
-    full_name: 'Patrícia Lima', 
+    full_name: 'Colaborador Campo Goiás 2',
     perfil: 'colaborador', 
     regiao: 'Goiás',
     sub_regioes: ['Goiás 2', 'Goiânia', 'Anápolis'],
-    email: 'patricia@agrotche.com',
+    email: 'colaborador.goias2@example.com',
     senha: 'colab123'
   },
 
@@ -89,58 +89,58 @@ export const users = [
   // Um produtor pode ter VÁRIAS fazendas (relação 1:N)
   { 
     id: 'u7', 
-    full_name: 'João Silva', 
+    full_name: 'Produtor Demonstração Sul',
     perfil: 'produtor',
     produtor_id: 'prop1', // proprietário - pode ter várias fazendas
-    email: 'joao.silva@email.com',
+    email: 'produtor.sul@example.com',
     senha: 'prod123'
   },
   { 
     id: 'u8', 
-    full_name: 'Maria Silva', // Esposa do João - mesmo proprietário
+    full_name: 'Responsável Demonstração Sul',
     perfil: 'produtor',
     produtor_id: 'prop1', // mesmo proprietário (João e Maria são da mesma família)
-    email: 'maria.silva@email.com',
+    email: 'responsavel.sul@example.com',
     senha: 'prod123'
   },
   { 
     id: 'u9', 
-    full_name: 'Roberto Oliveira', 
+    full_name: 'Produtor Demonstração Goiás',
     perfil: 'produtor',
     produtor_id: 'prop2',
-    email: 'roberto@email.com',
+    email: 'produtor.goias@example.com',
     senha: 'prod123'
   },
   { 
     id: 'u10', 
-    full_name: 'Fernanda Costa', 
+    full_name: 'Produtor Demonstração MT',
     perfil: 'produtor',
     produtor_id: 'prop3',
-    email: 'fernanda@email.com',
+    email: 'produtor.mt@example.com',
     senha: 'prod123'
   },
   { 
     id: 'u11', 
-    full_name: 'Pedro Santos', 
+    full_name: 'Produtor Demonstração Norte RS',
     perfil: 'produtor',
     produtor_id: 'prop_pedro',
-    email: 'pedro.santos@email.com',
+    email: 'produtor.norte.rs@example.com',
     senha: 'prod123'
   },
   { 
     id: 'u12', 
-    full_name: 'Maria Pereira', 
+    full_name: 'Produtor Demonstração Centro RS',
     perfil: 'produtor',
     produtor_id: 'prop_maria',
-    email: 'maria.pereira@email.com',
+    email: 'produtor.centro.rs@example.com',
     senha: 'prod123'
   },
   {
     id: 'u_sela1',
-    full_name: 'Fazenda Sela de Prata I',
+    full_name: 'Produtor Demonstração',
     perfil: 'produtor',
     produtor_id: 'prop_sela1',
-    email: 'seladeprataI@agrotche.com',
+    email: 'produtor.demonstracao@example.com',
     senha: 'prod123'
   },
 ];

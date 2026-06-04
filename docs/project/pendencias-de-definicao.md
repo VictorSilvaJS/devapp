@@ -290,9 +290,10 @@ que a Sela de Prata I informa `area_total: 6200`, enquanto o manifesto dos 15
 talhoes informa soma mapeada de `1888,6 ha`. Permanece pendente confirmar se os
 valores representam area total e area mapeada ou se o mock deve ser corrigido.
 Tambem permanece pendente confirmar autorizacao de nome, localizacao, limites e
-anexos e substituir o nome da Propriedade usado como Usuario produtor/Titular
-por uma persona demonstrativa ou dado autorizado. Nenhuma dessas correcoes deve
-ser inferida sem confirmacao.
+anexos. O Bloco 16B.1 substituiu o nome da Propriedade usado como Usuario
+produtor/Titular pela persona `Produtor Demonstracao`, sem inferir ou incluir
+um nome pessoal real. A area e os materiais/localizacao permanecem sem
+alteracao ate confirmacao.
 
 Permanece pendente definir e implementar:
 

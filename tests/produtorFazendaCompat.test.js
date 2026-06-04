@@ -27,8 +27,8 @@ const run = async () => {
     assert.equal(registro.fazenda_id, 'p1');
     assert.equal(registro.proprietario_id, 'prop1');
     assert.equal(registro.produtor_id, 'prop1');
-    assert.equal(registro.nome, 'João Silva');
-    assert.equal(registro.produtor_nome, 'João Silva');
+    assert.equal(registro.nome, 'Produtor Demonstração Sul');
+    assert.equal(registro.produtor_nome, 'Produtor Demonstração Sul');
     assert.equal(registro.fazenda, 'Fazenda Boa Vista');
     assert.equal(registro.fazenda_nome, 'Fazenda Boa Vista');
   });

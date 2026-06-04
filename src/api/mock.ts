@@ -49,22 +49,22 @@ const users = [
   // ADMINISTRADORES - Acesso total ao Brasil
   {
     id: 'u1',
-    nome: 'Bruna Administradora',
-    email: 'bruna@agrotche.com',
+    nome: 'Admin Demonstração',
+    email: 'admin.demonstracao@example.com',
     senha: 'admin123',
     perfil: 'admin',
-    telefone: '(51) 99999-9999',
+    telefone: '',
     regioes_acesso: ['Brasil'],
     ativo: true,
     data_cadastro: new Date('2024-01-01').toISOString()
   },
   {
     id: 'u1b',
-    nome: 'César Administrador',
-    email: 'cesar@agrotche.com',
+    nome: 'Admin Apoio Demonstração',
+    email: 'admin.apoio@example.com',
     senha: 'admin123',
     perfil: 'admin',
-    telefone: '(51) 99998-9998',
+    telefone: '',
     regioes_acesso: ['Brasil'],
     ativo: true,
     data_cadastro: new Date('2024-01-01').toISOString()
@@ -72,49 +72,49 @@ const users = [
   // COLABORADORES - Mesmas funções do admin, LIMITADO à região
   {
     id: 'u2',
-    nome: 'Carlos Silva',
-    email: 'carlos@agrotche.com',
+    nome: 'Colaborador Campo Goiás',
+    email: 'colaborador.goias@example.com',
     senha: 'colab123',
     perfil: 'colaborador',
     regiao: 'Goiás',
     sub_regioes: ['Goiás 1', 'Rio Verde', 'Jataí'],
-    telefone: '(62) 98888-8888',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-02-15').toISOString()
   },
   {
     id: 'u3',
-    nome: 'Ana Santos',
-    email: 'ana@agrotche.com',
+    nome: 'Colaborador Campo Sul',
+    email: 'colaborador.sul@example.com',
     senha: 'colab123',
     perfil: 'colaborador',
     regiao: 'Sul',
     sub_regioes: ['RS - Norte', 'RS - Centro', 'RS - Sul'],
-    telefone: '(51) 97777-7777',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-03-10').toISOString()
   },
   {
     id: 'u5',
-    nome: 'Marcos Ferreira',
-    email: 'marcos@agrotche.com',
+    nome: 'Colaborador de Campo',
+    email: 'colaborador.campo@example.com',
     senha: 'colab123',
     perfil: 'colaborador',
     regiao: 'Mato Grosso',
     sub_regioes: ['MT - Norte', 'Sorriso', 'Lucas do Rio Verde'],
-    telefone: '(65) 97776-7776',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-04-01').toISOString()
   },
   {
     id: 'u6',
-    nome: 'Patrícia Lima',
-    email: 'patricia@agrotche.com',
+    nome: 'Colaborador Campo Goiás 2',
+    email: 'colaborador.goias2@example.com',
     senha: 'colab123',
     perfil: 'colaborador',
     regiao: 'Goiás',
     sub_regioes: ['Goiás 2', 'Goiânia', 'Anápolis'],
-    telefone: '(62) 97775-7775',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-04-10').toISOString()
   },
@@ -123,78 +123,78 @@ const users = [
   // Um proprietário pode ter VÁRIAS fazendas (relação 1:N via proprietario_id)
   {
     id: 'u7',
-    nome: 'João Silva',
-    email: 'joao.silva@email.com',
+    nome: 'Produtor Demonstração Sul',
+    email: 'produtor.sul@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop1', // proprietário - várias fazendas vinculadas
-    telefone: '(51) 96666-6666',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-04-20').toISOString()
   },
   {
     id: 'u8',
-    nome: 'Maria Silva', // Esposa do João - mesmo proprietário
-    email: 'maria.silva@email.com',
+    nome: 'Responsável Demonstração Sul',
+    email: 'responsavel.sul@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop1', // MESMO proprietário que o João
-    telefone: '(51) 96665-6665',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-04-20').toISOString()
   },
   {
     id: 'u9',
-    nome: 'Roberto Oliveira',
-    email: 'roberto@email.com',
+    nome: 'Produtor Demonstração Goiás',
+    email: 'produtor.goias@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop2',
-    telefone: '(62) 93333-3333',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-03-15').toISOString()
   },
   {
     id: 'u10',
-    nome: 'Fernanda Costa',
-    email: 'fernanda@email.com',
+    nome: 'Produtor Demonstração MT',
+    email: 'produtor.mt@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop3',
-    telefone: '(65) 92222-2222',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-02-01').toISOString()
   },
   {
     id: 'u11',
-    nome: 'Pedro Santos',
-    email: 'pedro.santos@email.com',
+    nome: 'Produtor Demonstração Norte RS',
+    email: 'produtor.norte.rs@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop_pedro',
-    telefone: '(54) 94444-4444',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-06-01').toISOString()
   },
   {
     id: 'u12',
-    nome: 'Maria Pereira',
-    email: 'maria.pereira@email.com',
+    nome: 'Produtor Demonstração Centro RS',
+    email: 'produtor.centro.rs@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop_maria',
-    telefone: '(55) 95555-5555',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-05-10').toISOString()
   },
   {
     id: 'u_sela1',
-    nome: 'Fazenda Sela de Prata I',
-    email: 'seladeprataI@agrotche.com',
+    nome: 'Produtor Demonstração',
+    email: 'produtor.demonstracao@example.com',
     senha: 'prod123',
     perfil: 'produtor',
     produtor_id: 'prop_sela1',
-    telefone: '(66) 99000-0001',
+    telefone: '',
     ativo: true,
     data_cadastro: new Date('2024-05-15').toISOString()
   }
@@ -205,29 +205,29 @@ const users = [
 // Um proprietário pode ter VÁRIAS fazendas (relação 1:N)
 // proprietario_id vincula a fazenda ao dono
 const produtores: any[] = [
-  // ─── Fazendas do proprietário "prop1" (João Silva) ───
+  // ─── Fazendas do titular demonstrativo "prop1" ───
   {
     id: 'p1',
     propriedade_id: 'p1',
     propriedadeId: 'p1',
-    proprietario_id: 'prop1', // João e Maria Silva (mesma família)
+    proprietario_id: 'prop1',
     titular_id: 'prop1',
     titularId: 'prop1',
-    nome: 'João Silva',
-    titular_nome: 'João Silva',
+    nome: 'Produtor Demonstração Sul',
+    titular_nome: 'Produtor Demonstração Sul',
     fazenda: 'Fazenda Boa Vista',
     propriedade_nome: 'Fazenda Boa Vista',
     propriedadeNome: 'Fazenda Boa Vista',
     area_total: 850,
     cultura_atual: 'Soja',
-    telefone: '(51) 96666-6666',
-    email: 'joao.silva@email.com',
-    endereco: 'Estrada Rural, Km 12',
+    telefone: '',
+    email: 'produtor.sul@example.com',
+    endereco: '',
     cidade: 'Cruz Alta',
     estado: 'RS',
     regiao: 'Sul',
     microregiao: 'RS - Norte',
-    cep: '98100-000',
+    cep: '',
     ultima_analise: new Date('2024-10-15').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-04-20').toISOString()
@@ -236,24 +236,24 @@ const produtores: any[] = [
     id: 'p1b',
     propriedade_id: 'p1b',
     propriedadeId: 'p1b',
-    proprietario_id: 'prop1', // Segunda fazenda do João Silva
+    proprietario_id: 'prop1',
     titular_id: 'prop1',
     titularId: 'prop1',
-    nome: 'João Silva',
-    titular_nome: 'João Silva',
+    nome: 'Produtor Demonstração Sul',
+    titular_nome: 'Produtor Demonstração Sul',
     fazenda: 'Fazenda Horizonte',
     propriedade_nome: 'Fazenda Horizonte',
     propriedadeNome: 'Fazenda Horizonte',
     area_total: 420,
     cultura_atual: 'Milho',
-    telefone: '(51) 96666-6666',
-    email: 'joao.silva@email.com',
-    endereco: 'Estrada Rural, Km 20',
+    telefone: '',
+    email: 'produtor.sul@example.com',
+    endereco: '',
     cidade: 'Cruz Alta',
     estado: 'RS',
     regiao: 'Sul',
     microregiao: 'RS - Norte',
-    cep: '98100-000',
+    cep: '',
     ultima_analise: new Date('2024-11-01').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-06-15').toISOString()
@@ -263,24 +263,24 @@ const produtores: any[] = [
     id: 'p2',
     propriedade_id: 'p2',
     propriedadeId: 'p2',
-    proprietario_id: 'prop_maria', // Proprietária: Maria Pereira
+    proprietario_id: 'prop_maria',
     titular_id: 'prop_maria',
     titularId: 'prop_maria',
-    nome: 'Maria Pereira',
-    titular_nome: 'Maria Pereira',
+    nome: 'Produtor Demonstração Centro RS',
+    titular_nome: 'Produtor Demonstração Centro RS',
     fazenda: 'Sítio Esperança',
     propriedade_nome: 'Sítio Esperança',
     propriedadeNome: 'Sítio Esperança',
     area_total: 120,
     cultura_atual: 'Milho',
-    telefone: '(55) 95555-5555',
-    email: 'maria.pereira@email.com',
-    endereco: 'Linha Esperança, s/n',
+    telefone: '',
+    email: 'produtor.centro.rs@example.com',
+    endereco: '',
     cidade: 'Santa Maria',
     estado: 'RS',
     regiao: 'Sul',
     microregiao: 'RS - Centro',
-    cep: '97105-000',
+    cep: '',
     ultima_analise: new Date('2024-09-20').toISOString(),
     status: 'pendente',
     data_cadastro: new Date('2024-05-10').toISOString()
@@ -289,50 +289,50 @@ const produtores: any[] = [
     id: 'p3',
     propriedade_id: 'p3',
     propriedadeId: 'p3',
-    proprietario_id: 'prop_pedro', // Proprietário: Pedro Santos
+    proprietario_id: 'prop_pedro',
     titular_id: 'prop_pedro',
     titularId: 'prop_pedro',
-    nome: 'Pedro Santos',
-    titular_nome: 'Pedro Santos',
+    nome: 'Produtor Demonstração Norte RS',
+    titular_nome: 'Produtor Demonstração Norte RS',
     fazenda: 'Estância Santa Clara',
     propriedade_nome: 'Estância Santa Clara',
     propriedadeNome: 'Estância Santa Clara',
     area_total: 500,
     cultura_atual: 'Trigo',
-    telefone: '(54) 94444-4444',
-    email: 'pedro.santos@email.com',
-    endereco: 'BR-285, Km 45',
+    telefone: '',
+    email: 'produtor.norte.rs@example.com',
+    endereco: '',
     cidade: 'Passo Fundo',
     estado: 'RS',
     regiao: 'Sul',
     microregiao: 'RS - Norte',
-    cep: '99000-000',
+    cep: '',
     status: 'ativo',
     data_cadastro: new Date('2024-06-01').toISOString()
   },
-  // ─── Fazendas do proprietário "prop2" (Roberto Oliveira) ───
+  // ─── Fazendas do titular demonstrativo "prop2" ───
   {
     id: 'p4',
     propriedade_id: 'p4',
     propriedadeId: 'p4',
-    proprietario_id: 'prop2', // Roberto Oliveira
+    proprietario_id: 'prop2',
     titular_id: 'prop2',
     titularId: 'prop2',
-    nome: 'Roberto Oliveira',
-    titular_nome: 'Roberto Oliveira',
+    nome: 'Produtor Demonstração Goiás',
+    titular_nome: 'Produtor Demonstração Goiás',
     fazenda: 'Fazenda Planalto',
     propriedade_nome: 'Fazenda Planalto',
     propriedadeNome: 'Fazenda Planalto',
     area_total: 1200,
     cultura_atual: 'Soja',
-    telefone: '(62) 93333-3333',
-    email: 'roberto.oliveira@email.com',
-    endereco: 'GO-060, Km 120',
+    telefone: '',
+    email: 'produtor.goias@example.com',
+    endereco: '',
     cidade: 'Rio Verde',
     estado: 'GO',
     regiao: 'Goiás',
     microregiao: 'Rio Verde',
-    cep: '75900-000',
+    cep: '',
     ultima_analise: new Date('2024-11-01').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-03-15').toISOString()
@@ -341,51 +341,51 @@ const produtores: any[] = [
     id: 'p4b',
     propriedade_id: 'p4b',
     propriedadeId: 'p4b',
-    proprietario_id: 'prop2', // Segunda fazenda do Roberto
+    proprietario_id: 'prop2',
     titular_id: 'prop2',
     titularId: 'prop2',
-    nome: 'Roberto Oliveira',
-    titular_nome: 'Roberto Oliveira',
+    nome: 'Produtor Demonstração Goiás',
+    titular_nome: 'Produtor Demonstração Goiás',
     fazenda: 'Fazenda Cerrado Alto',
     propriedade_nome: 'Fazenda Cerrado Alto',
     propriedadeNome: 'Fazenda Cerrado Alto',
     area_total: 800,
     cultura_atual: 'Milho',
-    telefone: '(62) 93333-3333',
-    email: 'roberto.oliveira@email.com',
-    endereco: 'GO-060, Km 150',
+    telefone: '',
+    email: 'produtor.goias@example.com',
+    endereco: '',
     cidade: 'Jataí',
     estado: 'GO',
     regiao: 'Goiás',
     microregiao: 'Jataí',
-    cep: '75800-000',
+    cep: '',
     ultima_analise: new Date('2024-10-20').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-05-20').toISOString()
   },
-  // ─── Fazendas do proprietário "prop3" (Fernanda Costa) ───
+  // ─── Fazendas do titular demonstrativo "prop3" ───
   {
     id: 'p5',
     propriedade_id: 'p5',
     propriedadeId: 'p5',
-    proprietario_id: 'prop3', // Fernanda Costa
+    proprietario_id: 'prop3',
     titular_id: 'prop3',
     titularId: 'prop3',
-    nome: 'Fernanda Costa',
-    titular_nome: 'Fernanda Costa',
+    nome: 'Produtor Demonstração MT',
+    titular_nome: 'Produtor Demonstração MT',
     fazenda: 'Agrícola Cerrado Verde',
     propriedade_nome: 'Agrícola Cerrado Verde',
     propriedadeNome: 'Agrícola Cerrado Verde',
     area_total: 2500,
     cultura_atual: 'Algodão',
-    telefone: '(65) 92222-2222',
-    email: 'fernanda.costa@email.com',
-    endereco: 'MT-242, s/n',
+    telefone: '',
+    email: 'produtor.mt@example.com',
+    endereco: '',
     cidade: 'Sorriso',
     estado: 'MT',
     regiao: 'Mato Grosso',
     microregiao: 'Sorriso',
-    cep: '78890-000',
+    cep: '',
     ultima_analise: new Date('2024-10-25').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-02-01').toISOString()
@@ -394,29 +394,29 @@ const produtores: any[] = [
     id: 'p5b',
     propriedade_id: 'p5b',
     propriedadeId: 'p5b',
-    proprietario_id: 'prop3', // Segunda fazenda da Fernanda
+    proprietario_id: 'prop3',
     titular_id: 'prop3',
     titularId: 'prop3',
-    nome: 'Fernanda Costa',
-    titular_nome: 'Fernanda Costa',
+    nome: 'Produtor Demonstração MT',
+    titular_nome: 'Produtor Demonstração MT',
     fazenda: 'Fazenda Ouro Verde',
     propriedade_nome: 'Fazenda Ouro Verde',
     propriedadeNome: 'Fazenda Ouro Verde',
     area_total: 1800,
     cultura_atual: 'Soja',
-    telefone: '(65) 92222-2222',
-    email: 'fernanda.costa@email.com',
-    endereco: 'MT-242, Km 30',
+    telefone: '',
+    email: 'produtor.mt@example.com',
+    endereco: '',
     cidade: 'Lucas do Rio Verde',
     estado: 'MT',
     regiao: 'Mato Grosso',
     microregiao: 'Lucas do Rio Verde',
-    cep: '78455-000',
+    cep: '',
     ultima_analise: new Date('2024-11-10').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-03-01').toISOString()
   },
-  // ─── Fazendas na região de Patrícia Lima (Goiânia/Anápolis) ───
+  // ─── Fazendas demonstrativas em Goiânia/Anápolis ───
   {
     id: 'p6',
     propriedade_id: 'p6',
@@ -424,21 +424,21 @@ const produtores: any[] = [
     proprietario_id: 'prop5',
     titular_id: 'prop5',
     titularId: 'prop5',
-    nome: 'Antônio Ferreira',
-    titular_nome: 'Antônio Ferreira',
+    nome: 'Produtor Demonstração Goiás 2',
+    titular_nome: 'Produtor Demonstração Goiás 2',
     fazenda: 'Fazenda Ouro Branco',
     propriedade_nome: 'Fazenda Ouro Branco',
     propriedadeNome: 'Fazenda Ouro Branco',
     area_total: 600,
     cultura_atual: 'Soja',
-    telefone: '(62) 97777-7777',
-    email: 'antonio.ferreira@email.com',
-    endereco: 'GO-060, Km 45',
+    telefone: '',
+    email: 'produtor.goias2@example.com',
+    endereco: '',
     cidade: 'Goiânia',
     estado: 'GO',
     regiao: 'Goiás',
     microregiao: 'Goiânia',
-    cep: '74000-000',
+    cep: '',
     ultima_analise: new Date('2024-10-20').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-04-01').toISOString()
@@ -450,26 +450,26 @@ const produtores: any[] = [
     proprietario_id: 'prop5',
     titular_id: 'prop5',
     titularId: 'prop5',
-    nome: 'Antônio Ferreira',
-    titular_nome: 'Antônio Ferreira',
+    nome: 'Produtor Demonstração Goiás 2',
+    titular_nome: 'Produtor Demonstração Goiás 2',
     fazenda: 'Fazenda Santa Helena',
     propriedade_nome: 'Fazenda Santa Helena',
     propriedadeNome: 'Fazenda Santa Helena',
     area_total: 480,
     cultura_atual: 'Milho',
-    telefone: '(62) 97777-7777',
-    email: 'antonio.ferreira@email.com',
-    endereco: 'BR-153, Km 80',
+    telefone: '',
+    email: 'produtor.goias2@example.com',
+    endereco: '',
     cidade: 'Anápolis',
     estado: 'GO',
     regiao: 'Goiás',
     microregiao: 'Anápolis',
-    cep: '75000-000',
+    cep: '',
     ultima_analise: new Date('2024-11-05').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2024-05-15').toISOString()
   },
-  // ─── Fazenda Sela de Prata I — dados reais importados de KML ───────────────
+  // ─── Propriedade principal do pacote demonstrativo ─────────────────────────
   {
     id: SELA_DEPRATA_1_PRODUTOR_ID,
     propriedade_id: SELA_DEPRATA_1_PRODUTOR_ID,
@@ -477,21 +477,21 @@ const produtores: any[] = [
     proprietario_id: 'prop_sela1',
     titular_id: 'prop_sela1',
     titularId: 'prop_sela1',
-    nome: 'Fazenda Sela de Prata I',
-    titular_nome: 'Fazenda Sela de Prata I',
+    nome: 'Produtor Demonstração',
+    titular_nome: 'Produtor Demonstração',
     fazenda: 'Fazenda Sela de Prata I',
     propriedade_nome: 'Fazenda Sela de Prata I',
     propriedadeNome: 'Fazenda Sela de Prata I',
     area_total: 6200,
     cultura_atual: 'Soja',
-    telefone: '(66) 99000-0001',
-    email: 'seladeprataI@agrotche.com',
-    endereco: 'Zona Rural, s/n',
+    telefone: '',
+    email: 'produtor.demonstracao@example.com',
+    endereco: '',
     cidade: 'Alta Floresta',
     estado: 'MT',
     regiao: 'Mato Grosso',
     microregiao: 'MT - Norte',
-    cep: '78580-000',
+    cep: '',
     ultima_analise: new Date('2025-06-01').toISOString(),
     status: 'ativo',
     data_cadastro: new Date('2025-01-10').toISOString()
@@ -514,6 +514,7 @@ const usuarioPropriedade: any[] = [
   { usuario_id: 'u2', propriedade_id: 'p4b', tipo_vinculo: 'colaborador_atribuido', principal: false },
   { usuario_id: 'u5', propriedade_id: 'p5', tipo_vinculo: 'colaborador_atribuido', principal: true },
   { usuario_id: 'u5', propriedade_id: 'p5b', tipo_vinculo: 'colaborador_atribuido', principal: false },
+  { usuario_id: 'u5', propriedade_id: SELA_DEPRATA_1_PRODUTOR_ID, tipo_vinculo: 'colaborador_atribuido', principal: false },
   { usuario_id: 'u6', propriedade_id: 'p6', tipo_vinculo: 'colaborador_atribuido', principal: true },
   { usuario_id: 'u6', propriedade_id: 'p6b', tipo_vinculo: 'colaborador_atribuido', principal: false },
 ];
@@ -536,9 +537,35 @@ const usuarioMicroregiao: any[] = [
 // Visitas técnicas
 const visitas: any[] = [
   {
+    id: 'v_sela1_realizada_demo',
+    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    tecnico_responsavel: 'Colaborador de Campo',
+    data_visita: '2026-05-28T14:00:00.000Z',
+    objetivo: 'consultoria',
+    observacoes: 'Visita demonstrativa para conferência do panorama da Propriedade e registro do contexto de campo.',
+    recomendacoes: 'Nenhuma recomendação técnica registrada nesta demonstração.',
+    fotos: [],
+    clima: 'Condições de campo registradas apenas para demonstração.',
+    status: 'realizada'
+  },
+  {
+    id: 'v_sela1_agendada_demo',
+    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    tecnico_responsavel: 'Colaborador de Campo',
+    data_visita: '2026-06-12T14:00:00.000Z',
+    objetivo: 'avaliacao_cultivo',
+    observacoes: 'Visita demonstrativa agendada para continuidade da validação do fluxo de campo.',
+    recomendacoes: '',
+    fotos: [],
+    clima: '',
+    status: 'agendada'
+  },
+  {
     id: 'v1',
     produtor_id: 'p1',
-    tecnico_responsavel: 'Ana Santos',
+    tecnico_responsavel: 'Colaborador Campo Sul',
     data_visita: new Date().toISOString(),
     objetivo: 'consultoria',
     observacoes: 'Boa presença de plantas. Desenvolvimento adequado da cultura.',
@@ -551,7 +578,7 @@ const visitas: any[] = [
   {
     id: 'v2',
     produtor_id: 'p2',
-    tecnico_responsavel: 'Ana Santos',
+    tecnico_responsavel: 'Colaborador Campo Sul',
     data_visita: new Date(Date.now() - 86400000 * 5).toISOString(),
     objetivo: 'coleta_solo',
     observacoes: 'Coleta de amostras em 8 pontos diferentes da propriedade.',
@@ -564,7 +591,7 @@ const visitas: any[] = [
   {
     id: 'v3',
     produtor_id: 'p1',
-    tecnico_responsavel: 'Ana Santos',
+    tecnico_responsavel: 'Colaborador Campo Sul',
     data_visita: new Date(Date.now() + 86400000 * 7).toISOString(),
     objetivo: 'avaliacao_cultivo',
     observacoes: '',
@@ -576,7 +603,7 @@ const visitas: any[] = [
   {
     id: 'v4',
     produtor_id: 'p3',
-    tecnico_responsavel: 'Ana Santos',
+    tecnico_responsavel: 'Colaborador Campo Sul',
     data_visita: new Date(Date.now() - 86400000 * 15).toISOString(),
     objetivo: 'entrega_material',
     observacoes: 'Entrega de relatório de análise de solo e plano de adubação.',
@@ -590,7 +617,7 @@ const visitas: any[] = [
   {
     id: 'v5',
     produtor_id: 'p4', // Fazenda Planalto - Rio Verde (Carlos)
-    tecnico_responsavel: 'Carlos Silva',
+    tecnico_responsavel: 'Colaborador Campo Goiás',
     data_visita: new Date(Date.now() - 86400000 * 3).toISOString(),
     objetivo: 'consultoria',
     observacoes: 'Avaliação geral da lavoura de soja. Desenvolvimento dentro do esperado para o estágio V6.',
@@ -603,7 +630,7 @@ const visitas: any[] = [
   {
     id: 'v6',
     produtor_id: 'p4b', // Fazenda Cerrado Alto - Jataí (Carlos)
-    tecnico_responsavel: 'Carlos Silva',
+    tecnico_responsavel: 'Colaborador Campo Goiás',
     data_visita: new Date(Date.now() + 86400000 * 5).toISOString(),
     objetivo: 'coleta_solo',
     observacoes: '',
@@ -615,7 +642,7 @@ const visitas: any[] = [
   {
     id: 'v7',
     produtor_id: 'p4', // Fazenda Planalto - Rio Verde (Carlos)
-    tecnico_responsavel: 'Carlos Silva',
+    tecnico_responsavel: 'Colaborador Campo Goiás',
     data_visita: new Date(Date.now() - 86400000 * 20).toISOString(),
     objetivo: 'avaliacao_cultivo',
     observacoes: 'Primeira visita da safra. Lavoura recém-plantada.',
@@ -628,7 +655,7 @@ const visitas: any[] = [
   {
     id: 'v8',
     produtor_id: 'p5', // Agrícola Cerrado Verde - Sorriso (Marcos)
-    tecnico_responsavel: 'Marcos Ferreira',
+    tecnico_responsavel: 'Colaborador de Campo',
     data_visita: new Date(Date.now() - 86400000 * 2).toISOString(),
     objetivo: 'consultoria',
     observacoes: 'Avaliação de algodão em estágio avançado. Excelente desenvolvimento.',
@@ -641,7 +668,7 @@ const visitas: any[] = [
   {
     id: 'v9',
     produtor_id: 'p5b', // Fazenda Ouro Verde - Lucas do Rio Verde (Marcos)
-    tecnico_responsavel: 'Marcos Ferreira',
+    tecnico_responsavel: 'Colaborador de Campo',
     data_visita: new Date(Date.now() + 86400000 * 10).toISOString(),
     objetivo: 'coleta_solo',
     observacoes: '',
@@ -650,11 +677,11 @@ const visitas: any[] = [
     clima: '',
     status: 'agendada'
   },
-  // ─── Visitas em Goiás - Patrícia Lima (Goiânia/Anápolis) ───
+  // ─── Visitas demonstrativas em Goiás (Goiânia/Anápolis) ───
   {
     id: 'v10',
     produtor_id: 'p6', // Fazenda Ouro Branco - Goiânia
-    tecnico_responsavel: 'Patrícia Lima',
+    tecnico_responsavel: 'Colaborador Campo Goiás 2',
     data_visita: new Date(Date.now() - 86400000 * 4).toISOString(),
     objetivo: 'consultoria',
     observacoes: 'Avaliação de soja em estágio R1. Bom desenvolvimento vegetativo.',
@@ -667,7 +694,7 @@ const visitas: any[] = [
   {
     id: 'v11',
     produtor_id: 'p6b', // Fazenda Santa Helena - Anápolis
-    tecnico_responsavel: 'Patrícia Lima',
+    tecnico_responsavel: 'Colaborador Campo Goiás 2',
     data_visita: new Date(Date.now() + 86400000 * 3).toISOString(),
     objetivo: 'coleta_solo',
     observacoes: '',
@@ -679,7 +706,7 @@ const visitas: any[] = [
   {
     id: 'v12',
     produtor_id: 'p6', // Fazenda Ouro Branco - Goiânia
-    tecnico_responsavel: 'Patrícia Lima',
+    tecnico_responsavel: 'Colaborador Campo Goiás 2',
     data_visita: new Date(Date.now() - 86400000 * 18).toISOString(),
     objetivo: 'avaliacao_cultivo',
     observacoes: 'Primeira vistoria da safra. Plantio recém-emergido com stand uniforme.',
@@ -692,9 +719,25 @@ const visitas: any[] = [
 
 const cadernos: any[] = [
   {
+    id: 'c_sela1_vistoria_demo',
+    fazenda_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    produtor_id: SELA_DEPRATA_1_PRODUTOR_ID,
+    colaborador_responsavel: 'Colaborador de Campo',
+    data_atividade: '2026-05-29T14:30:00.000Z',
+    tipo_atividade: 'vistoria',
+    talhao: 'T01 - 230',
+    produtos_utilizados: [],
+    dosagem: '',
+    area_aplicada: null,
+    condicoes_clima: 'Condição registrada apenas para demonstração.',
+    observacoes: 'Registro demonstrativo de vistoria geral, sem recomendação técnica prescritiva.',
+    visivel_para_produtor: true,
+    fotos: []
+  },
+  {
     id: 'c1',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Ana Santos',
+    colaborador_responsavel: 'Colaborador Campo Sul',
     data_atividade: new Date().toISOString(),
     tipo_atividade: 'adubacao',
     talhao: 'Talhão A',
@@ -709,7 +752,7 @@ const cadernos: any[] = [
   {
     id: 'c2',
     produtor_id: 'p2',
-    colaborador_responsavel: 'Ana Santos',
+    colaborador_responsavel: 'Colaborador Campo Sul',
     data_atividade: new Date(Date.now() - 86400000 * 2).toISOString(), // 2 dias atrás
     tipo_atividade: 'plantio',
     talhao: 'Talhão B',
@@ -724,7 +767,7 @@ const cadernos: any[] = [
   {
     id: 'c3',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Ana Santos',
+    colaborador_responsavel: 'Colaborador Campo Sul',
     data_atividade: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 dias atrás
     tipo_atividade: 'vistoria',
     talhao: 'Talhão C',
@@ -738,7 +781,7 @@ const cadernos: any[] = [
   {
     id: 'c4',
     produtor_id: 'p2',
-    colaborador_responsavel: 'Ana Santos',
+    colaborador_responsavel: 'Colaborador Campo Sul',
     data_atividade: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 dias atrás
     tipo_atividade: 'analise_solo',
     talhao: 'Talhão A',
@@ -752,7 +795,7 @@ const cadernos: any[] = [
   {
     id: 'c5',
     produtor_id: 'p1',
-    colaborador_responsavel: 'Ana Santos',
+    colaborador_responsavel: 'Colaborador Campo Sul',
     data_atividade: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 dias atrás
     tipo_atividade: 'aplicacao',
     talhao: 'Talhão D',
@@ -767,7 +810,7 @@ const cadernos: any[] = [
   {
     id: 'c6',
     produtor_id: 'p3',
-    colaborador_responsavel: 'Ana Santos',
+    colaborador_responsavel: 'Colaborador Campo Sul',
     data_atividade: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 dias atrás
     tipo_atividade: 'colheita',
     talhao: 'Talhão Principal',
@@ -782,7 +825,7 @@ const cadernos: any[] = [
   {
     id: 'c7',
     produtor_id: 'p4', // Fazenda Planalto - Rio Verde
-    colaborador_responsavel: 'Carlos Silva',
+    colaborador_responsavel: 'Colaborador Campo Goiás',
     data_atividade: new Date(Date.now() - 86400000 * 1).toISOString(),
     tipo_atividade: 'adubacao',
     talhao: 'Pivô Central',
@@ -797,7 +840,7 @@ const cadernos: any[] = [
   {
     id: 'c8',
     produtor_id: 'p4b', // Fazenda Cerrado Alto - Jataí
-    colaborador_responsavel: 'Carlos Silva',
+    colaborador_responsavel: 'Colaborador Campo Goiás',
     data_atividade: new Date(Date.now() - 86400000 * 4).toISOString(),
     tipo_atividade: 'aplicacao',
     talhao: 'Área 2',
@@ -813,7 +856,7 @@ const cadernos: any[] = [
   {
     id: 'c9',
     produtor_id: 'p5', // Agrícola Cerrado Verde - Sorriso
-    colaborador_responsavel: 'Marcos Ferreira',
+    colaborador_responsavel: 'Colaborador de Campo',
     data_atividade: new Date(Date.now() - 86400000 * 2).toISOString(),
     tipo_atividade: 'vistoria',
     talhao: 'Talhão B3',
@@ -827,7 +870,7 @@ const cadernos: any[] = [
   {
     id: 'c10',
     produtor_id: 'p5b', // Fazenda Ouro Verde - Lucas do Rio Verde
-    colaborador_responsavel: 'Marcos Ferreira',
+    colaborador_responsavel: 'Colaborador de Campo',
     data_atividade: new Date(Date.now() - 86400000 * 6).toISOString(),
     tipo_atividade: 'plantio',
     talhao: 'Área Norte',
@@ -839,11 +882,11 @@ const cadernos: any[] = [
     visivel_para_produtor: true,
     fotos: ['https://picsum.photos/400/300?random=211']
   },
-  // ─── Cadernos em Goiás - Patrícia Lima (Goiânia/Anápolis) ───
+  // ─── Cadernos demonstrativos em Goiás (Goiânia/Anápolis) ───
   {
     id: 'c11',
     produtor_id: 'p6', // Fazenda Ouro Branco - Goiânia
-    colaborador_responsavel: 'Patrícia Lima',
+    colaborador_responsavel: 'Colaborador Campo Goiás 2',
     data_atividade: new Date(Date.now() - 86400000 * 3).toISOString(),
     tipo_atividade: 'adubacao',
     talhao: 'Talhão Sul',
@@ -858,7 +901,7 @@ const cadernos: any[] = [
   {
     id: 'c12',
     produtor_id: 'p6b', // Fazenda Santa Helena - Anápolis
-    colaborador_responsavel: 'Patrícia Lima',
+    colaborador_responsavel: 'Colaborador Campo Goiás 2',
     data_atividade: new Date(Date.now() - 86400000 * 7).toISOString(),
     tipo_atividade: 'vistoria',
     talhao: 'Área Central',
@@ -1134,7 +1177,7 @@ const mapas: any[] = [
     coordenadas: { latitude: -13.0497, longitude: -55.9064 },
     observacoes: 'Recomendação de calcário e gesso - Lucas do Rio Verde.'
   },
-  // ─── Mapas Goiás - Patrícia Lima (Goiânia/Anápolis) ───
+  // ─── Mapas demonstrativos em Goiás (Goiânia/Anápolis) ───
   {
     id: 'm17',
     titulo: 'NDVI - Fazenda Ouro Branco',

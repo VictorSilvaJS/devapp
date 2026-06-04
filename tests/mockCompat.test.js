@@ -1,5 +1,12 @@
 const assert = require('node:assert/strict');
-const { Mapa, Visita, CadernoCampo, LimiteArea } = require('../.tmp-domain-compat/src/api/mock');
+const {
+  User,
+  Produtor,
+  Mapa,
+  Visita,
+  CadernoCampo,
+  LimiteArea,
+} = require('../.tmp-domain-compat/src/api/mock');
 const { avaliarDownloadMapa } = require('../.tmp-domain-compat/src/utils/mapaDownloadCompat');
 
 let failed = 0;
@@ -16,6 +23,73 @@ const test = async (name, fn) => {
 };
 
 const run = async () => {
+  await test('mock 16B.1 alinha personas e Propriedade principal sem alterar contratos', async () => {
+    const admin = await User.get('u1');
+    const colaborador = await User.get('u5');
+    const produtor = await User.get('u_sela1');
+    const propriedade = await Produtor.get('p_sela1');
+    const usuarios = await User.list();
+    const propriedades = await Produtor.list();
+
+    assert.equal(admin.nome, 'Admin Demonstração');
+    assert.equal(admin.email, 'admin.demonstracao@example.com');
+    assert.equal(admin.telefone, '');
+
+    assert.equal(colaborador.nome, 'Colaborador de Campo');
+    assert.equal(colaborador.email, 'colaborador.campo@example.com');
+    assert.ok(colaborador.sub_regioes.includes('MT - Norte'));
+    assert.ok(colaborador.vinculos_propriedades.some((item) => item.propriedade_id === 'p_sela1'));
+
+    assert.equal(produtor.nome, 'Produtor Demonstração');
+    assert.equal(produtor.email, 'produtor.demonstracao@example.com');
+    assert.equal(produtor.produtor_id, 'prop_sela1');
+    assert.ok(produtor.vinculos_propriedades.some((item) => item.propriedade_id === 'p_sela1'));
+
+    assert.equal(propriedade.fazenda_id, 'p_sela1');
+    assert.equal(propriedade.produtor_id, 'prop_sela1');
+    assert.equal(propriedade.produtor_nome, 'Produtor Demonstração');
+    assert.equal(propriedade.fazenda_nome, 'Fazenda Sela de Prata I');
+    assert.equal(propriedade.area_total, 6200);
+    assert.equal(propriedade.telefone, '');
+    assert.equal(propriedade.endereco, '');
+    assert.equal(propriedade.cep, '');
+
+    assert.ok(usuarios.every((item) => item.email.endsWith('@example.com') && item.telefone === ''));
+    assert.ok(propriedades.every((item) => (
+      item.telefone === ''
+      && item.endereco === ''
+      && item.cep === ''
+    )));
+  });
+
+  await test('mock 16B.1 entrega visita e caderno demonstrativos fixos para p_sela1', async () => {
+    const visitas = await Visita.filter({ fazenda_id: 'p_sela1' });
+    const cadernos = await CadernoCampo.filter({ fazenda_id: 'p_sela1' });
+    const mapas = await Mapa.filter({ fazenda_id: 'p_sela1' });
+
+    assert.ok(visitas.some((item) => (
+      item.id === 'v_sela1_realizada_demo'
+      && item.status === 'realizada'
+      && item.data_visita === '2026-05-28T14:00:00.000Z'
+    )));
+    assert.ok(visitas.some((item) => (
+      item.id === 'v_sela1_agendada_demo'
+      && item.status === 'agendada'
+      && item.data_visita === '2026-06-12T14:00:00.000Z'
+    )));
+    assert.ok(visitas.every((item) => item.fazenda_id === 'p_sela1' && item.produtor_id === 'p_sela1'));
+    assert.ok(visitas.every((item) => item.fotos.length === 0));
+
+    assert.ok(cadernos.some((item) => (
+      item.id === 'c_sela1_vistoria_demo'
+      && item.data_atividade === '2026-05-29T14:30:00.000Z'
+      && item.talhao === 'T01 - 230'
+      && item.visivel_para_produtor === true
+    )));
+    assert.ok(cadernos.every((item) => item.fotos.length === 0));
+    assert.ok(mapas.length >= 5);
+  });
+
   await test('Mapa.get expõe leitura compatível com fazenda_id e alias de download', async () => {
     const mapa = await Mapa.get('m1');
 

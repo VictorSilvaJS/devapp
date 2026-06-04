@@ -371,11 +371,32 @@ Principais achados da abertura:
 - nomes, contatos, enderecos, credenciais e fotos externas do mock precisam de
   minimizacao para reduzir risco de LGPD/confusao.
 
-Esta abertura nao altera comportamento funcional, nao remove
-`fazenda_id`/`fazendaId`, nao migra contratos, nao implementa backend, login
-real, RBAC real, upload remoto ou sincronizacao.
+Atualizacao do Bloco 16B.1 em 2026-06-04:
 
-Validacoes executadas nesta abertura:
+- `authMock` e `api/mock` agora alinham as personas principais `Admin
+  Demonstracao`, `Colaborador de Campo` e `Produtor Demonstracao`;
+- o nome da Propriedade Sela de Prata I foi separado do Usuario produtor e do
+  Titular demonstrativo;
+- `u_sela1` permanece vinculado ao titular `prop_sela1` e a Propriedade
+  `p_sela1`;
+- `u5` permanece com escopo efetivo `Mato Grosso` / `MT - Norte` e recebeu
+  vinculo visual demonstrativo com `p_sela1`;
+- `p_sela1` agora possui uma visita realizada, uma visita agendada e um
+  caderno visivel ao Produtor, com datas fixas, textos neutros e sem fotos
+  externas;
+- nomes e contatos dos cadastros seed foram minimizados com personas, e-mails
+  `example.com` e telefone/endereco/CEP vazios;
+- `area_total: 6200` foi preservada; a relacao com os `1888,6 ha` mapeados
+  continua pendente;
+- mapas, talhoes, cinco PNGs, rotas, payloads, contratos, `fazenda_id` e
+  fallbacks das Fases 14/15 foram preservados.
+- os rotulos hardcoded do acesso rapido em `LoginScreen` ainda mostram nomes
+  legados, pois telas ficaram fora do recorte da 16B.1.
+
+O Bloco 16B.1 nao implementa backend, login real, RBAC real, persistencia
+local, upload remoto ou sincronizacao.
+
+Validacoes executadas na abertura e reexecutadas para o Bloco 16B.1:
 
 - `npm run typecheck` passou
 - `npm run test:domain-compat` passou

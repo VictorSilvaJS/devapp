@@ -138,7 +138,7 @@ const run = async () => {
   });
 
   await test('diagnostico: authMock alimenta colaborador com sub_regioes efetivas', () => {
-    const carlos = authUsers.find((user) => user.id === 'u2');
+    const colaboradorGoias = authUsers.find((user) => user.id === 'u2');
     const fazendasGoias = [
       {
         id: 'faz_rio_verde',
@@ -160,11 +160,31 @@ const run = async () => {
       },
     ];
 
-    assert.ok(carlos);
-    assert.ok(carlos.sub_regioes.includes('Rio Verde'));
-    assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasGoias, carlos)), [
+    assert.ok(colaboradorGoias);
+    assert.ok(colaboradorGoias.sub_regioes.includes('Rio Verde'));
+    assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasGoias, colaboradorGoias)), [
       'faz_rio_verde',
     ]);
+  });
+
+  await test('diagnostico 16B.1: authMock alinha as tres personas principais demonstrativas', () => {
+    const admin = authUsers.find((user) => user.id === 'u1');
+    const colaborador = authUsers.find((user) => user.id === 'u5');
+    const produtor = authUsers.find((user) => user.id === 'u_sela1');
+
+    assert.equal(admin.full_name, 'Admin Demonstração');
+    assert.equal(admin.email, 'admin.demonstracao@example.com');
+    assert.equal(admin.perfil, 'admin');
+
+    assert.equal(colaborador.full_name, 'Colaborador de Campo');
+    assert.equal(colaborador.email, 'colaborador.campo@example.com');
+    assert.equal(colaborador.perfil, 'colaborador');
+    assert.ok(colaborador.sub_regioes.includes('MT - Norte'));
+
+    assert.equal(produtor.full_name, 'Produtor Demonstração');
+    assert.equal(produtor.email, 'produtor.demonstracao@example.com');
+    assert.equal(produtor.perfil, 'produtor');
+    assert.equal(produtor.produtor_id, 'prop_sela1');
   });
 
   await test('diagnostico: colaborador nao usa propriedades_atribuidas como regra efetiva', () => {

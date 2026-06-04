@@ -1,11 +1,45 @@
 # Fase 16B - Revisao De Cadastros E Mock Realista Para APK De Campo
 
-Status em 2026-06-04: fase iniciada com diagnostico documental dos formularios,
-dos dados demonstrativos e da preparacao minima para persistencia local.
+Status em 2026-06-04: diagnostico documental concluido e Bloco 16B.1
+implementado no seed/mock principal.
 
-Esta abertura nao altera telas, mocks, contratos, rotas, permissoes ou
-persistencia. A implementacao deve ocorrer em blocos pequenos, preservando
+A 16B.1 altera somente seed/mock demonstrativo, testes e documentacao. Nao
+altera telas, contratos, rotas, permissoes ou persistencia e preserva
 `fazenda_id`/`fazendaId` e o comportamento validado na Fase 16A.
+
+## Entrega Do Bloco 16B.1
+
+Personas principais alinhadas entre `src/auth/authMock.ts` e `src/api/mock.ts`:
+
+| Perfil | ID | Persona | E-mail demonstrativo | Contexto |
+|---|---|---|---|---|
+| Admin | `u1` | Admin Demonstracao | `admin.demonstracao@example.com` | Brasil |
+| Colaborador | `u5` | Colaborador de Campo | `colaborador.campo@example.com` | Mato Grosso / `MT - Norte` |
+| Produtor | `u_sela1` | Produtor Demonstracao | `produtor.demonstracao@example.com` | Titular `prop_sela1`, vinculado a `p_sela1` |
+
+O pacote principal da Sela de Prata I agora possui:
+
+- Propriedade `Fazenda Sela de Prata I`, separada da persona
+  `Produtor Demonstracao`;
+- uma visita realizada em `2026-05-28`, sem foto externa e sem recomendacao
+  prescritiva;
+- uma visita agendada em `2026-06-12`, com texto demonstrativo neutro;
+- um caderno visivel ao Produtor em `2026-05-29`, vinculado ao talhao
+  `T01 - 230`;
+- os mapas, talhoes, cinco PNGs e `fazenda_id: p_sela1` existentes preservados.
+
+Dados pessoais minimizados no cadastro mock:
+
+- nomes de pessoas substituidos por personas demonstrativas;
+- e-mails substituidos pelo dominio reservado `example.com`;
+- telefones, enderecos e CEPs esvaziados;
+- nenhuma foto externa adicionada ao fluxo principal de `p_sela1`.
+
+Continuam fora deste bloco: telas, login/RBAC real, persistencia local,
+upload/storage, simplificacao de MapasScreen e alteracao da area cadastrada.
+Como a 16B.1 nao altera telas, os rotulos hardcoded do acesso rapido em
+`LoginScreen` ainda exibem nomes legados; as credenciais e os usuarios
+autenticados, porem, usam as personas novas.
 
 ## Objetivo
 
@@ -69,7 +103,7 @@ O nucleo dos formularios e utilizavel, mas o pacote demonstrativo ainda nao
 esta coerente o suficiente para ser apresentado como uma historia unica de
 campo.
 
-Principais achados:
+Principais achados da abertura, antes da implementacao da 16B.1:
 
 1. Nova Propriedade possui um conjunto de campos adequado ao contexto rural,
    mas ainda permite criar um novo Titular minimo dentro do cadastro. Isso
@@ -300,27 +334,29 @@ Simplificacao recomendada:
 |---|---|---|
 | Identificador | `p_sela1` em mapa, limites e anexos | Coerente; preservar `fazenda_id` |
 | Nome da Propriedade | `Fazenda Sela de Prata I` | Coerente se o uso estiver autorizado |
-| Usuario produtor | Nome igual ao da Propriedade | Inadequado para explicar Usuario/Produtor |
-| Titular | Nome igual ao da Propriedade | Ambiguo; precisa de persona ficticia ou dado autorizado |
+| Usuario produtor | `Produtor Demonstracao` | Separado do nome da Propriedade na 16B.1 |
+| Titular | `Produtor Demonstracao` | Persona demonstrativa vinculada a `prop_sela1` |
 | Area | `6200 ha` no cadastro | Nao confirmada contra os `1888,6 ha` mapeados |
 | Demarcacao | 15 talhoes e 37 poligonos | Coerente para amostra mock aprovada |
 | Anexos | Cinco PNGs de fertilidade, profundidade `10-20 cm` | Bom conjunto de consulta demonstrativa |
-| Visitas | Nenhuma vinculada a `p_sela1` | Nao atende a historia principal do teste |
-| Caderno | Nenhum vinculado a `p_sela1` | Nao atende a historia principal do teste |
-| Colaborador | Acesso por `MT - Norte` via usuario mock | Tecnicamente coerente, mas deve ser explicado como escopo regional |
-| Localizacao | Municipio, UF, endereco e coordenadas reais/parciais | Exige autorizacao e minimizacao |
+| Visitas | Uma realizada e uma agendada em `p_sela1` | Datas fixas, textos neutros e sem fotos externas |
+| Caderno | Uma vistoria visivel ao Produtor em `p_sela1` | Usa o talhao `T01 - 230` e texto neutro |
+| Colaborador | Acesso por `MT - Norte` e vinculo visual com `p_sela1` | Escopo regional continua sendo a regra efetiva |
+| Localizacao | Municipio/UF e coordenadas preservados; endereco e CEP vazios | Autorizacao da localizacao e dos limites continua pendente |
 
 Decisao segura nesta abertura:
 
 - nao alterar `6200 ha` para `1888,6 ha` sem confirmar se o primeiro valor e
   area total e o segundo e area mapeada;
 - nao inserir nome de Titular real sem autorizacao;
-- registrar a falta de visitas/caderno como prioridade de mock demonstrativo.
+- preservar a visita e o caderno demonstrativos adicionados na 16B.1.
 
 ### Usuarios Mockados
 
-O mock possui cobertura funcional suficiente, mas excesso de personas e dados
-com aparencia real para uma demonstracao de campo.
+O mock possui cobertura funcional suficiente. Na 16B.1, os nomes e contatos
+visiveis dos cadastros seed foram substituidos por personas e dados
+demonstrativos; os registros secundarios legados ainda exigem revisao futura
+de textos e fotos externas.
 
 Pacote minimo recomendado:
 
@@ -348,9 +384,8 @@ Os vinculos estao tecnicamente claros no codigo:
 - Colaborador de Mato Grosso acessa `p_sela1` pelo escopo `MT - Norte`;
 - `propriedades_atribuidas` continua visual/preparatorio.
 
-O risco esta na apresentacao:
+Riscos remanescentes de apresentacao:
 
-- Usuario produtor e Titular usam nome de Propriedade;
 - propriedade atribuida pode parecer permissao real;
 - cadastro administrativo e login demonstrativo usam fontes separadas.
 
@@ -359,7 +394,7 @@ O risco esta na apresentacao:
 Os exemplos existentes sao plausiveis como dados genericos, mas nao formam uma
 historia coerente com a Propriedade principal de teste.
 
-Problemas:
+Problemas identificados antes da 16B.1:
 
 - nenhuma visita ou caderno pertence a `p_sela1`;
 - talhoes genericos dos registros nao correspondem aos codigos reais da Sela
@@ -368,6 +403,10 @@ Problemas:
 - fotos em `picsum.photos` dependem de internet e nao representam evidencia de
   campo autorizada;
 - textos agronomicos podem ser interpretados como recomendacao real.
+
+O fluxo principal de `p_sela1` foi corrigido na 16B.1. Os itens acima ainda se
+aplicam aos registros secundarios legados e nao devem ser usados como historia
+principal da demonstracao.
 
 Pacote recomendado para `p_sela1`, sempre identificado como demonstrativo:
 
@@ -456,6 +495,8 @@ Devem permanecer fora do APK mockado:
 ## Ordem Segura De Implementacao
 
 ### Bloco 16B.1 - Alinhar O Pacote Demonstrativo Principal
+
+Status em 2026-06-04: implementado no seed/mock, com cobertura automatizada.
 
 - confirmar autorizacao e semantica da Sela de Prata I;
 - definir persona Produtor/Titular demonstrativa separada da Propriedade;
