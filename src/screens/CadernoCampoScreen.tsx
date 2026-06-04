@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import EmptyState from '../components/EmptyState';
+import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import { CadernoCampo, Produtor } from '../api/mock';
@@ -275,14 +276,12 @@ export default function CadernoCampoScreen() {
       </ScrollView>
 
       {podeIncluirCaderno(user) && (
-        <TouchableOpacity
-          style={styles.fab}
+        <CreateActionButton
+          label="Novo Registro"
+          icon="add-outline"
           onPress={() => navigation.navigate('NovoCaderno')}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="add" size={24} color={colors.card} />
-          <Text style={styles.fabText}>Novo</Text>
-        </TouchableOpacity>
+          accessibilityLabel="Cadastrar novo registro do caderno"
+        />
       )}
     </View>
   );
@@ -458,22 +457,4 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.screen * 3,
     paddingHorizontal: spacing.screen * 2,
   },
-  fab: {
-    position: 'absolute',
-    right: spacing.screen,
-    bottom: spacing.screen + 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.primary,
-    borderRadius: 28,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    ...shadows.md
-  },
-  fabText: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-    color: colors.card
-  }
 });

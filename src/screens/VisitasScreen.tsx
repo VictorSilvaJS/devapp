@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import EmptyState from '../components/EmptyState';
+import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import InfoBox from '../components/InfoBox';
 import SearchBar from '../components/SearchBar';
@@ -541,28 +542,13 @@ export default function VisitasScreen() {
         )}
       </ScrollView>
 
-      {/* Botão FAB - Nova Visita */}
       {podeCriarVisita(user) && (
-        <TouchableOpacity
-          style={styles.fab}
+        <CreateActionButton
+          label="Nova Visita"
+          icon="add-outline"
           onPress={() => navigation.navigate('NovaVisita')}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={[colors.primary, colors.primaryDark, colors.fabDark]}
-            style={styles.fabGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.fabContent}>
-              <View style={styles.fabIconContainer}>
-                <Ionicons name="add" size={26} color={colors.white} />
-              </View>
-              <Text style={styles.fabText}>Nova Visita</Text>
-            </View>
-          </LinearGradient>
-          <View style={styles.fabPulse} />
-        </TouchableOpacity>
+          accessibilityLabel="Cadastrar nova visita"
+        />
       )}
 
       {/* Modal de Filtros */}
@@ -943,53 +929,6 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     maxWidth: 340,
   },
-  fab: {
-    position: 'absolute',
-    right: spacing.screen,
-    bottom: spacing.screen + 20,
-    borderRadius: 32,
-    overflow: 'hidden',
-    shadowColor: colors.fabShadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  fabGradient: {
-    borderRadius: 32,
-    paddingHorizontal: spacing.lg + 4,
-    paddingVertical: spacing.md + 2,
-  },
-  fabContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-  },
-  fabIconContainer: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabText: {
-    fontSize: typography.fontBody + 2,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  fabPulse: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 32,
-    backgroundColor: 'transparent',
-  },
-  
   // Top Bar Styles
   topBar: {
     flexDirection: 'row',

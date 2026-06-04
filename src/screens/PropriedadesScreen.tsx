@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager, RefreshControl, Modal, Pressable, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyState from '../components/EmptyState';
+import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import ProdutorCard from '../components/ProdutorCard';
 import StatCard from '../components/StatCard';
@@ -375,28 +376,13 @@ export default function PropriedadesScreen() {
         )}
       </ScrollView>
 
-      {/* FAB - Floating Action Button Expandido */}
       {podeCriarProdutor(user) && (
-        <TouchableOpacity 
-          style={styles.fab}
+        <CreateActionButton
+          label="Nova Propriedade"
+          icon="add-outline"
           onPress={() => navigation.navigate('NovaPropriedade')}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={[colors.primary, colors.primaryDark, colors.fabDark]}
-            style={styles.fabGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.fabContent}>
-              <View style={styles.fabIconContainer}>
-                <Ionicons name="add" size={26} color={colors.white} />
-              </View>
-              <Text style={styles.fabText}>Nova Propriedade</Text>
-            </View>
-          </LinearGradient>
-          <View style={styles.fabPulse} />
-        </TouchableOpacity>
+          accessibilityLabel="Cadastrar nova propriedade"
+        />
       )}
 
       {/* Bottom Sheet de Filtros */}
@@ -706,54 +692,6 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 2,
     textAlign: 'center',
-  },
-
-  // FAB - Floating Action Button Expandido
-  fab: {
-    position: 'absolute',
-    right: spacing.screen,
-    bottom: spacing.screen + 20,
-    borderRadius: 32,
-    overflow: 'hidden',
-    shadowColor: colors.fabShadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  fabGradient: {
-    borderRadius: 32,
-    paddingHorizontal: spacing.lg + 4,
-    paddingVertical: spacing.md + 2,
-  },
-  fabContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-  },
-  fabIconContainer: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabText: {
-    fontSize: typography.fontBody + 2,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  fabPulse: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 32,
-    backgroundColor: 'transparent',
   },
 
   // Bottom Sheet

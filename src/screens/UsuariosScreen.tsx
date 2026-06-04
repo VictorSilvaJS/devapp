@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import EmptyState from '../components/EmptyState';
+import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import SegmentedChips from '../components/SegmentedChips';
@@ -202,16 +203,12 @@ export default function UsuariosScreen() {
         )}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.fab}
+      <CreateActionButton
+        label="Novo Usuário"
+        icon="person-add-outline"
         onPress={() => navigation.navigate('NovoUsuario')}
-        activeOpacity={0.85}
-      >
-        <LinearGradient colors={[colors.primary, colors.primaryDark]} style={styles.fabGradient}>
-          <Ionicons name="person-add-outline" size={22} color={colors.white} />
-          <Text style={styles.fabText}>Novo Usuário</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+        accessibilityLabel="Cadastrar novo usuário"
+      />
     </View>
   );
 }
@@ -326,26 +323,6 @@ const styles = StyleSheet.create({
   emptyState: {
     paddingVertical: spacing.xl * 3,
     paddingHorizontal: spacing.lg,
-  },
-  fab: {
-    position: 'absolute',
-    right: spacing.screen,
-    bottom: spacing.screen + 20,
-    borderRadius: 28,
-    overflow: 'hidden',
-    ...shadows.lg,
-  },
-  fabGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md + 2,
-    paddingHorizontal: spacing.lg,
-  },
-  fabText: {
-    color: colors.white,
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
   },
   blockedContainer: {
     flex: 1,
