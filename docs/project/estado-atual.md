@@ -441,8 +441,30 @@ Atualizacao do Bloco 16B.3 em 2026-06-04:
 O Bloco 16B.3 nao altera `src/api/mock.ts`, `mockLocalPersistence.ts`,
 `FazendaMapaScreen`, backend, RBAC, rotas, pipeline ou arquivos persistidos.
 
+Atualizacao do Bloco 16B.4 em 2026-06-04:
+
+- Nova/Editar Propriedade informam que o cadastro fica salvo localmente no
+  aparelho e nao possui backend ou sincronizacao;
+- a area aparece como `Area total informada`, sem afirmar que corresponde a
+  area mapeada;
+- Titular existente e o caminho principal de Nova Propriedade; Novo Titular
+  permanece como alternativa demonstrativa sem Usuario/login real;
+- cidade, UF e cultura sao identificadas como opcionais;
+- Editar Propriedade preserva e nao libera troca de Titular, Regiao ou
+  Microregiao;
+- Novo Usuario apresenta Produtor, Colaborador e Administrador como perfis
+  demonstrativos e informa que o cadastro nao cria login, autenticacao ou
+  RBAC real;
+- telefone e documento permanecem opcionais e recebem orientacao de
+  minimizacao de dados;
+- Usuario Detail nao destaca telefone/documento vazios e reforca que os
+  vinculos sao demonstrativos.
+
+O Bloco 16B.4 nao altera `src/api/mock.ts`, `src/api/validators.ts`, helpers de
+payload, contratos, compatibilidade legada, permissao ou persistencia local.
+
 Validacoes executadas na abertura e reexecutadas para os Blocos
-16B.1/16B.2/16B.3:
+16B.1/16B.2/16B.3/16B.4:
 
 - `npm run typecheck` passou
 - `npm run test:domain-compat` passou

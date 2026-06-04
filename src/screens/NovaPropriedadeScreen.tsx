@@ -253,7 +253,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
       const dataToSave = buildPayload();
       await Produtor.create(dataToSave);
 
-      toast.showSuccess('Propriedade cadastrada com vínculo do produtor titular!');
+      toast.showSuccess('Propriedade cadastrada e salva localmente!');
       navigation.goBack();
     } catch (error) {
       toast.showError('Não foi possível cadastrar a propriedade. Tente novamente.');
@@ -326,13 +326,16 @@ export default function NovaPropriedadeScreen({ navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoBox message="Cadastre a Propriedade e vincule um Titular responsável. Titular é o produtor vinculado à Propriedade no mock." />
+        <InfoBox
+          title="Cadastro local demonstrativo"
+          message="A Propriedade será salva somente neste aparelho. Não há backend ou sincronização nesta fase; prefira vincular um Titular existente."
+        />
 
         {errors.escopo && (
           <InfoBox variant="error" message={errors.escopo} />
         )}
 
-        <SectionCard title="Dados da Propriedade" subtitle="Informe a identificação e a área total da unidade rural.">
+        <SectionCard title="Dados da Propriedade" subtitle="Nome e Área total informada são obrigatórios para o cadastro local.">
           <FormField
             label="Nome da Propriedade"
             required
@@ -343,31 +346,32 @@ export default function NovaPropriedadeScreen({ navigation }) {
           />
 
           <FormField
-            label="Área total (ha)"
+            label="Área total informada (ha)"
             required
             value={form.area_total}
             onChangeText={(text) => handleChange('area_total', text)}
             placeholder="Ex: 500"
             keyboardType="numeric"
             error={errors.area_total}
+            helperText="Valor cadastral informado para a demonstração; não representa necessariamente a área mapeada."
           />
         </SectionCard>
 
-        <SectionCard title="Titular da Propriedade" subtitle="Vincule a Propriedade a um produtor existente ou cadastre um titular mínimo apenas para o vínculo mockado.">
+        <SectionCard title="Titular da Propriedade" subtitle="Titular existente é o caminho principal. Novo Titular é apenas uma alternativa demonstrativa e não cria login.">
           <View style={styles.field}>
             <RadioCardGroup
               options={[
                 {
                   value: 'existente',
-                  label: 'Existente',
-                  description: 'Selecionar um Titular/produtor já cadastrado.',
+                  label: 'Titular existente',
+                  description: 'Caminho recomendado: selecionar um Titular/produtor já cadastrado.',
                   icon: 'people-outline',
                   disabled: titulares.length === 0,
                 },
                 {
                   value: 'novo',
-                  label: 'Novo Titular',
-                  description: 'Cadastrar um Titular mínimo para vínculo mockado, sem criar login real.',
+                  label: 'Novo Titular demonstrativo',
+                  description: 'Alternativa local: cria somente um vínculo mínimo, sem usuário ou login real.',
                   icon: 'person-add-outline',
                 },
               ]}
@@ -393,25 +397,25 @@ export default function NovaPropriedadeScreen({ navigation }) {
           )}
         </SectionCard>
 
-        <SectionCard title="Dados produtivos" subtitle="Registre a cultura principal da Propriedade.">
+        <SectionCard title="Dados produtivos" subtitle="Campo opcional para facilitar a identificação durante o teste.">
           <FormField
-            label="Cultura principal"
+            label="Cultura principal (opcional)"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
           />
         </SectionCard>
 
-        <SectionCard title="Localização e Região" subtitle="Defina cidade, UF, Região e Microregião preservando os campos textuais do mock.">
+        <SectionCard title="Localização e Região" subtitle="Cidade e UF são opcionais. Região e Microregião mantêm o escopo territorial atual do mock.">
           <FormField
-            label="Cidade"
+            label="Cidade (opcional)"
             value={form.cidade}
             onChangeText={(text) => handleChange('cidade', text)}
             placeholder="Nome da cidade"
           />
 
           <FormField
-            label="UF"
+            label="UF (opcional)"
             value={form.estado}
             onChangeText={(text) => handleChange('estado', text.toUpperCase())}
             placeholder="Ex: RS, SP, GO"
@@ -508,7 +512,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
       <FormFooter
         onCancel={() => navigation.goBack()}
         onSubmit={handleSave}
-        submitLabel="Salvar"
+        submitLabel="Salvar localmente"
         loading={saving}
       />
     </View>

@@ -609,8 +609,8 @@ export default function NovoUsuarioScreen() {
 
       toast.showSuccess(
         propriedadeRapida.ativa
-          ? isEdit ? 'Usuário atualizado e propriedade criada no mock.' : 'Usuário e propriedade criados no mock.'
-          : isEdit ? 'Usuário atualizado no mock.' : 'Usuário criado no mock.'
+          ? isEdit ? 'Usuário atualizado e Propriedade criada foram salvos localmente.' : 'Usuário e Propriedade salvos localmente.'
+          : isEdit ? 'Usuário atualizado localmente.' : 'Usuário salvo localmente.'
       );
       navigation.replace('UsuarioDetail', { userId: saved.id });
     } catch (error) {
@@ -651,11 +651,18 @@ export default function NovoUsuarioScreen() {
       <Header title={isEdit ? 'Editar Usuário' : 'Novo Usuário'} showBack />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <InfoBox message="Este cadastro é visual/mockado. Não cria senha real, convite, reset de acesso ou autenticação em backend." />
+        <InfoBox
+          title="Cadastro administrativo demonstrativo"
+          message="Este registro fica salvo somente neste aparelho. Ele não cria login real, senha, convite, sessão, backend ou sincronização."
+        />
 
-        <SectionCard title="Dados do usuário">
+        <SectionCard
+          title="Dados do usuário demonstrativo"
+          subtitle="Nome e e-mail identificam o registro local. Use somente dados fictícios ou autorizados."
+        >
           <FormField
             label="Nome"
+            required
             value={form.nome}
             onChangeText={(value) => updateField('nome', value)}
             placeholder="Nome completo"
@@ -664,35 +671,41 @@ export default function NovoUsuarioScreen() {
 
           <FormField
             label="E-mail"
+            required
             value={form.email}
             onChangeText={(value) => updateField('email', value)}
-            placeholder="usuario@email.com"
+            placeholder="nome.demonstracao@example.com"
             autoCapitalize="none"
             keyboardType="email-address"
             error={errors.email}
+            helperText="Obrigatório para identificar o cadastro mockado; não funciona como credencial de login."
           />
 
           <FormField
-            label="Telefone"
+            label="Telefone (opcional)"
             value={form.telefone}
             onChangeText={(value) => updateField('telefone', value)}
             placeholder="(00) 00000-0000"
             keyboardType="phone-pad"
+            helperText="Deixe em branco quando não for necessário para a demonstração."
           />
 
           <FormField
-            label="Documento"
+            label="Documento (opcional)"
             value={form.documento}
             onChangeText={(value) => updateField('documento', value)}
-            placeholder="CPF ou CNPJ"
+            placeholder="Não informar dado real sem autorização"
+            helperText="Campo opcional e desaconselhado para o teste de campo."
           />
         </SectionCard>
 
         <SectionCard
-          title="Perfil de acesso"
-          subtitle="Defina se este usuário acessa como Produtor, Colaborador ou Administrador, sem expor valores técnicos internos."
+          title="Perfil demonstrativo"
+          subtitle="Produtor, Colaborador e Administrador organizam a demonstração local. Este cadastro não concede acesso ou RBAC real."
         >
-          <Text style={styles.label}>Perfil de acesso</Text>
+          <Text style={styles.label}>
+            Perfil demonstrativo <Text style={styles.required}>*</Text>
+          </Text>
           <SegmentedChips
             options={PERFIS_FORM.map((perfil) => ({
               value: perfil.key,
@@ -705,7 +718,9 @@ export default function NovoUsuarioScreen() {
           />
           {errors.perfil && <Text style={styles.errorText}>{errors.perfil}</Text>}
 
-          <Text style={[styles.label, styles.labelSpacing]}>Status</Text>
+          <Text style={[styles.label, styles.labelSpacing]}>
+            Status local <Text style={styles.required}>*</Text>
+          </Text>
           <SegmentedChips
             options={STATUS_USUARIO_ADMIN.map((status) => ({
               value: status.key,
@@ -718,7 +733,7 @@ export default function NovoUsuarioScreen() {
           {errors.status && <Text style={styles.errorText}>{errors.status}</Text>}
         </SectionCard>
 
-        <SectionCard title="Observações">
+        <SectionCard title="Observações opcionais" subtitle="Evite registrar dados pessoais ou sensíveis.">
           <FormField
             label="Observações"
             value={form.observacoes}
@@ -733,7 +748,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'produtor' && (
           <SectionCard
             title="Vínculos do Produtor"
-            subtitle="Produtor é perfil de usuário. Quando estiver ativo, deve ter ao menos uma Propriedade vinculada no mock."
+            subtitle="Vínculos demonstrativos organizam o registro local. Produtor ativo deve ter ao menos uma Propriedade vinculada no mock."
           >
             <Text style={styles.label}>Propriedades vinculadas</Text>
             {errors.vinculosPropriedades && <Text style={styles.errorText}>{errors.vinculosPropriedades}</Text>}
@@ -764,9 +779,9 @@ export default function NovoUsuarioScreen() {
 
             <View style={styles.quickPropertyHeader}>
               <View style={styles.quickPropertyHeaderText}>
-                <Text style={styles.linkedTitle}>Propriedade ainda não cadastrada?</Text>
+                <Text style={styles.linkedTitle}>Alternativa demonstrativa: Propriedade ainda não cadastrada?</Text>
                 <Text style={styles.linkedText}>
-                  Crie uma Propriedade mínima no mock e tente vinculá-la a este usuário produtor. Este fluxo não é transação real de backend.
+                  Use apenas quando necessário no teste assistido. O fluxo cria uma Propriedade local e não é transação real de backend.
                 </Text>
               </View>
               <TouchableOpacity
@@ -897,7 +912,7 @@ export default function NovoUsuarioScreen() {
                 )}
 
                 <FormField
-                  label="Área total"
+                  label="Área total informada"
                   value={propriedadeRapida.area_total}
                   onChangeText={(value) => updatePropriedadeRapida('area_total', value)}
                   placeholder="Ex: 500"
@@ -960,7 +975,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'colaborador' && (
           <SectionCard
             title="Escopo do Colaborador"
-            subtitle="Defina o escopo de trabalho por Região, Microregião ou Propriedades atribuídas. Parte desse vínculo ainda é visual/mockada no MVP."
+            subtitle="Região, Microregião e Propriedades atribuídas são vínculos demonstrativos. Eles não implementam RBAC real."
           >
             <FormField
               label="Função/cargo"
@@ -1050,7 +1065,7 @@ export default function NovoUsuarioScreen() {
 
             <Text style={styles.label}>Propriedades atribuídas no mock</Text>
             <Text style={styles.sectionHint}>
-              Opcional. Use quando o colaborador atuar em Propriedades específicas; isso não representa RBAC final por propriedade. As permissões efetivas continuam baseadas principalmente no escopo regional/sub-regional existente.
+              Opcional e demonstrativo. Não representa RBAC final por propriedade nem altera sozinho as permissões efetivas.
             </Text>
             {errors.escopoColaborador && <Text style={styles.errorText}>{errors.escopoColaborador}</Text>}
             <View style={styles.optionList}>
@@ -1067,7 +1082,7 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'admin' && (
           <SectionCard
             title="Dados administrativos"
-            subtitle="Administrador é o perfil gestor da operação no MVP mockado."
+            subtitle="Administrador é um perfil demonstrativo do MVP local; não concede acesso administrativo real."
           >
             <Text style={styles.label}>Nível administrativo</Text>
             <SegmentedChips
@@ -1083,7 +1098,7 @@ export default function NovoUsuarioScreen() {
               <Ionicons name="earth-outline" size={22} color={colors.primary} />
               <View style={styles.adminBoxText}>
                 <Text style={styles.adminBoxTitle}>Administrador</Text>
-                <Text style={styles.adminBoxSubtitle}>Perfil gestor com visão ampla das regiões, usuários e propriedades no MVP mockado.</Text>
+                <Text style={styles.adminBoxSubtitle}>Perfil demonstrativo com visão ampla no MVP local, sem RBAC ou autenticação real.</Text>
               </View>
             </View>
           </SectionCard>
@@ -1095,6 +1110,7 @@ export default function NovoUsuarioScreen() {
       <FormFooter
         onCancel={() => navigation.goBack()}
         onSubmit={handleSave}
+        submitLabel="Salvar localmente"
         loading={saving}
       />
     </View>
@@ -1121,6 +1137,9 @@ const styles = StyleSheet.create({
   },
   labelSpacing: {
     marginTop: spacing.md,
+  },
+  required: {
+    color: colors.error,
   },
   sectionHint: {
     color: colors.muted,

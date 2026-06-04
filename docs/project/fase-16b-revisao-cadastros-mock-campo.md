@@ -1,7 +1,7 @@
 # Fase 16B - Revisao De Cadastros E Mock Realista Para APK De Campo
 
-Status em 2026-06-04: diagnostico documental concluido e Blocos 16B.1, 16B.2
-e 16B.3 implementados.
+Status em 2026-06-04: diagnostico documental concluido e Blocos 16B.1, 16B.2,
+16B.3 e 16B.4 implementados.
 
 A 16B.1 altera somente seed/mock demonstrativo, testes e documentacao. Nao
 altera telas, contratos, rotas, permissoes ou persistencia e preserva
@@ -112,6 +112,57 @@ Pontos preservados:
 
 O suporte interno de metadados de Mapa permanece na camada mock para
 compatibilidade, mas nao e apresentado como fluxo de campo.
+
+## Entrega Do Bloco 16B.4
+
+Status em 2026-06-04: apresentacao dos cadastros de Propriedade e Usuario
+simplificada para o APK de campo, sem alterar validadores, payloads, contratos
+ou fluxo de salvamento.
+
+Alteracoes aplicadas:
+
+- Nova Propriedade e Editar Propriedade informam que os dados ficam salvos
+  localmente no aparelho, sem backend ou sincronizacao;
+- `Area total informada` substitui o rotulo generico de area e explica que o
+  valor nao representa necessariamente a area mapeada;
+- Titular existente aparece como caminho principal; Novo Titular permanece
+  como alternativa demonstrativa que nao cria Usuario ou login;
+- cidade, UF e cultura aparecem explicitamente como opcionais;
+- Editar Propriedade mantem Titular, Regiao e Microregiao bloqueados;
+- Novo Usuario explica que o cadastro administrativo nao cria login, senha,
+  sessao, backend, sincronizacao ou RBAC real;
+- telefone e documento aparecem como opcionais, com orientacao para evitar
+  dados reais sem autorizacao;
+- Produtor, Colaborador e Administrador aparecem como perfis demonstrativos;
+- Usuario Detail oculta telefone/documento vazios e explica que vinculos sao
+  demonstrativos.
+
+Campos obrigatorios preservados no MVP local:
+
+- Propriedade: nome, Titular, Area total informada, Regiao e Microregiao;
+- Usuario: nome, e-mail, perfil e status;
+- Produtor ativo: ao menos uma Propriedade vinculada;
+- Colaborador ativo: Microregiao/sub-regiao ou Propriedade atribuida no mock.
+
+Campos opcionais preservados:
+
+- Propriedade: cidade, UF e cultura principal/atual;
+- Usuario: telefone, documento e observacoes.
+
+Campos e comportamentos apenas demonstrativos/mockados:
+
+- Novo Titular minimo e cadastro rapido de Propriedade;
+- perfis, status e vinculos administrativos;
+- Propriedades atribuidas ao Colaborador;
+- nivel administrativo e senha interna adicionada pela compatibilidade.
+
+Limitacoes da persistencia local:
+
+- registros ficam no snapshot local deste aparelho;
+- nao existe login real para Usuario criado no Admin;
+- nao existe backend, sincronizacao, integridade referencial real ou RBAC;
+- arquivos, imagens, limites/talhoes e autenticacao nao entram no snapshot de
+  cadastros.
 
 ## Objetivo
 
@@ -263,7 +314,8 @@ Riscos:
 - area pode ser alterada sem explicar sua semantica;
 - status nao pode ser revisado na tela;
 - Regiao/Microregiao sao apenas preservadas, sem caminho de correcao no mock;
-- o formulario nao persiste apos reinicio do app.
+- a persistencia local nao possui sincronizacao, backend ou integridade
+  referencial real.
 
 Recomendacao para o APK:
 
@@ -626,8 +678,11 @@ Criterio de aceite:
 
 ### Bloco 16B.4 - Ajustar Apresentacao Dos Cadastros
 
+Status em 2026-06-04: implementado nas telas de Propriedade e Usuario.
+
 - manter Nova/Editar Propriedade com o conjunto atual de baixo risco;
-- deixar Novo Titular e cadastro rapido fora do fluxo principal;
+- apresentar Novo Titular e cadastro rapido como alternativas demonstrativas,
+  fora do caminho principal recomendado;
 - reforcar que Usuario administrativo nao cria login;
 - manter telefone/documento opcionais e vazios no seed principal.
 

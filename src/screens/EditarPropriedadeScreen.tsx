@@ -124,7 +124,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       const payload = buildFazendaUpdatePayload(produtorAtual, form);
       await Produtor.update(route.params.id, payload);
       
-      toast.showSuccess('Propriedade atualizada com sucesso!');
+      toast.showSuccess('Alterações salvas localmente!');
       navigation.goBack();
     } catch (error) {
       toast.showError('Não foi possível salvar as alterações. Tente novamente.');
@@ -171,7 +171,10 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <InfoBox message="Atualize a Propriedade mantendo o Titular vinculado. Titular é o produtor responsável já associado no mock." />
+        <InfoBox
+          title="Edição local demonstrativa"
+          message="As alterações ficam salvas somente neste aparelho. Titular, Região e Microregião permanecem vinculados e não podem ser trocados nesta fase."
+        />
 
         <SectionCard title="Titular preservado" subtitle="O Titular atual permanece vinculado à Propriedade; esta edição não troca o vínculo cadastral.">
           <View style={styles.linkedRows}>
@@ -197,7 +200,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
           </View>
         </SectionCard>
 
-        <SectionCard title="Dados da Propriedade" subtitle="Atualize a identificação e a área total cadastrada.">
+        <SectionCard title="Dados da Propriedade" subtitle="Atualize a identificação e a Área total informada no cadastro local.">
           <FormField
             label="Nome da Propriedade"
             required
@@ -208,35 +211,36 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
           />
 
           <FormField
-            label="Área total (ha)"
+            label="Área total informada (ha)"
             required
             value={form.area_total}
             onChangeText={(text) => handleChange('area_total', text)}
             placeholder="Ex: 500"
             keyboardType="numeric"
             error={errors.area_total}
+            helperText="Valor cadastral informado; não representa necessariamente a área coberta pelos talhões."
           />
         </SectionCard>
 
-        <SectionCard title="Dados produtivos" subtitle="Mantenha a cultura principal informada para a Propriedade.">
+        <SectionCard title="Dados produtivos" subtitle="Campo opcional para facilitar a identificação durante o teste.">
           <FormField
-            label="Cultura atual"
+            label="Cultura atual (opcional)"
             value={form.cultura_atual}
             onChangeText={(text) => handleChange('cultura_atual', text)}
             placeholder="Ex: Soja, Milho, Trigo"
           />
         </SectionCard>
 
-        <SectionCard title="Localização preservada" subtitle="Atualize cidade e UF sem alterar Região ou Microregião vinculadas.">
+        <SectionCard title="Localização preservada" subtitle="Cidade e UF são opcionais. Região e Microregião vinculadas permanecem bloqueadas nesta fase.">
           <FormField
-            label="Cidade"
+            label="Cidade (opcional)"
             value={form.cidade}
             onChangeText={(text) => handleChange('cidade', text)}
             placeholder="Nome da cidade"
           />
 
           <FormField
-            label="UF"
+            label="UF (opcional)"
             value={form.estado}
             onChangeText={(text) => handleChange('estado', text.toUpperCase())}
             placeholder="Ex: RS, SP, GO"
@@ -264,7 +268,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       <FormFooter
         onCancel={() => navigation.goBack()}
         onSubmit={handleSave}
-        submitLabel="Salvar"
+        submitLabel="Salvar localmente"
         loading={saving}
       />
     </View>

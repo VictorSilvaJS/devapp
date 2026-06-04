@@ -200,19 +200,34 @@ export default function UsuarioDetailScreen() {
           </View>
         </View>
 
-        <SectionCard title="Dados do usuário">
+        <InfoBox
+          title="Cadastro administrativo demonstrativo"
+          message="Este usuário e seus vínculos ficam salvos localmente. O cadastro não cria login real, autenticação ou RBAC."
+        />
+
+        <SectionCard title="Dados do usuário" subtitle="Telefone e documento são opcionais e só aparecem quando informados.">
           <InfoRow icon="mail-outline" label="E-mail" value={usuario.email} />
-          <InfoRow icon="call-outline" label="Telefone" value={usuario.telefone} />
-          <InfoRow icon="document-text-outline" label="Documento" value={usuario.documento} />
+          {usuario.telefone ? <InfoRow icon="call-outline" label="Telefone" value={usuario.telefone} /> : null}
+          {usuario.documento ? <InfoRow icon="document-text-outline" label="Documento" value={usuario.documento} /> : null}
+          {!usuario.telefone && !usuario.documento ? (
+            <InfoBox
+              message="Telefone e documento não informados. Esses campos são opcionais no cadastro demonstrativo."
+              style={styles.inlineInfoBox}
+            />
+          ) : null}
         </SectionCard>
 
-        <SectionCard title="Perfil de acesso">
-          <InfoRow icon="person-circle-outline" label="Perfil de acesso" value={getUsuarioPerfilLabel(usuario.perfil)} />
-          <InfoRow icon="checkmark-circle-outline" label="Status" value={status.label} />
+        <SectionCard title="Perfil demonstrativo">
+          <InfoRow icon="person-circle-outline" label="Perfil demonstrativo" value={getUsuarioPerfilLabel(usuario.perfil)} />
+          <InfoRow icon="checkmark-circle-outline" label="Status local" value={status.label} />
         </SectionCard>
 
         {usuario.perfil === 'produtor' && (
           <SectionCard title="Vínculos do Produtor">
+            <InfoBox
+              message="Vínculos com Propriedades organizam a demonstração local e não criam login ou permissão real."
+              style={styles.inlineInfoBox}
+            />
             <InfoRow
               icon="link-outline"
               label="Vínculos registrados"
@@ -249,7 +264,7 @@ export default function UsuarioDetailScreen() {
             <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
             <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
             <InfoBox
-              message="Região, Microregião e Propriedades atribuídas representam escopo de trabalho no MVP. Propriedades atribuídas ainda não são RBAC final por propriedade."
+              message="Região, Microregião e Propriedades atribuídas são vínculos demonstrativos. Propriedades atribuídas não são RBAC final e não alteram sozinhas o acesso efetivo."
               style={styles.inlineInfoBox}
             />
 
@@ -299,7 +314,7 @@ export default function UsuarioDetailScreen() {
             <InfoRow icon="earth-outline" label="Perfil administrativo" value="Administrador" />
             <InfoRow icon="shield-outline" label="Nível administrativo" value={getNivelAdminLabel(usuario.nivel_administrativo)} />
             <InfoRow icon="shield-checkmark-outline" label="Escopo" value={(usuario.regioes_acesso || ['Brasil']).join(', ')} />
-            <InfoBox message="Administrador é perfil gestor e representa visão ampla da operação no MVP mockado." style={styles.inlineInfoBox} />
+            <InfoBox message="Administrador é um perfil demonstrativo do MVP local e não concede autenticação ou RBAC real." style={styles.inlineInfoBox} />
           </SectionCard>
         )}
 
@@ -313,7 +328,7 @@ export default function UsuarioDetailScreen() {
       <FormFooter
         showCancel={false}
         onSubmit={() => navigation.navigate('EditarUsuario', { userId: usuario.id })}
-        submitLabel="Editar Usuário"
+        submitLabel="Editar cadastro local"
         submitIcon="create-outline"
       />
     </View>

@@ -16,7 +16,7 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 6. Criação de visita pelo detalhe da propriedade: `NovaVisita` deve pré-selecionar/travar a propriedade contextual e manter bloqueio fora de escopo.
 7. Mapas/Arquivos técnicos: consulta deve ser priorizada e a associação interna de referência não deve aparecer no fluxo de campo.
 8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
-9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Material técnico`, sem alterar download, filtros, permissões ou contratos.
+9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Arquivo técnico`, sem alterar abertura, filtros, permissões ou contratos.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; alinhar que login rápido, usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
@@ -34,6 +34,11 @@ Na 16B.3, `MapasScreen` passou a priorizar titulo, descricao e consulta dos
 materiais preparados. A associacao interna de referencia e os campos visiveis
 de URL, formato, tamanho e origem foram removidos da experiencia de campo.
 
+Na 16B.4, os cadastros de Propriedade e Usuario passaram a explicar o
+salvamento local e seus limites. Telefone/documento sao opcionais, Usuario
+administrativo nao cria login real e os perfis/vinculos continuam
+demonstrativos.
+
 Credenciais principais alinhadas na 16B.1:
 
 - Admin Demonstração: `admin.demonstracao@example.com` / `admin123`
@@ -48,12 +53,14 @@ Credenciais principais alinhadas na 16B.1:
 | APK16B-04 | P0 | Produtor/Colaborador/Admin | Fluxo principal | Abrir mapa, anexos, visitas e caderno da Sela de Prata I | Os quatro grupos possuem dados coerentes no contexto de `p_sela1` | Reexecutar | Seed e teste automatizado preparados; preservar `fazenda_id` |
 | APK16B-05 | P0 | Todos | Visitas/Caderno | Conferir os exemplos principais | Datas são estáveis, textos são neutros, talhões são coerentes e fotos externas não são necessárias | Reexecutar | Registros principais adicionados na 16B.1; não tratar conteúdo mock como recomendação real |
 | APK16B-06 | P0 | Admin/Colaborador | Mapas/Arquivos técnicos | Abrir a biblioteca no APK de campo | Consulta é priorizada, título/descrição têm destaque e nenhuma ação sugere associação, upload/download real, Drive ou storage | Reexecutar | Implementado na 16B.3; conferir ausência da ação interna |
-| APK16B-07 | P0 | Admin | Nova Propriedade | Criar Propriedade com Titular existente e campos mínimos | Salva no mock preservando Titular, Região, Microregião e contratos legados | Reexecutar | Novo Titular fica fora do fluxo principal |
-| APK16B-08 | P1 | Admin | Usuários | Abrir Novo Usuario e detalhe | Fluxo permanece assistido/mockado; telefone/documento são opcionais; Usuario criado não autentica | Reexecutar | Cadastro rápido fora do fluxo principal |
+| APK16B-07 | P0 | Admin | Nova Propriedade | Criar Propriedade com Titular existente e campos mínimos | Salva localmente preservando Titular, Região, Microregião e contratos legados | Reexecutar | Titular existente é o caminho principal; Novo Titular é alternativa demonstrativa |
+| APK16B-08 | P1 | Admin | Usuários | Abrir Novo Usuario e detalhe | Fluxo explica salvamento local; telefone/documento são opcionais; Usuario criado não autentica | Reexecutar | Perfis e cadastro rápido são demonstrativos |
 | APK16B-09 | P0 | Todos | LGPD | Revisar telas e detalhes do pacote principal | Nenhum dado pessoal real não autorizado, foto imprevisível ou endereço sensível aparece | Reexecutar | Cadastros seed minimizados; confirmar autorização de nome, limites, localização e anexos da Sela de Prata I |
 | APK16B-10 | P0 | Todos | Persistência local | Criar Usuario, Propriedade, Visita e Caderno; fechar e abrir o app | Cadastros continuam disponíveis, preservando ids, vínculos e `fazenda_id` sem sincronização | Reexecutar | Implementado na 16B.2; validar em Android físico |
 | APK16B-11 | P0 | Admin/Dev controlado | Restaurar demonstração | Executar `MockLocalData.restoreSeed()` em ambiente controlado e reabrir o app | Alterações locais são removidas e Sela de Prata I volta ao pacote inicial | Reexecutar | Sem botão visual nesta fase; ação destrutiva controlada |
 | APK16B-12 | P1 | Admin/Dev controlado | Mapas locais | Alterar metadado mockado de Mapa pela camada controlada, fechar e abrir o app | Metadado continua disponível; nenhum arquivo físico é copiado ou enviado | Reexecutar | Persistência cobre somente metadados estruturados; associação interna não aparece na tela |
+| APK16B-13 | P0 | Admin | Editar Propriedade | Alterar nome, Área total informada ou campo opcional e salvar | Alteração fica salva localmente; Titular, Região e Microregião não podem ser trocados | Reexecutar | Implementado visualmente na 16B.4; validar em Android físico |
+| APK16B-14 | P1 | Admin | Detalhe de Usuario | Abrir Usuario sem telefone/documento | Campos vazios não recebem destaque e a tela explica que vínculos/perfis são demonstrativos | Reexecutar | Cadastro não cria login ou RBAC real |
 
 **Rodada Fase 16A - APK Demonstrável Para Campo**
 
@@ -144,15 +151,15 @@ autenticação ou backend.
 
 | ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
-| CAD-01 | P0 | Admin | Usuários | Acessar Admin -> Usuários e abrir Novo/Editar Usuário | Perfis aparecem como `Produtor`, `Colaborador` e `Administrador`; não aparece `Admin` como label principal; seções `Dados do usuário` e `Perfil de acesso` aparecem corretamente | Reexecutar | Valor interno `admin` deve permanecer invisível como label principal |
+| CAD-01 | P0 | Admin | Usuários | Acessar Admin -> Usuários e abrir Novo/Editar Usuário | Perfis aparecem como `Produtor`, `Colaborador` e `Administrador`; seções usam `Dados do usuário demonstrativo` e `Perfil demonstrativo` | Reexecutar | Valor interno `admin` deve permanecer invisível como label principal |
 | CAD-02 | P0 | Admin | Usuário Produtor | Criar/editar usuário com perfil Produtor | Seção `Vínculos do Produtor` aparece; texto deixa claro que Produtor é perfil de usuário; vínculos são com `Propriedades` | Reexecutar | Não confundir nome do usuário com nome da propriedade |
 | CAD-03 | P0 | Admin | Cadastro rápido | No usuário Produtor, acionar cadastro rápido de propriedade quando disponível | Cadastro rápido aparece como propriedade visual/mockada; campos da propriedade ficam separados dos dados do usuário | Reexecutar | Não criar interpretação de backend, login real ou transação real |
 | CAD-04 | P0 | Admin | Usuário Colaborador | Criar/editar usuário com perfil Colaborador | Seção `Escopo do Colaborador` aparece com Região, Microregião e Propriedades atribuídas; texto indica escopo territorial/propriedades | Reexecutar | Conferir que a tela não promete alteração da permissão real |
 | CAD-05 | P0 | Admin | Usuário Administrador | Criar/editar usuário com perfil Administrador | Seção `Dados administrativos` aparece; label visível usa `Administrador`; valor interno `admin` não aparece para o usuário | Reexecutar | Não alterar valor interno do perfil |
 | CAD-06 | P0 | Admin | Propriedades | Acessar listagem de propriedades | Tela/listagem aparece como `Propriedades`; ação principal aparece como `Nova Propriedade`; conferir leitura de Titular, Região, Microregião, Área e Status quando disponíveis | Reexecutar | Arquivo/componente atual: `PropriedadesScreen`; rota técnica admin: `Propriedades` |
-| CAD-07 | P0 | Admin | Nova Propriedade | Abrir cadastro de Nova Propriedade | Tela não aparece como `Novo Produtor`; seções `Dados da Propriedade`, `Titular da Propriedade`, `Localização e Região` e `Dados produtivos` aparecem | Reexecutar | Titular é produtor vinculado, não nome da propriedade |
+| CAD-07 | P0 | Admin | Nova Propriedade | Abrir cadastro de Nova Propriedade | Tela explica salvamento local, usa `Área total informada` e apresenta Titular existente como caminho principal | Reexecutar | Cidade, UF e cultura são opcionais; Novo Titular é demonstrativo |
 | CAD-08 | P0 | Admin | Nova Propriedade | Preencher e salvar Nova Propriedade com dados válidos | Salvamento continua funcionando com os campos técnicos antigos preservados | Reexecutar | Preservar `fazenda_id`, `produtor_id`, `proprietario_id`, `fazendaNome` e `fazendaId` |
-| CAD-09 | P0 | Admin | Editar Propriedade | Abrir edição de propriedade existente | Tela aparece como `Editar Propriedade`; seções `Dados da Propriedade`, `Titular preservado`, `Localização preservada` e `Dados produtivos` aparecem | Reexecutar | Titular e localização territorial devem ser lidos como preservados |
+| CAD-09 | P0 | Admin | Editar Propriedade | Abrir edição de propriedade existente | Tela explica salvamento local, usa `Área total informada` e mantém Titular/Região/Microregião bloqueados | Reexecutar | Cidade, UF e cultura permanecem opcionais |
 | CAD-10 | P0 | Admin | Editar Propriedade | Alterar dados permitidos e salvar | Salvamento continua funcionando sem trocar titular, rota, mock, payload ou permissão | Reexecutar | Validar apenas comportamento existente |
 | CAD-11 | P1 | Produtor | Fluxo produtor | Entrar como produtor e abrir suas propriedades | Produtor vê suas `Propriedades`; não aparece `Fazenda` como texto principal; detalhe, mapa, anexos e caderno continuam acessíveis | Reexecutar | Nomes próprios como `Fazenda Sela de Prata I` podem permanecer |
 | CAD-12 | P1 | Colaborador | Fluxo colaborador | Entrar como colaborador e abrir propriedades do escopo | Colaborador vê propriedades do escopo; Nova Visita continua funcionando; textos de escopo visual não prometem RBAC por propriedade atribuída | Reexecutar | `sub_regioes` ou fallback `vinculos_microregioes`; `propriedades_atribuidas` não amplia permissão efetiva |
@@ -225,7 +232,7 @@ Login principal de teste: `carlos@agrotche.com` / `colab123`.
 | C-04 | P0 | Colaborador | Nova visita aberta pelo detalhe | Preencher e salvar visita | Visita salva no mock com a propriedade contextual e respeita escopo | Reexecutar | Sem backend real |
 | C-05 | P0 | Colaborador | Aba/listagem Visitas aberta | Tocar em Nova Visita global | Seletor normal de propriedade permanece disponível | Reexecutar | Fluxo global não deve ficar travado |
 | C-06 | P0 | Colaborador | Propriedade fora do escopo | Tentar criar visita por rota/contexto direto | Acesso bloqueado; não cria visita fora do escopo | Reexecutar | Regra por região/sub-região |
-| C-07 | P1 | Colaborador | Panorama/Mapas aberto | Revisar botão/modal de Material Técnico | Interface informa mock/protótipo visual, sem upload/storage/Drive/backend/cadastro real | Reexecutar | Conceito correto: Material Técnico; arquivo é recurso anexado |
+| C-07 | P1 | Colaborador | Mapas/Arquivos técnicos aberto | Consultar materiais preparados | Interface prioriza consulta e não exibe associação interna, upload/storage/Drive/backend/cadastro real | Reexecutar | Arquivo é recurso previamente preparado |
 | C-08 | P1 | Colaborador | Mapas sem dados em algum contexto | Ver mensagens vazias | Empty states diferenciam ausência de demarcação/talhões e ausência de materiais técnicos/anexos | Reexecutar | Mensagens simples para teste interno |
 | C-09 | P1 | Produtor | Fluxo do produtor disponível | Conferir detalhe, visitas, mapas e caderno | Produtor não ganha criação de visita nem acesso administrativo a Material Técnico | Reexecutar | Risco de regressão baixo, mas deve ser conferido |
 
@@ -236,7 +243,7 @@ Observacao geral: esta rodada valida apenas o MVP visual/mockado. Usuario criado
 
 | ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
-| U-01 | P0 | Admin | Login admin ativo | Abrir Admin -> Usuarios -> Novo Usuario | Formulario exibe nome, e-mail, telefone, documento, perfil, status e observacoes | Reexecutar | Campos comuns completos para o mock |
+| U-01 | P0 | Admin | Login admin ativo | Abrir Admin -> Usuarios -> Novo Usuario | Formulario identifica nome/e-mail como obrigatórios e telefone/documento/observações como opcionais | Reexecutar | Cadastro local demonstrativo; não usar dados reais desnecessários |
 | U-02 | P0 | Admin | Novo Usuario aberto | Criar produtor ativo com ao menos uma propriedade vinculada | Usuario produtor e criado no mock; detalhe mostra propriedade vinculada, tipo de vinculo e principal | Reexecutar | Pode ter multiplas propriedades |
 | U-03 | P0 | Admin | Novo Usuario aberto | Tentar criar produtor ativo sem propriedade vinculada | Salvamento bloqueado com aviso de vinculo obrigatorio | Reexecutar | Produtor ativo exige propriedade |
 | U-04 | P0 | Admin | Novo Usuario aberto | Criar produtor pendente sem propriedade vinculada | Usuario pendente e criado no mock sem propriedade | Reexecutar | Pendente pode aguardar vinculo |
@@ -250,6 +257,7 @@ Observacao geral: esta rodada valida apenas o MVP visual/mockado. Usuario criado
 | U-12 | P1 | Admin | Usuario criado pela tela admin | Tentar usar esse usuario como login real | Login real nao deve existir nesta fase | Reexecutar | Auth mock permanece separado |
 | U-13 | P1 | Admin/Colaborador | Colaborador com propriedade atribuida visualmente | Entrar no fluxo efetivo do colaborador e verificar permissao | Vinculo visual nao amplia permissao efetiva fora do motor atual | Reexecutar | Nao altera `acessoControle` |
 | U-14 | P1 | Admin | Usuario existente aberto em detalhe | Conferir textos visiveis | Nao exibe ID tecnico cru como informacao principal; usa termos Documento, Propriedades, Micro-regioes e Nivel administrativo | Reexecutar | Preservar nomes internos apenas onde necessario |
+| U-15 | P1 | Admin | Usuario sem telefone/documento aberto em detalhe | Conferir Dados do usuário | Telefone/documento vazios não aparecem como linhas principais; tela informa que são opcionais | Reexecutar | Não altera payload nem validação |
 
 **Rodada Admin - Sincronizacao Territorial E Vinculos Visuais Mockados**
 
