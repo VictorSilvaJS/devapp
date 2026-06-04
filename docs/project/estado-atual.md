@@ -343,6 +343,45 @@ Validacoes automaticas executadas nesta abertura:
 - `npm run test:domain-compat` passou
 - `git diff --check` passou
 
+## Fase 16B - Revisao De Cadastros E Mock Realista Para Campo
+
+Status em 2026-06-04: foi iniciada a Fase 16B com diagnostico documental dos
+formularios de Propriedade e Usuario, do pacote mock principal, dos vinculos
+por perfil, dos exemplos de visitas/caderno, da superficie de Mapas/Arquivos
+tecnicos e da preparacao minima para persistencia local.
+
+Documento principal:
+
+- `docs/project/fase-16b-revisao-cadastros-mock-campo.md`
+
+Principais achados da abertura:
+
+- os formularios possuem nucleo adequado ao MVP, mas Novo Usuario e cadastro
+  rapido de Propriedade devem ficar fora do fluxo principal de campo;
+- a Sela de Prata I possui demarcacao e cinco anexos, mas nao possui visitas
+  nem caderno vinculados a `p_sela1`;
+- o Usuario produtor e o Titular da Sela de Prata I usam o nome da propria
+  Propriedade, confundindo pessoa/perfil com unidade operacional;
+- `area_total: 6200` e a soma mapeada de `1888,6 ha` podem representar area
+  total e area mapeada, mas essa semantica ainda precisa ser confirmada;
+- MapasScreen ainda possui associacao interna de referencia com URL, formato e
+  tamanho, superficie tecnica demais para o APK de campo;
+- CRUD mockado continua somente em memoria; persistencia local deve ser
+  preparada sem implementar sincronizacao ou backend;
+- nomes, contatos, enderecos, credenciais e fotos externas do mock precisam de
+  minimizacao para reduzir risco de LGPD/confusao.
+
+Esta abertura nao altera comportamento funcional, nao remove
+`fazenda_id`/`fazendaId`, nao migra contratos, nao implementa backend, login
+real, RBAC real, upload remoto ou sincronizacao.
+
+Validacoes executadas nesta abertura:
+
+- `npm run typecheck` passou
+- `npm run test:domain-compat` passou
+- `git diff --check` passou; no Windows, emitiu apenas avisos normais de
+  conversao LF/CRLF
+
 ## Microfase De Padronizacao Visual Reutilizavel
 
 Status em 2026-05-30: foi criada e aplicada uma base visual reutilizavel em telas de formulario, detalhe e listagem, sem alterar dominio, backend, mocks, rotas, permissoes, payloads ou nomes tecnicos legados.

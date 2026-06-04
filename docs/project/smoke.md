@@ -20,6 +20,25 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; alinhar que login rápido, usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 16B - Cadastros E Mock Realista Para Campo**
+
+Observação geral: esta rodada valida o pacote demonstrativo da Fase 16B. Ela
+nao implementa backend, login real, RBAC real, upload remoto, sincronizacao ou
+migracao de `fazenda_id`/`fazendaId`.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| APK16B-01 | P0 | Todos | Dados demonstrativos | Conferir as credenciais principais de Admin, Colaborador e Produtor | As três personas são claramente demonstrativas e não expõem telefone/documento pessoal real | Reexecutar | Cadastro Admin continua separado do login mock |
+| APK16B-02 | P0 | Produtor | Sela de Prata I | Abrir a Propriedade principal e conferir Titular/Usuario | Nome do Usuario/Titular não é confundido com nome da Propriedade | Reexecutar | Não inserir Titular real sem autorização |
+| APK16B-03 | P0 | Todos | Sela de Prata I | Conferir área cadastrada e área coberta pelos talhões | Diferença entre área total e área mapeada está confirmada/explicada ou registrada como pendência | Reexecutar | Mock atual: 6200 ha; manifesto: 1888,6 ha |
+| APK16B-04 | P0 | Produtor/Colaborador/Admin | Fluxo principal | Abrir mapa, anexos, visitas e caderno da Sela de Prata I | Os quatro grupos possuem dados coerentes no contexto de `p_sela1` | Reexecutar | Preservar `fazenda_id` |
+| APK16B-05 | P0 | Todos | Visitas/Caderno | Conferir os exemplos principais | Datas são estáveis, textos são neutros, talhões são coerentes e fotos externas não são necessárias | Reexecutar | Não tratar conteúdo mock como recomendação real |
+| APK16B-06 | P0 | Admin/Colaborador | Mapas/Arquivos técnicos | Abrir a biblioteca no APK de campo | Consulta é priorizada e nenhuma ação central promete upload/download real | Reexecutar | Ocultar associação técnica de referência no fluxo de campo |
+| APK16B-07 | P0 | Admin | Nova Propriedade | Criar Propriedade com Titular existente e campos mínimos | Salva no mock preservando Titular, Região, Microregião e contratos legados | Reexecutar | Novo Titular fica fora do fluxo principal |
+| APK16B-08 | P1 | Admin | Usuários | Abrir Novo Usuario e detalhe | Fluxo permanece assistido/mockado; telefone/documento são opcionais; Usuario criado não autentica | Reexecutar | Cadastro rápido fora do fluxo principal |
+| APK16B-09 | P0 | Todos | LGPD | Revisar telas e detalhes do pacote principal | Nenhum dado pessoal real não autorizado, foto imprevisível ou endereço sensível aparece | Reexecutar | Confirmar autorização da Sela de Prata I |
+| APK16B-10 | P1 | Todos | Persistência local futura | Revisar comportamento após reinício do app | Limite atual de persistência está comunicado; implementação futura preservará APIs e `fazenda_id` sem sincronização | Reexecutar | Nesta abertura, CRUD ainda é somente memória |
+
 **Rodada Fase 16A - APK Demonstrável Para Campo**
 
 Observação geral: esta rodada valida a entrega demonstrável em celular Android.

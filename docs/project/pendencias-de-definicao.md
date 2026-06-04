@@ -148,6 +148,14 @@ alterou motor de permissoes, mocks, payloads, contratos de dados, helpers
 tecnicos ou logica de listagem/filtro. Permanece pendente apenas validar o
 smoke manual completo da navegacao apos a migracao.
 
+Status em 2026-06-04 (Fase 16B): o diagnostico de campo confirmou que Nova
+Propriedade possui um conjunto minimo adequado, mas `Novo Titular` e o cadastro
+rapido de Propriedade dentro de Novo Usuario devem ficar fora do fluxo
+principal do APK. Permanece pendente decidir, em etapa futura, se esses fluxos
+serao mantidos, removidos ou substituidos por criacao transacional no backend.
+Para o APK mockado, a recomendacao e priorizar Titular existente e manter
+Usuario administrativo como demonstracao assistida.
+
 Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras de Cadastro, junto com outros fluxos necessarios para padronizar conceitos, responsabilidades e nomenclatura.
 
 ## Pendencias de Regra e Permissao
@@ -252,6 +260,13 @@ Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda fa
 
 Sem esse fechamento, o projeto corre risco de descrever offline de forma mais ampla do que a capacidade real.
 
+Status em 2026-06-04 (Fase 16B): alem da capacidade offline de consulta,
+permanece pendente definir o corte minimo de persistencia local para Usuario,
+Propriedade, Visita, Caderno e metadados de Mapa. O CRUD atual desses cadastros
+altera arrays em memoria e se perde ao reiniciar/recarregar o app. A direcao
+recomendada e preparar uma borda local versionada, com restauracao do seed
+demonstrativo e preservacao de `fazenda_id`, sem implementar sincronizacao.
+
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
 O produto ja depende de mapas e arquivos no contexto da propriedade. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
@@ -269,6 +284,15 @@ Estado atual do teste local: existe uma amostragem da propriedade Sela de Prata 
 Estado atual dos anexos visuais: existe uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I cadastrada manualmente no mock como registros da entidade `Mapa`. Esses PNGs sao assets internos do app apenas para validacao visual do MVP. Eles nao representam upload real, cadastro administrativo completo, persistencia em banco/storage, API de anexos, importacao automatica ou gestao completa do acervo.
 
 Atualizacao em 2026-06-01: os cinco PNGs da Sela de Prata I foram enriquecidos de forma aditiva no mock com metadados conceituais do futuro `AnexoFertilidade`, preservando campos legados como `fazenda_id`, `produtor_id`, `talhao`, `subcategoria`, `data_criacao` e `disponivel_download`. Tambem existe o tipo isolado `src/types/anexoFertilidade.ts`, ainda nao integrado ao dominio real.
+
+Status em 2026-06-04 (Fase 16B): a revisao do pacote demonstrativo identificou
+que a Sela de Prata I informa `area_total: 6200`, enquanto o manifesto dos 15
+talhoes informa soma mapeada de `1888,6 ha`. Permanece pendente confirmar se os
+valores representam area total e area mapeada ou se o mock deve ser corrigido.
+Tambem permanece pendente confirmar autorizacao de nome, localizacao, limites e
+anexos e substituir o nome da Propriedade usado como Usuario produtor/Titular
+por uma persona demonstrativa ou dado autorizado. Nenhuma dessas correcoes deve
+ser inferida sem confirmacao.
 
 Permanece pendente definir e implementar:
 
