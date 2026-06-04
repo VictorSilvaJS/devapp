@@ -177,7 +177,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 
 ### Camada de autenticacao e regras
 
-- `src/auth/authMock.ts` faz login mock e acesso rapido de desenvolvimento
+- `src/auth/authMock.ts` faz login mock e acesso rapido demonstrativo/local
 - `src/utils/acessoControle.ts` concentra boa parte das regras de permissao por perfil, produtor e regiao
 
 ### Camada de dados
@@ -332,11 +332,10 @@ celular.
 
 Diagnostico da Fase 16A: o app esta tecnicamente apto para uma rodada de APK
 demonstravel desde que seja comunicado como MVP visual/mockado. Os principais
-cuidados antes de entregar o APK sao evitar build em modo `__DEV__`, decidir se
-o login rapido de desenvolvimento permanece visivel, confirmar autorizacao dos
-dados reais/semi-reais usados na Sela de Prata I e deixar claro que Admin
-Usuarios, fotos, anexos, uploads, downloads, autenticacao e permissoes continuam
-mockados ou preparatorios.
+cuidados antes de entregar o APK sao evitar build em modo `__DEV__`, confirmar
+autorizacao dos dados reais/semi-reais usados na Sela de Prata I e deixar
+claro que Admin Usuarios, fotos, anexos, uploads, downloads, autenticacao e
+permissoes continuam mockados ou preparatorios.
 
 Validacoes automaticas executadas nesta abertura:
 
@@ -392,8 +391,8 @@ Atualizacao do Bloco 16B.1 em 2026-06-04:
   continua pendente;
 - mapas, talhoes, cinco PNGs, rotas, payloads, contratos, `fazenda_id` e
   fallbacks das Fases 14/15 foram preservados.
-- os rotulos hardcoded do acesso rapido em `LoginScreen` ainda mostram nomes
-  legados, pois telas ficaram fora do recorte da 16B.1.
+- o desalinhamento visual dos rotulos de acesso rapido, deixado fora da 16B.1,
+  foi tratado no Bloco 16B.5.
 
 O Bloco 16B.1 nao implementa backend, login real, RBAC real, persistencia
 local, upload remoto ou sincronizacao.
@@ -463,8 +462,23 @@ Atualizacao do Bloco 16B.4 em 2026-06-04:
 O Bloco 16B.4 nao altera `src/api/mock.ts`, `src/api/validators.ts`, helpers de
 payload, contratos, compatibilidade legada, permissao ou persistencia local.
 
+Atualizacao do Bloco 16B.5 em 2026-06-04:
+
+- `LoginScreen` passou a apresentar `Acesso demonstrativo local`;
+- `Acesso rapido (dev)` foi substituido por `Acesso rapido para demonstracao`;
+- botoes principais usam `Admin Demonstracao`, `Colaborador de Campo` e
+  `Produtor Demonstracao`;
+- nomes legados de pessoas e da Propriedade foram removidos dos rotulos;
+- a tela informa que as credenciais nao representam autenticacao real;
+- chaves `admin`, `colaborador` e `produtor`, credenciais mockadas, roteamento
+  por perfil e `AuthContext` foram preservados;
+- Usuario criado no Admin continua sem virar login real.
+
+O Bloco 16B.5 nao altera backend, login real, `AuthContext` estruturalmente,
+RBAC, contratos, cadastros ou persistencia local.
+
 Validacoes executadas na abertura e reexecutadas para os Blocos
-16B.1/16B.2/16B.3/16B.4:
+16B.1/16B.2/16B.3/16B.4/16B.5:
 
 - `npm run typecheck` passou
 - `npm run test:domain-compat` passou

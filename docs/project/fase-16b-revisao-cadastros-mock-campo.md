@@ -1,7 +1,7 @@
 # Fase 16B - Revisao De Cadastros E Mock Realista Para APK De Campo
 
 Status em 2026-06-04: diagnostico documental concluido e Blocos 16B.1, 16B.2,
-16B.3 e 16B.4 implementados.
+16B.3, 16B.4 e 16B.5 implementados.
 
 A 16B.1 altera somente seed/mock demonstrativo, testes e documentacao. Nao
 altera telas, contratos, rotas, permissoes ou persistencia e preserva
@@ -37,9 +37,8 @@ Dados pessoais minimizados no cadastro mock:
 
 Continuam fora deste bloco: telas, login/RBAC real, persistencia local,
 upload/storage, simplificacao de MapasScreen e alteracao da area cadastrada.
-Como a 16B.1 nao altera telas, os rotulos hardcoded do acesso rapido em
-`LoginScreen` ainda exibem nomes legados; as credenciais e os usuarios
-autenticados, porem, usam as personas novas.
+O desalinhamento visual que ainda existia nos rotulos de acesso rapido da
+`LoginScreen` foi tratado posteriormente no Bloco 16B.5.
 
 ## Entrega Do Bloco 16B.2
 
@@ -163,6 +162,34 @@ Limitacoes da persistencia local:
 - nao existe backend, sincronizacao, integridade referencial real ou RBAC;
 - arquivos, imagens, limites/talhoes e autenticacao nao entram no snapshot de
   cadastros.
+
+## Entrega Do Bloco 16B.5
+
+Status em 2026-06-04: Login e acesso rapido alinhados ao pacote demonstrativo
+principal.
+
+Alteracoes aplicadas:
+
+- `Acesso rapido (dev)` foi substituido por `Acesso rapido para demonstracao`;
+- os tres botoes exibem `Admin Demonstracao`, `Colaborador de Campo` e
+  `Produtor Demonstracao`;
+- nomes legados de pessoas e da Propriedade foram removidos dos rotulos de
+  acesso rapido;
+- a tela informa que o acesso e demonstrativo/local e nao representa
+  autenticacao real;
+- campos, mensagens de erro e botao de entrada usam linguagem demonstrativa;
+- botoes de acesso rapido ocupam largura completa para leitura no celular.
+
+Credenciais e comportamento preservados:
+
+- Admin: `admin.demonstracao@example.com` / `admin123`, chave rapida `admin`;
+- Colaborador: `colaborador.campo@example.com` / `colab123`, chave rapida
+  `colaborador`;
+- Produtor: `produtor.demonstracao@example.com` / `prod123`, chave rapida
+  `produtor`;
+- `authMock`, roteamento por perfil e separacao entre Usuario administrativo e
+  login demonstrativo permanecem funcionais;
+- Usuario criado no Admin continua sem virar login real.
 
 ## Objetivo
 
@@ -692,12 +719,29 @@ Criterio de aceite:
 - Usuario continua validando perfis/vinculos mockados;
 - demonstracao nao mistura pessoa e Propriedade.
 
-### Bloco 16B.5 - Smoke Em Android Fisico
+### Bloco 16B.5 - Ajuste Final De Login/Acesso Rapido
 
-- executar a rodada 16B de `docs/project/smoke.md`;
-- testar sem internet;
-- conferir que assets internos abrem;
-- conferir linguagem, dados e limites do mock.
+Status em 2026-06-04: implementado na `LoginScreen`, sem alterar mecanismo de
+autenticacao mockada.
+
+- alinhar os tres rotulos de acesso rapido com as personas principais;
+- remover linguagem visivel de desenvolvimento;
+- explicar que o acesso e demonstrativo/local;
+- preservar credenciais, chaves de perfil e roteamento atuais.
+
+Criterio de aceite:
+
+- Admin, Colaborador e Produtor continuam entrando pelos acessos preparados;
+- a tela nao usa mais `dev` ou nomes legados nos rotulos de acesso rapido;
+- nenhum texto promete autenticacao real.
+
+### Recomendacao Para A Fase 16C
+
+- executar a rodada final de smoke em Android fisico;
+- testar login manual e acesso rapido das tres personas;
+- testar persistencia local apos fechar/reabrir o app;
+- testar sem internet e conferir abertura dos assets internos;
+- revisar legibilidade final dos textos no APK instalado.
 
 ## Criterios De Pronto Da Fase 16B
 
@@ -705,6 +749,7 @@ Criterio de aceite:
 - Sela de Prata I tem historia demonstrativa coerente ou pendencia explicita;
 - Usuario/Titular nao e confundido com nome da Propriedade;
 - tres perfis principais possuem personas demonstrativas claras;
+- Login e acesso rapido usam as mesmas personas demonstrativas;
 - visitas e caderno do fluxo principal sao realistas, neutros e vinculados a
   `p_sela1`;
 - Mapas/Arquivos tecnicos priorizam consulta e nao prometem upload;

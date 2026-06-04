@@ -18,7 +18,7 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
 9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Arquivo técnico`, sem alterar abertura, filtros, permissões ou contratos.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
-11. APK demonstrável: não entregar build em modo `__DEV__`; alinhar que login rápido, usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
+11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
 **Rodada Fase 16B - Cadastros E Mock Realista Para Campo**
 
@@ -39,7 +39,10 @@ salvamento local e seus limites. Telefone/documento sao opcionais, Usuario
 administrativo nao cria login real e os perfis/vinculos continuam
 demonstrativos.
 
-Credenciais principais alinhadas na 16B.1:
+Na 16B.5, a tela de Login e o acesso rapido passaram a usar linguagem
+demonstrativa/local e os mesmos nomes das tres personas principais.
+
+Credenciais principais alinhadas na 16B.1 e preservadas na 16B.5:
 
 - Admin Demonstração: `admin.demonstracao@example.com` / `admin123`
 - Colaborador de Campo: `colaborador.campo@example.com` / `colab123`
@@ -47,7 +50,7 @@ Credenciais principais alinhadas na 16B.1:
 
 | ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
 |---|---|---|---|---|---|---|---|
-| APK16B-01 | P0 | Todos | Dados demonstrativos | Conferir as credenciais principais de Admin, Colaborador e Produtor | As três personas são claramente demonstrativas e não expõem telefone/documento pessoal real | Reexecutar | Seed alinhado; rótulos hardcoded do acesso rápido ainda usam nomes legados |
+| APK16B-01 | P0 | Todos | Dados demonstrativos | Conferir as credenciais principais de Admin, Colaborador e Produtor | As três personas são claramente demonstrativas e não expõem telefone/documento pessoal real | Reexecutar | Seed e rótulos do acesso rápido alinhados |
 | APK16B-02 | P0 | Produtor | Sela de Prata I | Abrir a Propriedade principal e conferir Titular/Usuario | Nome do Usuario/Titular não é confundido com nome da Propriedade | Reexecutar | Esperado: Produtor Demonstração; não inserir Titular real |
 | APK16B-03 | P0 | Todos | Sela de Prata I | Conferir área cadastrada e área coberta pelos talhões | Diferença entre área total e área mapeada está confirmada/explicada ou registrada como pendência | Reexecutar | Mock atual: 6200 ha; manifesto: 1888,6 ha |
 | APK16B-04 | P0 | Produtor/Colaborador/Admin | Fluxo principal | Abrir mapa, anexos, visitas e caderno da Sela de Prata I | Os quatro grupos possuem dados coerentes no contexto de `p_sela1` | Reexecutar | Seed e teste automatizado preparados; preservar `fazenda_id` |
@@ -61,6 +64,8 @@ Credenciais principais alinhadas na 16B.1:
 | APK16B-12 | P1 | Admin/Dev controlado | Mapas locais | Alterar metadado mockado de Mapa pela camada controlada, fechar e abrir o app | Metadado continua disponível; nenhum arquivo físico é copiado ou enviado | Reexecutar | Persistência cobre somente metadados estruturados; associação interna não aparece na tela |
 | APK16B-13 | P0 | Admin | Editar Propriedade | Alterar nome, Área total informada ou campo opcional e salvar | Alteração fica salva localmente; Titular, Região e Microregião não podem ser trocados | Reexecutar | Implementado visualmente na 16B.4; validar em Android físico |
 | APK16B-14 | P1 | Admin | Detalhe de Usuario | Abrir Usuario sem telefone/documento | Campos vazios não recebem destaque e a tela explica que vínculos/perfis são demonstrativos | Reexecutar | Cadastro não cria login ou RBAC real |
+| APK16B-15 | P0 | Todos | Login/Acesso rápido | Abrir a tela de Login e expandir o acesso rápido | Tela usa `Acesso rápido para demonstração` e exibe Admin Demonstração, Colaborador de Campo e Produtor Demonstração | Reexecutar | Não deve aparecer `dev`, Bruna, Marcos ou Sela como rótulo de acesso |
+| APK16B-16 | P0 | Todos | Login/Acesso rápido | Entrar pelas três opções rápidas e pelas credenciais principais | Cada persona entra no perfil esperado; nenhuma opção cria ou promete autenticação real | Reexecutar | Usuário criado no Admin continua fora do `authMock` |
 
 **Rodada Fase 16A - APK Demonstrável Para Campo**
 

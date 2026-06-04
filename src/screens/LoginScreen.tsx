@@ -15,7 +15,7 @@ export default function LoginScreen({ navigation }) {
   const [senha, setSenha] = React.useState('');
   const [mostrarSenha, setMostrarSenha] = React.useState(false);
   const [erro, setErro] = React.useState('');
-  const [modoDevLogin, setModoDevLogin] = React.useState(false);
+  const [modoAcessoRapido, setModoAcessoRapido] = React.useState(false);
 
   React.useEffect(() => {
     Animated.parallel([
@@ -36,11 +36,11 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     setErro('');
     if (!email.trim()) {
-      setErro('Informe seu email');
+      setErro('Informe o e-mail demonstrativo');
       return;
     }
     if (!senha.trim()) {
-      setErro('Informe sua senha');
+      setErro('Informe a senha demonstrativa');
       return;
     }
     try {
@@ -48,17 +48,16 @@ export default function LoginScreen({ navigation }) {
       // Direcionamento automático - sem escolha de perfil
       // O próprio navigation cuida de redirecionar baseado no user.perfil
     } catch (err) {
-      setErro('Email ou senha incorretos');
+      setErro('Credenciais demonstrativas inválidas');
     }
   };
 
-  // Login rápido para desenvolvimento
-  const handleDevLogin = async (key) => {
+  const handleAcessoRapido = async (key) => {
     setErro('');
     try {
       await loginRapido(key);
     } catch (err) {
-      setErro('Erro ao autenticar');
+      setErro('Não foi possível iniciar o acesso demonstrativo');
     }
   };
 
@@ -79,7 +78,10 @@ export default function LoginScreen({ navigation }) {
         >
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.subtitle}>Acesse sua conta</Text>
+            <Text style={styles.subtitle}>Acesso demonstrativo local</Text>
+            <Text style={styles.accessNote}>
+              Use as credenciais preparadas para a demonstração. Este acesso não representa autenticação real.
+            </Text>
 
             {loading ? (
               <View style={styles.loadingContainer}>
@@ -93,7 +95,7 @@ export default function LoginScreen({ navigation }) {
                   <Ionicons name="mail-outline" size={20} color={colors.primary} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Email"
+                    placeholder="E-mail demonstrativo"
                     placeholderTextColor={colors.muted}
                     value={email}
                     onChangeText={(t) => { setEmail(t); setErro(''); }}
@@ -108,7 +110,7 @@ export default function LoginScreen({ navigation }) {
                   <Ionicons name="lock-closed-outline" size={20} color={colors.primary} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    placeholder="Senha"
+                    placeholder="Senha demonstrativa"
                     placeholderTextColor={colors.muted}
                     value={senha}
                     onChangeText={(t) => { setSenha(t); setErro(''); }}
@@ -142,54 +144,53 @@ export default function LoginScreen({ navigation }) {
                     end={{ x: 1, y: 1 }}
                   >
                     <Ionicons name="log-in-outline" size={24} color={colors.white} style={styles.btnIcon} />
-                    <Text style={styles.btnText}>Entrar</Text>
+                    <Text style={styles.btnText}>Entrar na demonstração</Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
-                {/* Separador - Acesso Rápido (DEV) */}
                 <TouchableOpacity 
-                  onPress={() => setModoDevLogin(!modoDevLogin)}
-                  style={styles.devToggle}
+                  onPress={() => setModoAcessoRapido(!modoAcessoRapido)}
+                  style={styles.acessoRapidoToggle}
                 >
                   <View style={styles.separador}>
                     <View style={styles.separadorLinha} />
                     <Text style={styles.separadorTexto}>
-                      {modoDevLogin ? 'Ocultar acesso rápido' : 'Acesso rápido (dev)'}
+                      {modoAcessoRapido ? 'Ocultar acesso rápido' : 'Acesso rápido para demonstração'}
                     </Text>
                     <View style={styles.separadorLinha} />
                   </View>
                 </TouchableOpacity>
 
-                {modoDevLogin && (
-                  <View style={styles.devButtonsContainer}>
+                {modoAcessoRapido && (
+                  <View style={styles.acessoRapidoButtonsContainer}>
                     <TouchableOpacity 
-                      style={[styles.devBtn]} 
-                      onPress={() => handleDevLogin('admin')} 
+                      style={styles.acessoRapidoBtn}
+                      onPress={() => handleAcessoRapido('admin')}
                       disabled={loading}
                       activeOpacity={0.8}
                     >
                       <Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />
-                      <Text style={styles.devBtnText}>Administrador (Bruna)</Text>
+                      <Text style={styles.acessoRapidoBtnText}>Admin Demonstração</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={[styles.devBtn]} 
-                      onPress={() => handleDevLogin('colaborador')} 
+                      style={styles.acessoRapidoBtn}
+                      onPress={() => handleAcessoRapido('colaborador')}
                       disabled={loading}
                       activeOpacity={0.8}
                     >
                       <Ionicons name="people-outline" size={18} color={colors.secondary} />
-                      <Text style={styles.devBtnText}>Colaborador (Marcos)</Text>
+                      <Text style={styles.acessoRapidoBtnText}>Colaborador de Campo</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                      style={[styles.devBtn]} 
-                      onPress={() => handleDevLogin('produtor')} 
+                      style={styles.acessoRapidoBtn}
+                      onPress={() => handleAcessoRapido('produtor')}
                       disabled={loading}
                       activeOpacity={0.8}
                     >
                       <Ionicons name="leaf-outline" size={18} color={colors.success} />
-                      <Text style={styles.devBtnText}>Produtor (Sela)</Text>
+                      <Text style={styles.acessoRapidoBtnText}>Produtor Demonstração</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -226,8 +227,16 @@ const styles = StyleSheet.create({
   subtitle: { 
     fontSize: typography.fontBody + 2, 
     color: colors.textLight, 
-    marginBottom: spacing.gap * 3,
+    marginBottom: spacing.gap,
     fontWeight: typography.weightSemibold
+  },
+  accessNote: {
+    color: colors.muted,
+    fontSize: typography.fontBody - 2,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: spacing.gap * 3,
+    maxWidth: 360,
   },
   loadingContainer: {
     marginTop: spacing.gap * 2,
@@ -296,7 +305,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightBold,
     fontSize: typography.fontBody + 2
   },
-  devToggle: {
+  acessoRapidoToggle: {
     marginTop: 8,
   },
   separador: {
@@ -313,14 +322,13 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody - 2,
     color: colors.muted,
   },
-  devButtonsContainer: {
+  acessoRapidoButtonsContainer: {
     flexDirection: 'row',
     gap: 8,
     flexWrap: 'wrap',
   },
-  devBtn: {
-    flex: 1,
-    minWidth: 90,
+  acessoRapidoBtn: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -331,7 +339,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  devBtnText: {
+  acessoRapidoBtnText: {
     fontSize: typography.fontBody - 2,
     color: colors.text,
     fontWeight: typography.weightSemibold,

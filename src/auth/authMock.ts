@@ -9,7 +9,7 @@
  * 
  * 2. COLABORADOR (colaborador): Acesso regional
  *    - Mesmas funcionalidades do admin, mas limitado à sua região/sub-regiões
- *    - NÃO aparece "colaborador" no login - direcionamento automático
+ *    - Direcionamento automático após autenticação ou acesso rápido demonstrativo
  *    - Regiões divididas por sub-regiões: Goiás 1, Goiás 2, Goiânia, Rio Verde, etc.
  * 
  * 3. PRODUTOR (produtor = cliente = proprietário): Dono da fazenda
@@ -166,7 +166,7 @@ export const authLogin = async (email, senha) => {
 };
 
 /**
- * Login rápido por perfil (apenas para desenvolvimento/testes)
+ * Acesso rápido por perfil para demonstração/testes locais
  */
 export const authLoginByProfile = async (profileKey) => {
   return new Promise((res, rej) => {
