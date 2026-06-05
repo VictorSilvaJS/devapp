@@ -817,6 +817,39 @@ Limite preservado: sessao antiga ja restaurada nao e revalidada profundamente
 nesta microfase. O corte atual bloqueia novos logins; revalidacao de sessao
 persistida quando o status mudar fica para evolucao futura.
 
+Status em 2026-06-05 (Fase 16E.6): a frente de login local demonstrativo foi
+fechada com smoke tecnico, revisao leve de seguranca local, reforco de testes e
+registro documental.
+
+Resultado da revisao:
+
+- login local demonstrativo esta funcional para usuarios persistidos com
+  credencial local;
+- novos logins respeitam status efetivo antes de gravar `@tche:user`;
+- acesso rapido demonstrativo continua funcionando para Admin Demonstracao,
+  Colaborador de Campo e Produtor Demonstracao;
+- `@tche:user` continua sanitizado, sem senha, hash, salt, credencial ou token;
+- senha inicial e nova senha digitadas no Admin nao aparecem em sessao,
+  `User.list`, detalhe de usuario, navegacao, dashboards ou mensagens de erro;
+- `UsuarioDetailScreen` mostra apenas indicador seguro de credencial local;
+- mensagens finais de pendente, inativo, cadastro inconsistente e credencial
+  invalida permanecem controladas.
+
+Observacao de seguranca local: o snapshot `@tche:mock-mvp:v1` ainda preserva o
+campo legado `senha` nos usuarios do seed e `senha: 'mock123'` em usuarios
+administrativos criados, por compatibilidade com o mock antigo. Esse campo nao
+recebe a senha inicial nem a nova senha local, nao e usado como credencial
+local real e nao autentica usuario administrativo sem registro em
+`@tche:local-credentials:v1`.
+
+Limites preservados na 16E.6:
+
+- sessao antiga restaurada ainda nao e revalidada profundamente;
+- credenciais locais sao locais ao aparelho;
+- usuarios e credenciais nao sincronizam entre dispositivos;
+- sem backend, JWT, RBAC real, recuperacao/troca de senha pelo proprio usuario,
+  GeoJSON, PNG, filtros, dashboards ou APK final.
+
 Verificacao Expo apos adicionar `expo-crypto`: `npx expo install --check`
 indicou dependencias atualizadas. `npx expo-doctor` passou em 14 de 16
 verificacoes e apontou dois riscos preexistentes/de publicacao futura:

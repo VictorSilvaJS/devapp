@@ -33,6 +33,12 @@ nao entram. A regra vale para usuarios locais persistidos e para fallback
 demonstrativo quando houver status/ativo no usuario retornado. Os tres acessos
 demonstrativos principais continuam funcionando.
 
+Status em 2026-06-05: concluida a Fase 16E.6 com smoke tecnico, revisao leve
+de seguranca local e fechamento documental do login local demonstrativo. Nao
+houve mudanca funcional de produto. A revisao confirmou login local funcional,
+status respeitado em novos logins, acesso rapido preservado, sessao sanitizada
+e limites atuais de aparelho/localidade sem backend, JWT ou RBAC real.
+
 ## Objetivo Da 16E.1
 
 Mapear o funcionamento atual do login, cadastro administrativo de usuarios,
@@ -488,6 +494,143 @@ Limites preservados:
 - sem mudanca em telas administrativas;
 - sem recuperacao/troca de senha pelo usuario;
 - sem backend, JWT, RBAC real, GeoJSON, PNG, filtros, dashboards ou APK final.
+
+## Resultado Da 16E.6
+
+A Fase 16E.6 fechou a frente de login local demonstrativo com revisao tecnica,
+testes e documentacao, sem criar nova funcionalidade de produto.
+
+Arquivos alterados nesta microfase:
+
+- `tests/usuarioLocalAccessAdmin.test.js`
+- `docs/project/fase-16e-login-local.md`
+- `docs/project/estado-atual.md`
+
+Nao houve alteracao em:
+
+- `src/auth/AuthContext.tsx`
+- `src/auth/authLocal.ts`
+- `src/auth/authSession.ts`
+- `src/auth/authStatus.ts`
+- `src/auth/localCredentials.ts`
+- `src/screens/LoginScreen.tsx`
+- `src/screens/NovoUsuarioScreen.tsx`
+- `src/screens/UsuarioDetailScreen.tsx`
+
+Revisao de seguranca local:
+
+- `@tche:user` continua passando por `sanitizeAuthUserForSession`, removendo
+  `senha`, `senha_hash`, `salt`, credenciais e tokens antes de persistir ou
+  restaurar sessao.
+- As senhas locais digitadas no Admin, tanto senha inicial quanto nova senha,
+  nao entram no usuario autenticado, em `User.get`, em `User.list` ou na sessao.
+- `UsuarioDetailScreen` usa apenas `hasCredential(usuarioId)` e mostra
+  indicador seguro, sem hash, salt, senha, datas tecnicas ou objeto de
+  credencial.
+- `LoginScreen` exibe mensagens controladas para pendente, inativo, cadastro
+  local inconsistente e credencial invalida, sem expor detalhes tecnicos.
+- Navegacao entre telas de usuario usa somente `userId`/`id` como parametro.
+- Dashboards recebem o usuario sanitizado exposto pelo `AuthContext`.
+- Os logs atuais do `AuthContext` registram o usuario ja sanitizado; nao foi
+  encontrado log de senha local, hash, salt, credencial ou token.
+
+Observacao sobre o mock administrativo: `@tche:mock-mvp:v1` ainda preserva o
+campo legado `senha` nos usuarios do seed e em usuarios administrativos criados
+com `senha: 'mock123'`, por compatibilidade do validador/mock antigo. Esse
+campo nao recebe a senha inicial nem a nova senha local, nao e migrado para
+credencial e nao autentica usuario administrativo sem credencial local. A
+credencial local real da demonstracao permanece separada em
+`@tche:local-credentials:v1`, onde ficam hash e salt.
+
+Fluxos revisados:
+
+- criacao de Admin ativo com senha inicial;
+- criacao de Colaborador ativo com senha inicial;
+- criacao de Produtor ativo com senha inicial;
+- criacao de usuario pendente com senha inicial;
+- criacao de usuario inativo com senha inicial;
+- edicao de usuario sem alterar senha preservando credencial;
+- redefinicao de senha local invalidando a senha antiga;
+- login ativo funcionando;
+- login pendente bloqueado;
+- login inativo bloqueado;
+- senha errada bloqueada;
+- e-mail com caixa diferente e espacos externos funcionando;
+- `mock123` sem autenticar usuario local sem credencial;
+- credencial local com prioridade sobre demonstrativa;
+- senha local errada sem fallback demonstrativo;
+- login ativo gravando apenas usuario sanitizado;
+- logout removendo sessao;
+- reinicio restaurando sessao existente;
+- usuario bloqueado sem gravar sessao.
+
+Mensagens finais conferidas:
+
+- pendente: `Seu acesso ainda está pendente de liberação pelo administrador.`
+- inativo: `Seu acesso está inativo. Solicite a reativação ao administrador.`
+- credencial invalida: erro visual generico de e-mail/senha invalidos.
+- cadastro local inconsistente:
+  `Não foi possível localizar o cadastro deste usuário.`
+
+Acesso rapido:
+
+- Admin Demonstracao continua funcionando;
+- Colaborador de Campo continua funcionando;
+- Produtor Demonstracao continua funcionando;
+- o acesso rapido passa por `assertUsuarioPodeEntrar` antes de `setUser` e
+  persistencia;
+- os tres perfis demonstrativos sem status explicito continuam tratados como
+  ativos por compatibilidade.
+
+Testes reforcados:
+
+- `tests/usuarioLocalAccessAdmin.test.js` passou a cobrir criacao de Admin,
+  Colaborador e Produtor ativos com senha inicial;
+- o mesmo teste passou a cobrir criacao de usuarios pendente e inativo com
+  senha inicial;
+- o teste de criacao confirmou que a senha inicial nao aparece em `User.list`.
+
+Validacoes executadas na 16E.6:
+
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/authLocal.test.js` passou;
+- `node tests/localCredentials.test.js` passou;
+- `node tests/usuarioLocalAccessAdmin.test.js` passou;
+- `git diff --check` passou, com avisos normais de LF/CRLF no Windows;
+- `npx expo install --check` falhou no sandbox por bloqueio de rede e passou
+  ao ser reexecutado com acesso aos servidores da Expo.
+
+Limites e riscos residuais:
+
+- sessao antiga ja restaurada nao e revalidada profundamente nesta microfase;
+- credenciais locais sao locais ao aparelho e nao sincronizam entre
+  dispositivos;
+- nao ha backend, JWT, RBAC real, convite, recuperacao de senha ou troca de
+  senha pelo proprio usuario;
+- `@tche:mock-mvp:v1` ainda guarda `senha` legada do mock para
+  compatibilidade, sem conter a senha local digitada no Admin;
+- `@tche:local-credentials:v1` e demonstrativo/local e nao substitui uma
+  estrategia produtiva de autenticacao de backend.
+
+Checklist manual Android recomendado antes da proxima frente:
+
+1. Entrar como Admin Demonstracao.
+2. Criar usuario Produtor ativo com senha inicial.
+3. Sair.
+4. Entrar com o Produtor criado.
+5. Confirmar dashboard/perfil do Produtor.
+6. Sair.
+7. Criar usuario Colaborador ativo com senha inicial.
+8. Entrar com o Colaborador criado.
+9. Confirmar dashboard/perfil do Colaborador.
+10. Criar usuario pendente com senha.
+11. Tentar entrar e confirmar bloqueio.
+12. Criar usuario inativo com senha.
+13. Tentar entrar e confirmar bloqueio.
+14. Redefinir senha de um usuario ativo.
+15. Confirmar que senha antiga nao entra e senha nova entra.
+16. Confirmar que os tres acessos rapidos continuam funcionando.
 
 ## Arquivos Analisados
 

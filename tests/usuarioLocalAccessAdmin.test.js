@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const {
   MOCK_LOCAL_STORAGE_KEY,
 } = require('../.tmp-domain-compat/src/api/mockLocalPersistence');
-const { User, MockLocalData } = require('../.tmp-domain-compat/src/api/mock');
+const { User, Produtor, MockLocalData } = require('../.tmp-domain-compat/src/api/mock');
 const {
   LOCAL_CREDENTIAL_STORAGE_KEY,
   createLocalCredentialService,
@@ -81,7 +81,7 @@ const setupMock = async () => {
   return mockStorage;
 };
 
-const adminPayload = (overrides = {}) =>
+const adminPayload = (overrides = {}, propriedades = []) =>
   buildUsuarioAdminPayload({
     form: {
       nome: 'Usuário Local Teste',
@@ -94,7 +94,7 @@ const adminPayload = (overrides = {}) =>
       nivelAdministrativo: 'suporte',
       ...overrides,
     },
-    propriedades: [],
+    propriedades,
   });
 
 const run = async () => {
@@ -159,6 +159,114 @@ const run = async () => {
 
     const rawMock = mockStorage.values.get(MOCK_LOCAL_STORAGE_KEY);
     assert.equal(rawMock.includes('SenhaInicial123'), false);
+
+    const usuarios = await User.list();
+    const listed = usuarios.find((item) => item.id === saved.id);
+    assert.ok(listed);
+    assert.equal(JSON.stringify(listed).includes('SenhaInicial123'), false);
+  });
+
+  await test('cria usuarios ativos por perfil com senha inicial', async () => {
+    await setupMock();
+    const { service } = createService();
+    const propriedades = await Produtor.list();
+    const propriedade = propriedades[0];
+
+    const admin = await createUsuarioAdminWithLocalCredential({
+      userApi: User,
+      credentialService: service,
+      payload: adminPayload({ email: 'admin.ativo.cred@example.com', perfil: 'admin', status: 'ativo' }, propriedades),
+      email: 'admin.ativo.cred@example.com',
+      senha: 'SenhaAdmin123',
+    });
+
+    const colaboradorPayload = adminPayload({
+      email: 'colaborador.ativo.cred@example.com',
+      perfil: 'colaborador',
+      status: 'ativo',
+      regiao: propriedade.regiao,
+      subRegioesText: propriedade.microregiao,
+    }, propriedades);
+    const colaborador = await createUsuarioAdminWithLocalCredential({
+      userApi: User,
+      credentialService: service,
+      payload: colaboradorPayload,
+      email: colaboradorPayload.email,
+      senha: 'SenhaColab123',
+    });
+
+    const produtorPayload = adminPayload({
+      email: 'produtor.ativo.cred@example.com',
+      perfil: 'produtor',
+      status: 'ativo',
+      vinculosPropriedades: [{
+        propriedade_id: propriedade.id,
+        tipo_vinculo: 'titular',
+        principal: true,
+      }],
+    }, propriedades);
+    const produtor = await createUsuarioAdminWithLocalCredential({
+      userApi: User,
+      credentialService: service,
+      payload: produtorPayload,
+      email: produtorPayload.email,
+      senha: 'SenhaProdutor123',
+    });
+
+    assert.equal((await User.get(admin.id)).perfil, 'admin');
+    assert.equal((await User.get(colaborador.id)).perfil, 'colaborador');
+    assert.equal((await User.get(produtor.id)).perfil, 'produtor');
+    assert.deepEqual(await service.verifyCredential('admin.ativo.cred@example.com', 'SenhaAdmin123'), {
+      ok: true,
+      usuario_id: admin.id,
+    });
+    assert.deepEqual(await service.verifyCredential('colaborador.ativo.cred@example.com', 'SenhaColab123'), {
+      ok: true,
+      usuario_id: colaborador.id,
+    });
+    assert.deepEqual(await service.verifyCredential('produtor.ativo.cred@example.com', 'SenhaProdutor123'), {
+      ok: true,
+      usuario_id: produtor.id,
+    });
+  });
+
+  await test('cria usuarios pendente e inativo com senha inicial', async () => {
+    await setupMock();
+    const { service } = createService();
+    const pendentePayload = adminPayload({
+      email: 'usuario.pendente.cred@example.com',
+      status: 'pendente',
+    });
+    const inativoPayload = adminPayload({
+      email: 'usuario.inativo.cred@example.com',
+      status: 'inativo',
+    });
+
+    const pendente = await createUsuarioAdminWithLocalCredential({
+      userApi: User,
+      credentialService: service,
+      payload: pendentePayload,
+      email: pendentePayload.email,
+      senha: 'SenhaPendente123',
+    });
+    const inativo = await createUsuarioAdminWithLocalCredential({
+      userApi: User,
+      credentialService: service,
+      payload: inativoPayload,
+      email: inativoPayload.email,
+      senha: 'SenhaInativo123',
+    });
+
+    assert.equal((await User.get(pendente.id)).status, 'pendente');
+    assert.equal((await User.get(inativo.id)).status, 'inativo');
+    assert.deepEqual(await service.verifyCredential('usuario.pendente.cred@example.com', 'SenhaPendente123'), {
+      ok: true,
+      usuario_id: pendente.id,
+    });
+    assert.deepEqual(await service.verifyCredential('usuario.inativo.cred@example.com', 'SenhaInativo123'), {
+      ok: true,
+      usuario_id: inativo.id,
+    });
   });
 
   await test('edicao sem senha preserva credencial existente', async () => {
