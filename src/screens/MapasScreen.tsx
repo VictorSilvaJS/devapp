@@ -683,18 +683,29 @@ export default function MapasScreen({ route, navigation }) {
         return;
       }
 
-      const { layer: talhoesLayerAtualizada } = await recarregarGeoJsonLocal({
-        propriedade_id: geoJsonPreview.resolvedContext.propriedade_id,
-        fazenda_id: geoJsonPreview.resolvedContext.fazenda_id,
-        produtor_id: geoJsonPreview.resolvedContext.produtor_id,
-      });
+      const resolvedContext = geoJsonPreview.resolvedContext;
       setGeoJsonPreview(null);
       setGeoJsonPreviewMode('attach');
+
+      let talhoesLayerAtualizada: GeoJsonTalhoesLayerResult | null = null;
+      let recarregouCamada = false;
+      try {
+        const recarregamento = await recarregarGeoJsonLocal({
+          propriedade_id: resolvedContext.propriedade_id,
+          fazenda_id: resolvedContext.fazenda_id,
+          produtor_id: resolvedContext.produtor_id,
+        });
+        talhoesLayerAtualizada = recarregamento.layer;
+        recarregouCamada = true;
+      } catch {
+        toast.showWarning('GeoJSON salvo, mas não foi possível recarregar a camada agora.');
+      }
+
       toast.showSuccess(isReplacing ? 'GeoJSON local substituído.' : 'GeoJSON anexado à Propriedade.');
       if ((result as any).warnings?.length > 0) {
         toast.showWarning((result as any).warnings[0].message);
       }
-      if (isGeoJsonTalhoesLayerActive(talhoesLayerAtualizada)) {
+      if (recarregouCamada && isGeoJsonTalhoesLayerActive(talhoesLayerAtualizada)) {
         toast.showInfo('Talhões carregados do GeoJSON local.');
       }
     } catch (error) {

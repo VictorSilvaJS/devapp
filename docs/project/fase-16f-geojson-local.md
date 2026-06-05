@@ -1932,18 +1932,195 @@ Validacoes executadas na 16F.8:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
-### 16F.9 - Smoke Android
+### 16F.9 - Smoke Android do GeoJSON local
 
-Validar em Android fisico:
+Status em 2026-06-05: foi executada revisao tecnica final da frente GeoJSON
+local e preparado o checklist de smoke Android fisico. O smoke em aparelho
+fisico ainda nao foi executado nesta sessao.
 
-- selecao de arquivo;
-- copia interna;
-- reinicio do app;
-- carregamento offline;
-- toque em talhao;
-- empty state de Propriedade sem GeoJSON;
-- tentativa fora do escopo;
-- arquivo grande e arquivo invalido.
+Arquivo alterado por correcao pequena:
+
+- `src/screens/MapasScreen.tsx`
+
+Arquivos de documentacao alterados:
+
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Correcao pequena aplicada:
+
+- apos confirmar anexo ou substituicao com metadado salvo, a modal de
+  pre-visualizacao passa a fechar antes da recarga da camada;
+- se a recarga posterior da camada local falhar, a tela mostra warning
+  controlado:
+  `GeoJSON salvo, mas nao foi possivel recarregar a camada agora.`;
+- isso evita que uma falha de refresh posterior pareca falha da associacao e
+  reduz risco de modal presa depois de uma gravacao bem-sucedida.
+
+Resultado da revisao tecnica:
+
+- nao foram encontrados imports quebrados nos arquivos da frente GeoJSON;
+- `MapasScreen` finaliza loading principal em `finally`;
+- picker cancelado permanece sem erro agressivo;
+- arquivo invalido retorna mensagem controlada do workflow;
+- falhas de leitura/validacao do GeoJSON ativo geram aviso e fallback para
+  seed/mock;
+- `FazendaMapaScreen` carrega camada efetiva antes de selecao por rota;
+- `GeoJsonStorageService.deleteStoredGeoJson` recusa caminho fora de
+  `tche-geojson-imports`;
+- workflows de importacao, visualizacao e gestao nao chamam `LimiteArea.list`,
+  nao importam telas, mocks ou assets e nao alteram seed;
+- metadados removidos nao retornam como ativo;
+- metadados substituidos permanecem no historico minimo;
+- nao ha gravacao de `FeatureCollection`, `features`, `coordinates`,
+  `poligono` ou `poligonos` no indice.
+
+Permissoes revisadas:
+
+- Admin ve `Anexar GeoJSON dos talhoes` em contexto de Propriedade sem ativo;
+- Admin ve `Substituir GeoJSON dos talhoes` e `Remover GeoJSON local` quando
+  ha ativo;
+- Colaborador autorizado ve as mesmas acoes apenas quando a Propriedade esta
+  no escopo efetivo;
+- Colaborador fora do escopo nao gerencia;
+- Produtor nao ve acoes administrativas;
+- Produtor visualiza a camada local ativa quando acessa a propria Propriedade
+  autorizada;
+- visao global/sem Propriedade clara nao mostra botoes administrativos de
+  GeoJSON.
+
+Fluxo de anexar revisado:
+
+- abre apenas em contexto de Propriedade gerenciavel;
+- cancelamento do picker retorna silenciosamente;
+- extensao/MIME invalido e validacao falsa retornam erro controlado;
+- arquivo valido abre pre-visualizacao com nome, contagem, partes, geometria,
+  tamanho, ano, safra e warnings;
+- confirmacao copia arquivo interno, cria metadado ativo e recarrega camada;
+- se a recarga da camada falhar apos sucesso, a tela mostra warning.
+
+Fluxo de substituir revisado:
+
+- exige GeoJSON local ativo;
+- mostra confirmacao antes de abrir picker;
+- reutiliza picker, validacao e pre-visualizacao;
+- novo metadado vira `ativo`;
+- anterior vira `substituido`;
+- arquivo antigo so e removido depois do novo ativo existir;
+- falha no novo arquivo mantem o anterior ativo;
+- falha ao apagar antigo apos substituicao retorna warning controlado.
+
+Fluxo de remover revisado:
+
+- exige GeoJSON local ativo;
+- mostra confirmacao explicando que Propriedade e anexos tecnicos nao serao
+  apagados;
+- marca metadado ativo como `removido`;
+- tenta apagar arquivo fisico local por caminho seguro;
+- arquivo inexistente nao derruba o fluxo;
+- falha de apagar arquivo vira warning controlado;
+- tela recarrega metadados e camada efetiva;
+- quando ha seed/mock, volta para a demarcacao disponivel;
+- quando nao ha seed/mock, o empty state de demarcacao permanece.
+
+Sela de Prata I:
+
+- seed/assets demonstrativos permanecem preservados;
+- `src/assets/geojson/selaDePrata1Talhoes.ts` nao foi alterado;
+- `data/processados/p_sela1` nao foi alterado;
+- `src/api/mock.ts` e `LimiteArea.list` nao foram alterados;
+- remocao do GeoJSON local de `p_sela1` remove apenas arquivo local seguro e
+  volta para a demarcacao demonstrativa quando disponivel;
+- PNGs de fertilidade continuam fora do fluxo GeoJSON local.
+
+Escopo preservado na 16F.9:
+
+- nao iniciou PNG;
+- nao implementou backend;
+- nao implementou sync;
+- nao implementou RBAC real;
+- nao alterou modelo de dados;
+- nao refatorou arquitetura;
+- nao gerou APK final.
+
+Checklist Android fisico recomendado:
+
+Admin:
+
+- login como Admin Demonstracao;
+- abrir Propriedade sem GeoJSON local ativo;
+- anexar GeoJSON valido;
+- cancelar picker e confirmar que nao ha erro agressivo;
+- confirmar pre-visualizacao;
+- confirmar indicador local;
+- abrir mapa cheio;
+- tocar em talhao e confirmar drawer/detalhe;
+- fechar e reabrir app para confirmar persistencia;
+- substituir por outro GeoJSON valido;
+- confirmar mudanca visual;
+- remover GeoJSON local;
+- confirmar fallback para seed/mock ou empty state.
+
+Colaborador:
+
+- login como Colaborador;
+- abrir Propriedade dentro do escopo;
+- confirmar que pode anexar/substituir/remover;
+- tentar Propriedade fora do escopo, se houver caminho;
+- confirmar que nao gerencia fora do escopo.
+
+Produtor:
+
+- login como Produtor vinculado;
+- abrir Propriedade com GeoJSON local ativo;
+- confirmar visualizacao dos talhoes;
+- confirmar ausencia de botoes administrativos;
+- abrir mapa cheio e tocar em talhao.
+
+Sela de Prata I:
+
+- abrir sem GeoJSON local ativo e confirmar seed funcionando;
+- anexar GeoJSON local;
+- confirmar indicador local;
+- remover GeoJSON local;
+- confirmar retorno ao seed demonstrativo;
+- confirmar que PNGs existentes continuam abrindo.
+
+Casos de erro recomendados para smoke:
+
+- picker cancelado;
+- `.png`, `.pdf`, `.zip`, `.kml`, `.kmz` e `.shp`;
+- `.json` invalido;
+- `FeatureCollection` vazio;
+- geometria `Point` ou `LineString`;
+- coordenada invalida;
+- arquivo maior que 10 MB, se houver amostra segura;
+- arquivo valido com warning de anel aberto;
+- arquivo valido com `MultiPolygon`;
+- arquivo sem nome de talhao, usando fallback `Talhao N`.
+
+Validacoes executadas na 16F.9:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonPropertyManageWorkflow.test.js` passou;
+- `node tests/geojsonTalhoesLayerService.test.js` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
+Recomendacao de fechamento:
+
+- a frente GeoJSON esta tecnicamente pronta para smoke Android;
+- manter a Fase 16F aberta operacionalmente ate o smoke fisico passar;
+- nao iniciar 16G/PNG antes de registrar o resultado do smoke Android.
 
 ## Testes Recomendados
 

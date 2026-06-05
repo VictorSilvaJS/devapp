@@ -1461,6 +1461,77 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16F.9 - Revisao Tecnica E Checklist Android Do GeoJSON Local
+
+Status em 2026-06-05: foi executada revisao tecnica final da frente GeoJSON
+local e preparado o checklist de smoke Android fisico. O smoke em aparelho
+fisico ainda nao foi executado nesta sessao.
+
+Arquivo alterado por correcao pequena:
+
+- `src/screens/MapasScreen.tsx`.
+
+Arquivos de documentacao alterados:
+
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Correcao aplicada:
+
+- depois de confirmar anexo ou substituicao com metadado salvo, a modal de
+  pre-visualizacao fecha antes da recarga da camada;
+- se a recarga posterior da camada falhar, a tela mostra warning controlado em
+  vez de tratar a operacao inteira como falha;
+- isso reduz risco de modal presa apos gravacao bem-sucedida.
+
+Resultado da revisao:
+
+- picker cancelado permanece sem erro agressivo;
+- arquivo invalido retorna mensagem controlada;
+- falha de leitura/validacao de GeoJSON ativo usa warning e fallback para
+  seed/mock;
+- substituicao so remove arquivo antigo depois do novo ativo existir;
+- remocao marca metadado como `removido` e tenta apagar apenas arquivo local
+  seguro;
+- Produtor nao ve acoes administrativas e continua podendo visualizar camada
+  local ativa quando possui acesso;
+- Admin e Colaborador no escopo podem anexar, substituir e remover;
+- Sela de Prata I preserva seed/assets, `data/processados/p_sela1`,
+  `src/api/mock.ts`, `LimiteArea.list` e PNGs existentes.
+
+Escopo preservado:
+
+- nao iniciou PNG;
+- nao implementou backend;
+- nao implementou sync;
+- nao implementou RBAC real;
+- nao alterou modelo de dados;
+- nao refatorou arquitetura;
+- nao gerou APK final.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonPropertyManageWorkflow.test.js` passou;
+- `node tests/geojsonTalhoesLayerService.test.js` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  passou apos liberacao de rede, sem divergencias de dependencias Expo;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
+Recomendacao:
+
+- a frente GeoJSON esta tecnicamente pronta para smoke Android;
+- manter a Fase 16F aberta operacionalmente ate o smoke fisico passar;
+- nao iniciar 16G/PNG antes de registrar o resultado do smoke Android.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
