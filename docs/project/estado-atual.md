@@ -1693,6 +1693,68 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16G.4 - Storage Interno De PNG
+
+Status em 2026-06-05: foi criado o servico isolado
+`src/services/PngStorageService.ts` para copiar PNG validado para storage
+interno controlado do app, sem tela, sem botao, sem metadados persistidos e
+sem integracao com `Mapa.list` ou `MapasScreen`.
+
+Arquivos principais:
+
+- `src/services/PngStorageService.ts`;
+- `tests/pngStorageService.test.js`;
+- `docs/project/fase-16g-anexos-png-local.md`.
+
+Diretorio interno:
+
+- `FileSystem.documentDirectory + 'tche-png-imports/'`.
+
+Regras implementadas:
+
+- cria diretorio base e subdiretorio por Propriedade;
+- sanitiza `propriedade_id`, `importId` e nome original;
+- preserva e normaliza extensao `.png`;
+- remove componentes de path, barras, `../` e caracteres perigosos;
+- aplica fallback `mapa-tecnico.png`;
+- constroi URI segura no formato
+  `.../tche-png-imports/{propriedade_id}/{importId}-{nome}.png`;
+- usa `FileSystem.copyAsync` para copiar o PNG;
+- confirma existencia com `FileSystem.getInfoAsync`;
+- retorna URI local estavel, nome final, nome original, tamanho quando
+  disponivel, MIME `image/png`, `propriedade_id`, `fazenda_id` e `copiedAt`;
+- bloqueia sobrescrita por padrao e permite `overwrite: true` apenas quando
+  explicito;
+- remove de forma segura apenas arquivos dentro de `tche-png-imports/`;
+- trata arquivo inexistente na remocao como sucesso controlado com
+  `deleted: false`.
+
+Escopo preservado:
+
+- nao le bytes, string ou conteudo do PNG em JS;
+- nao converte PNG para base64;
+- nao usa fallback textual;
+- nao chama `PngMapImportService`;
+- nao escreve em `@tche:png-map-imports:v1`;
+- nao escreve em `@tche:mock-mvp:v1`;
+- nao altera `Mapa.list`;
+- nao altera `MapasScreen`;
+- nao altera registros ou assets da Sela de Prata I;
+- nao cria visualizador, formulario, botao, backend, RBAC real, sincronizacao
+  ou APK.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF;
+- `npx expo install --check` passou.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

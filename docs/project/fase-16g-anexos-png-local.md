@@ -14,14 +14,18 @@ validacao leve de PNG em `src/services/PngFilePickerService.ts`, usando
 `expo-document-picker` por adapter injetavel, sem ler conteudo, sem copiar para
 storage interno e sem persistir metadados.
 
+Status em 2026-06-05: a Fase 16G.4 criou o servico isolado de storage interno
+de PNG em `src/services/PngStorageService.ts`, copiando arquivo validado para
+diretorio controlado do app por Propriedade, sem tela, sem botao, sem salvar
+metadados e sem integrar com `Mapa.list` ou `MapasScreen`.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
 
-Esta frente ainda nao altera telas, nao adiciona botao, nao copia arquivo para
-storage interno, nao persiste arquivo selecionado, nao altera `Mapa.list`, nao
-muda os registros da Sela de Prata I e nao implementa backend, JWT, RBAC real,
-sincronizacao ou APK final.
+Esta frente ainda nao altera telas, nao adiciona botao, nao persiste metadados
+do PNG selecionado, nao altera `Mapa.list`, nao muda os registros da Sela de
+Prata I e nao implementa backend, JWT, RBAC real, sincronizacao ou APK final.
 
 ## Base Documental Ativa
 
@@ -592,9 +596,120 @@ Validacoes da 16G.3:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## 16G.4 - Storage Interno De PNG
+
+Status em 2026-06-05: foi criado o servico isolado de storage interno de PNG em
+`src/services/PngStorageService.ts`.
+
+Arquivos criados:
+
+- `src/services/PngStorageService.ts`
+- `tests/pngStorageService.test.js`
+
+Arquivos alterados:
+
+- `tsconfig.domain-compat.json`
+- `package.json`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Diretorio interno adotado:
+
+- `FileSystem.documentDirectory + 'tche-png-imports/'`
+
+Estrutura de path:
+
+- subdiretorio por `propriedade_id` sanitizado;
+- arquivo no formato `{importId}-{nome-sanitizado}.png`;
+- exemplo: `.../tche-png-imports/p_sela1/import-001-mapa-ph.png`;
+- nao usa nome de Propriedade, nome de usuario ou path recebido do usuario sem
+  sanitizacao.
+
+Operacoes disponiveis:
+
+- `sanitizePngFileName`
+- `sanitizePngPathSegment`
+- `buildPngStorageDirectoryUri`
+- `buildPngStorageUri`
+- `ensurePngStorageDirectory`
+- `copyPngToInternalStorage`
+- `getStoredPngInfo`
+- `deleteStoredPng`
+- `isSafePngStorageUri`
+- `createPngStorageService`
+
+Regras implementadas:
+
+- cria diretorio base e subdiretorio da Propriedade quando necessario;
+- sanitiza `propriedade_id`, `importId` e nome original;
+- aceita `.PNG` e normaliza para `.png`;
+- remove componentes de path, barras, `../`, bytes nulos e caracteres
+  perigosos;
+- limita os segmentos de path e aplica fallback `mapa-tecnico.png`;
+- usa `importId` recebido de fora ou gerador injetavel para testes;
+- bloqueia sobrescrita por padrao;
+- permite `overwrite: true` somente quando explicito;
+- valida que destino e remocao ficam dentro de `tche-png-imports/`;
+- retorna erro controlado quando diretorio, destino, copia, info ou remocao
+  falham.
+
+Estrategia de copia:
+
+- usa `FileSystem.copyAsync({ from: sourceUri, to: destinationUri })`;
+- confirma existencia com `FileSystem.getInfoAsync(destinationUri)`;
+- captura tamanho quando disponivel;
+- retorna `uri`, nome final, nome original, tamanho, MIME `image/png`,
+  `propriedade_id`, `fazenda_id` e `copiedAt`;
+- nao le bytes/conteudo do PNG em JS;
+- nao converte PNG para texto;
+- nao usa fallback textual.
+
+Remocao segura:
+
+- `deleteStoredPng` remove apenas arquivo seguro dentro de
+  `tche-png-imports/{propriedade_id}/`;
+- recusa path fora do diretorio base;
+- recusa remover o diretorio base;
+- recusa remover subdiretorio de Propriedade;
+- trata arquivo inexistente como sucesso controlado com `deleted: false`;
+- nao toca nos assets da Sela de Prata I nem em `src/assets`.
+
+Relacao com a 16G.3:
+
+- `PngFilePickerService` continua responsavel por selecionar e validar o PNG
+  temporario/cache;
+- `PngStorageService` recebe `sourceUri` e copia para URI local estavel;
+- o storage service nao abre picker.
+
+Relacao com a 16G.2:
+
+- nao chama `PngMapImportService`;
+- nao cria metadado;
+- nao escreve em `@tche:png-map-imports:v1`;
+- nao escreve em `@tche:mock-mvp:v1`.
+
+Compatibilidade com Sela de Prata I:
+
+- `src/assets/mapas/sela-prata-i/2025/fertilidade/` nao foi alterado;
+- `src/assets/mapas/sela-prata-i/2025/fertilidade/index.ts` nao foi alterado;
+- registros de `Mapa` da Sela em `src/api/mock.ts` nao foram alterados;
+- `resolveSelaPrataIFertilidadeAssetSource` nao foi alterado;
+- `MapasScreen` nao foi alterada.
+
+Validacoes da 16G.4:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF;
+- `npx expo install --check` passou.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.4: copia segura para storage interno do PNG validado.
 - 16G.5A: botao `Anexar mapa PNG`.
 - 16G.5B: formulario minimo de metadados.
 - 16G.5C: persistencia local dos metadados.
@@ -628,7 +743,6 @@ Nao foi feito:
 - `expo-image-picker`;
 - nova dependencia;
 - leitura de conteudo do PNG;
-- copia para storage interno;
 - nova persistencia de metadados alem da 16G.2;
 - alteracao em `Mapa.list`;
 - alteracao em `MapasScreen`;

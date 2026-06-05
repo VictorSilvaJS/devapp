@@ -49,6 +49,7 @@
     "src/services/GeoJsonPropertyManageWorkflow.ts",
     "src/services/GeoJsonTalhoesLayerService.ts",
     "src/services/PngMapImportService.ts",
-    "src/services/PngFilePickerService.ts"
+    "src/services/PngFilePickerService.ts",
+    "src/services/PngStorageService.ts"
   ]
 }
