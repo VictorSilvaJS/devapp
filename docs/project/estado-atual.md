@@ -1229,6 +1229,83 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16F.6 - Associacao Local De GeoJSON A Propriedade
+
+Status em 2026-06-05: foi criado o fluxo minimo para anexar um GeoJSON local
+de talhoes a uma Propriedade, usando picker, validacao, copia para storage
+interno e metadados em `@tche:geojson-imports:v1`.
+
+Arquivo criado:
+
+- `src/services/GeoJsonPropertyImportWorkflow.ts`.
+
+Teste criado:
+
+- `tests/geojsonPropertyImportWorkflow.test.js`.
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`;
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Comportamento atual:
+
+- em `MapasScreen`, o botao `Anexar GeoJSON dos talhoes` aparece apenas em
+  contexto de uma Propriedade especifica;
+- Admin pode iniciar o fluxo;
+- Colaborador pode iniciar somente quando a Propriedade esta dentro do escopo
+  regional efetivo;
+- Produtor nao ve o botao;
+- a visao geral/global nao mostra o botao;
+- a tela mostra texto de apoio informando que o arquivo ficara salvo
+  localmente no aparelho;
+- depois de selecionar e validar o arquivo, a tela mostra pre-visualizacao com
+  nome, contagem de talhoes, partes/poligonos, tipos de geometria, tamanho,
+  ano, safra e avisos;
+- ao confirmar, o arquivo e copiado para `tche-geojson-imports/` e o metadado
+  ativo e criado no `GeoJsonImportService`;
+- se ja houver um ativo da mesma Propriedade, ele passa para `substituido`;
+- depois do sucesso, a tela recarrega os metadados e mostra `GeoJSON anexado`
+  com nome do arquivo, quantidade de talhoes, data e status.
+
+Protecoes:
+
+- o indice salva apenas metadados pequenos;
+- nao salva `FeatureCollection`, `features`, `coordinates`, `poligono` ou
+  `poligonos`;
+- se a copia passar e a criacao de metadado falhar, o workflow tenta remover o
+  arquivo copiado;
+- se o rollback falhar, retorna erro controlado `ROLLBACK_FAILED`;
+- para a Propriedade `p_sela1`, o modal exibe aviso de que ja existe
+  demarcacao demonstrativa e o arquivo sera salvo apenas como anexo local ate
+  a proxima etapa.
+
+Limites preservados:
+
+- `LimiteArea.list` continua sendo a fonte visual dos talhoes;
+- `FazendaMapaScreen` e `MapaFazendaView` nao leem importacoes locais;
+- nenhum GeoJSON importado e renderizado nesta fase;
+- seed/assets da Sela de Prata I e PNGs de fertilidade nao foram alterados;
+- sem backend, sync, RBAC real ou APK.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

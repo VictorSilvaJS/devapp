@@ -1423,15 +1423,191 @@ Validacoes executadas na 16F.5:
 
 ### 16F.6 - Associacao do GeoJSON a Propriedade
 
-Associar a URI local retornada pela 16F.5 aos metadados no contexto de
-Propriedade:
+Status em 2026-06-05: foi criado o fluxo visual minimo para anexar GeoJSON de
+talhoes a uma Propriedade, sem publicar esses talhoes na renderizacao atual.
 
-- preservar `fazenda_id`;
-- adicionar `propriedade_id` como alias futuro;
-- criar metadado em `GeoJsonImportService`;
-- salvar apenas metadados pequenos, nao o conteudo do GeoJSON;
-- impedir associacao fora do escopo do usuario;
-- manter Sela de Prata I protegida contra substituicao acidental.
+Arquivo criado:
+
+- `src/services/GeoJsonPropertyImportWorkflow.ts`
+
+Arquivo de teste criado:
+
+- `tests/geojsonPropertyImportWorkflow.test.js`
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`;
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Servico criado:
+
+- `GeoJsonPropertyImportWorkflow`;
+- helpers independentes para permissao, pre-visualizacao, confirmacao,
+  rollback e listagem de metadados por Propriedade.
+
+Funcoes principais:
+
+- `canStartGeoJsonPropertyImport(user, propriedade)`;
+- `prepareGeoJsonPropertyImport(input, deps)`;
+- `confirmGeoJsonPropertyImport(preview, input, deps)`;
+- `importGeoJsonForPropriedade(input, deps)`;
+- `listGeoJsonImportsForPropriedade(propriedadeId, deps)`;
+- `getActiveGeoJsonImportForPropriedade(propriedadeId, deps)`;
+- `isSelaPrataIPropriedade(input)`.
+
+Fluxo implementado:
+
+- em contexto de Propriedade especifica, `MapasScreen` exibe o botao
+  `Anexar GeoJSON dos talhoes`;
+- o botao aparece para Admin;
+- o botao aparece para Colaborador somente quando a Propriedade esta no escopo
+  regional efetivo do usuario;
+- o botao nao aparece para Produtor;
+- o botao nao aparece na visao geral/global sem Propriedade clara;
+- ao tocar, o app abre o picker da 16F.4;
+- cancelamento do picker nao gera erro agressivo;
+- arquivo invalido ou validacao falsa gera mensagem controlada;
+- quando a validacao passa, a tela abre modal de pre-visualizacao antes de
+  salvar.
+
+Pre-visualizacao exibida:
+
+- nome do arquivo;
+- quantidade de talhoes;
+- quantidade de partes/poligonos;
+- tipos de geometria;
+- tamanho do arquivo quando disponivel;
+- ano usado na normalizacao local;
+- safra quando houver;
+- avisos do validador quando houver.
+
+Confirmacao:
+
+- a tela pergunta `Confirmar associacao deste GeoJSON a Propriedade?`;
+- ao confirmar, o workflow copia o arquivo para o storage interno da 16F.5;
+- em seguida, cria metadado ativo no `GeoJsonImportService`;
+- a regra do `GeoJsonImportService` substitui automaticamente o ativo anterior
+  da mesma Propriedade;
+- depois do sucesso, a tela recarrega os metadados e mostra resumo simples:
+  `GeoJSON anexado`, nome do arquivo, quantidade de talhoes, data e status;
+- a tela informa que a visualizacao dos talhoes importados sera habilitada na
+  etapa seguinte.
+
+Campos salvos no metadado:
+
+- `id`;
+- `propriedade_id`;
+- `fazenda_id`;
+- `nome_propriedade`;
+- `arquivo_nome_original`;
+- `arquivo_uri_local`;
+- `arquivo_tamanho_bytes`;
+- `arquivo_mime`;
+- `importado_por_usuario_id`;
+- `importado_por_nome`;
+- `status: ativo`;
+- `talhoes_count`;
+- `polygon_parts_count`;
+- `geometry_types`;
+- `area_total_hectares` quando a soma das areas normalizadas for positiva;
+- `safra` quando informada;
+- `ano`;
+- `observacoes` quando informadas;
+- `origem` e `versao` continuam resolvidos pelo `GeoJsonImportService`.
+
+Conteudo nao salvo no indice:
+
+- `FeatureCollection`;
+- `features`;
+- `coordinates`;
+- `poligono`;
+- `poligonos`;
+- conteudo bruto do arquivo GeoJSON.
+
+Ano e safra:
+
+- a tela nao adicionou campos novos de formulario nesta fase;
+- o workflow usa o ano atual injetavel como fallback;
+- `safra` permanece vazia quando nao vier de contexto futuro;
+- a decisao de pedir safra/ano manualmente fica para microfase posterior se
+  isso virar requisito de produto.
+
+Protecao da Sela de Prata I:
+
+- se a Propriedade for `p_sela1`, o modal mostra aviso explicito:
+  `Esta Propriedade ja possui demarcacao demonstrativa. O arquivo sera salvo
+  como anexo local e so substituira a visualizacao em etapa futura.`;
+- o workflow tambem exige confirmacao extra antes de copiar;
+- isso evita interpretar o anexo local como substituicao imediata do seed ou
+  dos assets demonstrativos.
+
+Rollback:
+
+- se a copia falhar, nenhum metadado e criado;
+- se a copia passar e a criacao de metadados falhar, o workflow chama
+  `deleteStoredGeoJson` para remover o arquivo copiado;
+- se esse rollback tambem falhar, o retorno e controlado com
+  `ROLLBACK_FAILED`, preservando a URI copiada para diagnostico;
+- nao ha sucesso silencioso parcial.
+
+Limites preservados:
+
+- `LimiteArea.list` nao foi alterado;
+- `src/api/mock.ts` nao foi alterado;
+- `src/assets/geojson/selaDePrata1Talhoes.ts` nao foi alterado;
+- `data/processados/p_sela1/2025/limites_talhoes.geojson` nao foi alterado;
+- `FazendaMapaScreen` nao foi alterada;
+- `MapaFazendaView` nao foi alterado;
+- `ShapeRenderer` nao foi alterado;
+- nenhum GeoJSON importado passa a renderizar nesta fase;
+- nenhum PNG/anexo da Sela de Prata I foi alterado;
+- sem backend, sync, RBAC real ou APK.
+
+Testes criados:
+
+- `tests/geojsonPropertyImportWorkflow.test.js`
+
+Cobertura principal:
+
+- fluxo completo com picker, leitura, validacao, copia, metadado ativo e
+  recarga;
+- cancelamento do picker;
+- arquivo com extensao invalida;
+- validacao falsa;
+- falha de storage sem criacao de metadado;
+- falha de metadado apos copia com rollback do arquivo;
+- falha apenas na recarga da lista de metadados sem desfazer associacao ja
+  criada;
+- falha de rollback retornando erro explicito;
+- substituicao do ativo anterior da mesma Propriedade;
+- isolamento entre Propriedade A e Propriedade B;
+- preservacao de `propriedade_id` e `fazenda_id`;
+- garantia de que o indice nao salva `FeatureCollection`, `features`,
+  `coordinates`, `poligono` ou `poligonos`;
+- permissao de inicio para Admin;
+- permissao de inicio para Colaborador dentro do escopo;
+- bloqueio de Produtor;
+- bloqueio de Colaborador fora do escopo;
+- confirmacao extra para Sela de Prata I;
+- escopo sem imports de telas, mocks ou entidades de mapa.
+
+Validacoes executadas na 16F.6:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ### 16F.7 - Visualizacao do GeoJSON importado
 

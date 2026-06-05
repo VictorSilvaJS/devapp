@@ -43,6 +43,16 @@ import {
 } from '../utils/fazendaUiCompat';
 import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
+import {
+  canStartGeoJsonPropertyImport,
+  confirmGeoJsonPropertyImport,
+  listGeoJsonImportsForPropriedade,
+  prepareGeoJsonPropertyImport,
+} from '../services/GeoJsonPropertyImportWorkflow';
+import type {
+  GeoJsonPropertyImportPreview,
+} from '../services/GeoJsonPropertyImportWorkflow';
+import type { GeoJsonImportMetadata } from '../types/geojsonImport';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -185,6 +195,10 @@ export default function MapasScreen({ route, navigation }) {
   const [selectedTalhao, setSelectedTalhao] = useState(null);
   const [talhaoDetailVisible, setTalhaoDetailVisible] = useState(false);
   const [talhaoFiltroLimite, setTalhaoFiltroLimite] = useState(FILTRO_TODOS);
+  const [geoJsonImports, setGeoJsonImports] = useState<GeoJsonImportMetadata[]>([]);
+  const [geoJsonImporting, setGeoJsonImporting] = useState(false);
+  const [geoJsonConfirming, setGeoJsonConfirming] = useState(false);
+  const [geoJsonPreview, setGeoJsonPreview] = useState<GeoJsonPropertyImportPreview | null>(null);
 
   // ──────────────────────────────────────────────
   // CARREGAMENTO DE DADOS
@@ -223,6 +237,7 @@ export default function MapasScreen({ route, navigation }) {
           setFazendaFiltroOperacional(FILTRO_TODOS);
           setTalhaoFiltroLimite(FILTRO_TODOS);
           setSelectedTalhao(null);
+          setGeoJsonImports([]);
           return;
         }
 
@@ -261,6 +276,11 @@ export default function MapasScreen({ route, navigation }) {
 
       setMapas(mapasFiltrados);
       setLimites(limitesFiltrados);
+      setGeoJsonImports(
+        fazendaId && idsPermitidos.length === 1
+          ? await listGeoJsonImportsForPropriedade(idsPermitidos[0])
+          : []
+      );
 
       const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));
       setAnosDisponiveis(anos);
@@ -269,6 +289,7 @@ export default function MapasScreen({ route, navigation }) {
         return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
       });
     } catch (error) {
+      setGeoJsonImports([]);
       toast.showError('Não foi possível carregar os dados');
     } finally {
       setLoading(false);
@@ -286,6 +307,13 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   const consultaPorFazenda = contextoConsulta.tipo === 'fazenda' && !!contextoConsulta.fazenda;
   const fazendaContextoInfo = consultaPorFazenda ? getFazendaUiInfo(contextoConsulta.fazenda) : null;
+  const geoJsonImportAtivo = useMemo(
+    () => geoJsonImports.find((item) => item.status === 'ativo') ?? null,
+    [geoJsonImports]
+  );
+  const podeAnexarGeoJson = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canStartGeoJsonPropertyImport(user, contextoConsulta.fazenda);
   const fazendaOptions = useMemo(
     () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
     [contextoConsulta.fazendasPermitidas]
@@ -517,6 +545,67 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
+  const handleAnexarGeoJson = async () => {
+    if (!podeAnexarGeoJson || !contextoConsulta.fazenda) {
+      toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar GeoJSON.');
+      return;
+    }
+
+    setGeoJsonImporting(true);
+    try {
+      const result = await prepareGeoJsonPropertyImport({
+        user,
+        propriedade: contextoConsulta.fazenda,
+      });
+
+      if (!result.ok || !result.preview) {
+        if (result.error?.code !== 'PICKER_CANCELLED') {
+          toast.showError(result.error?.message || 'Não foi possível validar o GeoJSON selecionado.');
+        }
+        return;
+      }
+
+      setGeoJsonPreview(result.preview);
+    } catch (error) {
+      toast.showError('Não foi possível preparar o GeoJSON selecionado.');
+    } finally {
+      setGeoJsonImporting(false);
+    }
+  };
+
+  const handleCancelarGeoJsonPreview = () => {
+    if (geoJsonConfirming) return;
+    setGeoJsonPreview(null);
+  };
+
+  const handleConfirmarGeoJsonPreview = async () => {
+    if (!geoJsonPreview) return;
+
+    setGeoJsonConfirming(true);
+    try {
+      const result = await confirmGeoJsonPropertyImport(geoJsonPreview, {
+        selaPrataConfirmed: true,
+      });
+
+      if (!result.ok) {
+        toast.showError(result.error?.message || 'Não foi possível associar o GeoJSON à Propriedade.');
+        return;
+      }
+
+      const importsAtualizados = await listGeoJsonImportsForPropriedade(
+        geoJsonPreview.resolvedContext.propriedade_id
+      );
+      setGeoJsonImports(importsAtualizados);
+      setGeoJsonPreview(null);
+      toast.showSuccess('GeoJSON anexado à Propriedade.');
+      toast.showInfo('A visualização dos talhões importados será habilitada na próxima etapa.');
+    } catch (error) {
+      toast.showError('Não foi possível concluir a associação do GeoJSON.');
+    } finally {
+      setGeoJsonConfirming(false);
+    }
+  };
+
   const tituloTela = 'Mapas/Arquivos técnicos';
   const contextoLabel = consultaPorFazenda
     ? 'Consulta por propriedade'
@@ -629,6 +718,13 @@ export default function MapasScreen({ route, navigation }) {
   const formatarData = (data) => {
     if (!data) return 'N/A';
     return new Date(data).toLocaleDateString('pt-BR');
+  };
+
+  const formatarTamanhoArquivo = (bytes?: number) => {
+    if (typeof bytes !== 'number' || !Number.isFinite(bytes)) return 'Não informado';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const getFormatoArquivo = (mapa) =>
@@ -840,6 +936,73 @@ export default function MapasScreen({ route, navigation }) {
     );
   };
 
+  const renderGeoJsonImportPanel = () => {
+    if (!podeAnexarGeoJson) return null;
+
+    return (
+      <SectionCard
+        title="Arquivos técnicos da Propriedade"
+        subtitle="GeoJSON local dos talhões"
+        icon="document-attach-outline"
+        style={styles.geoJsonImportSection}
+      >
+        <InfoBox
+          message="Selecione um arquivo .geojson ou .json com os limites dos talhões. O arquivo ficará salvo localmente neste aparelho."
+          style={styles.geoJsonImportInfo}
+        />
+
+        {geoJsonImportAtivo ? (
+          <View style={styles.geoJsonImportSummary}>
+            <View style={styles.geoJsonImportSummaryIcon}>
+              <Ionicons name="checkmark-circle-outline" size={22} color={colors.success} />
+            </View>
+            <View style={styles.geoJsonImportSummaryText}>
+              <Text style={styles.geoJsonImportSummaryTitle}>GeoJSON anexado</Text>
+              <Text style={styles.geoJsonImportSummaryName} numberOfLines={1}>
+                {geoJsonImportAtivo.arquivo_nome_original}
+              </Text>
+              <Text style={styles.geoJsonImportSummaryMeta}>
+                {[
+                  `${geoJsonImportAtivo.talhoes_count ?? 0} talhão${geoJsonImportAtivo.talhoes_count === 1 ? '' : 's'}`,
+                  formatarData(geoJsonImportAtivo.importado_em),
+                  geoJsonImportAtivo.status,
+                ].join(' • ')}
+              </Text>
+              <Text style={styles.geoJsonImportNextStep}>
+                A visualização dos talhões importados será habilitada na próxima etapa.
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.geoJsonImportEmpty}>
+            <Text style={styles.geoJsonImportEmptyText}>
+              Nenhum GeoJSON local anexado a esta Propriedade.
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.geoJsonImportButton,
+            geoJsonImporting && styles.geoJsonImportButtonDisabled,
+          ]}
+          onPress={handleAnexarGeoJson}
+          activeOpacity={0.78}
+          disabled={geoJsonImporting}
+        >
+          {geoJsonImporting ? (
+            <ActivityIndicator size="small" color={colors.white} />
+          ) : (
+            <Ionicons name="attach-outline" size={18} color={colors.white} />
+          )}
+          <Text style={styles.geoJsonImportButtonText}>
+            Anexar GeoJSON dos talhões
+          </Text>
+        </TouchableOpacity>
+      </SectionCard>
+    );
+  };
+
   // ──────────────────────────────────────────────
   // RENDER: PANORAMA UNIFICADO
   // ──────────────────────────────────────────────
@@ -943,6 +1106,8 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.limparFiltrosText}>Limpar filtros do panorama</Text>
         </TouchableOpacity>
       )}
+
+      {renderGeoJsonImportPanel()}
 
       {/* Estatísticas do panorama */}
       <View style={styles.statsContainer}>
@@ -1190,6 +1355,139 @@ export default function MapasScreen({ route, navigation }) {
         onConfirm={confirmDownload}
         onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
       />
+
+      <Modal
+        visible={!!geoJsonPreview}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelarGeoJsonPreview}
+      >
+        <View style={styles.geoJsonPreviewOverlay}>
+          <View style={styles.geoJsonPreviewDialog}>
+            <View style={styles.geoJsonPreviewHeader}>
+              <View style={styles.geoJsonPreviewTitleWrap}>
+                <Text style={styles.geoJsonPreviewTitle}>Confirmar associação</Text>
+                <Text style={styles.geoJsonPreviewSubtitle}>
+                  Confirmar associação deste GeoJSON à Propriedade?
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleCancelarGeoJsonPreview}
+                style={styles.geoJsonPreviewClose}
+                disabled={geoJsonConfirming}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.geoJsonPreviewBody}
+              contentContainerStyle={styles.geoJsonPreviewContent}
+            >
+              {geoJsonPreview ? (
+                <>
+                  <View style={styles.geoJsonPreviewRows}>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Arquivo</Text>
+                      <Text style={styles.geoJsonPreviewValue} numberOfLines={2}>
+                        {geoJsonPreview.file.name}
+                      </Text>
+                    </View>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Talhões</Text>
+                      <Text style={styles.geoJsonPreviewValue}>
+                        {geoJsonPreview.summary.talhoes_count}
+                      </Text>
+                    </View>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Partes/polígonos</Text>
+                      <Text style={styles.geoJsonPreviewValue}>
+                        {geoJsonPreview.summary.polygon_parts_count}
+                      </Text>
+                    </View>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Geometrias</Text>
+                      <Text style={styles.geoJsonPreviewValue} numberOfLines={2}>
+                        {geoJsonPreview.summary.geometry_types.length > 0
+                          ? geoJsonPreview.summary.geometry_types.join(', ')
+                          : 'Não informado'}
+                      </Text>
+                    </View>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Tamanho</Text>
+                      <Text style={styles.geoJsonPreviewValue}>
+                        {formatarTamanhoArquivo(geoJsonPreview.summary.file_size_bytes)}
+                      </Text>
+                    </View>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Ano</Text>
+                      <Text style={styles.geoJsonPreviewValue}>
+                        {geoJsonPreview.resolvedContext.ano}
+                      </Text>
+                    </View>
+                    <View style={styles.geoJsonPreviewRow}>
+                      <Text style={styles.geoJsonPreviewLabel}>Safra</Text>
+                      <Text style={styles.geoJsonPreviewValue}>
+                        {geoJsonPreview.resolvedContext.safra || 'Não informada'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {geoJsonPreview.resolvedContext.requiresSelaPrataConfirmation && (
+                    <View style={styles.geoJsonSelaWarning}>
+                      <Ionicons name="alert-circle-outline" size={18} color={colors.warning} />
+                      <Text style={styles.geoJsonSelaWarningText}>
+                        Esta Propriedade já possui demarcação demonstrativa. O arquivo será salvo como anexo local e só substituirá a visualização em etapa futura.
+                      </Text>
+                    </View>
+                  )}
+
+                  {geoJsonPreview.warnings.length > 0 && (
+                    <View style={styles.geoJsonWarningsBox}>
+                      <Text style={styles.geoJsonWarningsTitle}>Avisos da validação</Text>
+                      {geoJsonPreview.warnings.slice(0, 4).map((warning) => (
+                        <Text key={`${warning.code}-${warning.message}`} style={styles.geoJsonWarningItem}>
+                          {warning.message}
+                        </Text>
+                      ))}
+                      {geoJsonPreview.warnings.length > 4 && (
+                        <Text style={styles.geoJsonWarningItem}>
+                          +{geoJsonPreview.warnings.length - 4} aviso(s)
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.geoJsonPreviewFooter}>
+              <TouchableOpacity
+                style={styles.geoJsonPreviewCancelButton}
+                onPress={handleCancelarGeoJsonPreview}
+                disabled={geoJsonConfirming}
+              >
+                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonPreviewConfirmButton,
+                  geoJsonConfirming && styles.geoJsonPreviewConfirmButtonDisabled,
+                ]}
+                onPress={handleConfirmarGeoJsonPreview}
+                disabled={geoJsonConfirming}
+              >
+                {geoJsonConfirming ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="checkmark-outline" size={18} color={colors.white} />
+                )}
+                <Text style={styles.geoJsonPreviewConfirmText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={imagePreview.visible}
@@ -1574,6 +1872,253 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.muted,
     marginTop: 1,
+  },
+
+  geoJsonImportSection: {
+    marginHorizontal: spacing.screen,
+    marginTop: spacing.md,
+  },
+  geoJsonImportInfo: {
+    marginBottom: spacing.md,
+  },
+  geoJsonImportSummary: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundSoft,
+    marginBottom: spacing.md,
+  },
+  geoJsonImportSummaryIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.successBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  geoJsonImportSummaryText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  geoJsonImportSummaryTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  geoJsonImportSummaryName: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  geoJsonImportSummaryMeta: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    marginTop: 4,
+  },
+  geoJsonImportNextStep: {
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    marginTop: spacing.xs,
+    lineHeight: 17,
+  },
+  geoJsonImportEmpty: {
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.background,
+    marginBottom: spacing.md,
+  },
+  geoJsonImportEmptyText: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    lineHeight: 18,
+  },
+  geoJsonImportButton: {
+    minHeight: 44,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  geoJsonImportButtonDisabled: {
+    opacity: 0.65,
+  },
+  geoJsonImportButtonText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.white,
+    textAlign: 'center',
+  },
+  geoJsonPreviewOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.md,
+  },
+  geoJsonPreviewDialog: {
+    width: '100%',
+    maxWidth: 560,
+    maxHeight: '86%',
+    backgroundColor: colors.card,
+    borderRadius: spacing.radiusLg,
+    overflow: 'hidden',
+    ...shadows.lg,
+  },
+  geoJsonPreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  geoJsonPreviewTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  geoJsonPreviewTitle: {
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  geoJsonPreviewSubtitle: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  geoJsonPreviewClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  geoJsonPreviewBody: {
+    maxHeight: 430,
+  },
+  geoJsonPreviewContent: {
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  geoJsonPreviewRows: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: spacing.radiusSm,
+    overflow: 'hidden',
+  },
+  geoJsonPreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  geoJsonPreviewLabel: {
+    width: 118,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    color: colors.muted,
+  },
+  geoJsonPreviewValue: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    lineHeight: 18,
+  },
+  geoJsonSelaWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.amberLight,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+  },
+  geoJsonSelaWarningText: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.text,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 18,
+  },
+  geoJsonWarningsBox: {
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  geoJsonWarningsTitle: {
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  geoJsonWarningItem: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  geoJsonPreviewFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.backgroundSoft,
+  },
+  geoJsonPreviewCancelButton: {
+    minHeight: 42,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+  },
+  geoJsonPreviewCancelText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
+    color: colors.text,
+  },
+  geoJsonPreviewConfirmButton: {
+    minHeight: 42,
+    borderRadius: spacing.radiusSm,
+    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+  },
+  geoJsonPreviewConfirmButtonDisabled: {
+    opacity: 0.65,
+  },
+  geoJsonPreviewConfirmText: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.white,
   },
 
   materiaisDescription: {
