@@ -200,6 +200,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
 - `MapasScreen.tsx` usa nomenclatura visual padronizada para a area de materiais, incluindo `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`
 - `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
+- `MapasScreen.tsx` possui fluxo local demonstrativo para anexar PNG por Propriedade com botao `Anexar mapa PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; esses PNGs locais ainda nao entram na listagem principal de `Mapa.list`
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -224,6 +225,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade, elemento, safra, talhao/propriedade inteira e nome original em materiais/anexos quando esses campos estiverem preenchidos
+- anexo local demonstrativo de PNG por Propriedade para Admin e Colaborador dentro do escopo, com formulario minimo e resumo local na tela de mapas
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 - base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
@@ -1747,6 +1749,57 @@ Validacoes executadas:
 
 - `npm run typecheck` passou;
 - `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF;
+- `npx expo install --check` passou.
+
+## Fase 16G.5 - Botao Anexar Mapa PNG E Formulario Minimo
+
+Status em 2026-06-05: foi criado
+`src/services/PngMapPropertyImportWorkflow.ts` e a `MapasScreen.tsx` passou a
+exibir o botao `Anexar mapa PNG` em contexto de uma Propriedade quando o usuario
+tem permissao de edicao local.
+
+Arquivos principais:
+
+- `src/services/PngMapPropertyImportWorkflow.ts`;
+- `tests/pngMapPropertyImportWorkflow.test.js`;
+- `src/screens/MapasScreen.tsx`;
+- `docs/project/fase-16g-anexos-png-local.md`.
+
+Comportamento atual:
+
+- Admin pode anexar PNG local;
+- Colaborador pode anexar PNG local apenas dentro do escopo territorial atual;
+- Produtor nao recebe acao de anexo PNG;
+- o fluxo usa o seletor/validador da 16G.3, o storage interno da 16G.4 e o
+  servico de metadados da 16G.2;
+- o formulario minimo coleta titulo, categoria/elemento tecnico, safra, ano,
+  profundidade, escopo, talhao quando aplicavel, observacoes e
+  `visivel_para_produtor`;
+- o arquivo fisico e copiado para `tche-png-imports/{propriedade_id}/`;
+- os metadados pequenos sao persistidos em `@tche:png-map-imports:v1`;
+- em falha de metadados apos copia, o workflow tenta remover o arquivo copiado;
+- a tela mostra apenas resumo local dos PNGs ativos da Propriedade.
+
+Escopo preservado:
+
+- `Mapa.list` nao foi alterado;
+- os PNGs locais ainda nao aparecem na listagem principal de materiais/anexos;
+- nao ha preview/abertura de PNG local;
+- nao ha substituicao/remocao de PNG pela tela;
+- registros e assets da Sela de Prata I nao foram alterados;
+- nao ha backend, upload remoto, RBAC real, sincronizacao ou APK final.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
 - `node tests/pngStorageService.test.js` passou;
 - `node tests/pngFilePickerService.test.js` passou;
 - `node tests/pngMapImportService.test.js` passou;

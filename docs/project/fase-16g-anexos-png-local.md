@@ -19,13 +19,21 @@ de PNG em `src/services/PngStorageService.ts`, copiando arquivo validado para
 diretorio controlado do app por Propriedade, sem tela, sem botao, sem salvar
 metadados e sem integrar com `Mapa.list` ou `MapasScreen`.
 
+Status em 2026-06-05: a Fase 16G.5 criou o workflow local de anexo PNG por
+Propriedade em `src/services/PngMapPropertyImportWorkflow.ts` e integrou o
+botao `Anexar mapa PNG` com formulario minimo em `MapasScreen.tsx`, copiando o
+arquivo para storage interno e salvando somente metadados pequenos em
+`@tche:png-map-imports:v1`.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
 
-Esta frente ainda nao altera telas, nao adiciona botao, nao persiste metadados
-do PNG selecionado, nao altera `Mapa.list`, nao muda os registros da Sela de
-Prata I e nao implementa backend, JWT, RBAC real, sincronizacao ou APK final.
+Esta frente ja possui selecao, validacao leve, copia local, metadados locais e
+formulario minimo de anexo PNG por Propriedade. Ela ainda nao altera
+`Mapa.list`, nao integra os PNGs locais a listagem principal de materiais, nao
+abre preview de PNG local, nao muda os registros da Sela de Prata I e nao
+implementa backend, JWT, RBAC real, sincronizacao ou APK final.
 
 ## Base Documental Ativa
 
@@ -708,11 +716,106 @@ Validacoes da 16G.4:
   LF/CRLF;
 - `npx expo install --check` passou.
 
+## 16G.5 - Botao Anexar Mapa PNG E Formulario Minimo
+
+Status em 2026-06-05: foi criado o workflow local de anexo PNG por
+Propriedade e o botao `Anexar mapa PNG` em `MapasScreen.tsx`.
+
+Arquivos criados:
+
+- `src/services/PngMapPropertyImportWorkflow.ts`
+- `tests/pngMapPropertyImportWorkflow.test.js`
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`
+- `tsconfig.domain-compat.json`
+- `package.json`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Operacoes disponiveis:
+
+- `canStartPngMapPropertyImport`
+- `preparePngMapPropertyImport`
+- `confirmPngMapPropertyImport`
+- `importPngMapForPropriedade`
+- `listPngMapImportsForPropriedade`
+- `listActivePngMapImportsForPropriedade`
+
+Regras implementadas:
+
+- o botao aparece apenas em consulta de uma Propriedade especifica;
+- Admin pode anexar PNG;
+- Colaborador pode anexar PNG somente quando a Propriedade esta dentro do seu
+  escopo atual de acesso;
+- Produtor nao pode anexar PNG;
+- o fluxo exige `propriedade_id` e preserva `fazenda_id` como chave tecnica de
+  compatibilidade;
+- o seletor aceita apenas PNG validado pela 16G.3;
+- o arquivo validado e copiado para storage interno controlado pela 16G.4;
+- depois da copia, os metadados pequenos sao salvos em
+  `@tche:png-map-imports:v1` pela 16G.2;
+- se a persistencia de metadados falhar depois da copia, o workflow tenta
+  remover o arquivo copiado;
+- multiplos PNGs ativos continuam permitidos para a mesma Propriedade.
+
+Formulario minimo:
+
+- titulo;
+- categoria/elemento tecnico;
+- safra;
+- ano;
+- profundidade;
+- escopo `Propriedade inteira` ou `Talhao especifico`;
+- talhao, quando o escopo for `Talhao especifico`;
+- observacoes;
+- flag `visivel_para_produtor`.
+
+Mapeamento de categoria:
+
+- `ph`, `fosforo`, `potassio`, `argila` e `materia_organica` geram
+  `categoria: 'fertilidade'`;
+- `ndvi` gera `categoria: 'indice_vegetacao'`;
+- `produtividade` gera `categoria: 'produtividade'`;
+- `sementes` e `linhas_plantio` geram `categoria: 'plantio'`;
+- `outro` gera `categoria: 'outro'`.
+
+Comportamento visual na `MapasScreen`:
+
+- o painel PNG fica dentro da secao de materiais/anexos da Propriedade;
+- quando nao ha PNG local ativo, mostra `Nenhum PNG local anexado a esta
+  Propriedade`;
+- quando ha PNG local ativo, mostra resumo local com titulo, categoria,
+  safra/ano, escopo, arquivo original e data de importacao;
+- apos salvar, a tela recarrega o resumo local e informa que a listagem
+  integrada dos anexos locais sera consolidada em etapa futura.
+
+Escopo preservado:
+
+- `Mapa.list` nao foi alterado;
+- os metadados PNG locais ainda nao sao convertidos em registros de `Mapa`;
+- a listagem principal de materiais ainda nao exibe os PNGs locais;
+- nao ha preview/abertura do PNG local;
+- nao ha substituicao/remocao de PNG pela tela;
+- registros e assets da Sela de Prata I nao foram alterados;
+- nao ha backend, upload remoto, RBAC real, sincronizacao ou APK final.
+
+Validacoes da 16G.5:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF;
+- `npx expo install --check` passou.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.5A: botao `Anexar mapa PNG`.
-- 16G.5B: formulario minimo de metadados.
-- 16G.5C: persistencia local dos metadados.
 - 16G.6: listagem dos PNGs locais junto aos anexos existentes.
 - 16G.7: visualizacao do PNG local.
 - 16G.8: substituicao/remocao segura.
@@ -738,14 +841,13 @@ Validacoes da 16G.4:
 
 Nao foi feito:
 
-- botao de anexar PNG;
-- seletor visivel em tela;
 - `expo-image-picker`;
 - nova dependencia;
 - leitura de conteudo do PNG;
-- nova persistencia de metadados alem da 16G.2;
 - alteracao em `Mapa.list`;
-- alteracao em `MapasScreen`;
+- integracao dos metadados PNG locais a listagem principal de materiais;
+- preview/abertura de PNG local;
+- substituicao/remocao de PNG pela tela;
 - alteracao nos registros da Sela de Prata I;
 - alteracao nos PNGs da Sela;
 - backend;

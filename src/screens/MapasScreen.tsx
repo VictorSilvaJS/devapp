@@ -18,7 +18,15 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import ShapeRenderer from '../components/ShapeRenderer';
 import TalhaoDetailModal from '../components/TalhaoDetailModal';
 import { useToast } from '../components/Toast';
-import { EmptyState, InfoBox, SearchBar, SectionCard, SegmentedChips } from '../components';
+import {
+  EmptyState,
+  FormField,
+  InfoBox,
+  SearchBar,
+  SectionCard,
+  SegmentedChips,
+  SelectField,
+} from '../components';
 import { Mapa, Produtor, LimiteArea } from '../api/mock';
 import {
   buildFazendaMapaRouteParamsFromPropriedade,
@@ -64,6 +72,18 @@ import {
   loadGeoJsonTalhoesLayer,
 } from '../services/GeoJsonTalhoesLayerService';
 import type { GeoJsonImportMetadata } from '../types/geojsonImport';
+import {
+  PNG_MAP_PROPERTY_CATEGORY_OPTIONS,
+  canStartPngMapPropertyImport,
+  confirmPngMapPropertyImport,
+  listActivePngMapImportsForPropriedade,
+  preparePngMapPropertyImport,
+} from '../services/PngMapPropertyImportWorkflow';
+import type {
+  PngMapPropertyImportFormInput,
+  PngMapPropertyImportPreview,
+} from '../services/PngMapPropertyImportWorkflow';
+import type { PngMapImportMetadata } from '../types/anexoPngLocal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -88,6 +108,32 @@ const ORDENACOES_MATERIAIS = [
   { key: 'recente', label: 'Recente', icon: 'time-outline' },
   { key: 'titulo', label: 'Título', icon: 'text-outline' },
 ];
+
+const PNG_ESCOPO_OPTIONS = [
+  {
+    value: 'propriedade',
+    label: 'Propriedade inteira',
+    description: 'Anexo vinculado ao contexto completo da Propriedade.',
+  },
+  {
+    value: 'talhao',
+    label: 'Talhão específico',
+    description: 'Anexo vinculado a um talhão informado.',
+  },
+];
+
+const EMPTY_PNG_FORM: PngMapPropertyImportFormInput = {
+  titulo: '',
+  elemento: 'outro',
+  safra: '',
+  ano: '',
+  profundidade: '',
+  escopo: 'propriedade',
+  talhao_id: '',
+  talhao_nome: '',
+  descricao: '',
+  visivel_para_produtor: true,
+};
 
 const normalizarBusca = (value: unknown): string =>
   typeof value === 'string'
@@ -214,6 +260,12 @@ export default function MapasScreen({ route, navigation }) {
   const [geoJsonConfirming, setGeoJsonConfirming] = useState(false);
   const [geoJsonPreview, setGeoJsonPreview] = useState<GeoJsonPropertyImportPreview | null>(null);
   const [geoJsonPreviewMode, setGeoJsonPreviewMode] = useState<GeoJsonImportMode>('attach');
+  const [pngImports, setPngImports] = useState<PngMapImportMetadata[]>([]);
+  const [pngImporting, setPngImporting] = useState(false);
+  const [pngConfirming, setPngConfirming] = useState(false);
+  const [pngPreview, setPngPreview] = useState<PngMapPropertyImportPreview | null>(null);
+  const [pngForm, setPngForm] = useState<PngMapPropertyImportFormInput>(EMPTY_PNG_FORM);
+  const [pngFormErrors, setPngFormErrors] = useState<Record<string, string>>({});
   const [geoJsonManageDialog, setGeoJsonManageDialog] = useState<{
     visible: boolean;
     action: GeoJsonManageDialogAction;
@@ -263,6 +315,7 @@ export default function MapasScreen({ route, navigation }) {
           setTalhaoFiltroLimite(FILTRO_TODOS);
           setSelectedTalhao(null);
           setGeoJsonImports([]);
+          setPngImports([]);
           setGeoJsonTalhoesLayer(null);
           return;
         }
@@ -299,19 +352,21 @@ export default function MapasScreen({ route, navigation }) {
         somenteDisponiveisDownload: user?.perfil === 'produtor',
       });
       const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
-      const [importsGeoJson, talhoesLayer] = fazendaId && idsPermitidos.length === 1
+      const [importsGeoJson, talhoesLayer, importsPng] = fazendaId && idsPermitidos.length === 1
         ? await Promise.all([
             listGeoJsonImportsForPropriedade(idsPermitidos[0]),
             loadGeoJsonTalhoesLayer({
               propriedade_id: idsPermitidos[0],
               fazenda_id: idsPermitidos[0],
             }),
+            listActivePngMapImportsForPropriedade(idsPermitidos[0]),
           ])
-        : [[], null];
+        : [[], null, []];
 
       setMapas(mapasFiltrados);
       setLimites(limitesFiltrados);
       setGeoJsonImports(importsGeoJson);
+      setPngImports(importsPng);
       setGeoJsonTalhoesLayer(talhoesLayer);
 
       const baseTalhoesParaAno = isGeoJsonTalhoesLayerActive(talhoesLayer)
@@ -325,6 +380,7 @@ export default function MapasScreen({ route, navigation }) {
       });
     } catch (error) {
       setGeoJsonImports([]);
+      setPngImports([]);
       setGeoJsonTalhoesLayer(null);
       toast.showError('Não foi possível carregar os dados');
     } finally {
@@ -351,6 +407,13 @@ export default function MapasScreen({ route, navigation }) {
     && !!contextoConsulta.fazenda
     && canManageGeoJsonForPropriedade(user, contextoConsulta.fazenda);
   const podeAnexarGeoJson = podeGerenciarGeoJson;
+  const podeAnexarPng = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canStartPngMapPropertyImport(user, contextoConsulta.fazenda);
+  const pngImportsAtivos = useMemo(
+    () => pngImports.filter((item) => item.status === 'ativo'),
+    [pngImports]
+  );
   const fazendaOptions = useMemo(
     () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
     [contextoConsulta.fazendasPermitidas]
@@ -399,6 +462,39 @@ export default function MapasScreen({ route, navigation }) {
     () => buildOptionsOrdenadas([...talhoesLimite, ...talhoesMapas]),
     [talhoesLimite, talhoesMapas]
   );
+  const pngCategoryOptions = useMemo(
+    () => PNG_MAP_PROPERTY_CATEGORY_OPTIONS.map((option) => ({
+      value: option.value,
+      label: option.label,
+      description: option.categoria_label,
+    })),
+    []
+  );
+  const pngTalhaoOptions = useMemo<Array<{ value: string; label: string; description?: string }>>(() => {
+    const seen = new Set<string>();
+    const options: Array<{ value: string; label: string; description?: string }> = [];
+
+    talhoesDemarcacaoNoContexto
+      .forEach((talhao: any) => {
+        const nome = typeof talhao?.talhao === 'string' && talhao.talhao.trim()
+          ? talhao.talhao.trim()
+          : typeof talhao?.nome === 'string'
+            ? talhao.nome.trim()
+            : '';
+        const id = typeof talhao?.id === 'string' && talhao.id.trim()
+          ? talhao.id.trim()
+          : nome;
+        if (!nome || seen.has(id)) return;
+        seen.add(id);
+        options.push({
+          value: id,
+          label: nome,
+          description: talhao?.area_hectares ? `${talhao.area_hectares} ha` : undefined,
+        });
+      });
+
+    return options;
+  }, [talhoesDemarcacaoNoContexto]);
 
   useEffect(() => {
     if (safraFiltroMapas !== FILTRO_TODOS && !safrasMapas.includes(safraFiltroMapas)) {
@@ -547,6 +643,12 @@ export default function MapasScreen({ route, navigation }) {
       layer: talhoesLayerAtualizada,
     };
   }, [limitesNoContexto]);
+
+  const recarregarPngLocal = useCallback(async (propriedadeId: string) => {
+    const importsAtualizados = await listActivePngMapImportsForPropriedade(propriedadeId);
+    setPngImports(importsAtualizados);
+    return importsAtualizados;
+  }, []);
 
   // ──────────────────────────────────────────────
   // HANDLERS
@@ -805,6 +907,113 @@ export default function MapasScreen({ route, navigation }) {
         action: null,
         loading: false,
       });
+    }
+  };
+
+  const updatePngForm = (patch: Partial<PngMapPropertyImportFormInput>) => {
+    setPngForm((current) => ({
+      ...current,
+      ...patch,
+    }));
+    setPngFormErrors((current) => {
+      const next = { ...current };
+      Object.keys(patch).forEach((key) => {
+        delete next[key];
+      });
+      if ('talhao_id' in patch || 'talhao_nome' in patch || 'escopo' in patch) {
+        delete next.talhao;
+      }
+      return next;
+    });
+  };
+
+  const handlePngTalhaoChange = (talhaoId: string) => {
+    const option = pngTalhaoOptions.find((item: any) => item?.value === talhaoId) as any;
+    updatePngForm({
+      talhao_id: talhaoId,
+      talhao_nome: option?.label || '',
+    });
+  };
+
+  const handleAnexarPng = async () => {
+    if (!podeAnexarPng || !contextoConsulta.fazenda) {
+      toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar PNG.');
+      return;
+    }
+
+    setPngImporting(true);
+    try {
+      const result = await preparePngMapPropertyImport({
+        user,
+        propriedade: contextoConsulta.fazenda,
+      });
+
+      if (!result.ok || !result.preview) {
+        if (result.error?.code !== 'PICKER_CANCELLED') {
+          toast.showError(result.error?.message || 'Não foi possível validar o PNG selecionado.');
+        }
+        return;
+      }
+
+      setPngPreview(result.preview);
+      setPngForm({
+        ...EMPTY_PNG_FORM,
+        ...result.preview.form,
+        ano: result.preview.form.ano ? String(result.preview.form.ano) : '',
+      });
+      setPngFormErrors({});
+    } catch (error) {
+      toast.showError('Não foi possível preparar o PNG selecionado.');
+    } finally {
+      setPngImporting(false);
+    }
+  };
+
+  const handleCancelarPngPreview = () => {
+    if (pngConfirming) return;
+    setPngPreview(null);
+    setPngForm(EMPTY_PNG_FORM);
+    setPngFormErrors({});
+  };
+
+  const handleConfirmarPngPreview = async () => {
+    if (!pngPreview) return;
+
+    setPngConfirming(true);
+    try {
+      const result = await confirmPngMapPropertyImport(pngPreview, pngForm);
+
+      if (!result.ok) {
+        if (result.error?.code === 'FORM_INVALID') {
+          setPngFormErrors((result.error.details as Record<string, string>) || {});
+          toast.showError('Revise os campos obrigatórios do mapa PNG.');
+          return;
+        }
+
+        toast.showError(result.error?.message || 'Não foi possível anexar o mapa PNG.');
+        return;
+      }
+
+      setPngPreview(null);
+      setPngForm(EMPTY_PNG_FORM);
+      setPngFormErrors({});
+      setPngImports(result.imports || (result.metadata ? [result.metadata] : []));
+
+      try {
+        await recarregarPngLocal(pngPreview.resolvedContext.propriedade_id);
+      } catch {
+        toast.showWarning('PNG salvo, mas não foi possível recarregar o resumo local agora.');
+      }
+
+      toast.showSuccess('Mapa PNG anexado à Propriedade.');
+      toast.showInfo('A listagem integrada dos anexos locais será consolidada na próxima etapa.');
+      if (result.warnings && result.warnings.length > 0) {
+        toast.showWarning(result.warnings[0].message);
+      }
+    } catch (error) {
+      toast.showError('Não foi possível concluir o anexo do PNG.');
+    } finally {
+      setPngConfirming(false);
     }
   };
 
@@ -1259,6 +1468,93 @@ export default function MapasScreen({ route, navigation }) {
     );
   };
 
+  const renderPngImportPanel = () => {
+    if (!podeAnexarPng) return null;
+
+    return (
+      <View style={styles.pngImportPanel}>
+        <View style={styles.pngImportHeader}>
+          <View style={styles.pngImportHeaderIcon}>
+            <Ionicons name="image-outline" size={18} color={colors.info} />
+          </View>
+          <View style={styles.pngImportHeaderText}>
+            <Text style={styles.pngImportTitle}>PNG local</Text>
+            <Text style={styles.pngImportSubtitle}>
+              Selecione um PNG de mapa técnico. O arquivo ficará salvo localmente neste aparelho.
+            </Text>
+          </View>
+        </View>
+
+        {pngImportsAtivos.length > 0 ? (
+          <View style={styles.pngImportSummaryList}>
+            {pngImportsAtivos.slice(0, 3).map((item) => (
+              <View key={item.id} style={styles.pngImportSummaryItem}>
+                <View style={styles.pngImportSummaryIcon}>
+                  <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
+                </View>
+                <View style={styles.pngImportSummaryText}>
+                  <Text style={styles.pngImportSummaryTitle} numberOfLines={1}>
+                    {item.titulo}
+                  </Text>
+                  <Text style={styles.pngImportSummaryMeta} numberOfLines={2}>
+                    {[
+                      item.elemento_label || item.categoria_label,
+                      item.safra || item.ano,
+                      item.escopo === 'talhao'
+                        ? item.talhao_nome || 'Talhão específico'
+                        : 'Propriedade inteira',
+                      item.status,
+                    ].filter(Boolean).join(' • ')}
+                  </Text>
+                  <Text style={styles.pngImportSummaryMeta} numberOfLines={1}>
+                    {[
+                      item.arquivo_nome_original,
+                      formatarData(item.importado_em),
+                    ].filter(Boolean).join(' • ')}
+                  </Text>
+                </View>
+              </View>
+            ))}
+            {pngImportsAtivos.length > 3 ? (
+              <Text style={styles.pngImportMoreText}>
+                +{pngImportsAtivos.length - 3} PNG local(is) nesta Propriedade.
+              </Text>
+            ) : null}
+          </View>
+        ) : (
+          <View style={styles.pngImportEmpty}>
+            <Text style={styles.pngImportEmptyText}>
+              Nenhum PNG local anexado a esta Propriedade.
+            </Text>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.geoJsonImportButton,
+            pngImporting && styles.geoJsonImportButtonDisabled,
+          ]}
+          onPress={handleAnexarPng}
+          activeOpacity={0.78}
+          disabled={pngImporting}
+        >
+          {pngImporting ? (
+            <ActivityIndicator size="small" color={colors.white} />
+          ) : (
+            <Ionicons name="attach-outline" size={18} color={colors.white} />
+          )}
+          <Text style={styles.geoJsonImportButtonText}>
+            Anexar mapa PNG
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.pngImportNextStep}>
+          A listagem integrada dos anexos locais será consolidada na próxima etapa.
+        </Text>
+      </View>
+    );
+  };
+
   // ──────────────────────────────────────────────
   // RENDER: PANORAMA UNIFICADO
   // ──────────────────────────────────────────────
@@ -1498,6 +1794,7 @@ export default function MapasScreen({ route, navigation }) {
           message="Consulte os mapas e arquivos técnicos já preparados para esta demonstração. Esta tela não envia, baixa ou publica arquivos."
           style={styles.materiaisDescription}
         />
+        {renderPngImportPanel()}
       </SectionCard>
 
       {/* Filtros de Categoria */}
@@ -1794,6 +2091,219 @@ export default function MapasScreen({ route, navigation }) {
                 )}
                 <Text style={styles.geoJsonPreviewConfirmText}>
                   {geoJsonPreviewMode === 'replace' ? 'Substituir' : 'Confirmar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!pngPreview}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelarPngPreview}
+      >
+        <View style={styles.geoJsonPreviewOverlay}>
+          <View style={styles.geoJsonPreviewDialog}>
+            <View style={styles.geoJsonPreviewHeader}>
+              <View style={styles.geoJsonPreviewTitleWrap}>
+                <Text style={styles.geoJsonPreviewTitle}>
+                  Anexar mapa PNG
+                </Text>
+                <Text style={styles.geoJsonPreviewSubtitle}>
+                  Complete os metadados mínimos para associar o PNG à Propriedade.
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleCancelarPngPreview}
+                style={styles.geoJsonPreviewClose}
+                disabled={pngConfirming}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.geoJsonPreviewBody}
+              contentContainerStyle={styles.geoJsonPreviewContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {pngPreview ? (
+                <>
+                  <View style={styles.pngFileBox}>
+                    <View style={styles.pngFileIcon}>
+                      <Ionicons name="image-outline" size={20} color={colors.info} />
+                    </View>
+                    <View style={styles.pngFileText}>
+                      <Text style={styles.pngFileLabel}>Arquivo selecionado</Text>
+                      <Text style={styles.pngFileName} numberOfLines={2}>
+                        {pngPreview.file.name}
+                      </Text>
+                      <Text style={styles.pngFileMeta}>
+                        {formatarTamanhoArquivo(pngPreview.file.size)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <FormField
+                    label="Título"
+                    required
+                    value={pngForm.titulo || ''}
+                    onChangeText={(titulo) => updatePngForm({ titulo })}
+                    error={pngFormErrors.titulo}
+                    placeholder="Ex.: Mapa de pH 2025"
+                    leftIcon="text-outline"
+                  />
+
+                  <SelectField
+                    label="Categoria"
+                    required
+                    value={pngForm.elemento ? String(pngForm.elemento) : ''}
+                    options={pngCategoryOptions}
+                    onChange={(elemento) => updatePngForm({ elemento })}
+                    error={pngFormErrors.elemento}
+                    placeholder="Selecione a categoria"
+                  />
+
+                  <View style={styles.pngFormRow}>
+                    <FormField
+                      label="Safra"
+                      value={pngForm.safra || ''}
+                      onChangeText={(safra) => updatePngForm({ safra })}
+                      placeholder="Ex.: 2025/2026"
+                      leftIcon="leaf-outline"
+                      containerStyle={styles.pngFormRowItem}
+                    />
+                    <FormField
+                      label="Ano"
+                      value={pngForm.ano ? String(pngForm.ano) : ''}
+                      onChangeText={(ano) => updatePngForm({ ano })}
+                      error={pngFormErrors.ano}
+                      keyboardType="number-pad"
+                      placeholder="2025"
+                      leftIcon="calendar-outline"
+                      containerStyle={styles.pngFormRowItem}
+                    />
+                  </View>
+
+                  <FormField
+                    label="Profundidade"
+                    value={pngForm.profundidade || ''}
+                    onChangeText={(profundidade) => updatePngForm({ profundidade })}
+                    placeholder="Ex.: 10-20 cm"
+                    leftIcon="resize-outline"
+                  />
+
+                  <SelectField
+                    label="Escopo"
+                    required
+                    value={pngForm.escopo || 'propriedade'}
+                    options={PNG_ESCOPO_OPTIONS}
+                    onChange={(escopo) => updatePngForm({
+                      escopo: escopo === 'talhao' ? 'talhao' : 'propriedade',
+                      talhao_id: '',
+                      talhao_nome: '',
+                    })}
+                    error={pngFormErrors.escopo}
+                  />
+
+                  {pngForm.escopo === 'talhao' ? (
+                    pngTalhaoOptions.length > 0 ? (
+                      <SelectField
+                        label="Talhão"
+                        required
+                        value={pngForm.talhao_id || ''}
+                        options={pngTalhaoOptions}
+                        onChange={handlePngTalhaoChange}
+                        error={pngFormErrors.talhao}
+                        placeholder="Selecione o talhão"
+                      />
+                    ) : (
+                      <FormField
+                        label="Nome do talhão"
+                        required
+                        value={pngForm.talhao_nome || ''}
+                        onChangeText={(talhao_nome) => updatePngForm({ talhao_nome })}
+                        error={pngFormErrors.talhao}
+                        placeholder="Informe o talhão"
+                        leftIcon="location-outline"
+                      />
+                    )
+                  ) : null}
+
+                  <FormField
+                    label="Observações"
+                    value={pngForm.descricao || ''}
+                    onChangeText={(descricao) => updatePngForm({ descricao })}
+                    placeholder="Observação técnica opcional"
+                    leftIcon="document-text-outline"
+                    textarea
+                    maxLength={420}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.pngVisibilityToggle}
+                    onPress={() => updatePngForm({
+                      visivel_para_produtor: !pngForm.visivel_para_produtor,
+                    })}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={pngForm.visivel_para_produtor ? 'checkbox-outline' : 'square-outline'}
+                      size={22}
+                      color={pngForm.visivel_para_produtor ? colors.primary : colors.muted}
+                    />
+                    <View style={styles.pngVisibilityText}>
+                      <Text style={styles.pngVisibilityTitle}>Visível para produtor</Text>
+                      <Text style={styles.pngVisibilitySubtitle}>
+                        O anexo será marcado para consulta do Produtor quando a listagem integrada estiver disponível.
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  {pngPreview.warnings.length > 0 ? (
+                    <View style={styles.geoJsonWarningsBox}>
+                      <Text style={styles.geoJsonWarningsTitle}>Avisos da validação</Text>
+                      {pngPreview.warnings.slice(0, 4).map((warning) => (
+                        <Text key={`${warning.code}-${warning.message}`} style={styles.geoJsonWarningItem}>
+                          {warning.message}
+                        </Text>
+                      ))}
+                      {pngPreview.warnings.length > 4 ? (
+                        <Text style={styles.geoJsonWarningItem}>
+                          +{pngPreview.warnings.length - 4} aviso(s)
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.geoJsonPreviewFooter}>
+              <TouchableOpacity
+                style={styles.geoJsonPreviewCancelButton}
+                onPress={handleCancelarPngPreview}
+                disabled={pngConfirming}
+              >
+                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonPreviewConfirmButton,
+                  pngConfirming && styles.geoJsonPreviewConfirmButtonDisabled,
+                ]}
+                onPress={handleConfirmarPngPreview}
+                disabled={pngConfirming}
+              >
+                {pngConfirming ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="checkmark-outline" size={18} color={colors.white} />
+                )}
+                <Text style={styles.geoJsonPreviewConfirmText}>
+                  Anexar PNG
                 </Text>
               </TouchableOpacity>
             </View>
@@ -2523,6 +3033,171 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     fontWeight: typography.weightBold,
     color: colors.white,
+  },
+
+  pngImportPanel: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    paddingTop: spacing.md,
+    gap: spacing.md,
+  },
+  pngImportHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  pngImportHeaderIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.infoLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pngImportHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pngImportTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  pngImportSubtitle: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  pngImportSummaryList: {
+    gap: spacing.sm,
+  },
+  pngImportSummaryItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.background,
+  },
+  pngImportSummaryIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.successBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pngImportSummaryText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pngImportSummaryTitle: {
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  pngImportSummaryMeta: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  pngImportMoreText: {
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    fontWeight: typography.weightSemibold,
+  },
+  pngImportEmpty: {
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.background,
+  },
+  pngImportEmptyText: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    lineHeight: 18,
+  },
+  pngImportNextStep: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 17,
+  },
+  pngFileBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.background,
+  },
+  pngFileIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.infoLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pngFileText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pngFileLabel: {
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold,
+  },
+  pngFileName: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  pngFileMeta: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    marginTop: 2,
+  },
+  pngFormRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  pngFormRowItem: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pngVisibilityToggle: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.background,
+  },
+  pngVisibilityText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  pngVisibilityTitle: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+  },
+  pngVisibilitySubtitle: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 17,
+    marginTop: 2,
   },
 
   materiaisDescription: {
