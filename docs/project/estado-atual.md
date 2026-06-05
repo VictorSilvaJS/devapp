@@ -670,6 +670,43 @@ Principais achados:
   usuario listado pelo Admin, preservando as credenciais demonstrativas como
   fallback.
 
+Status em 2026-06-05 (Fase 16E.2): foi criada a infraestrutura tecnica isolada
+de credenciais locais em `src/auth/localCredentials.ts`.
+
+Esta microfase adicionou:
+
+- chave separada `@tche:local-credentials:v1`;
+- contrato `LocalCredential` com `usuario_id`, `email_normalizado`,
+  `senha_hash`, `salt`, `versao`, `criado_em` e `atualizado_em`;
+- helper `normalizeEmail`;
+- servico `LocalCredentialService` com listagem de metadados, busca por usuario
+  ou e-mail, criacao, atualizacao, remocao e verificacao de credencial;
+- dependencia `expo-crypto` `~12.2.1`, compativel com Expo 48, encapsulada no
+  hasher local demonstrativo;
+- testes em `tests/localCredentials.test.js`.
+
+Limites preservados:
+
+- `LoginScreen.tsx` nao foi alterado;
+- `AuthContext.tsx` nao foi alterado;
+- `authMock.ts` continua sendo a origem efetiva do login demonstrativo;
+- usuarios criados no Admin ainda nao autenticam;
+- nenhuma credencial foi criada automaticamente para usuarios existentes;
+- `senha: 'mock123'` nao foi migrada nem usada como credencial;
+- `@tche:user`, `@tche:mock-mvp:v1`, dashboards, navegacao por perfil, filtros,
+  GeoJSON e PNG permanecem sem mudanca funcional.
+
+Risco residual: `User.delete` ainda nao remove credencial local, pois a
+microfase nao integrou o servico ao mock administrativo. Essa remocao deve ser
+tratada quando a interface administrativa de acesso for implementada.
+
+Verificacao Expo apos adicionar `expo-crypto`: `npx expo install --check`
+indicou dependencias atualizadas. `npx expo-doctor` passou em 14 de 16
+verificacoes e apontou dois riscos preexistentes/de publicacao futura:
+`@types/react-native` instalado diretamente e Expo SDK 48 mirando Android API
+33 ou inferior por padrao para submissao na Google Play. Nenhum desses pontos
+foi corrigido nesta microfase para evitar upgrade/limpeza ampla fora do escopo.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

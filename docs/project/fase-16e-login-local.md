@@ -6,11 +6,131 @@ campo novo de senha, autenticacao de usuarios criados no Admin, hash,
 redefinicao de senha, bloqueio por status, migracao, backend, JWT, upload,
 GeoJSON ou PNG.
 
+Status em 2026-06-05: concluida a Fase 16E.2 com infraestrutura tecnica
+isolada de credenciais locais. Esta etapa criou contrato, normalizacao unica de
+e-mail, chave propria em `AsyncStorage`, servico de persistencia e testes
+automatizados. Nao alterou `LoginScreen`, `AuthContext`, `authMock`, cadastro
+administrativo, acesso rapido, sessoes existentes, filtros, GeoJSON ou PNG.
+
 ## Objetivo Da 16E.1
 
 Mapear o funcionamento atual do login, cadastro administrativo de usuarios,
 persistencia local do mock e sessao para preparar uma mudanca pequena e segura
 nas proximas microfases.
+
+## Resultado Da 16E.2
+
+A Fase 16E.2 criou `src/auth/localCredentials.ts` como servico isolado para
+credenciais locais demonstrativas. Ele nao e chamado pelo login atual e nao
+cria credenciais automaticamente para usuarios existentes.
+
+Chave nova de armazenamento:
+
+- `@tche:local-credentials:v1`
+
+Essa chave fica separada de:
+
+- `@tche:mock-mvp:v1`
+- `@tche:user`
+- objetos retornados por `User.list`
+- contratos visuais do Admin
+
+Contrato da credencial local:
+
+- `usuario_id`
+- `email_normalizado`
+- `senha_hash`
+- `salt`
+- `versao`
+- `criado_em`
+- `atualizado_em`
+
+As consultas publicas do servico retornam metadados sem `senha_hash` e sem
+`salt`. O snapshot persistido contem hash e salt, mas nao deve conter senha em
+texto.
+
+Operacoes implementadas:
+
+- `listCredentialMetadata`
+- `findCredentialByUserId`
+- `findCredentialByEmail`
+- `hasCredential`
+- `createCredential`
+- `updateCredential`
+- `removeCredential`
+- `verifyCredential`
+
+Comportamentos definidos:
+
+- `normalizeEmail` aplica `trim()` nas extremidades e `lowercase`, sem alterar
+  caracteres internos.
+- Usuario sem credencial retorna `false` em `hasCredential`.
+- Nenhuma credencial automatica e criada para usuarios antigos.
+- `mock123` nao e migrado nem usado como credencial.
+- Duplicidade de `usuario_id` e de e-mail normalizado e bloqueada.
+- Atualizacao preserva `criado_em` e altera `atualizado_em`.
+- JSON invalido no armazenamento e tratado como snapshot vazio, sem derrubar o
+  app.
+- `User.delete` ainda nao remove credencial local; isso permanece como cuidado
+  futuro para evitar credenciais orfas.
+
+Estrategia de hash:
+
+- Foi adicionada a dependencia `expo-crypto` na versao compativel com Expo 48:
+  `~12.2.1`.
+- O servico encapsula `expo-crypto` em `createExpoLocalCredentialHasher`.
+- O salt e gerado com `getRandomBytesAsync(16)` e armazenado em hexadecimal.
+- O hash usa `digestStringAsync` com `CryptoDigestAlgorithm.SHA256` sobre uma
+  string versionada que combina versao, salt e senha.
+- Essa estrategia e local/demonstrativa e nao deve ser descrita como seguranca
+  equivalente a backend de producao.
+- Para testes, o servico aceita hasher injetavel, evitando dependencia de modulo
+  nativo no ambiente Node.
+
+Testes adicionados em `tests/localCredentials.test.js` cobrem:
+
+- normalizacao de e-mail;
+- criacao de credencial;
+- busca por usuario;
+- busca por e-mail ignorando caixa e espacos externos;
+- duplicidade de e-mail;
+- duplicidade de `usuario_id`;
+- verificacao de senha correta;
+- rejeicao de senha incorreta;
+- atualizacao de senha;
+- remocao;
+- usuario sem credencial;
+- armazenamento corrompido/JSON invalido;
+- credencial ausente em objetos administrativos;
+- ausencia de senha em texto no snapshot persistido.
+
+Validacoes executadas na 16E.2:
+
+- `npm run typecheck`
+- `npm run test:domain-compat`
+- `npx tsc -p tsconfig.domain-compat.json && node tests/localCredentials.test.js`
+- `npx expo install expo-crypto --check`
+- `npx expo install --check`
+- `npx expo-doctor`
+- `git diff --check`
+
+Observacao: `npx expo install expo-crypto` executou `npm install` e o `npm`
+relatou vulnerabilidades ja existentes/pendentes no audit. Nao foi executado
+`npm audit fix`, porque isso alteraria dependencias fora do escopo desta
+microfase.
+
+Resultado do `expo-doctor`: 14 de 16 verificacoes passaram. As duas falhas
+registradas nao foram introduzidas pela integracao do servico de credenciais:
+
+- `@types/react-native` esta instalado diretamente, embora o pacote
+  `react-native` ja inclua tipos;
+- Expo SDK 48 mira Android API 33 ou inferior por padrao, abaixo do requisito
+  atual de envio para Google Play. O proprio diagnostico recomenda Expo SDK 50
+  ou superior para submissao em loja.
+
+Esses pontos ficam como risco de build/publicacao futura. Nao foram corrigidos
+na 16E.2 porque exigem limpeza/upgrade de dependencias fora do escopo desta
+microfase.
 
 ## Arquivos Analisados
 

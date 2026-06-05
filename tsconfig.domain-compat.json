@@ -19,6 +19,7 @@
     "src/api/mock.ts",
     "src/api/mapaSyncEndpoints.ts",
     "src/auth/authMock.ts",
+    "src/auth/localCredentials.ts",
     "src/navigation/mapaRouteCompat.ts",
     "src/navigation/propriedadeRouteCompat.ts",
     "src/utils/acessoControle.ts",
