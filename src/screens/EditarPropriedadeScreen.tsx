@@ -26,7 +26,7 @@ import {
 } from '../utils/validacoes';
 import { getTitularIdFazenda, podeEditarProdutor } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
-import { getUsuarioNome, getUsuarioProdutorId } from '../utils/usuarioAdminCompat';
+import { getUsuarioNome, getUsuarioProdutorId, getUsuarioStatusInfo } from '../utils/usuarioAdminCompat';
 
 const STATUS_PROPRIEDADE = [
   { value: 'ativo', label: 'Ativo', icon: 'checkmark-circle-outline' as const },
@@ -204,7 +204,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   const titularOptions = produtoresUsuarios.some((usuario) => getUsuarioProdutorId(usuario) === titularId)
     ? produtoresUsuarios.map((usuario) => ({
         value: getUsuarioProdutorId(usuario),
-        label: getUsuarioNome(usuario),
+        label: `${getUsuarioNome(usuario)} (${getUsuarioStatusInfo(usuario).label})`,
         description: usuario.email,
       }))
     : [
@@ -215,7 +215,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
         },
         ...produtoresUsuarios.map((usuario) => ({
           value: getUsuarioProdutorId(usuario),
-          label: getUsuarioNome(usuario),
+          label: `${getUsuarioNome(usuario)} (${getUsuarioStatusInfo(usuario).label})`,
           description: usuario.email,
         })),
       ];

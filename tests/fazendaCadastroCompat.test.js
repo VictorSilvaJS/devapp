@@ -6,7 +6,7 @@ const {
   buildNovoTitularId,
   validateCadastroFazendaScope,
 } = require('../.tmp-domain-compat/src/utils/fazendaCadastroCompat');
-const { Produtor } = require('../.tmp-domain-compat/src/api/mock');
+const { Produtor, User } = require('../.tmp-domain-compat/src/api/mock');
 const { filtrarProdutoresPorAcesso } = require('../.tmp-domain-compat/src/utils/acessoControle');
 
 let failed = 0;
@@ -63,20 +63,78 @@ const run = async () => {
     assert.deepEqual(titulares[0].fazendas_ids, ['fz1']);
   });
 
-  await test('buildCadastroTitularOptionsFromUsers lista somente usuarios produtores por nome', () => {
+  await test('buildCadastroTitularOptionsFromUsers lista produtores ativos, pendentes e inativos por nome', () => {
     const titulares = buildCadastroTitularOptionsFromUsers(
       [
-        { id: 'u1', nome: 'Ana Usuária', perfil: 'produtor', produtor_id: 'prop1' },
+        { id: 'u1', nome: 'Ana Usuária', perfil: 'produtor', produtor_id: 'prop1', status: 'ativo' },
         { id: 'u2', nome: 'Carlos Campo', perfil: 'colaborador' },
-        { id: 'u3', nome: 'Produtor Pendente', perfil: 'produtor', produtor_id: '' },
+        { id: 'u3', nome: 'Produtor Pendente', perfil: 'produtor', produtor_id: '', status: 'pendente' },
+        { id: 'u4', nome: 'Produtor Inativo', perfil: 'produtor', ativo: false, status: 'inativo' },
+        { id: 'u5', nome: 'Admin Teste', perfil: 'admin', status: 'ativo' },
       ],
       fazendasBase
     );
 
-    assert.deepEqual(titulares.map((titular) => titular.id), ['prop1']);
-    assert.equal(titulares[0].nome, 'Ana Usuária');
-    assert.equal(titulares[0].usuario_id, 'u1');
-    assert.deepEqual(titulares[0].fazendas_nomes, ['Fazenda Sol']);
+    const ids = titulares.map((titular) => titular.id);
+    assert.deepEqual(ids, ['prop1', 'u4', 'u3']);
+
+    const antigoComProdutorId = titulares.find((titular) => titular.id === 'prop1');
+    assert.equal(antigoComProdutorId.nome, 'Ana Usuária');
+    assert.equal(antigoComProdutorId.usuario_id, 'u1');
+    assert.equal(antigoComProdutorId.status, 'ativo');
+    assert.equal(antigoComProdutorId.status_label, 'Ativo');
+    assert.deepEqual(antigoComProdutorId.fazendas_nomes, ['Fazenda Sol']);
+
+    const pendenteSemPropriedade = titulares.find((titular) => titular.id === 'u3');
+    assert.equal(pendenteSemPropriedade.nome, 'Produtor Pendente');
+    assert.equal(pendenteSemPropriedade.usuario_id, 'u3');
+    assert.equal(pendenteSemPropriedade.status, 'pendente');
+    assert.equal(pendenteSemPropriedade.status_label, 'Pendente');
+    assert.deepEqual(pendenteSemPropriedade.fazendas_nomes, []);
+
+    const inativoSemPropriedade = titulares.find((titular) => titular.id === 'u4');
+    assert.equal(inativoSemPropriedade.nome, 'Produtor Inativo');
+    assert.equal(inativoSemPropriedade.usuario_id, 'u4');
+    assert.equal(inativoSemPropriedade.status, 'inativo');
+    assert.equal(inativoSemPropriedade.status_label, 'Inativo');
+  });
+
+  await test('buildCadastroTitularOptionsFromUsers nao duplica produtor com produtor_id legado', () => {
+    const titulares = buildCadastroTitularOptionsFromUsers(
+      [
+        { id: 'u1', nome: 'Ana Usuária', perfil: 'produtor', produtor_id: 'prop1', status: 'ativo' },
+        { id: 'u1b', nome: 'Ana Duplicada', perfil: 'produtor', produtor_id: 'prop1', status: 'pendente' },
+        { id: 'u_sem_prop', nome: 'Produtor Sem Propriedade', perfil: 'produtor', status: 'pendente' },
+      ],
+      fazendasBase
+    );
+
+    assert.equal(titulares.filter((titular) => titular.id === 'prop1').length, 1);
+    assert.equal(titulares.filter((titular) => titular.id === 'u_sem_prop').length, 1);
+  });
+
+  await test('buildCadastroFazendaPayload vincula propriedade a produtor novo usando id do usuario', () => {
+    const titulares = buildCadastroTitularOptionsFromUsers(
+      [
+        { id: 'u_pendente', nome: 'Produtor Pendente', perfil: 'produtor', status: 'pendente' },
+      ],
+      fazendasBase
+    );
+    const payload = buildCadastroFazendaPayload({
+      mode: 'existente',
+      titularId: 'u_pendente',
+      fazendaNome: 'Propriedade Produtor Pendente',
+      areaTotal: 100,
+      regiao: 'Sul',
+      microregiao: 'Sul 1',
+      status: 'pendente',
+      titulares,
+    });
+
+    assert.equal(payload.produtor_id, 'u_pendente');
+    assert.equal(payload.proprietario_id, 'u_pendente');
+    assert.equal(payload.nome, 'Produtor Pendente');
+    assert.equal(payload.status, 'pendente');
   });
 
   await test('buildCadastroFazendaPayload vincula nova fazenda a titular existente', () => {
@@ -202,6 +260,28 @@ const run = async () => {
     const listaAtualizada = await Produtor.list();
     const visiveis = filtrarProdutoresPorAcesso(listaAtualizada, user);
     assert.ok(visiveis.some((fazenda) => fazenda.id === criado.id));
+  });
+
+  await test('User.create salva produtor pendente/inativo com produtor_id estavel', async () => {
+    const pendente = await User.create({
+      nome: 'Produtor Pendente Compat',
+      email: `produtor.pendente.compat.${Date.now()}@example.com`,
+      perfil: 'produtor',
+      status: 'pendente',
+      senha: 'mock123',
+    });
+    const inativo = await User.create({
+      nome: 'Produtor Inativo Compat',
+      email: `produtor.inativo.compat.${Date.now()}@example.com`,
+      perfil: 'produtor',
+      status: 'inativo',
+      senha: 'mock123',
+    });
+
+    assert.equal(pendente.produtor_id, pendente.id);
+    assert.equal(pendente.status, 'pendente');
+    assert.equal(inativo.produtor_id, inativo.id);
+    assert.equal(inativo.status, 'inativo');
   });
 
   if (failed > 0) {

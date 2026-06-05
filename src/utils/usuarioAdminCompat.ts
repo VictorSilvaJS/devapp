@@ -113,8 +113,14 @@ export const getUsuarioStatusInfo = (usuario: any) => {
   };
 };
 
-export const getUsuarioProdutorId = (usuario: any) =>
-  typeof usuario?.produtor_id === 'string' ? usuario.produtor_id.trim() : '';
+export const getUsuarioProdutorId = (usuario: any) => {
+  const produtorId = typeof usuario?.produtor_id === 'string' ? usuario.produtor_id.trim() : '';
+  if (produtorId) return produtorId;
+
+  return usuario?.perfil === 'produtor' && typeof usuario?.id === 'string'
+    ? usuario.id.trim()
+    : '';
+};
 
 const normalizeVinculoPropriedade = (vinculo: any, usuarioId?: string) => {
   const propriedadeId = getPropriedadeId(vinculo) || '';

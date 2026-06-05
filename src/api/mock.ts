@@ -2002,6 +2002,13 @@ const resolveUsuarioStatus = (data: any) => {
   return data?.ativo === false ? 'inativo' : 'ativo';
 };
 
+const resolveUsuarioProdutorId = (usuario: any, usuarioId?: string) => {
+  const produtorId = typeof usuario?.produtor_id === 'string' ? usuario.produtor_id.trim() : '';
+  if (produtorId) return produtorId;
+
+  return usuario?.perfil === 'produtor' ? String(usuarioId || usuario?.id || '').trim() : '';
+};
+
 const stripUsuarioRelations = (usuario: any) => {
   const { vinculos_propriedades, vinculos_microregioes, ...rest } = usuario || {};
   return rest;
@@ -2049,10 +2056,11 @@ const ensurePrincipalUsuarioPropriedade = (links: any[]) => {
 };
 
 const deriveUsuarioPropriedadeLinks = (usuario: any, usuarioId: string) => {
-  if (usuario?.perfil === 'produtor' && usuario?.produtor_id) {
+  const produtorId = resolveUsuarioProdutorId(usuario, usuarioId);
+  if (usuario?.perfil === 'produtor' && produtorId) {
     return ensurePrincipalUsuarioPropriedade(
       produtores
-        .filter((propriedade) => propriedade.proprietario_id === usuario.produtor_id || propriedade.produtor_id === usuario.produtor_id)
+        .filter((propriedade) => propriedade.proprietario_id === produtorId || propriedade.produtor_id === produtorId)
         .map((propriedade, index) => ({
           usuario_id: usuarioId,
           propriedade_id: propriedade.id,
@@ -2186,8 +2194,10 @@ const validateUsuarioMock = (
 
 const readUsuarioMock = (usuario: any) => {
   const status = resolveUsuarioStatus(usuario);
+  const produtorId = resolveUsuarioProdutorId(usuario, usuario.id);
   return {
     ...usuario,
+    produtor_id: usuario?.perfil === 'produtor' ? produtorId : usuario?.produtor_id || '',
     status,
     ativo: status === 'ativo',
     vinculos_propriedades: usuarioPropriedade
@@ -2234,6 +2244,7 @@ export const User: any = {
         ativo: status === 'ativo',
         data_cadastro: new Date().toISOString()
       };
+      novo.produtor_id = novo.perfil === 'produtor' ? resolveUsuarioProdutorId(novo, id) : '';
       const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, novo, data, true);
       const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, novo, data, true);
 
@@ -2256,6 +2267,9 @@ export const User: any = {
         status,
         ativo: status === 'ativo',
       };
+      atualizado.produtor_id = atualizado.perfil === 'produtor'
+        ? resolveUsuarioProdutorId(atualizado, id)
+        : '';
       const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, atualizado, data, false);
       const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, atualizado, data, false);
 

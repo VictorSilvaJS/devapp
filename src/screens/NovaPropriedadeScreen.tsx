@@ -331,7 +331,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
               value={titularSelecionadoId}
               options={titulares.map((titular) => ({
                 value: titular.id,
-                label: titular.nome,
+                label: titular.status_label ? `${titular.nome} (${titular.status_label})` : titular.nome,
                 description: titular.fazendas_nomes?.join(', ') || 'Produtor cadastrado sem Propriedade vinculada',
               }))}
               onChange={(value) => {

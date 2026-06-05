@@ -1,5 +1,5 @@
 import { listMockProdutoresTitulares } from '../api/produtorCompat';
-import { getUsuarioNome, getUsuarioProdutorId } from './usuarioAdminCompat';
+import { getUsuarioNome, getUsuarioProdutorId, getUsuarioStatusInfo } from './usuarioAdminCompat';
 
 export type CadastroTitularMode = 'existente' | 'novo';
 
@@ -9,6 +9,8 @@ export type CadastroTitularOption = {
   fazendas_ids: string[];
   fazendas_nomes: string[];
   usuario_id?: string;
+  status?: string;
+  status_label?: string;
 };
 
 export type CadastroFazendaPayload = {
@@ -127,10 +129,13 @@ export const buildCadastroTitularOptionsFromUsers = (
       if (!produtorId || options.has(produtorId)) return;
 
       const propriedades = propriedadesPorTitular.get(produtorId);
+      const status = getUsuarioStatusInfo(usuario);
       options.set(produtorId, {
         id: produtorId,
         nome: getUsuarioNome(usuario),
         usuario_id: trimString(usuario?.id),
+        status: status.key,
+        status_label: status.label,
         fazendas_ids: propriedades?.fazendas_ids || [],
         fazendas_nomes: propriedades?.fazendas_nomes || [],
       });
