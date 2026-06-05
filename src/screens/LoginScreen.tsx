@@ -36,19 +36,21 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     setErro('');
     if (!email.trim()) {
-      setErro('Informe o e-mail demonstrativo');
+      setErro('Informe o e-mail');
       return;
     }
-    if (!senha.trim()) {
-      setErro('Informe a senha demonstrativa');
+    if (!senha) {
+      setErro('Informe a senha');
       return;
     }
     try {
-      await login(email.trim(), senha.trim());
+      await login(email.trim(), senha);
       // Direcionamento automático - sem escolha de perfil
       // O próprio navigation cuida de redirecionar baseado no user.perfil
     } catch (err) {
-      setErro('Credenciais demonstrativas inválidas');
+      setErro(err?.message === 'Não foi possível localizar o cadastro deste usuário.'
+        ? 'Não foi possível localizar o cadastro deste usuário.'
+        : 'E-mail ou senha inválidos');
     }
   };
 
@@ -80,7 +82,7 @@ export default function LoginScreen({ navigation }) {
             <Image source={LOGO} style={styles.logo} resizeMode="contain" />
             <Text style={styles.subtitle}>Acesso demonstrativo local</Text>
             <Text style={styles.accessNote}>
-              Use as credenciais preparadas para a demonstração. Este acesso não representa autenticação real.
+              Use credenciais locais cadastradas no Admin ou os acessos demonstrativos. Este acesso não representa autenticação de produção.
             </Text>
 
             {loading ? (
@@ -95,7 +97,7 @@ export default function LoginScreen({ navigation }) {
                   <Ionicons name="mail-outline" size={20} color={colors.primary} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="E-mail demonstrativo"
+                    placeholder="E-mail"
                     placeholderTextColor={colors.muted}
                     value={email}
                     onChangeText={(t) => { setEmail(t); setErro(''); }}
@@ -110,7 +112,7 @@ export default function LoginScreen({ navigation }) {
                   <Ionicons name="lock-closed-outline" size={20} color={colors.primary} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    placeholder="Senha demonstrativa"
+                    placeholder="Senha"
                     placeholderTextColor={colors.muted}
                     value={senha}
                     onChangeText={(t) => { setSenha(t); setErro(''); }}

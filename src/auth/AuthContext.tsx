@@ -1,5 +1,12 @@
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
-import { authLogin, authLoginByProfile, authLogout } from './authMock';
+import { authLoginByProfile, authLogout } from './authMock';
+import { authenticateWithEmailAndPassword } from './authLocal';
+import {
+  clearAuthSessionUser,
+  persistAuthSessionUser,
+  restoreAuthSessionUser,
+  sanitizeAuthUserForSession,
+} from './authSession';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { normalizeUsuario, toUsuarioCompativelBorda } from '../domain';
 
@@ -26,20 +33,14 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState<CanonicalAuthUser>(null);
   const [loading, setLoading] = useState(false);
   const [isReady, setIsReady] = useState(false); // indica que carregamento inicial terminou
-  const STORAGE_KEY = '@tche:user';
 
   const normalizeAuthUser = useCallback((rawUser: any): CanonicalAuthUser => {
-    if (!rawUser) return null;
-    return normalizeUsuario(rawUser as any);
+    return sanitizeAuthUserForSession(rawUser) as CanonicalAuthUser;
   }, []);
 
   const persistCanonicalUser = useCallback(async (nextUser: CanonicalAuthUser) => {
     try {
-      if (nextUser) {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
-      } else {
-        await AsyncStorage.removeItem(STORAGE_KEY);
-      }
+      await persistAuthSessionUser(AsyncStorage, nextUser);
     } catch (e) {
       console.warn('Não foi possível persistir usuário', e);
     }
@@ -50,11 +51,10 @@ export function AuthProvider({ children }) {
     const loadUser = async () => {
       setLoading(true);
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          console.log('[AuthContext] loaded user from storage', parsed);
-          setUser(normalizeAuthUser(parsed));
+        const restored = await restoreAuthSessionUser(AsyncStorage);
+        if (restored) {
+          console.log('[AuthContext] loaded user from storage', restored);
+          setUser(restored as CanonicalAuthUser);
         }
       } catch (err) {
         console.error('Erro carregando usuário do storage', err);
@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, senha) => {
     setLoading(true);
     try {
-      const rawUser = await authLogin(email, senha);
+      const rawUser = await authenticateWithEmailAndPassword(email, senha);
       const nextUser = normalizeAuthUser(rawUser);
       console.log('[AuthContext] login -> setUser', nextUser);
       setUser(nextUser);
@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
       await authLogout();
       console.log('[AuthContext] logout -> clear user');
       setUser(null);
-      await persistCanonicalUser(null);
+      await clearAuthSessionUser(AsyncStorage);
     } finally {
       setLoading(false);
     }

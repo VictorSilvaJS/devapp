@@ -20,6 +20,13 @@ para exclusao de usuario com remocao de credencial. Nao alterou
 `LoginScreen`, `AuthContext`, `authMock`, acesso rapido, sessao, backend, JWT,
 GeoJSON, PNG, filtros ou dashboards.
 
+Status em 2026-06-05: concluida a Fase 16E.4 com autenticacao manual de
+usuarios persistidos por credencial local. O login manual agora tenta
+credencial local primeiro e usa `authMock.ts` apenas como fallback
+demonstrativo quando nao houver credencial local para o e-mail. O acesso rapido
+continua usando o caminho demonstrativo atual. Status `ativo`, `pendente` e
+`inativo` ainda nao bloqueiam login.
+
 ## Objetivo Da 16E.1
 
 Mapear o funcionamento atual do login, cadastro administrativo de usuarios,
@@ -266,6 +273,119 @@ Limites preservados:
 - acesso rapido demonstrativo continua preservado;
 - bloqueio de login por status permanece para fase futura;
 - backend, JWT, GeoJSON, PNG, filtros e dashboards nao foram alterados.
+
+## Resultado Da 16E.4
+
+A Fase 16E.4 criou uma camada unica para autenticacao manual local e conectou
+essa camada ao `AuthContext`, preservando o acesso rapido demonstrativo.
+
+Arquivos principais:
+
+- `src/auth/authLocal.ts`
+- `src/auth/authSession.ts`
+- `src/auth/AuthContext.tsx`
+- `src/screens/LoginScreen.tsx`
+- `tests/authLocal.test.js`
+
+Ordem final do login manual:
+
+1. normaliza o e-mail com `normalizeEmail`;
+2. procura credencial local por e-mail normalizado;
+3. se existir credencial local, verifica a senha;
+4. se a senha local estiver errada, retorna erro e nao tenta `authMock`;
+5. se a senha local estiver correta, carrega o usuario persistido por
+   `User.get(usuario_id)`;
+6. sanitiza o usuario, removendo campos sensiveis e legados desnecessarios;
+7. normaliza para o shape esperado pelo `AuthContext`;
+8. se nao houver credencial local para o e-mail, tenta o fallback
+   demonstrativo em `authMock.ts`.
+
+Como o usuario persistido e carregado:
+
+- `User.get(usuario_id)` garante a hidratacao do mock local antes da leitura;
+- o retorno preserva `perfil`, `status`, `ativo`, `produtor_id`, `regiao`,
+  `sub_regioes`, `vinculos_microregioes`, `vinculos_propriedades`,
+  `propriedades_atribuidas`, `regioes_acesso` e demais campos usados por
+  dashboards e regras de acesso;
+- `senha` legada, `senha_hash`, `salt`, credenciais e tokens nao entram no
+  usuario autenticado nem na sessao.
+
+Comportamento de fallback:
+
+- credenciais demonstrativas continuam funcionando no login manual quando nao
+  ha credencial local para o e-mail;
+- as credenciais preservadas sao
+  `admin.demonstracao@example.com`/`admin123`,
+  `colaborador.campo@example.com`/`colab123` e
+  `produtor.demonstracao@example.com`/`prod123`;
+- se houver credencial local para o mesmo e-mail, ela tem prioridade;
+- senha errada em credencial local nao cai para fallback demonstrativo.
+
+Comportamento de inconsistencia:
+
+- se a credencial local existir mas o usuario nao puder ser carregado, o login
+  nao autentica;
+- a mensagem controlada e `Nao foi possivel localizar o cadastro deste usuario.`;
+- a credencial orfa nao e removida automaticamente nesta fase.
+
+Sessao:
+
+- `@tche:user` continua salvando somente o usuario normalizado;
+- a persistencia foi isolada em `authSession.ts`;
+- restauracao e logout continuam no mesmo fluxo funcional;
+- senha, hash, salt, credencial, token e refresh token sao removidos antes de
+  persistir ou restaurar a sessao.
+
+Impacto no `AuthContext`:
+
+- `login(email, senha)` passou a chamar `authenticateWithEmailAndPassword`;
+- `loginRapido(profileKey)` continua usando `authLoginByProfile`;
+- `logout` continua limpando a sessao local;
+- a restauracao de sessao agora usa o mesmo sanitizador testavel.
+
+Impacto no `LoginScreen`:
+
+- visual preservado;
+- textos ajustados para aceitar credenciais locais do Admin ou acessos
+  demonstrativos;
+- senha e passada sem `trim()` silencioso;
+- mensagens de erro diferenciam apenas cadastro local nao encontrado de
+  e-mail/senha invalidos.
+
+Status:
+
+- `ativo`, `pendente` e `inativo` ainda autenticam conforme credencial;
+- bloqueio por status permanece explicitamente fora desta microfase e fica
+  para a Fase 16E.5.
+
+Testes adicionados em `tests/authLocal.test.js` cobrem:
+
+- login local com usuario ativo e senha correta;
+- senha incorreta em credencial local;
+- e-mail com caixa diferente e espacos externos;
+- usuario local Admin;
+- usuario local Colaborador;
+- usuario local Produtor;
+- preservacao de vinculos por perfil;
+- credencial orfa;
+- usuario sem credencial nao autenticando com `mock123`;
+- fallback demonstrativo;
+- acesso rapido preservado;
+- prioridade da credencial local sobre demonstrativa;
+- senha errada local sem fallback;
+- sessao sem senha, hash, salt, credencial ou token;
+- logout removendo sessao;
+- restauracao de usuario autenticado apos reinicio;
+- `mock123` sem efeito como senha real.
+
+Limites preservados:
+
+- `authMock.ts` nao foi alterado;
+- acesso rapido nao consulta credenciais locais;
+- nao ha bloqueio por status;
+- nao ha redefinicao pelo usuario, recuperacao de senha, backend, JWT ou RBAC
+  real;
+- GeoJSON, PNG, filtros e dashboards nao foram alterados.
 
 ## Arquivos Analisados
 

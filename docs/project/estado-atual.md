@@ -733,6 +733,52 @@ Limites preservados na 16E.3:
 - o app ainda nao possui botao visual de exclusao administrativa de usuario,
   mas o helper de exclusao com remocao de credencial ja esta pronto e testado.
 
+Status em 2026-06-05 (Fase 16E.4): o login manual passou a autenticar usuarios
+persistidos pelo Admin quando houver credencial local configurada no mesmo
+aparelho.
+
+Esta microfase adicionou:
+
+- `src/auth/authLocal.ts`, com `authenticateWithEmailAndPassword`;
+- `src/auth/authSession.ts`, com sanitizacao e persistencia testavel da sessao;
+- integracao minima do `AuthContext.login` com a nova camada manual;
+- ajuste textual no `LoginScreen` para credenciais locais ou demonstrativas;
+- testes em `tests/authLocal.test.js`.
+
+Ordem atual do login manual:
+
+1. procurar credencial local por e-mail normalizado;
+2. se existir, verificar senha local;
+3. se senha local estiver errada, nao tentar fallback;
+4. se senha local estiver correta, carregar usuario via `User.get(usuario_id)`;
+5. sanitizar e normalizar usuario para a sessao;
+6. se nao houver credencial local, usar `authMock.ts` como fallback
+   demonstrativo.
+
+Comportamento atual:
+
+- usuarios persistidos preservam `perfil`, `status`, `ativo`, `produtor_id`,
+  `regiao`, `sub_regioes`, `vinculos_microregioes`,
+  `vinculos_propriedades`, `propriedades_atribuidas` e campos compativeis
+  retornados por `User.get`;
+- `@tche:user` continua salvando somente usuario normalizado, sem senha,
+  hash, salt, credencial ou token;
+- `authMock.ts` permanece intacto e segue como fallback demonstrativo;
+- acesso rapido continua usando `authLoginByProfile`;
+- credencial local tem prioridade sobre credencial demonstrativa no mesmo
+  e-mail;
+- credencial orfa nao autentica e nao e removida automaticamente;
+- `mock123` continua apenas como campo legado de compatibilidade e nao
+  autentica usuario administrativo sem credencial local;
+- status `ativo`, `pendente` e `inativo` ainda nao bloqueiam login.
+
+Limites preservados na 16E.4:
+
+- sem bloqueio por status;
+- sem recuperacao ou troca de senha pelo usuario;
+- sem backend, JWT, RBAC real, GeoJSON, PNG, filtros ou dashboards;
+- sem APK final nesta microfase.
+
 Verificacao Expo apos adicionar `expo-crypto`: `npx expo install --check`
 indicou dependencias atualizadas. `npx expo-doctor` passou em 14 de 16
 verificacoes e apontou dois riscos preexistentes/de publicacao futura:
