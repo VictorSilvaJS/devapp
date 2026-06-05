@@ -1057,9 +1057,178 @@ Validacoes executadas na 16F.3:
 
 ### 16F.4 - Seletor de arquivo
 
-Adicionar `expo-document-picker` e uma acao minima para escolher `.geojson` ou
-`.json`, limitada a Admin/Colaborador em UI demonstrativa. Ainda sem publicar
-no mapa.
+Status em 2026-06-05: foi criada a infraestrutura isolada para selecionar,
+ler e validar um arquivo GeoJSON local em memoria, ainda sem tela e sem
+persistencia.
+
+Dependencias instaladas com Expo SDK 48:
+
+- `expo-document-picker@~11.2.2`;
+- `expo-file-system@~15.2.2`.
+
+Nao foi instalado:
+
+- `expo-sharing`.
+
+Arquivo criado:
+
+- `src/services/GeoJsonFilePickerService.ts`
+
+Arquivo de teste criado:
+
+- `tests/geojsonFilePickerService.test.js`
+
+Arquivos alterados:
+
+- `package.json`;
+- `package-lock.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Servico criado:
+
+- `GeoJsonFilePickerService`;
+- `createGeoJsonFilePickerService`;
+- funcoes puras/isoladas para validar nome, MIME, tamanho, resultado do picker,
+  leitura e validacao.
+
+Funcoes principais:
+
+- `isSupportedGeoJsonFileName`;
+- `isSupportedGeoJsonMimeType`;
+- `normalizePickedDocumentResult`;
+- `validatePickedGeoJsonFile`;
+- `pickGeoJsonDocument`;
+- `readGeoJsonFileAsString`;
+- `readAndValidatePickedGeoJson`;
+- `pickReadAndValidateGeoJson`.
+
+Compatibilidade com DocumentPicker:
+
+- formato antigo de sucesso:
+  `{ type: 'success', uri, name, size, mimeType }`;
+- formato antigo de cancelamento:
+  `{ type: 'cancel' }`;
+- formato novo de sucesso:
+  `{ canceled: false, assets: [{ uri, name, size, mimeType }] }`;
+- formato novo de cancelamento:
+  `{ canceled: true }`.
+
+O normalizador transforma os formatos aceitos em:
+
+- `PickedGeoJsonFile`
+  - `uri`;
+  - `name`;
+  - `size`;
+  - `mimeType`.
+
+Regras de arquivo:
+
+- aceita `.geojson`;
+- aceita `.json`;
+- aceita MIME `application/geo+json`;
+- aceita MIME `application/json`;
+- aceita MIME `text/json`;
+- aceita MIME `text/plain` apenas quando a extensao e `.geojson` ou `.json`;
+- aceita MIME ausente quando a extensao e valida;
+- rejeita `.zip`, `.kml`, `.kmz`, `.shp`, `.png`, `.jpg`, `.pdf` e nome sem
+  extensao reconhecida.
+
+Limite de tamanho:
+
+- `MAX_GEOJSON_FILE_SIZE_BYTES = 10 * 1024 * 1024`;
+- quando `size` vem acima do limite, rejeita antes de ler;
+- quando `size` esta ausente, permite a leitura nesta fase e registra warning
+  `FILE_SIZE_UNKNOWN`.
+
+Leitura:
+
+- usa `expo-file-system` sob demanda para
+  `readAsStringAsync(uri, { encoding: UTF8 })`;
+- nao loga conteudo;
+- nao salva conteudo;
+- nao chama `AsyncStorage`;
+- nao copia definitivamente para storage interno;
+- nao cria cache;
+- o `DocumentPicker` usa `copyToCacheDirectory: true` apenas para permitir a
+  leitura imediata do URI selecionado no Expo/Android, sem tratar isso como
+  persistencia da importacao.
+
+Integracao com validador:
+
+- apos a leitura textual, chama `validateAndNormalizeGeoJson(text, options)`;
+- retorna o arquivo selecionado, o resultado do validador e mensagens
+  estruturadas;
+- se o validador retornar `ok: false`, a fase apenas devolve erro controlado
+  `INVALID_GEOJSON` ou `VALIDATION_FAILED`;
+- nao salva o resultado em `GeoJsonImportService`.
+
+Erros controlados:
+
+- `PICKER_CANCELLED`;
+- `PICKER_RESULT_INVALID`;
+- `UNSUPPORTED_FILE_TYPE`;
+- `FILE_TOO_LARGE`;
+- `FILE_READ_FAILED`;
+- `INVALID_GEOJSON`;
+- `VALIDATION_FAILED`.
+
+Limites preservados:
+
+- nenhuma tela foi alterada;
+- nenhuma acao visual foi criada;
+- nenhuma chamada foi adicionada em `MapasScreen`;
+- nenhuma chamada foi adicionada em `FazendaMapaScreen`;
+- `LimiteArea.list` nao foi alterado;
+- `GeoJsonImportService` nao e chamado;
+- `@tche:mock-mvp:v1` nao e usado;
+- `@tche:geojson-imports:v1` nao e usado nesta fase;
+- a Sela de Prata I permanece no seed/assets.
+
+Permissoes:
+
+- Admin e Colaborador permanecem como perfis futuros esperados para acao de
+  importacao;
+- Produtor permanece como perfil de consulta/visualizacao;
+- nesta fase nao ha integracao visual nem regra de permissao nova;
+- RBAC real segue fora do escopo.
+
+Testes criados:
+
+- `tests/geojsonFilePickerService.test.js`
+
+Cobertura principal:
+
+- cancelamento antigo e novo do DocumentPicker;
+- sucesso antigo e novo do DocumentPicker;
+- resultado sem asset, sem `uri` e sem `name`;
+- configuracao do picker com `copyToCacheDirectory: true`;
+- extensao `.geojson` e `.json`;
+- MIME aceitos e ausentes;
+- rejeicao de extensoes incompativeis;
+- rejeicao de MIME incompativel;
+- limite de tamanho;
+- leitura textual via `FileSystem` mockado;
+- erro de leitura controlado;
+- validacao com helper real;
+- repasse de `propriedade_id`, `fazenda_id`, `produtor_id`, `ano` e `safra`
+  ao validador;
+- ausencia de imports para persistencia, telas, mocks e storage local.
+
+Validacoes executadas na 16F.4:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` passou com acesso a rede liberado; em ambiente
+  restrito, o mesmo comando nao conseguiu acessar os servidores Expo e caiu no
+  mapa de dependencias em cache;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ### 16F.5 - Copia para storage interno
 

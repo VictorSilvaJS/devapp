@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js && node tests/validatorsCompat.test.js && node tests/mockCompat.test.js && node tests/produtorFazendaCompat.test.js && node tests/acessoControleCompat.test.js && node tests/acessoEscopoPerfilDiagnostico.test.js && node tests/propriedadeTitularCompatDiagnostico.test.js && node tests/mapaOfflineCompat.test.js && node tests/mapaRouteCompat.test.js && node tests/mapaDownloadCompat.test.js && node tests/geojsonImportService.test.js && node tests/geojsonImportValidator.test.js && node tests/filtroCompat.test.js && node tests/visitaFormCompat.test.js && node tests/cadernoFormCompat.test.js && node tests/fazendaUiCompat.test.js && node tests/fazendaCadastroCompat.test.js && node tests/usuarioAdminCompat.test.js && node tests/localCredentials.test.js && node tests/usuarioLocalAccessAdmin.test.js && node tests/authLocal.test.js && node tests/dashboardCompat.test.js"
+    "test:domain-compat": "tsc -p tsconfig.domain-compat.json && node tests/domainCompat.test.js && node tests/validatorsCompat.test.js && node tests/mockCompat.test.js && node tests/produtorFazendaCompat.test.js && node tests/acessoControleCompat.test.js && node tests/acessoEscopoPerfilDiagnostico.test.js && node tests/propriedadeTitularCompatDiagnostico.test.js && node tests/mapaOfflineCompat.test.js && node tests/mapaRouteCompat.test.js && node tests/mapaDownloadCompat.test.js && node tests/geojsonImportService.test.js && node tests/geojsonImportValidator.test.js && node tests/geojsonFilePickerService.test.js && node tests/filtroCompat.test.js && node tests/visitaFormCompat.test.js && node tests/cadernoFormCompat.test.js && node tests/fazendaUiCompat.test.js && node tests/fazendaCadastroCompat.test.js && node tests/usuarioAdminCompat.test.js && node tests/localCredentials.test.js && node tests/usuarioLocalAccessAdmin.test.js && node tests/authLocal.test.js && node tests/dashboardCompat.test.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
@@ -28,7 +28,9 @@
     "react-native-svg": "13.4.0",
     "react-native-webview": "11.26.0",
     "react-native-maps": "1.3.2",
-    "expo-crypto": "~12.2.1"
+    "expo-crypto": "~12.2.1",
+    "expo-document-picker": "~11.2.2",
+    "expo-file-system": "~15.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

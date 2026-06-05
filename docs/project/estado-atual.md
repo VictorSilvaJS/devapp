@@ -1039,6 +1039,112 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16F.4 - Seletor E Leitura Controlada De GeoJSON
+
+Status em 2026-06-05: foi criada a infraestrutura isolada para selecionar,
+ler e validar GeoJSON local em memoria, sem abrir esse fluxo na interface e
+sem persistir importacao.
+
+Dependencias instaladas com Expo SDK 48:
+
+- `expo-document-picker@~11.2.2`;
+- `expo-file-system@~15.2.2`.
+
+Nao foi instalado:
+
+- `expo-sharing`.
+
+Servico criado:
+
+- `src/services/GeoJsonFilePickerService.ts`.
+
+Teste criado:
+
+- `tests/geojsonFilePickerService.test.js`.
+
+O servico cobre:
+
+- normalizacao do retorno antigo do DocumentPicker
+  `{ type: 'success', uri, name, size, mimeType }`;
+- normalizacao do retorno novo do DocumentPicker
+  `{ canceled: false, assets: [...] }`;
+- cancelamento antigo e novo;
+- validacao de extensao;
+- validacao de MIME;
+- limite de tamanho;
+- leitura textual com `expo-file-system`;
+- chamada ao helper `validateAndNormalizeGeoJson`;
+- retorno estruturado com arquivo, resultado de validacao, warnings e erro
+  controlado.
+
+Formatos aceitos:
+
+- `.geojson`;
+- `.json`;
+- MIME `application/geo+json`;
+- MIME `application/json`;
+- MIME `text/json`;
+- MIME `text/plain` apenas com extensao valida;
+- MIME ausente quando a extensao e valida.
+
+Formatos rejeitados:
+
+- `.zip`;
+- `.kml`;
+- `.kmz`;
+- `.shp`;
+- `.png`;
+- `.jpg`;
+- `.pdf`;
+- arquivo sem nome/extensao reconhecida.
+
+Limite de tamanho:
+
+- `MAX_GEOJSON_FILE_SIZE_BYTES = 10 * 1024 * 1024`;
+- arquivo maior que o limite e rejeitado antes da leitura quando `size` esta
+  disponivel;
+- `size` ausente ainda permite leitura nesta fase e gera warning
+  `FILE_SIZE_UNKNOWN`.
+
+Leitura e validacao:
+
+- `FileSystem.readAsStringAsync(uri, { encoding: UTF8 })` le o conteudo em
+  memoria;
+- o conteudo nao e logado;
+- o conteudo nao e salvo;
+- o resultado chama `validateAndNormalizeGeoJson(text, options)`;
+- `propriedade_id`, `fazenda_id`, `produtor_id`, `ano` e `safra` sao
+  repassados ao validador.
+
+Limites preservados:
+
+- sem tela;
+- sem botao de importacao;
+- sem chamada ao `GeoJsonImportService`;
+- sem escrita em `@tche:geojson-imports:v1`;
+- sem escrita em `@tche:mock-mvp:v1`;
+- sem copia definitiva para storage interno;
+- sem cache;
+- sem alteracao em `MapasScreen`;
+- sem alteracao em `FazendaMapaScreen`;
+- sem alteracao em `LimiteArea.list`;
+- sem renderizacao de GeoJSON importado;
+- sem alteracao na Sela de Prata I.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` passou com acesso a rede liberado; em ambiente
+  restrito, o mesmo comando nao conseguiu acessar os servidores Expo e caiu no
+  mapa de dependencias em cache;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
