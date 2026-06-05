@@ -961,6 +961,84 @@ Proximos passos recomendados:
 - 16F.4: seletor de arquivo com `expo-document-picker`, sem publicar ainda no
   mapa.
 
+## Fase 16F.3 - Validador Puro De GeoJSON
+
+Status em 2026-06-05: foi criado o helper puro
+`src/utils/geojsonImportValidator.ts` para validar GeoJSON bruto e normalizar
+talhoes em memoria para o formato runtime do app.
+
+Esta microfase nao implementa seletor de arquivo, leitura do aparelho, copia
+para filesystem, persistencia, associacao ativa com Propriedade, alteracao de
+`LimiteArea.list`, alteracao em telas, renderizacao de GeoJSON importado,
+backend, upload remoto ou sincronizacao.
+
+Entrada aceita:
+
+- objeto JSON ja parseado;
+- string JSON valida.
+
+Saida:
+
+- `ok`;
+- `errors`;
+- `warnings`;
+- `talhoes`;
+- `summary`.
+
+Regras principais:
+
+- aceita apenas `FeatureCollection`;
+- aceita `Polygon` e `MultiPolygon`;
+- rejeita geometrias vazias, ausentes ou incompativeis;
+- valida coordenadas numericas finitas em padrao GeoJSON `[lng, lat]`;
+- converte para runtime `{ lat, lng }`;
+- rejeita longitude fora de `-180..180` e latitude fora de `-90..90`;
+- detecta provavel inversao evidente `[lat, lng]`, emitindo warning e erro,
+  sem inverter automaticamente;
+- rejeita anel externo com menos de quatro pontos;
+- fecha anel externo aberto em memoria quando ha pontos suficientes, emitindo
+  warning;
+- ignora holes/interior rings nesta fase, emitindo warning;
+- normaliza `Polygon` para `poligono` e `poligonos` com uma parte;
+- normaliza `MultiPolygon` para `poligonos` com varias partes e `poligono`
+  apontando para a primeira;
+- resolve nome do talhao por `properties.talhao`, `properties.nome`,
+  `properties.name`, `properties.codigo`, `properties.id`, `feature.id` e
+  fallback `Talhao N`;
+- nomes duplicados geram warning, mas nao rejeitam a importacao nesta fase;
+- `fazenda_id` usa `options.fazenda_id || options.propriedade_id`;
+- `produtor_id` preserva o alias legado com `options.produtor_id ||
+  fazenda_id`;
+- IDs normalizados sao estaveis e nao dependem de data dinamica.
+
+Resumo produzido:
+
+- `features_count`;
+- `talhoes_count`;
+- `polygon_parts_count`;
+- `geometry_types`;
+- `warnings_count`;
+- `errors_count`.
+
+Arquivos principais:
+
+- `src/utils/geojsonImportValidator.ts`;
+- `tests/geojsonImportValidator.test.js`.
+
+A Sela de Prata I permanece intacta: seed/assets, GeoJSON processado,
+`LimiteArea.list`, `MapasScreen`, `FazendaMapaScreen`, `MapaFazendaView` e
+`ShapeRenderer` nao foram alterados para consumir o helper.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

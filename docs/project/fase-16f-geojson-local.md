@@ -875,21 +875,185 @@ Proximos passos:
 
 ### 16F.3 - Validador puro de GeoJSON
 
-Criar helper puro e testavel para:
+Status em 2026-06-05: foi criado o helper puro de validacao e normalizacao de
+GeoJSON bruto para o formato runtime de talhoes usado pelo app.
 
-- validar `FeatureCollection`;
-- aceitar `Polygon` e `MultiPolygon`;
-- rejeitar geometria vazia;
-- validar coordenadas numericas;
-- detectar provavel inversao lat/lng;
-- resolver nome por ordem controlada:
-  - `talhao`
-  - `nome`
-  - `name`
-  - `codigo`
-  - `id`
-- normalizar para array `MapaTalhao` com `poligono` e `poligonos`;
-- produzir diagnostico de erros e avisos sem gravar nada.
+Arquivos criados:
+
+- `src/utils/geojsonImportValidator.ts`
+- `tests/geojsonImportValidator.test.js`
+
+Arquivos alterados:
+
+- `package.json`
+- `tsconfig.domain-compat.json`
+- `docs/project/fase-16f-geojson-local.md`
+- `docs/project/estado-atual.md`
+
+Helper criado:
+
+- `validateAndNormalizeGeoJson(input, options)`
+
+Entrada aceita:
+
+- objeto JSON ja parseado;
+- string JSON, quando valida.
+
+Saida:
+
+- `ok`;
+- `errors`;
+- `warnings`;
+- `talhoes`;
+- `summary`.
+
+Tipos principais:
+
+- `GeoJsonValidationIssue`;
+- `GeoJsonNormalizeOptions`;
+- `GeoJsonValidationSummary`;
+- `GeoJsonNormalizedTalhao`;
+- `GeoJsonValidationResult`.
+
+Regras de validacao:
+
+- aceita apenas `FeatureCollection`;
+- `features` deve ser array e nao pode estar vazio;
+- cada item deve ser `Feature` quando o campo `type` vier preenchido;
+- aceita geometrias `Polygon` e `MultiPolygon`;
+- rejeita `Point`, `LineString`, `MultiPoint`, `MultiLineString`,
+  `GeometryCollection`, `geometry: null`, geometria sem `coordinates` e
+  geometria vazia;
+- cada coordenada deve ser array com pelo menos dois numeros finitos;
+- strings numericas, `NaN`, `Infinity` e valores nao numericos sao rejeitados;
+- longitude deve ficar entre `-180` e `180`;
+- latitude deve ficar entre `-90` e `90`;
+- anel externo com menos de quatro pontos e rejeitado.
+
+Tratamento de coordenadas:
+
+- GeoJSON entra como `[lng, lat]`;
+- runtime sai como `{ lat, lng }`;
+- terceiro valor da coordenada, quando existir, e ignorado;
+- coordenada fora de faixa gera erro;
+- provavel inversao evidente `[lat, lng]` gera warning
+  `PROBABLE_LAT_LNG_INVERSION` e erro de latitude fora de faixa;
+- a fase nao inverte coordenadas automaticamente quando ambos os valores sao
+  plausiveis.
+
+Tratamento de aneis:
+
+- se o anel externo ja estiver fechado, ele e preservado;
+- se tiver quatro ou mais pontos e estiver aberto, o helper fecha o anel em
+  memoria e emite warning `RING_NOT_CLOSED`;
+- se o anel externo tiver menos de quatro pontos, o helper rejeita a feature;
+- aneis internos/holes sao ignorados nesta fase e geram warning
+  `INTERIOR_RING_IGNORED`.
+
+Normalizacao:
+
+- `Polygon` vira um talhao com `poligono` igual ao anel externo e `poligonos`
+  com uma parte;
+- `MultiPolygon` vira um talhao com `poligonos` contendo cada parte externa e
+  `poligono` apontando para a primeira parte;
+- `fazenda_id` recebe `options.fazenda_id || options.propriedade_id`;
+- `produtor_id` preserva o alias legado com
+  `options.produtor_id || fazenda_id`;
+- `talhao` e `nome` recebem o mesmo nome resolvido;
+- `area_hectares` usa `properties.area_hectares`, `properties.area_ha` ou
+  `properties.area` quando forem numeros positivos; se ausente, usa `0`
+  porque `MapaTalhao.area_hectares` e numerico no contrato atual;
+- `ano` usa `options.ano` ou `properties.ano`, sem data dinamica;
+- `safra` usa `options.safra` ou `properties.safra`;
+- `cor` usa `options.corPadrao` ou cor padrao local;
+- `data_upload` so e preenchido quando vier em `options.data_upload`;
+- `disponivel_offline` fica `true` por compatibilidade com o runtime atual;
+- `id` e estavel, derivado de Propriedade, indice da feature e nome do
+  talhao, sem `Date.now`.
+
+Resolucao de nome do talhao:
+
+1. `properties.talhao`
+2. `properties.nome`
+3. `properties.name`
+4. `properties.codigo`
+5. `properties.id`
+6. `feature.id`
+7. fallback `Talhao N`
+
+Duplicidade:
+
+- nomes duplicados geram warning `DUPLICATE_TALHAO_NAME`;
+- duplicidade nao rejeita a normalizacao nesta fase.
+
+Resumo produzido:
+
+- `features_count`;
+- `talhoes_count`;
+- `polygon_parts_count`;
+- `geometry_types`;
+- `warnings_count`;
+- `errors_count`.
+
+Limites preservados:
+
+- sem persistencia;
+- sem chamada ao `GeoJsonImportService`;
+- sem `AsyncStorage`;
+- sem `expo-file-system`;
+- sem `expo-document-picker`;
+- sem `FileSystem`;
+- sem `DocumentPicker`;
+- sem leitura de arquivo do aparelho;
+- sem alteracao de `LimiteArea.list`;
+- sem alteracao em `MapasScreen`;
+- sem alteracao em `FazendaMapaScreen`;
+- sem alteracao em `MapaFazendaView`;
+- sem alteracao em `ShapeRenderer`;
+- sem alteracao da Sela de Prata I.
+
+Testes criados:
+
+- `tests/geojsonImportValidator.test.js`
+
+Cobertura principal:
+
+- `FeatureCollection` com `Polygon`;
+- `FeatureCollection` com `MultiPolygon`;
+- multiplas features;
+- resolucao de nome por `talhao`, `nome`, `name`, `codigo`, `id`,
+  `feature.id` e fallback;
+- area por `area_hectares`, `area_ha` e `area`;
+- conversao `[lng, lat]` para `{ lat, lng }`;
+- preenchimento de `poligono` e `poligonos`;
+- resumo de features, talhoes, partes e tipos de geometria;
+- JSON string valido e JSON string invalido;
+- objeto sem `type`, `type` diferente, `features` ausente e `features` vazio;
+- geometrias incompativeis;
+- `geometry: null`;
+- `coordinates` vazias;
+- coordenada nao numerica;
+- coordenada fora de faixa;
+- anel com pontos insuficientes;
+- anel aberto fechado com warning;
+- nomes duplicados;
+- interior ring ignorado;
+- provavel inversao lat/lng evidente;
+- fallback de `fazenda_id` e `produtor_id`;
+- IDs estaveis;
+- amostra leve dos campos usados pela Sela de Prata I;
+- ausencia de imports para storage, picker, filesystem, telas ou mocks;
+- saida sem `FeatureCollection`, `features` ou `coordinates` brutas.
+
+Validacoes executadas na 16F.3:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ### 16F.4 - Seletor de arquivo
 

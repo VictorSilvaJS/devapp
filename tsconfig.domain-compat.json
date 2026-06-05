@@ -27,6 +27,7 @@
     "src/navigation/mapaRouteCompat.ts",
     "src/navigation/propriedadeRouteCompat.ts",
     "src/utils/acessoControle.ts",
+    "src/utils/geojsonImportValidator.ts",
     "src/utils/mapaDownloadCompat.ts",
     "src/utils/usuarioAdminCompat.ts",
     "src/utils/usuarioLocalAccessAdmin.ts",
