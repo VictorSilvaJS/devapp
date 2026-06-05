@@ -42,6 +42,7 @@
     "src/services/MapaSincronizacaoService.ts",
     "src/services/MapaCacheService.ts",
     "src/services/GeoJsonImportService.ts",
-    "src/services/GeoJsonFilePickerService.ts"
+    "src/services/GeoJsonFilePickerService.ts",
+    "src/services/GeoJsonStorageService.ts"
   ]
 }

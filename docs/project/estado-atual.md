@@ -1145,6 +1145,90 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16F.5 - Storage Interno De GeoJSON
+
+Status em 2026-06-05: foi criado o servico isolado para copiar um GeoJSON
+validado para o storage interno do app, mantendo o conteudo grande fora de
+`AsyncStorage` e retornando uma URI local estavel para a 16F.6.
+
+Arquivo criado:
+
+- `src/services/GeoJsonStorageService.ts`.
+
+Teste criado:
+
+- `tests/geojsonStorageService.test.js`.
+
+Arquivos alterados:
+
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Diretorio adotado:
+
+- `FileSystem.documentDirectory + 'tche-geojson-imports/'`;
+- subdiretorio por Propriedade:
+  `tche-geojson-imports/{propriedade_id_sanitizado}/`;
+- arquivo final com `importId` e nome sanitizados, por exemplo:
+  `tche-geojson-imports/p_sela1/import-001-limites-talhoes.geojson`.
+
+O servico cobre:
+
+- sanitizacao de `propriedade_id`;
+- sanitizacao de nome de arquivo;
+- preservacao de `.geojson` e `.json`;
+- fallback para `limites-talhoes.geojson`;
+- criacao de diretorio base e subdiretorio por Propriedade;
+- copia por `FileSystem.copyAsync({ from, to })`;
+- fallback por `FileSystem.writeAsStringAsync` quando `copyAsync` falha e
+  `content` esta disponivel;
+- bloqueio de sobrescrita por padrao, com `overwrite: true` explicito;
+- remocao segura do destino anterior antes da copia quando `overwrite: true`
+  e usado;
+- confirmacao da copia com `FileSystem.getInfoAsync`;
+- leitura posterior via `readStoredGeoJson`;
+- validacao posterior via `validateStoredGeoJson` e
+  `validateAndNormalizeGeoJson`;
+- consulta de info via `getStoredGeoJsonInfo`;
+- remocao segura via `deleteStoredGeoJson`.
+
+Remocao segura:
+
+- so remove arquivo dentro de `tche-geojson-imports/`;
+- recusa paths externos com `UNSAFE_DELETE_PATH`;
+- recusa remover diretorio base ou subdiretorio amplo;
+- arquivo inexistente retorna sucesso controlado com `deleted: false`.
+
+Limites preservados:
+
+- sem tela;
+- sem botao ou fluxo visual;
+- sem chamada ao `GeoJsonImportService`;
+- sem escrita em `@tche:geojson-imports:v1`;
+- sem escrita em `@tche:mock-mvp:v1`;
+- sem metadado criado;
+- sem associacao visual a Propriedade;
+- sem renderizacao de GeoJSON importado;
+- sem alteracao em `MapasScreen`;
+- sem alteracao em `FazendaMapaScreen`;
+- sem alteracao em `LimiteArea.list`;
+- sem alteracao na Sela de Prata I.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` passou com acesso a rede liberado;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

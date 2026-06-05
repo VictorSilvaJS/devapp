@@ -1232,20 +1232,204 @@ Validacoes executadas na 16F.4:
 
 ### 16F.5 - Copia para storage interno
 
-Adicionar uso real de `expo-file-system`:
+Status em 2026-06-05: foi criado o servico isolado para copiar GeoJSON
+validado para storage interno do app, gerando URI local estavel para uso
+posterior nos metadados da 16F.6.
 
-- criar diretorio por Propriedade;
-- copiar arquivo selecionado;
-- calcular hash;
-- registrar metadados;
-- manter conteudo grande fora do AsyncStorage.
+Arquivo criado:
+
+- `src/services/GeoJsonStorageService.ts`
+
+Arquivo de teste criado:
+
+- `tests/geojsonStorageService.test.js`
+
+Arquivos alterados:
+
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Servico criado:
+
+- `GeoJsonStorageService`;
+- `createGeoJsonStorageService`;
+- funcoes puras/isoladas para sanitizar path e nome de arquivo;
+- funcoes de copia, leitura, validacao posterior, consulta de info e remocao
+  segura.
+
+Funcoes principais:
+
+- `sanitizeGeoJsonPathSegment`;
+- `sanitizeGeoJsonFileName`;
+- `buildGeoJsonStorageDirectoryUri`;
+- `buildGeoJsonStorageUri`;
+- `ensureGeoJsonStorageDirectory`;
+- `copyGeoJsonToInternalStorage`;
+- `readStoredGeoJson`;
+- `validateStoredGeoJson`;
+- `deleteStoredGeoJson`;
+- `getStoredGeoJsonInfo`.
+
+Diretorio interno adotado:
+
+- base: `FileSystem.documentDirectory + 'tche-geojson-imports/'`;
+- subdiretorio por Propriedade:
+  `.../tche-geojson-imports/{propriedade_id_sanitizado}/`;
+- arquivo final:
+  `.../{propriedade_id_sanitizado}/{importId_sanitizado}-{arquivo_sanitizado}`.
+
+Exemplo:
+
+- `file:///.../tche-geojson-imports/p_sela1/import-001-limites-talhoes.geojson`
+
+Regras de path:
+
+- `propriedade_id` e sanitizado antes de entrar no caminho;
+- nome cru de usuario ou Propriedade nao e usado no path;
+- caracteres perigosos e traversal como `../` sao removidos;
+- underscore de ids tecnicos, como `p_sela1`, e preservado para compatibilidade;
+- `importId` pode vir de fora ou ser gerado por helper injetavel;
+- testes injetam `generateImportId`, sem depender de `Date.now`.
+
+Regras de nome de arquivo:
+
+- preserva extensao `.geojson` ou `.json`;
+- converte espacos e caracteres inseguros para `-`;
+- remove componentes de caminho;
+- limita o tamanho da base do nome;
+- fallback para `limites-talhoes.geojson`;
+- garante extensao valida.
+
+Estrategia de copia:
+
+- cria o diretorio base e o subdiretorio da Propriedade se nao existirem;
+- verifica se o destino ja existe;
+- por padrao, nao sobrescreve arquivo existente e retorna
+  `DESTINATION_EXISTS`;
+- sobrescreve apenas quando `overwrite: true` vier explicito;
+- quando `overwrite: true` e o destino existe, remove o arquivo anterior dentro
+  da area segura antes de copiar;
+- tenta `FileSystem.copyAsync({ from: sourceUri, to: destinationUri })`;
+- se `copyAsync` falhar e `content` estiver disponivel, usa
+  `FileSystem.writeAsStringAsync(destinationUri, content, { encoding: UTF8 })`;
+- se copia e fallback falharem, retorna erro controlado;
+- nao loga conteudo;
+- nao salva conteudo em `AsyncStorage`;
+- apos a copia, chama `FileSystem.getInfoAsync(destinationUri)` para confirmar
+  existencia e capturar tamanho.
+
+Resultado da copia:
+
+- `propriedade_id`;
+- `fazenda_id`;
+- `uri`;
+- `name`;
+- `originalName`;
+- `size`;
+- `copiedAt`.
+
+Leitura e validacao posterior:
+
+- `readStoredGeoJson(uri)` le apenas URIs dentro do diretorio interno de
+  GeoJSON;
+- `validateStoredGeoJson(uri, options)` le o arquivo armazenado e chama
+  `validateAndNormalizeGeoJson`;
+- a validacao retorna talhoes normalizados quando o GeoJSON e valido;
+- conteudo invalido retorna `validation.ok: false`, sem salvar nada.
+
+Remocao segura:
+
+- `deleteStoredGeoJson(uri)` remove somente arquivo dentro do diretorio base de
+  GeoJSON;
+- path externo retorna `UNSAFE_DELETE_PATH`;
+- diretorio base ou subdiretorio de Propriedade nao sao removidos;
+- arquivo inexistente retorna sucesso controlado com `deleted: false`;
+- assets e seed da Sela de Prata I nao sao tocados.
+
+Erros controlados:
+
+- `PROPRIEDADE_ID_REQUIRED`;
+- `SOURCE_URI_REQUIRED`;
+- `STORAGE_DIRECTORY_FAILED`;
+- `INVALID_STORAGE_PATH`;
+- `DESTINATION_EXISTS`;
+- `COPY_FAILED`;
+- `WRITE_FALLBACK_FAILED`;
+- `STORED_FILE_NOT_FOUND`;
+- `READ_STORED_FILE_FAILED`;
+- `DELETE_FAILED`;
+- `UNSAFE_DELETE_PATH`;
+- `FILE_INFO_FAILED`.
+
+Limites preservados:
+
+- nenhuma tela foi alterada;
+- nenhuma acao visual foi criada;
+- nenhuma chamada foi adicionada em `MapasScreen`;
+- nenhuma chamada foi adicionada em `FazendaMapaScreen`;
+- `LimiteArea.list` nao foi alterado;
+- `GeoJsonImportService` nao e chamado;
+- `@tche:mock-mvp:v1` nao e usado;
+- `@tche:geojson-imports:v1` nao e usado nesta fase;
+- nenhum metadado e criado;
+- nenhuma importacao e marcada como ativa;
+- nenhum GeoJSON importado e associado visualmente a Propriedade;
+- nenhuma renderizacao de GeoJSON importado foi adicionada;
+- a Sela de Prata I permanece no seed/assets.
+
+Testes criados:
+
+- `tests/geojsonStorageService.test.js`
+
+Cobertura principal:
+
+- criacao do diretorio base;
+- criacao do subdiretorio por Propriedade;
+- sanitizacao de `propriedade_id`;
+- sanitizacao de nome de arquivo;
+- remocao de traversal;
+- preservacao de `.geojson` e `.json`;
+- fallback para `limites-talhoes.geojson`;
+- copia via `copyAsync`;
+- fallback textual via `writeAsStringAsync`;
+- erro controlado quando copia e fallback falham;
+- ausencia de sobrescrita por padrao;
+- `overwrite: true` explicito;
+- confirmacao de existencia com `getInfoAsync`;
+- retorno de URI e tamanho;
+- leitura posterior;
+- validacao posterior com helper real;
+- retorno `validation.ok: false` para conteudo invalido;
+- remocao segura;
+- recusa de path externo;
+- arquivo inexistente sem derrubar;
+- escopo sem imports para `GeoJsonImportService`, `LimiteArea`, `Mapa`,
+  `User`, `Produtor`, React, telas, `AsyncStorage` ou chaves `@tche`.
+
+Validacoes executadas na 16F.5:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` passou com acesso a rede liberado;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ### 16F.6 - Associacao do GeoJSON a Propriedade
 
-Associar metadados ao contexto de Propriedade:
+Associar a URI local retornada pela 16F.5 aos metadados no contexto de
+Propriedade:
 
 - preservar `fazenda_id`;
 - adicionar `propriedade_id` como alias futuro;
+- criar metadado em `GeoJsonImportService`;
+- salvar apenas metadados pequenos, nao o conteudo do GeoJSON;
 - impedir associacao fora do escopo do usuario;
 - manter Sela de Prata I protegida contra substituicao acidental.
 
@@ -1278,18 +1462,20 @@ Validar em Android fisico:
 
 ## Testes Recomendados
 
-Nesta fase nao foi adicionado teste, porque o pedido e diagnostico/documentacao
-e nao altera comportamento.
+Na 16F.1 nao foi adicionado teste, porque o pedido era
+diagnostico/documentacao e nao alterava comportamento.
 
-Para as proximas fases:
+Nas microfases seguintes ja foram adicionados testes para:
 
-- teste do validador GeoJSON puro;
+- `GeoJsonImportService`;
+- `validateAndNormalizeGeoJson`;
+- `GeoJsonFilePickerService`;
+- `GeoJsonStorageService`.
+
+Permanecem recomendados para as proximas fases:
+
 - teste de caracterizacao do asset da Sela de Prata I;
 - teste de contagem de features/talhoes;
-- teste de resolucao de nomes;
-- teste de `Polygon` e `MultiPolygon`;
-- teste de inversao de coordenadas;
-- teste de rejeicao de geometria invalida;
 - teste de compatibilidade de rota para selecionar talhao por id/nome.
 
 ## Conclusao Da 16F.1
