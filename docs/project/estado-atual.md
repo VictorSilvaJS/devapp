@@ -857,6 +857,49 @@ verificacoes e apontou dois riscos preexistentes/de publicacao futura:
 33 ou inferior por padrao para submissao na Google Play. Nenhum desses pontos
 foi corrigido nesta microfase para evitar upgrade/limpeza ampla fora do escopo.
 
+## Fase 16F.1 - Diagnostico De GeoJSON Local Por Propriedade
+
+Status em 2026-06-05: foi criado o diagnostico da Fase 16F.1 em
+`docs/project/fase-16f-geojson-local.md`.
+
+Esta fase nao implementa importacao real. Ela mapeia a estrutura atual de
+GeoJSON/limites/talhoes da Sela de Prata I, o fluxo de runtime em
+`LimiteArea`, `MapasScreen`, `FazendaMapaScreen`, `MapaFazendaView` e
+`ShapeRenderer`, a persistencia atual e as dependencias necessarias para uma
+importacao local futura.
+
+Principais achados:
+
+- o GeoJSON processado fica em
+  `data/processados/p_sela1/2025/limites_talhoes.geojson`, com
+  `FeatureCollection`, 15 talhoes, 37 partes e geometrias `Polygon` e
+  `MultiPolygon`;
+- o app consome em runtime o asset normalizado
+  `src/assets/geojson/selaDePrata1Talhoes.ts`, convertido para objetos
+  `{ lat, lng }` e inserido no mock como `LimiteArea`;
+- a Sela de Prata I e vinculada por `fazenda_id: p_sela1`, preservando
+  `produtor_id` como alias legado; `propriedade_id` ainda nao substitui esse
+  contrato em limites;
+- `MapasScreen` usa `ShapeRenderer` para pre-visualizacao SVG e
+  `FazendaMapaScreen` usa `MapaFazendaView` com WebView/Leaflet, com fallback
+  vetorial local;
+- limites/talhoes nao entram no snapshot `@tche:mock-mvp:v1`; permanecem no
+  seed/assets, enquanto metadados de mapas sim entram no snapshot;
+- `MapaCacheService.ts` importa `expo-file-system`, mas essa dependencia nao
+  aparece em `package.json`; `expo-document-picker` e `expo-sharing` tambem
+  nao estao instalados.
+
+Riscos principais para as proximas microfases: GeoJSON grande em AsyncStorage,
+`MultiPolygon`, coordenadas invertidas, geometria invalida, arquivo fora de
+WGS84, nomes de talhao ausentes, duplicidade/substituicao acidental de limites
+por Propriedade, performance de WebView/SVG e falta de dependencia de
+filesystem.
+
+Microfases recomendadas: contrato local de metadados, validador puro de
+GeoJSON, seletor com `expo-document-picker`, copia para storage interno com
+`expo-file-system`, associacao segura por Propriedade, visualizacao no mapa,
+substituicao/remocao controlada e smoke Android.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

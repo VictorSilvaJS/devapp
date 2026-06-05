@@ -1,0 +1,795 @@
+# Fase 16F - GeoJSON Local Por Propriedade
+
+Este documento registra a Fase 16F.1, limitada a diagnostico da estrutura atual
+de GeoJSON, limites e talhoes da propriedade Sela de Prata I. Ele prepara as
+proximas microfases de importacao local de GeoJSON por Propriedade, sem
+implementar seletor de arquivo, upload, persistencia nova, backend,
+sincronizacao ou RBAC real.
+
+## Escopo Da 16F.1
+
+Objetivo:
+
+- mapear como os limites/talhoes atuais sao carregados;
+- mapear o formato bruto, o formato convertido e o formato consumido em
+  runtime;
+- mapear vinculo com Propriedade, permissao, renderizacao e persistencia;
+- registrar riscos e microfases pequenas para 16F.2 em diante.
+
+Fora de escopo nesta fase:
+
+- seletor de arquivo;
+- upload real;
+- importacao real;
+- persistencia de GeoJSON novo;
+- edicao, substituicao ou exclusao de GeoJSON;
+- backend, JWT, RBAC real ou sincronizacao;
+- anexos PNG novos;
+- alteracao visual grande;
+- nova tela de cadastro de arquivo;
+- instalacao de dependencias.
+
+## Documentos Ativos Que Sustentam A Analise
+
+- `docs/project/estado-atual.md`
+- `docs/project/contexto-consolidado.md`
+- `docs/project/escopo-mvp.md`
+- `docs/project/regras-de-negocio.md`
+- `docs/project/decisoes-consolidadas.md`
+- `docs/project/pendencias-de-definicao.md`
+
+Direcoes preservadas:
+
+- `Propriedade` e o termo de produto para a unidade operacional.
+- `Produtor` e o perfil final de consulta.
+- `Titular` e o responsavel cadastral ou vinculo principal.
+- `Talhao` e a subdivisao interna da Propriedade.
+- `fazenda_id` permanece como chave tecnica interna temporaria para dados que
+  pertencem a uma Propriedade.
+- Limites/shapes sao camada tecnica de demarcacao dentro do panorama da
+  Propriedade, nao uma experiencia separada para o usuario final.
+
+## Arquivos Analisados
+
+Fontes geoespaciais e manifesto:
+
+- `data/processados/p_sela1/2025/limites_talhoes.geojson`
+- `data/processados/p_sela1/2025/manifesto.json`
+- `src/assets/geojson/selaDePrata1Talhoes.ts`
+- `scripts/convertSelaDePrataShape.ps1`
+
+Mocks, contratos e compatibilidade:
+
+- `src/api/mock.ts`
+- `src/api/mockCompat.ts`
+- `src/api/mockLocalPersistence.ts`
+- `src/domain/domainCompat.ts`
+- `src/domain/contracts.ts`
+- `entities/LimiteArea.json`
+- `entities/Mapa.json`
+- `src/types/mapa.ts`
+- `src/utils/acessoControle.ts`
+- `src/utils/fazendaUiCompat.ts`
+
+Rotas e telas:
+
+- `src/navigation/index.tsx`
+- `src/navigation/mapaRouteCompat.ts`
+- `src/screens/MapasScreen.tsx`
+- `src/screens/FazendaMapaScreen.tsx`
+- `src/screens/ProdutorScreen.tsx`
+- `src/screens/PropriedadesScreen.tsx`
+
+Componentes de mapa:
+
+- `src/components/MapaFazendaView.tsx`
+- `src/components/MapaFazendaNativoView.tsx`
+- `src/components/ShapeRenderer.tsx`
+- `src/components/TalhaoDetailModal.tsx`
+
+Persistencia, cache e dependencias:
+
+- `src/services/MapaCacheService.ts`
+- `src/services/mapaOfflineCompat.ts`
+- `src/services/MapaSincronizacaoService.ts`
+- `package.json`
+
+## Fontes GeoJSON Atuais
+
+### GeoJSON processado bruto
+
+Arquivo:
+
+- `data/processados/p_sela1/2025/limites_talhoes.geojson`
+
+Formato:
+
+- GeoJSON `FeatureCollection`;
+- 15 features;
+- 37 partes/poligonos;
+- geometrias `Polygon` e `MultiPolygon`;
+- coordenadas em padrao GeoJSON `[lng, lat]`;
+- propriedades por feature:
+  - `id`
+  - `fazenda_id`
+  - `talhao`
+  - `nome`
+  - `ano`
+  - `area_hectares`
+  - `fonte`
+  - `partes`
+
+Resumo verificado:
+
+- `type`: `FeatureCollection`
+- `features`: 15
+- `geometryTypes`: `MultiPolygon`, `Polygon`
+- `polygonParts`: 37
+- area somada: `1888.6 ha`
+- primeiro talhao: `T01 - 230`
+- primeiro `fazenda_id`: `p_sela1`
+
+Este arquivo e a saida processada da amostra, mas nao e o arquivo importado
+diretamente pelo app em runtime.
+
+### Manifesto da amostra
+
+Arquivo:
+
+- `data/processados/p_sela1/2025/manifesto.json`
+
+Formato:
+
+- JSON de manifesto operacional;
+- `schema_version: 1`;
+- `tipo: importacao_geoespacial`;
+- `importacao_id: p_sela1-2025-limites-talhoes-shp`;
+- contexto da Propriedade por `fazenda.fazenda_id: p_sela1`;
+- recorte `ano: 2025`, `safra: 2025/2026`, `camada: limites_talhoes`;
+- origem declarada como SHP;
+- campo de nome usado: `Campo`;
+- fallback de nome: `Nome_Perim`;
+- sistema de referencia declarado como WGS84;
+- saida principal:
+  - GeoJSON processado;
+  - asset TypeScript do app;
+  - 15 talhoes;
+  - 37 poligonos/partes;
+  - area total mapeada `1888.6 ha`;
+- revisao `aprovado_para_amostra_mock`, nao aprovado para producao.
+
+O manifesto registra rastreabilidade e revisao. Ele nao e consumido pela tela
+de mapa em runtime.
+
+### Asset TypeScript consumido pelo app
+
+Arquivo:
+
+- `src/assets/geojson/selaDePrata1Talhoes.ts`
+
+Formato:
+
+- exporta `SELA_DE_PRATA_1_SHAPE_FAZENDA_ID = 'p_sela1'`;
+- exporta `talhoesSelaDePrata1Shape`;
+- export default com o mesmo array;
+- array de objetos compativeis com `MapaTalhao`;
+- coordenadas convertidas para objetos `{ lat, lng }`;
+- suporte a partes multiplas por `poligonos`;
+- preserva `poligono` simples como fallback/principal.
+
+Resumo verificado:
+
+- 15 registros;
+- 37 partes em `poligonos`;
+- area somada `1888.6 ha`;
+- campos do primeiro registro:
+  - `id`
+  - `fazenda_id`
+  - `produtor_id`
+  - `nome`
+  - `ano`
+  - `talhao`
+  - `area_hectares`
+  - `poligono`
+  - `poligonos`
+  - `cor`
+  - `data_upload`
+  - `safra`
+  - `disponivel_offline`
+  - `observacoes`
+
+Este e o formato efetivamente consumido pelo mock/runtime, via `src/api/mock.ts`.
+
+## Entidade De Limite E Talhao
+
+A entidade atual relevante e `LimiteArea`.
+
+Contrato documental:
+
+- `entities/LimiteArea.json`
+
+Campos principais:
+
+- `id`
+- `nome`
+- `ano`
+- `produtor_id`
+- `fazenda_id`
+- `talhao`
+- `area_hectares`
+- `perimetro_km`
+- `textura`
+- `tipo_solo`
+- `elementos`
+- `cultura_atual`
+- `poligono`
+- `cor`
+- `data_upload`
+- `safra`
+- `disponivel_offline`
+- `observacoes`
+
+Obrigatorios no schema:
+
+- `nome`
+- `ano`
+- `talhao`
+- `poligono`
+- `fazenda_id` ou `produtor_id`
+
+Normalizacao efetiva:
+
+- `src/domain/domainCompat.ts` usa `normalizeLimiteArea`;
+- `fazenda_id` e resolvido por leitura dupla `fazenda_id` ou `produtor_id`;
+- `toLimiteAreaCompativelBorda` reemite `produtor_id` como alias legado de
+  `fazenda_id`;
+- `src/api/mockCompat.ts` usa essa normalizacao em leitura, filtro e
+  persistencia runtime.
+
+Campos de vinculo:
+
+- `fazenda_id`: chave tecnica canonica atual para o contexto de Propriedade;
+- `produtor_id`: alias legado preservado;
+- `propriedade_id`: nao aparece nos registros de `LimiteArea` atuais da Sela
+  de Prata I;
+- `fazendaId`: aparece em params de rota, nao no registro de `LimiteArea`.
+
+Nome do talhao:
+
+- no GeoJSON processado: `properties.talhao` e `properties.nome`;
+- no asset TypeScript: `talhao` e `nome`;
+- no mock: `talhao` e `nome`;
+- em telas e filtros: fallback `talhao || nome`.
+
+Area, codigo, safra e versao:
+
+- area vem de `area_hectares`;
+- codigo/nome operacional esta em `talhao`, por exemplo `T01 - 230`;
+- ano vem de `ano`;
+- safra vem de `safra` no asset/mock;
+- nao ha campo formal de status ou versao por limite;
+- `data_upload` funciona como data de importacao/amostra;
+- `disponivel_offline` aparece como indicador, mas nao significa cache real de
+  arquivo importado.
+
+## Como A Sela De Prata I Entra No Mock
+
+Em `src/api/mock.ts`:
+
+- importa `talhoesSelaDePrata1Shape`;
+- importa `SELA_DE_PRATA_1_SHAPE_FAZENDA_ID`;
+- define `SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID`;
+- a Propriedade principal tem `id: p_sela1`;
+- a Propriedade tambem recebe aliases:
+  - `propriedade_id: p_sela1`
+  - `propriedadeId: p_sela1`
+  - `titular_id: prop_sela1`
+  - `titularId: prop_sela1`
+- os limites sao adicionados ao array `limitesArea` por spread:
+  - `...talhoesSelaDePrata1Shape.map(...)`;
+- cada talhao recebe `produtor_id: p_sela1` e `fazenda_id: p_sela1`;
+- o mock preserva `poligono` e `poligonos`;
+- `LimiteArea.list()` retorna esses limites via `listMockLimitesArea`.
+
+Como o app sabe que a Sela de Prata I tem limites:
+
+- nao existe registro separado de "Propriedade com GeoJSON";
+- a existencia e inferida por haver registros `LimiteArea` com
+  `fazenda_id: p_sela1`;
+- telas filtram limites por ids de Propriedade acessiveis.
+
+Limites para outras propriedades:
+
+- existem registros mockados manuais para outras propriedades, principalmente
+  com `produtor_id` legado e `poligono` simples;
+- a Sela de Prata I e a unica fonte atual derivada de shapefile real
+  convertido para GeoJSON/asset.
+
+## Fluxo De Exibicao No Mapa
+
+### Entrada por telas
+
+Rotas principais:
+
+- `src/navigation/index.tsx` registra `Mapas` e `FazendaMapa` como telas de
+  stack comuns para usuario logado.
+
+Fluxos por perfil:
+
+- Admin:
+  - entra em `Propriedades`;
+  - abre detalhe da Propriedade;
+  - acessa mapas/talhoes pelo contexto da Propriedade.
+- Colaborador:
+  - entra em `PropriedadesColaborador`;
+  - lista apenas Propriedades do escopo efetivo;
+  - abre detalhe e mapas/talhoes se a Propriedade estiver no escopo.
+- Produtor:
+  - entra por `Minhas Fazendas`/`Minhas Propriedades`;
+  - abre detalhe da propria Propriedade;
+  - acessa mapas/talhoes e anexos autorizados.
+
+### `ProdutorScreen.tsx`
+
+No detalhe da Propriedade:
+
+- carrega `LimiteArea.list()`;
+- filtra dados por `fazendaAtualId`;
+- mostra contagem de `Limites de Area`;
+- monta params para `Mapas` com `buildMapasRouteParams`;
+- monta params para `FazendaMapa` com
+  `buildFazendaMapaRouteParamsFromPropriedade`;
+- ao abrir mapa de um material, tenta selecionar talhao compativel com
+  `buildMapaTalhaoRouteSelection`.
+
+### `MapasScreen.tsx`
+
+Papel:
+
+- experiencia de panorama e biblioteca de materiais tecnicos;
+- carrega `Mapa.list()` e `LimiteArea.list()`;
+- filtra por acesso e contexto de Propriedade;
+- exibe estatisticas de talhoes, area e materiais;
+- renderiza uma pre-visualizacao vetorial com `ShapeRenderer`;
+- abre a tela cheia de mapa via rota `FazendaMapa`;
+- abre detalhes do talhao em `TalhaoDetailModal`.
+
+Empty state:
+
+- se a Propriedade/contexto nao tem limites, exibe mensagem de ausencia de
+  demarcacao;
+- a mensagem preserva a possibilidade de haver anexos/materiais mesmo sem mapa
+  de talhoes;
+- se a visao geral nao tem limites no escopo, informa que demarcacoes
+  liberadas aparecerao quando existirem.
+
+### `ShapeRenderer.tsx`
+
+Papel:
+
+- renderizacao SVG local na propria `MapasScreen`;
+- nao usa Leaflet;
+- nao usa WebView;
+- recebe array de talhoes ja normalizados;
+- usa `poligonos` quando existem, senao usa `poligono`;
+- calcula bounds de todos os pontos `{ lat, lng }`;
+- converte para coordenadas SVG;
+- inverte eixo Y para desenhar a geometria corretamente;
+- permite toque no talhao e na legenda;
+- dispara `onTalhaoPress(talhao)`;
+- mostra label curto e area.
+
+### `FazendaMapaScreen.tsx`
+
+Papel:
+
+- tela cheia de mapa dos talhoes;
+- carrega Propriedades por `Produtor.list()`;
+- filtra Propriedades por acesso do usuario;
+- se recebeu `fazendaId`, reavalia acesso com `avaliarAcessoFazendaPorId`;
+- bloqueia rota direta quando a Propriedade nao existe ou esta fora do escopo;
+- carrega `LimiteArea.list()`;
+- filtra limites por ids permitidos via `filtrarLimitesPorFazendaIds`;
+- seleciona ano mais recente por padrao;
+- permite filtro por ano;
+- passa `talhoesExibidos` para `MapaFazendaView`;
+- abre drawer de detalhe ao tocar em talhao.
+
+Estados:
+
+- carregando;
+- erro de carga;
+- acesso negado;
+- Propriedade nao encontrada;
+- lista vazia de talhoes quando nao houver limite para o ano/periodo.
+
+### `MapaFazendaView.tsx`
+
+Papel:
+
+- componente ativo da tela cheia;
+- usa `react-native-webview` com Leaflet e tiles OpenStreetMap;
+- gera HTML local com `gerarHTMLLeaflet`;
+- reconverte os talhoes `{ lat, lng }` para GeoJSON in-memory;
+- para um poligono usa `Polygon`;
+- para varias partes usa `MultiPolygon`;
+- monta um `FeatureCollection` dentro do HTML;
+- chama `L.geoJSON`;
+- aplica estilo por `properties.cor`;
+- cria labels com nome do talhao e area;
+- chama `fitBounds` para enquadramento/zoom;
+- em clique no poligono, envia `talhaoPress` para React Native;
+- expoe ref para `selecionarTalhao` e `ajustarLimites`.
+
+Fallback:
+
+- se Leaflet nao ficar pronto em aproximadamente `6500 ms`, ativa fallback SVG;
+- se WebView gerar erro ou HTTP error, ativa fallback SVG;
+- `FallbackShapeMap` usa os mesmos talhoes `{ lat, lng }` e suporta toque.
+
+Dependencia externa em runtime:
+
+- a tela inclui CSS/JS do Leaflet por `https://unpkg.com/leaflet@1.9.4`;
+- os tiles vem de `https://tile.openstreetmap.org/{z}/{x}/{y}.png`;
+- se esses recursos falharem, o fallback vetorial local ainda consegue mostrar
+  os shapes sem mapa-base.
+
+### `MapaFazendaNativoView.tsx`
+
+Papel atual:
+
+- componente experimental/historico com `react-native-maps`;
+- nao e usado pela `FazendaMapaScreen` atual;
+- usa apenas `poligono`, nao trata `poligonos` multiplos como o componente
+  ativo;
+- deve ser tratado como apoio historico, nao como fluxo principal da 16F.1.
+
+## Normalizacao Esperada Pelo App
+
+O app atual nao espera receber `FeatureCollection` puro diretamente nas telas.
+
+Formato esperado em runtime:
+
+- array de talhoes normalizados;
+- cada item com:
+  - `id`
+  - `fazenda_id`
+  - `produtor_id` como alias legado
+  - `talhao`
+  - `nome`
+  - `ano`
+  - `area_hectares`
+  - `poligono: { lat, lng }[]`
+  - `poligonos?: { lat, lng }[][]`
+  - `cor`
+  - `data_upload`
+  - `safra`
+  - `disponivel_offline`
+  - `observacoes`
+
+Coordenadas:
+
+- GeoJSON processado guarda coordenadas `[lng, lat]`;
+- asset TypeScript converte para `{ lat, lng }`;
+- `ShapeRenderer` e fallback SVG trabalham com `{ lat, lng }`;
+- `MapaFazendaView` reconverte para `[lng, lat]` somente para montar o
+  `FeatureCollection` do Leaflet no HTML.
+
+`Polygon` e `MultiPolygon`:
+
+- o GeoJSON processado contem os dois tipos;
+- o asset normalizado representa partes multiplas em `poligonos`;
+- `MapaFazendaView` transforma `poligonos.length > 1` em `MultiPolygon`;
+- `ShapeRenderer` tambem renderiza multiplas partes;
+- `MapaFazendaNativoView` nao cobre plenamente `poligonos`.
+
+Validacao e calculos:
+
+- `validateLimiteArea` valida o contrato mockado;
+- nao ha helper puro especifico para validar GeoJSON importado pelo usuario;
+- nao ha validacao robusta de geometria GeoJSON;
+- nao ha validacao explicita de CRS em importacao local;
+- nao ha calculo de area no app a partir da geometria;
+- area vem pronta em `area_hectares`;
+- nao ha simplificacao ou reducao de precisao no runtime; a simplificacao, se
+  houver, pertence ao processamento/conversor antes do app.
+
+Dependencia de `properties` no GeoJSON bruto:
+
+- para a amostra atual, os campos relevantes sao `id`, `fazenda_id`, `talhao`,
+  `nome`, `ano` e `area_hectares`;
+- o manifesto registra que, para SHP, o campo de nome usado foi `Campo`;
+- para GeoJSON futuro, a proxima fase deve aceitar fallback controlado entre
+  `talhao`, `nome`, `name`, `codigo` e `id`, mas isso ainda nao existe como
+  helper implementado.
+
+## Vinculo Com A Propriedade Sela De Prata I
+
+Identificador principal:
+
+- `p_sela1`
+
+Campos usados hoje:
+
+- Propriedade em `src/api/mock.ts`:
+  - `id: p_sela1`
+  - `propriedade_id: p_sela1`
+  - `propriedadeId: p_sela1`
+  - `fazenda: Fazenda Sela de Prata I`
+  - `propriedade_nome: Fazenda Sela de Prata I`
+  - `propriedadeNome: Fazenda Sela de Prata I`
+- limites:
+  - `fazenda_id: p_sela1`
+  - `produtor_id: p_sela1`
+- anexos PNG de fertilidade:
+  - `fazenda_id: p_sela1`
+  - `produtor_id: p_sela1`
+  - `propriedade_id: p_sela1`
+
+Campos futuros e legados:
+
+- `propriedade_id` ja aparece em Propriedade e anexos de fertilidade;
+- `propriedade_id` ainda nao substitui `fazenda_id` em `LimiteArea`;
+- `fazendaId` e `produtorId` aparecem nos params de rota;
+- `buildFazendaMapaRouteParams` emite `fazendaId` e `produtorId` com o mesmo
+  valor por compatibilidade.
+
+Ausencia de limites:
+
+- nao existe flag por Propriedade;
+- se nenhum `LimiteArea` filtra para o `fazenda_id` atual, as telas mostram
+  empty state;
+- `MapasScreen` diferencia ausencia de demarcacao/talhoes de ausencia de
+  materiais tecnicos;
+- `FazendaMapaScreen` mostra lista vazia quando nao ha talhoes no periodo.
+
+## Permissoes Atuais
+
+A 16F.1 apenas diagnostica permissao; nao altera RBAC.
+
+Motor atual:
+
+- `src/utils/acessoControle.ts`
+- Admin ve todas as Propriedades;
+- Produtor ve Propriedades por vinculo de titular/produtor compativel;
+- Colaborador ve Propriedades por escopo regional/sub-regional;
+- `propriedades_atribuidas` continua visual/preparatorio e nao e regra
+  efetiva do MVP mockado.
+
+Mapas e limites:
+
+- `MapasScreen` filtra Propriedades por acesso e entao filtra mapas/limites por
+  ids permitidos;
+- para Produtor, mapas podem ser filtrados por `somenteDisponiveisDownload`;
+- limites nao possuem filtro de download/publicacao por perfil; eles seguem o
+  acesso a Propriedade;
+- `FazendaMapaScreen` reavalia acesso quando recebe `fazendaId`, evitando que
+  rota direta mostre limites fora do escopo.
+
+Acoes atuais:
+
+- Admin, Colaborador e Produtor podem abrir mapa de talhoes quando possuem
+  acesso a Propriedade;
+- nao existe acao real de importar GeoJSON;
+- nao existe permissao visual especifica de importar/remover limites;
+- existe biblioteca visual de materiais/anexos, mas sem upload real.
+
+## Persistencia Atual
+
+Snapshot mock local:
+
+- `src/api/mockLocalPersistence.ts` persiste:
+  - `users`
+  - `produtores`
+  - `usuarioPropriedade`
+  - `usuarioMicroregiao`
+  - `visitas`
+  - `cadernos`
+  - `mapas`
+- chave: `@tche:mock-mvp:v1`;
+- limites/talhoes nao entram no snapshot;
+- arquivos e assets tambem nao entram no snapshot.
+
+Limites atuais:
+
+- os limites seed ficam em memoria no array `limitesArea` de `src/api/mock.ts`;
+- a Sela de Prata I entra no seed a partir do asset TypeScript;
+- `LimiteArea.create/update/delete` usa `mutateHydratedRuntime`, mas o estado
+  de limites nao faz parte do snapshot persistente;
+- portanto, limites criados/alterados em runtime nao sao a estrategia atual de
+  persistencia duravel do MVP.
+
+Cache/offline:
+
+- `src/services/MapaCacheService.ts` existe como servico separado;
+- grava talhoes em AsyncStorage com prefixos `@mapas_talhao_`;
+- grava backup JSON por talhao em `FileSystem.documentDirectory/mapas_cache/`;
+- tambem grava metadados de tiles;
+- nao esta integrado ao fluxo atual de importacao de GeoJSON por Propriedade;
+- nao e a fonte de runtime da Sela de Prata I no app atual.
+
+Dependencia faltante:
+
+- `MapaCacheService.ts` importa `expo-file-system`;
+- `package.json` nao lista `expo-file-system`;
+- `package.json` tambem nao lista `expo-document-picker` nem `expo-sharing`.
+
+Risco de AsyncStorage:
+
+- metadados pequenos podem ficar em AsyncStorage;
+- GeoJSON grande ou lista completa de coordenadas nao deve ser gravada
+  diretamente no snapshot `@tche:mock-mvp:v1`;
+- para importacao futura, a direcao mais segura e guardar arquivo fisico em
+  storage interno do app e persistir apenas metadados/indice no snapshot ou em
+  banco futuro.
+
+## Dependencias Para Importacao Futura
+
+Sem instalar nada nesta fase, as dependencias provaveis sao:
+
+- `expo-document-picker`
+  - selecionar arquivo `.geojson`/`.json` no Android;
+  - ler nome, tamanho, MIME e URI temporario.
+- `expo-file-system`
+  - copiar o arquivo escolhido para diretorio interno do app;
+  - ler conteudo para validacao;
+  - manter URI estavel no sandbox do app;
+  - remover/substituir arquivo com seguranca.
+- `expo-sharing`
+  - opcional, apenas se houver necessidade futura de compartilhar/exportar
+    arquivo ou diagnostico.
+
+Compatibilidade Expo SDK 48:
+
+- as dependencias devem ser instaladas com `npx expo install` na versao
+  compativel;
+- o uso em Android fisico deve validar acesso ao URI apos selecao;
+- o app nao deve depender de permissao ampla de armazenamento externo quando o
+  Document Picker e a copia interna resolverem o fluxo.
+
+## Riscos Identificados Para 16F.2+
+
+- GeoJSON grande demais para AsyncStorage ou snapshot mock;
+- arquivo com `MultiPolygon` sem suporte correto na normalizacao;
+- coordenadas invertidas `[lat, lng]` em arquivo que deveria usar `[lng, lat]`;
+- geometria invalida, anel aberto ou poligono com menos de 3 pontos;
+- arquivo sem `properties.talhao`, `properties.nome` ou equivalente;
+- nomes duplicados de talhao dentro da mesma Propriedade;
+- GeoJSON sem CRS explicito;
+- arquivo fora de WGS84;
+- area ausente ou divergente da area calculada;
+- propriedade sem limites gerando confusao entre "sem demarcacao" e "sem
+  materiais";
+- Leaflet/WebView com performance ruim para muitos pontos;
+- fallback SVG pesado se o arquivo tiver muitas coordenadas;
+- `MapaFazendaNativoView` nao tratando `poligonos` multiplos;
+- duplicidade de limites por Propriedade sem regra de versao/substituicao;
+- substituicao acidental dos limites da Sela de Prata I;
+- falta de `expo-file-system` no `package.json`;
+- Android perder acesso ao URI temporario depois da selecao;
+- ausencia de status/publicacao/revisao para limites importados;
+- permissao visual futura de importacao ser confundida com RBAC real;
+- falta de backend para sincronizar GeoJSON entre aparelhos;
+- nome/localizacao/limites reais exigirem confirmacao de autorizacao antes de
+  demonstracao externa.
+
+## Arquitetura Minima Recomendada Para 16F.2+
+
+### 16F.2 - Contrato local para GeoJSON importado
+
+Definir contrato documental e tipos para metadados, sem UI:
+
+- `id`
+- `propriedade_id` futuro e `fazenda_id` compativel;
+- `nome_arquivo_original`;
+- `uri_local`;
+- `tamanho_bytes`;
+- `hash`;
+- `features_count`;
+- `talhoes_count`;
+- `geometry_types`;
+- `status_revisao`;
+- `criado_em`;
+- `criado_por`;
+- `substitui_limite_id` ou grupo/versionamento, se aplicavel.
+
+Guardar somente metadados no snapshot/banco local. Guardar o arquivo em
+storage interno.
+
+### 16F.3 - Validador puro de GeoJSON
+
+Criar helper puro e testavel para:
+
+- validar `FeatureCollection`;
+- aceitar `Polygon` e `MultiPolygon`;
+- rejeitar geometria vazia;
+- validar coordenadas numericas;
+- detectar provavel inversao lat/lng;
+- resolver nome por ordem controlada:
+  - `talhao`
+  - `nome`
+  - `name`
+  - `codigo`
+  - `id`
+- normalizar para array `MapaTalhao` com `poligono` e `poligonos`;
+- produzir diagnostico de erros e avisos sem gravar nada.
+
+### 16F.4 - Seletor de arquivo
+
+Adicionar `expo-document-picker` e uma acao minima para escolher `.geojson` ou
+`.json`, limitada a Admin/Colaborador em UI demonstrativa. Ainda sem publicar
+no mapa.
+
+### 16F.5 - Copia para storage interno
+
+Adicionar uso real de `expo-file-system`:
+
+- criar diretorio por Propriedade;
+- copiar arquivo selecionado;
+- calcular hash;
+- registrar metadados;
+- manter conteudo grande fora do AsyncStorage.
+
+### 16F.6 - Associacao do GeoJSON a Propriedade
+
+Associar metadados ao contexto de Propriedade:
+
+- preservar `fazenda_id`;
+- adicionar `propriedade_id` como alias futuro;
+- impedir associacao fora do escopo do usuario;
+- manter Sela de Prata I protegida contra substituicao acidental.
+
+### 16F.7 - Visualizacao do GeoJSON importado
+
+Permitir que `MapasScreen`/`FazendaMapaScreen` leiam limites importados
+normalizados, com fallback para seed/assets quando nao houver importacao local.
+
+### 16F.8 - Substituicao e remocao segura
+
+Adicionar operacoes controladas:
+
+- marcar importacao como ativa/inativa;
+- remover arquivo fisico;
+- restaurar seed quando aplicavel;
+- confirmar antes de substituir limites existentes.
+
+### 16F.9 - Smoke Android
+
+Validar em Android fisico:
+
+- selecao de arquivo;
+- copia interna;
+- reinicio do app;
+- carregamento offline;
+- toque em talhao;
+- empty state de Propriedade sem GeoJSON;
+- tentativa fora do escopo;
+- arquivo grande e arquivo invalido.
+
+## Testes Recomendados
+
+Nesta fase nao foi adicionado teste, porque o pedido e diagnostico/documentacao
+e nao altera comportamento.
+
+Para as proximas fases:
+
+- teste do validador GeoJSON puro;
+- teste de caracterizacao do asset da Sela de Prata I;
+- teste de contagem de features/talhoes;
+- teste de resolucao de nomes;
+- teste de `Polygon` e `MultiPolygon`;
+- teste de inversao de coordenadas;
+- teste de rejeicao de geometria invalida;
+- teste de compatibilidade de rota para selecionar talhao por id/nome.
+
+## Conclusao Da 16F.1
+
+O estado atual ja possui uma amostra robusta da Sela de Prata I, mas ela esta
+embutida no app como asset TypeScript normalizado. O GeoJSON processado e o
+manifesto servem como rastreabilidade e base para evolucao, nao como runtime
+direto.
+
+O caminho mais seguro para importacao local e nao gravar GeoJSON grande no
+snapshot mock. A proxima fase deve primeiro fechar contrato e validador puro,
+depois adicionar picker, copia interna, associacao por Propriedade e so entao
+visualizacao no mapa.
