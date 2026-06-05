@@ -696,6 +696,183 @@ Definir contrato documental e tipos para metadados, sem UI:
 Guardar somente metadados no snapshot/banco local. Guardar o arquivo em
 storage interno.
 
+Status em 2026-06-05: a base tecnica da 16F.2 foi implementada sem seletor,
+sem leitura de arquivo, sem copia para filesystem, sem validacao completa de
+GeoJSON e sem integracao visual.
+
+Arquivos criados:
+
+- `src/types/geojsonImport.ts`
+- `src/services/GeoJsonImportService.ts`
+- `tests/geojsonImportService.test.js`
+
+Arquivos alterados:
+
+- `package.json`
+- `tsconfig.domain-compat.json`
+- `docs/project/fase-16f-geojson-local.md`
+- `docs/project/estado-atual.md`
+
+Contrato criado:
+
+- `GeoJsonImportStatus`
+- `GeoJsonImportOrigin`
+- `GeoJsonImportMetadata`
+- `GeoJsonImportMetadataInput`
+- `GeoJsonImportMetadataPatch`
+
+Status previstos:
+
+- `rascunho`
+- `validado`
+- `ativo`
+- `substituido`
+- `removido`
+- `erro`
+
+Campos centrais do metadado:
+
+- `id`
+- `propriedade_id`
+- `fazenda_id`
+- `nome_propriedade`
+- `arquivo_nome_original`
+- `arquivo_uri_local`
+- `arquivo_tamanho_bytes`
+- `arquivo_mime`
+- `importado_por_usuario_id`
+- `importado_por_nome`
+- `importado_em`
+- `atualizado_em`
+- `status`
+- `talhoes_count`
+- `polygon_parts_count`
+- `geometry_types`
+- `area_total_hectares`
+- `safra`
+- `ano`
+- `observacoes`
+- `erro_validacao`
+- `origem`
+- `versao`
+
+Chave local criada:
+
+- `@tche:geojson-imports:v1`
+
+Regras da chave:
+
+- nao usa `@tche:mock-mvp:v1`;
+- nao usa `@tche:user`;
+- nao usa `@tche:local-credentials:v1`;
+- salva apenas metadados pequenos;
+- nao salva `FeatureCollection`, `features`, `coordinates`, `poligono` ou
+  `poligonos`.
+
+Servico criado:
+
+- `createGeoJsonImportService`
+- singleton `GeoJsonImportService`
+- constante `GEOJSON_IMPORT_STORAGE_KEY`
+
+Operacoes disponiveis:
+
+- `listGeoJsonImports`
+- `listGeoJsonImportsByPropriedade`
+- `getActiveGeoJsonImportForPropriedade`
+- `getGeoJsonImportById`
+- `createGeoJsonImportMetadata`
+- `updateGeoJsonImportMetadata`
+- `markGeoJsonImportAsActive`
+- `markGeoJsonImportAsSubstituido`
+- `markGeoJsonImportAsRemoved`
+- `deleteGeoJsonImportMetadata`
+- `__setStorageForTests`
+
+Compatibilidade de identificadores:
+
+- se vier apenas `propriedade_id`, o servico preenche `fazenda_id` com o
+  mesmo valor;
+- se vier apenas `fazenda_id`, o servico preenche `propriedade_id` com o
+  mesmo valor;
+- se vierem os dois, os dois sao preservados e a listagem por Propriedade
+  tambem aceita a busca pelo `fazenda_id` legado.
+
+Regra de ativo por Propriedade:
+
+- somente um metadado pode ficar `ativo` por Propriedade;
+- ao marcar um metadado como `ativo`, outro metadado `ativo` da mesma
+  Propriedade vira `substituido`;
+- metadado `removido` nao e retornado como ativo;
+- `deleteGeoJsonImportMetadata` remove apenas o metadado, pois ainda nao ha
+  arquivo fisico para remover nesta fase.
+
+Comportamento de armazenamento:
+
+- storage ausente retorna lista vazia;
+- JSON corrompido retorna lista vazia com fallback seguro;
+- ao salvar novamente depois de storage corrompido, o snapshot novo substitui
+  o conteudo invalido;
+- `id` e `importado_em` permanecem estaveis em update;
+- `atualizado_em` muda em update e mudanca de status;
+- IDs sao gerados apenas na criacao quando nao vierem no input.
+
+Limites preservados:
+
+- nenhuma chamada foi adicionada em `MapasScreen`;
+- nenhuma chamada foi adicionada em `FazendaMapaScreen`;
+- nenhuma chamada foi adicionada em `ProdutorScreen`;
+- nenhuma chamada foi adicionada em `NovaPropriedadeScreen` ou
+  `EditarPropriedadeScreen`;
+- `LimiteArea.list` nao foi alterado;
+- `src/api/mock.ts` nao foi alterado para limites da Sela de Prata I;
+- `src/assets/geojson/selaDePrata1Talhoes.ts` nao foi alterado;
+- `data/processados/p_sela1/2025/limites_talhoes.geojson` nao foi alterado;
+- nenhuma dependencia foi instalada.
+
+Relacao com `LimiteArea`:
+
+- a 16F.2 registra apenas o indice de metadados;
+- a transformacao futura de GeoJSON validado para o formato runtime de
+  `LimiteArea` fica para fase posterior;
+- a Sela de Prata I continua vindo do seed/assets.
+
+Testes criados:
+
+- `tests/geojsonImportService.test.js`
+
+Cobertura principal:
+
+- lista vazia sem storage;
+- criacao de metadado;
+- fallback `propriedade_id`/`fazenda_id`;
+- busca por id;
+- listagem por Propriedade;
+- um ativo por Propriedade;
+- ativo anterior vira `substituido`;
+- `removido` nao volta como ativo;
+- update preserva `id` e `importado_em`;
+- delete remove metadado;
+- JSON corrompido nao derruba;
+- indice nao salva `FeatureCollection`, `features`, `coordinates`,
+  `poligono` ou `poligonos`;
+- nao usa `@tche:mock-mvp:v1`;
+- Propriedade A nao vaza para Propriedade B.
+
+Validacoes executadas na 16F.2:
+
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
+Proximos passos:
+
+- 16F.3: criar validador puro de GeoJSON;
+- 16F.4: adicionar seletor de arquivo com `expo-document-picker`, ainda sem
+  publicar limites no mapa.
+
 ### 16F.3 - Validador puro de GeoJSON
 
 Criar helper puro e testavel para:

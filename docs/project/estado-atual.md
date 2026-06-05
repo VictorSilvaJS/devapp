@@ -900,6 +900,67 @@ GeoJSON, seletor com `expo-document-picker`, copia para storage interno com
 `expo-file-system`, associacao segura por Propriedade, visualizacao no mapa,
 substituicao/remocao controlada e smoke Android.
 
+## Fase 16F.2 - Contrato Local De Metadados GeoJSON
+
+Status em 2026-06-05: foi criada a base tecnica isolada para indice local de
+metadados de GeoJSON importado por Propriedade.
+
+Esta microfase nao implementa seletor de arquivo, leitura de arquivo, copia
+para filesystem, validacao completa de GeoJSON, renderizacao de GeoJSON
+importado, alteracao em `MapasScreen`, alteracao em `FazendaMapaScreen`,
+alteracao em `LimiteArea.list`, backend, upload remoto ou sincronizacao.
+
+Arquivos principais:
+
+- `src/types/geojsonImport.ts`
+- `src/services/GeoJsonImportService.ts`
+- `tests/geojsonImportService.test.js`
+
+Contrato criado:
+
+- `GeoJsonImportMetadata`, com vinculo por `propriedade_id` e `fazenda_id`,
+  nome original do arquivo, URI local futura, tamanho/MIME, responsavel,
+  datas, status, contagens, area, safra/ano, observacoes, erro de validacao,
+  origem `arquivo_local` e versao.
+
+Chave local:
+
+- `@tche:geojson-imports:v1`
+
+Regras implementadas:
+
+- o indice salva somente metadados pequenos;
+- nao salva `FeatureCollection`, `features`, `coordinates`, `poligono` ou
+  `poligonos`;
+- nao usa `@tche:mock-mvp:v1`, `@tche:user` ou
+  `@tche:local-credentials:v1`;
+- se vier apenas `propriedade_id`, preenche `fazenda_id` igual;
+- se vier apenas `fazenda_id`, preenche `propriedade_id` igual;
+- permite apenas um metadado `ativo` por Propriedade, substituindo o ativo
+  anterior para `substituido`;
+- metadado `removido` nao aparece como ativo;
+- storage ausente ou JSON corrompido retorna lista vazia sem derrubar o app;
+- `delete` remove apenas o metadado, pois ainda nao ha arquivo fisico nesta
+  fase.
+
+A Sela de Prata I permanece intacta: seed/assets, GeoJSON processado,
+`LimiteArea.list`, `MapasScreen`, `FazendaMapaScreen`, `MapaFazendaView` e
+`ShapeRenderer` nao foram alterados para consumir esse indice.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
+Proximos passos recomendados:
+
+- 16F.3: validador puro de GeoJSON;
+- 16F.4: seletor de arquivo com `expo-document-picker`, sem publicar ainda no
+  mapa.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
