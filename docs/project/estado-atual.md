@@ -1640,6 +1640,59 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16G.3 - Seletor E Validacao Leve De PNG
+
+Status em 2026-06-05: foi criado o servico isolado
+`src/services/PngFilePickerService.ts` para selecionar e validar um PNG local
+futuro via `expo-document-picker`, sem tela, sem botao, sem leitura de
+conteudo, sem copia para storage interno, sem persistencia e sem integracao
+com `Mapa.list` ou `MapasScreen`.
+
+Arquivos principais:
+
+- `src/services/PngFilePickerService.ts`;
+- `tests/pngFilePickerService.test.js`;
+- `docs/project/fase-16g-anexos-png-local.md`.
+
+Regras implementadas:
+
+- aceita somente extensao `.png`, sem diferenciar maiusculas e minusculas;
+- aceita MIME `image/png`;
+- aceita MIME ausente quando o nome termina em `.png`;
+- aceita `application/octet-stream` como fallback de Android apenas quando o
+  nome termina em `.png`;
+- rejeita formatos como `.jpg`, `.jpeg`, `.webp`, `.gif`, `.pdf`, `.zip`,
+  `.geojson`, `.json` e arquivos sem extensao PNG;
+- aplica limite de `25 MB`;
+- retorna warning `UNKNOWN_FILE_SIZE` quando o tamanho nao vem do seletor;
+- retorna erros controlados para cancelamento, resultado invalido, URI ausente,
+  nome ausente, formato nao suportado, MIME nao suportado e tamanho excedido.
+
+Escopo preservado:
+
+- nao usa `expo-image-picker`;
+- nao usa `expo-file-system`;
+- nao le bytes, binario, string ou conteudo do PNG;
+- nao usa `AsyncStorage`;
+- nao escreve em `@tche:png-map-imports:v1`;
+- nao escreve em `@tche:mock-mvp:v1`;
+- nao chama `PngMapImportService`;
+- nao altera `Mapa.list`;
+- nao altera `MapasScreen`;
+- nao altera registros ou assets da Sela de Prata I;
+- nao cria visualizador, formulario, botao, backend, RBAC real, sincronizacao
+  ou APK.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

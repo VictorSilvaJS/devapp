@@ -9,13 +9,19 @@ Status em 2026-06-05: a Fase 16G.2 criou o servico local isolado de metadados
 PNG em `src/services/PngMapImportService.ts`, persistindo somente metadados
 pequenos em `@tche:png-map-imports:v1`.
 
+Status em 2026-06-05: a Fase 16G.3 criou o servico isolado de selecao e
+validacao leve de PNG em `src/services/PngFilePickerService.ts`, usando
+`expo-document-picker` por adapter injetavel, sem ler conteudo, sem copiar para
+storage interno e sem persistir metadados.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
 
-Esta frente ainda nao altera telas, nao adiciona botao, nao seleciona arquivo,
-nao copia arquivo, nao altera `Mapa.list`, nao muda os registros da Sela de
-Prata I e nao implementa backend, JWT, RBAC real, sincronizacao ou APK final.
+Esta frente ainda nao altera telas, nao adiciona botao, nao copia arquivo para
+storage interno, nao persiste arquivo selecionado, nao altera `Mapa.list`, nao
+muda os registros da Sela de Prata I e nao implementa backend, JWT, RBAC real,
+sincronizacao ou APK final.
 
 ## Base Documental Ativa
 
@@ -502,10 +508,93 @@ Validacoes da 16G.2:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## 16G.3 - Seletor E Validacao Leve De PNG
+
+Status em 2026-06-05: foi criado o servico isolado de selecao e validacao leve
+de PNG em `src/services/PngFilePickerService.ts`.
+
+Arquivos criados:
+
+- `src/services/PngFilePickerService.ts`
+- `tests/pngFilePickerService.test.js`
+
+Arquivos alterados:
+
+- `tsconfig.domain-compat.json`
+- `package.json`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Operacoes disponiveis:
+
+- `isSupportedPngFileName`
+- `isSupportedPngMimeType`
+- `normalizePickedPngDocumentResult`
+- `validatePickedPngFile`
+- `pickPngDocument`
+- `pickAndValidatePngDocument`
+- `createPngFilePickerService`
+
+Regras implementadas:
+
+- aceita somente arquivos com extensao `.png`, sem diferenciar maiusculas e
+  minusculas;
+- aceita MIME `image/png`;
+- aceita MIME ausente quando o nome do arquivo termina em `.png`;
+- aceita `application/octet-stream` somente como fallback de Android quando o
+  nome do arquivo termina em `.png`;
+- rejeita `.jpg`, `.jpeg`, `.webp`, `.gif`, `.pdf`, `.zip`, `.geojson`,
+  `.json` e arquivos sem extensao PNG;
+- limita o arquivo selecionado a `25 MB`;
+- quando o tamanho nao vem do seletor, retorna warning `UNKNOWN_FILE_SIZE` sem
+  reprovar automaticamente;
+- normaliza tanto o retorno antigo do `expo-document-picker` (`type:
+  'success'`) quanto o formato novo (`canceled: false`, `assets`);
+- retorna erro controlado para cancelamento, resultado invalido, falta de URI,
+  falta de nome, tipo nao suportado, MIME nao suportado e tamanho excedido.
+
+Uso do `DocumentPicker`:
+
+- usa `expo-document-picker` de forma lazy e por adapter injetavel;
+- configura `type` como `['image/png', 'application/octet-stream']`;
+- configura `multiple: false`;
+- configura `copyToCacheDirectory: true` apenas como cache temporario do picker;
+- nao usa `expo-image-picker`;
+- nao usa `expo-file-system`;
+- nao le string, bytes, binario ou conteudo do PNG.
+
+Relacao com metadados e storage:
+
+- nao importa nem chama `PngMapImportService`;
+- nao usa `AsyncStorage`;
+- nao escreve em `@tche:png-map-imports:v1`;
+- nao escreve em `@tche:mock-mvp:v1`;
+- nao copia arquivo para storage interno controlado;
+- nao remove arquivo fisico;
+- nao persiste metadados;
+- a copia para storage interno fica reservada para 16G.4.
+
+Compatibilidade com `Mapa` e Sela de Prata I:
+
+- `Mapa.list` nao foi alterado nem chamado;
+- `MapasScreen` nao foi alterada;
+- os registros de `Mapa` da Sela de Prata I nao foram alterados;
+- `src/assets/mapas/sela-prata-i/2025/fertilidade/` nao foi alterado;
+- `resolveSelaPrataIFertilidadeAssetSource` nao foi alterado.
+
+Validacoes da 16G.3:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.3: seletor/leitura/validacao de arquivo PNG.
-- 16G.4: copia segura para storage interno.
+- 16G.4: copia segura para storage interno do PNG validado.
 - 16G.5A: botao `Anexar mapa PNG`.
 - 16G.5B: formulario minimo de metadados.
 - 16G.5C: persistencia local dos metadados.
@@ -535,11 +624,12 @@ Validacoes da 16G.2:
 Nao foi feito:
 
 - botao de anexar PNG;
-- seletor de imagem ou documento;
+- seletor visivel em tela;
 - `expo-image-picker`;
 - nova dependencia;
-- copia para storage;
-- metadado persistente;
+- leitura de conteudo do PNG;
+- copia para storage interno;
+- nova persistencia de metadados alem da 16G.2;
 - alteracao em `Mapa.list`;
 - alteracao em `MapasScreen`;
 - alteracao nos registros da Sela de Prata I;
