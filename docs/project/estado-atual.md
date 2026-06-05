@@ -1577,6 +1577,69 @@ Escopo preservado:
 - nao alterou os registros nem os PNGs da Sela de Prata I;
 - nao implementou backend, RBAC real, sincronizacao, GeoJSON ou APK.
 
+## Fase 16G.2 - Servico Local De Metadados PNG
+
+Status em 2026-06-05: foi criada a infraestrutura local minima para
+metadados de anexos PNG importados futuramente, sem selecionar arquivo, sem
+copiar imagem, sem botao e sem integrar com `Mapa.list` ou `MapasScreen`.
+
+Arquivos principais:
+
+- `src/services/PngMapImportService.ts`;
+- `src/types/anexoPngLocal.ts`;
+- `tests/pngMapImportService.test.js`;
+- `docs/project/fase-16g-anexos-png-local.md`.
+
+O servico usa `AsyncStorage` na chave separada
+`@tche:png-map-imports:v1`, com snapshot versionado contendo apenas
+metadados pequenos de `PngMapImportMetadata`. A chave `@tche:mock-mvp:v1` nao
+e usada por esta frente.
+
+Operacoes disponiveis:
+
+- listar todos os metadados PNG;
+- listar por Propriedade, aceitando `propriedade_id` ou `fazenda_id`;
+- listar apenas ativos por Propriedade;
+- buscar por id;
+- criar e atualizar metadado;
+- marcar como `ativo`, `substituido` ou `removido`;
+- deletar apenas o metadado.
+
+Regras implementadas:
+
+- todo item precisa de `propriedade_id` ou `fazenda_id`, com preenchimento
+  duplo por fallback;
+- `origem` deve ser `arquivo_local`;
+- `escopo: 'talhao'` exige `talhao_id` ou `talhao_nome`;
+- `visivel_para_produtor` usa default `true`, mantendo alinhamento com os
+  anexos demonstrativos atuais;
+- multiplos PNGs `ativo` sao permitidos para a mesma Propriedade, porque PNG e
+  biblioteca de anexos e nao camada unica de talhoes;
+- `removido` e `substituido` nao aparecem na listagem de ativos;
+- JSON corrompido retorna lista vazia sem derrubar o app;
+- campos suspeitos de conteudo bruto, como `base64`, `content`, `bytes`,
+  `data`, `blob`, `buffer`, `image`, `asset`, `source` e `require`, sao
+  rejeitados.
+
+Escopo preservado:
+
+- nao alterou `src/assets/mapas/sela-prata-i/2025/fertilidade/`;
+- nao alterou os registros de `Mapa` da Sela de Prata I em `src/api/mock.ts`;
+- nao alterou `resolveSelaPrataIFertilidadeAssetSource`;
+- nao alterou `MapasScreen`;
+- nao alterou `Mapa.list`;
+- nao criou picker, leitura de PNG, copia para storage interno, visualizador,
+  botao, backend, RBAC real, sincronizacao ou APK.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

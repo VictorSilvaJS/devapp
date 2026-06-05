@@ -113,7 +113,37 @@ export type PngMapImportMetadataInput = Partial<
     | 'importado_por_nome'
     | 'status'
     | 'visivel_para_produtor'
+    | 'origem'
   >
 > & {
   arquivo_nome_original: string;
 };
+
+export type PngMapImportMetadataPatch = Partial<
+  Pick<
+    PngMapImportMetadata,
+    | 'propriedade_id'
+    | 'fazenda_id'
+    | 'nome_propriedade'
+    | 'titulo'
+    | 'descricao'
+    | 'categoria'
+    | 'categoria_label'
+    | 'elemento'
+    | 'elemento_label'
+    | 'safra'
+    | 'ano'
+    | 'profundidade'
+    | 'escopo'
+    | 'talhao_id'
+    | 'talhao_nome'
+    | 'arquivo_nome_original'
+    | 'arquivo_uri_local'
+    | 'arquivo_tamanho_bytes'
+    | 'arquivo_mime'
+    | 'importado_por_usuario_id'
+    | 'importado_por_nome'
+    | 'status'
+    | 'visivel_para_produtor'
+  >
+>;

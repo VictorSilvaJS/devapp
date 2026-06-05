@@ -5,14 +5,17 @@
 Status em 2026-06-05: a Fase 16G.1 foi aberta como diagnostico e contrato
 isolado para anexos PNG locais por Propriedade.
 
+Status em 2026-06-05: a Fase 16G.2 criou o servico local isolado de metadados
+PNG em `src/services/PngMapImportService.ts`, persistindo somente metadados
+pequenos em `@tche:png-map-imports:v1`.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
 
-Esta fase nao altera telas, nao adiciona botao, nao seleciona arquivo, nao
-copia arquivo, nao cria persistencia nova, nao altera `Mapa.list`, nao muda os
-registros da Sela de Prata I e nao implementa backend, JWT, RBAC real,
-sincronizacao ou APK final.
+Esta frente ainda nao altera telas, nao adiciona botao, nao seleciona arquivo,
+nao copia arquivo, nao altera `Mapa.list`, nao muda os registros da Sela de
+Prata I e nao implementa backend, JWT, RBAC real, sincronizacao ou APK final.
 
 ## Base Documental Ativa
 
@@ -395,9 +398,112 @@ Recomendacao:
 Essa estrategia segue o criterio ja adotado na 16F: conteudo grande em storage
 interno, metadados pequenos em chave propria.
 
+## 16G.2 - Servico Local De Metadados PNG
+
+Status em 2026-06-05: foi criado o servico local de metadados PNG em
+`src/services/PngMapImportService.ts`.
+
+Arquivos criados:
+
+- `src/services/PngMapImportService.ts`
+- `tests/pngMapImportService.test.js`
+
+Arquivos alterados:
+
+- `src/types/anexoPngLocal.ts`
+- `tsconfig.domain-compat.json`
+- `package.json`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Chave de persistencia:
+
+- `@tche:png-map-imports:v1`
+
+Formato do snapshot:
+
+```ts
+interface PngMapImportSnapshot {
+  version: number;
+  savedAt: string;
+  items: PngMapImportMetadata[];
+}
+```
+
+Operacoes disponiveis:
+
+- `listPngMapImports`
+- `listPngMapImportsByPropriedade`
+- `listActivePngMapImportsByPropriedade`
+- `getPngMapImportById`
+- `createPngMapImportMetadata`
+- `updatePngMapImportMetadata`
+- `markPngMapImportAsActive`
+- `markPngMapImportAsSubstituido`
+- `markPngMapImportAsRemoved`
+- `deletePngMapImportMetadata`
+
+Regras implementadas:
+
+- todo metadado criado precisa de `propriedade_id` ou `fazenda_id`;
+- quando so um dos ids vem preenchido, o outro e preenchido com o mesmo valor;
+- `origem` deve ser `arquivo_local`;
+- `escopo: 'talhao'` exige `talhao_id` ou `talhao_nome`;
+- `visivel_para_produtor` usa default `true`, seguindo os anexos de fertilidade
+  demonstrativos atuais;
+- JSON corrompido em `@tche:png-map-imports:v1` retorna lista vazia e nao
+  derruba o app;
+- `deletePngMapImportMetadata` remove apenas metadado, sem remover arquivo
+  fisico;
+- multiplos PNGs `ativo` sao permitidos por Propriedade, porque PNG e
+  biblioteca de anexos e nao camada unica de talhoes;
+- `removido` e `substituido` nao aparecem em
+  `listActivePngMapImportsByPropriedade`.
+
+Sanitizacao:
+
+- o servico rejeita campos suspeitos como `base64`, `content`, `bytes`, `data`,
+  `blob`, `buffer`, `file`, `image`, `asset`, `source` e `require`;
+- `arquivo_tamanho_bytes` e permitido como metadado numerico pequeno;
+- strings grandes demais sao rejeitadas;
+- arrays, objetos e funcoes no input sao rejeitados para evitar salvar imagem,
+  `require`, buffer, objeto `Image` ou conteudo bruto no indice.
+
+Relacao com `Mapa`:
+
+- `Mapa.list` nao foi alterado;
+- `PngMapImportMetadata` ainda nao e convertido para `Mapa`;
+- `MapasScreen` nao foi alterada;
+- a integracao futura deve acontecer na 16G.6 por camada compativel.
+
+Relacao com storage:
+
+- nao ha picker;
+- nao ha leitura de PNG;
+- nao ha copia para storage interno;
+- nao ha remocao fisica de arquivo;
+- `arquivo_uri_local` continua opcional nesta fase e sera preenchido quando a
+  frente de storage PNG existir.
+
+Compatibilidade com Sela de Prata I:
+
+- `src/assets/mapas/sela-prata-i/2025/fertilidade/` nao foi alterado;
+- `src/assets/mapas/sela-prata-i/2025/fertilidade/index.ts` nao foi alterado;
+- registros de `Mapa` da Sela em `src/api/mock.ts` nao foram alterados;
+- `resolveSelaPrataIFertilidadeAssetSource` nao foi alterado;
+- a tela `MapasScreen` e seus filtros atuais nao foram alterados.
+
+Validacoes da 16G.2:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.2: contrato e servico local de metadados PNG.
 - 16G.3: seletor/leitura/validacao de arquivo PNG.
 - 16G.4: copia segura para storage interno.
 - 16G.5A: botao `Anexar mapa PNG`.
@@ -443,4 +549,3 @@ Nao foi feito:
 - sincronizacao;
 - GeoJSON;
 - APK.
-
