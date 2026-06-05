@@ -643,6 +643,33 @@ Validacoes executadas na implementacao:
 - `npm run test:domain-compat` passou
 - `git diff --check` passou; quando executado no Windows, pode emitir apenas avisos normais de LF/CRLF
 
+## Fase 16E.1 - Diagnostico E Preparacao Do Login Local
+
+Status em 2026-06-05: foi criado o diagnostico da Fase 16E.1 em
+`docs/project/fase-16e-login-local.md`.
+
+Esta fase nao implementa autenticacao local nova. Ela mapeia o login atual,
+cadastro administrativo de usuarios, persistencia local do mock, sessao,
+tratamento de e-mail/status, credenciais demonstrativas e riscos para preparar
+microfases futuras.
+
+Principais achados:
+
+- o login efetivo usa `src/auth/authMock.ts`, nao os usuarios persistidos em
+  `src/api/mock.ts`;
+- `authMock.ts` e `src/api/mock.ts` duplicam usuarios demonstrativos e senhas;
+- a sessao salva apenas o usuario canonico atual em `@tche:user`, sem senha ou
+  token;
+- o mock administrativo persiste dados em `@tche:mock-mvp:v1` e usuarios
+  criados localmente sobrevivem ao reinicio no mesmo dispositivo;
+- usuarios do Admin recebem `senha: 'mock123'` por compatibilidade com o
+  validador legado, mas essa senha nao autentica e nao deve ser tratada como
+  credencial real;
+- o login atual nao bloqueia por `status` ou `ativo`;
+- a recomendacao para fases futuras e separar credenciais locais do objeto de
+  usuario listado pelo Admin, preservando as credenciais demonstrativas como
+  fallback.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
