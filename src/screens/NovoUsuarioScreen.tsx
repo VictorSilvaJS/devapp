@@ -17,6 +17,7 @@ import SectionCard from '../components/SectionCard';
 import SegmentedChips from '../components/SegmentedChips';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
+import { LocalCredentialService } from '../auth/localCredentials';
 import { useToast } from '../components/Toast';
 import { colors, spacing, typography } from '../theme';
 import { getFazendaId } from '../utils/acessoControle';
@@ -34,6 +35,11 @@ import {
   normalizeFormVinculosPropriedade,
   parseListaTexto,
 } from '../utils/usuarioAdminCompat';
+import {
+  createUsuarioAdminWithLocalCredential,
+  updateUsuarioAdminAndSyncLocalCredential,
+  validateSenhaLocalAdmin,
+} from '../utils/usuarioLocalAccessAdmin';
 import {
   listarMicroregioesPorRegiao,
   listarPropriedadesPorMicroregioes,
@@ -68,6 +74,13 @@ const emptyForm = {
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+const emptyPasswordForm = {
+  senhaInicial: '',
+  confirmarSenhaInicial: '',
+  novaSenha: '',
+  confirmarNovaSenha: '',
+};
+
 export default function NovoUsuarioScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -83,6 +96,9 @@ export default function NovoUsuarioScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<any>({});
+  const [passwordForm, setPasswordForm] = useState(emptyPasswordForm);
+  const [showPrimaryPassword, setShowPrimaryPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     load();
@@ -106,9 +122,11 @@ export default function NovoUsuarioScreen() {
         const usuarioData = await User.get(userId);
         setUsuarioAtual(usuarioData);
         setForm(buildUsuarioFormFromMock(usuarioData, propriedadesData as any[]));
+        setPasswordForm(emptyPasswordForm);
       } else {
         setUsuarioAtual(null);
         setForm(emptyForm);
+        setPasswordForm(emptyPasswordForm);
       }
     } finally {
       setLoading(false);
@@ -117,6 +135,13 @@ export default function NovoUsuarioScreen() {
 
   const updateField = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const updatePasswordField = (field: string, value: string) => {
+    setPasswordForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
@@ -254,6 +279,14 @@ export default function NovoUsuarioScreen() {
     if (message.includes('Status obrigatório')) {
       return 'Selecione um status para o usuário.';
     }
+    if (message.includes('LocalCredential.email')) {
+      return 'Este e-mail já possui uma credencial local neste aparelho.';
+    }
+    if (message.includes('LocalCredential')) {
+      return isEdit
+        ? 'Não foi possível atualizar a credencial local. Revise os dados e tente novamente.'
+        : 'Não foi possível configurar a senha local. O cadastro foi desfeito; tente novamente.';
+    }
 
     return 'Não foi possível salvar o usuário no mock.';
   };
@@ -386,6 +419,22 @@ export default function NovoUsuarioScreen() {
       }
     }
 
+    const passwordValidation = validateSenhaLocalAdmin({
+      senha: isEdit ? passwordForm.novaSenha : passwordForm.senhaInicial,
+      confirmarSenha: isEdit ? passwordForm.confirmarNovaSenha : passwordForm.confirmarSenhaInicial,
+      obrigatoria: !isEdit,
+    });
+
+    if (!passwordValidation.valid) {
+      if (isEdit) {
+        nextErrors.novaSenha = passwordValidation.errors.senha;
+        nextErrors.confirmarNovaSenha = passwordValidation.errors.confirmarSenha;
+      } else {
+        nextErrors.senhaInicial = passwordValidation.errors.senha;
+        nextErrors.confirmarSenhaInicial = passwordValidation.errors.confirmarSenha;
+      }
+    }
+
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -398,17 +447,33 @@ export default function NovoUsuarioScreen() {
 
     setSaving(true);
     try {
-      const payload = buildUsuarioAdminPayload({
+      const payload: any = buildUsuarioAdminPayload({
         form,
         propriedades,
         existing: usuarioAtual,
       });
 
+      const shouldUpdatePassword =
+        isEdit && (passwordForm.novaSenha.length > 0 || passwordForm.confirmarNovaSenha.length > 0);
       const saved = isEdit
-        ? await User.update(userId, payload)
-        : await User.create(payload);
+        ? await updateUsuarioAdminAndSyncLocalCredential({
+            userApi: User,
+            credentialService: LocalCredentialService,
+            usuarioId: userId,
+            payload,
+            email: payload.email,
+            novaSenha: passwordForm.novaSenha,
+            shouldUpdatePassword,
+          })
+        : await createUsuarioAdminWithLocalCredential({
+            userApi: User,
+            credentialService: LocalCredentialService,
+            payload,
+            email: payload.email,
+            senha: passwordForm.senhaInicial,
+          });
 
-      toast.showSuccess(isEdit ? 'Usuário atualizado localmente.' : 'Usuário salvo localmente.');
+      toast.showSuccess(isEdit ? 'Usuário atualizado localmente.' : 'Usuário e acesso local salvos.');
       navigation.replace('UsuarioDetail', { userId: saved.id });
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
@@ -450,7 +515,7 @@ export default function NovoUsuarioScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <InfoBox
           title="Cadastro administrativo demonstrativo"
-          message="Este registro fica salvo somente neste aparelho. Ele não cria login real, senha, convite, sessão, backend ou sincronização."
+          message="Este registro fica salvo somente neste aparelho. A senha local prepara acesso demonstrativo futuro, mas ainda não cria sessão, backend, convite ou sincronização."
         />
 
         <SectionCard
@@ -493,6 +558,47 @@ export default function NovoUsuarioScreen() {
             onChangeText={(value) => updateField('documento', value)}
             placeholder="Não informar dado real sem autorização"
             helperText="Campo opcional e desaconselhado para o teste de campo."
+          />
+        </SectionCard>
+
+        <SectionCard
+          title={isEdit ? 'Redefinir senha local' : 'Acesso local'}
+          subtitle={
+            isEdit
+              ? 'Deixe os campos vazios para manter a credencial local atual.'
+              : 'Defina a senha inicial para o acesso local demonstrativo deste usuário.'
+          }
+        >
+          <FormField
+            label={isEdit ? 'Nova senha' : 'Senha inicial'}
+            required={!isEdit}
+            value={isEdit ? passwordForm.novaSenha : passwordForm.senhaInicial}
+            onChangeText={(value) => updatePasswordField(isEdit ? 'novaSenha' : 'senhaInicial', value)}
+            placeholder="Mínimo de 6 caracteres"
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry={!showPrimaryPassword}
+            rightIcon={showPrimaryPassword ? 'eye-off-outline' : 'eye-outline'}
+            onRightIconPress={() => setShowPrimaryPassword((prev) => !prev)}
+            error={isEdit ? errors.novaSenha : errors.senhaInicial}
+            helperText="Esta senha será usada para acesso local neste aparelho. O usuário poderá alterá-la futuramente quando houver backend."
+          />
+
+          <FormField
+            label={isEdit ? 'Confirmar nova senha' : 'Confirmar senha inicial'}
+            required={!isEdit}
+            value={isEdit ? passwordForm.confirmarNovaSenha : passwordForm.confirmarSenhaInicial}
+            onChangeText={(value) =>
+              updatePasswordField(isEdit ? 'confirmarNovaSenha' : 'confirmarSenhaInicial', value)
+            }
+            placeholder="Repita a senha"
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry={!showConfirmPassword}
+            rightIcon={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+            onRightIconPress={() => setShowConfirmPassword((prev) => !prev)}
+            error={isEdit ? errors.confirmarNovaSenha : errors.confirmarSenhaInicial}
+            helperText={isEdit ? 'Status ativo, pendente ou inativo não bloqueia a configuração nesta etapa.' : undefined}
           />
         </SectionCard>
 

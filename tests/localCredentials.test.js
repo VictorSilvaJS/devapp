@@ -161,6 +161,38 @@ const run = async () => {
     assert.equal(snapshot.credentials[0].atualizado_em, '2026-06-05T10:02:00.000Z');
   });
 
+  await test('atualiza somente e-mail preservando hash, salt e criado_em', async () => {
+    const { service, storage } = createService();
+    await service.createCredential('u_email', 'email.antigo@example.com', 'senha-local');
+
+    const before = readSnapshot(storage).credentials[0];
+    const updated = await service.updateCredentialEmail('u_email', '  EMAIL.NOVO@example.com  ');
+    const after = readSnapshot(storage).credentials[0];
+
+    assert.equal(updated.email_normalizado, 'email.novo@example.com');
+    assert.equal(updated.criado_em, '2026-06-05T10:00:00.000Z');
+    assert.equal(updated.atualizado_em, '2026-06-05T10:02:00.000Z');
+    assert.equal(after.senha_hash, before.senha_hash);
+    assert.equal(after.salt, before.salt);
+    assert.equal(after.criado_em, before.criado_em);
+    assert.deepEqual(await service.verifyCredential('email.novo@example.com', 'senha-local'), {
+      ok: true,
+      usuario_id: 'u_email',
+    });
+    assert.deepEqual(await service.verifyCredential('email.antigo@example.com', 'senha-local'), { ok: false });
+  });
+
+  await test('updateCredentialEmail bloqueia duplicidade de e-mail normalizado', async () => {
+    const { service } = createService();
+    await service.createCredential('u_email_um', 'email.um@example.com', 'senha-local');
+    await service.createCredential('u_email_dois', 'email.dois@example.com', 'senha-local');
+
+    await assert.rejects(
+      () => service.updateCredentialEmail('u_email_dois', ' EMAIL.UM@example.com '),
+      /e-mail já possui credencial/
+    );
+  });
+
   await test('remove credencial e usuario sem credencial retorna false em hasCredential', async () => {
     const { service } = createService();
     await service.createCredential('u_remove', 'remove@example.com', 'abc123');

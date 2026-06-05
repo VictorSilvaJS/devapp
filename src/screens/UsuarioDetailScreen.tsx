@@ -16,6 +16,7 @@ import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
+import { LocalCredentialService } from '../auth/localCredentials';
 import { colors, shadows, spacing, typography } from '../theme';
 import { getFazendaId } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
@@ -91,19 +92,22 @@ export default function UsuarioDetailScreen() {
   const { user } = useAuthState();
   const [usuario, setUsuario] = useState<any>(null);
   const [propriedades, setPropriedades] = useState<any[]>([]);
+  const [localAccessConfigured, setLocalAccessConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const userId = route.params?.userId || route.params?.id;
 
   const load = async () => {
     setLoading(true);
     try {
-      const [usuarioData, propriedadesData] = await Promise.all([
+      const [usuarioData, propriedadesData, hasLocalCredential] = await Promise.all([
         User.get(userId),
         Produtor.list(),
+        LocalCredentialService.hasCredential(userId),
       ]);
 
       setUsuario(usuarioData);
       setPropriedades(propriedadesData as any[]);
+      setLocalAccessConfigured(hasLocalCredential);
     } finally {
       setLoading(false);
     }
@@ -202,8 +206,34 @@ export default function UsuarioDetailScreen() {
 
         <InfoBox
           title="Cadastro administrativo demonstrativo"
-          message="Este usuário e seus vínculos ficam salvos localmente. O cadastro não cria login real, autenticação ou RBAC."
+          message="Este usuário e seus vínculos ficam salvos localmente. A credencial local é preparatória e ainda não integra sessão, backend ou RBAC."
         />
+
+        <SectionCard title="Acesso local" subtitle="Indicador administrativo seguro da credencial neste aparelho.">
+          <InfoRow
+            icon={localAccessConfigured ? 'key-outline' : 'key-outline'}
+            label="Credencial"
+            value={localAccessConfigured ? 'Acesso local configurado' : 'Acesso local não configurado'}
+          />
+          <InfoBox
+            message="Nenhum dado sensível da credencial é exibido nesta tela."
+            style={styles.inlineInfoBox}
+          />
+          <TouchableOpacity
+            style={styles.localAccessButton}
+            onPress={() => navigation.navigate('EditarUsuario', { userId: usuario.id })}
+            activeOpacity={0.78}
+          >
+            <Ionicons
+              name={localAccessConfigured ? 'key-outline' : 'add-circle-outline'}
+              size={18}
+              color={colors.primary}
+            />
+            <Text style={styles.localAccessButtonText}>
+              {localAccessConfigured ? 'Redefinir senha local' : 'Definir senha local'}
+            </Text>
+          </TouchableOpacity>
+        </SectionCard>
 
         <SectionCard title="Dados do usuário" subtitle="Telefone e documento são opcionais e só aparecem quando informados.">
           <InfoRow icon="mail-outline" label="E-mail" value={usuario.email} />
@@ -518,6 +548,23 @@ const styles = StyleSheet.create({
   },
   inlineInfoBox: {
     marginBottom: 0,
+  },
+  localAccessButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: spacing.radiusSm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  localAccessButtonText: {
+    color: colors.primary,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
   },
   blockedContainer: {
     flex: 1,

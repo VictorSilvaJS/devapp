@@ -263,6 +263,40 @@ export const createLocalCredentialService = ({
       });
     },
 
+    async updateCredentialEmail(usuarioId: string, email: string): Promise<LocalCredentialMetadata> {
+      return mutate(async () => {
+        const id = normalizeUsuarioId(usuarioId);
+        const emailNormalizado = normalizeEmail(email);
+        if (!id) throw new Error('LocalCredential.usuario_id: obrigatório');
+        if (!emailNormalizado) throw new Error('LocalCredential.email: obrigatório');
+
+        const snapshot = await loadSnapshot();
+        const index = snapshot.credentials.findIndex((credential) => credential.usuario_id === id);
+        if (index === -1) {
+          throw new Error('LocalCredential: credencial não encontrada');
+        }
+
+        const duplicatedEmail = snapshot.credentials.some((credential) =>
+          credential.usuario_id !== id && credential.email_normalizado === emailNormalizado
+        );
+        if (duplicatedEmail) {
+          throw new Error('LocalCredential.email: e-mail já possui credencial');
+        }
+
+        const existing = snapshot.credentials[index];
+        const updated: LocalCredential = {
+          ...existing,
+          email_normalizado: emailNormalizado,
+          atualizado_em: now(),
+        };
+        const credentials = [...snapshot.credentials];
+        credentials[index] = updated;
+
+        await saveCredentials(credentials);
+        return toMetadata(updated);
+      });
+    },
+
     async removeCredential(usuarioId: string): Promise<boolean> {
       return mutate(async () => {
         const id = normalizeUsuarioId(usuarioId);

@@ -12,6 +12,14 @@ e-mail, chave propria em `AsyncStorage`, servico de persistencia e testes
 automatizados. Nao alterou `LoginScreen`, `AuthContext`, `authMock`, cadastro
 administrativo, acesso rapido, sessoes existentes, filtros, GeoJSON ou PNG.
 
+Status em 2026-06-05: concluida a Fase 16E.3 com integracao administrativa da
+credencial local no cadastro de Usuarios. Esta etapa adicionou senha inicial na
+criacao, redefinicao administrativa na edicao, indicador seguro no detalhe,
+sincronizacao de e-mail da credencial, compensacao em falha de criacao e helper
+para exclusao de usuario com remocao de credencial. Nao alterou
+`LoginScreen`, `AuthContext`, `authMock`, acesso rapido, sessao, backend, JWT,
+GeoJSON, PNG, filtros ou dashboards.
+
 ## Objetivo Da 16E.1
 
 Mapear o funcionamento atual do login, cadastro administrativo de usuarios,
@@ -71,8 +79,8 @@ Comportamentos definidos:
 - Atualizacao preserva `criado_em` e altera `atualizado_em`.
 - JSON invalido no armazenamento e tratado como snapshot vazio, sem derrubar o
   app.
-- `User.delete` ainda nao remove credencial local; isso permanece como cuidado
-  futuro para evitar credenciais orfas.
+- `updateCredentialEmail`, para atualizar apenas o e-mail normalizado da
+  credencial sem trocar hash, salt ou `criado_em`.
 
 Estrategia de hash:
 
@@ -98,6 +106,7 @@ Testes adicionados em `tests/localCredentials.test.js` cobrem:
 - verificacao de senha correta;
 - rejeicao de senha incorreta;
 - atualizacao de senha;
+- atualizacao apenas de e-mail, preservando hash, salt e `criado_em`;
 - remocao;
 - usuario sem credencial;
 - armazenamento corrompido/JSON invalido;
@@ -131,6 +140,132 @@ registradas nao foram introduzidas pela integracao do servico de credenciais:
 Esses pontos ficam como risco de build/publicacao futura. Nao foram corrigidos
 na 16E.2 porque exigem limpeza/upgrade de dependencias fora do escopo desta
 microfase.
+
+## Resultado Da 16E.3
+
+A Fase 16E.3 integrou o servico de credenciais locais ao cadastro
+administrativo de Usuarios, mantendo a credencial separada do objeto de usuario
+e do snapshot do mock.
+
+Arquivos principais:
+
+- `src/screens/NovoUsuarioScreen.tsx`
+- `src/screens/UsuarioDetailScreen.tsx`
+- `src/auth/localCredentials.ts`
+- `src/utils/usuarioLocalAccessAdmin.ts`
+- `tests/usuarioLocalAccessAdmin.test.js`
+- `tests/localCredentials.test.js`
+
+No cadastro de novo usuario, a tela agora possui:
+
+- `Senha inicial`
+- `Confirmar senha inicial`
+- botao de mostrar/ocultar senha nos dois campos
+
+A senha inicial e obrigatoria para criar usuario nesta etapa, com minimo de 6
+caracteres, confirmacao exata e rejeicao de senha composta apenas por espacos.
+A senha nao e aparada silenciosamente, nao recebe valor demonstrativo fixo e
+nao usa `mock123`.
+
+Fluxo de criacao:
+
+1. valida o formulario administrativo;
+2. valida senha inicial e confirmacao;
+3. cria o usuario via `User.create`;
+4. usa o `id` retornado pelo mock;
+5. cria a credencial via `LocalCredentialService.createCredential`;
+6. navega para o detalhe somente depois de usuario e credencial passarem.
+
+Se `User.create` passar e a credencial falhar, o helper
+`createUsuarioAdminWithLocalCredential` tenta compensar com `User.delete` do
+usuario recem-criado. No mock atual essa remocao e segura para esse ponto
+porque remove o usuario e os vinculos administrativos do mesmo `usuario_id`.
+Se o rollback tambem falhar, o erro recebe metadados internos
+`rollbackFailed`/`rollbackError`, sem registrar senha.
+
+Na edicao de usuario existente, a tela exibe a secao `Redefinir senha local`:
+
+- `Nova senha`
+- `Confirmar nova senha`
+
+Campos vazios significam manter a credencial atual. Se um campo for preenchido,
+os dois passam pela mesma validacao. Quando ja existe credencial, a tela chama
+`updateCredential`; quando o usuario antigo nao possui credencial, chama
+`createCredential`. Edicoes comuns de nome, telefone, perfil, status,
+observacoes e vinculos nao removem nem trocam a senha local.
+
+Ao editar e-mail de usuario com credencial, a operacao
+`updateCredentialEmail(usuarioId, novoEmail)` atualiza somente
+`email_normalizado` e `atualizado_em`, preservando `senha_hash`, `salt` e
+`criado_em`. A duplicidade de e-mail da credencial e verificada antes de
+atualizar o usuario, reduzindo risco de inconsistencia.
+
+Usuarios existentes sem credencial continuam aparecendo normalmente. O detalhe
+mostra `Acesso local nao configurado`, e o Admin pode entrar na edicao para
+definir senha local. Nao ha criacao automatica de credencial e `mock123` nao e
+migrado.
+
+`UsuarioDetailScreen.tsx` mostra apenas o indicador seguro:
+
+- `Acesso local configurado`
+- `Acesso local nao configurado`
+
+O indicador usa `hasCredential(usuarioId)`. A tela nao mostra senha, hash, salt
+ou datas tecnicas da credencial. Tambem oferece acao para abrir a edicao como
+`Definir senha local` ou `Redefinir senha local`.
+
+Exclusao:
+
+- o app ainda nao possui botao especifico de exclusao administrativa de
+  usuario nesta tela;
+- foi criado o helper `deleteUsuarioAdminAndLocalCredential`, que executa
+  `User.delete` e depois `removeCredential(usuarioId)`;
+- esse helper foi testado para evitar credencial orfa quando um fluxo de
+  exclusao administrativa vier a chamá-lo.
+
+Status:
+
+- credencial pode ser configurada para usuario `ativo`, `pendente` ou
+  `inativo`;
+- status ainda nao bloqueia login, porque o login local permanece fora desta
+  microfase.
+
+Dados que continuam sem senha local:
+
+- payload administrativo salvo em `User.create`/`User.update`;
+- snapshot `@tche:mock-mvp:v1`;
+- sessao `@tche:user`;
+- objetos de `User.list`/`User.get`;
+- logs e mensagens de erro.
+
+Testes adicionados/atualizados cobrem:
+
+- criacao com senha valida;
+- confirmacao diferente;
+- senha menor que 6 caracteres;
+- senha apenas com espacos;
+- credencial criada com o `id` retornado por `User.create`;
+- senha inicial ausente do objeto de usuario e do snapshot
+  `@tche:mock-mvp:v1`;
+- edicao sem senha preservando credencial;
+- redefinicao de senha e rejeicao da senha antiga;
+- usuario antigo sem credencial recebendo senha;
+- alteracao de e-mail preservando senha;
+- duplicidade de e-mail de credencial bloqueada;
+- rollback quando a criacao da credencial falha;
+- exclusao com remocao de credencial pelo helper;
+- indicador baseado em `hasCredential`;
+- metadados publicos sem hash e sem salt.
+
+Limites preservados:
+
+- `LoginScreen.tsx` nao foi alterado;
+- `AuthContext.tsx` nao foi alterado;
+- `authMock.ts` nao foi alterado;
+- usuarios criados no Admin ainda nao autenticam;
+- acesso rapido demonstrativo continua preservado;
+- bloqueio de login por status permanece para fase futura;
+- backend, JWT, GeoJSON, PNG, filtros e dashboards nao foram alterados.
 
 ## Arquivos Analisados
 

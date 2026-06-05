@@ -696,9 +696,42 @@ Limites preservados:
 - `@tche:user`, `@tche:mock-mvp:v1`, dashboards, navegacao por perfil, filtros,
   GeoJSON e PNG permanecem sem mudanca funcional.
 
-Risco residual: `User.delete` ainda nao remove credencial local, pois a
-microfase nao integrou o servico ao mock administrativo. Essa remocao deve ser
-tratada quando a interface administrativa de acesso for implementada.
+Status em 2026-06-05 (Fase 16E.3): o cadastro administrativo de Usuarios foi
+integrado ao servico de credenciais locais, ainda sem autenticar usuarios
+persistidos.
+
+Esta microfase adicionou:
+
+- campos `Senha inicial` e `Confirmar senha inicial` na criacao de usuario;
+- secao `Redefinir senha local` na edicao, com `Nova senha` e
+  `Confirmar nova senha`;
+- validacao de minimo de 6 caracteres, confirmacao igual e rejeicao de senha
+  composta apenas por espacos;
+- criacao de usuario seguida de `LocalCredentialService.createCredential` com
+  o `id` retornado por `User.create`;
+- compensacao por `User.delete` quando a credencial falha apos criar usuario;
+- operacao `updateCredentialEmail` para trocar apenas o e-mail normalizado da
+  credencial, preservando hash, salt e `criado_em`;
+- indicador seguro no detalhe do usuario: `Acesso local configurado` ou
+  `Acesso local nao configurado`, baseado em `hasCredential`;
+- helper `deleteUsuarioAdminAndLocalCredential` para fluxos de exclusao
+  administrativa removerem usuario e credencial;
+- testes em `tests/usuarioLocalAccessAdmin.test.js` e ampliacao de
+  `tests/localCredentials.test.js`.
+
+Limites preservados na 16E.3:
+
+- `LoginScreen.tsx`, `AuthContext.tsx` e `authMock.ts` nao foram alterados;
+- usuarios criados no Admin ainda nao autenticam;
+- a credencial local pode ser configurada para usuarios ativos, pendentes ou
+  inativos, mas status ainda nao bloqueia login;
+- nenhuma credencial e criada automaticamente para usuarios existentes;
+- `senha: 'mock123'` continua apenas como campo legado de compatibilidade e
+  nao e migrada nem usada como credencial;
+- a senha inicial nao entra no payload administrativo, no snapshot
+  `@tche:mock-mvp:v1`, na sessao `@tche:user` nem em objetos de `User.list`;
+- o app ainda nao possui botao visual de exclusao administrativa de usuario,
+  mas o helper de exclusao com remocao de credencial ja esta pronto e testado.
 
 Verificacao Expo apos adicionar `expo-crypto`: `npx expo install --check`
 indicou dependencias atualizadas. `npx expo-doctor` passou em 14 de 16
