@@ -44,7 +44,6 @@ import {
 import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
-  canStartGeoJsonPropertyImport,
   confirmGeoJsonPropertyImport,
   listGeoJsonImportsForPropriedade,
   prepareGeoJsonPropertyImport,
@@ -52,6 +51,12 @@ import {
 import type {
   GeoJsonPropertyImportPreview,
 } from '../services/GeoJsonPropertyImportWorkflow';
+import {
+  canManageGeoJsonForPropriedade,
+  removeActiveGeoJsonForPropriedade,
+  replaceGeoJsonForPropriedade,
+  shouldShowSelaPrataIRemovalWarning,
+} from '../services/GeoJsonPropertyManageWorkflow';
 import {
   GeoJsonTalhoesLayerResult,
   isGeoJsonTalhoesLayerActive,
@@ -75,6 +80,9 @@ const CATEGORIAS = [
 ];
 
 const FILTRO_TODOS = 'todos';
+
+type GeoJsonImportMode = 'attach' | 'replace';
+type GeoJsonManageDialogAction = 'replace' | 'remove' | null;
 
 const ORDENACOES_MATERIAIS = [
   { key: 'recente', label: 'Recente', icon: 'time-outline' },
@@ -205,6 +213,16 @@ export default function MapasScreen({ route, navigation }) {
   const [geoJsonImporting, setGeoJsonImporting] = useState(false);
   const [geoJsonConfirming, setGeoJsonConfirming] = useState(false);
   const [geoJsonPreview, setGeoJsonPreview] = useState<GeoJsonPropertyImportPreview | null>(null);
+  const [geoJsonPreviewMode, setGeoJsonPreviewMode] = useState<GeoJsonImportMode>('attach');
+  const [geoJsonManageDialog, setGeoJsonManageDialog] = useState<{
+    visible: boolean;
+    action: GeoJsonManageDialogAction;
+    loading: boolean;
+  }>({
+    visible: false,
+    action: null,
+    loading: false,
+  });
   const [geoJsonTalhoesLayer, setGeoJsonTalhoesLayer] = useState<GeoJsonTalhoesLayerResult | null>(null);
 
   // ──────────────────────────────────────────────
@@ -329,9 +347,10 @@ export default function MapasScreen({ route, navigation }) {
     () => geoJsonImports.find((item) => item.status === 'ativo') ?? null,
     [geoJsonImports]
   );
-  const podeAnexarGeoJson = consultaPorFazenda
+  const podeGerenciarGeoJson = consultaPorFazenda
     && !!contextoConsulta.fazenda
-    && canStartGeoJsonPropertyImport(user, contextoConsulta.fazenda);
+    && canManageGeoJsonForPropriedade(user, contextoConsulta.fazenda);
+  const podeAnexarGeoJson = podeGerenciarGeoJson;
   const fazendaOptions = useMemo(
     () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
     [contextoConsulta.fazendasPermitidas]
@@ -494,6 +513,41 @@ export default function MapasScreen({ route, navigation }) {
     }
   }, [limitesFiltrados, selectedTalhao]);
 
+  const recarregarGeoJsonLocal = useCallback(async (contexto: {
+    propriedade_id: string;
+    fazenda_id?: string;
+    produtor_id?: string;
+  }) => {
+    const [importsAtualizados, talhoesLayerAtualizada] = await Promise.all([
+      listGeoJsonImportsForPropriedade(contexto.propriedade_id),
+      loadGeoJsonTalhoesLayer({
+        propriedade_id: contexto.propriedade_id,
+        fazenda_id: contexto.fazenda_id || contexto.propriedade_id,
+        produtor_id: contexto.produtor_id,
+      }),
+    ]);
+
+    setGeoJsonImports(importsAtualizados);
+    setGeoJsonTalhoesLayer(talhoesLayerAtualizada);
+
+    const baseTalhoesParaAno = isGeoJsonTalhoesLayerActive(talhoesLayerAtualizada)
+      ? talhoesLayerAtualizada.talhoes
+      : limitesNoContexto;
+    const anos = [...new Set(baseTalhoesParaAno.map((l: any) => l.ano))]
+      .sort((a: any, b: any) => Number(b) - Number(a));
+
+    setAnosDisponiveis(anos);
+    setAnoFiltroLimite((anoAtual) => {
+      if (anos.length === 0) return null;
+      return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
+    });
+
+    return {
+      imports: importsAtualizados,
+      layer: talhoesLayerAtualizada,
+    };
+  }, [limitesNoContexto]);
+
   // ──────────────────────────────────────────────
   // HANDLERS
   // ──────────────────────────────────────────────
@@ -571,12 +625,13 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const handleAnexarGeoJson = async () => {
+  const handleAnexarGeoJson = async (mode: GeoJsonImportMode = 'attach') => {
     if (!podeAnexarGeoJson || !contextoConsulta.fazenda) {
       toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar GeoJSON.');
       return;
     }
 
+    setGeoJsonPreviewMode(mode);
     setGeoJsonImporting(true);
     try {
       const result = await prepareGeoJsonPropertyImport({
@@ -602,6 +657,7 @@ export default function MapasScreen({ route, navigation }) {
   const handleCancelarGeoJsonPreview = () => {
     if (geoJsonConfirming) return;
     setGeoJsonPreview(null);
+    setGeoJsonPreviewMode('attach');
   };
 
   const handleConfirmarGeoJsonPreview = async () => {
@@ -609,41 +665,135 @@ export default function MapasScreen({ route, navigation }) {
 
     setGeoJsonConfirming(true);
     try {
-      const result = await confirmGeoJsonPropertyImport(geoJsonPreview, {
-        selaPrataConfirmed: true,
-      });
+      const isReplacing = geoJsonPreviewMode === 'replace';
+      const result = isReplacing
+        ? await replaceGeoJsonForPropriedade(geoJsonPreview, {
+            selaPrataConfirmed: true,
+          })
+        : await confirmGeoJsonPropertyImport(geoJsonPreview, {
+            selaPrataConfirmed: true,
+          });
 
       if (!result.ok) {
-        toast.showError(result.error?.message || 'Não foi possível associar o GeoJSON à Propriedade.');
+        toast.showError(result.error?.message || (
+          isReplacing
+            ? 'Não foi possível substituir o GeoJSON local.'
+            : 'Não foi possível associar o GeoJSON à Propriedade.'
+        ));
         return;
       }
 
-      const importsAtualizados = await listGeoJsonImportsForPropriedade(
-        geoJsonPreview.resolvedContext.propriedade_id
-      );
-      const talhoesLayerAtualizada = await loadGeoJsonTalhoesLayer({
+      const { layer: talhoesLayerAtualizada } = await recarregarGeoJsonLocal({
         propriedade_id: geoJsonPreview.resolvedContext.propriedade_id,
         fazenda_id: geoJsonPreview.resolvedContext.fazenda_id,
         produtor_id: geoJsonPreview.resolvedContext.produtor_id,
       });
-      setGeoJsonImports(importsAtualizados);
-      setGeoJsonTalhoesLayer(talhoesLayerAtualizada);
-      if (isGeoJsonTalhoesLayerActive(talhoesLayerAtualizada)) {
-        const anos = [...new Set(talhoesLayerAtualizada.talhoes.map((l: any) => l.ano))]
-          .sort((a: any, b: any) => Number(b) - Number(a));
-        setAnosDisponiveis(anos);
-        setAnoFiltroLimite((anoAtual) => {
-          if (anos.length === 0) return null;
-          return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
-        });
-      }
       setGeoJsonPreview(null);
-      toast.showSuccess('GeoJSON anexado à Propriedade.');
-      toast.showInfo('Talhões carregados do GeoJSON local.');
+      setGeoJsonPreviewMode('attach');
+      toast.showSuccess(isReplacing ? 'GeoJSON local substituído.' : 'GeoJSON anexado à Propriedade.');
+      if ((result as any).warnings?.length > 0) {
+        toast.showWarning((result as any).warnings[0].message);
+      }
+      if (isGeoJsonTalhoesLayerActive(talhoesLayerAtualizada)) {
+        toast.showInfo('Talhões carregados do GeoJSON local.');
+      }
     } catch (error) {
-      toast.showError('Não foi possível concluir a associação do GeoJSON.');
+      toast.showError(
+        geoJsonPreviewMode === 'replace'
+          ? 'Não foi possível concluir a substituição do GeoJSON.'
+          : 'Não foi possível concluir a associação do GeoJSON.'
+      );
     } finally {
       setGeoJsonConfirming(false);
+    }
+  };
+
+  const handleSolicitarSubstituirGeoJson = () => {
+    if (!geoJsonImportAtivo) return;
+    setGeoJsonManageDialog({
+      visible: true,
+      action: 'replace',
+      loading: false,
+    });
+  };
+
+  const handleSolicitarRemoverGeoJson = () => {
+    if (!geoJsonImportAtivo) return;
+    setGeoJsonManageDialog({
+      visible: true,
+      action: 'remove',
+      loading: false,
+    });
+  };
+
+  const handleCancelarGeoJsonManageDialog = () => {
+    if (geoJsonManageDialog.loading) return;
+    setGeoJsonManageDialog({
+      visible: false,
+      action: null,
+      loading: false,
+    });
+  };
+
+  const handleConfirmarGeoJsonManageDialog = async () => {
+    if (geoJsonManageDialog.action === 'replace') {
+      setGeoJsonManageDialog({
+        visible: false,
+        action: null,
+        loading: false,
+      });
+      await handleAnexarGeoJson('replace');
+      return;
+    }
+
+    if (geoJsonManageDialog.action !== 'remove' || !contextoConsulta.fazenda) {
+      handleCancelarGeoJsonManageDialog();
+      return;
+    }
+
+    setGeoJsonManageDialog((prev) => ({
+      ...prev,
+      loading: true,
+    }));
+
+    try {
+      const result = await removeActiveGeoJsonForPropriedade({
+        user,
+        propriedade: contextoConsulta.fazenda,
+        activeMetadata: geoJsonImportAtivo,
+      });
+
+      if (!result.ok) {
+        toast.showError(result.error?.message || 'Não foi possível remover o GeoJSON local.');
+        return;
+      }
+
+      const metadataContexto = result.metadata || result.activeMetadata || geoJsonImportAtivo;
+      if (metadataContexto) {
+        await recarregarGeoJsonLocal({
+          propriedade_id: metadataContexto.propriedade_id,
+          fazenda_id: metadataContexto.fazenda_id,
+        });
+      } else {
+        await loadDados();
+      }
+      setSelectedTalhao(null);
+      setTalhaoDetailVisible(false);
+
+      toast.showSuccess('GeoJSON local removido da Propriedade.');
+      if (result.warnings && result.warnings.length > 0) {
+        toast.showWarning(result.warnings[0].message);
+      } else {
+        toast.showInfo('Exibindo demarcação disponível.');
+      }
+    } catch (error) {
+      toast.showError('Não foi possível concluir a remoção do GeoJSON local.');
+    } finally {
+      setGeoJsonManageDialog({
+        visible: false,
+        action: null,
+        loading: false,
+      });
     }
   };
 
@@ -1024,6 +1174,47 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         )}
 
+        {geoJsonImportAtivo && (
+          <>
+            <Text style={styles.geoJsonManageHelp}>
+              Remover o GeoJSON local não apaga a Propriedade nem os anexos técnicos. Se existir demarcação demonstrativa/seed, ela voltará a ser exibida.
+            </Text>
+            <View style={styles.geoJsonManageActions}>
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonManageButton,
+                  styles.geoJsonManageButtonSecondary,
+                  geoJsonImporting && styles.geoJsonImportButtonDisabled,
+                ]}
+                onPress={handleSolicitarSubstituirGeoJson}
+                activeOpacity={0.78}
+                disabled={geoJsonImporting}
+              >
+                <Ionicons name="swap-horizontal-outline" size={17} color={colors.primary} />
+                <Text style={styles.geoJsonManageButtonTextSecondary}>
+                  Substituir GeoJSON dos talhões
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonManageButton,
+                  styles.geoJsonManageButtonDanger,
+                  geoJsonManageDialog.loading && styles.geoJsonImportButtonDisabled,
+                ]}
+                onPress={handleSolicitarRemoverGeoJson}
+                activeOpacity={0.78}
+                disabled={geoJsonManageDialog.loading}
+              >
+                <Ionicons name="trash-outline" size={17} color={colors.error} />
+                <Text style={styles.geoJsonManageButtonTextDanger}>
+                  Remover GeoJSON local
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+
         {geoJsonTalhoesLocalErro && (
           <View style={styles.geoJsonLayerWarningInline}>
             <Ionicons name="alert-circle-outline" size={16} color={colors.warning} />
@@ -1033,24 +1224,26 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         )}
 
-        <TouchableOpacity
-          style={[
-            styles.geoJsonImportButton,
-            geoJsonImporting && styles.geoJsonImportButtonDisabled,
-          ]}
-          onPress={handleAnexarGeoJson}
-          activeOpacity={0.78}
-          disabled={geoJsonImporting}
-        >
-          {geoJsonImporting ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Ionicons name="attach-outline" size={18} color={colors.white} />
-          )}
-          <Text style={styles.geoJsonImportButtonText}>
-            Anexar GeoJSON dos talhões
-          </Text>
-        </TouchableOpacity>
+        {!geoJsonImportAtivo && (
+          <TouchableOpacity
+            style={[
+              styles.geoJsonImportButton,
+              geoJsonImporting && styles.geoJsonImportButtonDisabled,
+            ]}
+            onPress={() => handleAnexarGeoJson('attach')}
+            activeOpacity={0.78}
+            disabled={geoJsonImporting}
+          >
+            {geoJsonImporting ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Ionicons name="attach-outline" size={18} color={colors.white} />
+            )}
+            <Text style={styles.geoJsonImportButtonText}>
+              Anexar GeoJSON dos talhões
+            </Text>
+          </TouchableOpacity>
+        )}
       </SectionCard>
     );
   };
@@ -1433,6 +1626,31 @@ export default function MapasScreen({ route, navigation }) {
         onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
       />
 
+      <ConfirmDialog
+        visible={geoJsonManageDialog.visible}
+        title={
+          geoJsonManageDialog.action === 'remove'
+            ? 'Remover GeoJSON local'
+            : 'Substituir GeoJSON dos talhões'
+        }
+        message={
+          geoJsonManageDialog.action === 'remove'
+            ? [
+                'Deseja remover o GeoJSON local desta Propriedade? O arquivo local será removido do aparelho, mas a Propriedade e os anexos técnicos não serão apagados.',
+                shouldShowSelaPrataIRemovalWarning({ propriedade: contextoConsulta.fazenda })
+                  ? 'Esta Propriedade possui demarcação demonstrativa embutida. Remover o GeoJSON local fará o app voltar para a demarcação demonstrativa.'
+                  : 'Se existir demarcação demonstrativa/seed, ela voltará a ser exibida.',
+              ].join('\n\n')
+            : 'Um GeoJSON local já está ativo para esta Propriedade. O novo arquivo substituirá a camada local atual.'
+        }
+        type={geoJsonManageDialog.action === 'remove' ? 'danger' : 'warning'}
+        confirmText={geoJsonManageDialog.action === 'remove' ? 'Remover' : 'Continuar'}
+        cancelText="Cancelar"
+        loading={geoJsonManageDialog.loading}
+        onConfirm={handleConfirmarGeoJsonManageDialog}
+        onCancel={handleCancelarGeoJsonManageDialog}
+      />
+
       <Modal
         visible={!!geoJsonPreview}
         transparent
@@ -1443,9 +1661,13 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.geoJsonPreviewDialog}>
             <View style={styles.geoJsonPreviewHeader}>
               <View style={styles.geoJsonPreviewTitleWrap}>
-                <Text style={styles.geoJsonPreviewTitle}>Confirmar associação</Text>
+                <Text style={styles.geoJsonPreviewTitle}>
+                  {geoJsonPreviewMode === 'replace' ? 'Confirmar substituição' : 'Confirmar associação'}
+                </Text>
                 <Text style={styles.geoJsonPreviewSubtitle}>
-                  Confirmar associação deste GeoJSON à Propriedade?
+                  {geoJsonPreviewMode === 'replace'
+                    ? 'Confirmar substituição da camada local desta Propriedade?'
+                    : 'Confirmar associação deste GeoJSON à Propriedade?'}
                 </Text>
               </View>
               <TouchableOpacity
@@ -1514,7 +1736,7 @@ export default function MapasScreen({ route, navigation }) {
                     <View style={styles.geoJsonSelaWarning}>
                       <Ionicons name="alert-circle-outline" size={18} color={colors.warning} />
                       <Text style={styles.geoJsonSelaWarningText}>
-                        Esta Propriedade já possui demarcação demonstrativa. O arquivo será salvo como anexo local e só substituirá a visualização em etapa futura.
+                        Esta Propriedade possui demarcação demonstrativa embutida. O GeoJSON local válido substitui a visualização local; ao remover, o app volta para a demarcação demonstrativa.
                       </Text>
                     </View>
                   )}
@@ -1559,7 +1781,9 @@ export default function MapasScreen({ route, navigation }) {
                 ) : (
                   <Ionicons name="checkmark-outline" size={18} color={colors.white} />
                 )}
-                <Text style={styles.geoJsonPreviewConfirmText}>Confirmar</Text>
+                <Text style={styles.geoJsonPreviewConfirmText}>
+                  {geoJsonPreviewMode === 'replace' ? 'Substituir' : 'Confirmar'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -2001,6 +2225,51 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginTop: spacing.xs,
     lineHeight: 17,
+  },
+  geoJsonManageHelp: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    lineHeight: 17,
+    marginBottom: spacing.sm,
+  },
+  geoJsonManageActions: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  geoJsonManageButton: {
+    minHeight: 42,
+    borderRadius: spacing.radiusSm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+  },
+  geoJsonManageButtonSecondary: {
+    backgroundColor: colors.accent,
+    borderColor: colors.primaryLight,
+  },
+  geoJsonManageButtonDanger: {
+    backgroundColor: colors.errorBgLight,
+    borderColor: colors.errorLight,
+  },
+  geoJsonManageButtonTextSecondary: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+    color: colors.primary,
+    textAlign: 'center',
+  },
+  geoJsonManageButtonTextDanger: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+    color: colors.error,
+    textAlign: 'center',
   },
   geoJsonLayerWarningInline: {
     flexDirection: 'row',

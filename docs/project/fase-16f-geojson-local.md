@@ -1757,12 +1757,180 @@ Validacoes executadas na 16F.7:
 
 ### 16F.8 - Substituicao e remocao segura
 
-Adicionar operacoes controladas:
+Status em 2026-06-05: foi criado o fluxo seguro para Admin e Colaborador no
+escopo substituirem ou removerem o GeoJSON local ativo de uma Propriedade.
 
-- marcar importacao como ativa/inativa;
-- remover arquivo fisico;
-- restaurar seed quando aplicavel;
-- confirmar antes de substituir limites existentes.
+Arquivo criado:
+
+- `src/services/GeoJsonPropertyManageWorkflow.ts`
+
+Arquivo de teste criado:
+
+- `tests/geojsonPropertyManageWorkflow.test.js`
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`;
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Servico criado:
+
+- `canManageGeoJsonForPropriedade(user, propriedade)`;
+- `shouldShowSelaPrataIRemovalWarning(input)`;
+- `replaceGeoJsonForPropriedade(preview, input, deps)`;
+- `removeActiveGeoJsonForPropriedade(input, deps)`.
+
+Acoes adicionadas em `MapasScreen`:
+
+- quando nao ha GeoJSON ativo, permanece o botao
+  `Anexar GeoJSON dos talhoes`;
+- quando ha GeoJSON ativo, o painel passa a mostrar:
+  - `Substituir GeoJSON dos talhoes`;
+  - `Remover GeoJSON local`;
+- antes de substituir, a tela avisa:
+  `Um GeoJSON local ja esta ativo para esta Propriedade. O novo arquivo
+  substituira a camada local atual.`;
+- antes de remover, a tela confirma que:
+  - o arquivo local sera removido do aparelho;
+  - a Propriedade nao sera apagada;
+  - anexos tecnicos/PNGs nao serao apagados;
+  - se houver seed/mock, a demarcacao disponivel volta a aparecer;
+- para Sela de Prata I, a confirmacao informa que a remocao do GeoJSON local
+  faz o app voltar para a demarcacao demonstrativa.
+
+Permissoes visuais:
+
+- Admin ve as acoes em contexto de Propriedade;
+- Colaborador ve as acoes somente quando a Propriedade esta no escopo efetivo;
+- Produtor nao ve acoes administrativas de anexo, substituicao ou remocao;
+- Produtor continua podendo visualizar a camada local ativa quando acessa a
+  propria Propriedade autorizada;
+- visao global/sem Propriedade clara nao mostra as acoes.
+
+Substituicao:
+
+- reutiliza o fluxo da 16F.6 com picker, leitura, validacao e modal de
+  pre-visualizacao;
+- ao confirmar, copia o novo arquivo para o storage interno;
+- cria novo metadado ativo;
+- o `GeoJsonImportService` move automaticamente o ativo anterior da mesma
+  Propriedade para `substituido`;
+- somente depois do novo metadado ativo existir o workflow tenta apagar o
+  arquivo fisico antigo;
+- se a copia ou criacao do novo metadado falhar, o ativo anterior permanece
+  ativo e o arquivo antigo nao e apagado;
+- se o novo ativo for criado, mas a remocao do arquivo antigo falhar, a
+  substituicao permanece valida e a tela recebe warning controlado;
+- o historico minimo de metadados substituidos e preservado.
+
+Remocao:
+
+- exige GeoJSON ativo e permissao de gestao;
+- marca o metadado ativo como `removido`;
+- depois tenta apagar o arquivo fisico local com
+  `GeoJsonStorageService.deleteStoredGeoJson`;
+- `deleteStoredGeoJson` recusa caminhos fora do diretorio interno
+  `tche-geojson-imports`;
+- se o arquivo ja nao existir, o fluxo nao derruba a tela;
+- se a exclusao fisica falhar, o metadado permanece `removido` e a tela mostra
+  aviso controlado:
+  `O vinculo foi removido, mas nao foi possivel apagar o arquivo local.`;
+- apos remover, a tela recarrega metadados e camada efetiva;
+- se houver seed/mock, `MapasScreen` volta a exibir essa demarcacao;
+- se nao houver seed/mock, permanece o empty state de demarcacao.
+
+Protecao da Sela de Prata I:
+
+- nunca apaga `src/assets/geojson/selaDePrata1Talhoes.ts`;
+- nunca apaga `data/processados/p_sela1`;
+- nunca altera `src/api/mock.ts`;
+- nunca altera `LimiteArea.list`;
+- remove apenas arquivo local dentro de `tche-geojson-imports`;
+- apos remover o GeoJSON local de `p_sela1`, a visualizacao volta para os 15
+  talhoes demonstrativos do seed quando eles estiverem disponiveis.
+
+Persistencia preservada:
+
+- o indice continua salvando somente metadados pequenos;
+- nao salva `FeatureCollection`, `features`, `coordinates`, `poligono` ou
+  `poligonos`;
+- nao altera `@tche:mock-mvp:v1`;
+- nao chama `LimiteArea.list` nos workflows de gestao;
+- talhoes normalizados continuam em memoria apenas durante renderizacao.
+
+Erros controlados:
+
+- usuario sem permissao;
+- tentativa fora de contexto de Propriedade;
+- ausencia de metadado ativo;
+- metadado ativo sem URI;
+- arquivo fisico inexistente;
+- caminho fora do diretorio seguro;
+- falha ao marcar metadado como removido;
+- falha ao apagar arquivo ativo removido;
+- falha de copia/metadado novo durante substituicao;
+- falha ao apagar arquivo antigo apos substituicao.
+
+Limites preservados:
+
+- sem gestao completa de historico;
+- sem backend;
+- sem upload remoto;
+- sem sync;
+- sem RBAC real;
+- sem PNG/anexos reais;
+- sem alteracao em `FazendaMapaScreen`, `ShapeRenderer`, `MapaFazendaView`,
+  `TalhaoDetailModal`, `LimiteArea.list`, mocks ou assets;
+- sem APK final.
+
+Testes criados:
+
+- `tests/geojsonPropertyManageWorkflow.test.js`
+
+Cobertura principal:
+
+- Admin pode remover GeoJSON ativo;
+- Colaborador dentro do escopo pode remover;
+- Produtor nao pode remover;
+- Colaborador fora do escopo nao pode remover;
+- remover sem ativo retorna erro controlado;
+- metadado ativo sem URI e removido com warning controlado;
+- remover ativo marca metadado como `removido`;
+- remover ativo apaga arquivo fisico local;
+- arquivo inexistente nao derruba a remocao;
+- path fora do diretorio seguro e recusado;
+- apos remover, nao ha ativo para a Propriedade;
+- Propriedade A nao remove GeoJSON da Propriedade B;
+- Sela de Prata I remove apenas arquivo local e preserva seed/assets;
+- substituir cria novo ativo;
+- substituir move ativo anterior para `substituido`;
+- substituir nao apaga antigo antes de novo ativo existir;
+- falha de novo arquivo mantem ativo anterior;
+- falha ao apagar antigo apos substituicao retorna warning controlado;
+- nao salva `FeatureCollection`, `features`, `coordinates`, `poligono` ou
+  `poligonos`;
+- nao altera `@tche:mock-mvp:v1`;
+- workflow nao importa telas, `LimiteArea`, mocks ou assets.
+
+Validacoes executadas na 16F.8:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonPropertyManageWorkflow.test.js` passou;
+- `node tests/geojsonTalhoesLayerService.test.js` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ### 16F.9 - Smoke Android
 

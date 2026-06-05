@@ -1372,6 +1372,95 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16F.8 - Substituicao E Remocao Segura De GeoJSON Local
+
+Status em 2026-06-05: foi criado o fluxo minimo para Admin e Colaborador no
+escopo substituirem ou removerem com seguranca o GeoJSON local ativo de uma
+Propriedade.
+
+Arquivo criado:
+
+- `src/services/GeoJsonPropertyManageWorkflow.ts`.
+
+Teste criado:
+
+- `tests/geojsonPropertyManageWorkflow.test.js`.
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`;
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Comportamento atual:
+
+- quando nao ha GeoJSON ativo, `MapasScreen` mostra
+  `Anexar GeoJSON dos talhoes`;
+- quando ha GeoJSON ativo, o painel mostra
+  `Substituir GeoJSON dos talhoes` e `Remover GeoJSON local`;
+- Admin pode gerenciar em contexto de Propriedade;
+- Colaborador pode gerenciar apenas dentro do escopo efetivo;
+- Produtor nao ve acoes administrativas, mas continua visualizando a camada
+  local ativa quando possui acesso a Propriedade;
+- antes da substituicao, a tela avisa que o novo arquivo substituira a camada
+  local atual;
+- antes da remocao, a tela explica que a Propriedade e anexos tecnicos nao
+  serao apagados e que o seed/mock volta a aparecer quando existir.
+
+Ordem segura de substituicao:
+
+- o fluxo reutiliza picker, leitura, validacao e pre-visualizacao da 16F.6;
+- o novo arquivo e copiado para o storage interno;
+- o novo metadado e criado como `ativo`;
+- o metadado ativo anterior vira `substituido`;
+- somente depois disso o workflow tenta apagar o arquivo fisico antigo;
+- se a copia ou o metadado novo falhar, o ativo anterior permanece ativo;
+- se apagar o arquivo antigo falhar depois do novo ativo existir, a
+  substituicao permanece valida e a tela recebe warning controlado.
+
+Ordem segura de remocao:
+
+- o metadado ativo e marcado como `removido`;
+- depois o workflow tenta apagar o arquivo fisico via
+  `GeoJsonStorageService.deleteStoredGeoJson`;
+- caminhos fora de `tche-geojson-imports` sao recusados pelo storage;
+- arquivo fisico inexistente nao derruba o fluxo;
+- se apagar o arquivo falhar, o metadado permanece `removido` e a tela mostra
+  aviso controlado;
+- apos remover, a tela recarrega metadados e camada efetiva, voltando para
+  seed/mock quando houver.
+
+Protecoes preservadas:
+
+- nao apaga seed/assets da Sela de Prata I;
+- nao apaga `data/processados/p_sela1`;
+- nao altera `src/api/mock.ts`;
+- nao altera `LimiteArea.list`;
+- nao salva `FeatureCollection`, `features`, `coordinates`, `poligono` ou
+  `poligonos` no indice;
+- nao altera `@tche:mock-mvp:v1`;
+- sem backend, upload remoto, sync, RBAC real, PNG real, gestao completa de
+  historico ou APK nesta fase.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonPropertyManageWorkflow.test.js` passou;
+- `node tests/geojsonTalhoesLayerService.test.js` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
