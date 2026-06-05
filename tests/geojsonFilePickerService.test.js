@@ -200,6 +200,7 @@ const run = async () => {
     assert.deepEqual(picker.calls[0].type, [
       'application/geo+json',
       'application/json',
+      'application/octet-stream',
       'text/json',
       'text/plain',
     ]);
@@ -210,11 +211,13 @@ const run = async () => {
     assert.equal(isSupportedGeoJsonFileName('limites.json'), true);
     assert.equal(isSupportedGeoJsonMimeType('application/geo+json'), true);
     assert.equal(isSupportedGeoJsonMimeType('application/json'), true);
+    assert.equal(isSupportedGeoJsonMimeType('application/octet-stream'), true);
     assert.equal(isSupportedGeoJsonMimeType('text/json'), true);
     assert.equal(isSupportedGeoJsonMimeType('text/plain'), true);
     assert.equal(isSupportedGeoJsonMimeType(undefined), true);
 
     assert.equal(validatePickedGeoJsonFile(baseFile()).error, undefined);
+    assert.equal(validatePickedGeoJsonFile(baseFile({ mimeType: 'application/octet-stream' })).error, undefined);
     assert.equal(validatePickedGeoJsonFile(baseFile({ mimeType: undefined })).error, undefined);
     assert.equal(validatePickedGeoJsonFile(baseFile({ mimeType: 'text/plain' })).error, undefined);
   });
@@ -224,6 +227,12 @@ const run = async () => {
       const validation = validatePickedGeoJsonFile(baseFile({ name, mimeType: undefined }));
       assert.equal(validation.error.code, 'UNSUPPORTED_FILE_TYPE');
     });
+
+    const genericMimeInvalidName = validatePickedGeoJsonFile(baseFile({
+      name: 'limites.png',
+      mimeType: 'application/octet-stream',
+    }));
+    assert.equal(genericMimeInvalidName.error.code, 'UNSUPPORTED_FILE_TYPE');
   });
 
   await test('rejeita MIME incompativel mesmo com extensao valida', () => {

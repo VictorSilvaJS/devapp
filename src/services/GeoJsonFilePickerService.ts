@@ -67,6 +67,7 @@ const SUPPORTED_EXTENSIONS = ['.geojson', '.json'];
 const SUPPORTED_MIME_TYPES = [
   'application/geo+json',
   'application/json',
+  'application/octet-stream',
   'text/json',
   'text/plain',
 ];
@@ -74,6 +75,7 @@ const SUPPORTED_MIME_TYPES = [
 const PICKER_MIME_TYPES = [
   'application/geo+json',
   'application/json',
+  'application/octet-stream',
   'text/json',
   'text/plain',
 ];

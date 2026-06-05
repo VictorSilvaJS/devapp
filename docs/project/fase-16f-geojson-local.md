@@ -1940,7 +1940,9 @@ fisico ainda nao foi executado nesta sessao.
 
 Arquivo alterado por correcao pequena:
 
-- `src/screens/MapasScreen.tsx`
+- `src/screens/MapasScreen.tsx`;
+- `src/services/GeoJsonFilePickerService.ts`;
+- `tests/geojsonFilePickerService.test.js`.
 
 Arquivos de documentacao alterados:
 
@@ -1955,7 +1957,12 @@ Correcao pequena aplicada:
   controlado:
   `GeoJSON salvo, mas nao foi possivel recarregar a camada agora.`;
 - isso evita que uma falha de refresh posterior pareca falha da associacao e
-  reduz risco de modal presa depois de uma gravacao bem-sucedida.
+  reduz risco de modal presa depois de uma gravacao bem-sucedida;
+- apos tentativa de smoke com arquivo local, o picker passou a aceitar o MIME
+  generico Android `application/octet-stream` quando o nome do arquivo continua
+  tendo extensao `.geojson` ou `.json`;
+- arquivos com extensoes invalidas continuam bloqueados mesmo quando o MIME
+  informado pelo Android e generico.
 
 Resultado da revisao tecnica:
 
@@ -1994,6 +2001,8 @@ Fluxo de anexar revisado:
 - abre apenas em contexto de Propriedade gerenciavel;
 - cancelamento do picker retorna silenciosamente;
 - extensao/MIME invalido e validacao falsa retornam erro controlado;
+- MIME generico Android `application/octet-stream` e aceito para nomes
+  `.geojson` ou `.json`;
 - arquivo valido abre pre-visualizacao com nome, contagem, partes, geometria,
   tamanho, ano, safra e warnings;
 - confirmacao copia arquivo interno, cria metadado ativo e recarrega camada;
@@ -2104,11 +2113,16 @@ Validacoes executadas na 16F.9:
 - `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
 - `npm run typecheck` passou;
 - `npm run test:domain-compat` passou;
+- validacao direta de `data/processados/p_sela1/2025/manifesto.json` confirmou
+  que o manifesto nao e importavel como GeoJSON;
+- validacao direta de `data/processados/p_sela1/2025/limites_talhoes.geojson`
+  passou com 15 talhoes e sem warnings;
 - `node tests/geojsonPropertyManageWorkflow.test.js` passou;
 - `node tests/geojsonTalhoesLayerService.test.js` passou;
 - `node tests/geojsonPropertyImportWorkflow.test.js` passou;
 - `node tests/geojsonStorageService.test.js` passou;
-- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou, incluindo MIME
+  generico Android `application/octet-stream`;
 - `node tests/geojsonImportValidator.test.js` passou;
 - `node tests/geojsonImportService.test.js` passou;
 - `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e

@@ -1469,7 +1469,9 @@ fisico ainda nao foi executado nesta sessao.
 
 Arquivo alterado por correcao pequena:
 
-- `src/screens/MapasScreen.tsx`.
+- `src/screens/MapasScreen.tsx`;
+- `src/services/GeoJsonFilePickerService.ts`;
+- `tests/geojsonFilePickerService.test.js`.
 
 Arquivos de documentacao alterados:
 
@@ -1482,7 +1484,11 @@ Correcao aplicada:
   pre-visualizacao fecha antes da recarga da camada;
 - se a recarga posterior da camada falhar, a tela mostra warning controlado em
   vez de tratar a operacao inteira como falha;
-- isso reduz risco de modal presa apos gravacao bem-sucedida.
+- isso reduz risco de modal presa apos gravacao bem-sucedida;
+- o picker aceita MIME generico Android `application/octet-stream` quando o
+  nome do arquivo continua tendo extensao `.geojson` ou `.json`;
+- arquivos com extensoes invalidas continuam bloqueados mesmo quando o MIME
+  informado pelo Android e generico.
 
 Resultado da revisao:
 
@@ -1514,11 +1520,16 @@ Validacoes executadas:
 - `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
 - `npm run typecheck` passou;
 - `npm run test:domain-compat` passou;
+- validacao direta de `data/processados/p_sela1/2025/manifesto.json` confirmou
+  que o manifesto nao e importavel como GeoJSON;
+- validacao direta de `data/processados/p_sela1/2025/limites_talhoes.geojson`
+  passou com 15 talhoes e sem warnings;
 - `node tests/geojsonPropertyManageWorkflow.test.js` passou;
 - `node tests/geojsonTalhoesLayerService.test.js` passou;
 - `node tests/geojsonPropertyImportWorkflow.test.js` passou;
 - `node tests/geojsonStorageService.test.js` passou;
-- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou, incluindo MIME
+  generico Android `application/octet-stream`;
 - `node tests/geojsonImportValidator.test.js` passou;
 - `node tests/geojsonImportService.test.js` passou;
 - `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
