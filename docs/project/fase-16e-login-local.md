@@ -27,6 +27,12 @@ demonstrativo quando nao houver credencial local para o e-mail. O acesso rapido
 continua usando o caminho demonstrativo atual. Status `ativo`, `pendente` e
 `inativo` ainda nao bloqueiam login.
 
+Status em 2026-06-05: concluida a Fase 16E.5 com bloqueio de novos logins por
+status de usuario. Usuario `ativo` pode entrar; usuario `pendente` e `inativo`
+nao entram. A regra vale para usuarios locais persistidos e para fallback
+demonstrativo quando houver status/ativo no usuario retornado. Os tres acessos
+demonstrativos principais continuam funcionando.
+
 ## Objetivo Da 16E.1
 
 Mapear o funcionamento atual do login, cadastro administrativo de usuarios,
@@ -386,6 +392,102 @@ Limites preservados:
 - nao ha redefinicao pelo usuario, recuperacao de senha, backend, JWT ou RBAC
   real;
 - GeoJSON, PNG, filtros e dashboards nao foram alterados.
+
+## Resultado Da 16E.5
+
+A Fase 16E.5 aplicou a regra de status no momento de novos logins, antes de
+persistir `@tche:user`.
+
+Arquivos principais:
+
+- `src/auth/authStatus.ts`
+- `src/auth/authLocal.ts`
+- `src/auth/AuthContext.tsx`
+- `src/screens/LoginScreen.tsx`
+- `tests/authLocal.test.js`
+
+Helper criado:
+
+- `getUsuarioStatusEfetivo(usuario)`
+- `canUsuarioLogin(usuario)`
+- `assertUsuarioPodeEntrar(usuario)`
+
+Regra de status efetivo:
+
+- `status === 'ativo'`: permitido;
+- `status === 'pendente'`: bloqueado;
+- `status === 'inativo'`: bloqueado;
+- se `status` estiver ausente e `ativo === false`: trata como `inativo`;
+- se `status` estiver ausente e `ativo !== false`: trata como `ativo`;
+- status desconhecido: bloqueado com mensagem controlada.
+
+Mensagens:
+
+- pendente: `Seu acesso ainda esta pendente de liberacao pelo administrador.`
+- inativo: `Seu acesso esta inativo. Solicite a reativacao ao administrador.`
+- desconhecido: `Nao foi possivel validar a situacao deste acesso.`
+- credencial invalida continua usando erro generico de e-mail/senha.
+
+Fluxo local com credencial:
+
+1. localiza credencial local;
+2. verifica senha;
+3. carrega usuario via `User.get(usuario_id)`;
+4. sanitiza/normaliza o usuario;
+5. valida status efetivo;
+6. se permitido, retorna para o `AuthContext` persistir a sessao;
+7. se bloqueado, nao persiste sessao e nao remove credencial.
+
+Fallback demonstrativo:
+
+- continua funcionando para
+  `admin.demonstracao@example.com`/`admin123`,
+  `colaborador.campo@example.com`/`colab123` e
+  `produtor.demonstracao@example.com`/`prod123`;
+- usuarios demonstrativos sem `status` seguem tratados como ativos por
+  compatibilidade;
+- se um usuario demonstrativo retornado pelo fallback tiver status `pendente`
+  ou `inativo`, a mesma regra bloqueia o login.
+
+Acesso rapido:
+
+- continua usando `authLoginByProfile`;
+- o resultado tambem passa por `assertUsuarioPodeEntrar` antes de `setUser` e
+  persistencia;
+- os tres acessos rapidos principais continuam funcionando porque os usuarios
+  demonstrativos sem status sao tratados como ativos.
+
+Sessao:
+
+- usuario bloqueado por status nao grava `@tche:user`;
+- usuario ativo continua gravando somente usuario sanitizado;
+- restauracao de sessao antiga nao foi revalidada profundamente nesta
+  microfase, para evitar refatoracao fora do corte. Essa revisao fica como
+  evolucao futura.
+
+Testes adicionados/alterados em `tests/authLocal.test.js` cobrem:
+
+- usuario ativo com senha correta entrando;
+- usuario pendente bloqueado;
+- usuario inativo bloqueado;
+- status ausente com `ativo === false` bloqueado;
+- status ausente com `ativo !== false` permitido;
+- status desconhecido com mensagem controlada;
+- senha errada mantendo erro generico;
+- bloqueio por status sem criar sessao;
+- credencial intacta apos bloqueio;
+- os tres logins demonstrativos principais funcionando;
+- fallback sem status tratado como ativo;
+- fallback inativo em teste bloqueado;
+- os tres acessos rapidos principais passando pela regra;
+- sessao sem senha, hash, salt, credencial ou token.
+
+Limites preservados:
+
+- sem revalidacao profunda de sessao restaurada;
+- sem mudanca em telas administrativas;
+- sem recuperacao/troca de senha pelo usuario;
+- sem backend, JWT, RBAC real, GeoJSON, PNG, filtros, dashboards ou APK final.
 
 ## Arquivos Analisados
 

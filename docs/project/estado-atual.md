@@ -779,6 +779,44 @@ Limites preservados na 16E.4:
 - sem backend, JWT, RBAC real, GeoJSON, PNG, filtros ou dashboards;
 - sem APK final nesta microfase.
 
+Status em 2026-06-05 (Fase 16E.5): novos logins manuais e acessos rapidos
+passaram a respeitar o status efetivo do usuario antes de gravar sessao.
+
+Esta microfase adicionou:
+
+- `src/auth/authStatus.ts`, com `getUsuarioStatusEfetivo`,
+  `canUsuarioLogin` e `assertUsuarioPodeEntrar`;
+- validacao de status no fluxo local de `authLocal.ts`;
+- validacao de status no resultado do `loginRapido` em `AuthContext.tsx`;
+- mensagens especificas no `LoginScreen` para usuario pendente e inativo;
+- ampliacao dos testes em `tests/authLocal.test.js`.
+
+Regra atual de status no login:
+
+- `ativo`: pode entrar;
+- `pendente`: bloqueado com `Seu acesso ainda esta pendente de liberacao pelo
+  administrador.`;
+- `inativo`: bloqueado com `Seu acesso esta inativo. Solicite a reativacao ao
+  administrador.`;
+- status ausente com `ativo === false`: tratado como `inativo`;
+- status ausente com `ativo !== false`: tratado como `ativo`;
+- status desconhecido: bloqueado com mensagem controlada.
+
+Comportamento atual da 16E.5:
+
+- senha errada continua retornando erro generico de credenciais invalidas;
+- bloqueio por status nao cria sessao parcial;
+- credencial local bloqueada por status permanece intacta;
+- `authMock.ts` continua sem alteracao;
+- fallback demonstrativo sem status e tratado como ativo por compatibilidade;
+- os tres logins demonstrativos e os tres acessos rapidos principais continuam
+  funcionando;
+- `@tche:user` continua sem senha, hash, salt, credencial ou token.
+
+Limite preservado: sessao antiga ja restaurada nao e revalidada profundamente
+nesta microfase. O corte atual bloqueia novos logins; revalidacao de sessao
+persistida quando o status mudar fica para evolucao futura.
+
 Verificacao Expo apos adicionar `expo-crypto`: `npx expo install --check`
 indicou dependencias atualizadas. `npx expo-doctor` passou em 14 de 16
 verificacoes e apontou dois riscos preexistentes/de publicacao futura:

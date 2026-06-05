@@ -7,6 +7,12 @@ const {
   authenticateWithEmailAndPassword,
 } = require('../.tmp-domain-compat/src/auth/authLocal');
 const {
+  AUTH_INACTIVE_ACCESS_MESSAGE,
+  AUTH_PENDING_ACCESS_MESSAGE,
+  AUTH_UNKNOWN_STATUS_MESSAGE,
+  assertUsuarioPodeEntrar,
+} = require('../.tmp-domain-compat/src/auth/authStatus');
+const {
   AUTH_STORAGE_KEY,
   clearAuthSessionUser,
   persistAuthSessionUser,
@@ -74,7 +80,7 @@ const setupMock = async () => {
   return mockStorage;
 };
 
-const createAdminUser = async (email = 'login.admin.local@example.com') =>
+const createAdminUser = async (email = 'login.admin.local@example.com', overrides = {}) =>
   User.create({
     nome: 'Admin Login Local',
     email,
@@ -84,6 +90,7 @@ const createAdminUser = async (email = 'login.admin.local@example.com') =>
     nivel_administrativo: 'suporte',
     regioes_acesso: ['Brasil'],
     acesso_global: true,
+    ...overrides,
   });
 
 const createColaboradorUser = async (email = 'login.colab.local@example.com') =>
@@ -118,6 +125,12 @@ const createProdutorUser = async (email = 'login.produtor.local@example.com') =>
 const loginLocal = (email, senha, service) =>
   authenticateWithEmailAndPassword(email, senha, { credentialService: service });
 
+const loginAndPersist = async (email, senha, service, sessionStorage) => {
+  const authenticated = await loginLocal(email, senha, service);
+  await persistAuthSessionUser(sessionStorage.adapter, authenticated);
+  return authenticated;
+};
+
 const assertNoSensitiveFields = (usuario) => {
   assert.equal(Object.prototype.hasOwnProperty.call(usuario, 'senha'), false);
   assert.equal(Object.prototype.hasOwnProperty.call(usuario, 'senha_hash'), false);
@@ -150,6 +163,109 @@ const run = async () => {
     await assert.rejects(
       () => loginLocal(usuario.email, 'SenhaErrada', service),
       new RegExp(AUTH_INVALID_CREDENTIALS_MESSAGE)
+    );
+  });
+
+  await test('usuario local pendente com senha correta nao entra', async () => {
+    await setupMock();
+    const { service } = createCredentialService();
+    const usuario = await createAdminUser('login.pendente.local@example.com', { status: 'pendente' });
+    await service.createCredential(usuario.id, usuario.email, 'SenhaLocal123');
+
+    await assert.rejects(
+      () => loginLocal(usuario.email, 'SenhaLocal123', service),
+      new RegExp(AUTH_PENDING_ACCESS_MESSAGE)
+    );
+    assert.equal(await service.hasCredential(usuario.id), true);
+  });
+
+  await test('usuario local inativo com senha correta nao entra', async () => {
+    await setupMock();
+    const { service } = createCredentialService();
+    const usuario = await createAdminUser('login.inativo.local@example.com', { status: 'inativo' });
+    await service.createCredential(usuario.id, usuario.email, 'SenhaLocal123');
+
+    await assert.rejects(
+      () => loginLocal(usuario.email, 'SenhaLocal123', service),
+      new RegExp(AUTH_INACTIVE_ACCESS_MESSAGE)
+    );
+    assert.equal(await service.hasCredential(usuario.id), true);
+  });
+
+  await test('usuario com status ausente e ativo false nao entra', async () => {
+    const credentialService = {
+      findCredentialByEmail: async () => ({ usuario_id: 'u_sem_status_inativo' }),
+      verifyCredential: async () => ({ ok: true, usuario_id: 'u_sem_status_inativo' }),
+    };
+    const userApi = {
+      get: async () => ({
+        id: 'u_sem_status_inativo',
+        nome: 'Sem Status Inativo',
+        email: 'sem.status.inativo@example.com',
+        perfil: 'admin',
+        ativo: false,
+      }),
+    };
+
+    await assert.rejects(
+      () => authenticateWithEmailAndPassword('sem.status.inativo@example.com', 'SenhaLocal123', {
+        credentialService,
+        userApi,
+      }),
+      new RegExp(AUTH_INACTIVE_ACCESS_MESSAGE)
+    );
+  });
+
+  await test('usuario com status ausente e ativo diferente de false entra', async () => {
+    const credentialService = {
+      findCredentialByEmail: async () => ({ usuario_id: 'u_sem_status_ativo' }),
+      verifyCredential: async () => ({ ok: true, usuario_id: 'u_sem_status_ativo' }),
+    };
+    const userApi = {
+      get: async () => ({
+        id: 'u_sem_status_ativo',
+        nome: 'Sem Status Ativo',
+        email: 'sem.status.ativo@example.com',
+        perfil: 'admin',
+      }),
+    };
+
+    const authenticated = await authenticateWithEmailAndPassword('sem.status.ativo@example.com', 'SenhaLocal123', {
+      credentialService,
+      userApi,
+    });
+
+    assert.equal(authenticated.id, 'u_sem_status_ativo');
+  });
+
+  await test('status desconhecido retorna mensagem controlada', async () => {
+    const credentialService = {
+      findCredentialByEmail: async () => ({ usuario_id: 'u_status_desconhecido' }),
+      verifyCredential: async () => ({ ok: true, usuario_id: 'u_status_desconhecido' }),
+    };
+    const userApi = {
+      get: async () => ({
+        id: 'u_status_desconhecido',
+        nome: 'Status Desconhecido',
+        email: 'status.desconhecido@example.com',
+        perfil: 'admin',
+        status: 'bloqueado',
+      }),
+    };
+
+    await assert.rejects(
+      () => authenticateWithEmailAndPassword('status.desconhecido@example.com', 'SenhaLocal123', {
+        credentialService,
+        userApi,
+      }),
+      new RegExp(AUTH_UNKNOWN_STATUS_MESSAGE)
+    );
+  });
+
+  await test('usuario ausente retorna mensagem controlada de status', async () => {
+    assert.throws(
+      () => assertUsuarioPodeEntrar(null),
+      new RegExp(AUTH_UNKNOWN_STATUS_MESSAGE)
     );
   });
 
@@ -247,12 +363,77 @@ const run = async () => {
     assertNoSensitiveFields(authenticated);
   });
 
+  await test('tres logins demonstrativos principais continuam funcionando', async () => {
+    await setupMock();
+    const { service } = createCredentialService();
+
+    const admin = await loginLocal('admin.demonstracao@example.com', 'admin123', service);
+    const colaborador = await loginLocal('colaborador.campo@example.com', 'colab123', service);
+    const produtor = await loginLocal('produtor.demonstracao@example.com', 'prod123', service);
+
+    assert.equal(admin.perfil, 'admin');
+    assert.equal(colaborador.perfil, 'colaborador');
+    assert.equal(produtor.perfil, 'produtor');
+  });
+
+  await test('fallback sem status e tratado como ativo', async () => {
+    const credentialService = {
+      findCredentialByEmail: async () => null,
+      verifyCredential: async () => ({ ok: false }),
+    };
+    const fallbackLogin = async () => ({
+      id: 'fallback_sem_status',
+      nome: 'Fallback Sem Status',
+      email: 'fallback.sem.status@example.com',
+      perfil: 'admin',
+    });
+
+    const authenticated = await authenticateWithEmailAndPassword('fallback.sem.status@example.com', 'admin123', {
+      credentialService,
+      fallbackLogin,
+    });
+
+    assert.equal(authenticated.id, 'fallback_sem_status');
+  });
+
+  await test('fallback demonstrativo inativo em teste e bloqueado', async () => {
+    const credentialService = {
+      findCredentialByEmail: async () => null,
+      verifyCredential: async () => ({ ok: false }),
+    };
+    const fallbackLogin = async () => ({
+      id: 'fallback_inativo',
+      nome: 'Fallback Inativo',
+      email: 'fallback.inativo@example.com',
+      perfil: 'admin',
+      status: 'inativo',
+    });
+
+    await assert.rejects(
+      () => authenticateWithEmailAndPassword('fallback.inativo@example.com', 'admin123', {
+        credentialService,
+        fallbackLogin,
+      }),
+      new RegExp(AUTH_INACTIVE_ACCESS_MESSAGE)
+    );
+  });
+
   await test('acesso rapido demonstrativo continua preservado', async () => {
     const authenticated = await authLoginByProfile('produtor');
 
     assert.equal(authenticated.id, 'u_sela1');
     assert.equal(authenticated.perfil, 'produtor');
     assertNoSensitiveFields(authenticated);
+  });
+
+  await test('tres acessos rapidos principais passam pela regra de status ativo', async () => {
+    const admin = await authLoginByProfile('admin');
+    const colaborador = await authLoginByProfile('colaborador');
+    const produtor = await authLoginByProfile('produtor');
+
+    assert.doesNotThrow(() => assertUsuarioPodeEntrar(admin));
+    assert.doesNotThrow(() => assertUsuarioPodeEntrar(colaborador));
+    assert.doesNotThrow(() => assertUsuarioPodeEntrar(produtor));
   });
 
   await test('credencial local tem prioridade sobre demonstrativa', async () => {
@@ -301,6 +482,22 @@ const run = async () => {
     const restored = await restoreAuthSessionUser(sessionStorage.adapter);
     assert.equal(restored.id, 'u_session');
     assertNoSensitiveFields(restored);
+  });
+
+  await test('bloqueio por status nao cria sessao', async () => {
+    await setupMock();
+    const { service } = createCredentialService();
+    const sessionStorage = createMemoryStorage();
+    const usuario = await createAdminUser('login.bloqueado.sem.sessao@example.com', { status: 'pendente' });
+    await service.createCredential(usuario.id, usuario.email, 'SenhaLocal123');
+
+    await assert.rejects(
+      () => loginAndPersist(usuario.email, 'SenhaLocal123', service, sessionStorage),
+      new RegExp(AUTH_PENDING_ACCESS_MESSAGE)
+    );
+
+    assert.equal(sessionStorage.values.has(AUTH_STORAGE_KEY), false);
+    assert.equal(await service.hasCredential(usuario.id), true);
   });
 
   await test('logout continua removendo sessao local', async () => {

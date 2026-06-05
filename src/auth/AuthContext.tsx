@@ -7,6 +7,7 @@ import {
   restoreAuthSessionUser,
   sanitizeAuthUserForSession,
 } from './authSession';
+import { assertUsuarioPodeEntrar } from './authStatus';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { normalizeUsuario, toUsuarioCompativelBorda } from '../domain';
 
@@ -86,6 +87,7 @@ export function AuthProvider({ children }) {
     try {
       const rawUser = await authLoginByProfile(profileKey);
       const nextUser = normalizeAuthUser(rawUser);
+      assertUsuarioPodeEntrar(nextUser);
       console.log('[AuthContext] loginRapido -> setUser', nextUser);
       setUser(nextUser);
       await persistCanonicalUser(nextUser);

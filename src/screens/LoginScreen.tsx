@@ -3,9 +3,21 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Ani
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthActions } from '../auth/AuthContext';
+import { AUTH_LOCAL_USER_NOT_FOUND_MESSAGE } from '../auth/authLocal';
+import {
+  AUTH_INACTIVE_ACCESS_MESSAGE,
+  AUTH_PENDING_ACCESS_MESSAGE,
+  AUTH_UNKNOWN_STATUS_MESSAGE,
+} from '../auth/authStatus';
 import { colors, typography, spacing, shadows } from '../theme';
 
 const LOGO = require('../assets/images/logo.png');
+const CONTROLLED_LOGIN_MESSAGES = [
+  AUTH_LOCAL_USER_NOT_FOUND_MESSAGE,
+  AUTH_PENDING_ACCESS_MESSAGE,
+  AUTH_INACTIVE_ACCESS_MESSAGE,
+  AUTH_UNKNOWN_STATUS_MESSAGE,
+];
 
 export default function LoginScreen({ navigation }) {
   const { login, loginRapido, loading } = useAuthActions();
@@ -48,9 +60,9 @@ export default function LoginScreen({ navigation }) {
       // Direcionamento automático - sem escolha de perfil
       // O próprio navigation cuida de redirecionar baseado no user.perfil
     } catch (err) {
-      setErro(err?.message === 'Não foi possível localizar o cadastro deste usuário.'
-        ? 'Não foi possível localizar o cadastro deste usuário.'
-        : 'E-mail ou senha inválidos');
+      const message = String(err?.message || '');
+
+      setErro(CONTROLLED_LOGIN_MESSAGES.includes(message) ? message : 'E-mail ou senha inválidos');
     }
   };
 
@@ -59,7 +71,12 @@ export default function LoginScreen({ navigation }) {
     try {
       await loginRapido(key);
     } catch (err) {
-      setErro('Não foi possível iniciar o acesso demonstrativo');
+      const message = String(err?.message || '');
+      setErro(
+        CONTROLLED_LOGIN_MESSAGES.includes(message)
+          ? message
+          : 'Não foi possível iniciar o acesso demonstrativo'
+      );
     }
   };
 

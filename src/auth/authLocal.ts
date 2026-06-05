@@ -2,6 +2,12 @@ import { User } from '../api/mock';
 import { authLogin } from './authMock';
 import { LocalCredentialService, normalizeEmail } from './localCredentials';
 import { sanitizeAuthUserForSession } from './authSession';
+import {
+  AUTH_INACTIVE_ACCESS_MESSAGE,
+  AUTH_PENDING_ACCESS_MESSAGE,
+  AUTH_UNKNOWN_STATUS_MESSAGE,
+  assertUsuarioPodeEntrar,
+} from './authStatus';
 
 export const AUTH_INVALID_CREDENTIALS_MESSAGE = 'Email ou senha incorretos';
 export const AUTH_LOCAL_USER_NOT_FOUND_MESSAGE = 'Não foi possível localizar o cadastro deste usuário.';
@@ -22,6 +28,13 @@ export interface ManualAuthDeps {
 }
 
 const invalidCredentials = () => new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
+
+const isAuthStatusError = (error: any) =>
+  [
+    AUTH_PENDING_ACCESS_MESSAGE,
+    AUTH_INACTIVE_ACCESS_MESSAGE,
+    AUTH_UNKNOWN_STATUS_MESSAGE,
+  ].includes(String(error?.message || ''));
 
 export const authenticateWithEmailAndPassword = async (
   email: string,
@@ -47,8 +60,14 @@ export const authenticateWithEmailAndPassword = async (
 
     try {
       const persistedUser = await userApi.get(verification.usuario_id);
-      return sanitizeAuthUserForSession(persistedUser);
+      const sanitizedUser = sanitizeAuthUserForSession(persistedUser);
+      assertUsuarioPodeEntrar(sanitizedUser);
+      return sanitizedUser;
     } catch (error) {
+      if (isAuthStatusError(error)) {
+        throw error;
+      }
+
       const controlledError = new Error(AUTH_LOCAL_USER_NOT_FOUND_MESSAGE);
       (controlledError as any).cause = error;
       throw controlledError;
@@ -56,5 +75,7 @@ export const authenticateWithEmailAndPassword = async (
   }
 
   const fallbackUser = await fallbackLogin(emailNormalizado, senha);
-  return sanitizeAuthUserForSession(fallbackUser);
+  const sanitizedFallbackUser = sanitizeAuthUserForSession(fallbackUser);
+  assertUsuarioPodeEntrar(sanitizedFallbackUser);
+  return sanitizedFallbackUser;
 };
