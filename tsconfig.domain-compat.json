@@ -44,6 +44,7 @@
     "src/services/GeoJsonImportService.ts",
     "src/services/GeoJsonFilePickerService.ts",
     "src/services/GeoJsonStorageService.ts",
-    "src/services/GeoJsonPropertyImportWorkflow.ts"
+    "src/services/GeoJsonPropertyImportWorkflow.ts",
+    "src/services/GeoJsonTalhoesLayerService.ts"
   ]
 }

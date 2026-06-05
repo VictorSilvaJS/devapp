@@ -52,6 +52,12 @@ import {
 import type {
   GeoJsonPropertyImportPreview,
 } from '../services/GeoJsonPropertyImportWorkflow';
+import {
+  GeoJsonTalhoesLayerResult,
+  isGeoJsonTalhoesLayerActive,
+  isGeoJsonTalhoesLayerFallback,
+  loadGeoJsonTalhoesLayer,
+} from '../services/GeoJsonTalhoesLayerService';
 import type { GeoJsonImportMetadata } from '../types/geojsonImport';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -199,6 +205,7 @@ export default function MapasScreen({ route, navigation }) {
   const [geoJsonImporting, setGeoJsonImporting] = useState(false);
   const [geoJsonConfirming, setGeoJsonConfirming] = useState(false);
   const [geoJsonPreview, setGeoJsonPreview] = useState<GeoJsonPropertyImportPreview | null>(null);
+  const [geoJsonTalhoesLayer, setGeoJsonTalhoesLayer] = useState<GeoJsonTalhoesLayerResult | null>(null);
 
   // ──────────────────────────────────────────────
   // CARREGAMENTO DE DADOS
@@ -238,6 +245,7 @@ export default function MapasScreen({ route, navigation }) {
           setTalhaoFiltroLimite(FILTRO_TODOS);
           setSelectedTalhao(null);
           setGeoJsonImports([]);
+          setGeoJsonTalhoesLayer(null);
           return;
         }
 
@@ -273,16 +281,25 @@ export default function MapasScreen({ route, navigation }) {
         somenteDisponiveisDownload: user?.perfil === 'produtor',
       });
       const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
+      const [importsGeoJson, talhoesLayer] = fazendaId && idsPermitidos.length === 1
+        ? await Promise.all([
+            listGeoJsonImportsForPropriedade(idsPermitidos[0]),
+            loadGeoJsonTalhoesLayer({
+              propriedade_id: idsPermitidos[0],
+              fazenda_id: idsPermitidos[0],
+            }),
+          ])
+        : [[], null];
 
       setMapas(mapasFiltrados);
       setLimites(limitesFiltrados);
-      setGeoJsonImports(
-        fazendaId && idsPermitidos.length === 1
-          ? await listGeoJsonImportsForPropriedade(idsPermitidos[0])
-          : []
-      );
+      setGeoJsonImports(importsGeoJson);
+      setGeoJsonTalhoesLayer(talhoesLayer);
 
-      const anos = [...new Set(limitesFiltrados.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));
+      const baseTalhoesParaAno = isGeoJsonTalhoesLayerActive(talhoesLayer)
+        ? talhoesLayer.talhoes
+        : limitesFiltrados;
+      const anos = [...new Set(baseTalhoesParaAno.map(l => l.ano))].sort((a: any, b: any) => Number(b) - Number(a));
       setAnosDisponiveis(anos);
       setAnoFiltroLimite((anoAtual) => {
         if (anos.length === 0) return null;
@@ -290,6 +307,7 @@ export default function MapasScreen({ route, navigation }) {
       });
     } catch (error) {
       setGeoJsonImports([]);
+      setGeoJsonTalhoesLayer(null);
       toast.showError('Não foi possível carregar os dados');
     } finally {
       setLoading(false);
@@ -338,6 +356,14 @@ export default function MapasScreen({ route, navigation }) {
     if (!fazendaFiltroId) return limites;
     return limites.filter((limite) => getLimiteAreaFazendaId(limite) === fazendaFiltroId);
   }, [limites, fazendaFiltroId]);
+  const geoJsonTalhoesLocalAtivo = isGeoJsonTalhoesLayerActive(geoJsonTalhoesLayer);
+  const geoJsonTalhoesLocalErro = isGeoJsonTalhoesLayerFallback(geoJsonTalhoesLayer);
+  const talhoesDemarcacaoNoContexto = useMemo(
+    () => geoJsonTalhoesLocalAtivo && geoJsonTalhoesLayer
+      ? geoJsonTalhoesLayer.talhoes
+      : limitesNoContexto,
+    [geoJsonTalhoesLocalAtivo, geoJsonTalhoesLayer, limitesNoContexto]
+  );
 
   const safrasMapas = useMemo(() => buildSafraOptions(mapasNoContexto), [mapasNoContexto]);
 
@@ -347,8 +373,8 @@ export default function MapasScreen({ route, navigation }) {
   );
 
   const talhoesLimite = useMemo(
-    () => buildOptionsOrdenadas(limitesNoContexto.map((limite: any) => limite?.talhao || limite?.nome || '')),
-    [limitesNoContexto]
+    () => buildOptionsOrdenadas(talhoesDemarcacaoNoContexto.map((limite: any) => limite?.talhao || limite?.nome || '')),
+    [talhoesDemarcacaoNoContexto]
   );
   const talhoesPanorama = useMemo(
     () => buildOptionsOrdenadas([...talhoesLimite, ...talhoesMapas]),
@@ -436,7 +462,7 @@ export default function MapasScreen({ route, navigation }) {
   const limitesFiltrados = useMemo(() => {
     const termoBusca = normalizarBusca(busca);
 
-    return limitesNoContexto.filter(l => {
+    return talhoesDemarcacaoNoContexto.filter(l => {
       const talhaoLimite = l.talhao || l.nome || '';
       const matchAno = !anoFiltroLimite || l.ano === anoFiltroLimite;
       const matchTalhao = talhaoFiltroLimite === FILTRO_TODOS || talhaoLimite === talhaoFiltroLimite;
@@ -454,7 +480,7 @@ export default function MapasScreen({ route, navigation }) {
       return matchAno && matchTalhao && matchBusca;
     });
   }, [
-    limitesNoContexto,
+    talhoesDemarcacaoNoContexto,
     anoFiltroLimite,
     busca,
     talhaoFiltroLimite,
@@ -595,10 +621,25 @@ export default function MapasScreen({ route, navigation }) {
       const importsAtualizados = await listGeoJsonImportsForPropriedade(
         geoJsonPreview.resolvedContext.propriedade_id
       );
+      const talhoesLayerAtualizada = await loadGeoJsonTalhoesLayer({
+        propriedade_id: geoJsonPreview.resolvedContext.propriedade_id,
+        fazenda_id: geoJsonPreview.resolvedContext.fazenda_id,
+        produtor_id: geoJsonPreview.resolvedContext.produtor_id,
+      });
       setGeoJsonImports(importsAtualizados);
+      setGeoJsonTalhoesLayer(talhoesLayerAtualizada);
+      if (isGeoJsonTalhoesLayerActive(talhoesLayerAtualizada)) {
+        const anos = [...new Set(talhoesLayerAtualizada.talhoes.map((l: any) => l.ano))]
+          .sort((a: any, b: any) => Number(b) - Number(a));
+        setAnosDisponiveis(anos);
+        setAnoFiltroLimite((anoAtual) => {
+          if (anos.length === 0) return null;
+          return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
+        });
+      }
       setGeoJsonPreview(null);
       toast.showSuccess('GeoJSON anexado à Propriedade.');
-      toast.showInfo('A visualização dos talhões importados será habilitada na próxima etapa.');
+      toast.showInfo('Talhões carregados do GeoJSON local.');
     } catch (error) {
       toast.showError('Não foi possível concluir a associação do GeoJSON.');
     } finally {
@@ -969,7 +1010,9 @@ export default function MapasScreen({ route, navigation }) {
                 ].join(' • ')}
               </Text>
               <Text style={styles.geoJsonImportNextStep}>
-                A visualização dos talhões importados será habilitada na próxima etapa.
+                {geoJsonTalhoesLocalAtivo
+                  ? 'Talhões carregados do GeoJSON local.'
+                  : 'O anexo local está registrado para esta Propriedade.'}
               </Text>
             </View>
           </View>
@@ -977,6 +1020,15 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.geoJsonImportEmpty}>
             <Text style={styles.geoJsonImportEmptyText}>
               Nenhum GeoJSON local anexado a esta Propriedade.
+            </Text>
+          </View>
+        )}
+
+        {geoJsonTalhoesLocalErro && (
+          <View style={styles.geoJsonLayerWarningInline}>
+            <Ionicons name="alert-circle-outline" size={16} color={colors.warning} />
+            <Text style={styles.geoJsonLayerWarningInlineText}>
+              Não foi possível carregar o GeoJSON local. Exibindo demarcação disponível.
             </Text>
           </View>
         )}
@@ -1108,6 +1160,31 @@ export default function MapasScreen({ route, navigation }) {
       )}
 
       {renderGeoJsonImportPanel()}
+
+      {(geoJsonTalhoesLocalAtivo || geoJsonTalhoesLocalErro) && (
+        <View style={[
+          styles.geoJsonLayerIndicator,
+          geoJsonTalhoesLocalErro && styles.geoJsonLayerIndicatorWarning,
+        ]}>
+          <Ionicons
+            name={geoJsonTalhoesLocalAtivo ? 'layers-outline' : 'alert-circle-outline'}
+            size={17}
+            color={geoJsonTalhoesLocalAtivo ? colors.primary : colors.warning}
+          />
+          <View style={styles.geoJsonLayerIndicatorTextos}>
+            <Text style={styles.geoJsonLayerIndicatorTitle}>
+              {geoJsonTalhoesLocalAtivo
+                ? 'Talhões carregados do GeoJSON local'
+                : 'Não foi possível carregar o GeoJSON local'}
+            </Text>
+            <Text style={styles.geoJsonLayerIndicatorSubtitle} numberOfLines={1}>
+              {geoJsonTalhoesLocalAtivo
+                ? geoJsonTalhoesLayer?.metadata?.arquivo_nome_original || 'GeoJSON local anexado'
+                : 'Exibindo demarcação disponível.'}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Estatísticas do panorama */}
       <View style={styles.statsContainer}>
@@ -1925,6 +2002,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     lineHeight: 17,
   },
+  geoJsonLayerWarningInline: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.amberLight,
+    marginBottom: spacing.md,
+  },
+  geoJsonLayerWarningInlineText: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: typography.fontCaption,
+    color: colors.text,
+    lineHeight: 17,
+  },
   geoJsonImportEmpty: {
     padding: spacing.md,
     borderRadius: spacing.radiusSm,
@@ -1957,6 +2050,37 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightBold,
     color: colors.white,
     textAlign: 'center',
+  },
+  geoJsonLayerIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.screen,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.accent,
+  },
+  geoJsonLayerIndicatorWarning: {
+    backgroundColor: colors.amberLight,
+    borderColor: colors.warningLight,
+  },
+  geoJsonLayerIndicatorTextos: {
+    flex: 1,
+    minWidth: 0,
+  },
+  geoJsonLayerIndicatorTitle: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+  },
+  geoJsonLayerIndicatorSubtitle: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    marginTop: 2,
   },
   geoJsonPreviewOverlay: {
     flex: 1,

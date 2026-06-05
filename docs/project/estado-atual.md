@@ -1306,6 +1306,72 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16F.7 - Visualizacao Do GeoJSON Local Ativo Nos Mapas
+
+Status em 2026-06-05: foi criada a camada de runtime que permite visualizar o
+GeoJSON local ativo da Propriedade em `MapasScreen` e `FazendaMapaScreen`, com
+fallback controlado para os talhoes do seed/mock.
+
+Arquivo criado:
+
+- `src/services/GeoJsonTalhoesLayerService.ts`.
+
+Teste criado:
+
+- `tests/geojsonTalhoesLayerService.test.js`.
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`;
+- `src/screens/FazendaMapaScreen.tsx`;
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Comportamento atual:
+
+- sem GeoJSON local ativo, os mapas continuam usando `LimiteArea.list`;
+- com GeoJSON local ativo e valido, o arquivo interno e relido e validado em
+  runtime, e os talhoes normalizados em memoria viram a camada visual efetiva;
+- se houver metadado ativo, mas a URI, leitura ou validacao falhar, a tela
+  mostra aviso e volta para a demarcacao disponivel no seed/mock;
+- `MapasScreen` usa a camada efetiva em estatisticas, filtros de ano/talhao,
+  pre-visualizacao SVG, listagem e detalhe do talhao;
+- `FazendaMapaScreen` usa a camada efetiva no mapa interativo, drawer, lista de
+  talhoes e selecao por rota;
+- apos confirmar um novo anexo GeoJSON, `MapasScreen` recarrega a camada local
+  e passa a informar que os talhoes foram carregados do GeoJSON local;
+- Produtor nao recebe permissao para anexar arquivo, mas visualiza a camada
+  local ativa quando acessa a propria Propriedade autorizada.
+
+Persistencia e limites preservados:
+
+- talhoes normalizados nao sao salvos em `AsyncStorage`;
+- o indice continua salvando somente metadados pequenos;
+- `FeatureCollection`, `features`, `coordinates`, `poligono` e `poligonos`
+  nao sao gravados no indice;
+- `LimiteArea.list`, `src/api/mock.ts`, seed/assets da Sela de Prata I,
+  `ShapeRenderer`, `MapaFazendaView` e `TalhaoDetailModal` nao foram alterados;
+- sem backend, upload remoto, sync, substituicao/remocao segura, RBAC real ou
+  APK nesta fase.
+
+Validacoes executadas:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonTalhoesLayerService.test.js` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
@@ -1510,7 +1576,13 @@ Fluxo validado:
 
 Esse resultado valida apenas a experiencia visual/mockada prevista para o MVP atual. Ele nao significa que upload, backend, storage, pipeline de importacao, cadastro administrativo real ou gestao completa de arquivos estejam implementados.
 
-O mapa interativo da propriedade usa apenas talhoes/limites vindos de `LimiteArea`, alimentados pelo GeoJSON normalizado de `src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de `data/processados/p_sela1/2025/limites_talhoes.geojson`.
+O mapa interativo da propriedade usa, por padrao, talhoes/limites vindos de
+`LimiteArea`, alimentados pelo GeoJSON normalizado de
+`src/assets/geojson/selaDePrata1Talhoes.ts`, derivado de
+`data/processados/p_sela1/2025/limites_talhoes.geojson`. Desde a Fase 16F.7,
+quando existe GeoJSON local ativo, valido e acessivel para a Propriedade, a
+camada visual efetiva usa esse arquivo local em runtime; se a leitura ou
+validacao falhar, volta para a demarcacao disponivel no seed/mock.
 
 Os mapas de elementos de fertilidade sao registros mockados da entidade `Mapa`. Na amostra atual, os PNGs ficam como anexos visuais internos do app em `src/assets/mapas/sela-prata-i/2025/fertilidade/`. Esses PNGs nao sao camadas georreferenciadas e nao sao sobrepostos ao mapa. Eles devem ser tratados como anexos de fertilidade para consulta.
 

@@ -38,6 +38,13 @@ import {
   getFazendaIds,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import {
+  GeoJsonTalhoesLayerResult,
+  isGeoJsonTalhoesLayerActive,
+  isGeoJsonTalhoesLayerFallback,
+  loadGeoJsonTalhoesLayer,
+  resolveEffectiveTalhoesLayer,
+} from '../services/GeoJsonTalhoesLayerService';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -174,6 +181,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [fazendaNome, setFazendaNome] = useState(fazendaNomeParam ?? '');
   const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
   const [fazendasContexto, setFazendasContexto] = useState<any[]>([]);
+  const [geoJsonTalhoesLayer, setGeoJsonTalhoesLayer] = useState<GeoJsonTalhoesLayerResult | null>(null);
 
   // Refs
   const mapaRef = useRef<MapaFazendaViewRef>(null);
@@ -222,6 +230,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
           setAnoSelecionado(null);
           setTalhaoSelecionadoId(null);
           setFazendasContexto(fazendasComAcesso);
+          setGeoJsonTalhoesLayer(null);
           return;
         }
 
@@ -245,13 +254,22 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
       const limites = await LimiteArea.list();
       const limitesFiltrados = filtrarLimitesPorFazendaIds(limites, idsPermitidos);
-      const selecaoRota = resolveTalhaoSelecionadoFromRoute(limitesFiltrados, route?.params);
+      const talhoesLayer = fazendaId && idsPermitidos.length === 1
+        ? await loadGeoJsonTalhoesLayer({
+            propriedade_id: idsPermitidos[0],
+            fazenda_id: idsPermitidos[0],
+          })
+        : null;
+      const camadaEfetiva = resolveEffectiveTalhoesLayer(limitesFiltrados, talhoesLayer);
+      const talhoesEfetivos = camadaEfetiva.talhoes;
+      const selecaoRota = resolveTalhaoSelecionadoFromRoute(talhoesEfetivos, route?.params);
 
-      setTodosLimites(limitesFiltrados);
+      setTodosLimites(talhoesEfetivos);
+      setGeoJsonTalhoesLayer(talhoesLayer);
       setTalhaoSelecionadoId(selecaoRota.talhaoId ?? null);
 
       // Seleciona o ano mais recente por padrão
-      const anos = [...new Set<number>(limitesFiltrados.map((l: any) => l.ano))].sort(
+      const anos = [...new Set<number>(talhoesEfetivos.map((l: any) => l.ano))].sort(
         (a, b) => b - a
       );
       if (selecaoRota.talhaoAno != null && anos.includes(selecaoRota.talhaoAno)) {
@@ -262,6 +280,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         setAnoSelecionado(null);
       }
     } catch (err) {
+      setGeoJsonTalhoesLayer(null);
       setErroConexao(true);
     } finally {
       setCarregando(false);
@@ -289,6 +308,8 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
     () => talhoesExibidos.reduce((sum, t) => sum + (t.area_hectares || 0), 0),
     [talhoesExibidos]
   );
+  const geoJsonTalhoesLocalAtivo = isGeoJsonTalhoesLayerActive(geoJsonTalhoesLayer);
+  const geoJsonTalhoesLocalErro = isGeoJsonTalhoesLayerFallback(geoJsonTalhoesLayer);
 
   // ── Drawer animation ─────────────────────────────────────────
   const abrirDrawer = useCallback(() => {
@@ -483,6 +504,24 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             ))}
           </ScrollView>
         )}
+
+        {(geoJsonTalhoesLocalAtivo || geoJsonTalhoesLocalErro) && (
+          <View style={[
+            styles.camadaLocalBanner,
+            geoJsonTalhoesLocalErro && styles.camadaLocalBannerErro,
+          ]}>
+            <Ionicons
+              name={geoJsonTalhoesLocalAtivo ? 'layers-outline' : 'alert-circle-outline'}
+              size={15}
+              color={geoJsonTalhoesLocalAtivo ? colors.white : colors.warningLight}
+            />
+            <Text style={styles.camadaLocalBannerTexto} numberOfLines={1}>
+              {geoJsonTalhoesLocalAtivo
+                ? 'Talhões carregados do GeoJSON local'
+                : 'Não foi possível carregar o GeoJSON local. Exibindo demarcação disponível.'}
+            </Text>
+          </View>
+        )}
       </SafeAreaView>
 
       {/* ── MAPA LEAFLET ─────────────────────────────────────── */}
@@ -502,7 +541,9 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         {/* Badge do mapa no canto inferior esquerdo */}
         <View style={styles.badgeSatelite}>
           <Ionicons name="earth" size={12} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.badgeSateliteTexto}>MAPA</Text>
+          <Text style={styles.badgeSateliteTexto}>
+            {geoJsonTalhoesLocalAtivo ? 'GEOJSON LOCAL' : 'MAPA'}
+          </Text>
         </View>
 
         {/* Legenda de cores dos talhões */}
@@ -880,6 +921,31 @@ const styles = StyleSheet.create({
   anoChipTextoAtivo: {
     color: colors.white,
     fontWeight: typography.weightBold,
+  },
+  camadaLocalBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: 'rgba(34,139,34,0.86)',
+    maxWidth: SCREEN_WIDTH - spacing.lg * 2,
+  },
+  camadaLocalBannerErro: {
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.75)',
+  },
+  camadaLocalBannerTexto: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
   },
 
   // ── Mapa ──

@@ -1611,8 +1611,149 @@ Validacoes executadas na 16F.6:
 
 ### 16F.7 - Visualizacao do GeoJSON importado
 
-Permitir que `MapasScreen`/`FazendaMapaScreen` leiam limites importados
-normalizados, com fallback para seed/assets quando nao houver importacao local.
+Status em 2026-06-05: foi criada a camada de runtime para visualizar o
+GeoJSON local ativo nos mapas da Propriedade, sem alterar o seed/mock de
+`LimiteArea` e sem persistir talhoes normalizados.
+
+Arquivo criado:
+
+- `src/services/GeoJsonTalhoesLayerService.ts`
+
+Arquivo de teste criado:
+
+- `tests/geojsonTalhoesLayerService.test.js`
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`;
+- `src/screens/FazendaMapaScreen.tsx`;
+- `package.json`;
+- `tsconfig.domain-compat.json`;
+- `docs/project/fase-16f-geojson-local.md`;
+- `docs/project/estado-atual.md`.
+
+Servico criado:
+
+- `loadGeoJsonTalhoesLayer(input, deps)`;
+- `resolveEffectiveTalhoesLayer(seedTalhoes, layer)`;
+- `isGeoJsonTalhoesLayerActive(layer)`;
+- `isGeoJsonTalhoesLayerFallback(layer)`.
+
+Regras de fonte visual:
+
+- quando nao ha GeoJSON ativo para a Propriedade, a tela usa os talhoes do
+  seed/mock retornados por `LimiteArea.list`;
+- quando ha GeoJSON local ativo, o arquivo interno e lido em runtime por
+  `GeoJsonStorageService.validateStoredGeoJson`;
+- o conteudo e validado/normalizado novamente por
+  `validateAndNormalizeGeoJson`;
+- quando a validacao passa, a camada efetiva de talhoes passa a ser o
+  GeoJSON local;
+- quando existe metadado ativo, mas a URI esta ausente, o arquivo nao existe,
+  a leitura falha ou a validacao falha, a tela mostra aviso e retorna ao
+  seed/mock como fallback;
+- o resultado local vale apenas no contexto da Propriedade acessivel;
+- uma Propriedade nao carrega importacao ativa de outra Propriedade;
+- `propriedade_id` e `fazenda_id` continuam reconciliados para compatibilidade.
+
+Persistencia preservada:
+
+- o servico nao chama `AsyncStorage.setItem`;
+- o servico nao atualiza metadados;
+- o servico nao salva `FeatureCollection`, `features`, `coordinates`,
+  `poligono` ou `poligonos`;
+- os talhoes normalizados existem apenas em memoria durante a renderizacao;
+- `LimiteArea.list`, `src/api/mock.ts`,
+  `src/assets/geojson/selaDePrata1Talhoes.ts`,
+  `data/processados/p_sela1/2025/limites_talhoes.geojson` e PNGs da Sela de
+  Prata I nao foram alterados.
+
+Comportamento em `MapasScreen`:
+
+- ao carregar dados em contexto de uma Propriedade especifica, a tela busca
+  metadados de GeoJSON e a camada local ativa em paralelo;
+- estatisticas, filtro de ano, filtro de talhao, pre-visualizacao SVG,
+  listagem de talhoes e `TalhaoDetailModal` usam a camada local quando ela esta
+  valida;
+- quando nao ha camada local valida, esses pontos continuam usando
+  `LimiteArea.list`;
+- apos confirmar um novo anexo na 16F.6, a tela recarrega imediatamente a
+  camada local e passa a informar `Talhoes carregados do GeoJSON local`;
+- se houver falha na leitura/validacao do GeoJSON ativo, a tela informa
+  `Nao foi possivel carregar o GeoJSON local. Exibindo demarcacao disponivel.`
+  e mantem a demarcacao seed/mock.
+
+Comportamento em `FazendaMapaScreen`:
+
+- ao abrir o mapa em contexto de uma Propriedade, a tela resolve a camada
+  efetiva antes de aplicar selecao por rota;
+- `MapaFazendaView`, drawer de detalhe e lista de talhoes recebem os talhoes
+  locais quando o GeoJSON ativo esta valido;
+- a selecao por `talhaoId`/nome continua usando os helpers de rota existentes,
+  agora sobre a camada efetiva;
+- a tela exibe indicador `GEOJSON LOCAL` quando a camada local esta ativa;
+- em falha controlada, a tela mostra aviso e usa a demarcacao disponivel do
+  seed/mock.
+
+Acesso:
+
+- a acao de anexar GeoJSON permanece restrita a Admin e Colaborador no escopo
+  da Propriedade, conforme 16F.6;
+- Produtor continua sem botao de anexo;
+- Produtor pode visualizar a camada local ativa quando acessa a propria
+  Propriedade autorizada.
+
+Protecao da Sela de Prata I:
+
+- seed/assets demonstrativos continuam intactos;
+- se nao houver GeoJSON local ativo para `p_sela1`, o mapa segue usando os 15
+  talhoes do seed;
+- se houver GeoJSON local ativo e valido para `p_sela1`, a visualizacao usa o
+  arquivo local;
+- se o GeoJSON local ativo falhar, a visualizacao retorna aos talhoes
+  demonstrativos.
+
+Limites preservados:
+
+- sem substituicao/remocao manual de importacoes;
+- sem exclusao de arquivo fisico nesta fase;
+- sem backend, upload remoto, sync, RBAC real ou APK;
+- sem mudanca em `ShapeRenderer`, `MapaFazendaView`,
+  `TalhaoDetailModal`, `LimiteArea.list`, mocks ou assets.
+
+Testes criados:
+
+- `tests/geojsonTalhoesLayerService.test.js`
+
+Cobertura principal:
+
+- ausencia de GeoJSON ativo retorna vazio para a tela usar seed;
+- GeoJSON ativo valido retorna talhoes normalizados em runtime;
+- metadado ativo sem URI retorna erro controlado;
+- arquivo ausente ou ilegivel retorna erro controlado com fallback seed;
+- validacao invalida retorna erro controlado sem salvar talhoes;
+- Propriedade A nao carrega GeoJSON ativo da Propriedade B;
+- compatibilidade entre `fazenda_id` e `propriedade_id`;
+- Sela de Prata I usa fallback seed quando GeoJSON local falha;
+- o servico nao persiste talhoes normalizados nem chama atualizacao de
+  metadados;
+- escopo do servico sem imports de React, telas, mock ou update de metadados.
+
+Validacoes executadas na 16F.7:
+
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `node tests/geojsonTalhoesLayerService.test.js` passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js` passou;
+- `node tests/geojsonStorageService.test.js` passou;
+- `node tests/geojsonFilePickerService.test.js` passou;
+- `node tests/geojsonImportValidator.test.js` passou;
+- `node tests/geojsonImportService.test.js` passou;
+- `npx expo install --check` falhou no sandbox restrito por bloqueio de rede e
+  depois passou com rede liberada;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ### 16F.8 - Substituicao e remocao segura
 
