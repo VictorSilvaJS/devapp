@@ -1543,6 +1543,40 @@ Recomendacao:
 - manter a Fase 16F aberta operacionalmente ate o smoke fisico passar;
 - nao iniciar 16G/PNG antes de registrar o resultado do smoke Android.
 
+## Fase 16G.1 - Diagnostico E Contrato Local De Anexos PNG
+
+Status em 2026-06-05: foi aberta a Fase 16G.1 em paralelo a pendencia
+operacional da 16F, por necessidade de adiantar o diagnostico de anexos PNG de
+mapas tecnicos/fertilidade. Isso nao fecha a Fase 16F: o smoke Android fisico
+do GeoJSON local continua pendente.
+
+Documento principal:
+
+- `docs/project/fase-16g-anexos-png-local.md`
+
+Entregas desta abertura:
+
+- diagnostico dos PNGs demonstrativos da Sela de Prata I;
+- mapeamento de como os anexos atuais sao cadastrados em `Mapa`;
+- mapeamento de filtros, listagem e abertura do PNG em `MapasScreen`;
+- criacao do tipo isolado `src/types/anexoPngLocal.ts`, com
+  `PngMapImportMetadata` e chave futura recomendada
+  `@tche:png-map-imports:v1`;
+- recomendacao de manter PNG fisico fora do `AsyncStorage`, copiando arquivo
+  para storage interno do app e salvando apenas metadados pequenos.
+
+Escopo preservado:
+
+- nao alterou `MapasScreen`;
+- nao criou botao de anexar PNG;
+- nao adicionou seletor de imagem/documento;
+- nao instalou dependencia nova;
+- nao copiou arquivo para storage;
+- nao criou persistencia local nova;
+- nao alterou `Mapa.list`;
+- nao alterou os registros nem os PNGs da Sela de Prata I;
+- nao implementou backend, RBAC real, sincronizacao, GeoJSON ou APK.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
