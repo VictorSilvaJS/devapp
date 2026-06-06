@@ -2,13 +2,18 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
+  PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
   PNG_LOCAL_MAPA_OPEN_MESSAGE,
+  PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
+  PNG_LOCAL_MAPA_UNSAFE_URI_MESSAGE,
   canShowPngMapImportInMapaList,
   evaluatePngLocalMapaOpen,
+  getPngLocalMapaUri,
   isPngLocalMapa,
   mergeMapasWithPngMapImports,
   pngMapImportToMapaCompat,
   pngMapImportsToMapaCompatList,
+  resolveMapaPngImageSource,
 } = require('../.tmp-domain-compat/src/utils/pngMapToMapaCompat');
 
 let failed = 0;
@@ -215,15 +220,143 @@ const run = async () => {
     assert.equal(merged[1].titulo, 'pH local Sela');
   });
 
-  await test('PNG local e identificado e abertura retorna aviso controlado nesta fase', () => {
+  await test('PNG local e identificado e abertura fica suportada na fase 16G.7', () => {
     const item = pngMapImportToMapaCompat(baseMetadata());
     const status = evaluatePngLocalMapaOpen(item);
 
     assert.equal(isPngLocalMapa(item), true);
-    assert.equal(status.supported, false);
+    assert.equal(status.supported, true);
     assert.equal(status.message, PNG_LOCAL_MAPA_OPEN_MESSAGE);
     assert.deepEqual(evaluatePngLocalMapaOpen({ id: 'mock' }), {
       supported: true,
+      message: '',
+    });
+  });
+
+  await test('PNG local com URI segura retorna source para Image sem base64', async () => {
+    const item = pngMapImportToMapaCompat(baseMetadata());
+    const result = await resolveMapaPngImageSource(item, {
+      isSafePngStorageUri: (uri) => uri === item.arquivo_uri_local,
+      getStoredPngInfo: async () => ({
+        ok: true,
+        info: {
+          exists: true,
+          isDirectory: false,
+        },
+      }),
+    });
+
+    assert.deepEqual(result, {
+      ok: true,
+      reason: 'ok',
+      message: '',
+      source: {
+        uri: item.arquivo_uri_local,
+      },
+    });
+    assert.equal(result.source.uri.startsWith('data:'), false);
+    assert.equal(result.source.uri.includes('base64'), false);
+    assert.equal(getPngLocalMapaUri(item), item.arquivo_uri_local);
+  });
+
+  await test('PNG local sem URI retorna erro controlado de arquivo ausente', async () => {
+    const item = pngMapImportToMapaCompat(baseMetadata({ arquivo_uri_local: undefined }));
+    const result = await resolveMapaPngImageSource(item);
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: 'missing_uri',
+      message: PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
+    });
+    assert.deepEqual(evaluatePngLocalMapaOpen(item), {
+      supported: false,
+      message: PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
+    });
+  });
+
+  await test('PNG local com URI fora do diretorio seguro e recusado', async () => {
+    const item = pngMapImportToMapaCompat(baseMetadata({
+      arquivo_uri_local: 'file:///app/outro-diretorio/prop_a/mapa.png',
+    }));
+    const result = await resolveMapaPngImageSource(item, {
+      isSafePngStorageUri: () => false,
+    });
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: 'unsafe_uri',
+      message: PNG_LOCAL_MAPA_UNSAFE_URI_MESSAGE,
+    });
+  });
+
+  await test('PNG local com arquivo ausente retorna mensagem controlada', async () => {
+    const item = pngMapImportToMapaCompat(baseMetadata());
+    const result = await resolveMapaPngImageSource(item, {
+      isSafePngStorageUri: () => true,
+      getStoredPngInfo: async () => ({
+        ok: true,
+        info: {
+          exists: false,
+          isDirectory: false,
+        },
+      }),
+    });
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: 'file_not_found',
+      message: PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
+    });
+  });
+
+  await test('falha ao consultar arquivo PNG local retorna mensagem controlada', async () => {
+    const item = pngMapImportToMapaCompat(baseMetadata());
+    const result = await resolveMapaPngImageSource(item, {
+      isSafePngStorageUri: () => true,
+      getStoredPngInfo: async () => ({
+        ok: false,
+      }),
+    });
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: 'file_info_failed',
+      message: PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
+    });
+  });
+
+  await test('asset mockado da Sela nao entra no fluxo de PNG local', async () => {
+    const mapaAsset = {
+      id: 'm_sela1_ph_10a20_2025',
+      titulo: 'pH - Fazenda Sela de Prata I',
+      categoria: 'fertilidade',
+      formato_arquivo: 'png',
+      arquivo_url: 'asset://mapas/sela-prata-i/2025/fertilidade/ph_10a20.png',
+      origem: 'drive_importado',
+      tipo_anexo: 'anexo_fertilidade',
+    };
+
+    assert.equal(isPngLocalMapa(mapaAsset), false);
+    assert.deepEqual(await resolveMapaPngImageSource(mapaAsset), {
+      ok: false,
+      reason: 'not_png_local',
+      message: '',
+    });
+  });
+
+  await test('item nao PNG local nao tenta abrir como source local', async () => {
+    const mapaPdf = {
+      id: 'mapa_pdf',
+      titulo: 'Relatorio tecnico',
+      formato_arquivo: 'pdf',
+      arquivo_uri_local: 'file:///app/tche-png-imports/prop_a/relatorio.pdf',
+      origem: 'arquivo_local',
+    };
+
+    assert.equal(isPngLocalMapa(mapaPdf), false);
+    assert.deepEqual(await resolveMapaPngImageSource(mapaPdf), {
+      ok: false,
+      reason: 'not_png_local',
       message: '',
     });
   });
@@ -239,6 +372,7 @@ const run = async () => {
     assert.equal(source.includes('require('), false);
     assert.equal(source.includes('AsyncStorage'), false);
     assert.equal(source.includes('expo-file-system'), false);
+    assert.equal(source.includes('base64'), false);
   });
 
   if (failed > 0) {

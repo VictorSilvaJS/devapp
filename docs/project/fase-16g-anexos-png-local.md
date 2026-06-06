@@ -30,6 +30,10 @@ Status em 2026-06-05: a Fase 16G.6 criou o helper puro
 principal da `MapasScreen` por lista derivada em runtime, sem alterar
 `Mapa.list`.
 
+Status em 2026-06-06: a Fase 16G.7 habilitou a visualizacao de PNG local em
+modal na `MapasScreen`, usando `Image` com source `{ uri: arquivo_uri_local }`
+apos validacao de URI segura e existencia do arquivo no storage interno.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
@@ -37,9 +41,9 @@ operacional e nao fecha operacionalmente a 16F.
 Esta frente ja possui selecao, validacao leve, copia local, metadados locais e
 formulario minimo de anexo PNG por Propriedade. Os PNGs locais ativos agora
 aparecem na listagem principal de materiais por compatibilidade derivada em
-runtime. Ela ainda nao altera `Mapa.list`, nao abre preview de PNG local, nao
-muda os registros da Sela de Prata I e nao implementa backend, JWT, RBAC real,
-sincronizacao ou APK final.
+runtime e podem ser abertos em modal local. Ela ainda nao altera `Mapa.list`,
+nao muda os registros da Sela de Prata I e nao implementa zoom avancado,
+download/compartilhamento, backend, JWT, RBAC real, sincronizacao ou APK final.
 
 ## Base Documental Ativa
 
@@ -894,10 +898,9 @@ Acao de abrir:
 
 - PNG asset/mockado da Sela de Prata I continua abrindo pelo resolvedor
   `resolveSelaPrataIFertilidadeAssetSource`;
-- PNG local ainda nao abre nesta fase;
-- ao tocar no card de PNG local, a tela mostra o aviso controlado
-  `Visualização do PNG local será habilitada na próxima etapa.`;
-- a abertura com `Image` usando `file://` fica reservada para 16G.7.
+- durante a 16G.6, PNG local ainda nao abria e o card mostrava aviso
+  controlado;
+- a abertura com `Image` usando `file://` ficou reservada para 16G.7.
 
 Compatibilidade com Sela de Prata I:
 
@@ -909,7 +912,7 @@ Compatibilidade com Sela de Prata I:
 
 Escopo preservado:
 
-- nao ha preview/abertura real de PNG local;
+- nao ha preview/abertura real de PNG local neste corte historico da 16G.6;
 - nao ha zoom;
 - nao ha substituicao/remocao de PNG pela tela;
 - nao ha alteracao em `Mapa.list`;
@@ -930,9 +933,84 @@ Validacoes da 16G.6:
   LF/CRLF;
 - `npx expo install --check` passou.
 
+## 16G.7 - Visualizacao Do PNG Local Em Modal
+
+Status em 2026-06-06: PNG local anexado, ativo e listado na `MapasScreen`
+passou a abrir em modal com `Image`, usando source `{ uri:
+arquivo_uri_local }`.
+
+Arquivos alterados:
+
+- `src/utils/pngMapToMapaCompat.ts`
+- `src/screens/MapasScreen.tsx`
+- `tests/pngMapToMapaCompat.test.js`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Helper de abertura:
+
+- `isPngLocalMapa` identifica PNG local por `tipo_anexo:
+  'anexo_png_local'`, `is_png_local: true` ou por `origem: 'arquivo_local'`
+  com `formato_arquivo: 'png'` e `arquivo_uri_local` preenchido;
+- `resolveMapaPngImageSource` retorna somente `{ uri }` para PNG local valido;
+- o helper nao chama `require`, nao converte para base64, nao le bytes em JS e
+  nao importa tela, mock, assets, AsyncStorage ou `expo-file-system`;
+- URI ausente retorna `Arquivo PNG local não encontrado neste aparelho.`;
+- URI fora do diretorio seguro retorna
+  `Este arquivo local não pode ser aberto por segurança.`;
+- falha de consulta de arquivo retorna `Não foi possível abrir este PNG local.`;
+- item nao PNG local retorna `not_png_local` e nao tenta abrir como source
+  local.
+
+Integracao na `MapasScreen`:
+
+- ao tocar em PNG local, a tela chama `resolveMapaPngImageSource` com
+  `PngStorageService.isSafePngStorageUri` e
+  `PngStorageService.getStoredPngInfo`;
+- quando a URI e segura e o arquivo existe, o modal atual abre o PNG com
+  `Image` e `resizeMode="contain"`;
+- o modal mostra titulo, tipo `PNG local`, elemento/categoria, safra/ano,
+  talhao ou `Propriedade inteira`, profundidade e nome original quando esses
+  dados existem;
+- `onError` do `Image` mostra a mensagem controlada
+  `Não foi possível abrir este PNG local.` e mantem o modal fechavel;
+- a URI local nao e exibida como titulo nem como texto principal.
+
+Compatibilidade preservada:
+
+- os cinco PNGs asset/mockados da Sela de Prata I continuam abrindo por
+  `resolveSelaPrataIFertilidadeAssetSource`;
+- `src/api/mock.ts`, `Mapa.list` e os assets da Sela de Prata I nao foram
+  alterados;
+- a visibilidade continua seguindo a lista ja filtrada na 16G.6: Admin e
+  Colaborador dentro do escopo, e Produtor apenas quando
+  `visivel_para_produtor === true`.
+
+Escopo preservado:
+
+- nao ha zoom/pinch avancado;
+- nao ha substituicao/remocao de PNG local;
+- nao ha edicao de metadados;
+- nao ha download/compartilhamento;
+- nao ha backend, sync, RBAC real, GeoJSON ou APK final;
+- nao houve alteracao em `Mapa.list`, `src/api/mock.ts` ou nos assets da Sela.
+
+Validacoes da 16G.7:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapToMapaCompat.test.js` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.7: visualizacao do PNG local.
 - 16G.8: substituicao/remocao segura.
 - 16G.9: smoke Android PNG.
 
@@ -940,10 +1018,10 @@ Validacoes da 16G.6:
 
 - A 16F ainda depende de smoke Android fisico; a 16G nao deve mascarar essa
   pendencia.
-- `Image` com `file://` precisa ser validado no Android fisico antes de assumir
-  que o visualizador local esta pronto.
-- `Linking.openURL` pode nao entregar boa experiencia para PNG local; um
-  componente de preview proprio deve ser preferido.
+- `Image` com `file://` precisa ser validado no Android fisico antes de
+  considerar a visualizacao local operacionalmente fechada em campo.
+- o smoke Android ainda deve confirmar reabertura do app, arquivo removido
+  manualmente e continuidade dos PNGs asset/mockados da Sela.
 - `categoria` em `Mapa` e ampla, enquanto os elementos de fertilidade ficam em
   `elemento`; misturar esses eixos pode quebrar filtros.
 - `visivel_para_produtor` existe no mock, mas a regra efetiva atual de produtor
@@ -960,7 +1038,8 @@ Nao foi feito:
 - nova dependencia;
 - leitura de conteudo do PNG;
 - alteracao em `Mapa.list`;
-- preview/abertura de PNG local;
+- zoom avancado;
+- download/compartilhamento;
 - substituicao/remocao de PNG pela tela;
 - alteracao nos registros da Sela de Prata I;
 - alteracao nos PNGs da Sela;

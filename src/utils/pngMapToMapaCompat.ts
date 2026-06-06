@@ -8,7 +8,13 @@ export const PNG_LOCAL_MAPA_TIPO_ANEXO = 'anexo_png_local';
 export const PNG_LOCAL_MAPA_TIPO_MATERIAL = 'png_local';
 export const PNG_LOCAL_MAPA_ORIGEM = 'arquivo_local';
 export const PNG_LOCAL_MAPA_OPEN_MESSAGE =
-  'Visualização do PNG local será habilitada na próxima etapa.';
+  'PNG local pronto para visualização.';
+export const PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE =
+  'Arquivo PNG local não encontrado neste aparelho.';
+export const PNG_LOCAL_MAPA_UNSAFE_URI_MESSAGE =
+  'Este arquivo local não pode ser aberto por segurança.';
+export const PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE =
+  'Não foi possível abrir este PNG local.';
 
 export type PngMapListPerfil = 'admin' | 'colaborador' | 'produtor' | string | undefined | null;
 
@@ -62,6 +68,40 @@ export interface PngLocalOpenStatus {
   message: string;
 }
 
+export interface PngMapaLocalImageSource {
+  uri: string;
+}
+
+export type PngMapaImageSourceResolveReason =
+  | 'ok'
+  | 'not_png_local'
+  | 'missing_uri'
+  | 'unsafe_uri'
+  | 'file_not_found'
+  | 'file_info_failed';
+
+export interface PngMapaImageSourceResult {
+  ok: boolean;
+  reason: PngMapaImageSourceResolveReason;
+  message: string;
+  source?: PngMapaLocalImageSource;
+}
+
+export interface PngStoredInfoForOpen {
+  exists: boolean;
+  isDirectory?: boolean;
+}
+
+export interface PngStoredInfoResultForOpen {
+  ok: boolean;
+  info?: PngStoredInfoForOpen;
+}
+
+export interface PngMapaImageSourceDeps {
+  isSafePngStorageUri?: (uri: string) => boolean;
+  getStoredPngInfo?: (uri: string) => Promise<PngStoredInfoResultForOpen>;
+}
+
 const ELEMENTO_LABELS: Record<PngMapElemento, string> = {
   ph: 'pH',
   fosforo: 'Fósforo',
@@ -98,6 +138,28 @@ const firstNonEmptyString = (...values: unknown[]): string => {
   return '';
 };
 
+const normalizeLocalUri = (value: unknown): string =>
+  firstNonEmptyString(value).replace(/\\/g, '/');
+
+const isProbablySafePngStorageUri = (uri: string): boolean => {
+  const normalizedUri = normalizeLocalUri(uri);
+  const lowerUri = normalizedUri.toLowerCase();
+
+  if (!lowerUri.startsWith('file://')) return false;
+  if (lowerUri.includes('..')) return false;
+  if (!lowerUri.includes('/tche-png-imports/')) return false;
+  if (!lowerUri.endsWith('.png')) return false;
+
+  const storagePath = lowerUri.split('/tche-png-imports/')[1] ?? '';
+  const parts = storagePath.split('/').filter(Boolean);
+
+  return parts.length === 2;
+};
+
+const isMapaFormatoPng = (mapa?: Record<string, any> | null): boolean =>
+  typeof mapa?.formato_arquivo === 'string'
+  && mapa.formato_arquivo.trim().toLowerCase() === 'png';
+
 const normalizePropriedadeIds = (ids?: string[]): Set<string> => new Set(
   (ids ?? []).map((id) => firstNonEmptyString(id)).filter(Boolean)
 );
@@ -126,16 +188,117 @@ export const isPngLocalMapa = (mapa?: Record<string, any> | null): boolean =>
   || mapa?.is_png_local === true
   || (
     mapa?.origem === PNG_LOCAL_MAPA_ORIGEM
+    && isMapaFormatoPng(mapa)
     && typeof mapa?.arquivo_uri_local === 'string'
     && mapa.arquivo_uri_local.trim().length > 0
   );
 
+export const getPngLocalMapaUri = (mapa?: Record<string, any> | null): string =>
+  normalizeLocalUri(mapa?.arquivo_uri_local);
+
 export const evaluatePngLocalMapaOpen = (
   mapa?: Record<string, any> | null
-): PngLocalOpenStatus => ({
-  supported: !isPngLocalMapa(mapa),
-  message: isPngLocalMapa(mapa) ? PNG_LOCAL_MAPA_OPEN_MESSAGE : '',
-});
+): PngLocalOpenStatus => {
+  if (!isPngLocalMapa(mapa)) {
+    return {
+      supported: true,
+      message: '',
+    };
+  }
+
+  if (!getPngLocalMapaUri(mapa)) {
+    return {
+      supported: false,
+      message: PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
+    };
+  }
+
+  return {
+    supported: true,
+    message: PNG_LOCAL_MAPA_OPEN_MESSAGE,
+  };
+};
+
+export const resolveMapaPngImageSource = async (
+  mapa?: Record<string, any> | null,
+  deps: PngMapaImageSourceDeps = {}
+): Promise<PngMapaImageSourceResult> => {
+  if (!isPngLocalMapa(mapa)) {
+    return {
+      ok: false,
+      reason: 'not_png_local',
+      message: '',
+    };
+  }
+
+  const uri = getPngLocalMapaUri(mapa);
+  if (!uri) {
+    return {
+      ok: false,
+      reason: 'missing_uri',
+      message: PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
+    };
+  }
+
+  let isSafeUri = false;
+
+  try {
+    isSafeUri = deps.isSafePngStorageUri
+      ? deps.isSafePngStorageUri(uri)
+      : isProbablySafePngStorageUri(uri);
+  } catch {
+    return {
+      ok: false,
+      reason: 'file_info_failed',
+      message: PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
+    };
+  }
+
+  if (!isSafeUri) {
+    return {
+      ok: false,
+      reason: 'unsafe_uri',
+      message: PNG_LOCAL_MAPA_UNSAFE_URI_MESSAGE,
+    };
+  }
+
+  if (deps.getStoredPngInfo) {
+    let storedInfo: PngStoredInfoResultForOpen;
+
+    try {
+      storedInfo = await deps.getStoredPngInfo(uri);
+    } catch {
+      return {
+        ok: false,
+        reason: 'file_info_failed',
+        message: PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
+      };
+    }
+
+    if (!storedInfo.ok) {
+      return {
+        ok: false,
+        reason: 'file_info_failed',
+        message: PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
+      };
+    }
+
+    if (!storedInfo.info?.exists || storedInfo.info.isDirectory === true) {
+      return {
+        ok: false,
+        reason: 'file_not_found',
+        message: PNG_LOCAL_MAPA_FILE_NOT_FOUND_MESSAGE,
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    reason: 'ok',
+    message: '',
+    source: { uri },
+  };
+};
 
 export const canShowPngMapImportInMapaList = (
   metadata: PngMapImportMetadata,

@@ -201,7 +201,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - `MapasScreen.tsx` usa nomenclatura visual padronizada para a area de materiais, incluindo `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`
 - `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
 - `MapasScreen.tsx` possui fluxo local demonstrativo para anexar PNG por Propriedade com botao `Anexar mapa PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; os PNGs locais ativos aparecem na listagem principal por lista derivada em runtime, sem alterar `Mapa.list`
-- `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; a abertura real do PNG local ainda fica fora desta fase
+- `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; PNG local ativo agora abre em modal com `Image` e source `{ uri: arquivo_uri_local }` apos validacao de URI segura e existencia no storage interno
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -758,7 +758,7 @@ Ordem atual do login manual:
 6. se nao houver credencial local, usar `authMock.ts` como fallback
    demonstrativo.
 
-Comportamento atual:
+Comportamento do corte 16G.5:
 
 - usuarios persistidos preservam `perfil`, `status`, `ativo`, `produtor_id`,
   `regiao`, `sub_regioes`, `vinculos_microregioes`,
@@ -1787,11 +1787,11 @@ Comportamento atual:
 - em falha de metadados apos copia, o workflow tenta remover o arquivo copiado;
 - a tela mostra apenas resumo local dos PNGs ativos da Propriedade.
 
-Escopo preservado:
+Escopo preservado no corte 16G.5:
 
 - `Mapa.list` nao foi alterado;
 - os PNGs locais ainda nao aparecem na listagem principal de materiais/anexos;
-- nao ha preview/abertura de PNG local;
+- naquele corte, a visualizacao local ainda nao existia;
 - nao ha substituicao/remocao de PNG pela tela;
 - registros e assets da Sela de Prata I nao foram alterados;
 - nao ha backend, upload remoto, RBAC real, sincronizacao ou APK final.
@@ -1844,17 +1844,15 @@ Comportamento atual:
 Acao de abrir:
 
 - PNGs asset/mockados da Sela de Prata I continuam abrindo no modal atual;
-- PNG local ainda nao abre nesta fase;
-- ao tocar no card de PNG local, a tela mostra
-  `Visualização do PNG local será habilitada na próxima etapa.`;
-- a visualizacao com `Image` usando `file://` fica para 16G.7.
+- durante a 16G.6, PNG local ainda nao abria e ficava reservado para 16G.7.
 
 Escopo preservado:
 
 - `Mapa.list` nao foi alterado;
 - `@tche:mock-mvp:v1` nao recebe dados do PNG local;
 - registros e assets da Sela de Prata I nao foram alterados;
-- nao ha preview real, zoom, substituicao ou remocao de PNG local pela tela;
+- nao ha preview real neste corte historico da 16G.6;
+- nao ha zoom, substituicao ou remocao de PNG local pela tela;
 - nao ha backend, upload remoto, RBAC real, sincronizacao ou APK final.
 
 Validacoes executadas:
@@ -1870,6 +1868,56 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF;
 - `npx expo install --check` passou.
+
+## Fase 16G.7 - Visualizacao De PNG Local Em Modal
+
+Status em 2026-06-06: PNGs locais ativos listados na `MapasScreen` agora
+abrem em modal com `Image`, usando source `{ uri: arquivo_uri_local }` do
+storage interno.
+
+Implementacao:
+
+- `src/utils/pngMapToMapaCompat.ts` passou a expor
+  `resolveMapaPngImageSource`, que retorna `{ uri }` apenas para PNG local
+  valido;
+- `isPngLocalMapa` identifica PNG local por `tipo_anexo:
+  'anexo_png_local'`, `is_png_local: true` ou por `origem: 'arquivo_local'`
+  com `formato_arquivo: 'png'` e `arquivo_uri_local`;
+- `MapasScreen.tsx` valida a URI com
+  `PngStorageService.isSafePngStorageUri` e confirma existencia com
+  `PngStorageService.getStoredPngInfo` antes de abrir;
+- o modal atual mostra titulo, tipo `PNG local`, elemento/categoria,
+  safra/ano, talhao ou Propriedade inteira, profundidade e nome original,
+  sem exibir a URI local crua;
+- erro de arquivo ausente mostra
+  `Arquivo PNG local não encontrado neste aparelho.`;
+- URI fora do diretorio seguro mostra
+  `Este arquivo local não pode ser aberto por segurança.`;
+- erro de carregamento do `Image` mostra
+  `Não foi possível abrir este PNG local.` e mantem o modal fechavel.
+
+Preservado:
+
+- PNGs asset/mockados da Sela de Prata I continuam abrindo pelo resolvedor
+  `resolveSelaPrataIFertilidadeAssetSource`;
+- `Mapa.list`, `src/api/mock.ts` e os assets da Sela de Prata I nao foram
+  alterados;
+- nao ha zoom avancado, substituicao/remocao de PNG local, download,
+  compartilhamento, backend, RBAC real, sincronizacao, GeoJSON ou APK final.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapToMapaCompat.test.js` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
 
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 

@@ -51,9 +51,10 @@ import {
 } from '../utils/fazendaUiCompat';
 import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 import {
-  evaluatePngLocalMapaOpen,
+  PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
   isPngLocalMapa,
   mergeMapasWithPngMapImports,
+  resolveMapaPngImageSource,
 } from '../utils/pngMapToMapaCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
@@ -88,6 +89,7 @@ import type {
   PngMapPropertyImportFormInput,
   PngMapPropertyImportPreview,
 } from '../services/PngMapPropertyImportWorkflow';
+import { PngStorageService } from '../services/PngStorageService';
 import type { PngMapImportMetadata } from '../types/anexoPngLocal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -684,9 +686,49 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   // HANDLERS
   // ──────────────────────────────────────────────
-  const handleDownload = (mapa) => {
+  const closeImagePreview = () => {
+    setImagePreview({ visible: false, mapa: null, source: null, loadError: null });
+  };
+
+  const openImagePreview = (mapa, source) => {
+    setImagePreview({
+      visible: true,
+      mapa,
+      source,
+      loadError: null,
+    });
+  };
+
+  const handleImagePreviewError = () => {
+    const message = isPngLocalMapa(imagePreview.mapa)
+      ? PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE
+      : 'Não foi possível carregar este anexo.';
+
+    setImagePreview((current) => ({
+      ...current,
+      source: null,
+      loadError: message,
+    }));
+    toast.showError(message);
+  };
+
+  const handleDownload = async (mapa) => {
     if (isPngLocalMapa(mapa)) {
-      toast.showInfo(evaluatePngLocalMapaOpen(mapa).message);
+      try {
+        const result = await resolveMapaPngImageSource(mapa, {
+          isSafePngStorageUri: PngStorageService.isSafePngStorageUri,
+          getStoredPngInfo: PngStorageService.getStoredPngInfo,
+        });
+
+        if (!result.ok || !result.source) {
+          toast.showError(result.message || PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE);
+          return;
+        }
+
+        openImagePreview(mapa, result.source);
+      } catch {
+        toast.showError(PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE);
+      }
       return;
     }
 
@@ -699,11 +741,7 @@ export default function MapasScreen({ route, navigation }) {
 
     const assetSource = resolveSelaPrataIFertilidadeAssetSource(status.arquivoUrl);
     if (assetSource) {
-      setImagePreview({
-        visible: true,
-        mapa,
-        source: assetSource,
-      });
+      openImagePreview(mapa, assetSource);
       return;
     }
 
@@ -712,8 +750,9 @@ export default function MapasScreen({ route, navigation }) {
 
   const confirmDownload = async () => {
     if (isPngLocalMapa(downloadDialog.mapa)) {
-      toast.showInfo(evaluatePngLocalMapaOpen(downloadDialog.mapa).message);
+      const mapaSelecionado = downloadDialog.mapa;
       setDownloadDialog({ visible: false, mapa: null, status: null });
+      await handleDownload(mapaSelecionado);
       return;
     }
 
@@ -727,11 +766,7 @@ export default function MapasScreen({ route, navigation }) {
 
     const assetSource = resolveSelaPrataIFertilidadeAssetSource(status.arquivoUrl);
     if (assetSource) {
-      setImagePreview({
-        visible: true,
-        mapa: downloadDialog.mapa,
-        source: assetSource,
-      });
+      openImagePreview(downloadDialog.mapa, assetSource);
       return;
     }
 
@@ -1217,6 +1252,41 @@ export default function MapasScreen({ route, navigation }) {
     );
   };
 
+  const getImagePreviewTipoLabel = (mapa) => {
+    if (isPngLocalMapa(mapa)) return 'PNG local';
+    if (mapa?.tipo_anexo === 'anexo_fertilidade') return 'Anexo de fertilidade';
+    return 'Material técnico';
+  };
+
+  const buildImagePreviewMetaItems = (mapa) => {
+    if (!mapa) return [];
+
+    const elementoLabel = getMapaElementoLabel(mapa) || mapa?.categoria_label || mapa?.subcategoria;
+    const safraMapa = getMapaSafra(mapa);
+    const talhaoMapa = getMapaTalhao(mapa);
+    const profundidadeMapa = getMapaProfundidade(mapa);
+    const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
+
+    return [
+      { icon: 'image-outline', label: 'Tipo', value: getImagePreviewTipoLabel(mapa) },
+      { icon: 'flask-outline', label: 'Elemento', value: elementoLabel },
+      { icon: 'calendar-outline', label: 'Safra/ano', value: safraMapa },
+      { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
+      { icon: 'resize-outline', label: 'Profundidade', value: profundidadeMapa },
+      { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
+    ].filter((item) => item.value);
+  };
+
+  const renderImagePreviewMetaChip = (item) => (
+    <View key={item.label} style={styles.imagePreviewMetaChip}>
+      <Ionicons name={item.icon as any} size={13} color={colors.primary} />
+      <View style={styles.imagePreviewMetaTextos}>
+        <Text style={styles.imagePreviewMetaLabel}>{item.label}</Text>
+        <Text style={styles.imagePreviewMetaValue} numberOfLines={1}>{item.value}</Text>
+      </View>
+    </View>
+  );
+
   // ──────────────────────────────────────────────
   // RENDER: Card de Mapa
   // ──────────────────────────────────────────────
@@ -1239,7 +1309,7 @@ export default function MapasScreen({ route, navigation }) {
         ? 'Mapa de fertilidade'
         : 'Arquivo técnico';
     const abrirMaterialLabel = isPngLocal
-      ? 'Visualização na próxima etapa'
+      ? 'Abrir anexo'
       : statusDownload.podeAbrir
       ? isAnexoFertilidade
         ? 'Abrir anexo'
@@ -1247,7 +1317,7 @@ export default function MapasScreen({ route, navigation }) {
       : 'Arquivo não disponível';
     const tipoMaterialLabel = isPngLocal ? 'Anexo local' : formatarTipoMaterial(mapa.tipo_material);
     const podeAcionarMapa = isPngLocal || statusDownload.podeAbrir;
-    const indicadorDisponivel = statusDownload.podeAbrir && !isPngLocal;
+    const indicadorDisponivel = isPngLocal || statusDownload.podeAbrir;
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
       || fazendaFiltroInfo;
@@ -1312,7 +1382,7 @@ export default function MapasScreen({ route, navigation }) {
           indicadorDisponivel ? styles.downloadIndicatorDisponivel : styles.downloadIndicatorIndisponivel,
         ]}>
           <Ionicons
-            name={indicadorDisponivel ? 'open-outline' : isPngLocal ? 'time-outline' : 'alert-circle-outline'}
+            name={indicadorDisponivel ? 'open-outline' : 'alert-circle-outline'}
             size={16}
             color={indicadorDisponivel ? colors.success : colors.warning}
           />
@@ -1324,11 +1394,9 @@ export default function MapasScreen({ route, navigation }) {
           </Text>
         </View>
       </View>
-      {(isPngLocal || !statusDownload.podeAbrir) && (
+      {!isPngLocal && !statusDownload.podeAbrir && (
         <Text style={styles.materialIndisponivelTexto}>
-          {isPngLocal
-            ? 'Visualização do PNG local será habilitada na próxima etapa.'
-            : 'Este material ainda não possui arquivo disponível para consulta.'}
+          Este material ainda não possui arquivo disponível para consulta.
         </Text>
       )}
     </TouchableOpacity>
@@ -1916,6 +1984,8 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   // RENDER PRINCIPAL
   // ──────────────────────────────────────────────
+  const imagePreviewMetaItems = buildImagePreviewMetaItems(imagePreview.mapa);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -2366,7 +2436,7 @@ export default function MapasScreen({ route, navigation }) {
         visible={imagePreview.visible}
         transparent
         animationType="fade"
-        onRequestClose={() => setImagePreview({ visible: false, mapa: null, source: null })}
+        onRequestClose={closeImagePreview}
       >
         <View style={styles.imagePreviewOverlay}>
           <View style={styles.imagePreviewDialog}>
@@ -2385,17 +2455,31 @@ export default function MapasScreen({ route, navigation }) {
                 ) : null}
               </View>
               <TouchableOpacity
-                onPress={() => setImagePreview({ visible: false, mapa: null, source: null })}
+                onPress={closeImagePreview}
                 style={styles.imagePreviewClose}
               >
                 <Ionicons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
+            {imagePreviewMetaItems.length > 0 ? (
+              <View style={styles.imagePreviewMetaGrid}>
+                {imagePreviewMetaItems.map(renderImagePreviewMetaChip)}
+              </View>
+            ) : null}
+            {imagePreview.loadError ? (
+              <View style={styles.imagePreviewErrorBox}>
+                <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
+                <Text style={styles.imagePreviewErrorText}>
+                  {imagePreview.loadError}
+                </Text>
+              </View>
+            ) : null}
             {imagePreview.source ? (
               <Image
                 source={imagePreview.source}
                 style={styles.imagePreviewImage}
                 resizeMode="contain"
+                onError={handleImagePreviewError}
               />
             ) : null}
           </View>
@@ -3295,6 +3379,43 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 2,
   },
+  imagePreviewMetaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    backgroundColor: colors.backgroundSoft,
+  },
+  imagePreviewMetaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.card,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    maxWidth: '100%',
+  },
+  imagePreviewMetaTextos: {
+    minWidth: 0,
+    maxWidth: 170,
+  },
+  imagePreviewMetaLabel: {
+    fontSize: typography.fontSmall,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold,
+  },
+  imagePreviewMetaValue: {
+    fontSize: typography.fontCaption,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+    marginTop: 1,
+  },
   imagePreviewClose: {
     width: 36,
     height: 36,
@@ -3309,6 +3430,26 @@ const styles = StyleSheet.create({
     maxWidth: SCREEN_WIDTH - spacing.md * 2,
     alignSelf: 'center',
     backgroundColor: colors.background,
+  },
+  imagePreviewErrorBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    margin: spacing.md,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.errorLight,
+    backgroundColor: colors.errorBgLight,
+  },
+  imagePreviewErrorText: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.error,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
   },
 
   // ── MAPAS LISTA ──
