@@ -50,6 +50,11 @@ import {
   getFazendaUiInfo,
 } from '../utils/fazendaUiCompat';
 import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
+import {
+  evaluatePngLocalMapaOpen,
+  isPngLocalMapa,
+  mergeMapasWithPngMapImports,
+} from '../utils/pngMapToMapaCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
   confirmGeoJsonPropertyImport,
@@ -95,8 +100,11 @@ const CATEGORIAS = [
   { id: 'fertilidade', nome: 'Fertilidade', icon: 'leaf-outline' },
   { id: 'correcao', nome: 'Correção', icon: 'construct-outline' },
   { id: 'indice_vegetacao', nome: 'Índice Vegetação', icon: 'analytics-outline' },
+  { id: 'produtividade', nome: 'Produtividade', icon: 'bar-chart-outline' },
   { id: 'panorama', nome: 'Panorama', icon: 'image-outline' },
   { id: 'plantio', nome: 'Plantio', icon: 'git-network-outline' },
+  { id: 'operacional', nome: 'Operacional', icon: 'briefcase-outline' },
+  { id: 'outro', nome: 'Material técnico', icon: 'document-text-outline' },
 ];
 
 const FILTRO_TODOS = 'todos';
@@ -352,16 +360,22 @@ export default function MapasScreen({ route, navigation }) {
         somenteDisponiveisDownload: user?.perfil === 'produtor',
       });
       const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
-      const [importsGeoJson, talhoesLayer, importsPng] = fazendaId && idsPermitidos.length === 1
-        ? await Promise.all([
-            listGeoJsonImportsForPropriedade(idsPermitidos[0]),
-            loadGeoJsonTalhoesLayer({
+      const pngImportsPromise = idsPermitidos.length > 0
+        ? Promise.all(idsPermitidos.map((id) => listActivePngMapImportsForPropriedade(id)))
+            .then((listas) => listas.flat())
+        : Promise.resolve([]);
+      const [importsGeoJson, talhoesLayer, importsPng] = await Promise.all([
+        fazendaId && idsPermitidos.length === 1
+          ? listGeoJsonImportsForPropriedade(idsPermitidos[0])
+          : Promise.resolve([]),
+        fazendaId && idsPermitidos.length === 1
+          ? loadGeoJsonTalhoesLayer({
               propriedade_id: idsPermitidos[0],
               fazenda_id: idsPermitidos[0],
-            }),
-            listActivePngMapImportsForPropriedade(idsPermitidos[0]),
-          ])
-        : [[], null, []];
+            })
+          : Promise.resolve(null),
+        pngImportsPromise,
+      ]);
 
       setMapas(mapasFiltrados);
       setLimites(limitesFiltrados);
@@ -428,11 +442,22 @@ export default function MapasScreen({ route, navigation }) {
   const fazendaFiltroId = !consultaPorFazenda && fazendaFiltroInfo
     ? fazendaFiltroInfo.id
     : null;
+  const propriedadeIdsPermitidos = useMemo(
+    () => (contextoConsulta.fazendasPermitidas || []).map(getFazendaId).filter(Boolean),
+    [contextoConsulta.fazendasPermitidas]
+  );
+  const mapasComPngLocal = useMemo(
+    () => mergeMapasWithPngMapImports(mapas, pngImports, {
+      propriedadeIds: propriedadeIdsPermitidos,
+      perfil: user?.perfil,
+    }),
+    [mapas, pngImports, propriedadeIdsPermitidos, user?.perfil]
+  );
 
   const mapasNoContexto = useMemo(() => {
-    if (!fazendaFiltroId) return mapas;
-    return mapas.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
-  }, [mapas, fazendaFiltroId]);
+    if (!fazendaFiltroId) return mapasComPngLocal;
+    return mapasComPngLocal.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
+  }, [mapasComPngLocal, fazendaFiltroId]);
 
   const limitesNoContexto = useMemo(() => {
     if (!fazendaFiltroId) return limites;
@@ -530,13 +555,19 @@ export default function MapasScreen({ route, navigation }) {
       const matchTalhao = talhaoFiltroMapas === FILTRO_TODOS || talhaoMapa === talhaoFiltroMapas;
       const textoBusca = [
         m.titulo,
+        m.descricao,
         m.subcategoria,
         m.elemento,
+        m.elemento_label,
+        m.categoria_label,
         profundidadeMapa,
         m.tipo_material,
+        m.tipo_anexo,
         talhaoMapa,
         safraMapa,
         m.observacoes,
+        m.arquivo_nome_original,
+        m.origem === 'arquivo_local' ? 'png local anexo local' : '',
         fazendaInfo?.fazendaNome,
         fazendaInfo?.titularNome,
       ].map(normalizarBusca).filter(Boolean).join(' ');
@@ -654,6 +685,11 @@ export default function MapasScreen({ route, navigation }) {
   // HANDLERS
   // ──────────────────────────────────────────────
   const handleDownload = (mapa) => {
+    if (isPngLocalMapa(mapa)) {
+      toast.showInfo(evaluatePngLocalMapaOpen(mapa).message);
+      return;
+    }
+
     const status = avaliarDownloadMapa(mapa);
 
     if (!status.podeAbrir) {
@@ -675,6 +711,12 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const confirmDownload = async () => {
+    if (isPngLocalMapa(downloadDialog.mapa)) {
+      toast.showInfo(evaluatePngLocalMapaOpen(downloadDialog.mapa).message);
+      setDownloadDialog({ visible: false, mapa: null, status: null });
+      return;
+    }
+
     const status = downloadDialog.status || avaliarDownloadMapa(downloadDialog.mapa);
     setDownloadDialog({ visible: false, mapa: null, status: null });
 
@@ -1006,7 +1048,7 @@ export default function MapasScreen({ route, navigation }) {
       }
 
       toast.showSuccess('Mapa PNG anexado à Propriedade.');
-      toast.showInfo('A listagem integrada dos anexos locais será consolidada na próxima etapa.');
+      toast.showInfo('PNG local também aparece na listagem principal de materiais.');
       if (result.warnings && result.warnings.length > 0) {
         toast.showWarning(result.warnings[0].message);
       }
@@ -1187,18 +1229,25 @@ export default function MapasScreen({ route, navigation }) {
     const statusDownload = avaliarDownloadMapa(mapa);
     const formatoArquivo = getFormatoArquivo(mapa);
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
+    const isPngLocal = isPngLocalMapa(mapa);
     const isAnexoFertilidade = mapa?.tipo_anexo === 'anexo_fertilidade';
-    const tipoArquivoLabel = isAnexoFertilidade
+    const tipoArquivoLabel = isPngLocal
+      ? 'PNG local'
+      : isAnexoFertilidade
       ? 'Anexo de fertilidade'
       : mapa?.categoria === 'fertilidade'
         ? 'Mapa de fertilidade'
         : 'Arquivo técnico';
-    const abrirMaterialLabel = statusDownload.podeAbrir
+    const abrirMaterialLabel = isPngLocal
+      ? 'Visualização na próxima etapa'
+      : statusDownload.podeAbrir
       ? isAnexoFertilidade
         ? 'Abrir anexo'
         : 'Abrir material'
       : 'Arquivo não disponível';
-    const tipoMaterialLabel = formatarTipoMaterial(mapa.tipo_material);
+    const tipoMaterialLabel = isPngLocal ? 'Anexo local' : formatarTipoMaterial(mapa.tipo_material);
+    const podeAcionarMapa = isPngLocal || statusDownload.podeAbrir;
+    const indicadorDisponivel = statusDownload.podeAbrir && !isPngLocal;
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
       || fazendaFiltroInfo;
@@ -1215,8 +1264,8 @@ export default function MapasScreen({ route, navigation }) {
       <TouchableOpacity 
         key={mapa.id} 
         style={styles.mapaCard}
-        onPress={statusDownload.podeAbrir ? () => handleDownload(mapa) : undefined}
-        activeOpacity={statusDownload.podeAbrir ? 0.7 : 1}
+        onPress={podeAcionarMapa ? () => handleDownload(mapa) : undefined}
+        activeOpacity={podeAcionarMapa ? 0.7 : 1}
       >
       <View style={styles.mapaHeader}>
         <View style={styles.mapaIconContainer}>
@@ -1260,24 +1309,26 @@ export default function MapasScreen({ route, navigation }) {
       <View style={styles.mapaFooter}>
         <View style={[
           styles.downloadIndicator,
-          statusDownload.podeAbrir ? styles.downloadIndicatorDisponivel : styles.downloadIndicatorIndisponivel,
+          indicadorDisponivel ? styles.downloadIndicatorDisponivel : styles.downloadIndicatorIndisponivel,
         ]}>
           <Ionicons
-            name={statusDownload.podeAbrir ? 'open-outline' : 'alert-circle-outline'}
+            name={indicadorDisponivel ? 'open-outline' : isPngLocal ? 'time-outline' : 'alert-circle-outline'}
             size={16}
-            color={statusDownload.podeAbrir ? colors.success : colors.warning}
+            color={indicadorDisponivel ? colors.success : colors.warning}
           />
           <Text style={[
             styles.downloadTexto,
-            !statusDownload.podeAbrir && styles.downloadTextoIndisponivel,
+            !indicadorDisponivel && styles.downloadTextoIndisponivel,
           ]}>
             {abrirMaterialLabel}
           </Text>
         </View>
       </View>
-      {!statusDownload.podeAbrir && (
+      {(isPngLocal || !statusDownload.podeAbrir) && (
         <Text style={styles.materialIndisponivelTexto}>
-          Este material ainda não possui arquivo disponível para consulta.
+          {isPngLocal
+            ? 'Visualização do PNG local será habilitada na próxima etapa.'
+            : 'Este material ainda não possui arquivo disponível para consulta.'}
         </Text>
       )}
     </TouchableOpacity>
@@ -1549,7 +1600,7 @@ export default function MapasScreen({ route, navigation }) {
         </TouchableOpacity>
 
         <Text style={styles.pngImportNextStep}>
-          A listagem integrada dos anexos locais será consolidada na próxima etapa.
+          PNGs locais ativos também aparecem na listagem principal de materiais.
         </Text>
       </View>
     );
@@ -1791,7 +1842,7 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         </View>
         <InfoBox
-          message="Consulte os mapas e arquivos técnicos já preparados para esta demonstração. Esta tela não envia, baixa ou publica arquivos."
+          message="Consulte os mapas e arquivos técnicos disponíveis, incluindo PNGs locais anexados neste aparelho. Esta tela não envia nem publica arquivos."
           style={styles.materiaisDescription}
         />
         {renderPngImportPanel()}
@@ -2257,7 +2308,7 @@ export default function MapasScreen({ route, navigation }) {
                     <View style={styles.pngVisibilityText}>
                       <Text style={styles.pngVisibilityTitle}>Visível para produtor</Text>
                       <Text style={styles.pngVisibilitySubtitle}>
-                        O anexo será marcado para consulta do Produtor quando a listagem integrada estiver disponível.
+                        O anexo será marcado para consulta do Produtor na listagem principal quando permitido.
                       </Text>
                     </View>
                   </TouchableOpacity>

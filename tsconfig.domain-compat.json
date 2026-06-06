@@ -30,6 +30,7 @@
     "src/utils/acessoControle.ts",
     "src/utils/geojsonImportValidator.ts",
     "src/utils/mapaDownloadCompat.ts",
+    "src/utils/pngMapToMapaCompat.ts",
     "src/utils/usuarioAdminCompat.ts",
     "src/utils/usuarioLocalAccessAdmin.ts",
     "src/utils/dashboardCompat.ts",

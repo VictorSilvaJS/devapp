@@ -25,15 +25,21 @@ botao `Anexar mapa PNG` com formulario minimo em `MapasScreen.tsx`, copiando o
 arquivo para storage interno e salvando somente metadados pequenos em
 `@tche:png-map-imports:v1`.
 
+Status em 2026-06-05: a Fase 16G.6 criou o helper puro
+`src/utils/pngMapToMapaCompat.ts` e integrou os PNGs locais ativos a listagem
+principal da `MapasScreen` por lista derivada em runtime, sem alterar
+`Mapa.list`.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
 
 Esta frente ja possui selecao, validacao leve, copia local, metadados locais e
-formulario minimo de anexo PNG por Propriedade. Ela ainda nao altera
-`Mapa.list`, nao integra os PNGs locais a listagem principal de materiais, nao
-abre preview de PNG local, nao muda os registros da Sela de Prata I e nao
-implementa backend, JWT, RBAC real, sincronizacao ou APK final.
+formulario minimo de anexo PNG por Propriedade. Os PNGs locais ativos agora
+aparecem na listagem principal de materiais por compatibilidade derivada em
+runtime. Ela ainda nao altera `Mapa.list`, nao abre preview de PNG local, nao
+muda os registros da Sela de Prata I e nao implementa backend, JWT, RBAC real,
+sincronizacao ou APK final.
 
 ## Base Documental Ativa
 
@@ -814,9 +820,118 @@ Validacoes da 16G.5:
   LF/CRLF;
 - `npx expo install --check` passou.
 
+## 16G.6 - PNG Local Na Listagem Principal De Materiais
+
+Status em 2026-06-05: os PNGs locais ativos passaram a aparecer na listagem
+principal de `Mapas/Arquivos tecnicos` da `MapasScreen`.
+
+Arquivos criados:
+
+- `src/utils/pngMapToMapaCompat.ts`
+- `tests/pngMapToMapaCompat.test.js`
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`
+- `tsconfig.domain-compat.json`
+- `package.json`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Helper de compatibilidade:
+
+- converte `PngMapImportMetadata` para um item compativel com os campos usados
+  pela listagem atual de mapas;
+- preserva `arquivo_uri_local` e o replica apenas como referencia de
+  `arquivo_url` para compatibilidade visual, sem transformar em asset;
+- nao usa `asset://`;
+- nao chama `require`;
+- nao importa tela, mock, assets, storage ou backend;
+- nao salva o item convertido em storage;
+- marca o item como `tipo_anexo: 'anexo_png_local'`, `origem:
+  'arquivo_local'` e `is_png_local: true`.
+
+Lista combinada:
+
+- `MapasScreen` continua carregando `Mapa.list()` normalmente;
+- os PNGs locais ativos sao carregados de `@tche:png-map-imports:v1` por
+  Propriedade permitida;
+- a lista principal passa a usar uma lista derivada em runtime:
+  `mapas mockados filtrados + PNGs locais convertidos`;
+- `Mapa.list` nao foi alterado;
+- `@tche:mock-mvp:v1` nao recebe dados de PNG local;
+- nao ha copia entre stores.
+
+Visibilidade por perfil:
+
+- Admin ve PNGs locais ativos das Propriedades acessiveis;
+- Colaborador ve PNGs locais ativos dentro do seu escopo efetivo;
+- Produtor ve apenas PNG local ativo da propria Propriedade quando
+  `visivel_para_produtor === true`;
+- Admin e Colaborador podem ver PNG ativo mesmo quando nao estiver visivel
+  para Produtor.
+
+Filtros e ordenacao:
+
+- PNG local participa de filtro por Propriedade, categoria, safra/ano, talhao
+  e busca;
+- escopo `propriedade` aparece como `Propriedade inteira`;
+- escopo `talhao` usa `talhao_nome`;
+- a busca considera titulo, descricao/observacoes, elemento, categoria, nome
+  original e o termo `PNG local`;
+- a ordenacao por recente usa `importado_em` como `data_criacao`;
+- a ordenacao por titulo usa o titulo convertido.
+
+Card/listagem:
+
+- o card mostra o indicador `PNG local`;
+- mostra `Anexo local` como detalhe operacional;
+- preserva titulo, categoria/elemento, Propriedade, safra/ano, talhao,
+  profundidade e nome original quando esses dados existem;
+- nao exibe a URI local crua como informacao principal.
+
+Acao de abrir:
+
+- PNG asset/mockado da Sela de Prata I continua abrindo pelo resolvedor
+  `resolveSelaPrataIFertilidadeAssetSource`;
+- PNG local ainda nao abre nesta fase;
+- ao tocar no card de PNG local, a tela mostra o aviso controlado
+  `Visualização do PNG local será habilitada na próxima etapa.`;
+- a abertura com `Image` usando `file://` fica reservada para 16G.7.
+
+Compatibilidade com Sela de Prata I:
+
+- os cinco PNGs mockados atuais nao foram alterados;
+- os assets atuais nao foram alterados;
+- `src/api/mock.ts` nao foi alterado;
+- se houver PNG local anexado a Sela de Prata I, ele aparece adicionalmente na
+  lista e nao substitui os PNGs mockados.
+
+Escopo preservado:
+
+- nao ha preview/abertura real de PNG local;
+- nao ha zoom;
+- nao ha substituicao/remocao de PNG pela tela;
+- nao ha alteracao em `Mapa.list`;
+- nao ha alteracao nos registros ou assets da Sela de Prata I;
+- nao ha backend, upload remoto, RBAC real, sincronizacao ou APK final.
+
+Validacoes da 16G.6:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapToMapaCompat.test.js` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF;
+- `npx expo install --check` passou.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.6: listagem dos PNGs locais junto aos anexos existentes.
 - 16G.7: visualizacao do PNG local.
 - 16G.8: substituicao/remocao segura.
 - 16G.9: smoke Android PNG.
@@ -845,7 +960,6 @@ Nao foi feito:
 - nova dependencia;
 - leitura de conteudo do PNG;
 - alteracao em `Mapa.list`;
-- integracao dos metadados PNG locais a listagem principal de materiais;
 - preview/abertura de PNG local;
 - substituicao/remocao de PNG pela tela;
 - alteracao nos registros da Sela de Prata I;

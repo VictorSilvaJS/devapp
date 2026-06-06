@@ -200,7 +200,8 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
 - `MapasScreen.tsx` usa nomenclatura visual padronizada para a area de materiais, incluindo `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`
 - `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
-- `MapasScreen.tsx` possui fluxo local demonstrativo para anexar PNG por Propriedade com botao `Anexar mapa PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; esses PNGs locais ainda nao entram na listagem principal de `Mapa.list`
+- `MapasScreen.tsx` possui fluxo local demonstrativo para anexar PNG por Propriedade com botao `Anexar mapa PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; os PNGs locais ativos aparecem na listagem principal por lista derivada em runtime, sem alterar `Mapa.list`
+- `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; a abertura real do PNG local ainda fica fora desta fase
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -225,7 +226,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade, elemento, safra, talhao/propriedade inteira e nome original em materiais/anexos quando esses campos estiverem preenchidos
-- anexo local demonstrativo de PNG por Propriedade para Admin e Colaborador dentro do escopo, com formulario minimo e resumo local na tela de mapas
+- anexo local demonstrativo de PNG por Propriedade para Admin e Colaborador dentro do escopo, com formulario minimo, resumo local e presenca na listagem principal de materiais
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 - base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
@@ -1799,6 +1800,68 @@ Validacoes executadas:
 
 - `npm run typecheck` passou;
 - `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF;
+- `npx expo install --check` passou.
+
+## Fase 16G.6 - PNG Local Na Listagem Principal
+
+Status em 2026-06-05: foi criado `src/utils/pngMapToMapaCompat.ts` e os PNGs
+locais ativos passaram a aparecer na listagem principal de
+`Mapas/Arquivos tecnicos` da `MapasScreen`.
+
+Arquivos principais:
+
+- `src/utils/pngMapToMapaCompat.ts`;
+- `tests/pngMapToMapaCompat.test.js`;
+- `src/screens/MapasScreen.tsx`;
+- `docs/project/fase-16g-anexos-png-local.md`.
+
+Comportamento atual:
+
+- `MapasScreen` continua carregando `Mapa.list()` como antes;
+- PNGs locais ativos sao carregados por Propriedade permitida a partir dos
+  metadados em `@tche:png-map-imports:v1`;
+- a listagem principal usa uma lista derivada em runtime combinando mapas
+  mockados filtrados com PNGs locais convertidos;
+- o helper de compatibilidade preenche os campos usados pela tela, como
+  titulo, categoria, subcategoria/elemento, `fazenda_id`, `propriedade_id`,
+  talhao, safra, profundidade, nome original, `arquivo_uri_local`, formato
+  `png`, `tipo_anexo: 'anexo_png_local'`, `origem: 'arquivo_local'` e
+  indicador `PNG local`;
+- Admin e Colaborador veem PNGs locais ativos das Propriedades dentro do seu
+  escopo;
+- Produtor ve apenas PNG local ativo da propria Propriedade quando
+  `visivel_para_produtor === true`;
+- os filtros existentes de Propriedade, categoria, safra/ano, talhao, busca e
+  ordenacao passam a considerar a lista combinada.
+
+Acao de abrir:
+
+- PNGs asset/mockados da Sela de Prata I continuam abrindo no modal atual;
+- PNG local ainda nao abre nesta fase;
+- ao tocar no card de PNG local, a tela mostra
+  `Visualização do PNG local será habilitada na próxima etapa.`;
+- a visualizacao com `Image` usando `file://` fica para 16G.7.
+
+Escopo preservado:
+
+- `Mapa.list` nao foi alterado;
+- `@tche:mock-mvp:v1` nao recebe dados do PNG local;
+- registros e assets da Sela de Prata I nao foram alterados;
+- nao ha preview real, zoom, substituicao ou remocao de PNG local pela tela;
+- nao ha backend, upload remoto, RBAC real, sincronizacao ou APK final.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapToMapaCompat.test.js` passou;
 - `node tests/pngMapPropertyImportWorkflow.test.js` passou;
 - `node tests/pngStorageService.test.js` passou;
 - `node tests/pngFilePickerService.test.js` passou;
