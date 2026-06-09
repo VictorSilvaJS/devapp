@@ -39,6 +39,13 @@ Propriedade em `src/services/PngMapPropertyManageWorkflow.ts` e integrou
 substituicao/remocao segura no modal de preview da `MapasScreen`, somente para
 Admin ou Colaborador autorizado.
 
+Status em 2026-06-09: a Fase 16G.9 executou revisao tecnica final dos anexos
+PNG locais e preparou o checklist de smoke Android fisico. As validacoes
+automatizadas passaram, mas o smoke fisico nao foi executado neste ambiente
+porque `adb` nao esta disponivel e nao ha aparelho Android acessivel pela
+sessao. Portanto, a 16G permanece tecnicamente revisada, mas ainda nao esta
+operacionalmente fechada.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
@@ -50,6 +57,7 @@ runtime e podem ser abertos, substituidos e removidos localmente pelo modal de
 preview quando o usuario tem permissao. Ela ainda nao altera `Mapa.list`, nao
 muda os registros da Sela de Prata I e nao implementa zoom avancado,
 download/compartilhamento, backend, JWT, RBAC real, sincronizacao ou APK final.
+O fechamento operacional ainda depende do smoke Android fisico da 16G.9.
 
 ## Base Documental Ativa
 
@@ -1095,10 +1103,129 @@ Validacoes da 16G.8:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## 16G.9 - Revisao Tecnica E Checklist Android PNG
+
+Status em 2026-06-09: revisao tecnica final executada e checklist de smoke
+Android fisico preparado. O smoke fisico nao foi executado neste ambiente:
+`adb` nao esta disponivel na sessao (`Get-Command adb` nao encontrou o
+comando) e nenhum aparelho Android fisico ficou acessivel para instalacao,
+abertura do app e validacao manual.
+
+Resultado operacional da 16G.9:
+
+- aprovado tecnicamente por revisao de codigo e validacoes automatizadas;
+- pendente operacionalmente ate executar o smoke Android fisico;
+- nenhum bug pequeno foi encontrado na revisao permitida;
+- nenhuma alteracao funcional foi aplicada nesta microfase;
+- a 16G nao deve ser considerada fechada operacionalmente enquanto o smoke
+  fisico nao passar.
+
+Arquivos revisados:
+
+- `src/services/PngMapPropertyManageWorkflow.ts`
+- `src/services/PngMapPropertyImportWorkflow.ts`
+- `src/services/PngStorageService.ts`
+- `src/services/PngFilePickerService.ts`
+- `src/services/PngMapImportService.ts`
+- `src/utils/pngMapToMapaCompat.ts`
+- `src/screens/MapasScreen.tsx`
+- `tests/pngMapPropertyManageWorkflow.test.js`
+- `tests/pngMapToMapaCompat.test.js`
+- `tests/pngMapPropertyImportWorkflow.test.js`
+- `tests/pngStorageService.test.js`
+- `tests/pngFilePickerService.test.js`
+- `tests/pngMapImportService.test.js`
+
+Checklist tecnico revisado:
+
+| Item | Resultado |
+|---|---|
+| `canManagePngMapItem` so libera PNG local real | Aprovado por revisao e teste |
+| Produtor nao ve `Substituir PNG` nem `Remover PNG local` | Aprovado por revisao e teste |
+| Admin ve acoes em Propriedade permitida | Aprovado por revisao e teste |
+| Colaborador so ve/usa acoes dentro do escopo efetivo | Aprovado por revisao e teste |
+| PNG asset/mockado da Sela abre normalmente e nao mostra gestao | Aprovado por revisao e teste |
+| PNG local anexado a Sela aparece adicionalmente | Aprovado por revisao e teste |
+| Substituicao cria novo ativo e marca anterior como `substituido` | Aprovado por revisao e teste |
+| Remocao marca metadado como `removido` e remove so URI segura | Aprovado por revisao e teste |
+| Arquivo ausente gera warning/mensagem controlada | Aprovado por revisao e teste |
+| URI fora do diretorio seguro nao abre e nao e removida | Aprovado por revisao e teste |
+| URI local crua nao aparece como texto principal da UI | Aprovado por revisao e teste |
+
+Checklist Android fisico:
+
+| Item | Resultado em 2026-06-09 |
+|---|---|
+| 1. Instalar/abrir app no Android fisico | Pendente: sem aparelho/`adb` |
+| 2. Login como Admin Demonstracao | Pendente: sem aparelho/`adb` |
+| 3. Abrir Propriedade especifica | Pendente: sem aparelho/`adb` |
+| 4. Entrar em Mapas/Arquivos tecnicos | Pendente: sem aparelho/`adb` |
+| 5. Confirmar cinco PNGs demonstrativos da Sela | Pendente: sem aparelho/`adb` |
+| 6. Confirmar ausencia de gestao nos PNGs asset/mockados | Pendente: sem aparelho/`adb` |
+| 7. Usar `Anexar mapa PNG` | Pendente: sem aparelho/`adb` |
+| 8. Selecionar `.png` valido pelo DocumentPicker | Pendente: sem aparelho/`adb` |
+| 9. Preencher formulario minimo e salvar | Pendente: sem aparelho/`adb` |
+| 10. Confirmar PNG local na listagem com indicador | Pendente: sem aparelho/`adb` |
+| 11. Abrir PNG local no modal com `Image` | Pendente: sem aparelho/`adb` |
+| 12. Fechar e reabrir o app | Pendente: sem aparelho/`adb` |
+| 13. Confirmar persistencia apos reabertura | Pendente: sem aparelho/`adb` |
+| 14. Usar `Substituir PNG` como Admin | Pendente: sem aparelho/`adb` |
+| 15. Selecionar outro `.png` valido | Pendente: sem aparelho/`adb` |
+| 16. Confirmar novo PNG, recarga e tela sem travar | Pendente: sem aparelho/`adb` |
+| 17. Usar `Remover PNG local` | Pendente: sem aparelho/`adb` |
+| 18. Confirmar saida da listagem ativa | Pendente: sem aparelho/`adb` |
+| 19. Reabrir app e confirmar que segue removido | Pendente: sem aparelho/`adb` |
+| 20. Confirmar PNGs demonstrativos da Sela intactos | Pendente: sem aparelho/`adb` |
+| 21. Login como Produtor Demonstracao | Pendente: sem aparelho/`adb` |
+| 22. Confirmar Produtor sem acoes de gestao | Pendente: sem aparelho/`adb` |
+| 23. Confirmar visibilidade do PNG local para Produtor | Pendente: sem aparelho/`adb` |
+| 24. Login como Colaborador de Campo | Pendente: sem aparelho/`adb` |
+| 25. Confirmar acoes so dentro do escopo efetivo | Pendente: sem aparelho/`adb` |
+| 26. Testar cancelamento do picker | Pendente: sem aparelho/`adb` |
+| 27. Testar selecao de arquivo nao PNG | Pendente: sem aparelho/`adb` |
+| 28. Testar arquivo removido manualmente/URI quebrada | Pendente: sem aparelho/`adb` |
+
+Bugs e correcoes:
+
+- Nenhum bug pequeno foi encontrado na revisao tecnica da 16G.9.
+- Nenhuma correcao funcional foi aplicada.
+
+Compatibilidade preservada:
+
+- `Mapa.list` nao foi alterado;
+- `src/api/mock.ts` nao foi alterado;
+- `@tche:mock-mvp:v1` nao foi alterado;
+- assets e registros mockados da Sela de Prata I nao foram alterados;
+- nenhum fluxo salva base64/binario/conteudo de PNG em `AsyncStorage`;
+- nenhum fluxo le bytes/string/conteudo do PNG em JS;
+- `expo-image-picker` nao foi usado;
+- backend, JWT, RBAC real, sincronizacao, upload remoto,
+  download/compartilhamento, zoom avancado e APK final continuam fora do
+  escopo.
+
+Validacoes da 16G.9:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyManageWorkflow.test.js` passou;
+- `node tests/pngMapToMapaCompat.test.js` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou com acesso externo aprovado apos falha de
+  rede/sandbox na primeira tentativa;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.9: smoke Android PNG, incluindo abrir, substituir e remover arquivo
-  local, alem de confirmar que os PNGs asset/mockados da Sela seguem intactos.
+- Executar o smoke Android fisico da 16G.9 quando houver aparelho disponivel,
+  incluindo abrir, anexar, substituir e remover PNG local, alem de confirmar
+  que os PNGs asset/mockados da Sela seguem intactos.
+- So considerar a 16G operacionalmente fechada depois de registrar o aparelho,
+  ambiente e resultado aprovado do checklist fisico.
 
 ## Riscos Residuais
 
@@ -1116,6 +1243,9 @@ Validacoes da 16G.8:
   `disponivel_download`.
 - Sem backend/RBAC real, a administracao de anexos PNG sera local/mockada e
   deve ser comunicada como demonstrativa.
+- A 16G.9 deixou o checklist preparado, mas a ausencia de aparelho Android
+  fisico/`adb` nesta sessao impede aprovar o comportamento operacional em
+  campo.
 
 ## Escopo Preservado Nesta Fase
 
@@ -1129,6 +1259,8 @@ Nao foi feito:
 - download/compartilhamento;
 - alteracao nos registros da Sela de Prata I;
 - alteracao nos PNGs da Sela;
+- smoke Android fisico aprovado;
+- fechamento operacional da 16G;
 - backend;
 - RBAC;
 - sincronizacao;

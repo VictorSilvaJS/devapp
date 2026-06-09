@@ -1964,6 +1964,43 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16G.9 - Revisao Tecnica E Checklist Android PNG
+
+Status em 2026-06-09: a 16G.9 executou revisao tecnica final da frente PNG
+local e preparou o checklist de smoke Android fisico. O smoke fisico nao foi
+executado neste ambiente porque `adb` nao esta disponivel e nao ha aparelho
+Android acessivel pela sessao.
+
+Resultado:
+
+- frente PNG aprovada tecnicamente por revisao de codigo e validacoes
+  automatizadas;
+- status operacional da frente PNG permanece pendente ate smoke Android fisico
+  aprovado;
+- nenhum bug pequeno foi encontrado e nenhuma correcao funcional foi aplicada;
+- `Mapa.list`, `src/api/mock.ts`, `@tche:mock-mvp:v1` e os assets da Sela de
+  Prata I permanecem sem alteracao;
+- backend, JWT, RBAC real, sincronizacao, upload remoto,
+  download/compartilhamento, zoom avancado e APK final seguem fora do escopo;
+- a 16F GeoJSON continua dependendo do proprio smoke Android fisico e nao deve
+  ser considerada fechada por causa da revisao da 16G.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyManageWorkflow.test.js` passou;
+- `node tests/pngMapToMapaCompat.test.js` passou;
+- `node tests/pngMapPropertyImportWorkflow.test.js` passou;
+- `node tests/pngStorageService.test.js` passou;
+- `node tests/pngFilePickerService.test.js` passou;
+- `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou com acesso externo aprovado apos falha de
+  rede/sandbox na primeira tentativa;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
