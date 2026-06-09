@@ -34,6 +34,11 @@ Status em 2026-06-06: a Fase 16G.7 habilitou a visualizacao de PNG local em
 modal na `MapasScreen`, usando `Image` com source `{ uri: arquivo_uri_local }`
 apos validacao de URI segura e existencia do arquivo no storage interno.
 
+Status em 2026-06-06: a Fase 16G.8 criou o workflow local de gestao de PNG por
+Propriedade em `src/services/PngMapPropertyManageWorkflow.ts` e integrou
+substituicao/remocao segura no modal de preview da `MapasScreen`, somente para
+Admin ou Colaborador autorizado.
+
 A frente GeoJSON da Fase 16F continua tecnicamente pronta, mas o smoke Android
 fisico permanece pendente. A abertura da 16G ocorre em paralelo por necessidade
 operacional e nao fecha operacionalmente a 16F.
@@ -41,8 +46,9 @@ operacional e nao fecha operacionalmente a 16F.
 Esta frente ja possui selecao, validacao leve, copia local, metadados locais e
 formulario minimo de anexo PNG por Propriedade. Os PNGs locais ativos agora
 aparecem na listagem principal de materiais por compatibilidade derivada em
-runtime e podem ser abertos em modal local. Ela ainda nao altera `Mapa.list`,
-nao muda os registros da Sela de Prata I e nao implementa zoom avancado,
+runtime e podem ser abertos, substituidos e removidos localmente pelo modal de
+preview quando o usuario tem permissao. Ela ainda nao altera `Mapa.list`, nao
+muda os registros da Sela de Prata I e nao implementa zoom avancado,
 download/compartilhamento, backend, JWT, RBAC real, sincronizacao ou APK final.
 
 ## Base Documental Ativa
@@ -1009,10 +1015,90 @@ Validacoes da 16G.7:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## 16G.8 - Substituicao E Remocao Segura De PNG Local
+
+Status em 2026-06-06: PNG local anexado, ativo e listado na `MapasScreen`
+passou a poder ser substituido ou removido localmente pelo modal de preview,
+somente por Admin ou Colaborador dentro do escopo da Propriedade.
+
+Arquivos criados:
+
+- `src/services/PngMapPropertyManageWorkflow.ts`
+- `tests/pngMapPropertyManageWorkflow.test.js`
+
+Arquivos alterados:
+
+- `src/screens/MapasScreen.tsx`
+- `tsconfig.domain-compat.json`
+- `package.json`
+- `docs/project/fase-16g-anexos-png-local.md`
+- `docs/project/estado-atual.md`
+
+Workflow de gestao:
+
+- `canManagePngMapForPropriedade` reutiliza a regra da 16G.5: Admin pode
+  gerir PNG local e Colaborador pode gerir apenas dentro do escopo territorial
+  efetivo;
+- `canManagePngMapItem` exige permissao de gestao e item identificado como
+  PNG local, impedindo acao sobre asset/mock da Sela de Prata I;
+- `replacePngMapForPropriedade` seleciona novo PNG pelo seletor validado,
+  copia para storage interno controlado, cria novo metadado ativo preservando
+  titulo/categoria/elemento/safra/ano/profundidade/escopo/talhao/visibilidade,
+  marca o metadado anterior como `substituido` e tenta apagar o arquivo local
+  anterior;
+- `removePngMapForPropriedade` marca o metadado ativo como `removido` e tenta
+  apagar o arquivo fisico apenas quando a URI pertence ao diretorio seguro de
+  PNG da 16G.4;
+- falhas de copia, criacao de metadado ou marcacao do metadado anterior mantem
+  o PNG anterior ativo ou tentam rollback do novo arquivo/metadado;
+- arquivo anterior ausente ou falha de remocao fisica vira warning controlado,
+  sem apagar a Propriedade nem outros anexos.
+
+Integracao na `MapasScreen`:
+
+- as acoes aparecem dentro do modal de preview apenas para PNG local
+  gerenciavel;
+- Produtor nao ve as acoes de gestao;
+- asset/mock da Sela de Prata I continua abrindo normalmente, sem botoes de
+  substituicao/remocao;
+- o dialogo de remocao informa que a Propriedade nao sera apagada, que outros
+  mapas/anexos nao serao apagados e que PNGs demonstrativos da Sela de Prata I
+  nao serao afetados;
+- apos substituir ou remover, a tela recarrega os PNGs locais ativos da
+  Propriedade e fecha o preview atual.
+
+Compatibilidade preservada:
+
+- `Mapa.list` nao foi alterado;
+- `src/api/mock.ts` nao foi alterado;
+- `@tche:mock-mvp:v1` nao recebe PNG local nem metadado local;
+- os registros e assets PNG da Sela de Prata I nao foram alterados;
+- um PNG local anexado a Sela de Prata I pode ser gerido como PNG local, mas
+  os PNGs asset/mockados demonstrativos permanecem intactos e nao sao
+  substituidos.
+
+Escopo preservado:
+
+- nao ha zoom/pinch avancado;
+- nao ha edicao livre de metadados;
+- nao ha download/compartilhamento;
+- nao ha backend, upload remoto, RBAC real, sincronizacao, GeoJSON ou APK final;
+- nao houve alteracao em `Mapa.list`, `src/api/mock.ts` ou nos assets da Sela.
+
+Validacoes da 16G.8:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyManageWorkflow.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
 ## Proximas Microfases Recomendadas
 
-- 16G.8: substituicao/remocao segura.
-- 16G.9: smoke Android PNG.
+- 16G.9: smoke Android PNG, incluindo abrir, substituir e remover arquivo
+  local, alem de confirmar que os PNGs asset/mockados da Sela seguem intactos.
 
 ## Riscos Residuais
 
@@ -1020,8 +1106,9 @@ Validacoes da 16G.7:
   pendencia.
 - `Image` com `file://` precisa ser validado no Android fisico antes de
   considerar a visualizacao local operacionalmente fechada em campo.
-- o smoke Android ainda deve confirmar reabertura do app, arquivo removido
-  manualmente e continuidade dos PNGs asset/mockados da Sela.
+- o smoke Android ainda deve confirmar reabertura do app, substituicao,
+  remocao, arquivo removido manualmente e continuidade dos PNGs asset/mockados
+  da Sela.
 - `categoria` em `Mapa` e ampla, enquanto os elementos de fertilidade ficam em
   `elemento`; misturar esses eixos pode quebrar filtros.
 - `visivel_para_produtor` existe no mock, mas a regra efetiva atual de produtor
@@ -1040,7 +1127,6 @@ Nao foi feito:
 - alteracao em `Mapa.list`;
 - zoom avancado;
 - download/compartilhamento;
-- substituicao/remocao de PNG pela tela;
 - alteracao nos registros da Sela de Prata I;
 - alteracao nos PNGs da Sela;
 - backend;

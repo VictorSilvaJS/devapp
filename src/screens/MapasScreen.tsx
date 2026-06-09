@@ -89,6 +89,11 @@ import type {
   PngMapPropertyImportFormInput,
   PngMapPropertyImportPreview,
 } from '../services/PngMapPropertyImportWorkflow';
+import {
+  canManagePngMapItem,
+  removePngMapForPropriedade,
+  replacePngMapForPropriedade,
+} from '../services/PngMapPropertyManageWorkflow';
 import { PngStorageService } from '../services/PngStorageService';
 import type { PngMapImportMetadata } from '../types/anexoPngLocal';
 
@@ -113,6 +118,7 @@ const FILTRO_TODOS = 'todos';
 
 type GeoJsonImportMode = 'attach' | 'replace';
 type GeoJsonManageDialogAction = 'replace' | 'remove' | null;
+type PngManageDialogAction = 'replace' | 'remove' | null;
 
 const ORDENACOES_MATERIAIS = [
   { key: 'recente', label: 'Recente', icon: 'time-outline' },
@@ -279,6 +285,15 @@ export default function MapasScreen({ route, navigation }) {
   const [geoJsonManageDialog, setGeoJsonManageDialog] = useState<{
     visible: boolean;
     action: GeoJsonManageDialogAction;
+    loading: boolean;
+  }>({
+    visible: false,
+    action: null,
+    loading: false,
+  });
+  const [pngManageDialog, setPngManageDialog] = useState<{
+    visible: boolean;
+    action: PngManageDialogAction;
     loading: boolean;
   }>({
     visible: false,
@@ -712,6 +727,17 @@ export default function MapasScreen({ route, navigation }) {
     toast.showError(message);
   };
 
+  const resolvePngMetadataFromMapa = useCallback((mapa: any): PngMapImportMetadata | null => {
+    const importId = typeof mapa?.png_map_import_id === 'string' && mapa.png_map_import_id.trim()
+      ? mapa.png_map_import_id.trim()
+      : typeof mapa?.id === 'string' && mapa.id.startsWith('png_local:')
+        ? mapa.id.slice('png_local:'.length)
+        : '';
+
+    if (!importId) return null;
+    return pngImports.find((item) => item.id === importId) ?? null;
+  }, [pngImports]);
+
   const handleDownload = async (mapa) => {
     if (isPngLocalMapa(mapa)) {
       try {
@@ -980,6 +1006,132 @@ export default function MapasScreen({ route, navigation }) {
       toast.showError('Não foi possível concluir a remoção do GeoJSON local.');
     } finally {
       setGeoJsonManageDialog({
+        visible: false,
+        action: null,
+        loading: false,
+      });
+    }
+  };
+
+  const handleSolicitarSubstituirPng = () => {
+    if (
+      !contextoConsulta.fazenda
+      || !canManagePngMapItem(user, contextoConsulta.fazenda, imagePreview.mapa)
+    ) {
+      toast.showInfo('Abra um PNG local de uma Propriedade dentro do seu escopo para substituir.');
+      return;
+    }
+
+    setPngManageDialog({
+      visible: true,
+      action: 'replace',
+      loading: false,
+    });
+  };
+
+  const handleSolicitarRemoverPng = () => {
+    if (
+      !contextoConsulta.fazenda
+      || !canManagePngMapItem(user, contextoConsulta.fazenda, imagePreview.mapa)
+    ) {
+      toast.showInfo('Abra um PNG local de uma Propriedade dentro do seu escopo para remover.');
+      return;
+    }
+
+    setPngManageDialog({
+      visible: true,
+      action: 'remove',
+      loading: false,
+    });
+  };
+
+  const handleCancelarPngManageDialog = () => {
+    if (pngManageDialog.loading) return;
+    setPngManageDialog({
+      visible: false,
+      action: null,
+      loading: false,
+    });
+  };
+
+  const handleConfirmarPngManageDialog = async () => {
+    const action = pngManageDialog.action;
+    const mapaSelecionado = imagePreview.mapa;
+    const propriedade = contextoConsulta.fazenda;
+
+    if (
+      !action
+      || !propriedade
+      || !canManagePngMapItem(user, propriedade, mapaSelecionado)
+    ) {
+      handleCancelarPngManageDialog();
+      return;
+    }
+
+    const metadata = resolvePngMetadataFromMapa(mapaSelecionado);
+
+    setPngManageDialog({
+      visible: action === 'remove',
+      action,
+      loading: true,
+    });
+
+    try {
+      const result = action === 'replace'
+        ? await replacePngMapForPropriedade({
+            user,
+            propriedade,
+            mapa: mapaSelecionado,
+            metadata,
+          })
+        : await removePngMapForPropriedade({
+            user,
+            propriedade,
+            mapa: mapaSelecionado,
+            metadata,
+          });
+
+      if (!result.ok) {
+        if (result.error?.code !== 'PICKER_CANCELLED') {
+          toast.showError(result.error?.message || 'Não foi possível gerenciar o PNG local.');
+        }
+        return;
+      }
+
+      const resultado = result as any;
+      if (Array.isArray(resultado.imports)) {
+        setPngImports(resultado.imports);
+      }
+
+      const metadataContexto = resultado.metadata
+        || resultado.activeMetadata
+        || resultado.previousMetadata
+        || metadata;
+      const propriedadeId = metadataContexto?.propriedade_id || getFazendaId(propriedade);
+
+      if (propriedadeId) {
+        try {
+          await recarregarPngLocal(propriedadeId);
+        } catch {
+          toast.showWarning('A ação foi concluída, mas não foi possível recarregar o resumo local agora.');
+        }
+      } else {
+        await loadDados();
+      }
+
+      closeImagePreview();
+      toast.showSuccess(action === 'replace' ? 'PNG local substituído.' : 'PNG local removido.');
+      if (resultado.warnings?.length > 0) {
+        toast.showWarning(resultado.warnings[0].message);
+      }
+    } catch {
+      toast.showError(
+        action === 'replace'
+          ? 'Não foi possível concluir a substituição do PNG local.'
+          : 'Não foi possível concluir a remoção do PNG local.'
+      );
+    } finally {
+      setPngManageDialog({
         visible: false,
         action: null,
         loading: false,
@@ -1985,6 +2137,9 @@ export default function MapasScreen({ route, navigation }) {
   // RENDER PRINCIPAL
   // ──────────────────────────────────────────────
   const imagePreviewMetaItems = buildImagePreviewMetaItems(imagePreview.mapa);
+  const canManageImagePreviewPng = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canManagePngMapItem(user, contextoConsulta.fazenda, imagePreview.mapa);
 
   if (loading) {
     return (
@@ -2078,6 +2233,29 @@ export default function MapasScreen({ route, navigation }) {
         loading={geoJsonManageDialog.loading}
         onConfirm={handleConfirmarGeoJsonManageDialog}
         onCancel={handleCancelarGeoJsonManageDialog}
+      />
+
+      <ConfirmDialog
+        visible={pngManageDialog.visible}
+        title={
+          pngManageDialog.action === 'remove'
+            ? 'Remover PNG local'
+            : 'Substituir PNG local'
+        }
+        message={
+          pngManageDialog.action === 'remove'
+            ? [
+                'Deseja remover este PNG local? O arquivo local será removido deste aparelho.',
+                'A Propriedade não será apagada. Outros mapas/anexos não serão apagados. PNGs demonstrativos da Sela de Prata I não serão afetados.',
+              ].join('\n\n')
+            : 'O novo arquivo substituirá este PNG local. Os metadados principais serão preservados.'
+        }
+        type={pngManageDialog.action === 'remove' ? 'danger' : 'warning'}
+        confirmText={pngManageDialog.action === 'remove' ? 'Remover' : 'Continuar'}
+        cancelText="Cancelar"
+        loading={pngManageDialog.loading}
+        onConfirm={handleConfirmarPngManageDialog}
+        onCancel={handleCancelarPngManageDialog}
       />
 
       <Modal
@@ -2464,6 +2642,40 @@ export default function MapasScreen({ route, navigation }) {
             {imagePreviewMetaItems.length > 0 ? (
               <View style={styles.imagePreviewMetaGrid}>
                 {imagePreviewMetaItems.map(renderImagePreviewMetaChip)}
+              </View>
+            ) : null}
+            {canManageImagePreviewPng ? (
+              <View style={styles.imagePreviewManagePanel}>
+                <TouchableOpacity
+                  style={[
+                    styles.geoJsonManageButton,
+                    styles.geoJsonManageButtonSecondary,
+                    pngManageDialog.loading && styles.geoJsonImportButtonDisabled,
+                  ]}
+                  onPress={handleSolicitarSubstituirPng}
+                  activeOpacity={0.78}
+                  disabled={pngManageDialog.loading}
+                >
+                  <Ionicons name="swap-horizontal-outline" size={17} color={colors.primary} />
+                  <Text style={styles.geoJsonManageButtonTextSecondary}>
+                    Substituir PNG
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.geoJsonManageButton,
+                    styles.geoJsonManageButtonDanger,
+                    pngManageDialog.loading && styles.geoJsonImportButtonDisabled,
+                  ]}
+                  onPress={handleSolicitarRemoverPng}
+                  activeOpacity={0.78}
+                  disabled={pngManageDialog.loading}
+                >
+                  <Ionicons name="trash-outline" size={17} color={colors.error} />
+                  <Text style={styles.geoJsonManageButtonTextDanger}>
+                    Remover PNG local
+                  </Text>
+                </TouchableOpacity>
               </View>
             ) : null}
             {imagePreview.loadError ? (
@@ -3388,6 +3600,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     backgroundColor: colors.backgroundSoft,
+  },
+  imagePreviewManagePanel: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    backgroundColor: colors.card,
   },
   imagePreviewMetaChip: {
     flexDirection: 'row',

@@ -200,8 +200,8 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
 - `MapasScreen.tsx` usa nomenclatura visual padronizada para a area de materiais, incluindo `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`
 - `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
-- `MapasScreen.tsx` possui fluxo local demonstrativo para anexar PNG por Propriedade com botao `Anexar mapa PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; os PNGs locais ativos aparecem na listagem principal por lista derivada em runtime, sem alterar `Mapa.list`
-- `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; PNG local ativo agora abre em modal com `Image` e source `{ uri: arquivo_uri_local }` apos validacao de URI segura e existencia no storage interno
+- `MapasScreen.tsx` possui fluxo local demonstrativo para anexar e gerir PNG por Propriedade com botao `Anexar mapa PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; os PNGs locais ativos aparecem na listagem principal por lista derivada em runtime, sem alterar `Mapa.list`
+- `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; PNG local ativo agora abre em modal com `Image` e source `{ uri: arquivo_uri_local }` apos validacao de URI segura e existencia no storage interno, e pode ser substituido/removido localmente por Admin ou Colaborador autorizado
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -226,7 +226,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade, elemento, safra, talhao/propriedade inteira e nome original em materiais/anexos quando esses campos estiverem preenchidos
-- anexo local demonstrativo de PNG por Propriedade para Admin e Colaborador dentro do escopo, com formulario minimo, resumo local e presenca na listagem principal de materiais
+- anexo local demonstrativo de PNG por Propriedade para Admin e Colaborador dentro do escopo, com formulario minimo, resumo local, presenca na listagem principal de materiais e substituicao/remocao local segura
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 - base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
@@ -309,7 +309,8 @@ usam `Propriedade`; rotas de stack usam `NovaPropriedade` e
 - integridade referencial real entre usuarios, propriedades, titulares e vinculos
 - upload real de arquivos
 - cadastro administrativo real de PNGs ou outros anexos tecnicos
-- salvamento persistente de anexos em banco, storage local gerenciado ou storage remoto
+- salvamento persistente de anexos em banco ou storage remoto; para PNG existe
+  apenas storage local demonstrativo do MVP
 - API/backend para anexos de mapas
 - importacao automatica dos arquivos da pasta de origem
 - importacao automatica do Drive
@@ -1914,6 +1915,50 @@ Validacoes executadas:
 - `node tests/pngStorageService.test.js` passou;
 - `node tests/pngFilePickerService.test.js` passou;
 - `node tests/pngMapImportService.test.js` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou;
+- `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
+  LF/CRLF.
+
+## Fase 16G.8 - Substituicao E Remocao Segura De PNG Local
+
+Status em 2026-06-06: foi criado
+`src/services/PngMapPropertyManageWorkflow.ts` para substituir e remover PNG
+local por Propriedade com rollback e remocao fisica segura dentro do storage
+controlado da 16G.4.
+
+Implementacao:
+
+- `canManagePngMapItem` libera gestao somente para PNG local e para Admin ou
+  Colaborador dentro do escopo da Propriedade;
+- Produtor nao recebe acao de substituir/remover PNG local;
+- `replacePngMapForPropriedade` valida novo PNG pelo seletor da 16G.3, copia
+  para storage interno, cria novo metadado ativo preservando os metadados
+  principais, marca o anterior como `substituido` e tenta apagar o arquivo
+  local anterior;
+- `removePngMapForPropriedade` marca o metadado ativo como `removido` e tenta
+  apagar apenas arquivo dentro do diretorio seguro de PNG local;
+- `MapasScreen.tsx` mostra `Substituir PNG` e `Remover PNG local` no modal de
+  preview apenas quando o item e gerenciavel;
+- o dialogo de remocao informa que a Propriedade, outros mapas/anexos e PNGs
+  demonstrativos da Sela de Prata I nao serao apagados.
+
+Preservado:
+
+- `Mapa.list`, `src/api/mock.ts`, `@tche:mock-mvp:v1` e os assets da Sela de
+  Prata I nao foram alterados;
+- PNG asset/mockado da Sela continua abrindo pelo resolvedor de asset e nao
+  recebe botoes de gestao;
+- PNG local anexado a Sela pode ser gerido como PNG local, sem substituir os
+  cinco PNGs demonstrativos embutidos;
+- nao ha zoom avancado, edicao livre de metadados, download,
+  compartilhamento, backend, RBAC real, sincronizacao, GeoJSON ou APK final.
+
+Validacoes executadas:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `node tests/pngMapPropertyManageWorkflow.test.js` passou;
 - `npm run test:domain-compat` passou;
 - `npx expo install --check` passou;
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de

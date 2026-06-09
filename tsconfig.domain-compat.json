@@ -52,6 +52,7 @@
     "src/services/PngMapImportService.ts",
     "src/services/PngFilePickerService.ts",
     "src/services/PngStorageService.ts",
-    "src/services/PngMapPropertyImportWorkflow.ts"
+    "src/services/PngMapPropertyImportWorkflow.ts",
+    "src/services/PngMapPropertyManageWorkflow.ts"
   ]
 }
