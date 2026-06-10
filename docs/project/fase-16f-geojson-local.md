@@ -2136,6 +2136,38 @@ Recomendacao de fechamento:
 - manter a Fase 16F aberta operacionalmente ate o smoke fisico passar;
 - nao iniciar 16G/PNG antes de registrar o resultado do smoke Android.
 
+### 16H.1 - Tentativa De Smoke Android Fisico Integrado
+
+Status em 2026-06-10: a rodada integrada 16H.1 tentou validar GeoJSON local,
+PNG local e regressao minima em Android fisico. O smoke GeoJSON nao foi
+executado porque nenhum aparelho Android fisico apareceu conectado/autorizado
+no `adb`.
+
+Resultado de ambiente:
+
+- `adb devices` falhou porque `adb` nao esta no `PATH`;
+- o binario direto
+  `C:\Users\e_vsjesus\AppData\Local\Android\Sdk\platform-tools\adb.exe`
+  funcionou, mas listou apenas `emulator-5554`;
+- packageId confirmado: `com.tcheagro.mobile`;
+- havia APK release existente, mas ele nao foi instalado/aberto em aparelho
+  fisico nesta rodada.
+
+Resultado operacional:
+
+- nenhum GeoJSON foi selecionado via DocumentPicker;
+- nenhum anexo, substituicao, remocao, reabertura ou fallback foi validado em
+  aparelho fisico;
+- a 16G ja foi iniciada posteriormente por necessidade operacional, mas isso
+  nao fecha nem aprova a 16F;
+- nenhum bug pequeno foi comprovado durante smoke;
+- nenhuma correcao funcional foi aplicada;
+- 16F permanece aberta operacionalmente.
+
+Registro detalhado:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+
 ## Testes Recomendados
 
 Na 16F.1 nao foi adicionado teste, porque o pedido era

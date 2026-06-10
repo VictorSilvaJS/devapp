@@ -2001,6 +2001,44 @@ Validacoes executadas:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## Fase 16H.1 - Smoke Android Fisico Integrado
+
+Status em 2026-06-10: foi tentada a rodada 16H.1 para smoke Android fisico
+integrado de GeoJSON local, PNG local e regressao minima do APK demonstravel.
+O smoke operacional nao foi executado porque nenhum aparelho Android fisico
+apareceu conectado/autorizado no `adb`.
+
+Ambiente verificado:
+
+- `adb devices` falhou porque `adb` nao esta no `PATH`;
+- o binario local
+  `C:\Users\e_vsjesus\AppData\Local\Android\Sdk\platform-tools\adb.exe`
+  funcionou por caminho absoluto;
+- `adb devices -l` pelo binario direto listou apenas `emulator-5554`,
+  `product:sdk_gtablet_x86_64`, `model:Pixel_Tablet`;
+- nenhum Android fisico foi detectado;
+- packageId confirmado em `app.json` e `android/app/build.gradle`:
+  `com.tcheagro.mobile`;
+- APKs release existentes foram encontrados em `dist/` e
+  `android/app/build/outputs/apk/release/`, mas nenhum foi instalado/aberto em
+  aparelho fisico nesta rodada.
+
+Resultado:
+
+- smoke base do app bloqueado;
+- smoke GeoJSON local bloqueado;
+- smoke PNG local bloqueado;
+- validacao por Admin, Colaborador e Produtor bloqueada;
+- persistencia local por reabertura/force-stop bloqueada;
+- nenhum bug pequeno foi comprovado em aparelho;
+- nenhuma correcao funcional foi aplicada;
+- 16F permanece tecnicamente pronta, mas operacionalmente aberta;
+- 16G permanece tecnicamente revisada, mas operacionalmente aberta.
+
+Documento principal da rodada:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

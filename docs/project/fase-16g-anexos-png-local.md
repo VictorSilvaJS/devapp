@@ -1219,8 +1219,41 @@ Validacoes da 16G.9:
 - `git diff --check` passou; no Windows, pode emitir apenas avisos normais de
   LF/CRLF.
 
+## 16H.1 - Tentativa De Smoke Android Fisico Integrado
+
+Status em 2026-06-10: a rodada integrada 16H.1 tentou validar GeoJSON local,
+PNG local e regressao minima em Android fisico. O smoke PNG nao foi executado
+porque nenhum aparelho Android fisico apareceu conectado/autorizado no `adb`.
+
+Resultado de ambiente:
+
+- `adb devices` falhou porque `adb` nao esta no `PATH`;
+- o binario direto
+  `C:\Users\e_vsjesus\AppData\Local\Android\Sdk\platform-tools\adb.exe`
+  funcionou, mas listou apenas `emulator-5554`;
+- packageId confirmado: `com.tcheagro.mobile`;
+- havia APK release existente, mas ele nao foi instalado/aberto em aparelho
+  fisico nesta rodada.
+
+Resultado operacional:
+
+- nenhum PNG foi selecionado via DocumentPicker;
+- nenhum anexo, visualizacao com `Image`, substituicao, remocao ou reabertura
+  foi validado em aparelho fisico;
+- a ausencia de botoes de gestao em PNG asset/mockado da Sela nao foi validada
+  em aparelho fisico nesta rodada;
+- nenhum bug pequeno foi comprovado durante smoke;
+- nenhuma correcao funcional foi aplicada;
+- 16G permanece aberta operacionalmente.
+
+Registro detalhado:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+
 ## Proximas Microfases Recomendadas
 
+- Reexecutar a 16H.1 integrada quando houver aparelho Android fisico
+  conectado/autorizado no `adb`.
 - Executar o smoke Android fisico da 16G.9 quando houver aparelho disponivel,
   incluindo abrir, anexar, substituir e remover PNG local, alem de confirmar
   que os PNGs asset/mockados da Sela seguem intactos.
