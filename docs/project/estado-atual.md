@@ -2039,6 +2039,44 @@ Documento principal da rodada:
 
 - `docs/project/fase-16h-smoke-android-integrado.md`
 
+## Fase 16H.2 - Smoke Tecnico Em Emulador E APK Atual
+
+Status em 2026-06-10: com o emulador Android ativo, foi executado um smoke
+tecnico preparatorio do APK atual, ainda em Expo SDK 48. Esta rodada nao fecha
+operacionalmente 16F nem 16G, porque o criterio ativo continua exigindo smoke
+em Android fisico.
+
+Resultado:
+
+- emulador detectado: `emulator-5554`, `model:Pixel_Tablet`;
+- Node local `v22.20.0`, npm `10.9.3`, Expo CLI `0.7.3`;
+- SDK atual do projeto confirmado como Expo SDK 48;
+- `npx expo install --check` passou com rede liberada para o SDK 48 atual;
+- `npm run typecheck`, `.\node_modules\.bin\tsc -p
+  tsconfig.domain-compat.json` e `npm run test:domain-compat` passaram;
+- `.\gradlew.bat assembleRelease` passou com `BUILD SUCCESSFUL`;
+- APK de teste copiado para
+  `dist/tche-agro-mobile-2026-06-10-emulator-release.apk`;
+- o APK foi instalado no emulador por `adb install -r`;
+- o app abriu sem tela vermelha/crash visivel;
+- apos `force-stop` e reabertura, a sessao local de Admin foi restaurada e o
+  Dashboard abriu novamente;
+- nenhum fluxo de DocumentPicker, GeoJSON local ou PNG local foi exercitado
+  nesta rodada;
+- nenhuma correcao funcional foi aplicada.
+
+Diagnostico de SDK:
+
+- a documentacao oficial do Expo lista SDK 56 como referencia atual;
+- SDK 56 exige salto de React Native/React e atualizacao dos projetos nativos;
+- a migracao de SDK 48 para SDK 56 deve ser tratada como frente propria,
+  preferencialmente incremental, para nao misturar risco de plataforma com o
+  fechamento operacional das fases 16F/16G.
+
+Documento principal da rodada:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

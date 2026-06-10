@@ -254,19 +254,104 @@ Validacoes finais da rodada:
 As validacoes automatizadas confirmam a consistencia tecnica atual, mas nao
 substituem o smoke em Android fisico.
 
+## 16H.2 - Smoke Tecnico Em Emulador E APK Atual
+
+Status em 2026-06-10: com o emulador Android ligado, foi executado um smoke
+tecnico preparatorio do APK atual, ainda em Expo SDK 48. Esta rodada nao
+substitui o criterio operacional em Android fisico, mas confirma que o build
+release atual instala e abre no emulador.
+
+Ambiente:
+
+- emulador detectado por `adb`:
+  `emulator-5554 device product:sdk_gtablet_x86_64 model:Pixel_Tablet`;
+- Node local: `v22.20.0`;
+- npm local: `10.9.3`;
+- Expo CLI local: `0.7.3`;
+- SDK atual do projeto: Expo SDK `48.0.0`;
+- packageId: `com.tcheagro.mobile`.
+
+Validador de dependencias:
+
+- `npx expo install --check` falhou sem rede externa e passou com acesso aos
+  servidores da Expo;
+- para o SDK 48 atual, as dependencias instaladas estao alinhadas;
+- `npm outdated --long` confirmou que o npm publica Expo `56.0.9` como versao
+  mais recente, mas essa informacao bruta nao deve ser usada para atualizar
+  pacotes isolados fora da matriz de compatibilidade do Expo SDK.
+
+Referencias oficiais consultadas:
+
+- a documentacao oficial do Expo lista SDK 56 como referencia atual;
+- SDK 56 usa React Native `0.85`, React `19.2.3` e requer Node minimo
+  `22.13.x`;
+- o guia oficial de upgrade recomenda instalar o novo `expo`, rodar
+  `npx expo install --fix`, atualizar projetos nativos e seguir changelogs;
+- pelo salto do projeto de SDK 48 para SDK 56, a migracao deve ser tratada como
+  frente propria e preferencialmente incremental, sem misturar com o smoke de
+  fechamento operacional da 16F/16G.
+
+Validacoes locais executadas antes do build:
+
+- `npm run typecheck` passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json` passou;
+- `npm run test:domain-compat` passou.
+
+APK gerado:
+
+- comando: `.\gradlew.bat assembleRelease`, executado em `android/`;
+- resultado: `BUILD SUCCESSFUL`;
+- APK principal atualizado:
+  `android/app/build/outputs/apk/release/app-release.apk`;
+- copia de teste preservada fora do controle de versao:
+  `dist/tche-agro-mobile-2026-06-10-emulator-release.apk`;
+- tamanho da copia: `28514417` bytes.
+
+Warnings do build:
+
+- warnings normais do bundle Hermes sobre variaveis globais;
+- avisos de Gradle/Kotlin em dependencias antigas do SDK 48;
+- aviso de recursos Gradle depreciados e incompatibilidade futura com Gradle
+  8.0;
+- nenhum desses avisos bloqueou o build desta rodada.
+
+Smoke no emulador:
+
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`
+  passou;
+- abertura via `adb shell monkey -p com.tcheagro.mobile -c
+  android.intent.category.LAUNCHER 1` passou;
+- o app abriu sem tela vermelha ou crash visivel;
+- a primeira abertura exibiu a tela de acesso demonstrativo local;
+- apos reinstall/abertura do APK recem-gerado, a sessao local de Admin foi
+  restaurada e o app abriu no Dashboard;
+- `adb shell am force-stop com.tcheagro.mobile` seguido de nova abertura
+  restaurou o Dashboard Admin novamente.
+
+Resultado:
+
+- aprovado como smoke tecnico em emulador do APK atual;
+- nao aprovado como smoke operacional de 16F/16G, porque o criterio ativo pede
+  Android fisico;
+- nenhum fluxo de DocumentPicker foi exercitado nesta rodada;
+- nenhum GeoJSON ou PNG local foi anexado/substituido/removido no emulador;
+- nenhuma correcao funcional foi aplicada.
+
 ## Status Final Recomendado
 
 16F GeoJSON:
 
 - manter tecnicamente pronta;
 - manter operacionalmente aberta;
-- nao marcar como aprovada em Android fisico nesta rodada.
+- nao marcar como aprovada em Android fisico nesta rodada;
+- registrar a 16H.2 apenas como evidencia preparatoria em emulador.
 
 16G PNG:
 
 - manter tecnicamente revisada;
 - manter operacionalmente aberta;
-- nao marcar como aprovada em Android fisico nesta rodada.
+- nao marcar como aprovada em Android fisico nesta rodada;
+- registrar a 16H.2 apenas como evidencia preparatoria em emulador.
 
 Fase 16H.1:
 
@@ -286,3 +371,6 @@ Fase 16H.1:
 - registrar Android version, modelo do aparelho, arquivos usados e evidencias
   operacionais;
 - fechar 16F e 16G operacionalmente apenas se os itens criticos passarem.
+- abrir uma frente separada para migracao Expo SDK 48 -> SDK 56, com upgrade
+  de dependencias, projetos nativos e build Android proprio, antes de trocar a
+  base de demonstracao.
