@@ -20,6 +20,36 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 16H.4 - Smoke Em Emulador Android SDK 56**
+
+Observacao geral em 2026-06-11: por decisao operacional da rodada, o APK SDK
+56 foi instalado e testado no emulador Android conectado ao PC
+(`emulator-5554`, `Pixel_Tablet`). Esta rodada valida execucao operacional em
+Android/emulador, mas nao substitui os casos que exigem Android fisico e
+DocumentPicker real no aparelho.
+
+APK usado: `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`.
+
+Validacoes automaticas antes do smoke:
+
+- `npm run typecheck`: passou.
+- `npm run test:domain-compat`: passou.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| APK16H4-01 | P0 | Todos | Instalacao | Instalar APK SDK 56 no emulador | Instalacao passa e app abre sem crash visivel | Passou | `adb install -r` passou com `Success`; abertura via `monkey` passou |
+| APK16H4-02 | P0 | Todos | Login | Conferir tela de login | Linguagem demonstrativa/local aparece sem prometer producao | Passou | Textos `Acesso demonstrativo local` e `Acesso rapido para demonstracao` visiveis |
+| APK16H4-03 | P0 | Todos | Login | Entrar manualmente como Admin, Colaborador e Produtor | Cada persona entra no perfil esperado | Passou | Admin, Colaborador de Campo e Produtor Demonstracao autenticaram com credenciais principais |
+| APK16H4-04 | P0 | Admin | Dashboard | Abrir Dashboard Admin | Dashboard abre com navegacao inferior esperada | Passou | Sem tela vermelha/crash; aba `Usuarios` visivel para Admin |
+| APK16H4-05 | P0 | Colaborador | Dashboard/Perfil | Abrir fluxo do Colaborador | Colaborador abre sem aba administrativa de `Usuarios` | Passou | Perfil exibiu escopo territorial e propriedades atribuidas demonstrativas |
+| APK16H4-06 | P0 | Produtor | Propriedades | Abrir Minhas Propriedades | Produtor ve a Sela de Prata I vinculada | Passou | Sela aparece com Titular `Produtor Demonstracao`, 6200 ha e Soja |
+| APK16H4-07 | P0 | Produtor | Detalhe da Propriedade | Abrir Sela de Prata I | Detalhe carrega contexto principal da Propriedade | Passou | Exibiu 2 visitas, 5 mapas, 1 caderno e 15 limites |
+| APK16H4-08 | P0 | Produtor | Mapa/Talhoes | Abrir panorama e selecionar talhao | Mapa renderiza talhoes e selecao mostra detalhe | Passou | 15 talhoes, 1888.6 ha; `T01 - 230` exibiu 274.1 ha e safra 2025/2026 |
+| APK16H4-09 | P0 | Produtor | Visitas | Abrir aba Visitas da Propriedade | Visitas demonstrativas aparecem no contexto correto | Passou | 2 visitas tecnicas visiveis; sem criacao de visita pelo Produtor |
+| APK16H4-10 | P0 | Produtor | Caderno | Abrir aba Caderno da Propriedade | Registro demonstrativo aparece no contexto correto | Passou | 1 registro `Vistoria`, vinculado ao talhao T01 - 230 |
+| APK16H4-11 | P1 | Todos | Sessao/Persistencia | Executar force-stop e reabrir app | Sessao local restaura sem crash | Passou | Reabriu em `Minhas Propriedades` como Produtor |
+| APK16H4-12 | P0 | Admin/Colaborador | GeoJSON/PNG local | Exercitar DocumentPicker de arquivos locais | GeoJSON/PNG local anexado/substituido/removido | Nao executado | Emulador validou mapa seed/talhoes; DocumentPicker fisico segue pendente |
+
 **Rodada Fase 16C - Build E Smoke Final Do APK**
 
 Observacao geral em 2026-06-04: o APK `release` foi gerado e inspecionado, mas

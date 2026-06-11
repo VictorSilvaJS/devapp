@@ -448,6 +448,66 @@ Limites:
 - `npm install` ainda reporta 10 vulnerabilidades moderadas no audit do npm,
   sem correcao automatica aplicada nesta rodada.
 
+## 16H.4 - Smoke Operacional Em Emulador SDK 56
+
+Status em 2026-06-11: por decisao operacional da rodada, o APK SDK 56 foi
+instalado e testado no emulador Android ja conectado ao PC. Esta validacao
+serve como smoke operacional em Android/emulador e evidencia que o APK atual
+abre e executa fluxos principais. Ela nao substitui, documentalmente, o
+criterio anterior de Android fisico para fechar 16F/16G com DocumentPicker real
+em aparelho.
+
+Ambiente:
+
+- dispositivo: `emulator-5554`;
+- modelo: `Pixel_Tablet`;
+- packageId: `com.tcheagro.mobile`;
+- APK usado: `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`;
+- tamanho do APK: `91669372` bytes;
+- instalacao: `adb install -r` passou com `Success`;
+- abertura: `adb shell monkey -p com.tcheagro.mobile -c
+  android.intent.category.LAUNCHER 1` passou.
+
+Validacoes automaticas antes do smoke:
+
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou.
+
+Fluxos validados no emulador:
+
+- abertura do app sem tela vermelha ou crash visivel;
+- tela de login com linguagem `Acesso demonstrativo local` e
+  `Acesso rapido para demonstracao`;
+- login manual Admin com `admin.demonstracao@example.com` / `admin123`;
+- login manual Colaborador com `colaborador.campo@example.com` / `colab123`;
+- login manual Produtor com `produtor.demonstracao@example.com` / `prod123`;
+- Dashboard Admin abriu com navegacao inferior esperada;
+- Dashboard Colaborador abriu sem aba administrativa de `Usuarios`;
+- Produtor abriu em `Minhas Propriedades` com a Sela de Prata I visivel;
+- detalhe da Sela de Prata I abriu com Titular `Produtor Demonstracao`,
+  `6200 ha`, cultura `Soja`, `2` visitas, `5` mapas, `1` caderno e `15`
+  limites;
+- aba `Lavoura` exibiu anexos/mapas de fertilidade da Sela;
+- acao `Visualizar Mapa` abriu o panorama de talhoes;
+- mapa de talhoes renderizou os 15 talhoes, com total `1888.6 ha`;
+- selecao do talhao `T01 - 230` exibiu safra `2025/2026`, area `274.1`
+  hectares e observacao do shapefile;
+- aba `Visitas` da Propriedade exibiu 2 visitas tecnicas demonstrativas;
+- aba `Caderno` exibiu 1 registro de caderno da Propriedade;
+- `adb shell am force-stop com.tcheagro.mobile` seguido de nova abertura
+  restaurou a sessao do Produtor e a tela `Minhas Propriedades` sem crash.
+
+Limites da rodada:
+
+- nenhum Android fisico foi usado;
+- DocumentPicker real de GeoJSON/PNG nao foi exercitado;
+- nenhum GeoJSON local foi anexado, substituido ou removido;
+- nenhum PNG local novo foi anexado, substituido ou removido;
+- nenhum cadastro novo de Usuario, Propriedade, Visita ou Caderno foi criado
+  nesta rodada;
+- o teste offline ficou limitado a reabertura/force-stop e consulta de dados
+  locais ja disponiveis no emulador.
+
 ## Status Final Recomendado
 
 16F GeoJSON:
@@ -455,20 +515,30 @@ Limites:
 - manter tecnicamente pronta;
 - manter operacionalmente aberta;
 - nao marcar como aprovada em Android fisico nesta rodada;
-- registrar a 16H.2 apenas como evidencia preparatoria em emulador.
+- registrar 16H.2 e 16H.4 como evidencias de emulador, sem fechar o smoke
+  fisico de DocumentPicker.
 
 16G PNG:
 
 - manter tecnicamente revisada;
 - manter operacionalmente aberta;
 - nao marcar como aprovada em Android fisico nesta rodada;
-- registrar a 16H.2 apenas como evidencia preparatoria em emulador.
+- registrar 16H.2 e 16H.4 como evidencias de emulador, sem fechar o smoke
+  fisico de DocumentPicker.
 
 Fase 16H.1:
 
 - registrar como tentativa bloqueada por ausencia de aparelho Android fisico
   conectado/autorizado;
 - reexecutar quando houver aparelho fisico disponivel no `adb`.
+
+Fase 16H.4:
+
+- considerar aprovada como smoke operacional em emulador SDK 56 dos fluxos
+  principais de login, Propriedade, mapa/talhoes, visitas, caderno e
+  restauracao de sessao;
+- nao usar essa aprovacao para afirmar validacao fisica de DocumentPicker,
+  camera, arquivos locais do aparelho ou comportamento especifico de hardware.
 
 ## Pendencias Residuais
 
