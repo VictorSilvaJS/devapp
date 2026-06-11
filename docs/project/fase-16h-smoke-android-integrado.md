@@ -337,6 +337,117 @@ Resultado:
 - nenhum GeoJSON ou PNG local foi anexado/substituido/removido no emulador;
 - nenhuma correcao funcional foi aplicada.
 
+## 16H.3 - Migracao Expo SDK 56 E APK De Teste
+
+Status em 2026-06-10: a frente tecnica separada de migracao Expo SDK 48 -> SDK
+56 foi executada para voltar a alinhar o app com o Expo Go atual e com a
+matriz Android recente. Esta rodada nao fecha operacionalmente 16F nem 16G,
+porque ainda nao executa o checklist de DocumentPicker/GeoJSON/PNG em Android
+fisico.
+
+Motivo:
+
+- o app ainda estava em Expo SDK `48.0.0`;
+- o Expo Go em celular acompanha a linha atual do SDK e deixa de atender SDKs
+  antigos;
+- a documentacao oficial atual do Expo lista SDK 56 como referencia, com
+  React Native `0.85`, React `19.2.3`, Node minimo `22.13.x` e Android
+  compile/target SDK 36;
+- o guia oficial de upgrade recomenda atualizar `expo`, rodar `npx expo
+  install --fix` e atualizar/regenerar os projetos nativos quando aplicavel.
+
+Dependencias principais apos a migracao:
+
+- `expo`: `^56.0.9`;
+- `react-native`: `0.85.3`;
+- `react`: `19.2.3`;
+- `typescript`: `~6.0.3`;
+- `babel-preset-expo`: `^56.0.14`;
+- `@types/react`: `~19.2.14`;
+- modulos Expo/RN alinhados por `npx expo install --fix` e conferidos por
+  `npx expo install --check`.
+
+Android nativo:
+
+- `app.json` passou para `sdkVersion: "56.0.0"`;
+- `npx expo prebuild --platform android --clean --no-install` regenerou o
+  projeto Android nativo local;
+- build Android passou a usar Gradle `9.3.1`, Android compile/target SDK `36`,
+  build tools `36.0.0`, Kotlin `2.1.20` e minSdk `24`;
+- a nova arquitetura ficou ativa no projeto Android gerado (`newArchEnabled=true`).
+
+Ajustes pequenos de compatibilidade aplicados:
+
+- `tsconfig.json` voltou a usar a resolucao herdada do Expo SDK 56 e manteve
+  `baseUrl` com `ignoreDeprecations: "6.0"` por causa do alias `@/*`;
+- `tsconfig.domain-compat.json` manteve CommonJS/node para os testes e recebeu
+  `ignoreDeprecations: "6.0"`;
+- `MapaCacheService`, `GeoJsonStorageService` e `PngStorageService` passaram a
+  usar `expo-file-system/legacy`, preservando a API antiga de storage local
+  sem migrar a logica de negocio para a nova API de `File`, `Directory` e
+  `Paths`;
+- usos tipados de `StyleSheet.absoluteFillObject`, `StatusBar` do
+  `expo-status-bar`, `LinearGradient` e um estilo de modal foram ajustados para
+  as tipagens atuais;
+- o helper `src/api/tests.ts` recebeu declaracoes locais minimas de
+  `require/module` para manter o typecheck sem adicionar dependencia Node
+  global.
+
+APK gerado:
+
+- comando: `.\gradlew.bat assembleRelease --console=plain`, executado em
+  `android/`;
+- resultado: `BUILD SUCCESSFUL`;
+- APK principal:
+  `android/app/build/outputs/apk/release/app-release.apk`;
+- copia de teste:
+  `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`;
+- tamanho da copia: `91669372` bytes.
+
+Warnings observados no build:
+
+- aviso de `NODE_ENV` ausente no bundle, com fallback para `.env.local` e
+  `.env`;
+- aviso de `FileSystemFileProvider` com `tools:replace` sem declaracao
+  conflitante;
+- aviso de recursos Gradle depreciados para Gradle 10;
+- nenhum desses avisos bloqueou o build ou a abertura do app no emulador.
+
+Smoke no emulador:
+
+- inicialmente `adb devices` nao listou nenhum dispositivo;
+- AVD disponiveis: `Teste_Tche` e `tche_test`;
+- `tche_test` foi iniciado em modo sem janela e apareceu como
+  `emulator-5554 device`;
+- `adb install -r dist\tche-agro-mobile-2026-06-10-sdk56-release.apk` passou
+  com `Success`;
+- abertura via `adb shell monkey -p com.tcheagro.mobile -c
+  android.intent.category.LAUNCHER 1` passou;
+- o app abriu sem tela vermelha/crash visivel;
+- login manual com `admin.demonstracao@example.com` / `admin123` passou;
+- Dashboard Admin abriu no APK SDK 56 com contadores e navegacao inferior
+  visiveis.
+
+Validacoes finais executadas:
+
+- `npx expo install --check` passou;
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `.\gradlew.bat assembleRelease --console=plain` passou;
+- instalacao e abertura no emulador passaram;
+- screenshot visual confirmou Login e Dashboard renderizados.
+
+Limites:
+
+- o teste em Expo Go no celular fisico ainda nao foi executado nesta sessao;
+- o smoke Android fisico de 16F/16G ainda depende de um aparelho listado em
+  `adb devices` como `device`;
+- nenhum arquivo foi selecionado por DocumentPicker nesta rodada;
+- nenhum GeoJSON local ou PNG local foi anexado, substituido, removido ou
+  reaberto em aparelho fisico;
+- `npm install` ainda reporta 10 vulnerabilidades moderadas no audit do npm,
+  sem correcao automatica aplicada nesta rodada.
+
 ## Status Final Recomendado
 
 16F GeoJSON:
@@ -371,6 +482,5 @@ Fase 16H.1:
 - registrar Android version, modelo do aparelho, arquivos usados e evidencias
   operacionais;
 - fechar 16F e 16G operacionalmente apenas se os itens criticos passarem.
-- abrir uma frente separada para migracao Expo SDK 48 -> SDK 56, com upgrade
-  de dependencias, projetos nativos e build Android proprio, antes de trocar a
-  base de demonstracao.
+- testar a base SDK 56 em Android fisico/Expo Go atual antes de tratar a
+  migracao como base operacional aprovada para campo.

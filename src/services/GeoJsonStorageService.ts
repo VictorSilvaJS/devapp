@@ -138,7 +138,7 @@ const MAX_FILE_BASE_LENGTH = 80;
 const MAX_PATH_SEGMENT_LENGTH = 80;
 
 const getDefaultFileSystem = (): GeoJsonFileSystemAdapter =>
-  require('expo-file-system') as GeoJsonFileSystemAdapter;
+  require('expo-file-system/legacy') as GeoJsonFileSystemAdapter;
 
 const createDefaultImportId = (): string =>
   `geojson_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

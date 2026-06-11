@@ -2077,6 +2077,59 @@ Documento principal da rodada:
 
 - `docs/project/fase-16h-smoke-android-integrado.md`
 
+## Fase 16H.3 - Migracao Expo SDK 56 E APK De Teste
+
+Status em 2026-06-10: foi executada a migracao tecnica do app de Expo SDK 48
+para Expo SDK 56, motivada pela incompatibilidade pratica do Expo Go atual em
+celular com a base antiga. Esta frente atualiza a base Android e gera um APK
+novo, mas nao fecha operacionalmente 16F nem 16G porque ainda falta o smoke
+fisico com DocumentPicker, GeoJSON local e PNG local.
+
+Estado tecnico apos a migracao:
+
+- `app.json` usa `sdkVersion: "56.0.0"`;
+- dependencias principais alinhadas: `expo@56.0.9`,
+  `react-native@0.85.3`, `react@19.2.3`, `typescript@6.0.3` e
+  `babel-preset-expo@56.0.14`;
+- `npx expo install --fix`/`npx expo install --check` alinharam a matriz de
+  pacotes do SDK 56;
+- `npx expo prebuild --platform android --clean --no-install` regenerou o
+  Android nativo local;
+- o build Android usa compile/target SDK 36, build tools 36.0.0, Gradle 9.3.1,
+  Kotlin 2.1.20 e minSdk 24;
+- `expo-file-system/legacy` foi usado nos servicos locais de storage/cache para
+  preservar a API antiga sem reescrever GeoJSON/PNG nesta rodada.
+
+Validacoes e APK:
+
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` passou;
+- `.\gradlew.bat assembleRelease --console=plain` passou com
+  `BUILD SUCCESSFUL`;
+- APK gerado em `android/app/build/outputs/apk/release/app-release.apk`;
+- copia preservada em
+  `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk` com `91669372` bytes;
+- `adb install -r dist\tche-agro-mobile-2026-06-10-sdk56-release.apk` passou no
+  AVD `tche_test`;
+- abertura do app no emulador passou sem tela vermelha/crash visivel;
+- login manual `admin.demonstracao@example.com` / `admin123` passou;
+- Dashboard Admin abriu no APK SDK 56.
+
+Limites mantidos:
+
+- teste em Expo Go no celular fisico ainda pendente;
+- Android fisico ainda precisa aparecer em `adb devices` como `device`;
+- DocumentPicker de GeoJSON/PNG nao foi exercitado nesta rodada;
+- 16F GeoJSON e 16G PNG continuam tecnicamente prontas/revisadas, mas
+  operacionalmente abertas ate o smoke fisico aprovado;
+- `npm install` ainda reporta 10 vulnerabilidades moderadas no audit do npm,
+  sem `npm audit fix` aplicado.
+
+Documento principal da rodada:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
@@ -2428,7 +2481,9 @@ Documento de fechamento: `docs/project/fechamento-visitas-caderno-fazenda.md`.
 - A visualizacao atual de mapas usa tiles online OpenStreetMap no MVP; cache/offline de tiles e estrategia de provedor ainda precisam de decisao antes de producao
 - A ingestao ideal de demarcacoes para o app e um GeoJSON/JSON final ja normalizado fora do celular; o conversor local de shapefile e o importador KML sao ferramentas de desenvolvimento, nao pipeline definitivo de producao
 - O fluxo real de importacao geoespacial deve passar por pre-visualizacao e aprovacao antes de publicar o GeoJSON/JSON final no app ou backend
-- `src/services/MapaCacheService.ts` usa `expo-file-system`, mas essa dependencia nao aparece em `package.json`
+- `src/services/MapaCacheService.ts`, `GeoJsonStorageService` e
+  `PngStorageService` usam `expo-file-system/legacy`; a dependencia agora esta
+  declarada em `package.json` e alinhada ao Expo SDK 56
 
 ## Complementares Oficiais
 

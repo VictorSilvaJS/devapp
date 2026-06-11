@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": false,
     "noImplicitAny": false,
-    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "allowJs": false,
     "skipLibCheck": true,
     "baseUrl": ".",

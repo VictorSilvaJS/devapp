@@ -13,6 +13,9 @@ import {
   validateProdutor
 } from './index';
 
+declare const require: { main?: unknown };
+declare const module: unknown;
+
 // Cores para output no console
 const colors = {
   green: '\x1b[32m',

@@ -22,7 +22,7 @@ export default function App() {
           </NotificacaoProvider>
         </FiltroProvider>
       </AuthProvider>
-      <StatusBar style="dark" backgroundColor="#F8FBF8" />
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }

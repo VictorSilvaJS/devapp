@@ -22,7 +22,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true,
     return displayName.charAt(0).toUpperCase();
   };
 
-  const getPerfilColor = () => {
+  const getPerfilColor = (): [string, string] => {
     const perfil = user?.perfil || 'produtor';
     switch (perfil) {
       case 'admin':

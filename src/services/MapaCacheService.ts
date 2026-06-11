@@ -9,7 +9,7 @@
  * - Rastrear integridade dos dados
  */
 
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MapaTalhao, CacheTilesSatelite, BackupMapaOffline, RelatorioCacheMapas } from '../types/mapa';
 import {

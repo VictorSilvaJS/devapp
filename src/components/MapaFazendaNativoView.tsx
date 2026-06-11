@@ -227,7 +227,7 @@ const MapaFazendaNativoView = forwardRef<MapaFazendaNativoViewRef, Props>(({
       <MapView
         key={`mapa-${mapaInstanceKey}`}
         ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         initialRegion={MAPA_PADRAO_REGIAO}
         onMapReady={handleMapReady}
         onMapLoaded={handleMapReady}
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   },
 
   containerCarregandoOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.35)',

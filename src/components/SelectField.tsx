@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   dialog: {
-    ...modalStyles.dialog,
+    ...(modalStyles.dialog as ViewStyle),
     maxHeight: '80%',
     padding: 0,
     overflow: 'hidden',

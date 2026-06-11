@@ -4,6 +4,7 @@
     "module": "CommonJS",
     "jsx": "react",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "outDir": ".tmp-domain-compat",
     "rootDir": ".",
     "esModuleInterop": true,

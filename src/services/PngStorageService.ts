@@ -104,7 +104,7 @@ const DEFAULT_PNG_BASE_NAME = 'mapa-tecnico';
 const PNG_MIME_TYPE = 'image/png';
 
 const getDefaultFileSystem = (): PngFileSystemAdapter =>
-  require('expo-file-system') as PngFileSystemAdapter;
+  require('expo-file-system/legacy') as PngFileSystemAdapter;
 
 const createDefaultImportId = (): string =>
   `png_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
