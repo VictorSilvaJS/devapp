@@ -508,6 +508,56 @@ Limites da rodada:
 - o teste offline ficou limitado a reabertura/force-stop e consulta de dados
   locais ja disponiveis no emulador.
 
+## 16H.5 - Smoke DocumentPicker Em Emulador SDK 56
+
+Status em 2026-06-11: executado smoke complementar no mesmo emulador Android
+SDK 56 conectado ao PC para exercitar DocumentPicker real de GeoJSON e PNG.
+Esta rodada fecha a evidencia operacional de PNG local em emulador, mas
+identifica bloqueio funcional em GeoJSON local.
+
+Ambiente:
+
+- dispositivo: `emulator-5554`;
+- modelo: `Pixel_Tablet`;
+- packageId: `com.tcheagro.mobile`;
+- APK usado: `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`;
+- perfil usado: Admin Demonstração;
+- Propriedade usada: `Fazenda Sela de Prata I`;
+- arquivos usados:
+  - `/sdcard/Download/limites_talhoes.geojson`;
+  - `/sdcard/Download/limites_talhoes.json`;
+  - `/sdcard/Download/smoke_ph_10a20.png`.
+
+Fluxos validados:
+
+- acesso Admin restaurou sessao local sem crash;
+- `Propriedades` filtrou por `Sela` e abriu a Sela de Prata I;
+- aba `Lavoura` abriu `Mapas/Arquivos técnicos`;
+- DocumentPicker abriu para GeoJSON a partir de `Anexar GeoJSON dos talhões`;
+- arquivos `.geojson` e `.json` apareceram e puderam ser selecionados no
+  seletor Android;
+- apos selecionar `.geojson` e `.json`, o app voltou para a tela de mapas,
+  mas permaneceu com `Nenhum GeoJSON local anexado a esta Propriedade` e
+  `Anexar GeoJSON dos talhões`;
+- DocumentPicker abriu para PNG a partir de `Anexar mapa PNG`;
+- `smoke_ph_10a20.png` foi selecionado em Downloads;
+- modal `Anexar mapa PNG` exibiu arquivo selecionado, titulo automatico
+  `smoke ph 10a20`, categoria `Outro` e ano `2026`;
+- confirmacao em `Anexar PNG` salvou o PNG local;
+- a tela passou a exibir `smoke ph 10a20`, arquivo `smoke_ph_10a20.png`,
+  status `ativo` e contador `6 Materiais`;
+- apos `adb shell am force-stop com.tcheagro.mobile` e reabertura, a sessao
+  Admin restaurou, a Sela de Prata I abriu novamente em Mapas/Arquivos
+  técnicos e o contador `6 Materiais` persistiu.
+
+Resultado:
+
+- PNG local em emulador: aprovado para anexar e persistir localmente;
+- GeoJSON local em emulador: reprovado para anexo/persistencia, apesar do
+  DocumentPicker abrir e permitir a selecao do arquivo;
+- 16H nao deve ser fechada como smoke integrado completo enquanto o GeoJSON
+  local nao atualizar a tela/estado apos selecao.
+
 ## Status Final Recomendado
 
 16F GeoJSON:
@@ -515,16 +565,18 @@ Limites da rodada:
 - manter tecnicamente pronta;
 - manter operacionalmente aberta;
 - nao marcar como aprovada em Android fisico nesta rodada;
-- registrar 16H.2 e 16H.4 como evidencias de emulador, sem fechar o smoke
-  fisico de DocumentPicker.
+- registrar 16H.2, 16H.4 e 16H.5 como evidencias de emulador;
+- tratar 16H.5 como bloqueio funcional de GeoJSON local: picker abre e arquivo
+  seleciona, mas o anexo nao aparece nem persiste visualmente no app.
 
 16G PNG:
 
 - manter tecnicamente revisada;
-- manter operacionalmente aberta;
+- considerar aprovada em emulador para DocumentPicker, metadados e persistencia
+  local;
+- manter operacionalmente aberta apenas para validacao em Android fisico;
 - nao marcar como aprovada em Android fisico nesta rodada;
-- registrar 16H.2 e 16H.4 como evidencias de emulador, sem fechar o smoke
-  fisico de DocumentPicker.
+- registrar 16H.2, 16H.4 e 16H.5 como evidencias de emulador.
 
 Fase 16H.1:
 
@@ -540,6 +592,15 @@ Fase 16H.4:
 - nao usar essa aprovacao para afirmar validacao fisica de DocumentPicker,
   camera, arquivos locais do aparelho ou comportamento especifico de hardware.
 
+Fase 16H.5:
+
+- considerar aprovada parcialmente como smoke DocumentPicker em emulador;
+- PNG local passou em selecao, metadados, salvamento e reabertura;
+- GeoJSON local falhou apos selecao de `.geojson` e `.json`;
+- proximo fechamento recomendado: corrigir o fluxo de persistencia/estado do
+  GeoJSON local e reexecutar apenas os casos 16H.5 de GeoJSON antes de fechar a
+  microfase integrada.
+
 ## Pendencias Residuais
 
 - colocar Android fisico em modo depuracao USB;
@@ -547,8 +608,11 @@ Fase 16H.4:
 - garantir que o aparelho apareca em `adb devices` como `device`, nao apenas
   emulador;
 - instalar ou abrir o APK/dev build existente sem mudar versao/configuracao;
-- preparar arquivos temporarios de smoke para GeoJSON e PNG;
-- executar o checklist integrado completo;
+- corrigir o anexo/persistencia visual de GeoJSON local apos selecao pelo
+  DocumentPicker;
+- reexecutar os casos de GeoJSON da 16H.5 no emulador;
+- executar o checklist integrado completo em Android fisico quando houver
+  aparelho disponivel;
 - registrar Android version, modelo do aparelho, arquivos usados e evidencias
   operacionais;
 - fechar 16F e 16G operacionalmente apenas se os itens criticos passarem.

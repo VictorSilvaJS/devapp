@@ -20,6 +20,31 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 16H.5 - DocumentPicker Em Emulador Android SDK 56**
+
+Observacao geral em 2026-06-11: smoke complementar executado no mesmo APK SDK
+56 e no emulador Android conectado ao PC (`emulator-5554`, `Pixel_Tablet`).
+Esta rodada validou DocumentPicker real em emulador para PNG local e encontrou
+falha funcional no anexo local de GeoJSON.
+
+APK usado: `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`.
+
+Arquivos usados:
+
+- `/sdcard/Download/limites_talhoes.geojson`;
+- `/sdcard/Download/limites_talhoes.json`;
+- `/sdcard/Download/smoke_ph_10a20.png`.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| APK16H5-01 | P0 | Admin | Navegacao | Abrir Sela de Prata I em Mapas/Arquivos técnicos | Tela tecnica abre no contexto da Propriedade | Passou | Admin restaurou sessao; filtro `Sela` abriu a Propriedade e `Lavoura > Ver Todos` abriu Mapas |
+| APK16H5-02 | P0 | Admin | GeoJSON local | Acionar `Anexar GeoJSON dos talhões` | DocumentPicker abre e lista arquivos locais compativeis | Passou | Picker Android abriu e exibiu `.geojson`/`.json` em Downloads/Recentes |
+| APK16H5-03 | P0 | Admin | GeoJSON local | Selecionar `limites_talhoes.geojson` | GeoJSON aparece como anexado localmente | Falhou | App voltou para Mapas, mas continuou exibindo `Nenhum GeoJSON local anexado a esta Propriedade` |
+| APK16H5-04 | P0 | Admin | GeoJSON local | Selecionar `limites_talhoes.json` | JSON aparece como anexado localmente | Falhou | Mesmo comportamento do `.geojson`: picker seleciona, tela nao atualiza estado local |
+| APK16H5-05 | P0 | Admin | PNG local | Acionar `Anexar mapa PNG` e selecionar `smoke_ph_10a20.png` | Picker abre, arquivo e metadados aparecem no modal | Passou | Modal `Anexar mapa PNG` exibiu arquivo, titulo `smoke ph 10a20`, categoria `Outro` e ano `2026` |
+| APK16H5-06 | P0 | Admin | PNG local | Confirmar `Anexar PNG` | PNG fica salvo localmente e aparece na tela | Passou | Tela exibiu `smoke ph 10a20`, `smoke_ph_10a20.png`, status ativo e contador `6 Materiais` |
+| APK16H5-07 | P1 | Admin | Persistencia local | Executar force-stop, reabrir app e voltar aos mapas da Sela | PNG local permanece contabilizado/visivel no contexto | Passou | Apos reabertura, Admin voltou sem crash; Sela abriu Mapas e contador `6 Materiais` persistiu |
+
 **Rodada Fase 16H.4 - Smoke Em Emulador Android SDK 56**
 
 Observacao geral em 2026-06-11: por decisao operacional da rodada, o APK SDK
