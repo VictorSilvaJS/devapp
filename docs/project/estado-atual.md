@@ -2130,6 +2130,104 @@ Documento principal da rodada:
 
 - `docs/project/fase-16h-smoke-android-integrado.md`
 
+## Fase 16H.4 - Smoke Operacional Em Emulador SDK 56
+
+Status em 2026-06-11: por decisao operacional da rodada, o APK SDK 56 foi
+instalado e testado no emulador Android conectado ao PC. Esta validacao serve
+como smoke operacional em Android/emulador dos fluxos principais do app, mas
+nao substitui a validacao final em Android fisico.
+
+Ambiente:
+
+- dispositivo: `emulator-5554`;
+- modelo: `Pixel_Tablet`;
+- packageId: `com.tcheagro.mobile`;
+- APK usado: `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`;
+- instalacao via `adb install -r` passou com `Success`;
+- abertura via `adb shell monkey -p com.tcheagro.mobile -c
+  android.intent.category.LAUNCHER 1` passou.
+
+Resultado:
+
+- app abriu sem tela vermelha/crash visivel;
+- login manual de Admin, Colaborador e Produtor passou;
+- Dashboard Admin abriu com navegacao esperada;
+- Colaborador abriu sem aba administrativa de `Usuarios`;
+- Produtor abriu `Minhas Propriedades` com a Sela de Prata I;
+- detalhe da Sela exibiu Titular `Produtor Demonstracao`, `6200 ha`, cultura
+  `Soja`, `2` visitas, `5` mapas, `1` caderno e `15` limites;
+- aba `Lavoura` exibiu mapas/anexos;
+- `Visualizar Mapa` abriu panorama de talhoes com 15 talhoes e `1888.6 ha`;
+- selecao do talhao `T01 - 230` exibiu detalhe coerente;
+- abas `Visitas` e `Caderno` abriram com dados demonstrativos esperados;
+- `force-stop` e reabertura restauraram sessao local sem crash.
+
+Limites:
+
+- nenhum Android fisico foi usado;
+- DocumentPicker real de GeoJSON/PNG ainda nao foi exercitado nesta rodada;
+- nenhum arquivo local foi anexado/substituido/removido.
+
+Documento principal da rodada:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+
+## Fase 16H.5 - Smoke DocumentPicker Em Emulador SDK 56
+
+Status em 2026-06-11: foi executado smoke complementar no mesmo emulador SDK
+56 para exercitar DocumentPicker real de GeoJSON e PNG em contexto da
+Propriedade Sela de Prata I. A rodada aprovou PNG local em emulador e revelou
+falha funcional no anexo local de GeoJSON.
+
+Ambiente e arquivos:
+
+- dispositivo: `emulator-5554`;
+- modelo: `Pixel_Tablet`;
+- APK usado: `dist/tche-agro-mobile-2026-06-10-sdk56-release.apk`;
+- perfil usado: Admin Demonstracao;
+- Propriedade usada: `Fazenda Sela de Prata I`;
+- arquivos testados:
+  - `/sdcard/Download/limites_talhoes.geojson`;
+  - `/sdcard/Download/limites_talhoes.json`;
+  - `/sdcard/Download/smoke_ph_10a20.png`.
+
+Resultado GeoJSON:
+
+- `Anexar GeoJSON dos talhoes` abriu o DocumentPicker Android;
+- arquivos `.geojson` e `.json` apareceram e puderam ser selecionados;
+- apos selecionar `limites_talhoes.geojson` e `limites_talhoes.json`, o app
+  voltou para Mapas/Arquivos tecnicos;
+- a tela continuou exibindo `Nenhum GeoJSON local anexado a esta Propriedade`
+  e `Anexar GeoJSON dos talhoes`;
+- portanto, GeoJSON local permanece bloqueado operacionalmente em emulador por
+  falha de atualizacao/persistencia visual apos selecao.
+
+Resultado PNG:
+
+- `Anexar mapa PNG` abriu o DocumentPicker Android;
+- `smoke_ph_10a20.png` foi selecionado em Downloads;
+- o modal `Anexar mapa PNG` exibiu arquivo selecionado, titulo automatico
+  `smoke ph 10a20`, categoria `Outro` e ano `2026`;
+- `Anexar PNG` salvou o PNG local;
+- a tela passou a exibir `smoke ph 10a20`, arquivo `smoke_ph_10a20.png`,
+  status `ativo` e contador `6 Materiais`;
+- apos `force-stop` e reabertura, a sessao Admin restaurou e a tela de mapas da
+  Sela manteve o contador `6 Materiais`.
+
+Situacao atual:
+
+- 16G/PNG local esta aprovado em emulador para DocumentPicker, metadados,
+  salvamento local e reabertura;
+- 16F/GeoJSON local continua tecnicamente implementada, mas operacionalmente
+  bloqueada ate corrigir o fluxo que deve atualizar/persistir o anexo apos a
+  selecao no DocumentPicker;
+- Android fisico continua pendente para validacao final de campo.
+
+Documentos principais da rodada:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+- `docs/project/smoke.md`
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

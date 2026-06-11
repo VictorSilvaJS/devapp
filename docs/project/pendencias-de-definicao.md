@@ -297,10 +297,21 @@ produtor/Titular pela persona `Produtor Demonstracao`, sem inferir ou incluir
 um nome pessoal real. A area e os materiais/localizacao permanecem sem
 alteracao ate confirmacao.
 
+Status em 2026-06-11 (Fase 16H.5): no APK SDK 56 instalado em emulador Android,
+o DocumentPicker de PNG local passou em selecao, metadados, salvamento e
+reabertura para a Sela de Prata I. O DocumentPicker de GeoJSON local abre e
+permite selecionar arquivos `.geojson` e `.json`, mas o app retorna para a tela
+de Mapas/Arquivos tecnicos sem exibir ou persistir o anexo local, mantendo
+`Nenhum GeoJSON local anexado a esta Propriedade`. Permanece pendente corrigir
+esse fluxo e reexecutar o smoke de GeoJSON antes de fechar a microfase
+integrada; Android fisico tambem segue pendente para validacao final de campo.
+
 Permanece pendente definir e implementar:
 
 - integracao futura de `AnexoFertilidade` ao dominio real, sem quebrar a compatibilidade atual
 - fluxo administrativo real para cadastrar/liberar PNGs e outros anexos
+- correcao do fluxo local de GeoJSON para atualizar e persistir o anexo apos
+  selecao pelo DocumentPicker
 - estrategia de armazenamento persistente dos arquivos
 - backend/storage/upload para anexos e materiais tecnicos
 - API/backend para anexos de mapas
