@@ -558,16 +558,93 @@ Resultado:
 - 16H nao deve ser fechada como smoke integrado completo enquanto o GeoJSON
   local nao atualizar a tela/estado apos selecao.
 
+## 16H.6 - Correcao GeoJSON Pos-DocumentPicker Em Emulador SDK 56
+
+Status em 2026-06-11: corrigido o ponto de leitura do arquivo local de GeoJSON
+no APK SDK 56 e reexecutados os casos GeoJSON da 16H.5 no emulador Android
+conectado ao PC. A correcao foi limitada ao fluxo pos-DocumentPicker de
+GeoJSON; seed, mock, `LimiteArea.list`, `Mapa.list`, `src/api/mock.ts`,
+storage mock principal e assets da Sela de Prata I permanecem sem alteracao.
+
+Causa raiz:
+
+- `GeoJsonFilePickerService` ainda lia o arquivo selecionado via
+  `expo-file-system`;
+- no SDK 56, os pontos que dependem da API antiga precisam usar
+  `expo-file-system/legacy`, como ja ocorria nos servicos de storage/cache;
+- o fluxo PNG passou porque nao dependia da leitura imediata do arquivo pelo
+  mesmo caminho;
+- apos trocar a leitura do GeoJSON para `expo-file-system/legacy`, o app voltou
+  a ler, validar, abrir modal de confirmacao e persistir os metadados locais.
+
+Arquivos alterados:
+
+- `src/services/GeoJsonFilePickerService.ts`;
+- `tests/geojsonFilePickerService.test.js`.
+
+Validacoes automaticas executadas:
+
+- `npm run typecheck`: passou;
+- `.\node_modules\.bin\tsc -p tsconfig.domain-compat.json`: passou;
+- `node tests/geojsonFilePickerService.test.js`: passou;
+- `node tests/geojsonPropertyImportWorkflow.test.js`: passou;
+- `node tests/geojsonStorageService.test.js`: passou;
+- `node tests/geojsonTalhoesLayerService.test.js`: passou;
+- `node tests/geojsonImportService.test.js`: passou;
+- `node tests/geojsonImportValidator.test.js`: passou;
+- `npm run test:domain-compat`: passou;
+- `npx expo install --check`: passou, `Dependencies are up to date`;
+- `git diff --check`: passou.
+
+Build e instalacao:
+
+- build: `android\gradlew.bat assembleRelease --console=plain`: passou;
+- APK gerado para smoke:
+  `dist/tche-agro-mobile-2026-06-11-geojson-fix-sdk56-release.apk`;
+- instalacao no emulador: `adb install -r`: passou com `Success`;
+- abertura: `monkey -p com.tcheagro.mobile -c android.intent.category.LAUNCHER
+  1`: passou sem crash visivel.
+
+Ambiente:
+
+- dispositivo: `emulator-5554`;
+- modelo: `Pixel_Tablet`;
+- packageId: `com.tcheagro.mobile`;
+- perfil usado: Admin Demonstração;
+- Propriedade usada: `Fazenda Sela de Prata I`;
+- arquivos usados:
+  - `/sdcard/Download/limites_talhoes.geojson`;
+  - `/sdcard/Download/limites_talhoes.json`.
+
+Reexecucao dos casos GeoJSON da 16H.5:
+
+| Caso | Resultado |
+|---|---|
+| APK16H5-02 | Passou: DocumentPicker abriu em Downloads e listou `.geojson`/`.json` |
+| APK16H5-03 | Passou: `limites_talhoes.geojson` abriu modal com 15 talhoes e 37 partes/poligonos; apos confirmar, a tela exibiu `GeoJSON anexado`, arquivo e status ativo |
+| APK16H5-04 | Passou: substituicao por `limites_talhoes.json` abriu modal com 15 talhoes e 37 partes/poligonos; apos substituir, a tela exibiu `GeoJSON anexado`, arquivo e status ativo |
+| APK16H6-01 | Passou: apos `force-stop`, reabertura e retorno aos mapas da Sela, `limites_talhoes.json` permaneceu anexado e ativo |
+
+Resultado:
+
+- 16F/GeoJSON local esta aprovado em emulador SDK 56 para DocumentPicker,
+  leitura, validacao, associacao, substituicao e persistencia local;
+- 16G/PNG local ja estava aprovado em emulador pela 16H.5 para DocumentPicker,
+  metadados, salvamento e persistencia;
+- Android fisico continua pendente para validacao final de campo e nao foi
+  substituido por esta rodada em emulador.
+
 ## Status Final Recomendado
 
 16F GeoJSON:
 
 - manter tecnicamente pronta;
-- manter operacionalmente aberta;
+- considerar aprovada em emulador SDK 56 para DocumentPicker, leitura,
+  validacao, associacao, substituicao e persistencia local;
+- manter operacionalmente aberta apenas para validacao em Android fisico;
 - nao marcar como aprovada em Android fisico nesta rodada;
-- registrar 16H.2, 16H.4 e 16H.5 como evidencias de emulador;
-- tratar 16H.5 como bloqueio funcional de GeoJSON local: picker abre e arquivo
-  seleciona, mas o anexo nao aparece nem persiste visualmente no app.
+- registrar 16H.2, 16H.4, 16H.5 e 16H.6 como evidencias de emulador;
+- tratar a falha da 16H.5 como corrigida/reexecutada em emulador pela 16H.6.
 
 16G PNG:
 
@@ -597,9 +674,15 @@ Fase 16H.5:
 - considerar aprovada parcialmente como smoke DocumentPicker em emulador;
 - PNG local passou em selecao, metadados, salvamento e reabertura;
 - GeoJSON local falhou apos selecao de `.geojson` e `.json`;
-- proximo fechamento recomendado: corrigir o fluxo de persistencia/estado do
-  GeoJSON local e reexecutar apenas os casos 16H.5 de GeoJSON antes de fechar a
-  microfase integrada.
+- falha GeoJSON foi mantida como historico e corrigida/reexecutada na 16H.6.
+
+Fase 16H.6:
+
+- considerar aprovada como reexecucao pontual do GeoJSON local em emulador SDK
+  56;
+- GeoJSON local passou para `.geojson`, `.json`, substituicao e persistencia
+  apos force-stop/reabertura;
+- nao usar essa aprovacao para afirmar validacao fisica de DocumentPicker.
 
 ## Pendencias Residuais
 
@@ -608,9 +691,6 @@ Fase 16H.5:
 - garantir que o aparelho apareca em `adb devices` como `device`, nao apenas
   emulador;
 - instalar ou abrir o APK/dev build existente sem mudar versao/configuracao;
-- corrigir o anexo/persistencia visual de GeoJSON local apos selecao pelo
-  DocumentPicker;
-- reexecutar os casos de GeoJSON da 16H.5 no emulador;
 - executar o checklist integrado completo em Android fisico quando houver
   aparelho disponivel;
 - registrar Android version, modelo do aparelho, arquivos usados e evidencias

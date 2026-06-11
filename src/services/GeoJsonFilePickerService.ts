@@ -108,7 +108,7 @@ const getDefaultDocumentPicker = (): GeoJsonDocumentPickerAdapter =>
   require('expo-document-picker') as GeoJsonDocumentPickerAdapter;
 
 const getDefaultFileSystem = (): GeoJsonFileSystemAdapter =>
-  require('expo-file-system') as GeoJsonFileSystemAdapter;
+  require('expo-file-system/legacy') as GeoJsonFileSystemAdapter;
 
 const buildError = (
   code: GeoJsonFilePickerErrorCode,

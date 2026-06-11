@@ -20,6 +20,28 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 16H.6 - Reexecucao GeoJSON Em Emulador Android SDK 56**
+
+Observacao geral em 2026-06-11: correcao pontual aplicada ao fluxo local de
+GeoJSON pos-DocumentPicker no SDK 56 e reexecutada no emulador Android
+conectado ao PC (`emulator-5554`, `Pixel_Tablet`). Esta rodada substitui o
+resultado falho dos casos GeoJSON da 16H.5 em emulador, mas nao substitui a
+validacao final em Android fisico.
+
+APK usado: `dist/tche-agro-mobile-2026-06-11-geojson-fix-sdk56-release.apk`.
+
+Arquivos usados:
+
+- `/sdcard/Download/limites_talhoes.geojson`;
+- `/sdcard/Download/limites_talhoes.json`.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| APK16H5-02-R1 | P0 | Admin | GeoJSON local | Acionar `Anexar GeoJSON dos talhões` | DocumentPicker abre e lista arquivos locais compativeis | Passou | Picker Android abriu em Downloads e exibiu `.geojson`/`.json` |
+| APK16H5-03-R1 | P0 | Admin | GeoJSON local | Selecionar `limites_talhoes.geojson` e confirmar associacao | GeoJSON aparece como anexado localmente | Passou | Modal leu 15 talhoes/37 partes; tela exibiu `GeoJSON anexado`, `limites_talhoes.geojson`, 15 talhoes e status ativo |
+| APK16H5-04-R1 | P0 | Admin | GeoJSON local | Substituir por `limites_talhoes.json` e confirmar substituicao | JSON aparece como anexado localmente | Passou | Modal leu 15 talhoes/37 partes; tela exibiu `GeoJSON anexado`, `limites_talhoes.json`, 15 talhoes e status ativo |
+| APK16H6-01 | P1 | Admin | Persistencia local | Executar force-stop, reabrir app e voltar aos mapas da Sela | GeoJSON local permanece visivel no contexto | Passou | Apos reabertura, Admin voltou sem crash; Sela abriu Mapas e `limites_talhoes.json` permaneceu anexado/ativo |
+
 **Rodada Fase 16H.5 - DocumentPicker Em Emulador Android SDK 56**
 
 Observacao geral em 2026-06-11: smoke complementar executado no mesmo APK SDK

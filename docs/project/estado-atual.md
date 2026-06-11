@@ -2228,6 +2228,43 @@ Documentos principais da rodada:
 - `docs/project/fase-16h-smoke-android-integrado.md`
 - `docs/project/smoke.md`
 
+## Fase 16H.6 - Correcao GeoJSON Pos-DocumentPicker Em Emulador SDK 56
+
+Status em 2026-06-11: foi corrigido o fluxo local de GeoJSON que falhava apos
+a selecao pelo DocumentPicker no APK SDK 56. A causa foi o uso de
+`expo-file-system` no servico de leitura do GeoJSON selecionado; o fluxo foi
+alinhado para `expo-file-system/legacy`, consistente com os servicos de storage
+e cache que ainda dependem da API antiga no SDK 56.
+
+O build `dist/tche-agro-mobile-2026-06-11-geojson-fix-sdk56-release.apk` foi
+gerado, instalado no `emulator-5554` (`Pixel_Tablet`) e reexecutou os casos
+GeoJSON da 16H.5 na Sela de Prata I:
+
+- `Anexar GeoJSON dos talhoes` abriu o DocumentPicker Android em Downloads;
+- `limites_talhoes.geojson` abriu modal de confirmacao com 15 talhoes e 37
+  partes/poligonos e passou a aparecer como `GeoJSON anexado`;
+- `limites_talhoes.json` substituiu o anexo local com o mesmo resumo de 15
+  talhoes e 37 partes/poligonos;
+- apos `force-stop`, reabertura do app e retorno a Mapas/Arquivos tecnicos da
+  Sela, `limites_talhoes.json` permaneceu anexado e ativo.
+
+Validacoes executadas: `npm run typecheck`,
+`.\node_modules\.bin\tsc -p tsconfig.domain-compat.json`, testes unitarios dos
+servicos GeoJSON, `npm run test:domain-compat`, `npx expo install --check`,
+build release Android e `git diff --check`.
+
+Situacao atual:
+
+- 16F/GeoJSON local esta aprovada em emulador SDK 56 para DocumentPicker,
+  leitura, validacao, associacao, substituicao e persistencia local;
+- 16G/PNG local permanece aprovada em emulador desde a 16H.5;
+- Android fisico continua pendente para validacao final de campo.
+
+Documentos principais da rodada:
+
+- `docs/project/fase-16h-smoke-android-integrado.md`
+- `docs/project/smoke.md`
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.

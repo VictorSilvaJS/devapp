@@ -177,6 +177,27 @@ const run = async () => {
     });
   });
 
+  await test('normaliza resultado SDK 56 com URI copiada e MIME ausente', () => {
+    const file = normalizePickedDocumentResult({
+      canceled: false,
+      assets: [{
+        uri: 'file:///data/user/0/com.tcheagro.mobile/cache/DocumentPicker/limites_talhoes.geojson',
+        name: 'limites_talhoes.geojson',
+        size: 176011,
+      }],
+    });
+
+    assert.deepEqual(file, {
+      uri: 'file:///data/user/0/com.tcheagro.mobile/cache/DocumentPicker/limites_talhoes.geojson',
+      name: 'limites_talhoes.geojson',
+      size: 176011,
+      mimeType: undefined,
+    });
+
+    const validation = validatePickedGeoJsonFile(file);
+    assert.equal(validation.error, undefined);
+  });
+
   await test('resultado sem asset, uri ou nome nao normaliza arquivo', () => {
     assert.equal(normalizePickedDocumentResult({ canceled: false, assets: [] }), null);
     assert.equal(normalizePickedDocumentResult({ type: 'success', name: 'a.geojson' }), null);
@@ -350,6 +371,8 @@ const run = async () => {
     const sourcePath = path.resolve(__dirname, '..', 'src', 'services', 'GeoJsonFilePickerService.ts');
     const source = fs.readFileSync(sourcePath, 'utf8');
 
+    assert.equal(source.includes("require('expo-file-system/legacy')"), true);
+    assert.equal(source.includes("require('expo-file-system')"), false);
     assert.equal(source.includes('GeoJsonImportService'), false);
     assert.equal(source.includes('LimiteArea'), false);
     assert.equal(source.includes('Mapa'), false);
