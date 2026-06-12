@@ -2265,6 +2265,20 @@ Documentos principais da rodada:
 - `docs/project/fase-16h-smoke-android-integrado.md`
 - `docs/project/smoke.md`
 
+## Fase 17A - Analise De Desenvolvimento Do MVP Pos-SDK 56
+
+Status em 2026-06-12: foi criada
+`docs/project/fase-17a-analise-desenvolvimento-mvp.md` como analise tecnica e
+funcional do MVP demonstravel em emulador, sem alterar comportamento funcional.
+
+A analise confirma que 16F/GeoJSON local e 16G/PNG local estao aprovadas em
+emulador SDK 56, enquanto Android fisico continua pendente para validacao final
+de campo. A recomendacao unica de proxima implementacao e a Fase 17B:
+simplificar a UX do fluxo do Produtor em emulador, preservando consulta por
+Propriedade, `fazenda_id`, mocks, `Mapa.list`, `LimiteArea.list`, assets da
+Sela de Prata I e os limites de escopo sem backend/RBAC/sync/upload/download
+real.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
@@ -2636,10 +2650,13 @@ Use estes documentos junto com este retrato do presente:
 
 ## Proximo Passo Recomendado
 
-Com a frente `Produtor` / `Propriedade` fechada para o MVP atual, o proximo trabalho deve escolher uma nova frente funcional ou tecnica sem reabrir a limpeza estrutural ja encerrada.
+Com a Fase 17A concluida como analise documental, o proximo trabalho
+recomendado e a Fase 17B: simplificar a UX do fluxo do Produtor em emulador.
 
-Opcoes seguras:
-
-- evoluir outra frente funcional do MVP, como visitas, caderno ou mapas
-- iniciar a separacao gradual da camada mock quando houver decisao sobre backend
-- executar apenas limpeza nominal pequena e localizada, se ela desbloquear trabalho funcional real
+Essa proxima fase deve melhorar clareza de consulta, reduzir excesso de
+informacao tecnica para o Produtor e reforcar onde terminam as acoes de
+consulta e onde comecam operacoes restritas a equipe. Deve preservar
+`fazenda_id`, regras de acesso mockadas, `Mapa.list`, `LimiteArea.list`, assets
+e registros mockados da Sela de Prata I, sem backend, JWT, RBAC real, sync,
+upload remoto, download real, storage remoto, zoom avancado ou pipeline
+produtivo.
