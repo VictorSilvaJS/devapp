@@ -89,12 +89,13 @@ O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao d
 
 Status em 2026-07-01: a taxonomia operacional inicial da interface foi
 orientada para tres tipos principais de mapas: fertilidade, correcao de solo e
-prescricao, com filtros principais restritos a esses tres tipos. Prescricao
-fica tratada conceitualmente como pacote/anexo ZIP do acervo quando houver
-fluxo real. Permanece pendente a taxonomia final alem desse corte inicial, os
+prescricao, com filtros principais restritos a esses tres tipos. Na Fase 17C,
+Prescricao passou a ter fluxo local demonstrativo por ZIP, com metadados em
+AsyncStorage e arquivo copiado para storage interno do app, sem processamento
+do conteudo. Permanece pendente a taxonomia final alem desse corte inicial, os
 nomes finais de todos os elementos/camadas, a forma de evoluir panoramas alem
-da demarcacao basica e o fluxo real para anexar, armazenar, revisar e publicar
-arquivos ZIP de prescricao.
+da demarcacao basica e o fluxo produtivo para revisar, publicar, sincronizar e
+servir arquivos ZIP de prescricao por backend/storage real.
 
 ### 5. Experiencia detalhada do produtor
 

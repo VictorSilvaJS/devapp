@@ -350,6 +350,15 @@ const run = async () => {
     assert.equal(validation.errors.talhao, 'Selecione ou informe o talhao do mapa PNG.');
   });
 
+  await test('prescricao nao entra no fluxo PNG', () => {
+    const validation = validatePngMapPropertyImportForm(baseForm({
+      elemento: 'prescricao',
+    }));
+
+    assert.equal(validation.ok, false);
+    assert.equal(validation.errors.elemento, 'Selecione o tipo de mapa PNG.');
+  });
+
   await test('sucesso copia PNG e cria metadado ativo sem conteudo bruto', async () => {
     const { service, storage } = createService();
     const { calls, deps } = createWorkflowDeps({

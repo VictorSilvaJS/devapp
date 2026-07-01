@@ -16,6 +16,7 @@
     "src/types/mapa.ts",
     "src/types/geojsonImport.ts",
     "src/types/anexoPngLocal.ts",
+    "src/types/anexoPrescricaoZipLocal.ts",
     "src/api/validators.ts",
     "src/api/mockCompat.ts",
     "src/api/produtorCompat.ts",
@@ -32,6 +33,7 @@
     "src/utils/geojsonImportValidator.ts",
     "src/utils/mapaDownloadCompat.ts",
     "src/utils/pngMapToMapaCompat.ts",
+    "src/utils/prescriptionZipToMapaCompat.ts",
     "src/utils/usuarioAdminCompat.ts",
     "src/utils/usuarioLocalAccessAdmin.ts",
     "src/utils/dashboardCompat.ts",
@@ -54,6 +56,11 @@
     "src/services/PngFilePickerService.ts",
     "src/services/PngStorageService.ts",
     "src/services/PngMapPropertyImportWorkflow.ts",
-    "src/services/PngMapPropertyManageWorkflow.ts"
+    "src/services/PngMapPropertyManageWorkflow.ts",
+    "src/services/PrescriptionZipImportService.ts",
+    "src/services/PrescriptionZipFilePickerService.ts",
+    "src/services/PrescriptionZipStorageService.ts",
+    "src/services/PrescriptionZipPropertyImportWorkflow.ts",
+    "src/services/PrescriptionZipPropertyManageWorkflow.ts"
   ]
 }

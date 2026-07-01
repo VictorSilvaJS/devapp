@@ -56,6 +56,11 @@ import {
   mergeMapasWithPngMapImports,
   resolveMapaPngImageSource,
 } from '../utils/pngMapToMapaCompat';
+import {
+  PRESCRIPTION_ZIP_DETAILS_MESSAGE,
+  isPrescriptionZipLocalMapa,
+  mergeMapasWithPrescriptionZipImports,
+} from '../utils/prescriptionZipToMapaCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
   confirmGeoJsonPropertyImport,
@@ -96,6 +101,23 @@ import {
 } from '../services/PngMapPropertyManageWorkflow';
 import { PngStorageService } from '../services/PngStorageService';
 import type { PngMapImportMetadata } from '../types/anexoPngLocal';
+import {
+  PRESCRIPTION_ZIP_LAYER_OPTIONS,
+  canStartPrescriptionZipPropertyImport,
+  confirmPrescriptionZipPropertyImport,
+  listActivePrescriptionZipImportsForPropriedade,
+  preparePrescriptionZipPropertyImport,
+} from '../services/PrescriptionZipPropertyImportWorkflow';
+import type {
+  PrescriptionZipPropertyImportFormInput,
+  PrescriptionZipPropertyImportPreview,
+} from '../services/PrescriptionZipPropertyImportWorkflow';
+import {
+  canManagePrescriptionZipItem,
+  removePrescriptionZipForPropriedade,
+  replacePrescriptionZipForPropriedade,
+} from '../services/PrescriptionZipPropertyManageWorkflow';
+import type { PrescriptionZipImportMetadata } from '../types/anexoPrescricaoZipLocal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -115,6 +137,7 @@ const CATEGORIAS_MATERIAIS_TECNICOS = ['fertilidade', 'correcao', 'prescricao'];
 type GeoJsonImportMode = 'attach' | 'replace';
 type GeoJsonManageDialogAction = 'replace' | 'remove' | null;
 type PngManageDialogAction = 'replace' | 'remove' | null;
+type PrescriptionZipManageDialogAction = 'replace' | 'remove' | null;
 
 const ORDENACOES_MATERIAIS = [
   { key: 'recente', label: 'Recente', icon: 'time-outline' },
@@ -140,6 +163,18 @@ const EMPTY_PNG_FORM: PngMapPropertyImportFormInput = {
   safra: '',
   ano: '',
   profundidade: '',
+  escopo: 'propriedade',
+  talhao_id: '',
+  talhao_nome: '',
+  descricao: '',
+  visivel_para_produtor: true,
+};
+
+const EMPTY_PRESCRIPTION_ZIP_FORM: PrescriptionZipPropertyImportFormInput = {
+  titulo: '',
+  camada: 'prescricao',
+  safra: '',
+  ano: '',
   escopo: 'propriedade',
   talhao_id: '',
   talhao_nome: '',
@@ -286,6 +321,12 @@ export default function MapasScreen({ route, navigation }) {
   const [pngPreview, setPngPreview] = useState<PngMapPropertyImportPreview | null>(null);
   const [pngForm, setPngForm] = useState<PngMapPropertyImportFormInput>(EMPTY_PNG_FORM);
   const [pngFormErrors, setPngFormErrors] = useState<Record<string, string>>({});
+  const [prescriptionZipImports, setPrescriptionZipImports] = useState<PrescriptionZipImportMetadata[]>([]);
+  const [prescriptionZipImporting, setPrescriptionZipImporting] = useState(false);
+  const [prescriptionZipConfirming, setPrescriptionZipConfirming] = useState(false);
+  const [prescriptionZipPreview, setPrescriptionZipPreview] = useState<PrescriptionZipPropertyImportPreview | null>(null);
+  const [prescriptionZipForm, setPrescriptionZipForm] = useState<PrescriptionZipPropertyImportFormInput>(EMPTY_PRESCRIPTION_ZIP_FORM);
+  const [prescriptionZipFormErrors, setPrescriptionZipFormErrors] = useState<Record<string, string>>({});
   const [geoJsonManageDialog, setGeoJsonManageDialog] = useState<{
     visible: boolean;
     action: GeoJsonManageDialogAction;
@@ -303,6 +344,19 @@ export default function MapasScreen({ route, navigation }) {
     visible: false,
     action: null,
     loading: false,
+  });
+  const [prescriptionZipManageDialog, setPrescriptionZipManageDialog] = useState<{
+    visible: boolean;
+    action: PrescriptionZipManageDialogAction;
+    loading: boolean;
+  }>({
+    visible: false,
+    action: null,
+    loading: false,
+  });
+  const [prescriptionZipDetail, setPrescriptionZipDetail] = useState<any>({
+    visible: false,
+    mapa: null,
   });
   const [geoJsonTalhoesLayer, setGeoJsonTalhoesLayer] = useState<GeoJsonTalhoesLayerResult | null>(null);
 
@@ -345,6 +399,7 @@ export default function MapasScreen({ route, navigation }) {
           setSelectedTalhao(null);
           setGeoJsonImports([]);
           setPngImports([]);
+          setPrescriptionZipImports([]);
           setGeoJsonTalhoesLayer(null);
           return;
         }
@@ -385,7 +440,11 @@ export default function MapasScreen({ route, navigation }) {
         ? Promise.all(idsPermitidos.map((id) => listActivePngMapImportsForPropriedade(id)))
             .then((listas) => listas.flat())
         : Promise.resolve([]);
-      const [importsGeoJson, talhoesLayer, importsPng] = await Promise.all([
+      const prescriptionZipImportsPromise = idsPermitidos.length > 0
+        ? Promise.all(idsPermitidos.map((id) => listActivePrescriptionZipImportsForPropriedade(id)))
+            .then((listas) => listas.flat())
+        : Promise.resolve([]);
+      const [importsGeoJson, talhoesLayer, importsPng, importsPrescriptionZip] = await Promise.all([
         fazendaId && idsPermitidos.length === 1
           ? listGeoJsonImportsForPropriedade(idsPermitidos[0])
           : Promise.resolve([]),
@@ -396,12 +455,14 @@ export default function MapasScreen({ route, navigation }) {
             })
           : Promise.resolve(null),
         pngImportsPromise,
+        prescriptionZipImportsPromise,
       ]);
 
       setMapas(mapasFiltrados);
       setLimites(limitesFiltrados);
       setGeoJsonImports(importsGeoJson);
       setPngImports(importsPng);
+      setPrescriptionZipImports(importsPrescriptionZip);
       setGeoJsonTalhoesLayer(talhoesLayer);
 
       const baseTalhoesParaAno = isGeoJsonTalhoesLayerActive(talhoesLayer)
@@ -416,6 +477,7 @@ export default function MapasScreen({ route, navigation }) {
     } catch (error) {
       setGeoJsonImports([]);
       setPngImports([]);
+      setPrescriptionZipImports([]);
       setGeoJsonTalhoesLayer(null);
       toast.showError('Não foi possível carregar os dados');
     } finally {
@@ -446,6 +508,9 @@ export default function MapasScreen({ route, navigation }) {
   const podeAnexarPng = consultaPorFazenda
     && !!contextoConsulta.fazenda
     && canStartPngMapPropertyImport(user, contextoConsulta.fazenda);
+  const podeAnexarPrescriptionZip = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canStartPrescriptionZipPropertyImport(user, contextoConsulta.fazenda);
   const pngImportsAtivos = useMemo(
     () => pngImports.filter((item) => item.status === 'ativo'),
     [pngImports]
@@ -453,6 +518,10 @@ export default function MapasScreen({ route, navigation }) {
   const pngImportsMateriaisAtivos = useMemo(
     () => pngImportsAtivos.filter((item) => isCategoriaMaterialTecnico(item.categoria)),
     [pngImportsAtivos]
+  );
+  const prescriptionZipImportsAtivos = useMemo(
+    () => prescriptionZipImports.filter((item) => item.status === 'ativo'),
+    [prescriptionZipImports]
   );
   const fazendaOptions = useMemo(
     () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
@@ -479,11 +548,18 @@ export default function MapasScreen({ route, navigation }) {
     }),
     [mapas, pngImports, propriedadeIdsPermitidos, user?.perfil]
   );
+  const mapasComMateriaisLocais = useMemo(
+    () => mergeMapasWithPrescriptionZipImports(mapasComPngLocal, prescriptionZipImports, {
+      propriedadeIds: propriedadeIdsPermitidos,
+      perfil: user?.perfil,
+    }),
+    [mapasComPngLocal, prescriptionZipImports, propriedadeIdsPermitidos, user?.perfil]
+  );
 
   const mapasNoContexto = useMemo(() => {
-    if (!fazendaFiltroId) return mapasComPngLocal;
-    return mapasComPngLocal.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
-  }, [mapasComPngLocal, fazendaFiltroId]);
+    if (!fazendaFiltroId) return mapasComMateriaisLocais;
+    return mapasComMateriaisLocais.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
+  }, [mapasComMateriaisLocais, fazendaFiltroId]);
   const materiaisTecnicosNoContexto = useMemo(
     () => mapasNoContexto.filter((mapa) => isCategoriaMaterialTecnico(mapa?.categoria)),
     [mapasNoContexto]
@@ -553,6 +629,14 @@ export default function MapasScreen({ route, navigation }) {
 
     return options;
   }, [talhoesDemarcacaoNoContexto]);
+  const prescriptionZipLayerOptions = useMemo(
+    () => PRESCRIPTION_ZIP_LAYER_OPTIONS.map((option) => ({
+      value: option.value,
+      label: option.label,
+      description: 'Prescrição',
+    })),
+    []
+  );
 
   useEffect(() => {
     if (safraFiltroMapas !== FILTRO_TODOS && !safrasMapas.includes(safraFiltroMapas)) {
@@ -717,6 +801,12 @@ export default function MapasScreen({ route, navigation }) {
     return importsAtualizados;
   }, []);
 
+  const recarregarPrescriptionZipLocal = useCallback(async (propriedadeId: string) => {
+    const importsAtualizados = await listActivePrescriptionZipImportsForPropriedade(propriedadeId);
+    setPrescriptionZipImports(importsAtualizados);
+    return importsAtualizados;
+  }, []);
+
   // ──────────────────────────────────────────────
   // HANDLERS
   // ──────────────────────────────────────────────
@@ -730,6 +820,20 @@ export default function MapasScreen({ route, navigation }) {
       mapa,
       source,
       loadError: null,
+    });
+  };
+
+  const openPrescriptionZipDetail = (mapa) => {
+    setPrescriptionZipDetail({
+      visible: true,
+      mapa,
+    });
+  };
+
+  const closePrescriptionZipDetail = () => {
+    setPrescriptionZipDetail({
+      visible: false,
+      mapa: null,
     });
   };
 
@@ -757,7 +861,23 @@ export default function MapasScreen({ route, navigation }) {
     return pngImports.find((item) => item.id === importId) ?? null;
   }, [pngImports]);
 
+  const resolvePrescriptionZipMetadataFromMapa = useCallback((mapa: any): PrescriptionZipImportMetadata | null => {
+    const importId = typeof mapa?.prescription_zip_import_id === 'string' && mapa.prescription_zip_import_id.trim()
+      ? mapa.prescription_zip_import_id.trim()
+      : typeof mapa?.id === 'string' && mapa.id.startsWith('zip_local:')
+        ? mapa.id.slice('zip_local:'.length)
+        : '';
+
+    if (!importId) return null;
+    return prescriptionZipImports.find((item) => item.id === importId) ?? null;
+  }, [prescriptionZipImports]);
+
   const handleDownload = async (mapa) => {
+    if (isPrescriptionZipLocalMapa(mapa)) {
+      openPrescriptionZipDetail(mapa);
+      return;
+    }
+
     if (isPngLocalMapa(mapa)) {
       try {
         const result = await resolveMapaPngImageSource(mapa, {
@@ -794,6 +914,13 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const confirmDownload = async () => {
+    if (isPrescriptionZipLocalMapa(downloadDialog.mapa)) {
+      const mapaSelecionado = downloadDialog.mapa;
+      setDownloadDialog({ visible: false, mapa: null, status: null });
+      openPrescriptionZipDetail(mapaSelecionado);
+      return;
+    }
+
     if (isPngLocalMapa(downloadDialog.mapa)) {
       const mapaSelecionado = downloadDialog.mapa;
       setDownloadDialog({ visible: false, mapa: null, status: null });
@@ -1158,6 +1285,132 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
+  const handleSolicitarSubstituirPrescriptionZip = () => {
+    if (
+      !contextoConsulta.fazenda
+      || !canManagePrescriptionZipItem(user, contextoConsulta.fazenda, prescriptionZipDetail.mapa)
+    ) {
+      toast.showInfo('Abra uma prescrição local de uma Propriedade dentro do seu escopo para substituir.');
+      return;
+    }
+
+    setPrescriptionZipManageDialog({
+      visible: true,
+      action: 'replace',
+      loading: false,
+    });
+  };
+
+  const handleSolicitarRemoverPrescriptionZip = () => {
+    if (
+      !contextoConsulta.fazenda
+      || !canManagePrescriptionZipItem(user, contextoConsulta.fazenda, prescriptionZipDetail.mapa)
+    ) {
+      toast.showInfo('Abra uma prescrição local de uma Propriedade dentro do seu escopo para remover.');
+      return;
+    }
+
+    setPrescriptionZipManageDialog({
+      visible: true,
+      action: 'remove',
+      loading: false,
+    });
+  };
+
+  const handleCancelarPrescriptionZipManageDialog = () => {
+    if (prescriptionZipManageDialog.loading) return;
+    setPrescriptionZipManageDialog({
+      visible: false,
+      action: null,
+      loading: false,
+    });
+  };
+
+  const handleConfirmarPrescriptionZipManageDialog = async () => {
+    const action = prescriptionZipManageDialog.action;
+    const mapaSelecionado = prescriptionZipDetail.mapa;
+    const propriedade = contextoConsulta.fazenda;
+
+    if (
+      !action
+      || !propriedade
+      || !canManagePrescriptionZipItem(user, propriedade, mapaSelecionado)
+    ) {
+      handleCancelarPrescriptionZipManageDialog();
+      return;
+    }
+
+    const metadata = resolvePrescriptionZipMetadataFromMapa(mapaSelecionado);
+
+    setPrescriptionZipManageDialog({
+      visible: action === 'remove',
+      action,
+      loading: true,
+    });
+
+    try {
+      const result = action === 'replace'
+        ? await replacePrescriptionZipForPropriedade({
+            user,
+            propriedade,
+            mapa: mapaSelecionado,
+            metadata,
+          })
+        : await removePrescriptionZipForPropriedade({
+            user,
+            propriedade,
+            mapa: mapaSelecionado,
+            metadata,
+          });
+
+      if (!result.ok) {
+        if (result.error?.code !== 'PICKER_CANCELLED') {
+          toast.showError(result.error?.message || 'Não foi possível gerenciar a prescrição local.');
+        }
+        return;
+      }
+
+      const resultado = result as any;
+      if (Array.isArray(resultado.imports)) {
+        setPrescriptionZipImports(resultado.imports);
+      }
+
+      const metadataContexto = resultado.metadata
+        || resultado.activeMetadata
+        || resultado.previousMetadata
+        || metadata;
+      const propriedadeId = metadataContexto?.propriedade_id || getFazendaId(propriedade);
+
+      if (propriedadeId) {
+        try {
+          await recarregarPrescriptionZipLocal(propriedadeId);
+        } catch {
+          toast.showWarning('A ação foi concluída, mas não foi possível recarregar o resumo local agora.');
+        }
+      } else {
+        await loadDados();
+      }
+
+      closePrescriptionZipDetail();
+      toast.showSuccess(action === 'replace' ? 'Prescrição local substituída.' : 'Prescrição local removida.');
+      if (resultado.warnings?.length > 0) {
+        toast.showWarning(resultado.warnings[0].message);
+      }
+    } catch {
+      toast.showError(
+        action === 'replace'
+          ? 'Não foi possível concluir a substituição da prescrição local.'
+          : 'Não foi possível concluir a remoção da prescrição local.'
+      );
+    } finally {
+      setPrescriptionZipManageDialog({
+        visible: false,
+        action: null,
+        loading: false,
+      });
+    }
+  };
+
   const updatePngForm = (patch: Partial<PngMapPropertyImportFormInput>) => {
     setPngForm((current) => ({
       ...current,
@@ -1262,6 +1515,116 @@ export default function MapasScreen({ route, navigation }) {
       toast.showError('Não foi possível concluir o anexo do PNG.');
     } finally {
       setPngConfirming(false);
+    }
+  };
+
+  const updatePrescriptionZipForm = (patch: Partial<PrescriptionZipPropertyImportFormInput>) => {
+    setPrescriptionZipForm((current) => ({
+      ...current,
+      ...patch,
+    }));
+    setPrescriptionZipFormErrors((current) => {
+      const next = { ...current };
+      Object.keys(patch).forEach((key) => {
+        delete next[key];
+      });
+      if ('talhao_id' in patch || 'talhao_nome' in patch || 'escopo' in patch) {
+        delete next.talhao;
+      }
+      return next;
+    });
+  };
+
+  const handlePrescriptionZipTalhaoChange = (talhaoId: string) => {
+    const option = pngTalhaoOptions.find((item: any) => item?.value === talhaoId) as any;
+    updatePrescriptionZipForm({
+      talhao_id: talhaoId,
+      talhao_nome: option?.label || '',
+    });
+  };
+
+  const handleAnexarPrescriptionZip = async () => {
+    if (!podeAnexarPrescriptionZip || !contextoConsulta.fazenda) {
+      toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar prescrição.');
+      return;
+    }
+
+    setPrescriptionZipImporting(true);
+    try {
+      const result = await preparePrescriptionZipPropertyImport({
+        user,
+        propriedade: contextoConsulta.fazenda,
+      });
+
+      if (!result.ok || !result.preview) {
+        if (result.error?.code !== 'PICKER_CANCELLED') {
+          toast.showError(result.error?.message || 'Não foi possível validar o ZIP selecionado.');
+        }
+        return;
+      }
+
+      setPrescriptionZipPreview(result.preview);
+      setPrescriptionZipForm({
+        ...EMPTY_PRESCRIPTION_ZIP_FORM,
+        ...result.preview.form,
+        ano: result.preview.form.ano ? String(result.preview.form.ano) : '',
+      });
+      setPrescriptionZipFormErrors({});
+    } catch {
+      toast.showError('Não foi possível preparar o ZIP selecionado.');
+    } finally {
+      setPrescriptionZipImporting(false);
+    }
+  };
+
+  const handleCancelarPrescriptionZipPreview = () => {
+    if (prescriptionZipConfirming) return;
+    setPrescriptionZipPreview(null);
+    setPrescriptionZipForm(EMPTY_PRESCRIPTION_ZIP_FORM);
+    setPrescriptionZipFormErrors({});
+  };
+
+  const handleConfirmarPrescriptionZipPreview = async () => {
+    if (!prescriptionZipPreview) return;
+
+    setPrescriptionZipConfirming(true);
+    try {
+      const result = await confirmPrescriptionZipPropertyImport(
+        prescriptionZipPreview,
+        prescriptionZipForm
+      );
+
+      if (!result.ok) {
+        if (result.error?.code === 'FORM_INVALID') {
+          setPrescriptionZipFormErrors((result.error.details as Record<string, string>) || {});
+          toast.showError('Revise os campos obrigatórios da prescrição.');
+          return;
+        }
+
+        toast.showError(result.error?.message || 'Não foi possível anexar a prescrição.');
+        return;
+      }
+
+      setPrescriptionZipPreview(null);
+      setPrescriptionZipForm(EMPTY_PRESCRIPTION_ZIP_FORM);
+      setPrescriptionZipFormErrors({});
+      setPrescriptionZipImports(result.imports || (result.metadata ? [result.metadata] : []));
+
+      try {
+        await recarregarPrescriptionZipLocal(prescriptionZipPreview.resolvedContext.propriedade_id);
+      } catch {
+        toast.showWarning('Prescrição salva, mas não foi possível recarregar o resumo local agora.');
+      }
+
+      toast.showSuccess('Prescrição ZIP anexada à Propriedade.');
+      toast.showInfo('A prescrição aparece em Material técnico sem abrir ou processar o ZIP.');
+      if (result.warnings && result.warnings.length > 0) {
+        toast.showWarning(result.warnings[0].message);
+      }
+    } catch {
+      toast.showError('Não foi possível concluir o anexo da prescrição.');
+    } finally {
+      setPrescriptionZipConfirming(false);
     }
   };
 
@@ -1437,6 +1800,20 @@ export default function MapasScreen({ route, navigation }) {
     return 'Material técnico';
   };
 
+  const getMaterialTipoLabel = (mapa) => {
+    if (isPrescriptionZipLocalMapa(mapa)) return 'Prescrição';
+    if (isProdutorView && (isPngLocalMapa(mapa) || mapa?.tipo_anexo === 'anexo_fertilidade')) {
+      return 'Anexo técnico';
+    }
+    if (isPngLocalMapa(mapa)) {
+      return mapa?.categoria === 'correcao' ? 'Mapa de correção de solo' : 'Mapa de fertilidade';
+    }
+    if (mapa?.tipo_anexo === 'anexo_fertilidade') return 'Mapa de fertilidade';
+    if (mapa?.categoria === 'correcao') return 'Mapa de correção de solo';
+    if (mapa?.categoria === 'prescricao') return 'Prescrição';
+    return 'Arquivo técnico';
+  };
+
   const buildImagePreviewMetaItems = (mapa) => {
     if (!mapa) return [];
 
@@ -1453,6 +1830,28 @@ export default function MapasScreen({ route, navigation }) {
       { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
       { icon: 'resize-outline', label: 'Profundidade', value: profundidadeMapa },
       { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
+    ].filter((item) => item.value);
+  };
+
+  const buildPrescriptionZipMetaItems = (mapa) => {
+    if (!mapa) return [];
+
+    const camadaLabel = getMapaElementoLabel(mapa) || mapa?.camada_label || mapa?.subcategoria;
+    const safraMapa = getMapaSafra(mapa);
+    const talhaoMapa = getMapaTalhao(mapa);
+    const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
+    const tamanhoArquivo = mapa?.tamanho_arquivo
+      ? formatarTamanhoArquivo(mapa.tamanho_arquivo)
+      : '';
+
+    return [
+      { icon: 'archive-outline', label: 'Tipo', value: 'Prescrição' },
+      { icon: 'layers-outline', label: 'Camada', value: camadaLabel },
+      { icon: 'calendar-outline', label: 'Safra/ano', value: safraMapa },
+      { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
+      { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
+      { icon: 'server-outline', label: 'Tamanho', value: tamanhoArquivo },
+      { icon: 'file-tray-full-outline', label: 'Formato', value: 'ZIP' },
     ].filter((item) => item.value);
   };
 
@@ -1479,32 +1878,25 @@ export default function MapasScreen({ route, navigation }) {
     const formatoArquivo = getFormatoArquivo(mapa);
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
     const isPngLocal = isPngLocalMapa(mapa);
+    const isPrescriptionZip = isPrescriptionZipLocalMapa(mapa);
     const isAnexoFertilidade = mapa?.tipo_anexo === 'anexo_fertilidade';
-    const tipoArquivoLabel = isProdutorView && (isPngLocal || isAnexoFertilidade)
-      ? 'Anexo técnico'
-      : isPngLocal
-      ? 'PNG local'
-      : isAnexoFertilidade
-      ? 'Anexo de fertilidade'
-      : mapa?.categoria === 'fertilidade'
-        ? 'Mapa de fertilidade'
-        : mapa?.categoria === 'correcao'
-        ? 'Mapa de correção de solo'
-        : mapa?.categoria === 'prescricao'
-        ? 'Prescrição'
-        : 'Arquivo técnico';
+    const tipoArquivoLabel = getMaterialTipoLabel(mapa);
     const abrirMaterialLabel = isPngLocal
       ? 'Abrir anexo'
+      : isPrescriptionZip
+      ? 'Ver detalhes'
       : statusDownload.podeAbrir
       ? isAnexoFertilidade
         ? 'Abrir anexo'
         : 'Abrir material'
       : 'Arquivo não disponível';
     const tipoMaterialLabel = isPngLocal
-      ? isProdutorView ? '' : 'Anexo local'
+      ? isProdutorView ? '' : 'Imagem local'
+      : isPrescriptionZip
+      ? isProdutorView ? '' : 'ZIP local'
       : formatarTipoMaterial(mapa.tipo_material);
-    const podeAcionarMapa = isPngLocal || statusDownload.podeAbrir;
-    const indicadorDisponivel = isPngLocal || statusDownload.podeAbrir;
+    const podeAcionarMapa = isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
+    const indicadorDisponivel = isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
       || fazendaFiltroInfo;
@@ -1537,9 +1929,9 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.mapaTipoLinha}>
             <View style={[styles.mapaTipoTag, isImagemAnexo && styles.mapaTipoTagImagem]}>
               <Ionicons
-                name={isImagemAnexo ? 'image-outline' : 'document-outline'}
+                name={isPrescriptionZip ? 'archive-outline' : isImagemAnexo ? 'image-outline' : 'document-outline'}
                 size={13}
-                color={isImagemAnexo ? colors.info : colors.primary}
+                color={isPrescriptionZip ? colors.primary : isImagemAnexo ? colors.info : colors.primary}
               />
               <Text style={[styles.mapaTipoTexto, isImagemAnexo && styles.mapaTipoTextoImagem]}>
                 {tipoArquivoLabel}
@@ -1581,7 +1973,7 @@ export default function MapasScreen({ route, navigation }) {
           </Text>
         </View>
       </View>
-      {!isPngLocal && !statusDownload.podeAbrir && (
+      {!isPngLocal && !isPrescriptionZip && !statusDownload.podeAbrir && (
         <Text style={styles.materialIndisponivelTexto}>
           Este material ainda não possui arquivo disponível para consulta.
         </Text>
@@ -1775,7 +2167,7 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const renderPngImportPanel = () => {
-    if (!podeAnexarPng) return null;
+    if (!podeAnexarPng && !podeAnexarPrescriptionZip) return null;
 
     return (
       <View style={styles.pngImportPanel}>
@@ -1835,27 +2227,87 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         )}
 
-        <TouchableOpacity
-          style={[
-            styles.geoJsonImportButton,
-            pngImporting && styles.geoJsonImportButtonDisabled,
-          ]}
-          onPress={handleAnexarPng}
-          activeOpacity={0.78}
-          disabled={pngImporting}
-        >
-          {pngImporting ? (
-            <ActivityIndicator size="small" color={colors.white} />
-          ) : (
-            <Ionicons name="attach-outline" size={18} color={colors.white} />
-          )}
-          <Text style={styles.geoJsonImportButtonText}>
-            Anexar PNG
-          </Text>
-        </TouchableOpacity>
+        {prescriptionZipImportsAtivos.length > 0 ? (
+          <View style={styles.pngImportSummaryList}>
+            {prescriptionZipImportsAtivos.slice(0, 2).map((item) => (
+              <View key={item.id} style={styles.pngImportSummaryItem}>
+                <View style={styles.pngImportSummaryIcon}>
+                  <Ionicons name="archive-outline" size={18} color={colors.primary} />
+                </View>
+                <View style={styles.pngImportSummaryText}>
+                  <Text style={styles.pngImportSummaryTitle} numberOfLines={1}>
+                    {item.titulo}
+                  </Text>
+                  <Text style={styles.pngImportSummaryMeta} numberOfLines={2}>
+                    {[
+                      item.camada_label || item.elemento_label,
+                      item.safra || item.ano,
+                      item.escopo === 'talhao'
+                        ? item.talhao_nome || 'Talhão específico'
+                        : 'Propriedade inteira',
+                      item.status,
+                    ].filter(Boolean).join(' • ')}
+                  </Text>
+                  <Text style={styles.pngImportSummaryMeta} numberOfLines={1}>
+                    {[
+                      item.arquivo_nome_original,
+                      formatarData(item.importado_em),
+                    ].filter(Boolean).join(' • ')}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        <View style={styles.materialImportActions}>
+          {podeAnexarPng ? (
+            <TouchableOpacity
+              style={[
+                styles.geoJsonImportButton,
+                styles.materialImportActionButton,
+                pngImporting && styles.geoJsonImportButtonDisabled,
+              ]}
+              onPress={handleAnexarPng}
+              activeOpacity={0.78}
+              disabled={pngImporting}
+            >
+              {pngImporting ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons name="image-outline" size={18} color={colors.white} />
+              )}
+              <Text style={styles.geoJsonImportButtonText}>
+                Anexar PNG
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {podeAnexarPrescriptionZip ? (
+            <TouchableOpacity
+              style={[
+                styles.geoJsonImportButton,
+                styles.materialImportActionButton,
+                prescriptionZipImporting && styles.geoJsonImportButtonDisabled,
+              ]}
+              onPress={handleAnexarPrescriptionZip}
+              activeOpacity={0.78}
+              disabled={prescriptionZipImporting}
+            >
+              {prescriptionZipImporting ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons name="archive-outline" size={18} color={colors.white} />
+              )}
+              <Text style={styles.geoJsonImportButtonText}>
+                Anexar prescrição ZIP
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
         <Text style={styles.pngImportNextStep}>
-          Os anexos ativos aparecem em Material técnico conforme tipo, safra e talhão.
+          PNG abre como imagem. Prescrição ZIP abre apenas como detalhe do pacote técnico.
         </Text>
       </View>
     );
@@ -2178,9 +2630,13 @@ export default function MapasScreen({ route, navigation }) {
   // RENDER PRINCIPAL
   // ──────────────────────────────────────────────
   const imagePreviewMetaItems = buildImagePreviewMetaItems(imagePreview.mapa);
+  const prescriptionZipMetaItems = buildPrescriptionZipMetaItems(prescriptionZipDetail.mapa);
   const canManageImagePreviewPng = consultaPorFazenda
     && !!contextoConsulta.fazenda
     && canManagePngMapItem(user, contextoConsulta.fazenda, imagePreview.mapa);
+  const canManagePrescriptionZipDetail = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canManagePrescriptionZipItem(user, contextoConsulta.fazenda, prescriptionZipDetail.mapa);
 
   if (loading) {
     return (
@@ -2297,6 +2753,29 @@ export default function MapasScreen({ route, navigation }) {
         loading={pngManageDialog.loading}
         onConfirm={handleConfirmarPngManageDialog}
         onCancel={handleCancelarPngManageDialog}
+      />
+
+      <ConfirmDialog
+        visible={prescriptionZipManageDialog.visible}
+        title={
+          prescriptionZipManageDialog.action === 'remove'
+            ? 'Remover prescrição local'
+            : 'Substituir ZIP'
+        }
+        message={
+          prescriptionZipManageDialog.action === 'remove'
+            ? [
+                'Deseja remover esta prescrição local? O arquivo ZIP local será removido deste aparelho.',
+                'A Propriedade não será apagada. Outros mapas/anexos não serão apagados.',
+              ].join('\n\n')
+            : 'O novo arquivo ZIP substituirá esta prescrição local. Os metadados principais serão preservados.'
+        }
+        type={prescriptionZipManageDialog.action === 'remove' ? 'danger' : 'warning'}
+        confirmText={prescriptionZipManageDialog.action === 'remove' ? 'Remover' : 'Continuar'}
+        cancelText="Cancelar"
+        loading={prescriptionZipManageDialog.loading}
+        onConfirm={handleConfirmarPrescriptionZipManageDialog}
+        onCancel={handleCancelarPrescriptionZipManageDialog}
       />
 
       <Modal
@@ -2652,6 +3131,201 @@ export default function MapasScreen({ route, navigation }) {
       </Modal>
 
       <Modal
+        visible={!!prescriptionZipPreview}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelarPrescriptionZipPreview}
+      >
+        <View style={styles.geoJsonPreviewOverlay}>
+          <View style={styles.geoJsonPreviewDialog}>
+            <View style={styles.geoJsonPreviewHeader}>
+              <View style={styles.geoJsonPreviewTitleWrap}>
+                <Text style={styles.geoJsonPreviewTitle}>
+                  Anexar prescrição ZIP
+                </Text>
+                <Text style={styles.geoJsonPreviewSubtitle}>
+                  Classifique o pacote técnico sem abrir ou processar o ZIP.
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleCancelarPrescriptionZipPreview}
+                style={styles.geoJsonPreviewClose}
+                disabled={prescriptionZipConfirming}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.geoJsonPreviewBody}
+              contentContainerStyle={styles.geoJsonPreviewContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {prescriptionZipPreview ? (
+                <>
+                  <View style={styles.pngFileBox}>
+                    <View style={styles.pngFileIcon}>
+                      <Ionicons name="archive-outline" size={20} color={colors.primary} />
+                    </View>
+                    <View style={styles.pngFileText}>
+                      <Text style={styles.pngFileLabel}>Arquivo selecionado</Text>
+                      <Text style={styles.pngFileName} numberOfLines={2}>
+                        {prescriptionZipPreview.file.name}
+                      </Text>
+                      <Text style={styles.pngFileMeta}>
+                        {formatarTamanhoArquivo(prescriptionZipPreview.file.size)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <FormField
+                    label="Título"
+                    required
+                    value={prescriptionZipForm.titulo || ''}
+                    onChangeText={(titulo) => updatePrescriptionZipForm({ titulo })}
+                    error={prescriptionZipFormErrors.titulo}
+                    placeholder="Ex.: Prescrição 2025"
+                    leftIcon="text-outline"
+                  />
+
+                  <SelectField
+                    label="Camada"
+                    required
+                    value={prescriptionZipForm.camada ? String(prescriptionZipForm.camada) : ''}
+                    options={prescriptionZipLayerOptions}
+                    onChange={(camada) => updatePrescriptionZipForm({ camada })}
+                    error={prescriptionZipFormErrors.camada}
+                    placeholder="Selecione a camada"
+                  />
+
+                  <View style={styles.pngFormRow}>
+                    <FormField
+                      label="Safra"
+                      value={prescriptionZipForm.safra || ''}
+                      onChangeText={(safra) => updatePrescriptionZipForm({ safra })}
+                      placeholder="Ex.: 2025/2026"
+                      leftIcon="leaf-outline"
+                      containerStyle={styles.pngFormRowItem}
+                    />
+                    <FormField
+                      label="Ano"
+                      value={prescriptionZipForm.ano ? String(prescriptionZipForm.ano) : ''}
+                      onChangeText={(ano) => updatePrescriptionZipForm({ ano })}
+                      error={prescriptionZipFormErrors.ano}
+                      keyboardType="number-pad"
+                      placeholder="2025"
+                      leftIcon="calendar-outline"
+                      containerStyle={styles.pngFormRowItem}
+                    />
+                  </View>
+
+                  <SelectField
+                    label="Escopo"
+                    required
+                    value={prescriptionZipForm.escopo || 'propriedade'}
+                    options={PNG_ESCOPO_OPTIONS}
+                    onChange={(escopo) => updatePrescriptionZipForm({
+                      escopo: escopo === 'talhao' ? 'talhao' : 'propriedade',
+                      talhao_id: '',
+                      talhao_nome: '',
+                    })}
+                    error={prescriptionZipFormErrors.escopo}
+                  />
+
+                  {prescriptionZipForm.escopo === 'talhao' ? (
+                    pngTalhaoOptions.length > 0 ? (
+                      <SelectField
+                        label="Talhão"
+                        required
+                        value={prescriptionZipForm.talhao_id || ''}
+                        options={pngTalhaoOptions}
+                        onChange={handlePrescriptionZipTalhaoChange}
+                        error={prescriptionZipFormErrors.talhao}
+                        placeholder="Selecione o talhão"
+                      />
+                    ) : (
+                      <FormField
+                        label="Nome do talhão"
+                        required
+                        value={prescriptionZipForm.talhao_nome || ''}
+                        onChangeText={(talhao_nome) => updatePrescriptionZipForm({ talhao_nome })}
+                        error={prescriptionZipFormErrors.talhao}
+                        placeholder="Informe o talhão"
+                        leftIcon="location-outline"
+                      />
+                    )
+                  ) : null}
+
+                  <FormField
+                    label="Observações"
+                    value={prescriptionZipForm.descricao || ''}
+                    onChangeText={(descricao) => updatePrescriptionZipForm({ descricao })}
+                    placeholder="Observação técnica opcional"
+                    leftIcon="document-text-outline"
+                    textarea
+                    maxLength={420}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.pngVisibilityToggle}
+                    onPress={() => updatePrescriptionZipForm({
+                      visivel_para_produtor: !prescriptionZipForm.visivel_para_produtor,
+                    })}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={prescriptionZipForm.visivel_para_produtor ? 'checkbox-outline' : 'square-outline'}
+                      size={22}
+                      color={prescriptionZipForm.visivel_para_produtor ? colors.primary : colors.muted}
+                    />
+                    <View style={styles.pngVisibilityText}>
+                      <Text style={styles.pngVisibilityTitle}>Visível para produtor</Text>
+                      <Text style={styles.pngVisibilitySubtitle}>
+                        A prescrição será marcada para consulta quando permitido.
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <InfoBox
+                    variant="info"
+                    title="Pacote técnico"
+                    message={PRESCRIPTION_ZIP_DETAILS_MESSAGE}
+                  />
+                </>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.geoJsonPreviewFooter}>
+              <TouchableOpacity
+                style={styles.geoJsonPreviewCancelButton}
+                onPress={handleCancelarPrescriptionZipPreview}
+                disabled={prescriptionZipConfirming}
+              >
+                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonPreviewConfirmButton,
+                  prescriptionZipConfirming && styles.geoJsonPreviewConfirmButtonDisabled,
+                ]}
+                onPress={handleConfirmarPrescriptionZipPreview}
+                disabled={prescriptionZipConfirming}
+              >
+                {prescriptionZipConfirming ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="checkmark-outline" size={18} color={colors.white} />
+                )}
+                <Text style={styles.geoJsonPreviewConfirmText}>
+                  Anexar ZIP
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
         visible={imagePreview.visible}
         transparent
         animationType="fade"
@@ -2714,7 +3388,7 @@ export default function MapasScreen({ route, navigation }) {
                 >
                   <Ionicons name="trash-outline" size={17} color={colors.error} />
                   <Text style={styles.geoJsonManageButtonTextDanger}>
-                    Remover PNG local
+                    Remover material local
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -2734,6 +3408,81 @@ export default function MapasScreen({ route, navigation }) {
                 resizeMode="contain"
                 onError={handleImagePreviewError}
               />
+            ) : null}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={prescriptionZipDetail.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={closePrescriptionZipDetail}
+      >
+        <View style={styles.imagePreviewOverlay}>
+          <View style={styles.imagePreviewDialog}>
+            <View style={styles.imagePreviewHeader}>
+              <View style={styles.imagePreviewTitleWrap}>
+                <Text style={styles.imagePreviewTitle} numberOfLines={1}>
+                  {prescriptionZipDetail.mapa?.titulo || 'Prescrição'}
+                </Text>
+                <Text style={styles.imagePreviewSubtitle}>
+                  Pacote técnico ZIP
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={closePrescriptionZipDetail}
+                style={styles.imagePreviewClose}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {prescriptionZipMetaItems.length > 0 ? (
+              <View style={styles.imagePreviewMetaGrid}>
+                {prescriptionZipMetaItems.map(renderImagePreviewMetaChip)}
+              </View>
+            ) : null}
+
+            <InfoBox
+              variant="info"
+              title="Prescrição"
+              message={PRESCRIPTION_ZIP_DETAILS_MESSAGE}
+            />
+
+            {canManagePrescriptionZipDetail ? (
+              <View style={styles.imagePreviewManagePanel}>
+                <TouchableOpacity
+                  style={[
+                    styles.geoJsonManageButton,
+                    styles.geoJsonManageButtonSecondary,
+                    prescriptionZipManageDialog.loading && styles.geoJsonImportButtonDisabled,
+                  ]}
+                  onPress={handleSolicitarSubstituirPrescriptionZip}
+                  activeOpacity={0.78}
+                  disabled={prescriptionZipManageDialog.loading}
+                >
+                  <Ionicons name="swap-horizontal-outline" size={17} color={colors.primary} />
+                  <Text style={styles.geoJsonManageButtonTextSecondary}>
+                    Substituir ZIP
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.geoJsonManageButton,
+                    styles.geoJsonManageButtonDanger,
+                    prescriptionZipManageDialog.loading && styles.geoJsonImportButtonDisabled,
+                  ]}
+                  onPress={handleSolicitarRemoverPrescriptionZip}
+                  activeOpacity={0.78}
+                  disabled={prescriptionZipManageDialog.loading}
+                >
+                  <Ionicons name="trash-outline" size={17} color={colors.error} />
+                  <Text style={styles.geoJsonManageButtonTextDanger}>
+                    Remover prescrição local
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : null}
           </View>
         </View>
@@ -3509,6 +4258,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     color: colors.textLight,
     lineHeight: 18,
+  },
+  materialImportActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  materialImportActionButton: {
+    minWidth: 150,
   },
   pngImportNextStep: {
     fontSize: typography.fontCaption,

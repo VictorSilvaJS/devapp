@@ -20,6 +20,24 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17C - Material Tecnico PNG/ZIP**
+
+Observacao geral: checklist preparado para validar em emulador a organizacao de
+`Material tecnico`. A implementacao e local/demonstrativa: PNG abre como
+imagem, prescricao ZIP abre apenas como detalhe do pacote tecnico. Nao ha
+backend, upload remoto, sync, unzip, processamento de conteudo ou download
+real.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17C-01 | P0 | Todos | Filtros | Abrir `Material tecnico` em uma Propriedade | Filtros principais exibem apenas Fertilidade, Correcao de solo e Prescricao | Reexecutar | Validar tambem estado vazio por filtro |
+| 17C-02 | P0 | Admin/Colaborador | PNG | Acionar `Anexar PNG` | Formulario oferece apenas Fertilidade/Correcao de solo | Reexecutar | Prescricao nao deve aparecer no fluxo PNG |
+| 17C-03 | P0 | Admin/Colaborador | ZIP | Acionar `Anexar prescrição ZIP` e selecionar `.zip` | Modal mostra tipo Prescricao, camada, safra/ano, escopo, nome original e tamanho | Reexecutar | Nao deve abrir preview de imagem |
+| 17C-04 | P0 | Admin/Colaborador | ZIP | Tentar selecionar PNG/PDF/GeoJSON/JSON/SHP/KML/KMZ no fluxo ZIP | Arquivo e recusado com erro controlado | Reexecutar | Validacao leve do DocumentPicker |
+| 17C-05 | P0 | Admin/Colaborador | ZIP | Confirmar anexo ZIP | Card aparece como Prescricao e abre detalhe do pacote tecnico | Reexecutar | Mensagem deve informar que abertura/processamento nao faz parte do MVP |
+| 17C-06 | P1 | Admin/Colaborador | ZIP | Substituir e remover prescricao ZIP local | Lista atualiza sem afetar `Mapa.list`, PNGs ou demarcacao | Reexecutar | Confirmar ausencia de acao em itens mock/assets |
+| 17C-07 | P0 | Produtor | Consulta | Abrir Material tecnico com prescricao visivel | Produtor ve detalhe consultivo e nao ve anexar/substituir/remover | Reexecutar | Nao mostrar termos internos como storage/mock/sync |
+
 **Rodada Fase 17B - Checklist Em Emulador Para Simplificacao Do Produtor**
 
 Observacao geral: checklist proposto pela analise 17A para a fase 17B. Em

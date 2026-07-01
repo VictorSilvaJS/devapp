@@ -202,7 +202,7 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
 - `MapasScreen.tsx` possui fluxo local demonstrativo para anexar e gerir PNG por Propriedade com botao `Anexar PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; os PNGs locais ativos aparecem na listagem principal por lista derivada em runtime, sem alterar `Mapa.list`
 - `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; PNG local ativo agora abre em modal com `Image` e source `{ uri: arquivo_uri_local }` apos validacao de URI segura e existencia no storage interno, e pode ser substituido/removido localmente por Admin ou Colaborador autorizado
-- Em 2026-07-01, a interface de mapas passou a destacar a taxonomia operacional inicial de fertilidade, correcao de solo e prescricao. A area de materiais usa o titulo visual `Material tecnico`, os filtros principais foram reduzidos para esses tres tipos e o anexo PNG local pode ser catalogado nessas categorias. Prescricao fica registrada como categoria de material e o pacote ZIP permanece como acervo/anexo tecnico futuro, sem upload/backend real nesta etapa.
+- Em 2026-07-01, a interface de mapas passou a destacar a taxonomia operacional inicial de fertilidade, correcao de solo e prescricao. A area de materiais usa o titulo visual `Material tecnico`, os filtros principais foram reduzidos para esses tres tipos, PNG local ficou restrito a fertilidade/correcao de solo e prescricao passou a ter fluxo local demonstrativo por ZIP. O ZIP e copiado para storage interno em `tche-prescription-zips/{propriedade_id}/`, guarda apenas metadados pequenos em `@tche:prescription-zip-imports:v1`, aparece na listagem como `Prescrição` e abre em modal de detalhe do pacote tecnico, sem preview de imagem, unzip, leitura de bytes, upload/backend, sync ou download real.
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -2683,12 +2683,62 @@ Use estes documentos junto com este retrato do presente:
 - `docs/project/roadmap-futuro.md` para backlog de evolucao apos a estabilizacao da base
 - `docs/README.md` para a trilha geral de leitura da documentacao
 
+## Fase 17C - Material Tecnico: PNG E ZIP De Prescricao
+
+Status em 2026-07-01: a frente de `Material tecnico` em `MapasScreen` foi
+organizada para o corte operacional atual: mapas de fertilidade, mapas de
+correcao de solo e prescricoes.
+
+Entregas implementadas:
+
+- `MapasScreen.tsx` usa o titulo visual `Material tecnico` e filtros
+  principais restritos a `Fertilidade`, `Correcao de solo` e `Prescricao`;
+- o fluxo PNG local continua abrindo imagem/anexo, mas agora aceita apenas
+  opcoes de fertilidade e correcao de solo, sem prescricao no formulario PNG;
+- foi criado fluxo local demonstrativo de prescricao ZIP com seletor,
+  validacao leve, copia para storage interno seguro e metadados em
+  `@tche:prescription-zip-imports:v1`;
+- Prescricao ZIP aparece na listagem principal como material de prescricao,
+  com tipo/camada, safra/ano, escopo, nome original e tamanho quando
+  disponivel;
+- o modal de prescricao mostra apenas detalhes do pacote tecnico e a mensagem:
+  `Pacote técnico anexado localmente. A abertura ou processamento do ZIP não faz parte do MVP atual.`;
+- Admin e Colaborador autorizado podem anexar, substituir e remover ZIP local;
+  Produtor consulta somente itens visiveis, sem acoes administrativas;
+- `Mapa.list`, `src/api/mock.ts`, `LimiteArea.list`, assets existentes e
+  `fazenda_id` foram preservados.
+
+Fora do escopo mantido:
+
+- backend, API, banco real, upload remoto, sync e download real;
+- unzip, leitura/processamento do conteudo do ZIP ou conversao automatica;
+- sobreposicao de PNG ou ZIP no mapa interativo;
+- alteracao dos PNGs demonstrativos da Sela de Prata I.
+
+Validacoes automatizadas executadas nesta frente:
+
+- `npm run typecheck`;
+- `tsc -p tsconfig.domain-compat.json`;
+- `npm run test:domain-compat`;
+- testes focados de PNG/ZIP em `tests/pngMapPropertyImportWorkflow.test.js`,
+  `tests/prescriptionZipImportService.test.js`,
+  `tests/prescriptionZipFilePickerService.test.js`,
+  `tests/prescriptionZipStorageService.test.js`,
+  `tests/prescriptionZipPropertyImportWorkflow.test.js` e
+  `tests/prescriptionZipToMapaCompat.test.js`;
+- `git diff --check` passou com avisos normais de LF/CRLF no Windows;
+- `npx expo install --check` confirmou divergencia ja conhecida:
+  `expo@56.0.11`, esperado `~56.0.13`.
+
+Documento de fechamento: `docs/project/fase-17c-material-tecnico-mapas-prescricao.md`.
+
 ## Proximo Passo Recomendado
 
-Com a Fase 17B aplicada em codigo e documentacao, o proximo trabalho
-recomendado e completar os casos 17B ainda em `Reexecutar`: selecao detalhada
-de talhao, anexo PNG de fertilidade, rotas diretas de bloqueio e regressoes de
-Colaborador/Admin.
+Com a Fase 17C aplicada em codigo e documentacao, o proximo trabalho
+recomendado e executar smoke visual em emulador para `Material tecnico`:
+filtros dos tres tipos, anexo PNG de fertilidade/correcao, anexo ZIP de
+prescricao, detalhe do ZIP, substituicao/remocao por Admin/Colaborador e
+consulta pelo Produtor sem acoes administrativas.
 
 Antes de considerar a fase totalmente aprovada, tambem e necessario tratar ou
 aceitar explicitamente a divergencia indicada por `npx expo install --check`

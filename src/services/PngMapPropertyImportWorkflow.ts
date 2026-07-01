@@ -182,8 +182,8 @@ export const PNG_MAP_PROPERTY_CATEGORY_OPTIONS: PngMapCategoryOption[] = [
   { value: 'calcario', label: 'Calcário', categoria: 'correcao', categoria_label: 'Correção de solo' },
   { value: 'gesso', label: 'Gesso', categoria: 'correcao', categoria_label: 'Correção de solo' },
   { value: 'corretivo', label: 'Corretivo', categoria: 'correcao', categoria_label: 'Correção de solo' },
-  { value: 'prescricao', label: 'Prescrição', categoria: 'prescricao', categoria_label: 'Prescrição' },
-  { value: 'taxa_variavel', label: 'Taxa variável', categoria: 'prescricao', categoria_label: 'Prescrição' },
+  { value: 'correcao_solo', label: 'Correção de solo', categoria: 'correcao', categoria_label: 'Correção de solo' },
+  { value: 'necessidade_aplicacao', label: 'Necessidade de aplicação', categoria: 'correcao', categoria_label: 'Correção de solo' },
 ];
 
 const firstNonEmptyString = (...values: unknown[]): string => {

@@ -39,7 +39,7 @@ Nao implica, por si so, que todos os fluxos de upload, download ou processamento
 
 Para a primeira versao de testes, o corte funcional da biblioteca de materiais deve priorizar mapas tecnicos que produtor e equipe possam acessar, principalmente diagnosticos como fertilidade por elemento/camada, por exemplo argila, fosforo, pH, potassio e materia organica. Outros arquivos tecnicos disponiveis no acervo, como sementes, linhas de plantio ou materiais operacionais, podem aparecer quando forem liberados, mas nao devem deslocar o foco inicial dos diagnosticos.
 
-Na evolucao operacional da biblioteca de mapas, a interface deve organizar os materiais principalmente em mapas de fertilidade, mapas de correcao de solo e prescricoes, com filtros principais restritos a esses tres tipos. Prescricoes podem existir como pacote tecnico/anexo ZIP quando houver acervo real; isso nao implica upload real, backend, processamento ou publicacao automatica no MVP atual.
+Na evolucao operacional da biblioteca de mapas, a interface deve organizar os materiais principalmente em mapas de fertilidade, mapas de correcao de solo e prescricoes, com filtros principais restritos a esses tres tipos. No MVP atual, PNG local cobre fertilidade e correcao de solo; prescricoes podem existir como pacote tecnico/anexo ZIP local demonstrativo. Isso nao implica upload real, backend, processamento, unzip, leitura de conteudo ou publicacao automatica.
 
 Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 
