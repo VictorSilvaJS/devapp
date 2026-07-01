@@ -48,6 +48,7 @@ export default function VisitasScreen() {
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
+  const isProdutorView = user?.perfil === 'produtor';
 
   const load = useCallback(async () => {
     try {
@@ -260,7 +261,7 @@ export default function VisitasScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Visitas Técnicas" />
+      <Header title={isProdutorView ? 'Histórico de visitas' : 'Visitas Técnicas'} />
       
       {/* Top Bar com Busca e Filtros */}
       <LinearGradient
@@ -419,7 +420,9 @@ export default function VisitasScreen() {
               message={
                 busca
                   ? 'Tente ajustar sua busca ou aguarde novas visitas'
-                  : 'As visitas técnicas agendadas aparecerão aqui'
+                  : isProdutorView
+                    ? 'Nenhuma visita registrada para consulta nas suas Propriedades.'
+                    : 'As visitas técnicas agendadas aparecerão aqui'
               }
               style={styles.emptyState}
             />
@@ -429,7 +432,7 @@ export default function VisitasScreen() {
                 message={
                   user?.perfil === 'admin' || user?.perfil === 'colaborador'
                     ? 'Agende visitas para acompanhamento técnico das propriedades'
-                    : 'Aguarde o agendamento de visitas técnicas pela equipe'
+                    : 'O histórico será atualizado quando houver visitas liberadas para consulta'
                 }
                 style={styles.emptyTipInfo}
               />

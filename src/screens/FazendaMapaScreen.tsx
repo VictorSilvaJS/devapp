@@ -163,6 +163,7 @@ function InfoRow({
 // ─────────────────────────────────────────────────────────────
 export default function FazendaMapaScreen({ route, navigation }: any) {
   const { user } = useAuth();
+  const isProdutorView = user?.perfil === 'produtor';
 
   // Params da rota
   const fazendaId: string | undefined = resolveRouteFazendaId(route?.params);
@@ -517,7 +518,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             />
             <Text style={styles.camadaLocalBannerTexto} numberOfLines={1}>
               {geoJsonTalhoesLocalAtivo
-                ? 'Talhões carregados do GeoJSON local'
+                ? isProdutorView ? 'Talhões disponíveis para consulta' : 'Talhões carregados do GeoJSON local'
                 : 'Não foi possível carregar o GeoJSON local. Exibindo demarcação disponível.'}
             </Text>
           </View>
@@ -542,7 +543,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         <View style={styles.badgeSatelite}>
           <Ionicons name="earth" size={12} color="rgba(255,255,255,0.8)" />
           <Text style={styles.badgeSateliteTexto}>
-            {geoJsonTalhoesLocalAtivo ? 'GEOJSON LOCAL' : 'MAPA'}
+            {geoJsonTalhoesLocalAtivo ? isProdutorView ? 'TALHÕES' : 'GEOJSON LOCAL' : 'MAPA'}
           </Text>
         </View>
 

@@ -38,6 +38,8 @@ export default function CadernoCampoScreen() {
   const [busca, setBusca] = useState('');
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
+  const isProdutorView = user?.perfil === 'produtor';
+  const podeMostrarCriarCaderno = podeIncluirCaderno(user) && !isProdutorView;
 
   const load = useCallback(async () => {
     try {
@@ -164,11 +166,13 @@ export default function CadernoCampoScreen() {
         ) : registrosFiltrados.length === 0 ? (
           <EmptyState
             icon={busca ? 'search-outline' : 'document-text-outline'}
-            title={busca ? 'Nenhum registro encontrado' : 'Ainda não há registros de caderno de campo para esta propriedade.'}
+            title={busca ? 'Nenhum registro encontrado' : isProdutorView ? 'Nenhum registro liberado' : 'Ainda não há registros de caderno de campo'}
             message={
               busca
                 ? 'Tente ajustar os filtros de busca'
-                : 'Quando houver registros liberados, eles aparecerão aqui.'
+                : isProdutorView
+                  ? 'Nenhum registro de caderno liberado para o Produtor.'
+                  : 'Quando houver registros liberados, eles aparecerão aqui.'
             }
             style={styles.emptyState}
           />
@@ -275,7 +279,7 @@ export default function CadernoCampoScreen() {
         )}
       </ScrollView>
 
-      {podeIncluirCaderno(user) && (
+      {podeMostrarCriarCaderno && (
         <CreateActionButton
           label="Novo Registro"
           icon="add-outline"

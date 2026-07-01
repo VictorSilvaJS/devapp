@@ -97,6 +97,15 @@ O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais f
 - como acessar historico, mapas e arquivos de modo simples
 - onde termina consulta e onde comecam operacoes que exigem permissao da equipe
 
+Status em 2026-07-01 (Fase 17B): a experiencia do Produtor foi parcialmente
+tratada no MVP demonstravel, com linguagem mais consultiva no detalhe da
+Propriedade, atalhos para Talhoes, Materiais tecnicos, Historico de visitas e
+Caderno de campo, e estados vazios orientados a materiais/registros liberados.
+A pendencia permanece aberta porque isso nao fecha a experiencia final do
+produto, nao define backend/RBAC real, nao fecha matriz completa de permissoes
+por acao e ainda exige smoke visual em emulador e validacao final em Android
+fisico.
+
 ### 6. Revisao do fluxo de cadastro de Propriedade e Produtor
 
 Ainda falta avaliar se a tela de Nova Propriedade deve permitir criar novo titular/produtor dentro do proprio cadastro.

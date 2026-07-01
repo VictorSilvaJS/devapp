@@ -2279,6 +2279,40 @@ Propriedade, `fazenda_id`, mocks, `Mapa.list`, `LimiteArea.list`, assets da
 Sela de Prata I e os limites de escopo sem backend/RBAC/sync/upload/download
 real.
 
+## Fase 17B - Simplificacao Da UX Do Produtor
+
+Status em 2026-07-01: foi criada
+`docs/project/fase-17b-ux-produtor.md` e aplicada a simplificacao visual/textual
+do fluxo do Produtor em emulador.
+
+A fase reforca o Produtor como perfil de acompanhamento e consulta da propria
+Propriedade. O detalhe da Propriedade passou a destacar modo acompanhamento,
+atalhos para Panorama/Talhoes, Materiais tecnicos, Historico de visitas e
+Caderno de campo, alem de estados vazios orientados a registros ou materiais
+liberados para consulta.
+
+Tambem foram ajustados textos de `PropriedadesScreen`, `MapasScreen`,
+`FazendaMapaScreen`, `VisitasScreen` e `CadernoCampoScreen` para reduzir
+linguagem de manutencao para Produtor, sem alterar mocks, `Mapa.list`,
+`LimiteArea.list`, assets da Sela de Prata I, stores locais, compatibilidade
+`fazenda_id`/`fazendaId` ou regra efetiva de acesso.
+
+Validacoes executadas: `npm run typecheck`,
+`.\node_modules\.bin\tsc -p tsconfig.domain-compat.json`,
+`npm run test:domain-compat` e `git diff --check` passaram. `npx expo install
+--check` foi executado e falhou por divergencia de dependencia (`expo@56.0.11`,
+esperado `~56.0.13`); dependencias nao foram atualizadas porque a fase proibe
+upgrade.
+
+Smoke visual 17B em emulador foi executado parcialmente no `emulator-5554` com
+build debug instalada por `npm run android`. Passaram login do Produtor via
+acesso rapido, abertura de `Minhas Propriedades`, detalhe da Sela de Prata I,
+materiais tecnicos, historico de visitas e caderno sem acao de criacao para
+Produtor. Permanecem como `Reexecutar` a selecao detalhada de talhao, abertura
+do anexo PNG de fertilidade, rotas diretas de bloqueio e regressoes de
+Colaborador/Admin. Android fisico continua pendente para validacao final de
+campo.
+
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
@@ -2650,13 +2684,13 @@ Use estes documentos junto com este retrato do presente:
 
 ## Proximo Passo Recomendado
 
-Com a Fase 17A concluida como analise documental, o proximo trabalho
-recomendado e a Fase 17B: simplificar a UX do fluxo do Produtor em emulador.
+Com a Fase 17B aplicada em codigo e documentacao, o proximo trabalho
+recomendado e completar os casos 17B ainda em `Reexecutar`: selecao detalhada
+de talhao, anexo PNG de fertilidade, rotas diretas de bloqueio e regressoes de
+Colaborador/Admin.
 
-Essa proxima fase deve melhorar clareza de consulta, reduzir excesso de
-informacao tecnica para o Produtor e reforcar onde terminam as acoes de
-consulta e onde comecam operacoes restritas a equipe. Deve preservar
-`fazenda_id`, regras de acesso mockadas, `Mapa.list`, `LimiteArea.list`, assets
-e registros mockados da Sela de Prata I, sem backend, JWT, RBAC real, sync,
-upload remoto, download real, storage remoto, zoom avancado ou pipeline
-produtivo.
+Antes de considerar a fase totalmente aprovada, tambem e necessario tratar ou
+aceitar explicitamente a divergencia indicada por `npx expo install --check`
+(`expo@56.0.11`, esperado `~56.0.13`) sem fazer upgrade automatico nesta fase.
+
+Android fisico continua pendente para validacao final de campo.

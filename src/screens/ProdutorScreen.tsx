@@ -268,11 +268,28 @@ export default function ProdutorScreen({ route, navigation }) {
   const colaboradoresRelacionadosMock = user?.perfil === 'admin'
     ? getColaboradoresRelacionadosAPropriedade(usuariosMock, produtor, todasFazendasMock)
     : [];
+  const isProdutorView = user?.perfil === 'produtor';
   const statusInfo = produtor.status === 'ativo'
     ? { label: 'Ativo', color: colors.success, icon: 'checkmark-circle' as const }
     : produtor.status === 'inativo'
       ? { label: 'Inativo', color: colors.muted, icon: 'close-circle' as const }
       : { label: 'Pendente', color: colors.warning, icon: 'time' as const };
+  const detalhePropriedadeSubtitulo = isProdutorView
+    ? 'Acompanhe talhões, visitas, caderno e materiais técnicos liberados para esta Propriedade.'
+    : 'Consulte o contexto operacional e acesse os fluxos vinculados a esta Propriedade.';
+  const podeMostrarCriarCaderno = podeCriarCadernoNaFazenda && !isProdutorView;
+  const tituloMateriaisPropriedade = isProdutorView
+    ? 'Mapas e arquivos técnicos'
+    : 'Materiais técnicos da Propriedade';
+  const mensagemSemMaterial = isProdutorView
+    ? 'Nenhum material técnico liberado para consulta nesta Propriedade.'
+    : 'Nenhum material técnico cadastrado para esta Propriedade.';
+  const mensagemSemVisita = isProdutorView
+    ? 'Nenhuma visita registrada para consulta nesta Propriedade.'
+    : 'Quando uma visita for registrada para esta Propriedade, ela aparecerá aqui.';
+  const mensagemSemCaderno = isProdutorView
+    ? 'Nenhum registro de caderno liberado para o Produtor.'
+    : 'Quando houver registros liberados para esta Propriedade, eles aparecerão aqui.';
 
   const handleNovaVisita = () => {
     if (!podeCriarVisitaNaFazenda) {
@@ -353,6 +370,9 @@ export default function ProdutorScreen({ route, navigation }) {
           <View style={styles.profileInfo}>
             <Text style={styles.profileName} numberOfLines={1}>
               {fazendaInfo.fazendaNome || 'Propriedade sem nome'}
+            </Text>
+            <Text style={styles.profileSubtitle} numberOfLines={3}>
+              {detalhePropriedadeSubtitulo}
             </Text>
             <View style={styles.locationContainer}>
               <Ionicons name="person-outline" size={14} color={colors.muted} />
@@ -456,7 +476,7 @@ export default function ProdutorScreen({ route, navigation }) {
               <Ionicons name="map-outline" size={20} color={colors.amber} />
             </View>
             <Text style={styles.statValueCompact}>{mapas.length}</Text>
-            <Text style={styles.statLabelCompact}>Mapas</Text>
+            <Text style={styles.statLabelCompact}>Materiais</Text>
           </View>
 
           <View style={styles.statCardCompact}>
@@ -472,7 +492,7 @@ export default function ProdutorScreen({ route, navigation }) {
               <Ionicons name="git-network-outline" size={20} color={colors.primary} />
             </View>
             <Text style={styles.statValueCompact}>{limites.length}</Text>
-            <Text style={styles.statLabelCompact}>Limites</Text>
+            <Text style={styles.statLabelCompact}>Talhões</Text>
           </View>
         </ScrollView>
 
@@ -503,7 +523,7 @@ export default function ProdutorScreen({ route, navigation }) {
               style={styles.tabIcon}
             />
             <Text style={[styles.tabText, activeTab === 'lavoura' && styles.tabTextActive]}>
-              Lavoura
+              Talhões
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -539,6 +559,55 @@ export default function ProdutorScreen({ route, navigation }) {
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
           <View style={styles.tabContent}>
+            {isProdutorView && (
+              <InfoBox
+                title="Modo acompanhamento"
+                message="Esta visão reúne a situação da Propriedade para consulta. Ações de manutenção técnica ficam com a equipe autorizada."
+                style={styles.infoBox}
+              />
+            )}
+
+            <SectionCard title="Atalhos da Propriedade" icon="compass-outline">
+              <View style={styles.quickActionGrid}>
+                <TouchableOpacity
+                  style={styles.quickActionCard}
+                  onPress={() => navigation.navigate('FazendaMapa', buildFazendaMapaRouteParamsFromPropriedade(produtor))}
+                  activeOpacity={0.78}
+                >
+                  <Ionicons name="git-network-outline" size={20} color={colors.primary} />
+                  <Text style={styles.quickActionTitle}>Panorama e Talhões</Text>
+                  <Text style={styles.quickActionText}>Consultar divisão interna</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quickActionCard}
+                  onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
+                  activeOpacity={0.78}
+                >
+                  <Ionicons name="images-outline" size={20} color={colors.primary} />
+                  <Text style={styles.quickActionTitle}>Materiais técnicos</Text>
+                  <Text style={styles.quickActionText}>Abrir mapas e anexos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quickActionCard}
+                  onPress={() => setActiveTab('visitas')}
+                  activeOpacity={0.78}
+                >
+                  <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                  <Text style={styles.quickActionTitle}>Histórico de visitas</Text>
+                  <Text style={styles.quickActionText}>Acompanhar atendimentos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quickActionCard}
+                  onPress={() => setActiveTab('caderno')}
+                  activeOpacity={0.78}
+                >
+                  <Ionicons name="book-outline" size={20} color={colors.primary} />
+                  <Text style={styles.quickActionTitle}>Caderno de campo</Text>
+                  <Text style={styles.quickActionText}>Ver registros liberados</Text>
+                </TouchableOpacity>
+              </View>
+            </SectionCard>
+
             <SectionCard title="Contexto da Propriedade" icon="home-outline">
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
@@ -715,34 +784,34 @@ export default function ProdutorScreen({ route, navigation }) {
               </SectionCard>
             )}
 
-            <SectionCard title="Estatísticas" icon="stats-chart-outline">
+            <SectionCard title="Panorama da Propriedade" icon="stats-chart-outline">
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="calendar" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Visitas da Propriedade</Text>
+                  <Text style={styles.infoLabel}>Histórico de visitas</Text>
                 </View>
                 <Text style={styles.infoValue}>{visitas.length} visita{visitas.length !== 1 ? 's' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="map" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Mapas da Propriedade</Text>
+                  <Text style={styles.infoLabel}>Mapas e arquivos técnicos</Text>
                 </View>
-                <Text style={styles.infoValue}>{mapas.length} mapa{mapas.length !== 1 ? 's' : ''}</Text>
+                <Text style={styles.infoValue}>{mapas.length} material{mapas.length !== 1 ? 'is' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="book" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Registros de Caderno</Text>
+                  <Text style={styles.infoLabel}>Caderno de campo</Text>
                 </View>
                 <Text style={styles.infoValue}>{cadernos.length} registro{cadernos.length !== 1 ? 's' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="git-network" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Limites de Área</Text>
+                  <Text style={styles.infoLabel}>Talhões</Text>
                 </View>
-                <Text style={styles.infoValue}>{limites.length} limite{limites.length !== 1 ? 's' : ''}</Text>
+                <Text style={styles.infoValue}>{limites.length} talhão{limites.length !== 1 ? 'es' : ''}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
@@ -783,17 +852,17 @@ export default function ProdutorScreen({ route, navigation }) {
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
             <SectionCard
-              title="Mapas da Propriedade"
+              title={tituloMateriaisPropriedade}
               icon="map-outline"
-              actionLabel="Ver Todos"
+              actionLabel="Abrir materiais"
               actionIcon="chevron-forward-outline"
               onActionPress={() => navigation.navigate('Mapas', mapasRouteParams)}
             >
               {mapas.length === 0 ? (
                 <EmptyState
                   icon="map-outline"
-                  title="Nenhum mapa cadastrado"
-                  message="Nenhum mapa cadastrado para esta propriedade"
+                  title="Nenhum material técnico disponível"
+                  message={mensagemSemMaterial}
                   style={styles.emptyStateCompact}
                 />
               ) : (
@@ -838,8 +907,8 @@ export default function ProdutorScreen({ route, navigation }) {
                           onPress={() => navigation.navigate('FazendaMapa', getMapaAtualRouteParams(mapa))}
                           activeOpacity={0.8}
                         >
-                          <Ionicons name="download-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
-                          <Text style={styles.mapaButtonText}>Visualizar Mapa</Text>
+                          <Ionicons name="open-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
+                          <Text style={styles.mapaButtonText}>Abrir material</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -850,7 +919,7 @@ export default function ProdutorScreen({ route, navigation }) {
                       onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
                     >
                       <Text style={styles.verMaisText}>
-                        Ver mais {mapas.length - 3} mapas
+                        Ver mais {mapas.length - 3} materiais
                       </Text>
                       <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
                     </TouchableOpacity>
@@ -869,7 +938,9 @@ export default function ProdutorScreen({ route, navigation }) {
                   <View style={styles.detailSectionIcon}>
                     <Ionicons name="calendar-outline" size={20} color={colors.primary} />
                   </View>
-                  <Text style={styles.detailSectionTitle}>Visitas Técnicas</Text>
+                  <Text style={styles.detailSectionTitle}>
+                    {isProdutorView ? 'Histórico de visitas' : 'Visitas Técnicas'}
+                  </Text>
                 </View>
                 <View style={styles.sectionActions}>
                   <View style={styles.countBadge}>
@@ -891,8 +962,8 @@ export default function ProdutorScreen({ route, navigation }) {
               {visitas.length === 0 ? (
                 <EmptyState
                   icon="calendar-outline"
-                  title="Nenhuma visita técnica registrada"
-                  message="Quando uma visita for registrada para esta propriedade, ela aparecerá aqui."
+                  title="Nenhuma visita registrada"
+                  message={mensagemSemVisita}
                   style={styles.emptyStateCompact}
                 />
               ) : (
@@ -964,7 +1035,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <View style={styles.countBadge}>
                     <Text style={styles.countBadgeText}>{cadernos.length}</Text>
                   </View>
-                  {podeCriarCadernoNaFazenda && (
+                  {podeMostrarCriarCaderno && (
                     <TouchableOpacity
                       style={styles.newCadernoButton}
                       onPress={handleNovoCaderno}
@@ -981,10 +1052,10 @@ export default function ProdutorScreen({ route, navigation }) {
                 <EmptyState
                   icon="book-outline"
                   title="Nenhum registro de caderno"
-                  message="Quando houver registros liberados para esta propriedade, eles aparecerão aqui."
-                  actionLabel={podeCriarCadernoNaFazenda ? 'Novo Registro' : undefined}
-                  actionIcon={podeCriarCadernoNaFazenda ? 'add' : undefined}
-                  onActionPress={podeCriarCadernoNaFazenda ? handleNovoCaderno : undefined}
+                  message={mensagemSemCaderno}
+                  actionLabel={podeMostrarCriarCaderno ? 'Novo Registro' : undefined}
+                  actionIcon={podeMostrarCriarCaderno ? 'add' : undefined}
+                  onActionPress={podeMostrarCriarCaderno ? handleNovoCaderno : undefined}
                   style={styles.emptyStateCompact}
                 />
               ) : (
@@ -1129,6 +1200,12 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightBold,
     color: colors.text,
     marginBottom: 6
+  },
+  profileSubtitle: {
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 19,
+    marginBottom: 6,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -1291,6 +1368,32 @@ const styles = StyleSheet.create({
   emptyStateCompact: {
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.md,
+  },
+  quickActionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  quickActionCard: {
+    width: '48%',
+    minHeight: 104,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  quickActionTitle: {
+    marginTop: spacing.sm,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  quickActionText: {
+    marginTop: 4,
+    fontSize: typography.fontCaption + 1,
+    color: colors.textLight,
+    lineHeight: 18,
   },
   sectionHeader: {
     flexDirection: 'row',

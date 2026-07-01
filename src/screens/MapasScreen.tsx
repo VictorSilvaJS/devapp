@@ -429,6 +429,7 @@ export default function MapasScreen({ route, navigation }) {
   // CONTEXTO OPERACIONAL
   // ──────────────────────────────────────────────
   const consultaPorFazenda = contextoConsulta.tipo === 'fazenda' && !!contextoConsulta.fazenda;
+  const isProdutorView = user?.perfil === 'produtor';
   const fazendaContextoInfo = consultaPorFazenda ? getFazendaUiInfo(contextoConsulta.fazenda) : null;
   const geoJsonImportAtivo = useMemo(
     () => geoJsonImports.find((item) => item.status === 'ativo') ?? null,
@@ -1246,9 +1247,9 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const tituloTela = 'Mapas/Arquivos técnicos';
+  const tituloTela = isProdutorView ? 'Materiais técnicos' : 'Mapas/Arquivos técnicos';
   const contextoLabel = consultaPorFazenda
-    ? 'Consulta por propriedade'
+    ? isProdutorView ? 'Consulta da Propriedade' : 'Consulta por propriedade'
     : fazendaFiltroInfo
       ? 'Visão geral filtrada'
       : 'Visão geral';
@@ -1288,10 +1289,12 @@ export default function MapasScreen({ route, navigation }) {
       && mapasNoContexto.every((mapa) => mapa.categoria === 'fertilidade')
     );
   const tituloSecaoMateriais = materiaisSaoFertilidade
-    ? 'Anexos de fertilidade'
+    ? isProdutorView ? 'Mapas e arquivos técnicos' : 'Anexos de fertilidade'
     : 'Mapas/Arquivos técnicos';
   const subtituloSecaoMateriais = materiaisSaoFertilidade
-    ? 'Anexos de fertilidade disponíveis para consulta.'
+    ? isProdutorView
+      ? 'Materiais técnicos liberados para consulta nesta Propriedade.'
+      : 'Anexos de fertilidade disponíveis para consulta.'
     : 'Materiais técnicos disponíveis para consulta.';
   const categoriaOptions = useMemo(
     () => CATEGORIAS.map((cat) => ({
@@ -1405,6 +1408,9 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const getImagePreviewTipoLabel = (mapa) => {
+    if (isProdutorView && (isPngLocalMapa(mapa) || mapa?.tipo_anexo === 'anexo_fertilidade')) {
+      return 'Anexo técnico';
+    }
     if (isPngLocalMapa(mapa)) return 'PNG local';
     if (mapa?.tipo_anexo === 'anexo_fertilidade') return 'Anexo de fertilidade';
     return 'Material técnico';
@@ -1453,7 +1459,9 @@ export default function MapasScreen({ route, navigation }) {
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
     const isPngLocal = isPngLocalMapa(mapa);
     const isAnexoFertilidade = mapa?.tipo_anexo === 'anexo_fertilidade';
-    const tipoArquivoLabel = isPngLocal
+    const tipoArquivoLabel = isProdutorView && (isPngLocal || isAnexoFertilidade)
+      ? 'Anexo técnico'
+      : isPngLocal
       ? 'PNG local'
       : isAnexoFertilidade
       ? 'Anexo de fertilidade'
@@ -1467,7 +1475,9 @@ export default function MapasScreen({ route, navigation }) {
         ? 'Abrir anexo'
         : 'Abrir material'
       : 'Arquivo não disponível';
-    const tipoMaterialLabel = isPngLocal ? 'Anexo local' : formatarTipoMaterial(mapa.tipo_material);
+    const tipoMaterialLabel = isPngLocal
+      ? isProdutorView ? '' : 'Anexo local'
+      : formatarTipoMaterial(mapa.tipo_material);
     const podeAcionarMapa = isPngLocal || statusDownload.podeAbrir;
     const indicadorDisponivel = isPngLocal || statusDownload.podeAbrir;
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
@@ -1945,12 +1955,14 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.geoJsonLayerIndicatorTextos}>
             <Text style={styles.geoJsonLayerIndicatorTitle}>
               {geoJsonTalhoesLocalAtivo
-                ? 'Talhões carregados do GeoJSON local'
+                ? isProdutorView ? 'Talhões disponíveis para consulta' : 'Talhões carregados do GeoJSON local'
                 : 'Não foi possível carregar o GeoJSON local'}
             </Text>
             <Text style={styles.geoJsonLayerIndicatorSubtitle} numberOfLines={1}>
               {geoJsonTalhoesLocalAtivo
-                ? geoJsonTalhoesLayer?.metadata?.arquivo_nome_original || 'GeoJSON local anexado'
+                ? isProdutorView
+                  ? 'Demarcação da Propriedade carregada.'
+                  : geoJsonTalhoesLayer?.metadata?.arquivo_nome_original || 'GeoJSON local anexado'
                 : 'Exibindo demarcação disponível.'}
             </Text>
           </View>
@@ -2062,7 +2074,11 @@ export default function MapasScreen({ route, navigation }) {
           </View>
         </View>
         <InfoBox
-          message="Consulte os mapas e arquivos técnicos disponíveis, incluindo PNGs locais anexados neste aparelho. Esta tela não envia nem publica arquivos."
+          message={
+            isProdutorView
+              ? 'Consulte os mapas e arquivos técnicos liberados para esta Propriedade.'
+              : 'Consulte os mapas e arquivos técnicos disponíveis, incluindo PNGs locais anexados neste aparelho. Esta tela não envia nem publica arquivos.'
+          }
           style={styles.materiaisDescription}
         />
         {renderPngImportPanel()}
@@ -2104,7 +2120,9 @@ export default function MapasScreen({ route, navigation }) {
           message={
             temFiltroMaterialAtivo
               ? 'Tente ajustar safra, talhão, categoria ou busca.'
-              : 'Quando materiais previamente preparados forem liberados para este contexto, eles aparecerão aqui para consulta.'
+              : isProdutorView
+                ? 'Nenhum material técnico liberado para consulta nesta Propriedade.'
+                : 'Quando materiais previamente preparados forem liberados para este contexto, eles aparecerão aqui para consulta.'
           }
           style={styles.emptyContainer}
         />

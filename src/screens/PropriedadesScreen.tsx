@@ -30,6 +30,7 @@ export default function PropriedadesScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const { filtrarProdutores: filtrarProdutoresPorRegiao, filtros } = useFiltros();
+  const isProdutorView = user?.perfil === 'produtor';
 
   useEffect(() => { load(); }, [user, filtros]);
 
@@ -146,7 +147,7 @@ export default function PropriedadesScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Propriedades" />
+      <Header title={isProdutorView ? 'Minhas Propriedades' : 'Propriedades'} />
       
       {/* Barra de Busca Compacta */}
       <LinearGradient
@@ -346,11 +347,19 @@ export default function PropriedadesScreen() {
         {produtoresFiltrados.length === 0 ? (
           <EmptyState
             icon={listaSemResultadoPorFiltro ? 'search-outline' : 'person-add-outline'}
-            title={listaSemResultadoPorFiltro ? 'Nenhuma propriedade encontrada' : 'Nenhuma propriedade cadastrada'}
+            title={
+              listaSemResultadoPorFiltro
+                ? 'Nenhuma Propriedade encontrada'
+                : isProdutorView
+                  ? 'Nenhuma Propriedade liberada'
+                  : 'Nenhuma Propriedade cadastrada'
+            }
             message={
               listaSemResultadoPorFiltro
-                ? 'Tente ajustar os filtros de busca ou limpar os filtros aplicados'
-                : 'Comece adicionando a primeira propriedade vinculada a um titular'
+                ? 'Tente ajustar a busca ou limpar os filtros aplicados'
+                : isProdutorView
+                  ? 'Nenhuma Propriedade liberada para consulta neste acesso.'
+                  : 'Comece adicionando a primeira propriedade vinculada a um titular'
             }
             actionLabel={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'Nova Propriedade' : undefined}
             actionIcon={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? 'add-circle' : undefined}

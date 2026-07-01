@@ -22,22 +22,24 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 
 **Rodada Fase 17B - Checklist Em Emulador Para Simplificacao Do Produtor**
 
-Observacao geral: checklist proposto pela analise 17A para a proxima fase de
-implementacao em emulador. Nao substitui validacao Android fisico e nao abre
-backend, RBAC real, sync, upload remoto, download real ou pipeline produtivo.
+Observacao geral: checklist proposto pela analise 17A para a fase 17B. Em
+2026-07-01 a implementacao de UX/textos foi aplicada e o smoke visual parcial
+foi executado no emulador `emulator-5554` com build debug instalada por
+`npm run android`. Nao substitui validacao Android fisico e nao abre backend,
+RBAC real, sync, upload remoto, download real ou pipeline produtivo.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
-| 17B-01 | P0 | Produtor | Login | Entrar como `produtor.demonstracao@example.com` | Abre em `Minhas Propriedades` sem crash | Reexecutar | Emulador SDK 56 |
-| 17B-02 | P0 | Produtor | Propriedade | Abrir Sela de Prata I | Detalhe usa linguagem de consulta e preserva resumo principal | Reexecutar | Sem expor acao de equipe como responsabilidade do produtor |
-| 17B-03 | P0 | Produtor | Talhoes | Abrir panorama e selecionar talhao | Talhoes renderizam e detalhe continua legivel | Reexecutar | Preservar seed/GeoJSON local conforme estado |
-| 17B-04 | P0 | Produtor | Mapas | Abrir Mapas/Arquivos tecnicos | Materiais aparecem sem sugerir upload/backend/sync | Reexecutar | `Mapa.list` e `LimiteArea.list` preservados |
-| 17B-05 | P1 | Produtor | PNG asset | Abrir anexo de fertilidade demonstrativo | Imagem abre e metadados nao confundem com acao administrativa | Reexecutar | PNG local continua frente separada |
-| 17B-06 | P1 | Produtor | Visitas | Abrir visitas da Propriedade | Historico aparece para consulta, sem criacao/edicao | Reexecutar | Produtor segue bloqueado para manutencao |
-| 17B-07 | P1 | Produtor | Caderno | Abrir caderno da Propriedade | Registros visiveis aparecem; restritos continuam ocultos | Reexecutar | Preservar `visivel_para_produtor` |
-| 17B-08 | P0 | Produtor | Rotas diretas | Tentar `NovaVisita` e `EditarVisita` por rota interna de smoke | Produtor permanece bloqueado | Reexecutar | Regressao de permissao |
-| 17B-09 | P0 | Colaborador | Regressao | Abrir Propriedade do escopo e criar visita contextual | `fazenda_id` preservado e contexto travado | Reexecutar | Nao ampliar escopo |
-| 17B-10 | P0 | Admin | Regressao | Abrir Sela em Mapas/Arquivos tecnicos | GeoJSON/PNG locais continuam acessiveis conforme estado do emulador | Reexecutar | Nao declarar Android fisico aprovado |
+| 17B-01 | P0 | Produtor | Login | Entrar como `produtor.demonstracao@example.com` | Abre em `Minhas Propriedades` sem crash | Passou | Acesso rapido `Produtor Demonstracao` abriu `Minhas Propriedades` |
+| 17B-02 | P0 | Produtor | Propriedade | Abrir Sela de Prata I | Detalhe usa linguagem de consulta e preserva resumo principal | Passou | Exibiu subtitulo consultivo, `Titular`, `Materiais`, `Talhoes`, modo acompanhamento e atalhos |
+| 17B-03 | P0 | Produtor | Talhoes | Abrir panorama e selecionar talhao | Talhoes renderizam e detalhe continua legivel | Reexecutar | Mapa/lista de talhoes renderizou; selecao detalhada de talhao ficou para rodada especifica |
+| 17B-04 | P0 | Produtor | Mapas | Abrir Mapas/Arquivos tecnicos | Materiais aparecem sem sugerir upload/backend/sync | Passou | Tela exibiu `Consulta da Propriedade`, `Talhoes disponiveis para consulta` e materiais sem acao administrativa |
+| 17B-05 | P1 | Produtor | PNG asset | Abrir anexo de fertilidade demonstrativo | Imagem abre e metadados nao confundem com acao administrativa | Reexecutar | Nao exercitado nesta rodada; confirmar anexo PNG de fertilidade como material de consulta |
+| 17B-06 | P1 | Produtor | Visitas | Abrir visitas da Propriedade | Historico aparece para consulta, sem criacao/edicao | Passou | Secao `Historico de visitas` visivel com registros e sem acao de criacao |
+| 17B-07 | P1 | Produtor | Caderno | Abrir caderno da Propriedade | Registros visiveis aparecem; restritos continuam ocultos | Passou | Caderno da Propriedade e Caderno global exibiram registros liberados sem `Novo Registro` |
+| 17B-08 | P0 | Produtor | Rotas diretas | Tentar `NovaVisita` e `EditarVisita` por rota interna de smoke | Produtor permanece bloqueado | Reexecutar | Nao executado: coberto por teste de dominio, exige smoke visual |
+| 17B-09 | P0 | Colaborador | Regressao | Abrir Propriedade do escopo e criar visita contextual | `fazenda_id` preservado e contexto travado | Reexecutar | Nao executado: validar regressao visual/funcional em emulador |
+| 17B-10 | P0 | Admin | Regressao | Abrir Sela em Mapas/Arquivos tecnicos | GeoJSON/PNG locais continuam acessiveis conforme estado do emulador | Reexecutar | Nao executado: nao declarar Android fisico aprovado |
 
 **Rodada Fase 16H.6 - Reexecucao GeoJSON Em Emulador Android SDK 56**
 
