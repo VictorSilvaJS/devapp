@@ -105,16 +105,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CATEGORIAS = [
   { id: 'todos', nome: 'Todos', icon: 'grid-outline' },
   { id: 'fertilidade', nome: 'Fertilidade', icon: 'leaf-outline' },
-  { id: 'correcao', nome: 'Correção', icon: 'construct-outline' },
-  { id: 'indice_vegetacao', nome: 'Índice Vegetação', icon: 'analytics-outline' },
-  { id: 'produtividade', nome: 'Produtividade', icon: 'bar-chart-outline' },
-  { id: 'panorama', nome: 'Panorama', icon: 'image-outline' },
-  { id: 'plantio', nome: 'Plantio', icon: 'git-network-outline' },
-  { id: 'operacional', nome: 'Operacional', icon: 'briefcase-outline' },
-  { id: 'outro', nome: 'Material técnico', icon: 'document-text-outline' },
+  { id: 'correcao', nome: 'Correção de solo', icon: 'construct-outline' },
+  { id: 'prescricao', nome: 'Prescrição', icon: 'map-outline' },
 ];
 
 const FILTRO_TODOS = 'todos';
+const CATEGORIAS_MATERIAIS_TECNICOS = ['fertilidade', 'correcao', 'prescricao'];
 
 type GeoJsonImportMode = 'attach' | 'replace';
 type GeoJsonManageDialogAction = 'replace' | 'remove' | null;
@@ -140,7 +136,7 @@ const PNG_ESCOPO_OPTIONS = [
 
 const EMPTY_PNG_FORM: PngMapPropertyImportFormInput = {
   titulo: '',
-  elemento: 'outro',
+  elemento: 'ph',
   safra: '',
   ano: '',
   profundidade: '',
@@ -180,6 +176,14 @@ const getMapaTalhao = (mapa: any): string => {
 
   return typeof mapa?.talhao === 'string' ? mapa.talhao.trim() : '';
 };
+
+const getCategoriaMapaLabel = (categoria?: string): string => {
+  const categoriaInfo = CATEGORIAS.find((cat) => cat.id === categoria);
+  return categoriaInfo?.nome || 'Material técnico';
+};
+
+const isCategoriaMaterialTecnico = (categoria?: unknown): boolean =>
+  typeof categoria === 'string' && CATEGORIAS_MATERIAIS_TECNICOS.includes(categoria);
 
 const getMapaProfundidade = (mapa: any): string =>
   typeof mapa?.profundidade === 'string' ? mapa.profundidade.trim() : '';
@@ -446,6 +450,10 @@ export default function MapasScreen({ route, navigation }) {
     () => pngImports.filter((item) => item.status === 'ativo'),
     [pngImports]
   );
+  const pngImportsMateriaisAtivos = useMemo(
+    () => pngImportsAtivos.filter((item) => isCategoriaMaterialTecnico(item.categoria)),
+    [pngImportsAtivos]
+  );
   const fazendaOptions = useMemo(
     () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
     [contextoConsulta.fazendasPermitidas]
@@ -476,6 +484,10 @@ export default function MapasScreen({ route, navigation }) {
     if (!fazendaFiltroId) return mapasComPngLocal;
     return mapasComPngLocal.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
   }, [mapasComPngLocal, fazendaFiltroId]);
+  const materiaisTecnicosNoContexto = useMemo(
+    () => mapasNoContexto.filter((mapa) => isCategoriaMaterialTecnico(mapa?.categoria)),
+    [mapasNoContexto]
+  );
 
   const limitesNoContexto = useMemo(() => {
     if (!fazendaFiltroId) return limites;
@@ -490,11 +502,14 @@ export default function MapasScreen({ route, navigation }) {
     [geoJsonTalhoesLocalAtivo, geoJsonTalhoesLayer, limitesNoContexto]
   );
 
-  const safrasMapas = useMemo(() => buildSafraOptions(mapasNoContexto), [mapasNoContexto]);
+  const safrasMapas = useMemo(
+    () => buildSafraOptions(materiaisTecnicosNoContexto),
+    [materiaisTecnicosNoContexto]
+  );
 
   const talhoesMapas = useMemo(
-    () => buildOptionsOrdenadas(mapasNoContexto.map(getMapaTalhao)),
-    [mapasNoContexto]
+    () => buildOptionsOrdenadas(materiaisTecnicosNoContexto.map(getMapaTalhao)),
+    [materiaisTecnicosNoContexto]
   );
 
   const talhoesLimite = useMemo(
@@ -563,7 +578,7 @@ export default function MapasScreen({ route, navigation }) {
   const mapasFiltrados = useMemo(() => {
     const termoBusca = normalizarBusca(busca);
 
-    return mapasNoContexto.filter(m => {
+    return materiaisTecnicosNoContexto.filter(m => {
       const fazendaInfo = fazendaInfoPorId.get(getMapaFazendaId(m));
       const safraMapa = getMapaSafra(m);
       const talhaoMapa = getMapaTalhao(m);
@@ -581,6 +596,9 @@ export default function MapasScreen({ route, navigation }) {
         profundidadeMapa,
         m.tipo_material,
         m.tipo_anexo,
+        getCategoriaMapaLabel(m.categoria),
+        m.categoria === 'correcao' ? 'correcao de solo corretivo calcario gesso' : '',
+        m.categoria === 'prescricao' ? 'prescricao taxa variavel zip' : '',
         talhaoMapa,
         safraMapa,
         m.observacoes,
@@ -601,7 +619,7 @@ export default function MapasScreen({ route, navigation }) {
       return 0;
     });
   }, [
-    mapasNoContexto,
+    materiaisTecnicosNoContexto,
     fazendaInfoPorId,
     categoriaAtiva,
     busca,
@@ -1247,7 +1265,7 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const tituloTela = isProdutorView ? 'Materiais técnicos' : 'Mapas/Arquivos técnicos';
+  const tituloTela = 'Material técnico';
   const contextoLabel = consultaPorFazenda
     ? isProdutorView ? 'Consulta da Propriedade' : 'Consulta por propriedade'
     : fazendaFiltroInfo
@@ -1283,19 +1301,20 @@ export default function MapasScreen({ route, navigation }) {
   const areaLimitesFiltrados = limitesFiltrados
     .reduce((s, l) => s + (l.area_hectares || 0), 0)
     .toFixed(1);
-  const materiaisSaoFertilidade = categoriaAtiva === 'fertilidade'
-    || (
-      mapasNoContexto.length > 0
-      && mapasNoContexto.every((mapa) => mapa.categoria === 'fertilidade')
-    );
-  const tituloSecaoMateriais = materiaisSaoFertilidade
-    ? isProdutorView ? 'Mapas e arquivos técnicos' : 'Anexos de fertilidade'
-    : 'Mapas/Arquivos técnicos';
-  const subtituloSecaoMateriais = materiaisSaoFertilidade
-    ? isProdutorView
-      ? 'Materiais técnicos liberados para consulta nesta Propriedade.'
-      : 'Anexos de fertilidade disponíveis para consulta.'
-    : 'Materiais técnicos disponíveis para consulta.';
+  const categoriasNoContexto = new Set(
+    materiaisTecnicosNoContexto.map((mapa) => mapa.categoria).filter(Boolean)
+  );
+  const categoriaUnicaNoContexto = categoriasNoContexto.size === 1
+    ? Array.from(categoriasNoContexto)[0]
+    : '';
+  const categoriaSecao = categoriaAtiva !== FILTRO_TODOS
+    ? categoriaAtiva
+    : categoriaUnicaNoContexto;
+  const categoriaSecaoLabel = categoriaSecao ? getCategoriaMapaLabel(categoriaSecao) : '';
+  const tituloSecaoMateriais = 'Material técnico';
+  const subtituloSecaoMateriais = categoriaSecaoLabel
+    ? `${categoriaSecaoLabel} disponível no contexto da Propriedade.`
+    : 'Fertilidade, correção de solo e prescrição disponíveis para consulta.';
   const categoriaOptions = useMemo(
     () => CATEGORIAS.map((cat) => ({
       value: cat.id,
@@ -1413,6 +1432,8 @@ export default function MapasScreen({ route, navigation }) {
     }
     if (isPngLocalMapa(mapa)) return 'PNG local';
     if (mapa?.tipo_anexo === 'anexo_fertilidade') return 'Anexo de fertilidade';
+    if (mapa?.categoria === 'correcao') return 'Mapa de correção de solo';
+    if (mapa?.categoria === 'prescricao') return 'Prescrição';
     return 'Material técnico';
   };
 
@@ -1427,7 +1448,7 @@ export default function MapasScreen({ route, navigation }) {
 
     return [
       { icon: 'image-outline', label: 'Tipo', value: getImagePreviewTipoLabel(mapa) },
-      { icon: 'flask-outline', label: 'Elemento', value: elementoLabel },
+      { icon: 'layers-outline', label: 'Camada', value: elementoLabel },
       { icon: 'calendar-outline', label: 'Safra/ano', value: safraMapa },
       { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
       { icon: 'resize-outline', label: 'Profundidade', value: profundidadeMapa },
@@ -1467,6 +1488,10 @@ export default function MapasScreen({ route, navigation }) {
       ? 'Anexo de fertilidade'
       : mapa?.categoria === 'fertilidade'
         ? 'Mapa de fertilidade'
+        : mapa?.categoria === 'correcao'
+        ? 'Mapa de correção de solo'
+        : mapa?.categoria === 'prescricao'
+        ? 'Prescrição'
         : 'Arquivo técnico';
     const abrirMaterialLabel = isPngLocal
       ? 'Abrir anexo'
@@ -1484,7 +1509,7 @@ export default function MapasScreen({ route, navigation }) {
       || fazendaContextoInfo
       || fazendaFiltroInfo;
     const mapaMetaChips = [
-      renderMapaMetaChip('flask-outline', 'Elemento', elementoLabel),
+      renderMapaMetaChip('layers-outline', 'Camada', elementoLabel),
       renderMapaMetaChip('resize-outline', 'Profundidade', profundidadeMapa),
       renderMapaMetaChip('calendar-outline', 'Safra/ano', safraMapa || formatarData(mapa.data_criacao)),
       renderMapaMetaChip('location-outline', 'Talhão', talhaoMapa),
@@ -1759,16 +1784,16 @@ export default function MapasScreen({ route, navigation }) {
             <Ionicons name="image-outline" size={18} color={colors.info} />
           </View>
           <View style={styles.pngImportHeaderText}>
-            <Text style={styles.pngImportTitle}>PNG local</Text>
+            <Text style={styles.pngImportTitle}>PNG local de mapa</Text>
             <Text style={styles.pngImportSubtitle}>
-              Selecione um PNG de mapa técnico. O arquivo ficará salvo localmente neste aparelho.
+              Anexos locais classificados por fertilidade, correção de solo ou prescrição.
             </Text>
           </View>
         </View>
 
-        {pngImportsAtivos.length > 0 ? (
+        {pngImportsMateriaisAtivos.length > 0 ? (
           <View style={styles.pngImportSummaryList}>
-            {pngImportsAtivos.slice(0, 3).map((item) => (
+            {pngImportsMateriaisAtivos.slice(0, 3).map((item) => (
               <View key={item.id} style={styles.pngImportSummaryItem}>
                 <View style={styles.pngImportSummaryIcon}>
                   <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
@@ -1796,16 +1821,16 @@ export default function MapasScreen({ route, navigation }) {
                 </View>
               </View>
             ))}
-            {pngImportsAtivos.length > 3 ? (
+            {pngImportsMateriaisAtivos.length > 3 ? (
               <Text style={styles.pngImportMoreText}>
-                +{pngImportsAtivos.length - 3} PNG local(is) nesta Propriedade.
+                +{pngImportsMateriaisAtivos.length - 3} PNG local(is) nesta Propriedade.
               </Text>
             ) : null}
           </View>
         ) : (
           <View style={styles.pngImportEmpty}>
             <Text style={styles.pngImportEmptyText}>
-              Nenhum PNG local anexado a esta Propriedade.
+              Nenhum PNG local de material técnico nesta Propriedade.
             </Text>
           </View>
         )}
@@ -1825,12 +1850,12 @@ export default function MapasScreen({ route, navigation }) {
             <Ionicons name="attach-outline" size={18} color={colors.white} />
           )}
           <Text style={styles.geoJsonImportButtonText}>
-            Anexar mapa PNG
+            Anexar PNG
           </Text>
         </TouchableOpacity>
 
         <Text style={styles.pngImportNextStep}>
-          PNGs locais ativos também aparecem na listagem principal de materiais.
+          Os anexos ativos aparecem em Material técnico conforme tipo, safra e talhão.
         </Text>
       </View>
     );
@@ -1980,7 +2005,7 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.statLabel}>ha</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumero}>{mapasNoContexto.length}</Text>
+          <Text style={styles.statNumero}>{materiaisTecnicosNoContexto.length}</Text>
           <Text style={styles.statLabel}>Materiais</Text>
         </View>
       </View>
@@ -2113,9 +2138,7 @@ export default function MapasScreen({ route, navigation }) {
           title={
             temFiltroMaterialAtivo
               ? 'Nenhum material técnico encontrado'
-              : materiaisSaoFertilidade
-                ? 'Nenhum anexo de fertilidade disponível'
-                : 'Nenhum material técnico disponível'
+              : 'Nenhum material técnico disponível'
           }
           message={
             temFiltroMaterialAtivo
@@ -2426,10 +2449,10 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.geoJsonPreviewHeader}>
               <View style={styles.geoJsonPreviewTitleWrap}>
                 <Text style={styles.geoJsonPreviewTitle}>
-                  Anexar mapa PNG
+                  Anexar PNG
                 </Text>
                 <Text style={styles.geoJsonPreviewSubtitle}>
-                  Complete os metadados mínimos para associar o PNG à Propriedade.
+                  Classifique o material técnico e vincule ao contexto correto.
                 </Text>
               </View>
               <TouchableOpacity
@@ -2474,13 +2497,13 @@ export default function MapasScreen({ route, navigation }) {
                   />
 
                   <SelectField
-                    label="Categoria"
+                    label="Tipo de mapa/camada"
                     required
                     value={pngForm.elemento ? String(pngForm.elemento) : ''}
                     options={pngCategoryOptions}
                     onChange={(elemento) => updatePngForm({ elemento })}
                     error={pngFormErrors.elemento}
-                    placeholder="Selecione a categoria"
+                    placeholder="Selecione o tipo de mapa"
                   />
 
                   <View style={styles.pngFormRow}>

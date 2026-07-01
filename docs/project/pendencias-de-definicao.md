@@ -87,7 +87,14 @@ Mapas e arquivos sao parte central do produto, mas a classificacao final ainda p
 
 O corte atual do MVP ja define que limite/shape e camada tecnica de demarcacao dentro do panorama da propriedade, nao uma experiencia separada para o usuario. Tambem ja define, para a primeira versao de testes, que os materiais tecnicos liberaveis devem ser organizados por propriedade, campo/talhao, recorte temporal e elemento/camada quando aplicavel, priorizando diagnosticos como fertilidade por argila, fosforo, pH, potassio e materia organica.
 
-O que permanece pendente e a taxonomia final das categorias de materiais tecnicos alem desse corte inicial, os nomes finais de todos os elementos/camadas e a forma de evoluir panoramas alem da demarcacao basica.
+Status em 2026-07-01: a taxonomia operacional inicial da interface foi
+orientada para tres tipos principais de mapas: fertilidade, correcao de solo e
+prescricao, com filtros principais restritos a esses tres tipos. Prescricao
+fica tratada conceitualmente como pacote/anexo ZIP do acervo quando houver
+fluxo real. Permanece pendente a taxonomia final alem desse corte inicial, os
+nomes finais de todos os elementos/camadas, a forma de evoluir panoramas alem
+da demarcacao basica e o fluxo real para anexar, armazenar, revisar e publicar
+arquivos ZIP de prescricao.
 
 ### 5. Experiencia detalhada do produtor
 

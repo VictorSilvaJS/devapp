@@ -299,8 +299,10 @@ Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingest
 - Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da propriedade.
 - Para a primeira versao de testes, materiais tecnicos devem ser organizados por `fazenda_id`, campo/talhao, recorte temporal e elemento/camada quando aplicavel.
 - O foco inicial dos materiais liberaveis deve ser mapas de diagnostico, especialmente fertilidade por elemento/camada, como argila, fosforo, pH, potassio e materia organica.
+- A taxonomia operacional inicial da biblioteca de mapas passa a destacar tres tipos principais: mapas de fertilidade, mapas de correcao de solo e prescricoes. Na interface atual, os filtros principais de materiais tecnicos devem ficar restritos a esses tres tipos.
 - No MVP atual, o mapa interativo e apenas a base de talhoes/limites. Mapas de elementos, como PNGs de fertilidade, devem ser tratados como anexos visuais da biblioteca de materiais.
 - PNGs de elementos nao devem ser sobrepostos ao mapa interativo nesta etapa. A experiencia esperada e abrir o PNG como imagem/anexo para consulta.
+- Arquivos de prescricao devem ser tratados como anexos tecnicos de pacote, preferencialmente ZIP quando houver acervo real, sem sobreposicao no mapa interativo e sem prometer upload/backend antes da frente produtiva.
 - Arquivos tecnicos operacionais disponiveis no acervo, como sementes ou linhas de plantio, podem ser anexados e liberados quando fizerem sentido para a propriedade, mas nao devem virar uma experiencia separada da biblioteca de materiais da propriedade.
 - O app deve consumir um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, em vez de carregar no celular o pacote bruto de arquivos `.shp`, `.shx`, `.dbf`, `.prj`, `.kml`, `.kmz` ou metadados auxiliares.
 - Para acelerar o MVP, a validacao local pode usar um conversor de desenvolvimento que gera o arquivo final a partir dos originais, mas a conversao produtiva futura deve acontecer fora do app, em backend ou processo operacional controlado.

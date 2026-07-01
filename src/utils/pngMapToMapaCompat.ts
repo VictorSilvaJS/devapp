@@ -108,6 +108,11 @@ const ELEMENTO_LABELS: Record<PngMapElemento, string> = {
   potassio: 'Potássio',
   argila: 'Argila',
   materia_organica: 'Matéria orgânica',
+  calcario: 'Calcário',
+  gesso: 'Gesso',
+  corretivo: 'Corretivo',
+  prescricao: 'Prescrição',
+  taxa_variavel: 'Taxa variável',
   ndvi: 'NDVI',
   produtividade: 'Produtividade',
   sementes: 'Sementes',
@@ -117,6 +122,8 @@ const ELEMENTO_LABELS: Record<PngMapElemento, string> = {
 
 const CATEGORIA_LABELS: Record<PngMapCategoria, string> = {
   fertilidade: 'Fertilidade',
+  correcao: 'Correção de solo',
+  prescricao: 'Prescrição',
   indice_vegetacao: 'Índice de vegetação',
   produtividade: 'Produtividade',
   plantio: 'Plantio',

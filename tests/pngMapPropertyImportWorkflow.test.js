@@ -336,7 +336,7 @@ const run = async () => {
     assert.equal(semTitulo.error.details.titulo, 'Informe um titulo para o mapa PNG.');
     assert.equal(semCategoria.ok, false);
     assert.equal(semCategoria.error.code, 'FORM_INVALID');
-    assert.equal(semCategoria.error.details.elemento, 'Selecione a categoria do mapa PNG.');
+    assert.equal(semCategoria.error.details.elemento, 'Selecione o tipo de mapa PNG.');
   });
 
   await test('escopo talhao sem talhao bloqueia', () => {
@@ -412,13 +412,13 @@ const run = async () => {
     const result = await importPngMapForPropriedade({
       user: colaboradorRioVerde,
       propriedade: propriedadeA,
-      form: baseForm({ titulo: 'NDVI local', elemento: 'ndvi' }),
+      form: baseForm({ titulo: 'Calcario local', elemento: 'calcario' }),
     }, deps);
 
     assert.equal(result.ok, true);
     assert.equal(result.metadata.importado_por_usuario_id, 'u_colab');
-    assert.equal(result.metadata.categoria, 'indice_vegetacao');
-    assert.equal(result.metadata.elemento, 'ndvi');
+    assert.equal(result.metadata.categoria, 'correcao');
+    assert.equal(result.metadata.elemento, 'calcario');
   });
 
   await test('falha no storage nao cria metadado', async () => {

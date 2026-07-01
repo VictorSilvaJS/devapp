@@ -22,6 +22,8 @@ export type PngMapStatus = typeof PNG_MAP_STATUSES[number];
 
 export const PNG_MAP_CATEGORIAS = [
   'fertilidade',
+  'correcao',
+  'prescricao',
   'indice_vegetacao',
   'produtividade',
   'plantio',
@@ -37,6 +39,11 @@ export const PNG_MAP_ELEMENTOS = [
   'potassio',
   'argila',
   'materia_organica',
+  'calcario',
+  'gesso',
+  'corretivo',
+  'prescricao',
+  'taxa_variavel',
   'ndvi',
   'produtividade',
   'sementes',

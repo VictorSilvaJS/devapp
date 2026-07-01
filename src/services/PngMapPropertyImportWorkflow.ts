@@ -175,15 +175,15 @@ export interface PngMapPropertyImportWorkflowDeps {
 
 export const PNG_MAP_PROPERTY_CATEGORY_OPTIONS: PngMapCategoryOption[] = [
   { value: 'ph', label: 'pH', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
-  { value: 'fosforo', label: 'Fosforo', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
-  { value: 'potassio', label: 'Potassio', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
+  { value: 'fosforo', label: 'Fósforo', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
+  { value: 'potassio', label: 'Potássio', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
   { value: 'argila', label: 'Argila', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
-  { value: 'materia_organica', label: 'Materia organica', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
-  { value: 'ndvi', label: 'NDVI', categoria: 'indice_vegetacao', categoria_label: 'Indice de vegetacao' },
-  { value: 'produtividade', label: 'Produtividade', categoria: 'produtividade', categoria_label: 'Produtividade' },
-  { value: 'sementes', label: 'Sementes', categoria: 'plantio', categoria_label: 'Plantio' },
-  { value: 'linhas_plantio', label: 'Linhas de plantio', categoria: 'plantio', categoria_label: 'Plantio' },
-  { value: 'outro', label: 'Outro', categoria: 'outro', categoria_label: 'Outro' },
+  { value: 'materia_organica', label: 'Matéria orgânica', categoria: 'fertilidade', categoria_label: 'Fertilidade' },
+  { value: 'calcario', label: 'Calcário', categoria: 'correcao', categoria_label: 'Correção de solo' },
+  { value: 'gesso', label: 'Gesso', categoria: 'correcao', categoria_label: 'Correção de solo' },
+  { value: 'corretivo', label: 'Corretivo', categoria: 'correcao', categoria_label: 'Correção de solo' },
+  { value: 'prescricao', label: 'Prescrição', categoria: 'prescricao', categoria_label: 'Prescrição' },
+  { value: 'taxa_variavel', label: 'Taxa variável', categoria: 'prescricao', categoria_label: 'Prescrição' },
 ];
 
 const firstNonEmptyString = (...values: unknown[]): string => {
@@ -393,7 +393,7 @@ export const validatePngMapPropertyImportForm = (
   }
 
   if (!categoryOption) {
-    errors.elemento = 'Selecione a categoria do mapa PNG.';
+    errors.elemento = 'Selecione o tipo de mapa PNG.';
   }
 
   if (Number.isNaN(ano)) {
@@ -479,7 +479,7 @@ export const preparePngMapPropertyImport = async (
       resolvedContext,
       form: {
         titulo: buildDefaultPngMapTitle(picked.file.name),
-        elemento: 'outro',
+        elemento: 'ph',
         ano: resolveAnoDefault(deps),
         escopo: 'propriedade',
         visivel_para_produtor: true,

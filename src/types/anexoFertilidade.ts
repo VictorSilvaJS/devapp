@@ -10,12 +10,14 @@ export type TipoAnexoFertilidade =
   | 'mapa_ndvi'
   | 'laudo'
   | 'material_tecnico'
+  | 'prescricao'
   | 'documento';
 
 export type CategoriaAnexoFertilidade =
   | 'fertilidade'
   | 'plantio'
   | 'correcao'
+  | 'prescricao'
   | 'indice_vegetacao'
   | 'limites'
   | 'documento';
@@ -23,6 +25,7 @@ export type CategoriaAnexoFertilidade =
 export type TipoMaterialAnexoFertilidade =
   | 'diagnostico'
   | 'recomendacao'
+  | 'prescricao'
   | 'demarcacao'
   | 'imagem'
   | 'laudo'
