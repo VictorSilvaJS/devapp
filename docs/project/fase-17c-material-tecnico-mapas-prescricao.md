@@ -1,6 +1,7 @@
 # Fase 17C - Material Tecnico: Mapas E Prescricao
 
-Status em 2026-07-01: implementado no MVP local/demonstrativo.
+Status em 2026-07-03: implementado no MVP local/demonstrativo e aprovado em
+smoke visual no emulador. Android fisico continua pendente.
 
 ## Objetivo
 
@@ -40,6 +41,41 @@ detalhes.
 - alteracao de `Mapa.list`, `src/api/mock.ts`, `LimiteArea.list`, assets ou
   stores existentes.
 
+## Smoke Visual 17C.1
+
+Rodada executada em 2026-07-03 no emulador Android `emulator-5554`
+(`Pixel Tablet`, API 35), com APK release
+`android/app/build/outputs/apk/release/app-release.apk` gerado por
+`.\gradlew.bat :app:assembleRelease` e instalado por `adb install -r`.
+
+Arquivos usados em `/sdcard/Download`:
+
+- `smoke_ph_10a20.png`;
+- `prescricao_taxa_variavel_2026.zip`;
+- `arquivo_invalido.pdf`;
+- `limites_talhoes.json`.
+
+Resultados:
+
+- 17C-01 passou: filtros principais exibiram `Todos`, `Fertilidade`,
+  `Correcao de solo` e `Prescricao`; `Todos` e agregador, nao tipo tecnico.
+- 17C-02 passou: o formulario PNG ofereceu apenas Fertilidade e Correcao de
+  solo; Prescricao nao apareceu no fluxo PNG.
+- 17C-03 passou: o ZIP valido abriu modal com tipo/camada, safra/ano, escopo,
+  nome original e tamanho.
+- 17C-04 passou com comportamento do DocumentPicker: o PDF invalido ficou
+  visivel no seletor, mas nao retornou para o app nem criou metadado invalido.
+- 17C-05 passou: o ZIP apareceu como Prescricao, abriu detalhe de pacote
+  tecnico e nao exibiu preview de imagem.
+- 17C-06 passou: substituicao e remocao do ZIP local atualizaram a lista sem
+  afetar GeoJSON, PNG local, `Mapa.list` ou seed da Sela.
+- 17C-07 passou: Produtor consultou PNG e ZIP, sem botoes de anexar,
+  substituir ou remover; detalhe de ZIP permaneceu consultivo e sem preview.
+
+Ajuste pontual feito apos o smoke: a descricao do bloco `PNG local de mapa`
+foi corrigida para nao citar Prescricao, mantendo PNG restrito a Fertilidade e
+Correcao de solo.
+
 ## Validacao
 
 Executado:
@@ -53,14 +89,16 @@ Executado:
 - `node tests/prescriptionZipStorageService.test.js`
 - `node tests/prescriptionZipPropertyImportWorkflow.test.js`
 - `node tests/prescriptionZipToMapaCompat.test.js`
+- `.\gradlew.bat :app:assembleRelease`
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`
 - `git diff --check`
 
 Observacao: `npx expo install --check` foi executado. No sandbox falhou com
 `ECONNREFUSED 127.0.0.1:9`; repetido fora do sandbox, confirmou divergencia
-ja conhecida de dependencia: `expo@56.0.11`, esperado `~56.0.13`. A
-dependencia nao foi atualizada nesta fase.
+ja conhecida de dependencia: `expo@56.0.11`, esperado `~56.0.14`. A
+dependencia nao foi atualizada nesta fase; a divergencia foi aceita
+temporariamente para nao misturar upgrade de SDK com smoke/correcao 17C.1.
 
 Pendente:
 
-- smoke visual em emulador;
 - validacao final em Android fisico.

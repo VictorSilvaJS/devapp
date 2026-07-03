@@ -2178,7 +2178,7 @@ export default function MapasScreen({ route, navigation }) {
           <View style={styles.pngImportHeaderText}>
             <Text style={styles.pngImportTitle}>PNG local de mapa</Text>
             <Text style={styles.pngImportSubtitle}>
-              Anexos locais classificados por fertilidade, correção de solo ou prescrição.
+              Anexos locais classificados por fertilidade ou correção de solo.
             </Text>
           </View>
         </View>

@@ -28,15 +28,21 @@ imagem, prescricao ZIP abre apenas como detalhe do pacote tecnico. Nao ha
 backend, upload remoto, sync, unzip, processamento de conteudo ou download
 real.
 
+Rodada 17C.1 executada em 2026-07-03 no emulador `emulator-5554`
+(`Pixel Tablet`, API 35), com APK release
+`android/app/build/outputs/apk/release/app-release.apk`. Arquivos usados:
+`smoke_ph_10a20.png`, `prescricao_taxa_variavel_2026.zip`,
+`arquivo_invalido.pdf` e `limites_talhoes.json`.
+
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
-| 17C-01 | P0 | Todos | Filtros | Abrir `Material tecnico` em uma Propriedade | Filtros principais exibem apenas Fertilidade, Correcao de solo e Prescricao | Reexecutar | Validar tambem estado vazio por filtro |
-| 17C-02 | P0 | Admin/Colaborador | PNG | Acionar `Anexar PNG` | Formulario oferece apenas Fertilidade/Correcao de solo | Reexecutar | Prescricao nao deve aparecer no fluxo PNG |
-| 17C-03 | P0 | Admin/Colaborador | ZIP | Acionar `Anexar prescrição ZIP` e selecionar `.zip` | Modal mostra tipo Prescricao, camada, safra/ano, escopo, nome original e tamanho | Reexecutar | Nao deve abrir preview de imagem |
-| 17C-04 | P0 | Admin/Colaborador | ZIP | Tentar selecionar PNG/PDF/GeoJSON/JSON/SHP/KML/KMZ no fluxo ZIP | Arquivo e recusado com erro controlado | Reexecutar | Validacao leve do DocumentPicker |
-| 17C-05 | P0 | Admin/Colaborador | ZIP | Confirmar anexo ZIP | Card aparece como Prescricao e abre detalhe do pacote tecnico | Reexecutar | Mensagem deve informar que abertura/processamento nao faz parte do MVP |
-| 17C-06 | P1 | Admin/Colaborador | ZIP | Substituir e remover prescricao ZIP local | Lista atualiza sem afetar `Mapa.list`, PNGs ou demarcacao | Reexecutar | Confirmar ausencia de acao em itens mock/assets |
-| 17C-07 | P0 | Produtor | Consulta | Abrir Material tecnico com prescricao visivel | Produtor ve detalhe consultivo e nao ve anexar/substituir/remover | Reexecutar | Nao mostrar termos internos como storage/mock/sync |
+| 17C-01 | P0 | Todos | Filtros | Abrir `Material tecnico` em uma Propriedade | Filtros principais exibem apenas Fertilidade, Correcao de solo e Prescricao | Passou | `Todos` aparece como agregador; tipos tecnicos visiveis: Fertilidade, Correcao de solo e Prescricao |
+| 17C-02 | P0 | Admin/Colaborador | PNG | Acionar `Anexar PNG` | Formulario oferece apenas Fertilidade/Correcao de solo | Passou | Dropdown exibiu pH, Fosforo, Potassio, Argila, Materia organica, Calcario e Gesso; Prescricao nao apareceu |
+| 17C-03 | P0 | Admin/Colaborador | ZIP | Acionar `Anexar prescrição ZIP` e selecionar `.zip` | Modal mostra tipo Prescricao, camada, safra/ano, escopo, nome original e tamanho | Passou | `prescricao_taxa_variavel_2026.zip` abriu modal com 174 B, camada Prescricao e ano 2026 |
+| 17C-04 | P0 | Admin/Colaborador | ZIP | Tentar selecionar PNG/PDF/GeoJSON/JSON/SHP/KML/KMZ no fluxo ZIP | Arquivo e recusado com erro controlado | Passou | `arquivo_invalido.pdf` ficou visivel no picker, mas nao retornou para o app nem criou metadado invalido |
+| 17C-05 | P0 | Admin/Colaborador | ZIP | Confirmar anexo ZIP | Card aparece como Prescricao e abre detalhe do pacote tecnico | Passou | Detalhe mostrou `Pacote tecnico ZIP`, formato ZIP, sem preview de imagem |
+| 17C-06 | P1 | Admin/Colaborador | ZIP | Substituir e remover prescricao ZIP local | Lista atualiza sem afetar `Mapa.list`, PNGs ou demarcacao | Passou | Substituicao/remocao do ZIP local preservaram GeoJSON, PNG local e seed; ZIP foi reanexado para consulta do Produtor |
+| 17C-07 | P0 | Produtor | Consulta | Abrir Material tecnico com prescricao visivel | Produtor ve detalhe consultivo e nao ve anexar/substituir/remover | Passou | Produtor viu PNG e ZIP com `Abrir anexo`/`Ver detalhes`; modais sem substituir/remover/anexar e ZIP sem preview |
 
 **Rodada Fase 17B - Checklist Em Emulador Para Simplificacao Do Produtor**
 

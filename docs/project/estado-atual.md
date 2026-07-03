@@ -2685,9 +2685,10 @@ Use estes documentos junto com este retrato do presente:
 
 ## Fase 17C - Material Tecnico: PNG E ZIP De Prescricao
 
-Status em 2026-07-01: a frente de `Material tecnico` em `MapasScreen` foi
-organizada para o corte operacional atual: mapas de fertilidade, mapas de
-correcao de solo e prescricoes.
+Status em 2026-07-03: a frente de `Material tecnico` em `MapasScreen` foi
+organizada para o corte operacional atual e aprovada em smoke visual no
+emulador Android: mapas de fertilidade, mapas de correcao de solo e
+prescricoes.
 
 Entregas implementadas:
 
@@ -2708,6 +2709,21 @@ Entregas implementadas:
 - `Mapa.list`, `src/api/mock.ts`, `LimiteArea.list`, assets existentes e
   `fazenda_id` foram preservados.
 
+Smoke visual 17C.1 executado em 2026-07-03 no emulador `emulator-5554`
+(`Pixel Tablet`, API 35), com APK release
+`android/app/build/outputs/apk/release/app-release.apk` gerado por
+`.\gradlew.bat :app:assembleRelease` e instalado por `adb install -r`.
+
+Resultado da rodada:
+
+- filtros principais com Fertilidade, Correcao de solo e Prescricao;
+- PNG local aceitando somente Fertilidade/Correcao de solo;
+- ZIP de prescricao anexado, detalhado, substituido e removido sem preview de
+  imagem, unzip, backend, upload, sync ou download real;
+- PDF invalido no fluxo ZIP nao criou metadado invalido;
+- Produtor consultou PNG e ZIP sem ver anexar, substituir ou remover;
+- descricao do bloco `PNG local de mapa` corrigida para nao citar Prescricao.
+
 Fora do escopo mantido:
 
 - backend, API, banco real, upload remoto, sync e download real;
@@ -2726,22 +2742,19 @@ Validacoes automatizadas executadas nesta frente:
   `tests/prescriptionZipStorageService.test.js`,
   `tests/prescriptionZipPropertyImportWorkflow.test.js` e
   `tests/prescriptionZipToMapaCompat.test.js`;
+- `.\gradlew.bat :app:assembleRelease`;
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`;
 - `git diff --check` passou com avisos normais de LF/CRLF no Windows;
 - `npx expo install --check` confirmou divergencia ja conhecida:
-  `expo@56.0.11`, esperado `~56.0.13`.
+  `expo@56.0.11`, esperado `~56.0.14`; a divergencia foi aceita
+  temporariamente para nao misturar upgrade de SDK com a correcao/smoke 17C.1.
 
 Documento de fechamento: `docs/project/fase-17c-material-tecnico-mapas-prescricao.md`.
 
 ## Proximo Passo Recomendado
 
-Com a Fase 17C aplicada em codigo e documentacao, o proximo trabalho
-recomendado e executar smoke visual em emulador para `Material tecnico`:
-filtros dos tres tipos, anexo PNG de fertilidade/correcao, anexo ZIP de
-prescricao, detalhe do ZIP, substituicao/remocao por Admin/Colaborador e
-consulta pelo Produtor sem acoes administrativas.
-
-Antes de considerar a fase totalmente aprovada, tambem e necessario tratar ou
-aceitar explicitamente a divergencia indicada por `npx expo install --check`
-(`expo@56.0.11`, esperado `~56.0.13`) sem fazer upgrade automatico nesta fase.
-
-Android fisico continua pendente para validacao final de campo.
+Com a Fase 17C.1 aprovada em emulador, o proximo trabalho recomendado e a
+validacao final em Android fisico para campo. A divergencia indicada por
+`npx expo install --check` (`expo@56.0.11`, esperado `~56.0.14`) segue aceita
+temporariamente e deve ser tratada em fase propria de alinhamento de SDK, sem
+misturar com correcoes de smoke.

@@ -97,6 +97,13 @@ nomes finais de todos os elementos/camadas, a forma de evoluir panoramas alem
 da demarcacao basica e o fluxo produtivo para revisar, publicar, sincronizar e
 servir arquivos ZIP de prescricao por backend/storage real.
 
+Status em 2026-07-03: a rodada 17C.1 aprovou em emulador o corte operacional
+inicial de `Material tecnico` com Fertilidade, Correcao de solo e Prescricao,
+incluindo PNG local restrito a Fertilidade/Correcao de solo, ZIP de prescricao
+como pacote de detalhe sem preview de imagem e consulta do Produtor sem acoes
+administrativas. A pendencia permanece aberta para taxonomia final, pipeline
+produtivo, backend/storage real, publicacao/sync e validacao em Android fisico.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
@@ -321,6 +328,14 @@ reexecutado. `limites_talhoes.geojson` e `limites_talhoes.json` abriram modal
 com 15 talhoes/37 partes, foram anexados/substituidos e permaneceram visiveis
 apos `force-stop`, reabertura e retorno a Mapas/Arquivos tecnicos. Permanece
 pendente apenas a validacao final em Android fisico para campo.
+
+Status em 2026-07-03 (Fase 17C.1): no APK release instalado em emulador
+Android, o fluxo local de `Material tecnico` passou com PNG de fertilidade,
+ZIP de prescricao, validacao de arquivo invalido no fluxo ZIP, substituicao e
+remocao de ZIP local, persistencia visual na listagem e consulta do Produtor
+sem acoes administrativas. Isso nao fecha a estrategia produtiva de ingestao:
+backend/storage real, pipeline de revisao/publicacao, sincronizacao, download
+real e validacao em Android fisico continuam pendentes.
 
 Permanece pendente definir e implementar:
 
