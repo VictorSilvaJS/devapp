@@ -30,7 +30,20 @@ export const PERFIS_USUARIO = ['admin', 'colaborador', 'produtor'];
 export const STATUS_PRODUTOR = ['ativo', 'inativo', 'pendente'];
 export const STATUS_VISITA = ['agendada', 'realizada', 'cancelada'];
 export const OBJETIVOS_VISITA = ['consultoria', 'coleta_solo', 'avaliacao_cultivo', 'entrega_material', 'outro'];
-export const TIPOS_ATIVIDADE = ['plantio', 'adubacao', 'aplicacao', 'colheita', 'analise_solo', 'vistoria', 'outro'];
+export const TIPOS_ATIVIDADE = [
+  'observacao',
+  'visita_tecnica',
+  'fertilidade',
+  'correcao_solo',
+  'prescricao',
+  'plantio',
+  'colheita',
+  'outro',
+  'adubacao',
+  'aplicacao',
+  'analise_solo',
+  'vistoria',
+];
 export const CATEGORIAS_MAPA = ['fertilidade', 'correcao', 'indice_vegetacao', 'colheita', 'plantio', 'panorama'];
 
 // Helper: Buscar entidade por ID em qualquer coleção

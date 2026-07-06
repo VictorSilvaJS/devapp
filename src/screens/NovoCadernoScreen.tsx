@@ -24,7 +24,6 @@ import {
   filtrarProdutoresPorAcesso,
   findFazendaById,
   getFazendaId,
-  isProdutor,
   podeIncluirCaderno,
   podeIncluirCadernoEmFazenda,
 } from '../utils/acessoControle';
@@ -44,11 +43,12 @@ export default function NovoCadernoScreen() {
   const { user } = useAuth();
 
   const routeFazendaId = route.params?.fazendaId || route.params?.produtorId;
-  const produtorLogado = isProdutor(user);
+  const responsavelInicial = user?.nome || user?.full_name || '';
 
   const [fazendaId, setFazendaId] = useState('');
   const [dataAtividade, setDataAtividade] = useState(new Date());
-  const [tipoAtividade, setTipoAtividade] = useState('vistoria');
+  const [tipoAtividade, setTipoAtividade] = useState('observacao');
+  const [responsavel, setResponsavel] = useState(responsavelInicial);
   const [talhao, setTalhao] = useState('');
   const [produtosText, setProdutosText] = useState('');
   const [dosagem, setDosagem] = useState('');
@@ -74,6 +74,12 @@ export default function NovoCadernoScreen() {
   useEffect(() => {
     loadFazendas();
   }, [user, routeFazendaId]);
+
+  useEffect(() => {
+    if (!responsavel && responsavelInicial) {
+      setResponsavel(responsavelInicial);
+    }
+  }, [responsavel, responsavelInicial]);
 
   const loadFazendas = async () => {
     setLoadingFazendas(true);
@@ -130,6 +136,10 @@ export default function NovoCadernoScreen() {
       newErrors.tipoAtividade = 'Selecione o tipo de atividade';
     }
 
+    if (!responsavel.trim()) {
+      newErrors.responsavel = 'Informe o responsável pelo registro';
+    }
+
     if (parseCadernoAreaAplicada(areaAplicada) === null) {
       newErrors.areaAplicada = 'Informe uma área maior que zero';
     }
@@ -169,7 +179,7 @@ export default function NovoCadernoScreen() {
         condicoesClima,
         observacoes,
         visivelParaProdutor,
-        colaboradorResponsavel: user?.nome || user?.full_name || 'Sistema',
+        colaboradorResponsavel: responsavel,
         criadoPorUserId: user?.id,
       });
 
@@ -207,7 +217,7 @@ export default function NovoCadernoScreen() {
         <View style={styles.blockedContainer}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
           <Text style={styles.blockedText}>Acesso restrito</Text>
-          <Text style={styles.blockedSubtext}>Você não tem permissão para criar registro nesta propriedade.</Text>
+          <Text style={styles.blockedSubtext}>Produtor consulta somente registros liberados. A criação fica restrita à equipe.</Text>
         </View>
       </View>
     );
@@ -284,9 +294,9 @@ export default function NovoCadernoScreen() {
           </View>
         </SectionCard>
 
-        <SectionCard title="Atividade" subtitle="Registre data, tipo e informações operacionais do caderno.">
+        <SectionCard title="Registro de campo" subtitle="Registre data, tipo, responsável e informações operacionais.">
           <DatePicker
-            label="Data da Atividade"
+            label="Data do registro"
             value={dataAtividade}
             onChange={(date) => {
               setDataAtividade(date);
@@ -300,7 +310,7 @@ export default function NovoCadernoScreen() {
 
           <View style={styles.field}>
             <Text style={styles.label}>
-              Tipo de Atividade <Text style={styles.required}>*</Text>
+              Tipo de registro <Text style={styles.required}>*</Text>
             </Text>
             <RadioCardGroup
               options={CADERNO_TIPOS_ATIVIDADE.map((tipo) => ({
@@ -315,6 +325,17 @@ export default function NovoCadernoScreen() {
               error={errors.tipoAtividade}
             />
           </View>
+
+          <FormField
+            label="Responsável"
+            value={responsavel}
+            onChangeText={(value) => {
+              setResponsavel(value);
+              setErrors(prev => ({ ...prev, responsavel: null }));
+            }}
+            placeholder="Nome do responsável"
+            error={errors.responsavel}
+          />
 
           <FormField
             label="Talhão"
@@ -374,23 +395,18 @@ export default function NovoCadernoScreen() {
             options={[
               {
                 value: 'visivel',
-                label: 'Visível ao produtor',
+                label: 'Liberado ao produtor',
                 description: 'Aparece no histórico da propriedade.',
-                disabled: produtorLogado,
               },
               {
                 value: 'restrito',
-                label: 'Restrito à equipe',
+                label: 'Interno',
                 description: 'Disponível apenas para admin e colaboradores.',
-                disabled: produtorLogado,
               },
             ]}
             value={visivelParaProdutor ? 'visivel' : 'restrito'}
             onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
           />
-          {produtorLogado && (
-            <Text style={styles.contextHint}>Registros criados pelo produtor ficam visíveis no histórico da própria propriedade.</Text>
-          )}
         </SectionCard>
 
         <InfoBox message="O registro será salvo no caderno da propriedade selecionada." />

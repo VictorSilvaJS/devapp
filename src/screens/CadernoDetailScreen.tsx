@@ -21,6 +21,12 @@ import {
   podeEditarCadernoEmFazenda,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import {
+  getCadernoTalhaoLabel,
+  getCadernoTipoLabel,
+  getCadernoVisibilidadeLabel,
+  isCadernoVisivelParaProdutor,
+} from '../utils/cadernoFormCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 
 const { width } = Dimensions.get('window');
@@ -79,6 +85,11 @@ export default function CadernoDetailScreen() {
 
   const getTipoColor = (tipo) => {
     const cores = {
+      observacao: colors.muted,
+      visita_tecnica: colors.cyan,
+      fertilidade: colors.success,
+      correcao_solo: colors.info,
+      prescricao: colors.purple,
       plantio: colors.success,
       adubacao: colors.info,
       aplicacao: colors.purple,
@@ -88,19 +99,6 @@ export default function CadernoDetailScreen() {
       outro: colors.muted,
     };
     return cores[tipo] || colors.muted;
-  };
-
-  const getTipoLabel = (tipo) => {
-    const labels = {
-      plantio: 'Plantio',
-      adubacao: 'Adubação',
-      aplicacao: 'Aplicação',
-      colheita: 'Colheita',
-      analise_solo: 'Análise de Solo',
-      vistoria: 'Vistoria',
-      outro: 'Outro',
-    };
-    return labels[tipo] || String(tipo || 'Registro').replace(/_/g, ' ');
   };
 
   const formatDate = (dateStr) => {
@@ -157,8 +155,9 @@ export default function CadernoDetailScreen() {
   const fazendaInfo = fazenda ? getFazendaUiInfo(fazenda) : null;
   const tipoColor = getTipoColor(registro.tipo_atividade);
   const areaFormatada = formatArea(registro.area_aplicada);
-  const visivelParaProdutor = registro.visivel_para_produtor === true;
+  const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
   const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
+  const tipoLabel = getCadernoTipoLabel(registro.tipo_atividade);
   const fotos = Array.isArray(registro.fotos) ? registro.fotos : [];
   const produtos = Array.isArray(registro.produtos_utilizados) ? registro.produtos_utilizados : [];
 
@@ -173,7 +172,7 @@ export default function CadernoDetailScreen() {
       >
         <View style={styles.statusContainer}>
           <View style={[styles.statusBadge, { backgroundColor: tipoColor }]}>
-            <Text style={styles.statusText}>{getTipoLabel(registro.tipo_atividade)}</Text>
+            <Text style={styles.statusText}>{tipoLabel}</Text>
           </View>
           <View style={[styles.visibilityBadge, { backgroundColor: visibilidadeColor + '20' }]}>
             <Ionicons
@@ -182,7 +181,7 @@ export default function CadernoDetailScreen() {
               color={visibilidadeColor}
             />
             <Text style={[styles.visibilityText, { color: visibilidadeColor }]}>
-              {visivelParaProdutor ? 'Visível ao produtor' : 'Restrito à equipe'}
+              {getCadernoVisibilidadeLabel(registro)}
             </Text>
           </View>
         </View>
@@ -217,9 +216,17 @@ export default function CadernoDetailScreen() {
           </View>
 
           <View style={styles.infoRow}>
+            <Ionicons name="pricetag" size={20} color={colors.muted} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Tipo de registro</Text>
+              <Text style={styles.infoValue}>{tipoLabel}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
             <Ionicons name="calendar" size={20} color={colors.muted} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Data da Atividade</Text>
+              <Text style={styles.infoLabel}>Data do registro</Text>
               <Text style={styles.infoValue}>{formatDate(registro.data_atividade)}</Text>
             </View>
           </View>
@@ -232,15 +239,13 @@ export default function CadernoDetailScreen() {
             </View>
           </View>
 
-          {registro.talhao && (
-            <View style={styles.infoRow}>
-              <Ionicons name="location" size={20} color={colors.muted} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Talhão</Text>
-                <Text style={styles.infoValue}>{registro.talhao}</Text>
-              </View>
+          <View style={styles.infoRow}>
+            <Ionicons name="location" size={20} color={colors.muted} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Talhão</Text>
+              <Text style={styles.infoValue}>{getCadernoTalhaoLabel(registro)}</Text>
             </View>
-          )}
+          </View>
 
           {areaFormatada && (
             <View style={styles.infoRow}>

@@ -222,13 +222,15 @@ export const toVisitaCompativelBorda = (
 export const normalizeCadernoCampo = (
   raw: CadernoCampoLegado | CadernoCampoCanonico | CadernoCampoCompativelBorda
 ): CadernoCampoCanonico => {
-  const { produtor_id, criado_por, fazenda_id, ...rest } =
+  const { produtor_id, criado_por, fazenda_id, fazendaId, ...rest } =
     raw as CadernoCampoLegado & CadernoCampoCanonico & CadernoCampoCompativelBorda;
+  const contextoFazendaId = firstNonEmptyString(fazenda_id, fazendaId, produtor_id) ?? '';
 
   return {
     ...rest,
     id: raw.id,
-    fazenda_id: firstNonEmptyString(fazenda_id, produtor_id) ?? '',
+    fazenda_id: contextoFazendaId,
+    fazendaId: contextoFazendaId,
     colaborador_responsavel: raw.colaborador_responsavel ?? '',
     data_atividade: raw.data_atividade ?? '',
     tipo_atividade: raw.tipo_atividade ?? '',
@@ -245,6 +247,7 @@ export const toCadernoCampoCompativelBorda = (
     ...caderno,
     produtor_id: caderno.fazenda_id,
     criado_por: caderno.criado_por_user_id,
+    fazendaId: caderno.fazenda_id,
   };
 };
 

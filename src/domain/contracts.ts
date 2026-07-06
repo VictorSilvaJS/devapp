@@ -181,6 +181,7 @@ export interface VisitaCanonica {
 export interface CadernoCampoCanonico {
   id: string;
   fazenda_id: string;
+  fazendaId?: string;
   colaborador_responsavel: string;
   data_atividade: string;
   tipo_atividade: string;
@@ -308,6 +309,7 @@ export interface CadernoCampoLegado {
   id: string;
   produtor_id?: string;
   fazenda_id?: string;
+  fazendaId?: string;
   colaborador_responsavel?: string;
   data_atividade?: string;
   tipo_atividade?: string;
@@ -375,6 +377,7 @@ export interface VisitaCompativelBorda extends VisitaCanonica {
 export interface CadernoCampoCompativelBorda extends CadernoCampoCanonico {
   produtor_id: string;
   criado_por?: string;
+  fazendaId: string;
 }
 
 export interface LimiteAreaCompativelBorda extends LimiteAreaCanonico {

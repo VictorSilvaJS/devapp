@@ -163,11 +163,12 @@ const run = async () => {
       { id: 'c1', produtor_id: 'fz1', colaborador_responsavel: 'Ana', data_atividade: '2026-04-16', tipo_atividade: 'vistoria', visivel_para_produtor: true },
       { id: 'c2', produtor_id: 'fz1', colaborador_responsavel: 'Ana', data_atividade: '2026-04-16', tipo_atividade: 'vistoria', visivel_para_produtor: false },
       { id: 'c3', produtor_id: 'fz2', colaborador_responsavel: 'Ana', data_atividade: '2026-04-16', tipo_atividade: 'vistoria', visivel_para_produtor: true },
+      { id: 'c4', produtor_id: 'fz1', colaborador_responsavel: 'Ana', data_atividade: '2026-04-17', tipo_atividade: 'observacao' },
     ];
 
     const resultado = filtrarCadernosPorAcesso(registros, produtorUser, fazendasBase);
 
-    assert.deepEqual(resultado.map((registro) => registro.id), ['c1']);
+    assert.deepEqual(resultado.map((registro) => registro.id), ['c1', 'c4']);
   });
 
   await test('filtrarCadernosPorFazendaIds alimenta detalhe da fazenda com visibilidade correta', () => {
@@ -229,21 +230,21 @@ const run = async () => {
     assert.equal(avaliarAcessoCaderno(adminUser, registroSemFazenda, fazendasBase).status, 'fazenda_nao_encontrada');
   });
 
-  await test('podeIncluirCadernoEmFazenda permite criação apenas dentro do escopo', () => {
+  await test('podeIncluirCadernoEmFazenda permite criação apenas para equipe dentro do escopo', () => {
     const fazendaNoEscopo = fazendasBase[0];
     const fazendaForaEscopo = fazendasBase[1];
 
-    assert.equal(podeIncluirCaderno(produtorUser), true);
+    assert.equal(podeIncluirCaderno(produtorUser), false);
     assert.equal(podeIncluirCaderno(colaboradorUser), true);
     assert.equal(podeIncluirCaderno(adminUser), true);
-    assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaNoEscopo), true);
+    assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaNoEscopo), false);
     assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaForaEscopo), false);
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaNoEscopo), true);
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeIncluirCadernoEmFazenda(adminUser, fazendaForaEscopo), true);
   });
 
-  await test('podeEditarCadernoEmFazenda preserva escopo e autoria do produtor', () => {
+  await test('podeEditarCadernoEmFazenda bloqueia produtor e preserva escopo da equipe', () => {
     const fazendaNoEscopo = fazendasBase[0];
     const fazendaForaEscopo = fazendasBase[1];
     const registroDoProdutor = {
@@ -261,9 +262,9 @@ const run = async () => {
       criado_por_user_id: 'u99',
     };
 
-    assert.equal(podeEditarCaderno(produtorUser, registroDoProdutor), true);
+    assert.equal(podeEditarCaderno(produtorUser, registroDoProdutor), false);
     assert.equal(podeEditarCaderno(produtorUser, registroDeOutro), false);
-    assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaNoEscopo), true);
+    assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaNoEscopo), false);
     assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaForaEscopo), false);
     assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoProdutor, fazendaNoEscopo), true);
     assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoProdutor, fazendaForaEscopo), false);

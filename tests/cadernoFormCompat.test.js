@@ -5,6 +5,11 @@ const {
   findCadernoFazendaOption,
   getCadernoFormFazendaId,
   getCadernoFormFazendaLabel,
+  getCadernoTalhaoLabel,
+  getCadernoTipoLabel,
+  getCadernoVisibilidadeLabel,
+  isCadernoVisivelParaProdutor,
+  ordenarCadernosPorDataRecente,
   parseCadernoAreaAplicada,
   parseCadernoProdutos,
   resolveCadernoEdicaoFazendaId,
@@ -119,12 +124,30 @@ const run = async () => {
     });
 
     assert.equal(payload.fazenda_id, 'faz_payload');
+    assert.equal(payload.fazendaId, 'faz_payload');
     assert.equal(payload.colaborador_responsavel, 'Carlos Silva');
     assert.equal(payload.tipo_atividade, 'adubacao');
     assert.equal(payload.area_aplicada, 120.5);
     assert.equal(payload.visivel_para_produtor, false);
     assert.equal(payload.criado_por_user_id, 'u2');
     assert.deepEqual(payload.produtos_utilizados, ['MAP', 'KCl']);
+  });
+
+  await test('helpers de apresentação do caderno cobrem tipo, talhão, visibilidade e ordenação', () => {
+    assert.equal(getCadernoTipoLabel('correcao_solo'), 'Correção de solo');
+    assert.equal(getCadernoTipoLabel('vistoria'), 'Vistoria');
+    assert.equal(getCadernoTalhaoLabel({}), 'Sem talhão vinculado');
+    assert.equal(getCadernoTalhaoLabel({ talhao: 'Talhão A' }), 'Talhão A');
+    assert.equal(isCadernoVisivelParaProdutor({ visivel_para_produtor: false }), false);
+    assert.equal(isCadernoVisivelParaProdutor({}), true);
+    assert.equal(getCadernoVisibilidadeLabel({ visivel_para_produtor: false }), 'Interno');
+    assert.deepEqual(
+      ordenarCadernosPorDataRecente([
+        { id: 'antigo', data_atividade: '2026-04-01T00:00:00.000Z' },
+        { id: 'novo', data_atividade: '2026-04-03T00:00:00.000Z' },
+      ]).map((item) => item.id),
+      ['novo', 'antigo']
+    );
   });
 
   await test('buildCadernoPayload retorna null para data ou área inválida', () => {

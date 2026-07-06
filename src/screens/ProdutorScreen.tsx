@@ -39,6 +39,13 @@ import {
   getUsuariosProdutoresDaPropriedade,
 } from '../utils/territorioCompat';
 import {
+  getCadernoTalhaoLabel,
+  getCadernoTipoLabel,
+  getCadernoVisibilidadeLabel,
+  isCadernoVisivelParaProdutor,
+  ordenarCadernosPorDataRecente,
+} from '../utils/cadernoFormCompat';
+import {
   getUsuarioNome,
   getVinculoPropriedadeLabel,
   getVinculosPropriedadeUsuario,
@@ -110,9 +117,11 @@ export default function ProdutorScreen({ route, navigation }) {
       const m = filtrarMapasPorFazendaIds(todosMapas, [fazendaAtualId], {
         somenteDisponiveisDownload: user?.perfil === 'produtor',
       });
-      const c = filtrarCadernosPorFazendaIds(todosCadernos, [fazendaAtualId], {
-        somenteVisivelParaProdutor: user?.perfil === 'produtor',
-      });
+      const c = ordenarCadernosPorDataRecente(
+        filtrarCadernosPorFazendaIds(todosCadernos, [fazendaAtualId], {
+          somenteVisivelParaProdutor: user?.perfil === 'produtor',
+        })
+      );
       const l = filtrarLimitesPorFazendaIds(todosLimites, [fazendaAtualId]);
       const fazendasComAcesso = filtrarProdutoresPorAcesso(todasFazendas, user);
       const detalheContexto = buildFazendaDetailContext(p, fazendasComAcesso);
@@ -317,6 +326,11 @@ export default function ProdutorScreen({ route, navigation }) {
 
   const getCadernoTipoColor = (tipo) => {
     const cores = {
+      observacao: colors.muted,
+      visita_tecnica: colors.cyan,
+      fertilidade: colors.success,
+      correcao_solo: colors.info,
+      prescricao: colors.purple,
       plantio: colors.success,
       adubacao: colors.info,
       aplicacao: colors.purple,
@@ -326,19 +340,6 @@ export default function ProdutorScreen({ route, navigation }) {
       outro: colors.muted,
     };
     return cores[tipo] || colors.muted;
-  };
-
-  const getCadernoTipoLabel = (tipo) => {
-    const labels = {
-      plantio: 'Plantio',
-      adubacao: 'Adubação',
-      aplicacao: 'Aplicação',
-      colheita: 'Colheita',
-      analise_solo: 'Análise de Solo',
-      vistoria: 'Vistoria',
-      outro: 'Outro',
-    };
-    return labels[tipo] || String(tipo || 'Registro').replace(/_/g, ' ');
   };
 
   const formatarDataCaderno = (data) => {
@@ -1065,7 +1066,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   const produtos = Array.isArray(registro.produtos_utilizados)
                     ? registro.produtos_utilizados
                     : [];
-                  const visivelParaProdutor = registro.visivel_para_produtor === true;
+                  const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
 
                   return (
                     <TouchableOpacity
@@ -1083,7 +1084,7 @@ export default function ProdutorScreen({ route, navigation }) {
                             {getCadernoTipoLabel(registro.tipo_atividade)}
                           </Text>
                           <Text style={styles.cadernoSubtitle} numberOfLines={1}>
-                            {[registro.talhao, registro.colaborador_responsavel].filter(Boolean).join(' • ') || 'Registro da propriedade'}
+                            {[getCadernoTalhaoLabel(registro), registro.colaborador_responsavel].filter(Boolean).join(' • ')}
                           </Text>
                         </View>
                         <Ionicons name="chevron-forward-outline" size={20} color={colors.muted} />
@@ -1108,7 +1109,7 @@ export default function ProdutorScreen({ route, navigation }) {
                               color={visivelParaProdutor ? colors.success : colors.warning}
                             />
                             <Text style={styles.cadernoMetaText}>
-                              {visivelParaProdutor ? 'Visível ao produtor' : 'Restrito à equipe'}
+                              {getCadernoVisibilidadeLabel(registro)}
                             </Text>
                           </View>
                         )}

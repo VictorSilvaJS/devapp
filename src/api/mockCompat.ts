@@ -47,12 +47,13 @@ export const filterMockCadernosCampo = (records: any[], query?: Record<string, a
 
 export const persistMockCadernoCampo = ({ id, data, existing }: { id?: any; data: any; existing?: any }) => {
   const current = existing ? readMockCadernoCampo(existing) : null;
-  const nextFazendaId = data?.fazenda_id ?? data?.produtor_id ?? current?.fazenda_id;
+  const nextFazendaId = data?.fazenda_id ?? data?.fazendaId ?? data?.produtor_id ?? current?.fazenda_id ?? current?.fazendaId;
   const normalized = normalizeCadernoCampo({
     ...(current || {}),
     ...(data || {}),
     id: id ?? data?.id ?? current?.id,
     fazenda_id: nextFazendaId,
+    fazendaId: nextFazendaId,
     visivel_para_produtor: data?.visivel_para_produtor ?? current?.visivel_para_produtor ?? true,
     fotos: data?.fotos ?? current?.fotos ?? [],
     data_criacao: data?.data_criacao ?? current?.data_criacao ?? new Date().toISOString(),

@@ -230,6 +230,7 @@ test('normalizeCadernoCampo migra produtor_id legado e centraliza autoria futura
   assert.deepEqual(caderno, {
     id: 'c1',
     fazenda_id: 'p1',
+    fazendaId: 'p1',
     colaborador_responsavel: 'Ana Santos',
     data_atividade: '2026-04-14T10:00:00.000Z',
     tipo_atividade: 'vistoria',
@@ -237,6 +238,7 @@ test('normalizeCadernoCampo migra produtor_id legado e centraliza autoria futura
   });
 
   assert.equal(toCadernoCampoCompativelBorda(caderno).produtor_id, 'p1');
+  assert.equal(toCadernoCampoCompativelBorda(caderno).fazendaId, 'p1');
 });
 
 test('normalizeLimiteArea migra produtor_id legado para fazenda_id', () => {

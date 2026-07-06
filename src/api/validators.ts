@@ -12,6 +12,7 @@ import {
   normalizeVisita,
 } from '../domain';
 import { normalizeMockFazendaInput } from './produtorCompat';
+import { CADERNO_TIPO_VALUES } from '../utils/cadernoFormCompat';
 
 const isMissingValue = (value) =>
   value === undefined ||
@@ -118,7 +119,7 @@ export const validateCadernoCampo = (data) => {
   
   validateEnum(
     normalized.tipo_atividade, 
-    ['plantio', 'adubacao', 'aplicacao', 'colheita', 'analise_solo', 'vistoria', 'outro'], 
+    CADERNO_TIPO_VALUES,
     'tipo_atividade', 
     'CadernoCampo'
   );

@@ -28,6 +28,13 @@ import {
   podeIncluirCaderno,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
+import {
+  getCadernoTalhaoLabel,
+  getCadernoTipoLabel,
+  getCadernoVisibilidadeLabel,
+  isCadernoVisivelParaProdutor,
+  ordenarCadernosPorDataRecente,
+} from '../utils/cadernoFormCompat';
 
 export default function CadernoCampoScreen() {
   const navigation = useNavigation<any>();
@@ -105,18 +112,24 @@ export default function CadernoCampoScreen() {
   const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};
 
   // Filtro de busca
-  const registrosFiltrados = registros.filter(registro => {
+  const registrosFiltrados = ordenarCadernosPorDataRecente(registros.filter(registro => {
     const fazenda = getFazenda(getCadernoFazendaId(registro));
     return matchesFazendaUiBusca(fazenda, busca, [
       registro.tipo_atividade,
       registro.talhao,
       registro.colaborador_responsavel,
+      registro.observacoes,
     ]);
-  });
+  }));
 
   // Cores para tipos de atividade
   const getTipoColor = (tipo) => {
     const cores = {
+      observacao: colors.muted,
+      visita_tecnica: colors.cyan,
+      fertilidade: colors.success,
+      correcao_solo: colors.info,
+      prescricao: colors.purple,
       plantio: colors.success,
       adubacao: colors.info,
       aplicacao: colors.purple,
@@ -130,7 +143,9 @@ export default function CadernoCampoScreen() {
 
   // Formata data
   const formatarData = (data) => {
+    if (!data) return '-';
     const d = new Date(data);
+    if (Number.isNaN(d.getTime())) return '-';
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
@@ -172,7 +187,7 @@ export default function CadernoCampoScreen() {
                 ? 'Tente ajustar os filtros de busca'
                 : isProdutorView
                   ? 'Nenhum registro de caderno liberado para o Produtor.'
-                  : 'Quando houver registros liberados, eles aparecerão aqui.'
+                  : 'Quando houver registros de caderno, eles aparecerão aqui.'
             }
             style={styles.emptyState}
           />
@@ -181,6 +196,10 @@ export default function CadernoCampoScreen() {
             const fazenda = getFazenda(getCadernoFazendaId(reg));
             const fazendaInfo = getFazendaUiInfo(fazenda);
             const tipoColor = getTipoColor(reg.tipo_atividade);
+            const tipoLabel = getCadernoTipoLabel(reg.tipo_atividade);
+            const talhaoLabel = getCadernoTalhaoLabel(reg);
+            const visivelParaProdutor = isCadernoVisivelParaProdutor(reg);
+            const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
             
             return (
               <TouchableOpacity
@@ -200,14 +219,14 @@ export default function CadernoCampoScreen() {
                         {fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
                       </Text>
                       <Text style={styles.cardSubtitle} numberOfLines={1}>
-                        {fazendaInfo.titularNome || reg.talhao}
+                        Talhão: {talhaoLabel}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.cardHeaderRight}>
                     <View style={[styles.badge, { backgroundColor: tipoColor + '20' }]}>
                       <Text style={[styles.badgeText, { color: tipoColor }]}>
-                        {reg.tipo_atividade.replace(/_/g, ' ')}
+                        {tipoLabel}
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color={colors.muted} />
@@ -223,7 +242,18 @@ export default function CadernoCampoScreen() {
                   <View style={styles.infoRow}>
                     <Ionicons name="person-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                     <Text style={styles.infoText} numberOfLines={1}>
-                      {reg.colaborador_responsavel}
+                      Responsável: {reg.colaborador_responsavel || '-'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Ionicons
+                      name={visivelParaProdutor ? 'eye-outline' : 'lock-closed-outline'}
+                      size={16}
+                      color={visibilidadeColor}
+                      style={styles.infoIcon}
+                    />
+                    <Text style={[styles.infoText, { color: visibilidadeColor }]} numberOfLines={1}>
+                      {getCadernoVisibilidadeLabel(reg)}
                     </Text>
                   </View>
                   {reg.area_aplicada && (

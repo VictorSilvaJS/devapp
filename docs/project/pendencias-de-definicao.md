@@ -77,6 +77,18 @@ O caderno ja esta definido como modulo enxuto e operacional, mas ainda faltam de
 - nivel de detalhe esperado
 - criterios de visibilidade por perfil
 
+Status em 2026-07-03 (Fase 17D): o MVP demonstravel passou a ter um corte
+operacional mais claro para Caderno de Campo: Produtor fica somente leitura e
+ve apenas registros liberados, Admin/Colaborador mantem criacao e edicao
+local/mockada, e telas de listagem, detalhe, novo e editar exibem Propriedade,
+Talhao, data, tipo, responsavel, visibilidade e observacao. Registros legados
+sem Talhao ou sem visibilidade explicita continuam compatíveis. A pendencia
+permanece aberta porque isso nao fecha a modelagem final do Caderno,
+backend/RBAC real, matriz completa de permissoes por acao, storage/sync,
+auditoria, nem a validacao completa desta frente. O smoke parcial em emulador
+foi executado para o perfil Produtor; permanecem pendentes ampliar o smoke para
+Admin/Colaborador e validar em Android fisico.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:

@@ -219,6 +219,7 @@ const run = async () => {
 
     assert.ok(registro.id);
     assert.equal(registro.fazenda_id, 'p4');
+    assert.equal(registro.fazendaId, 'p4');
     assert.equal(registro.produtor_id, 'p4');
     assert.equal(registro.criado_por, 'u2');
     assert.equal(registro.visivel_para_produtor, true);
@@ -254,6 +255,7 @@ const run = async () => {
     });
 
     assert.equal(atualizado.fazenda_id, 'p4');
+    assert.equal(atualizado.fazendaId, 'p4');
     assert.equal(atualizado.produtor_id, 'p4');
     assert.equal(atualizado.observacoes, 'Registro ajustado');
     assert.equal(atualizado.visivel_para_produtor, false);

@@ -96,6 +96,15 @@ test('validateCadernoCampo aceita fazenda_id canônico', () => {
   }), true);
 });
 
+test('validateCadernoCampo aceita tipos enxutos da Fase 17D', () => {
+  assert.equal(validateCadernoCampo({
+    fazenda_id: 'p1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'prescricao',
+  }), true);
+});
+
 test('validateLimiteArea aceita fazenda_id canônico', () => {
   assert.equal(validateLimiteArea({
     nome: 'LT 2025 - Talhão A',

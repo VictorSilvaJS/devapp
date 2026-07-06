@@ -203,6 +203,7 @@ const run = async () => {
 
     assert.equal(visita.fazenda_id, 'faz_operacional');
     assert.equal(caderno.fazenda_id, 'faz_operacional');
+    assert.equal(caderno.fazendaId, 'faz_operacional');
     assert.equal(Object.prototype.hasOwnProperty.call(visita, 'propriedade_id'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(caderno, 'propriedade_id'), false);
   });

@@ -2751,10 +2751,71 @@ Validacoes automatizadas executadas nesta frente:
 
 Documento de fechamento: `docs/project/fase-17c-material-tecnico-mapas-prescricao.md`.
 
+## Fase 17D - Caderno De Campo Enxuto Por Propriedade
+
+Status em 2026-07-03: a frente de `Caderno de Campo` foi ajustada para o
+corte operacional do MVP demonstravel, mantendo fluxo local/mockado,
+compatibilidade de `fazenda_id`/`fazendaId` e sem abrir backend, sync, upload,
+download ou storage remoto.
+
+Entregas implementadas:
+
+- Produtor consulta apenas registros liberados para ele e nao ve acoes de
+  criar, editar ou remover Caderno;
+- Admin e Colaborador continuam criando e editando registros conforme a regra
+  local existente e o escopo da Propriedade;
+- listagem, detalhe e formulários exibem campos minimos claros: Propriedade,
+  Talhao, data do registro, tipo, responsavel, visibilidade e observacao;
+- registros antigos sem Talhao exibem `Sem talhão vinculado`;
+- registros legados sem campo explicito de visibilidade continuam tratados como
+  liberados ao Produtor por compatibilidade;
+- a lista do Caderno e o bloco de Caderno no detalhe da Propriedade passaram a
+  ordenar registros por data mais recente primeiro;
+- os tipos de Caderno usados no formulario foram alinhados ao corte enxuto da
+  Fase 17D, preservando valores legados como `vistoria`, `adubacao`,
+  `aplicacao` e `analise_solo`.
+
+Preservado nesta fase:
+
+- `src/api/mock.ts`, `Mapa.list`, `LimiteArea.list`, assets e seeds da Sela de
+  Prata I;
+- chaves locais existentes, incluindo `@tche:mock-mvp:v1`,
+  `@tche:geojson-imports:v1`, `@tche:png-map-imports:v1` e
+  `@tche:prescription-zip-imports:v1`;
+- Material tecnico com Fertilidade/Correcao de solo em PNG e Prescricao em ZIP;
+- ausência de backend, JWT, RBAC real, sync, upload remoto, download real,
+  unzip ou processamento de ZIP.
+
+Validacoes executadas nesta frente:
+
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `git diff --check` passou com avisos normais de LF/CRLF no Windows;
+- `.\gradlew.bat :app:assembleRelease`;
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`;
+- smoke visual parcial em emulador `emulator-5554` (`Pixel Tablet`), usando
+  `adb` pelo caminho direto do Android SDK.
+
+Resultado do smoke visual parcial em emulador:
+
+- no perfil Produtor, a lista do Caderno exibiu apenas registro liberado para
+  consulta;
+- o card exibiu Propriedade, Talhao, tipo, data, responsavel, visibilidade e
+  observacao;
+- o botao de novo registro nao apareceu para Produtor;
+- o detalhe abriu em modo de consulta, com Propriedade, tipo, data,
+  responsavel, Talhao e visibilidade, sem acao de edicao visivel.
+
+Limitacoes de validacao: ainda e recomendado ampliar o smoke manual em
+emulador para Admin/Colaborador criando e editando registros. Android fisico
+continua pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Com a Fase 17C.1 aprovada em emulador, o proximo trabalho recomendado e a
-validacao final em Android fisico para campo. A divergencia indicada por
+Com a Fase 17D validada automaticamente e com smoke parcial do Produtor em
+emulador, o proximo trabalho recomendado e ampliar o smoke visual em emulador
+Android para Admin/Colaborador no Caderno e, depois, executar a validacao final
+em Android fisico para campo. A divergencia indicada por
 `npx expo install --check` (`expo@56.0.11`, esperado `~56.0.14`) segue aceita
 temporariamente e deve ser tratada em fase propria de alinhamento de SDK, sem
-misturar com correcoes de smoke.
+misturar com correcoes funcionais.

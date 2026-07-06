@@ -6,8 +6,7 @@
  * - colaborador: Mesmas funcionalidades do admin, mas LIMITADO à sua região/sub-regiões
  * - produtor: (= cliente = proprietário) - Dono da fazenda
  *   - Apenas visualização e download
- *   - Pode incluir dados apenas no caderno de campo
- *   - NÃO pode editar ou incluir outros dados
+ *   - Não cria, edita ou remove registros do caderno no MVP atual
  *   - Um produtor pode ter VÁRIAS fazendas (1:N)
  *   - Várias pessoas podem ter login vinculado ao mesmo proprietário
  */
@@ -88,6 +87,8 @@ const filterByFazendaIds = (items, getId, fazendaIds) => {
 
   return items.filter((item) => allowedIds.has(getId(item)));
 };
+
+const cadernoVisivelParaProdutor = (registro) => registro?.visivel_para_produtor !== false;
 
 export const getTitularIdUsuario = (user) => firstNonEmptyString(user?.produtor_id);
 
@@ -224,7 +225,7 @@ export const filtrarCadernosPorFazendaIds = (
   const registrosFiltrados = filterByFazendaIds(registros, getCadernoFazendaId, fazendaIds);
 
   if (options.somenteVisivelParaProdutor) {
-    return registrosFiltrados.filter((registro) => registro.visivel_para_produtor === true);
+    return registrosFiltrados.filter(cadernoVisivelParaProdutor);
   }
 
   return registrosFiltrados;
@@ -344,7 +345,6 @@ export const filtrarMapasPorAcesso = (mapas, user, produtores = []) => {
 
 /**
  * Verifica se um usuário tem acesso a um registro de caderno de campo
- * NOTA: Produtor PODE incluir dados no caderno de campo (única exceção de edição)
  */
 export const temAcessoCaderno = (user, registro, produtor) => {
   if (!user || !registro) return false;
@@ -353,7 +353,7 @@ export const temAcessoCaderno = (user, registro, produtor) => {
 
   // Produtor: vê registros visíveis das suas fazendas
   if (isProdutor(user)) {
-    return fazendaPertenceAoTitular(produtor, user) && registro.visivel_para_produtor === true;
+    return fazendaPertenceAoTitular(produtor, user) && cadernoVisivelParaProdutor(registro);
   }
 
   if (isColaborador(user)) {
@@ -580,12 +580,10 @@ export const podeEditarVisita = (user, visita, produtor) => {
 
 /**
  * Verifica se usuário pode incluir registros no caderno de campo
- * EXCEÇÃO: Produtor PODE incluir dados no caderno de campo
  */
 export const podeIncluirCaderno = (user) => {
   if (!user) return false;
-  // Todos podem incluir no caderno: admin, colaborador E produtor
-  return true;
+  return podeGerenciar(user);
 };
 
 export const podeIncluirCadernoEmFazenda = (user, fazenda) => {
@@ -595,7 +593,6 @@ export const podeIncluirCadernoEmFazenda = (user, fazenda) => {
 
 /**
  * Verifica se usuário pode editar registros do caderno (edição completa)
- * Produtor pode incluir MAS não pode editar registros existentes de outros
  */
 export const podeEditarCaderno = (user, registro, fazenda = null) => {
   if (!user || !registro) return false;
@@ -603,14 +600,6 @@ export const podeEditarCaderno = (user, registro, fazenda = null) => {
   if (isAdmin(user)) return true;
   if (isColaborador(user)) {
     return fazenda ? produtorNaRegiao(user, fazenda) : true;
-  }
-
-  // Produtor pode editar apenas seus próprios registros do caderno
-  if (
-    isProdutor(user) &&
-    (registro.criado_por === user.id || registro.criado_por_user_id === user.id)
-  ) {
-    return true;
   }
 
   return false;

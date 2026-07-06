@@ -23,7 +23,6 @@ import { colors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
   findFazendaById,
-  isProdutor,
   podeEditarCadernoEmFazenda,
 } from '../utils/acessoControle';
 import {
@@ -31,6 +30,7 @@ import {
   buildCadernoFazendaOptions,
   buildCadernoPayload,
   getCadernoFormFazendaLabel,
+  isCadernoVisivelParaProdutor,
   parseCadernoAreaAplicada,
   resolveCadernoEdicaoFazendaId,
 } from '../utils/cadernoFormCompat';
@@ -43,7 +43,6 @@ export default function EditarCadernoScreen() {
 
   const { cadernoId, registroId, id } = route.params || {};
   const cadernoRouteId = cadernoId || registroId || id;
-  const produtorLogado = isProdutor(user);
 
   const [registroOriginal, setRegistroOriginal] = useState<any>(null);
   const [fazenda, setFazenda] = useState<any>(null);
@@ -55,7 +54,8 @@ export default function EditarCadernoScreen() {
 
   const [fazendaId, setFazendaId] = useState('');
   const [dataAtividade, setDataAtividade] = useState<Date | null>(null);
-  const [tipoAtividade, setTipoAtividade] = useState('vistoria');
+  const [tipoAtividade, setTipoAtividade] = useState('observacao');
+  const [responsavel, setResponsavel] = useState('');
   const [talhao, setTalhao] = useState('');
   const [produtosText, setProdutosText] = useState('');
   const [dosagem, setDosagem] = useState('');
@@ -100,7 +100,8 @@ export default function EditarCadernoScreen() {
       setFazendas(fazendasData);
       setFazendaId(contextoFazendaId);
       setDataAtividade(registroData.data_atividade ? new Date(registroData.data_atividade) : null);
-      setTipoAtividade(registroData.tipo_atividade || 'vistoria');
+      setTipoAtividade(registroData.tipo_atividade || 'observacao');
+      setResponsavel(registroData.colaborador_responsavel || user?.nome || user?.full_name || '');
       setTalhao(registroData.talhao || '');
       setProdutosText(Array.isArray(registroData.produtos_utilizados) ? registroData.produtos_utilizados.join(', ') : '');
       setDosagem(registroData.dosagem || '');
@@ -111,7 +112,7 @@ export default function EditarCadernoScreen() {
       );
       setCondicoesClima(registroData.condicoes_clima || '');
       setObservacoes(registroData.observacoes || '');
-      setVisivelParaProdutor(registroData.visivel_para_produtor === true);
+      setVisivelParaProdutor(isCadernoVisivelParaProdutor(registroData));
     } catch (error) {
       console.error('Erro ao carregar registro para edição:', error);
       toast.showError('Erro ao carregar edição do caderno');
@@ -134,6 +135,10 @@ export default function EditarCadernoScreen() {
 
     if (!tipoAtividade) {
       newErrors.tipoAtividade = 'Selecione o tipo de atividade';
+    }
+
+    if (!responsavel.trim()) {
+      newErrors.responsavel = 'Informe o responsável pelo registro';
     }
 
     if (parseCadernoAreaAplicada(areaAplicada) === null) {
@@ -177,7 +182,7 @@ export default function EditarCadernoScreen() {
         condicoesClima,
         observacoes,
         visivelParaProdutor,
-        colaboradorResponsavel: registroOriginal.colaborador_responsavel || user?.nome || user?.full_name || 'Sistema',
+        colaboradorResponsavel: responsavel,
         criadoPorUserId: registroOriginal.criado_por_user_id || registroOriginal.criado_por || user?.id,
       });
 
@@ -254,9 +259,9 @@ export default function EditarCadernoScreen() {
           </View>
         </SectionCard>
 
-        <SectionCard title="Atividade" subtitle="Atualize data, tipo e informações operacionais do caderno.">
+        <SectionCard title="Registro de campo" subtitle="Atualize data, tipo, responsável e informações operacionais.">
           <DatePicker
-            label="Data da Atividade"
+            label="Data do registro"
             value={dataAtividade}
             onChange={(date) => {
               setDataAtividade(date);
@@ -270,7 +275,7 @@ export default function EditarCadernoScreen() {
 
           <View style={styles.field}>
             <Text style={styles.label}>
-              Tipo de Atividade <Text style={styles.required}>*</Text>
+              Tipo de registro <Text style={styles.required}>*</Text>
             </Text>
             <RadioCardGroup
               options={CADERNO_TIPOS_ATIVIDADE.map((tipo) => ({
@@ -285,6 +290,17 @@ export default function EditarCadernoScreen() {
               error={errors.tipoAtividade}
             />
           </View>
+
+          <FormField
+            label="Responsável"
+            value={responsavel}
+            onChangeText={(value) => {
+              setResponsavel(value);
+              setErrors(prev => ({ ...prev, responsavel: null }));
+            }}
+            placeholder="Nome do responsável"
+            error={errors.responsavel}
+          />
 
           <FormField
             label="Talhão"
@@ -344,23 +360,18 @@ export default function EditarCadernoScreen() {
             options={[
               {
                 value: 'visivel',
-                label: 'Visível ao produtor',
+                label: 'Liberado ao produtor',
                 description: 'Aparece no histórico da propriedade.',
-                disabled: produtorLogado,
               },
               {
                 value: 'restrito',
-                label: 'Restrito à equipe',
+                label: 'Interno',
                 description: 'Disponível apenas para admin e colaboradores.',
-                disabled: produtorLogado,
               },
             ]}
             value={visivelParaProdutor ? 'visivel' : 'restrito'}
             onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
           />
-          {produtorLogado && (
-            <Text style={styles.contextHint}>Produtor não altera a visibilidade do registro nesta edição.</Text>
-          )}
         </SectionCard>
 
         <InfoBox message="As alterações serão salvas no registro desta propriedade." />

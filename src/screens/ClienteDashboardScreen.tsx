@@ -31,6 +31,7 @@ import {
   getPropriedadeStatusLabel,
   sortDashboardItemsByDate,
 } from '../utils/dashboardCompat';
+import { getCadernoTipoLabel } from '../utils/cadernoFormCompat';
 
 /**
  * Tela específica para produtores - Dashboard das propriedades vinculadas.
@@ -435,7 +436,7 @@ export default function ClienteDashboardScreen() {
             <View style={styles.emptySecao}>
               <Ionicons name="document-text-outline" size={40} color={colors.muted} />
               <Text style={styles.emptySecaoText}>
-                Nenhum registro no caderno
+                Nenhum registro de caderno liberado
               </Text>
               <Text style={styles.emptySecaoSubtext}>
                 Mapas e anexos disponíveis continuam acessíveis na seção de mapas.
@@ -449,7 +450,7 @@ export default function ClienteDashboardScreen() {
                     <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
                   </View>
                   <View style={styles.atividadeInfo}>
-                    <Text style={styles.atividadeTipo}>{atividade.tipo_atividade}</Text>
+                    <Text style={styles.atividadeTipo}>{getCadernoTipoLabel(atividade.tipo_atividade)}</Text>
                     <Text style={styles.atividadeData}>{formatarData(atividade.data_atividade)}</Text>
                   </View>
                 </View>

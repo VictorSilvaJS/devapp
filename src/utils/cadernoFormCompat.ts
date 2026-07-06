@@ -13,13 +13,38 @@ export type CadernoFazendaOption = {
 };
 
 export const CADERNO_TIPOS_ATIVIDADE = [
-  { value: 'vistoria', label: 'Vistoria' },
+  { value: 'observacao', label: 'Observação' },
+  { value: 'visita_tecnica', label: 'Visita técnica' },
+  { value: 'fertilidade', label: 'Fertilidade' },
+  { value: 'correcao_solo', label: 'Correção de solo' },
+  { value: 'prescricao', label: 'Prescrição' },
   { value: 'plantio', label: 'Plantio' },
-  { value: 'adubacao', label: 'Adubação' },
-  { value: 'aplicacao', label: 'Aplicação' },
   { value: 'colheita', label: 'Colheita' },
-  { value: 'analise_solo', label: 'Análise de Solo' },
   { value: 'outro', label: 'Outro' },
+];
+
+export const CADERNO_TIPO_LABELS: Record<string, string> = {
+  observacao: 'Observação',
+  visita_tecnica: 'Visita técnica',
+  fertilidade: 'Fertilidade',
+  correcao_solo: 'Correção de solo',
+  prescricao: 'Prescrição',
+  plantio: 'Plantio',
+  colheita: 'Colheita',
+  outro: 'Outro',
+  // Valores legados preservados para registros ja existentes.
+  vistoria: 'Vistoria',
+  adubacao: 'Adubação',
+  aplicacao: 'Aplicação',
+  analise_solo: 'Análise de solo',
+};
+
+export const CADERNO_TIPO_VALUES = [
+  ...CADERNO_TIPOS_ATIVIDADE.map((tipo) => tipo.value),
+  'vistoria',
+  'adubacao',
+  'aplicacao',
+  'analise_solo',
 ];
 
 type BuildCadernoPayloadInput = {
@@ -72,6 +97,35 @@ export const getCadernoFormFazendaLabel = (
   return [option.fazendaNome, option.titularNome].filter(Boolean).join(' - ');
 };
 
+export const getCadernoTipoLabel = (tipo?: string | null): string => {
+  const normalized = String(tipo || '').trim();
+  if (!normalized) {
+    return 'Registro';
+  }
+
+  return CADERNO_TIPO_LABELS[normalized] || normalized.replace(/_/g, ' ');
+};
+
+export const getCadernoTalhaoLabel = (registro: any): string => {
+  const talhao = String(registro?.talhao || '').trim();
+  return talhao || 'Sem talhão vinculado';
+};
+
+export const isCadernoVisivelParaProdutor = (registro: any): boolean =>
+  registro?.visivel_para_produtor !== false;
+
+export const getCadernoVisibilidadeLabel = (registro: any): string =>
+  isCadernoVisivelParaProdutor(registro) ? 'Liberado ao produtor' : 'Interno';
+
+export const ordenarCadernosPorDataRecente = (registros: any[] = []) =>
+  [...(registros || [])].sort((a, b) => {
+    const dataA = a?.data_atividade ? new Date(a.data_atividade).getTime() : 0;
+    const dataB = b?.data_atividade ? new Date(b.data_atividade).getTime() : 0;
+    const safeA = Number.isFinite(dataA) ? dataA : 0;
+    const safeB = Number.isFinite(dataB) ? dataB : 0;
+    return safeB - safeA;
+  });
+
 export const parseCadernoProdutos = (produtosText = ''): string[] =>
   produtosText
     .split(',')
@@ -123,6 +177,7 @@ export const buildCadernoPayload = ({
 
   const payload: Record<string, any> = {
     fazenda_id: fazendaId,
+    fazendaId,
     colaborador_responsavel: trimOrUndefined(colaboradorResponsavel) || 'Sistema',
     data_atividade: dataAtividade.toISOString(),
     tipo_atividade: tipoAtividade,
