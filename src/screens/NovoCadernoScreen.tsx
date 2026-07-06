@@ -43,13 +43,15 @@ export default function NovoCadernoScreen() {
   const { user } = useAuth();
 
   const routeFazendaId = route.params?.fazendaId || route.params?.produtorId;
+  const routeTalhao = route.params?.talhaoNome || route.params?.talhao || '';
+  const isProdutorView = user?.perfil === 'produtor';
   const responsavelInicial = user?.nome || user?.full_name || '';
 
   const [fazendaId, setFazendaId] = useState('');
   const [dataAtividade, setDataAtividade] = useState(new Date());
   const [tipoAtividade, setTipoAtividade] = useState('observacao');
   const [responsavel, setResponsavel] = useState(responsavelInicial);
-  const [talhao, setTalhao] = useState('');
+  const [talhao, setTalhao] = useState(routeTalhao);
   const [produtosText, setProdutosText] = useState('');
   const [dosagem, setDosagem] = useState('');
   const [areaAplicada, setAreaAplicada] = useState('');
@@ -80,6 +82,12 @@ export default function NovoCadernoScreen() {
       setResponsavel(responsavelInicial);
     }
   }, [responsavel, responsavelInicial]);
+
+  useEffect(() => {
+    if (isProdutorView) {
+      setVisivelParaProdutor(true);
+    }
+  }, [isProdutorView]);
 
   const loadFazendas = async () => {
     setLoadingFazendas(true);
@@ -168,6 +176,7 @@ export default function NovoCadernoScreen() {
 
     setSaving(true);
     try {
+      const visibilidadeEfetiva = isProdutorView ? true : visivelParaProdutor;
       const novoRegistro = buildCadernoPayload({
         fazendaId,
         dataAtividade,
@@ -178,9 +187,10 @@ export default function NovoCadernoScreen() {
         areaAplicadaText: areaAplicada,
         condicoesClima,
         observacoes,
-        visivelParaProdutor,
+        visivelParaProdutor: visibilidadeEfetiva,
         colaboradorResponsavel: responsavel,
         criadoPorUserId: user?.id,
+        origemRegistro: isProdutorView ? 'produtor' : 'equipe',
       });
 
       if (!novoRegistro) {
@@ -188,7 +198,7 @@ export default function NovoCadernoScreen() {
       }
 
       const criado = await CadernoCampo.create(novoRegistro);
-      toast.showSuccess('Registro de caderno criado com sucesso!');
+      toast.showSuccess(isProdutorView ? 'Registro enviado ao Caderno!' : 'Registro de caderno criado com sucesso!');
       navigation.replace('CadernoDetail', { cadernoId: criado.id });
     } catch (error) {
       console.error('Erro ao salvar registro de caderno:', error);
@@ -201,7 +211,7 @@ export default function NovoCadernoScreen() {
   if (loadingFazendas) {
     return (
       <View style={styles.container}>
-        <Header title="Novo Registro" showBack />
+        <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack />
         <View style={styles.blockedContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.blockedSubtext}>Carregando propriedades autorizadas...</Text>
@@ -213,11 +223,11 @@ export default function NovoCadernoScreen() {
   if (accessDenied) {
     return (
       <View style={styles.container}>
-        <Header title="Novo Registro" showBack />
+        <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack />
         <View style={styles.blockedContainer}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
           <Text style={styles.blockedText}>Acesso restrito</Text>
-          <Text style={styles.blockedSubtext}>Produtor consulta somente registros liberados. A criação fica restrita à equipe.</Text>
+          <Text style={styles.blockedSubtext}>Você não tem permissão para registrar Caderno nesta propriedade.</Text>
         </View>
       </View>
     );
@@ -225,7 +235,7 @@ export default function NovoCadernoScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Novo Registro" showBack />
+      <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -387,27 +397,31 @@ export default function NovoCadernoScreen() {
           />
         </SectionCard>
 
-        <SectionCard title="Visibilidade" subtitle="Controle se o registro aparece para o produtor.">
-          <Text style={styles.label}>
-            Visibilidade para Produtor <Text style={styles.required}>*</Text>
-          </Text>
-          <RadioCardGroup
-            options={[
-              {
-                value: 'visivel',
-                label: 'Liberado ao produtor',
-                description: 'Aparece no histórico da propriedade.',
-              },
-              {
-                value: 'restrito',
-                label: 'Interno',
-                description: 'Disponível apenas para admin e colaboradores.',
-              },
-            ]}
-            value={visivelParaProdutor ? 'visivel' : 'restrito'}
-            onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
-          />
-        </SectionCard>
+        {isProdutorView ? (
+          <InfoBox message="O registro ficará visível para você e para a equipe autorizada da Propriedade." />
+        ) : (
+          <SectionCard title="Visibilidade" subtitle="Controle se o registro aparece para o produtor.">
+            <Text style={styles.label}>
+              Visibilidade para Produtor <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={[
+                {
+                  value: 'visivel',
+                  label: 'Liberado ao produtor',
+                  description: 'Aparece no histórico da propriedade.',
+                },
+                {
+                  value: 'restrito',
+                  label: 'Interno',
+                  description: 'Disponível apenas para admin e colaboradores.',
+                },
+              ]}
+              value={visivelParaProdutor ? 'visivel' : 'restrito'}
+              onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
+            />
+          </SectionCard>
+        )}
 
         <InfoBox message="O registro será salvo no caderno da propriedade selecionada." />
       </ScrollView>
@@ -415,7 +429,7 @@ export default function NovoCadernoScreen() {
       <FormFooter
         onCancel={() => navigation.goBack()}
         onSubmit={handleSave}
-        submitLabel="Salvar Registro"
+        submitLabel={isProdutorView ? 'Registrar no Caderno' : 'Salvar Registro'}
         loading={saving}
         disabled={loadingFazendas || semFazendasAutorizadas}
       />

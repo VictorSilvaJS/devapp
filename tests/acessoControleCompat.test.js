@@ -230,14 +230,14 @@ const run = async () => {
     assert.equal(avaliarAcessoCaderno(adminUser, registroSemFazenda, fazendasBase).status, 'fazenda_nao_encontrada');
   });
 
-  await test('podeIncluirCadernoEmFazenda permite criação apenas para equipe dentro do escopo', () => {
+  await test('podeIncluirCadernoEmFazenda permite produtor na propria Propriedade e equipe no escopo', () => {
     const fazendaNoEscopo = fazendasBase[0];
     const fazendaForaEscopo = fazendasBase[1];
 
-    assert.equal(podeIncluirCaderno(produtorUser), false);
+    assert.equal(podeIncluirCaderno(produtorUser), true);
     assert.equal(podeIncluirCaderno(colaboradorUser), true);
     assert.equal(podeIncluirCaderno(adminUser), true);
-    assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaNoEscopo), false);
+    assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaNoEscopo), true);
     assert.equal(podeIncluirCadernoEmFazenda(produtorUser, fazendaForaEscopo), false);
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaNoEscopo), true);
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaForaEscopo), false);

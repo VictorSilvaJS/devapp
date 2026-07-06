@@ -286,7 +286,9 @@ export default function ProdutorScreen({ route, navigation }) {
   const detalhePropriedadeSubtitulo = isProdutorView
     ? 'Acompanhe talhões, visitas, caderno e materiais técnicos liberados para esta Propriedade.'
     : 'Consulte o contexto operacional e acesse os fluxos vinculados a esta Propriedade.';
-  const podeMostrarCriarCaderno = podeCriarCadernoNaFazenda && !isProdutorView;
+  const podeMostrarCriarCaderno = podeCriarCadernoNaFazenda;
+  const criarCadernoLabel = isProdutorView ? 'Registrar' : 'Novo';
+  const criarCadernoEmptyLabel = isProdutorView ? 'Registrar no Caderno' : 'Novo Registro';
   const tituloMateriaisPropriedade = isProdutorView
     ? 'Mapas e arquivos técnicos'
     : 'Materiais técnicos da Propriedade';
@@ -297,7 +299,7 @@ export default function ProdutorScreen({ route, navigation }) {
     ? 'Nenhuma visita registrada para consulta nesta Propriedade.'
     : 'Quando uma visita for registrada para esta Propriedade, ela aparecerá aqui.';
   const mensagemSemCaderno = isProdutorView
-    ? 'Nenhum registro de caderno liberado para o Produtor.'
+    ? 'Você ainda não tem registros liberados ou registrados no Caderno.'
     : 'Quando houver registros liberados para esta Propriedade, eles aparecerão aqui.';
 
   const handleNovaVisita = () => {
@@ -563,7 +565,7 @@ export default function ProdutorScreen({ route, navigation }) {
             {isProdutorView && (
               <InfoBox
                 title="Modo acompanhamento"
-                message="Esta visão reúne a situação da Propriedade para consulta. Ações de manutenção técnica ficam com a equipe autorizada."
+                message="Esta visão reúne a situação da Propriedade para consulta. Você pode registrar ocorrências no Caderno; ações técnicas e materiais ficam com a equipe autorizada."
                 style={styles.infoBox}
               />
             )}
@@ -604,7 +606,9 @@ export default function ProdutorScreen({ route, navigation }) {
                 >
                   <Ionicons name="book-outline" size={20} color={colors.primary} />
                   <Text style={styles.quickActionTitle}>Caderno de campo</Text>
-                  <Text style={styles.quickActionText}>Ver registros liberados</Text>
+                  <Text style={styles.quickActionText}>
+                    {isProdutorView ? 'Ver e registrar campo' : 'Ver registros liberados'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </SectionCard>
@@ -1043,7 +1047,7 @@ export default function ProdutorScreen({ route, navigation }) {
                       activeOpacity={0.85}
                     >
                       <Ionicons name="add" size={16} color={colors.white} />
-                      <Text style={styles.newCadernoButtonText}>Novo</Text>
+                      <Text style={styles.newCadernoButtonText}>{criarCadernoLabel}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -1054,7 +1058,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   icon="book-outline"
                   title="Nenhum registro de caderno"
                   message={mensagemSemCaderno}
-                  actionLabel={podeMostrarCriarCaderno ? 'Novo Registro' : undefined}
+                  actionLabel={podeMostrarCriarCaderno ? criarCadernoEmptyLabel : undefined}
                   actionIcon={podeMostrarCriarCaderno ? 'add' : undefined}
                   onActionPress={podeMostrarCriarCaderno ? handleNovoCaderno : undefined}
                   style={styles.emptyStateCompact}

@@ -198,6 +198,7 @@ export interface CadernoCampoCanonico {
    * Campo reservado para consolidacao futura de autoria sem reabrir a modelagem agora.
    */
   criado_por_user_id?: string;
+  origem_registro?: 'produtor' | 'equipe' | string;
 }
 
 export interface LimiteAreaCanonico {
@@ -324,6 +325,7 @@ export interface CadernoCampoLegado {
   data_criacao?: string;
   criado_por?: string;
   criado_por_user_id?: string;
+  origem_registro?: 'produtor' | 'equipe' | string;
   [key: string]: unknown;
 }
 

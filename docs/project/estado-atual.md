@@ -2810,12 +2810,72 @@ Limitacoes de validacao: ainda e recomendado ampliar o smoke manual em
 emulador para Admin/Colaborador criando e editando registros. Android fisico
 continua pendente e nao aprovado.
 
+## Fase 17D.2 - Correcao De Regra Do Caderno Para Produtor
+
+Status em 2026-07-06: a Fase 17D.2 corrigiu a regra funcional do Caderno de
+Campo para permitir que o Produtor registre informacoes de campo na propria
+Propriedade, mantendo o corte enxuto, local/mockado e por contexto de
+`fazenda_id`/`fazendaId`.
+
+Entregas implementadas:
+
+- Produtor pode criar registro de Caderno apenas em Propriedades do proprio
+  vinculo efetivo;
+- no contexto de uma Propriedade, o formulario de novo Caderno preserva a
+  Propriedade da rota e impede troca quando o contexto vem travado;
+- registros criados pelo Produtor ficam sempre visiveis para o proprio
+  Produtor e para Admin/Colaborador autorizado;
+- a tela de novo registro reaproveita o formulario existente, sem criar fluxo
+  paralelo para Produtor;
+- a visibilidade administrativa continua disponivel para Admin/Colaborador,
+  preservando registros internos ocultaveis ao Produtor;
+- o detalhe do Caderno exibe selo discreto para registro criado pelo Produtor;
+- tipos de registro do Caderno incluem o corte pratico para Produtor:
+  Observacao, Plantio, Aplicacao, Colheita, Ocorrencia e Outro, preservando os
+  tipos tecnicos e legados ja aceitos.
+
+Limites mantidos nesta fase:
+
+- Produtor nao edita nem remove registros do Caderno nesta etapa; a autoria
+  local existe como metadado preparatorio, mas a regra completa de edicao de
+  registro proprio permanece para definicao futura;
+- Produtor continua sem criar, editar ou remover Visitas Tecnicas;
+- Produtor continua sem acoes administrativas em Material tecnico, PNG,
+  GeoJSON ou ZIP;
+- nao houve backend, JWT, RBAC real, sync, upload remoto, download real,
+  storage remoto, unzip ou processamento de ZIP;
+- `src/api/mock.ts`, `Mapa.list`, `LimiteArea.list`, assets/seeds da Sela de
+  Prata I e chaves locais versionadas foram preservados.
+
+Validacoes executadas nesta frente:
+
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `node tests/cadernoFormCompat.test.js`;
+- `git diff --check` passou com avisos normais de LF/CRLF no Windows;
+- `.\gradlew.bat :app:assembleRelease`;
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`;
+- smoke visual em emulador `emulator-5554` (`Pixel Tablet`) para Produtor
+  criando Caderno na propria Propriedade.
+
+Resultado do smoke visual em emulador:
+
+- Produtor acessou a Propriedade `Fazenda Sela de Prata I`;
+- aba Caderno exibiu acao `Registrar`;
+- formulario abriu como `Registrar no Caderno`, com Propriedade travada pela
+  rota e tipos praticos para campo;
+- registro `Observacao` foi salvo em 06/07/2026 para `Produtor Demonstracao`;
+- detalhe exibiu `Liberado ao produtor` e `Registrado pelo produtor`, sem
+  acao de edicao visivel para Produtor;
+- ao retornar para a Propriedade, a aba Caderno exibiu contador `2` e listou o
+  novo registro antes do registro demonstrativo anterior.
+
 ## Proximo Passo Recomendado
 
-Com a Fase 17D validada automaticamente e com smoke parcial do Produtor em
-emulador, o proximo trabalho recomendado e ampliar o smoke visual em emulador
-Android para Admin/Colaborador no Caderno e, depois, executar a validacao final
-em Android fisico para campo. A divergencia indicada por
-`npx expo install --check` (`expo@56.0.11`, esperado `~56.0.14`) segue aceita
-temporariamente e deve ser tratada em fase propria de alinhamento de SDK, sem
-misturar com correcoes funcionais.
+Com a Fase 17D.2 validada automaticamente e com smoke de criacao pelo Produtor
+executado em emulador, o proximo trabalho recomendado e ampliar o smoke visual
+para Admin vendo o registro do Produtor e registro interno continuando oculto
+para Produtor. Em seguida, executar a validacao final em Android fisico para
+campo. A divergencia indicada por `npx expo install --check` (`expo@56.0.11`,
+esperado `~56.0.14`) segue aceita temporariamente e deve ser tratada em fase
+propria de alinhamento de SDK, sem misturar com correcoes funcionais.

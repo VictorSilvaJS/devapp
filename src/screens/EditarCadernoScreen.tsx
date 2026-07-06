@@ -184,6 +184,7 @@ export default function EditarCadernoScreen() {
         visivelParaProdutor,
         colaboradorResponsavel: responsavel,
         criadoPorUserId: registroOriginal.criado_por_user_id || registroOriginal.criado_por || user?.id,
+        origemRegistro: registroOriginal.origem_registro || 'equipe',
       });
 
       if (!payload) {

@@ -37,6 +37,7 @@ export const TIPOS_ATIVIDADE = [
   'correcao_solo',
   'prescricao',
   'plantio',
+  'ocorrencia',
   'colheita',
   'outro',
   'adubacao',

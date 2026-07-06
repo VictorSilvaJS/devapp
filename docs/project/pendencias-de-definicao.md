@@ -89,6 +89,14 @@ auditoria, nem a validacao completa desta frente. O smoke parcial em emulador
 foi executado para o perfil Produtor; permanecem pendentes ampliar o smoke para
 Admin/Colaborador e validar em Android fisico.
 
+Status em 2026-07-06 (Fase 17D.2): a regra funcional foi corrigida para
+permitir que Produtor tambem registre Caderno de Campo na propria Propriedade,
+sempre com visibilidade para ele e para a equipe autorizada. Admin/Colaborador
+mantem criacao/edicao local conforme escopo e registros internos continuam
+podendo ficar ocultos do Produtor. A pendencia permanece aberta porque a edicao
+de registro proprio pelo Produtor, remocao, auditoria, aprovacao, backend/RBAC
+real, sync e validacao em Android fisico ainda nao foram fechados.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:

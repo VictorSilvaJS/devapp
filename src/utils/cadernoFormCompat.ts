@@ -14,38 +14,41 @@ export type CadernoFazendaOption = {
 
 export const CADERNO_TIPOS_ATIVIDADE = [
   { value: 'observacao', label: 'Observação' },
+  { value: 'plantio', label: 'Plantio' },
+  { value: 'aplicacao', label: 'Aplicação' },
+  { value: 'colheita', label: 'Colheita' },
+  { value: 'ocorrencia', label: 'Ocorrência' },
   { value: 'visita_tecnica', label: 'Visita técnica' },
   { value: 'fertilidade', label: 'Fertilidade' },
   { value: 'correcao_solo', label: 'Correção de solo' },
   { value: 'prescricao', label: 'Prescrição' },
-  { value: 'plantio', label: 'Plantio' },
-  { value: 'colheita', label: 'Colheita' },
   { value: 'outro', label: 'Outro' },
 ];
 
 export const CADERNO_TIPO_LABELS: Record<string, string> = {
   observacao: 'Observação',
+  plantio: 'Plantio',
+  aplicacao: 'Aplicação',
+  colheita: 'Colheita',
+  ocorrencia: 'Ocorrência',
   visita_tecnica: 'Visita técnica',
   fertilidade: 'Fertilidade',
   correcao_solo: 'Correção de solo',
   prescricao: 'Prescrição',
-  plantio: 'Plantio',
-  colheita: 'Colheita',
   outro: 'Outro',
   // Valores legados preservados para registros ja existentes.
   vistoria: 'Vistoria',
   adubacao: 'Adubação',
-  aplicacao: 'Aplicação',
   analise_solo: 'Análise de solo',
 };
 
-export const CADERNO_TIPO_VALUES = [
+export const CADERNO_TIPO_VALUES = Array.from(new Set([
   ...CADERNO_TIPOS_ATIVIDADE.map((tipo) => tipo.value),
   'vistoria',
   'adubacao',
   'aplicacao',
   'analise_solo',
-];
+]));
 
 type BuildCadernoPayloadInput = {
   fazendaId: string;
@@ -60,6 +63,7 @@ type BuildCadernoPayloadInput = {
   visivelParaProdutor?: boolean;
   colaboradorResponsavel?: string;
   criadoPorUserId?: string;
+  origemRegistro?: string;
 };
 
 export const buildCadernoFazendaOptions = (fazendas: any[] = []): CadernoFazendaOption[] =>
@@ -117,6 +121,12 @@ export const isCadernoVisivelParaProdutor = (registro: any): boolean =>
 export const getCadernoVisibilidadeLabel = (registro: any): string =>
   isCadernoVisivelParaProdutor(registro) ? 'Liberado ao produtor' : 'Interno';
 
+export const isCadernoRegistradoPeloProdutor = (registro: any): boolean =>
+  registro?.origem_registro === 'produtor';
+
+export const getCadernoOrigemLabel = (registro: any): string =>
+  isCadernoRegistradoPeloProdutor(registro) ? 'Registrado pelo produtor' : 'Registrado pela equipe';
+
 export const ordenarCadernosPorDataRecente = (registros: any[] = []) =>
   [...(registros || [])].sort((a, b) => {
     const dataA = a?.data_atividade ? new Date(a.data_atividade).getTime() : 0;
@@ -165,6 +175,7 @@ export const buildCadernoPayload = ({
   visivelParaProdutor = true,
   colaboradorResponsavel,
   criadoPorUserId,
+  origemRegistro,
 }: BuildCadernoPayloadInput) => {
   if (!(dataAtividade instanceof Date) || Number.isNaN(dataAtividade.getTime())) {
     return null;
@@ -193,6 +204,11 @@ export const buildCadernoPayload = ({
   const autoria = trimOrUndefined(criadoPorUserId);
   if (autoria) {
     payload.criado_por_user_id = autoria;
+  }
+
+  const origem = trimOrUndefined(origemRegistro);
+  if (origem) {
+    payload.origem_registro = origem;
   }
 
   return payload;

@@ -5,9 +5,11 @@ const {
   findCadernoFazendaOption,
   getCadernoFormFazendaId,
   getCadernoFormFazendaLabel,
+  getCadernoOrigemLabel,
   getCadernoTalhaoLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
+  isCadernoRegistradoPeloProdutor,
   isCadernoVisivelParaProdutor,
   ordenarCadernosPorDataRecente,
   parseCadernoAreaAplicada,
@@ -121,6 +123,7 @@ const run = async () => {
       visivelParaProdutor: false,
       colaboradorResponsavel: 'Carlos Silva',
       criadoPorUserId: 'u2',
+      origemRegistro: 'produtor',
     });
 
     assert.equal(payload.fazenda_id, 'faz_payload');
@@ -130,17 +133,22 @@ const run = async () => {
     assert.equal(payload.area_aplicada, 120.5);
     assert.equal(payload.visivel_para_produtor, false);
     assert.equal(payload.criado_por_user_id, 'u2');
+    assert.equal(payload.origem_registro, 'produtor');
     assert.deepEqual(payload.produtos_utilizados, ['MAP', 'KCl']);
   });
 
   await test('helpers de apresentação do caderno cobrem tipo, talhão, visibilidade e ordenação', () => {
     assert.equal(getCadernoTipoLabel('correcao_solo'), 'Correção de solo');
+    assert.equal(getCadernoTipoLabel('ocorrencia'), 'Ocorrência');
     assert.equal(getCadernoTipoLabel('vistoria'), 'Vistoria');
     assert.equal(getCadernoTalhaoLabel({}), 'Sem talhão vinculado');
     assert.equal(getCadernoTalhaoLabel({ talhao: 'Talhão A' }), 'Talhão A');
     assert.equal(isCadernoVisivelParaProdutor({ visivel_para_produtor: false }), false);
     assert.equal(isCadernoVisivelParaProdutor({}), true);
     assert.equal(getCadernoVisibilidadeLabel({ visivel_para_produtor: false }), 'Interno');
+    assert.equal(isCadernoRegistradoPeloProdutor({ origem_registro: 'produtor' }), true);
+    assert.equal(isCadernoRegistradoPeloProdutor({ origem_registro: 'equipe' }), false);
+    assert.equal(getCadernoOrigemLabel({ origem_registro: 'produtor' }), 'Registrado pelo produtor');
     assert.deepEqual(
       ordenarCadernosPorDataRecente([
         { id: 'antigo', data_atividade: '2026-04-01T00:00:00.000Z' },

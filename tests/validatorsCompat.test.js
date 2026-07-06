@@ -101,7 +101,7 @@ test('validateCadernoCampo aceita tipos enxutos da Fase 17D', () => {
     fazenda_id: 'p1',
     colaborador_responsavel: 'Ana Santos',
     data_atividade: '2026-04-14T10:00:00.000Z',
-    tipo_atividade: 'prescricao',
+    tipo_atividade: 'ocorrencia',
   }), true);
 });
 

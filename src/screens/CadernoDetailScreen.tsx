@@ -23,8 +23,10 @@ import {
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import {
   getCadernoTalhaoLabel,
+  getCadernoOrigemLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
+  isCadernoRegistradoPeloProdutor,
   isCadernoVisivelParaProdutor,
 } from '../utils/cadernoFormCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
@@ -158,6 +160,7 @@ export default function CadernoDetailScreen() {
   const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
   const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
   const tipoLabel = getCadernoTipoLabel(registro.tipo_atividade);
+  const registradoPeloProdutor = isCadernoRegistradoPeloProdutor(registro);
   const fotos = Array.isArray(registro.fotos) ? registro.fotos : [];
   const produtos = Array.isArray(registro.produtos_utilizados) ? registro.produtos_utilizados : [];
 
@@ -184,6 +187,14 @@ export default function CadernoDetailScreen() {
               {getCadernoVisibilidadeLabel(registro)}
             </Text>
           </View>
+          {registradoPeloProdutor && (
+            <View style={[styles.visibilityBadge, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="person-outline" size={16} color={colors.primary} />
+              <Text style={[styles.visibilityText, { color: colors.primary }]}>
+                {getCadernoOrigemLabel(registro)}
+              </Text>
+            </View>
+          )}
         </View>
 
         {fazenda && fazendaInfo && (

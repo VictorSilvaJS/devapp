@@ -579,11 +579,12 @@ export const podeEditarVisita = (user, visita, produtor) => {
 };
 
 /**
- * Verifica se usuário pode incluir registros no caderno de campo
+ * Verifica se usuario pode incluir registros no caderno de campo.
+ * Produtor registra apenas nas Propriedades do proprio vinculo efetivo.
  */
 export const podeIncluirCaderno = (user) => {
   if (!user) return false;
-  return podeGerenciar(user);
+  return podeGerenciar(user) || isProdutor(user);
 };
 
 export const podeIncluirCadernoEmFazenda = (user, fazenda) => {

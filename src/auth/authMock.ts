@@ -14,8 +14,8 @@
  * 
  * 3. PRODUTOR (produtor = cliente = proprietário): Dono da fazenda
  *    - Acesso apenas para visualização e download
- *    - Consulta apenas registros liberados no caderno de campo
- *    - Não cria, edita ou remove registros do caderno no MVP atual
+ *    - Pode registrar caderno de campo nas próprias fazendas
+ *    - Não edita ou remove registros do caderno no MVP atual
  *    - Um produtor pode ter VÁRIAS fazendas (1:N)
  *    - Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo produtor
  */

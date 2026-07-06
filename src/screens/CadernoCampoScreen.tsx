@@ -46,7 +46,8 @@ export default function CadernoCampoScreen() {
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
-  const podeMostrarCriarCaderno = podeIncluirCaderno(user) && !isProdutorView;
+  const podeMostrarCriarCaderno = podeIncluirCaderno(user);
+  const criarCadernoLabel = isProdutorView ? 'Registrar no Caderno' : 'Novo Registro';
 
   const load = useCallback(async () => {
     try {
@@ -186,7 +187,7 @@ export default function CadernoCampoScreen() {
               busca
                 ? 'Tente ajustar os filtros de busca'
                 : isProdutorView
-                  ? 'Nenhum registro de caderno liberado para o Produtor.'
+                  ? 'Você ainda não tem registros liberados ou registrados no Caderno.'
                   : 'Quando houver registros de caderno, eles aparecerão aqui.'
             }
             style={styles.emptyState}
@@ -311,10 +312,10 @@ export default function CadernoCampoScreen() {
 
       {podeMostrarCriarCaderno && (
         <CreateActionButton
-          label="Novo Registro"
+          label={criarCadernoLabel}
           icon="add-outline"
           onPress={() => navigation.navigate('NovoCaderno')}
-          accessibilityLabel="Cadastrar novo registro do caderno"
+          accessibilityLabel={isProdutorView ? 'Registrar no caderno de campo' : 'Cadastrar novo registro do caderno'}
         />
       )}
     </View>
