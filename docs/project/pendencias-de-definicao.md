@@ -97,6 +97,15 @@ podendo ficar ocultos do Produtor. A pendencia permanece aberta porque a edicao
 de registro proprio pelo Produtor, remocao, auditoria, aprovacao, backend/RBAC
 real, sync e validacao em Android fisico ainda nao foram fechados.
 
+Status em 2026-07-06 (Fase 17D.3): o smoke completo do Caderno de Campo foi
+executado em emulador Android para Produtor, Admin e Colaborador. Foram
+validados: Produtor criando registro na propria Propriedade sem poder editar ou
+remover; Admin vendo o registro do Produtor e criando registro interno; Produtor
+nao vendo registro interno; Colaborador vendo registros do escopo e criando
+registro na Propriedade Sela de Prata I. A pendencia permanece aberta para
+fechar modelagem final, edicao/remocao pelo Produtor se for desejado,
+auditoria, aprovacao, backend/RBAC real, sync e validacao em Android fisico.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:

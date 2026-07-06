@@ -2870,12 +2870,74 @@ Resultado do smoke visual em emulador:
 - ao retornar para a Propriedade, a aba Caderno exibiu contador `2` e listou o
   novo registro antes do registro demonstrativo anterior.
 
+## Fase 17D.3 - Smoke Completo E Fechamento Do Caderno De Campo
+
+Status em 2026-07-06: o Caderno de Campo enxuto foi validado em smoke completo
+no emulador Android para Produtor, Admin e Colaborador, mantendo a regra
+local/mockada, o contexto por Propriedade e a compatibilidade de
+`fazenda_id`/`fazendaId`.
+
+Resultado por perfil no emulador:
+
+- Produtor criou registro `Observacao` na propria Propriedade
+  `Fazenda Sela de Prata I`, com Propriedade travada pela rota, status
+  `Liberado ao produtor`, selo `Registrado pelo produtor` e sem acao de
+  edicao/remocao visivel;
+- Admin visualizou o registro criado pelo Produtor, criou um registro interno
+  na mesma Propriedade e confirmou que o detalhe permite edicao para perfil
+  autorizado;
+- Produtor reabriu a Propriedade depois do registro interno do Admin e continuou
+  vendo somente os registros liberados para ele, sem exposicao do registro
+  `Interno`;
+- Colaborador visualizou registros liberados e internos dentro do escopo
+  regional, criou novo registro na `Fazenda Sela de Prata I` e confirmou
+  Propriedade, responsavel, Talhao, visibilidade e acao `Editar` no detalhe;
+- a listagem do Colaborador mostrou o novo registro no topo, seguido do
+  registro interno do Admin e do registro liberado do Produtor.
+
+Regressao de Material tecnico:
+
+- no fluxo do Produtor, a Propriedade manteve acesso ao atalho `Material
+  tecnico`;
+- a tela `Material tecnico` abriu no contexto da `Fazenda Sela de Prata I`,
+  preservando consulta da Propriedade e filtros do corte Fertilidade, Correcao
+  de solo e Prescricao;
+- as validacoes automatizadas de compatibilidade de GeoJSON, PNG local e ZIP de
+  prescricao continuaram passando em `npm run test:domain-compat`;
+- o estado local do emulador possuia importacoes anteriores, por isso a tela de
+  materiais pode somar itens locais aos cinco materiais base da Propriedade.
+
+Validacoes executadas:
+
+- `npm run typecheck`;
+- `node tests/cadernoFormCompat.test.js`;
+- `node tests/acessoControleCompat.test.js`;
+- `node tests/validatorsCompat.test.js`;
+- `npm run test:domain-compat`;
+- `.\gradlew.bat :app:assembleRelease` em `android`;
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`;
+- `adb shell monkey -p com.tcheagro.mobile -c android.intent.category.LAUNCHER 1`;
+- smoke manual por `adb` no emulador `emulator-5554` (`Pixel Tablet`).
+
+Observacoes da rodada:
+
+- o primeiro build release dentro do sandbox falhou por permissao de acesso ao
+  lock do cache global do Gradle; a repeticao com permissao aprovada concluiu
+  com sucesso;
+- o build exibiu o aviso conhecido de `NODE_ENV` ausente, sem bloquear a APK;
+- nao foram aplicadas correcoes de codigo na Fase 17D.3, apenas fechamento
+  documental do smoke completo;
+- nao houve upgrade amplo de SDK/dependencias, `npm audit fix`, backend, JWT,
+  RBAC real, sync, upload/download remoto, storage remoto, unzip ou
+  processamento produtivo.
+
+Limitacao remanescente: Android fisico continua pendente e nao aprovado para
+campo.
+
 ## Proximo Passo Recomendado
 
-Com a Fase 17D.2 validada automaticamente e com smoke de criacao pelo Produtor
-executado em emulador, o proximo trabalho recomendado e ampliar o smoke visual
-para Admin vendo o registro do Produtor e registro interno continuando oculto
-para Produtor. Em seguida, executar a validacao final em Android fisico para
-campo. A divergencia indicada por `npx expo install --check` (`expo@56.0.11`,
-esperado `~56.0.14`) segue aceita temporariamente e deve ser tratada em fase
-propria de alinhamento de SDK, sem misturar com correcoes funcionais.
+Com a Fase 17D.3 validada em emulador para Produtor, Admin e Colaborador, o
+proximo trabalho recomendado e executar a validacao final em Android fisico
+para campo. A divergencia conhecida `expo@56.0.11`, esperado `~56.0.14`, segue
+aceita temporariamente e deve ser tratada em fase propria de alinhamento de SDK,
+sem misturar com correcoes funcionais.
