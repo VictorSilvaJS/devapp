@@ -2934,10 +2934,57 @@ Observacoes da rodada:
 Limitacao remanescente: Android fisico continua pendente e nao aprovado para
 campo.
 
+## Fase 17D.4 - Validacao Android Fisico Do Caderno E Material Tecnico
+
+Status em 2026-07-07: a validacao em Android fisico foi iniciada, mas ficou
+bloqueada porque nenhum aparelho fisico apareceu autorizado no `adb`.
+
+Resultado da conferencia de dispositivo:
+
+- comando executado: `adb devices -l`;
+- resultado encontrado: apenas `emulator-5554`, modelo `Pixel_Tablet`, status
+  `device`;
+- nenhum Android fisico apareceu com status `device`;
+- modelo e versao de Android fisico nao foram obtidos;
+- instalacao em Android fisico nao foi executada;
+- smoke manual fisico de Caderno, Material tecnico, DocumentPicker,
+  persistencia local e usabilidade nao foi executado.
+
+Validacoes tecnicas executadas apesar do bloqueio fisico:
+
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `node tests/cadernoFormCompat.test.js`;
+- `node tests/acessoControleCompat.test.js`;
+- `node tests/validatorsCompat.test.js`;
+- `.\gradlew.bat :app:assembleRelease` em `android`;
+- `git diff --check`.
+
+Resultado tecnico:
+
+- as validacoes automatizadas passaram;
+- o primeiro build release dentro do sandbox falhou por permissao de acesso ao
+  lock do cache global do Gradle;
+- a repeticao com permissao aprovada gerou o APK release com sucesso em
+  `android/app/build/outputs/apk/release/app-release.apk`;
+- o APK gerado em 2026-07-07 tinha 91.713.808 bytes;
+- o build manteve avisos conhecidos de `NODE_ENV` ausente e depreciações
+  Gradle, sem bloquear a geracao do APK;
+- nao houve instalacao no Android fisico;
+- nao houve correcao de codigo nesta fase.
+
+Status final da Fase 17D.4 nesta rodada: Android fisico segue pendente e nao
+aprovado. Para aprovar campo, ainda e necessario conectar um aparelho fisico
+autorizado no `adb`, instalar o APK e executar o roteiro manual completo no
+dispositivo.
+
 ## Proximo Passo Recomendado
 
-Com a Fase 17D.3 validada em emulador para Produtor, Admin e Colaborador, o
-proximo trabalho recomendado e executar a validacao final em Android fisico
-para campo. A divergencia conhecida `expo@56.0.11`, esperado `~56.0.14`, segue
-aceita temporariamente e deve ser tratada em fase propria de alinhamento de SDK,
-sem misturar com correcoes funcionais.
+Com a Fase 17D.4 bloqueada por ausencia de aparelho fisico autorizado no
+`adb`, o proximo trabalho recomendado e conectar um Android fisico com
+depuracao USB ativa, aceitar a chave RSA no aparelho, confirmar `adb devices
+-l` com status `device`, instalar o APK release atual e executar o roteiro
+manual completo de Caderno, Material tecnico, DocumentPicker, persistencia
+local e talhoes. A divergencia conhecida `expo@56.0.11`, esperado `~56.0.14`,
+segue aceita temporariamente e deve ser tratada em fase propria de alinhamento
+de SDK, sem misturar com validacao funcional.

@@ -20,6 +20,46 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17D.4 - Validacao Android Fisico Do Caderno E Material Tecnico**
+
+Observacao geral em 2026-07-07: rodada iniciada para validar Caderno de Campo,
+Material tecnico, DocumentPicker real, persistencia local e usabilidade em
+Android fisico. A execucao manual ficou bloqueada porque `adb devices -l`
+mostrou apenas o emulador `emulator-5554` (`Pixel_Tablet`) com status
+`device`; nenhum aparelho fisico apareceu autorizado. Android fisico segue
+pendente e nao aprovado.
+
+APK release gerado:
+`android/app/build/outputs/apk/release/app-release.apk` com 91.713.808 bytes,
+gerado em 2026-07-07. O primeiro build no sandbox falhou por acesso negado ao
+lock do cache global do Gradle; a repeticao com permissao aprovada passou.
+
+Validacoes tecnicas executadas:
+
+- `npm run typecheck`: passou.
+- `npm run test:domain-compat`: passou.
+- `node tests/cadernoFormCompat.test.js`: passou.
+- `node tests/acessoControleCompat.test.js`: passou.
+- `node tests/validatorsCompat.test.js`: passou.
+- `.\gradlew.bat :app:assembleRelease`: passou apos permissao para o cache
+  global do Gradle.
+- `git diff --check`: passou.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17D4-01 | P0 | Todos | Dispositivo | Rodar `adb devices -l` | Aparelho fisico aparece como `device` | Bloqueado | Apenas `emulator-5554` (`Pixel_Tablet`) apareceu; nenhum Android fisico autorizado |
+| 17D4-02 | P0 | Todos | Build | Gerar APK release atual | APK release gerado sem alterar SDK/dependencias | Passou | APK gerado em `android/app/build/outputs/apk/release/app-release.apk`; sem `npm audit fix` e sem upgrade de SDK |
+| 17D4-03 | P0 | Todos | Instalacao fisica | Instalar APK no Android fisico | `adb install -r` passa no aparelho | Reexecutar | Nao executado por ausencia de Android fisico autorizado |
+| 17D4-04 | P0 | Todos | Abertura fisica | Abrir app no Android fisico | App abre sem crash/tela vermelha | Reexecutar | Nao executado por ausencia de Android fisico autorizado |
+| 17D4-05 | P0 | Produtor | Caderno | Criar Caderno na Sela com teclado real | Registro proprio salvo, visivel e sem editar/remover | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-06 | P0 | Admin | Caderno | Ver registro do Produtor e criar interno | Admin ve ambos e consegue editar quando o fluxo existir | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-07 | P0 | Produtor | Visibilidade | Reabrir como Produtor apos registro interno | Registro interno do Admin nao aparece | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-08 | P0 | Colaborador | Caderno | Criar registro na Sela dentro do escopo | Registro aparece e detalhe mostra editar quando disponivel | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-09 | P0 | Produtor | Material tecnico | Abrir Fertilidade, Correcao de solo e Prescricao | Filtros mantidos e sem acoes administrativas para Produtor | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-10 | P0 | Admin/Colaborador | DocumentPicker | Anexar PNG valido e ZIP valido; tentar invalido | PNG abre, ZIP detalha sem unzip/processamento e invalido nao cria metadado | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-11 | P0 | Todos | GeoJSON/Talhoes | Abrir Panorama/Talhoes da Sela | Talhoes abrem; local se existir, seed/mock como fallback | Reexecutar | Nao executado no aparelho fisico |
+| 17D4-12 | P0 | Todos | Persistencia | Fechar app e reabrir no aparelho | Registros/metadados locais permanecem | Reexecutar | Nao executado no aparelho fisico |
+
 **Rodada Fase 17C - Material Tecnico PNG/ZIP**
 
 Observacao geral: checklist preparado para validar em emulador a organizacao de

@@ -106,6 +106,13 @@ registro na Propriedade Sela de Prata I. A pendencia permanece aberta para
 fechar modelagem final, edicao/remocao pelo Produtor se for desejado,
 auditoria, aprovacao, backend/RBAC real, sync e validacao em Android fisico.
 
+Status em 2026-07-07 (Fase 17D.4): a validacao em Android fisico foi iniciada,
+mas ficou bloqueada porque `adb devices -l` mostrou apenas o emulador
+`emulator-5554` (`Pixel_Tablet`) e nenhum aparelho fisico autorizado com status
+`device`. As validacoes automatizadas e o build release passaram, mas a
+instalacao e o smoke manual em Android fisico nao foram executados. Android
+fisico segue pendente e nao aprovado.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -132,6 +139,12 @@ incluindo PNG local restrito a Fertilidade/Correcao de solo, ZIP de prescricao
 como pacote de detalhe sem preview de imagem e consulta do Produtor sem acoes
 administrativas. A pendencia permanece aberta para taxonomia final, pipeline
 produtivo, backend/storage real, publicacao/sync e validacao em Android fisico.
+
+Status em 2026-07-07 (Fase 17D.4): a validacao fisica de `Material tecnico`,
+DocumentPicker real, PNG, ZIP de Prescricao e GeoJSON/talhoes permaneceu
+bloqueada pela ausencia de Android fisico autorizado no `adb`. A cobertura
+automatizada de compatibilidade continuou passando e o APK release foi gerado,
+mas isso nao substitui o smoke no aparelho.
 
 ### 5. Experiencia detalhada do produtor
 
