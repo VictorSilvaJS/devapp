@@ -3015,11 +3015,52 @@ Preservado nesta fase:
 - ausencia de backend, JWT, RBAC real, sync, upload remoto, download real,
   storage remoto, unzip, processamento de ZIP ou pipeline produtivo.
 
+Smoke 17E.1 executado em 2026-07-08 no emulador `emulator-5554`
+(`Pixel_Tablet`), com APK release gerado em
+`android/app/build/outputs/apk/release/app-release.apk` e instalado por
+`adb install -r`.
+
+Resultado da rodada:
+
+- Colaborador autorizado criou uma Safra `Soja` `2025/2026` na Propriedade
+  `Fazenda Sela de Prata I`, confirmou validacao de campos obrigatorios e
+  editou/salvou o periodo sem criar duplicidade;
+- o contador de `Safras` da Propriedade passou para `1`, persistiu apos
+  `force-stop` e reabertura do app, e o card continuou visivel em
+  `Talhoes > Safras e Safrinha`;
+- Produtor Demonstração abriu a mesma Propriedade, consultou a Safra local e
+  nao viu acao de criar ou editar periodo;
+- Colaborador criou registro de Caderno com vinculo opcional ao periodo,
+  conferiu o vinculo no detalhe e depois removeu o vinculo em edicao,
+  preservando a Propriedade do registro;
+- a tela de `Material tecnico` abriu no contexto da Sela de Prata I, manteve
+  materiais base de fertilidade/PNG e renderizou GeoJSON/talhoes; a reabertura
+  individual de PNG e ZIP deve ser repetida no roteiro fisico;
+- auditoria textual de storage manteve a regra de metadados pequenos e nao
+  identificou salvamento de conteudo bruto no storage de periodos.
+
+Validacoes executadas na rodada 17E.1:
+
+- `adb devices -l`;
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `node tests/periodoProdutivoService.test.js`;
+- `node tests/cadernoFormCompat.test.js`;
+- `node tests/acessoControleCompat.test.js`;
+- `node tests/validatorsCompat.test.js`;
+- `.\gradlew.bat :app:assembleRelease` em `android`;
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`;
+- `adb shell monkey -p com.tcheagro.mobile -c android.intent.category.LAUNCHER 1`;
+- `rg -n "@tche:periodos-produtivos|periodos-produtivos|base64|GeoJSON|coordinates|features|png|zip|bytes|blob|AsyncStorage" src tests -S`.
+
 Limitacoes remanescentes:
 
 - Safra/Safrinha e apenas organizacao local demonstrativa e opcional;
 - nao ha sincronizacao, publicacao, auditoria completa, backend ou modelo
   produtivo definitivo para periodos;
+- o smoke manual de Admin gerenciando periodo, Produtor criando Caderno com
+  vinculo de Safra/Safrinha e reabertura individual de PNG/ZIP deve ser
+  repetido em rodada de campo;
 - Android fisico segue pendente e nao aprovado.
 
 ## Proximo Passo Recomendado

@@ -122,6 +122,15 @@ pendencia permanece aberta porque ainda nao ha modelagem final de periodo
 produtivo, backend/RBAC real, sync, auditoria, regras completas de
 encerramento/remocao, nem validacao em Android fisico.
 
+Status em 2026-07-08 (Fase 17E.1): o smoke em emulador validou a criacao,
+edicao, consulta e persistencia local de Safra/Safrinha na Sela de Prata I
+usando Colaborador autorizado e Produtor em modo consulta. Tambem foi validado
+o vinculo opcional no Caderno pelo Colaborador, incluindo remocao do vinculo
+sem trocar a Propriedade. A pendencia permanece aberta para repetir Admin de
+forma manual, registrar Caderno pelo Produtor com vinculo de periodo,
+revalidar PNG/ZIP individualmente e executar a rodada completa em Android
+fisico autorizado.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -160,6 +169,12 @@ como metadado local opcional separado de mapas e arquivos tecnicos. Isso nao
 fecha a taxonomia final de mapas nem o pipeline produtivo; PNG, ZIP e GeoJSON
 continuam com seus storages/chaves proprias e sem conteudo bruto em
 AsyncStorage.
+
+Status em 2026-07-08 (Fase 17E.1): durante o smoke em emulador, `Material
+tecnico` abriu no contexto da Sela de Prata I, os materiais base de
+fertilidade/PNG permaneceram listados e GeoJSON/talhoes foram renderizados. A
+reabertura individual de anexos PNG e do detalhe de ZIP de Prescricao nao foi
+repetida nesta rodada e deve continuar no roteiro de Android fisico.
 
 ### 5. Experiencia detalhada do produtor
 
