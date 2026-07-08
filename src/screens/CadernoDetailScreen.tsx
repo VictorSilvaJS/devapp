@@ -23,6 +23,7 @@ import {
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import {
   getCadernoTalhaoLabel,
+  getCadernoPeriodoProdutivoLabel,
   getCadernoOrigemLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
@@ -160,6 +161,7 @@ export default function CadernoDetailScreen() {
   const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
   const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
   const tipoLabel = getCadernoTipoLabel(registro.tipo_atividade);
+  const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(registro);
   const registradoPeloProdutor = isCadernoRegistradoPeloProdutor(registro);
   const fotos = Array.isArray(registro.fotos) ? registro.fotos : [];
   const produtos = Array.isArray(registro.produtos_utilizados) ? registro.produtos_utilizados : [];
@@ -257,6 +259,16 @@ export default function CadernoDetailScreen() {
               <Text style={styles.infoValue}>{getCadernoTalhaoLabel(registro)}</Text>
             </View>
           </View>
+
+          {periodoProdutivoLabel ? (
+            <View style={styles.infoRow}>
+              <Ionicons name="calendar" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Safra/Safrinha</Text>
+                <Text style={styles.infoValue}>{periodoProdutivoLabel}</Text>
+              </View>
+            </View>
+          ) : null}
 
           {areaFormatada && (
             <View style={styles.infoRow}>

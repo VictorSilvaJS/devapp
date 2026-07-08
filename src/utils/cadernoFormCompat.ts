@@ -12,6 +12,18 @@ export type CadernoFazendaOption = {
   estado?: string;
 };
 
+export type CadernoPeriodoProdutivoOption = {
+  id: string;
+  label: string;
+  tipoPeriodo?: string;
+  cultura?: string;
+  anoAgricola?: string;
+  status?: string;
+  fazendaId?: string;
+  propriedadeId?: string;
+  talhao?: string;
+};
+
 export const CADERNO_TIPOS_ATIVIDADE = [
   { value: 'observacao', label: 'Observação' },
   { value: 'plantio', label: 'Plantio' },
@@ -64,6 +76,7 @@ type BuildCadernoPayloadInput = {
   colaboradorResponsavel?: string;
   criadoPorUserId?: string;
   origemRegistro?: string;
+  periodoProdutivo?: CadernoPeriodoProdutivoOption | null;
 };
 
 export const buildCadernoFazendaOptions = (fazendas: any[] = []): CadernoFazendaOption[] =>
@@ -84,6 +97,40 @@ export const findCadernoFazendaOption = (
   fazendaId?: string | null
 ): CadernoFazendaOption | null => options.find((option) => option.id === fazendaId) ?? null;
 
+export const buildCadernoPeriodoProdutivoOptions = (
+  periodos: any[] = []
+): CadernoPeriodoProdutivoOption[] =>
+  (periodos || []).map((periodo) => {
+    const talhao = String(periodo?.talhao_nome || periodo?.talhao || '').trim();
+    const label = String(
+      periodo?.label
+        || [
+          periodo?.tipo_periodo_label,
+          periodo?.cultura,
+          periodo?.ano_agricola,
+          talhao,
+        ].filter(Boolean).join(' • ')
+    ).trim();
+
+    return {
+      id: String(periodo?.id || '').trim(),
+      label: label || 'Safra/Safrinha',
+      tipoPeriodo: String(periodo?.tipo_periodo || '').trim() || undefined,
+      cultura: String(periodo?.cultura || '').trim() || undefined,
+      anoAgricola: String(periodo?.ano_agricola || '').trim() || undefined,
+      status: String(periodo?.status || '').trim() || undefined,
+      fazendaId: String(periodo?.fazenda_id || periodo?.fazendaId || '').trim() || undefined,
+      propriedadeId: String(periodo?.propriedade_id || periodo?.propriedadeId || '').trim() || undefined,
+      talhao: talhao || undefined,
+    };
+  }).filter((option) => option.id.length > 0);
+
+export const findCadernoPeriodoProdutivoOption = (
+  options: CadernoPeriodoProdutivoOption[] = [],
+  periodoProdutivoId?: string | null
+): CadernoPeriodoProdutivoOption | null =>
+  options.find((option) => option.id === periodoProdutivoId) ?? null;
+
 export const getCadernoFormFazendaId = (registro: any): string =>
   getCadernoFazendaId(registro) || getPropriedadeId(registro) || '';
 
@@ -101,6 +148,11 @@ export const getCadernoFormFazendaLabel = (
   return [option.fazendaNome, option.titularNome].filter(Boolean).join(' - ');
 };
 
+export const getCadernoFormPeriodoProdutivoLabel = (
+  option?: CadernoPeriodoProdutivoOption | null,
+  emptyLabel = 'Sem Safra/Safrinha vinculada'
+): string => option?.label || emptyLabel;
+
 export const getCadernoTipoLabel = (tipo?: string | null): string => {
   const normalized = String(tipo || '').trim();
   if (!normalized) {
@@ -113,6 +165,18 @@ export const getCadernoTipoLabel = (tipo?: string | null): string => {
 export const getCadernoTalhaoLabel = (registro: any): string => {
   const talhao = String(registro?.talhao || '').trim();
   return talhao || 'Sem talhão vinculado';
+};
+
+export const getCadernoPeriodoProdutivoLabel = (registro: any): string => {
+  const label = String(registro?.periodo_produtivo_label || '').trim();
+  if (label) return label;
+
+  const tipo = String(registro?.tipo_periodo || '').trim();
+  const tipoLabel = tipo === 'safrinha' ? 'Safrinha' : tipo === 'safra' ? 'Safra' : '';
+  const cultura = String(registro?.cultura_periodo || '').trim();
+  const anoAgricola = String(registro?.ano_agricola || '').trim();
+
+  return [tipoLabel, cultura, anoAgricola].filter(Boolean).join(' • ');
 };
 
 export const isCadernoVisivelParaProdutor = (registro: any): boolean =>
@@ -162,6 +226,23 @@ const trimOrUndefined = (value?: string) => {
   return normalized || undefined;
 };
 
+const buildCadernoPeriodoPayloadFields = (
+  periodoProdutivo?: CadernoPeriodoProdutivoOption | null
+): Record<string, any> => {
+  if (!periodoProdutivo?.id) {
+    return {};
+  }
+
+  return {
+    periodo_produtivo_id: periodoProdutivo.id,
+    periodoProdutivoId: periodoProdutivo.id,
+    periodo_produtivo_label: trimOrUndefined(periodoProdutivo.label),
+    tipo_periodo: trimOrUndefined(periodoProdutivo.tipoPeriodo),
+    cultura_periodo: trimOrUndefined(periodoProdutivo.cultura),
+    ano_agricola: trimOrUndefined(periodoProdutivo.anoAgricola),
+  };
+};
+
 export const buildCadernoPayload = ({
   fazendaId,
   dataAtividade,
@@ -176,6 +257,7 @@ export const buildCadernoPayload = ({
   colaboradorResponsavel,
   criadoPorUserId,
   origemRegistro,
+  periodoProdutivo,
 }: BuildCadernoPayloadInput) => {
   if (!(dataAtividade instanceof Date) || Number.isNaN(dataAtividade.getTime())) {
     return null;
@@ -199,6 +281,7 @@ export const buildCadernoPayload = ({
     condicoes_clima: trimOrUndefined(condicoesClima),
     observacoes: trimOrUndefined(observacoes),
     visivel_para_produtor: visivelParaProdutor === true,
+    ...buildCadernoPeriodoPayloadFields(periodoProdutivo),
   };
 
   const autoria = trimOrUndefined(criadoPorUserId);

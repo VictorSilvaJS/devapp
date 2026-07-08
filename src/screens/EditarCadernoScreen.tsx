@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -19,6 +19,7 @@ import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
@@ -28,8 +29,11 @@ import {
 import {
   CADERNO_TIPOS_ATIVIDADE,
   buildCadernoFazendaOptions,
+  buildCadernoPeriodoProdutivoOptions,
   buildCadernoPayload,
+  findCadernoPeriodoProdutivoOption,
   getCadernoFormFazendaLabel,
+  getCadernoFormPeriodoProdutivoLabel,
   isCadernoVisivelParaProdutor,
   parseCadernoAreaAplicada,
   resolveCadernoEdicaoFazendaId,
@@ -63,12 +67,71 @@ export default function EditarCadernoScreen() {
   const [condicoesClima, setCondicoesClima] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [visivelParaProdutor, setVisivelParaProdutor] = useState(true);
+  const [periodoProdutivoId, setPeriodoProdutivoId] = useState('');
+  const [periodosProdutivos, setPeriodosProdutivos] = useState<any[]>([]);
+  const [loadingPeriodos, setLoadingPeriodos] = useState(false);
+  const [showPeriodoPicker, setShowPeriodoPicker] = useState(false);
+
+  const periodoOptions = useMemo(() => {
+    const options = buildCadernoPeriodoProdutivoOptions(periodosProdutivos);
+    const periodoAtualId = String(
+      registroOriginal?.periodo_produtivo_id || registroOriginal?.periodoProdutivoId || ''
+    ).trim();
+
+    if (periodoAtualId && !options.some((option) => option.id === periodoAtualId)) {
+      const label = String(registroOriginal?.periodo_produtivo_label || '').trim();
+      options.push({
+        id: periodoAtualId,
+        label: label || 'Safra/Safrinha vinculada',
+        tipoPeriodo: String(registroOriginal?.tipo_periodo || '').trim() || undefined,
+        cultura: String(registroOriginal?.cultura_periodo || '').trim() || undefined,
+        anoAgricola: String(registroOriginal?.ano_agricola || '').trim() || undefined,
+      });
+    }
+
+    return options;
+  }, [periodosProdutivos, registroOriginal]);
+  const periodoSelecionado = useMemo(
+    () => findCadernoPeriodoProdutivoOption(periodoOptions, periodoProdutivoId),
+    [periodoOptions, periodoProdutivoId]
+  );
 
   useFocusEffect(
     useCallback(() => {
       loadRegistro();
     }, [cadernoRouteId, user])
   );
+
+  const loadPeriodosProdutivos = async (contextoFazendaId, periodoAtualId = '') => {
+    const normalizedFazendaId = String(contextoFazendaId || '').trim();
+    setShowPeriodoPicker(false);
+
+    if (!normalizedFazendaId) {
+      setPeriodosProdutivos([]);
+      setPeriodoProdutivoId(periodoAtualId || '');
+      return;
+    }
+
+    setLoadingPeriodos(true);
+    try {
+      const periodos = await PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(normalizedFazendaId);
+      setPeriodosProdutivos(periodos);
+      setPeriodoProdutivoId((current) => {
+        const selected = current || periodoAtualId;
+        return selected && (
+          periodos.some((periodo) => periodo.id === selected) || selected === periodoAtualId
+        )
+          ? selected
+          : '';
+      });
+    } catch (error) {
+      console.error('Erro ao carregar periodos produtivos para edição do caderno:', error);
+      setPeriodosProdutivos([]);
+      setPeriodoProdutivoId(periodoAtualId || '');
+    } finally {
+      setLoadingPeriodos(false);
+    }
+  };
 
   const loadRegistro = async () => {
     setLoading(true);
@@ -113,6 +176,9 @@ export default function EditarCadernoScreen() {
       setCondicoesClima(registroData.condicoes_clima || '');
       setObservacoes(registroData.observacoes || '');
       setVisivelParaProdutor(isCadernoVisivelParaProdutor(registroData));
+      const periodoAtualId = String(registroData.periodo_produtivo_id || registroData.periodoProdutivoId || '').trim();
+      setPeriodoProdutivoId(periodoAtualId);
+      await loadPeriodosProdutivos(contextoFazendaId, periodoAtualId);
     } catch (error) {
       console.error('Erro ao carregar registro para edição:', error);
       toast.showError('Erro ao carregar edição do caderno');
@@ -185,10 +251,20 @@ export default function EditarCadernoScreen() {
         colaboradorResponsavel: responsavel,
         criadoPorUserId: registroOriginal.criado_por_user_id || registroOriginal.criado_por || user?.id,
         origemRegistro: registroOriginal.origem_registro || 'equipe',
+        periodoProdutivo: periodoSelecionado,
       });
 
       if (!payload) {
         throw new Error('Não foi possível montar o payload do caderno');
+      }
+
+      if (!periodoSelecionado) {
+        payload.periodo_produtivo_id = null;
+        payload.periodoProdutivoId = null;
+        payload.periodo_produtivo_label = null;
+        payload.tipo_periodo = null;
+        payload.cultura_periodo = null;
+        payload.ano_agricola = null;
       }
 
       await CadernoCampo.update(cadernoRouteId, payload);
@@ -257,6 +333,88 @@ export default function EditarCadernoScreen() {
             </View>
             <Text style={styles.contextHint}>A propriedade do registro não é alterada nesta edição.</Text>
             {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Safra/Safrinha</Text>
+            <TouchableOpacity
+              style={styles.picker}
+              onPress={() => setShowPeriodoPicker(!showPeriodoPicker)}
+              disabled={loadingPeriodos}
+            >
+              <Text style={[styles.pickerText, !periodoProdutivoId && styles.placeholder]}>
+                {loadingPeriodos
+                  ? 'Carregando...'
+                  : getCadernoFormPeriodoProdutivoLabel(periodoSelecionado)}
+              </Text>
+              <Ionicons
+                name={showPeriodoPicker ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={colors.muted}
+              />
+            </TouchableOpacity>
+            <Text style={styles.contextHint}>Opcional. Você pode remover o vínculo sem alterar a Propriedade.</Text>
+
+            {showPeriodoPicker && (
+              <View style={styles.dropdownContainer}>
+                <ScrollView style={styles.dropdown} nestedScrollEnabled>
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownItem,
+                      !periodoProdutivoId && styles.dropdownItemSelected,
+                    ]}
+                    onPress={() => {
+                      setPeriodoProdutivoId('');
+                      setShowPeriodoPicker(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        !periodoProdutivoId && styles.dropdownItemTextSelected,
+                      ]}
+                    >
+                      Sem Safra/Safrinha vinculada
+                    </Text>
+                    <Text style={styles.dropdownItemSubtext}>Manter o registro independente de período.</Text>
+                  </TouchableOpacity>
+
+                  {periodoOptions.length === 0 ? (
+                    <View style={styles.dropdownItem}>
+                      <Text style={styles.dropdownItemSubtext}>
+                        Nenhuma Safra/Safrinha local cadastrada para esta Propriedade.
+                      </Text>
+                    </View>
+                  ) : (
+                    periodoOptions.map((periodo) => (
+                      <TouchableOpacity
+                        key={periodo.id}
+                        style={[
+                          styles.dropdownItem,
+                          periodoProdutivoId === periodo.id && styles.dropdownItemSelected,
+                        ]}
+                        onPress={() => {
+                          setPeriodoProdutivoId(periodo.id);
+                          setShowPeriodoPicker(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            periodoProdutivoId === periodo.id && styles.dropdownItemTextSelected,
+                          ]}
+                        >
+                          {periodo.label}
+                        </Text>
+                        <Text style={styles.dropdownItemSubtext}>
+                          {[periodo.status, periodo.talhao].filter(Boolean).join(' • ') || 'Período da Propriedade'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </ScrollView>
+              </View>
+            )}
           </View>
         </SectionCard>
 
@@ -449,11 +607,48 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.text,
   },
+  placeholder: {
+    color: colors.muted,
+  },
   contextHint: {
     marginTop: spacing.xs,
     fontSize: typography.fontSmall,
     color: colors.muted,
     lineHeight: 16,
+  },
+  dropdownContainer: {
+    marginTop: spacing.sm,
+    maxHeight: 250,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.card,
+    ...shadows.md,
+  },
+  dropdown: {
+    maxHeight: 250,
+  },
+  dropdownItem: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  dropdownItemSelected: {
+    backgroundColor: colors.accent,
+  },
+  dropdownItemText: {
+    fontSize: typography.fontBody,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  dropdownItemTextSelected: {
+    color: colors.primary,
+  },
+  dropdownItemSubtext: {
+    fontSize: typography.fontSmall,
+    color: colors.muted,
   },
   radioGroup: {
     gap: spacing.sm,

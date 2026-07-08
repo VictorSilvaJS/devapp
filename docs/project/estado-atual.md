@@ -2978,13 +2978,57 @@ aprovado. Para aprovar campo, ainda e necessario conectar um aparelho fisico
 autorizado no `adb`, instalar o APK e executar o roteiro manual completo no
 dispositivo.
 
+## Fase 17E - Safra/Safrinha Local E Opcional
+
+Status em 2026-07-08: foi implementada a organizacao local e opcional de
+Safra/Safrinha por Propriedade, sem alterar o mock central, `Mapa.list`,
+`LimiteArea.list`, assets/seeds da Sela de Prata I ou os fluxos de Material
+tecnico.
+
+Entregas implementadas:
+
+- novo servico local `PeriodoProdutivoService` com metadados pequenos em
+  `@tche:periodos-produtivos:v1`;
+- preservacao de `propriedade_id`/`propriedadeId` e
+  `fazenda_id`/`fazendaId` nos registros locais de periodo;
+- bloqueio defensivo contra salvamento de GeoJSON bruto, features,
+  coordinates, PNG, ZIP, base64, bytes, binario, arquivos ou conteudo bruto no
+  storage de periodos;
+- secao `Safras e Safrinha` no detalhe da Propriedade, dentro da aba de
+  lavoura/materiais, com consulta para Produtor e criacao/edicao para
+  Admin/Colaborador autorizado;
+- formularios locais de criacao/edicao de periodo com Propriedade travada,
+  tipo Safra/Safrinha, cultura, ano agricola, datas opcionais, status,
+  observacao e Talhao opcional;
+- vinculo opcional de Safra/Safrinha em novo/editar Caderno de Campo;
+- exibicao do vinculo opcional em listagem, detalhe e cards de Caderno quando
+  existir.
+
+Preservado nesta fase:
+
+- `src/api/mock.ts`, `Mapa.list`, `LimiteArea.list`, assets e seeds da Sela de
+  Prata I;
+- chaves locais existentes: `@tche:mock-mvp:v1`,
+  `@tche:geojson-imports:v1`, `@tche:png-map-imports:v1` e
+  `@tche:prescription-zip-imports:v1`;
+- Material tecnico com Fertilidade/Correcao de solo em PNG e Prescricao em ZIP;
+- ausencia de backend, JWT, RBAC real, sync, upload remoto, download real,
+  storage remoto, unzip, processamento de ZIP ou pipeline produtivo.
+
+Limitacoes remanescentes:
+
+- Safra/Safrinha e apenas organizacao local demonstrativa e opcional;
+- nao ha sincronizacao, publicacao, auditoria completa, backend ou modelo
+  produtivo definitivo para periodos;
+- Android fisico segue pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Com a Fase 17D.4 bloqueada por ausencia de aparelho fisico autorizado no
-`adb`, o proximo trabalho recomendado e conectar um Android fisico com
-depuracao USB ativa, aceitar a chave RSA no aparelho, confirmar `adb devices
--l` com status `device`, instalar o APK release atual e executar o roteiro
-manual completo de Caderno, Material tecnico, DocumentPicker, persistencia
-local e talhoes. A divergencia conhecida `expo@56.0.11`, esperado `~56.0.14`,
-segue aceita temporariamente e deve ser tratada em fase propria de alinhamento
-de SDK, sem misturar com validacao funcional.
+Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar
+um aparelho fisico com depuracao USB ativa, aceitar a chave RSA no aparelho,
+confirmar `adb devices -l` com status `device`, instalar o APK release atual e
+executar o roteiro manual completo de Caderno, Safra/Safrinha, Material
+tecnico, DocumentPicker, persistencia local e talhoes. A divergencia conhecida
+`expo@56.0.11`, esperado `~56.0.14`, segue aceita temporariamente e deve ser
+tratada em fase propria de alinhamento de SDK, sem misturar com validacao
+funcional.

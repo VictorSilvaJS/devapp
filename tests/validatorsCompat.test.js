@@ -105,6 +105,22 @@ test('validateCadernoCampo aceita tipos enxutos da Fase 17D', () => {
   }), true);
 });
 
+test('validateCadernoCampo aceita Safra/Safrinha opcional como metadado', () => {
+  assert.equal(validateCadernoCampo({
+    fazenda_id: 'p1',
+    fazendaId: 'p1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'observacao',
+    periodo_produtivo_id: 'periodo_1',
+    periodoProdutivoId: 'periodo_1',
+    periodo_produtivo_label: 'Safra • Soja • 2025/2026',
+    tipo_periodo: 'safra',
+    cultura_periodo: 'Soja',
+    ano_agricola: '2025/2026',
+  }), true);
+});
+
 test('validateLimiteArea aceita fazenda_id canônico', () => {
   assert.equal(validateLimiteArea({
     nome: 'LT 2025 - Talhão A',

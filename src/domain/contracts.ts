@@ -194,6 +194,12 @@ export interface CadernoCampoCanonico {
   visivel_para_produtor?: boolean;
   fotos?: string[];
   data_criacao?: string;
+  periodo_produtivo_id?: string;
+  periodoProdutivoId?: string;
+  periodo_produtivo_label?: string;
+  tipo_periodo?: string;
+  cultura_periodo?: string;
+  ano_agricola?: string;
   /**
    * Campo reservado para consolidacao futura de autoria sem reabrir a modelagem agora.
    */
@@ -323,6 +329,12 @@ export interface CadernoCampoLegado {
   visivel_para_produtor?: boolean;
   fotos?: string[];
   data_criacao?: string;
+  periodo_produtivo_id?: string;
+  periodoProdutivoId?: string;
+  periodo_produtivo_label?: string;
+  tipo_periodo?: string;
+  cultura_periodo?: string;
+  ano_agricola?: string;
   criado_por?: string;
   criado_por_user_id?: string;
   origem_registro?: 'produtor' | 'equipe' | string;

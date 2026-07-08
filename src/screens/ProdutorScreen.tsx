@@ -10,6 +10,7 @@ import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
+import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import {
   buildFazendaMapaRouteParamsFromPropriedade,
   buildMapaTalhaoRouteSelection,
@@ -31,6 +32,7 @@ import {
   podeIncluirCadernoEmFazenda,
   podeEditarProdutor,
   podeExcluirProdutor,
+  podeGerenciarPeriodoProdutivoEmFazenda,
   temAcessoProdutor,
 } from '../utils/acessoControle';
 import { buildFazendaDetailContext, getFazendaUiInfo } from '../utils/fazendaUiCompat';
@@ -40,6 +42,7 @@ import {
 } from '../utils/territorioCompat';
 import {
   getCadernoTalhaoLabel,
+  getCadernoPeriodoProdutivoLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
   isCadernoVisivelParaProdutor,
@@ -58,6 +61,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const [visitas, setVisitas] = useState([]);
   const [mapas, setMapas] = useState([]);
   const [cadernos, setCadernos] = useState([]);
+  const [periodosProdutivos, setPeriodosProdutivos] = useState([]);
   const [limites, setLimites] = useState([]);
   const [deleteIntegrity, setDeleteIntegrity] = useState(null);
   const [outrasFazendasTitular, setOutrasFazendasTitular] = useState([]);
@@ -76,6 +80,7 @@ export default function ProdutorScreen({ route, navigation }) {
       setVisitas([]);
       setMapas([]);
       setCadernos([]);
+      setPeriodosProdutivos([]);
       setLimites([]);
       setDeleteIntegrity(null);
       setOutrasFazendasTitular([]);
@@ -96,6 +101,7 @@ export default function ProdutorScreen({ route, navigation }) {
         setVisitas([]);
         setMapas([]);
         setCadernos([]);
+        setPeriodosProdutivos([]);
         setLimites([]);
         setDeleteIntegrity(null);
         setOutrasFazendasTitular([]);
@@ -106,10 +112,11 @@ export default function ProdutorScreen({ route, navigation }) {
       }
 
       const fazendaAtualId = getFazendaId(p) || id;
-      const [v, todosMapas, todosCadernos, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
+      const [v, todosMapas, todosCadernos, periodos, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
         Visita.filter({ fazenda_id: fazendaAtualId }),
         Mapa.list(),
         CadernoCampo.list(),
+        PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(fazendaAtualId),
         LimiteArea.list(),
         Produtor.list(),
         User.list(),
@@ -138,6 +145,7 @@ export default function ProdutorScreen({ route, navigation }) {
       setVisitas(v);
       setMapas(m);
       setCadernos(c);
+      setPeriodosProdutivos(periodos);
       setLimites(l);
       setDeleteIntegrity(integridadeExclusao);
       setOutrasFazendasTitular(detalheContexto.outrasFazendasTitular);
@@ -271,6 +279,7 @@ export default function ProdutorScreen({ route, navigation }) {
   });
   const podeCriarCadernoNaFazenda = podeIncluirCadernoEmFazenda(user, produtor);
   const podeCriarVisitaNaFazenda = podeCriarVisitaEmFazenda(user, produtor);
+  const podeGerenciarPeriodosNaFazenda = podeGerenciarPeriodoProdutivoEmFazenda(user, produtor);
   const produtoresVinculadosMock = user?.perfil === 'admin'
     ? getUsuariosProdutoresDaPropriedade(usuariosMock, produtor, todasFazendasMock)
     : [];
@@ -326,6 +335,23 @@ export default function ProdutorScreen({ route, navigation }) {
     }
   };
 
+  const handleNovoPeriodoProdutivo = () => {
+    if (!podeGerenciarPeriodosNaFazenda) {
+      toast.showWarning('Você não tem permissão para gerenciar Safra/Safrinha nesta propriedade.');
+      return;
+    }
+
+    navigation.navigate('NovoPeriodoProdutivo', { fazendaId: fazendaAtualId });
+  };
+
+  const handleEditarPeriodoProdutivo = (periodo) => {
+    if (!podeGerenciarPeriodosNaFazenda) {
+      return;
+    }
+
+    navigation.navigate('EditarPeriodoProdutivo', { periodoId: periodo.id });
+  };
+
   const getCadernoTipoColor = (tipo) => {
     const cores = {
       observacao: colors.muted,
@@ -357,6 +383,27 @@ export default function ProdutorScreen({ route, navigation }) {
     const areaNumber = Number(area);
     if (!Number.isFinite(areaNumber) || areaNumber <= 0) return null;
     return `${areaNumber.toLocaleString('pt-BR')} ha`;
+  };
+
+  const getPeriodoStatusInfo = (status) => {
+    if (status === 'em_andamento') {
+      return { label: 'Em andamento', color: colors.success };
+    }
+    if (status === 'encerrada') {
+      return { label: 'Encerrada', color: colors.muted };
+    }
+    return { label: 'Planejada', color: colors.warning };
+  };
+
+  const formatarDataPeriodo = (data) => {
+    if (!data) return null;
+    const date = new Date(data);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -488,6 +535,14 @@ export default function ProdutorScreen({ route, navigation }) {
             </View>
             <Text style={styles.statValueCompact}>{cadernos.length}</Text>
             <Text style={styles.statLabelCompact}>Caderno</Text>
+          </View>
+
+          <View style={styles.statCardCompact}>
+            <View style={[styles.statIconCompact, { backgroundColor: colors.infoLight }]}>
+              <Ionicons name="calendar-outline" size={20} color={colors.info} />
+            </View>
+            <Text style={styles.statValueCompact}>{periodosProdutivos.length}</Text>
+            <Text style={styles.statLabelCompact}>Safras</Text>
           </View>
 
           <View style={styles.statCardCompact}>
@@ -813,6 +868,13 @@ export default function ProdutorScreen({ route, navigation }) {
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
+                  <Ionicons name="calendar" size={16} color={colors.primary} />
+                  <Text style={styles.infoLabel}>Safras e Safrinha</Text>
+                </View>
+                <Text style={styles.infoValue}>{periodosProdutivos.length} período{periodosProdutivos.length !== 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
                   <Ionicons name="git-network" size={16} color={colors.primary} />
                   <Text style={styles.infoLabel}>Talhões</Text>
                 </View>
@@ -856,6 +918,101 @@ export default function ProdutorScreen({ route, navigation }) {
 
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
+            <SectionCard
+              title="Safras e Safrinha"
+              subtitle="Organização local e opcional dos ciclos produtivos da Propriedade."
+              icon="calendar-outline"
+              actionLabel={podeGerenciarPeriodosNaFazenda ? 'Novo' : undefined}
+              actionIcon={podeGerenciarPeriodosNaFazenda ? 'add-outline' : undefined}
+              onActionPress={podeGerenciarPeriodosNaFazenda ? handleNovoPeriodoProdutivo : undefined}
+            >
+              {periodosProdutivos.length === 0 ? (
+                <EmptyState
+                  icon="calendar-outline"
+                  title="Nenhuma Safra/Safrinha cadastrada"
+                  message={
+                    podeGerenciarPeriodosNaFazenda
+                      ? 'Cadastre períodos locais para organizar registros do Caderno.'
+                      : 'Nenhuma Safra/Safrinha vinculada a esta Propriedade.'
+                  }
+                  actionLabel={podeGerenciarPeriodosNaFazenda ? 'Nova Safra/Safrinha' : undefined}
+                  actionIcon={podeGerenciarPeriodosNaFazenda ? 'add-outline' : undefined}
+                  onActionPress={podeGerenciarPeriodosNaFazenda ? handleNovoPeriodoProdutivo : undefined}
+                  style={styles.emptyStateCompact}
+                />
+              ) : (
+                periodosProdutivos.map((periodo) => {
+                  const statusPeriodo = getPeriodoStatusInfo(periodo.status);
+                  const dataInicio = formatarDataPeriodo(periodo.data_inicio);
+                  const dataFim = formatarDataPeriodo(periodo.data_fim);
+                  const intervalo = dataInicio && dataFim
+                    ? `${dataInicio} a ${dataFim}`
+                    : dataInicio || dataFim;
+                  const talhaoPeriodo = periodo.talhao_nome || periodo.talhao;
+
+                  return (
+                    <TouchableOpacity
+                      key={periodo.id}
+                      style={styles.periodoCard}
+                      activeOpacity={podeGerenciarPeriodosNaFazenda ? 0.82 : 1}
+                      disabled={!podeGerenciarPeriodosNaFazenda}
+                      onPress={() => handleEditarPeriodoProdutivo(periodo)}
+                    >
+                      <View style={styles.periodoHeader}>
+                        <View style={styles.periodoIcon}>
+                          <Ionicons
+                            name={periodo.tipo_periodo === 'safrinha' ? 'repeat-outline' : 'leaf-outline'}
+                            size={20}
+                            color={colors.primary}
+                          />
+                        </View>
+                        <View style={styles.periodoInfo}>
+                          <Text style={styles.periodoTitle} numberOfLines={1}>
+                            {periodo.label}
+                          </Text>
+                          <Text style={styles.periodoSubtitle} numberOfLines={1}>
+                            {[periodo.tipo_periodo_label, periodo.cultura, periodo.ano_agricola].filter(Boolean).join(' • ')}
+                          </Text>
+                        </View>
+                        <View style={[styles.periodoStatusBadge, { backgroundColor: statusPeriodo.color + '20' }]}>
+                          <Text style={[styles.periodoStatusText, { color: statusPeriodo.color }]}>
+                            {statusPeriodo.label}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.periodoMeta}>
+                        {talhaoPeriodo ? (
+                          <View style={styles.periodoMetaItem}>
+                            <Ionicons name="git-branch-outline" size={15} color={colors.textLight} />
+                            <Text style={styles.periodoMetaText}>{talhaoPeriodo}</Text>
+                          </View>
+                        ) : null}
+                        {intervalo ? (
+                          <View style={styles.periodoMetaItem}>
+                            <Ionicons name="calendar-outline" size={15} color={colors.textLight} />
+                            <Text style={styles.periodoMetaText}>{intervalo}</Text>
+                          </View>
+                        ) : null}
+                        {podeGerenciarPeriodosNaFazenda ? (
+                          <View style={styles.periodoMetaItem}>
+                            <Ionicons name="create-outline" size={15} color={colors.textLight} />
+                            <Text style={styles.periodoMetaText}>Toque para editar</Text>
+                          </View>
+                        ) : null}
+                      </View>
+
+                      {periodo.observacoes ? (
+                        <Text style={styles.periodoObservacoes} numberOfLines={2}>
+                          {periodo.observacoes}
+                        </Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </SectionCard>
+
             <SectionCard
               title={tituloMateriaisPropriedade}
               icon="map-outline"
@@ -1071,6 +1228,7 @@ export default function ProdutorScreen({ route, navigation }) {
                     ? registro.produtos_utilizados
                     : [];
                   const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
+                  const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(registro);
 
                   return (
                     <TouchableOpacity
@@ -1103,6 +1261,12 @@ export default function ProdutorScreen({ route, navigation }) {
                           <View style={styles.cadernoMetaItem}>
                             <Ionicons name="resize-outline" size={15} color={colors.textLight} />
                             <Text style={styles.cadernoMetaText}>{areaFormatada}</Text>
+                          </View>
+                        )}
+                        {periodoProdutivoLabel && (
+                          <View style={styles.cadernoMetaItem}>
+                            <Ionicons name="leaf-outline" size={15} color={colors.textLight} />
+                            <Text style={styles.cadernoMetaText}>{periodoProdutivoLabel}</Text>
                           </View>
                         )}
                         {user?.perfil !== 'produtor' && (
@@ -1625,6 +1789,74 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.text,
     lineHeight: 22,
+  },
+  periodoCard: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radius,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  periodoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  periodoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodoInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  periodoTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  periodoSubtitle: {
+    marginTop: 2,
+    fontSize: typography.fontCaption + 1,
+    color: colors.muted,
+  },
+  periodoStatusBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: spacing.radiusSm,
+    flexShrink: 0,
+  },
+  periodoStatusText: {
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
+  },
+  periodoMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  periodoMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  periodoMetaText: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    fontWeight: typography.weightSemibold,
+  },
+  periodoObservacoes: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontBody - 1,
+    color: colors.textLight,
+    lineHeight: 20,
   },
   mapaCard: {
     backgroundColor: colors.backgroundAlt,

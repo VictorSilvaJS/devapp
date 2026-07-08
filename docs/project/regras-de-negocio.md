@@ -209,6 +209,10 @@ campo.
 - O caderno de campo deve registrar apenas o que for relevante para a operacao.
 - Nao deve nascer como modulo excessivamente generico ou pesado.
 - Seu nivel de visibilidade deve ser controlado por regra de perfil e contexto.
+- Safra/Safrinha, quando existir no MVP local, e contexto opcional do Caderno
+  por Propriedade. Admin e Colaborador autorizado podem gerenciar periodos
+  locais; Produtor pode consultar e vincular ao registrar Caderno, mas nao
+  gerencia periodos nesta fase.
 
 Este documento nao fecha ainda todos os campos, obrigatoriedades ou fluxos do caderno. Esses detalhes pertencem a consolidacao futura das pendencias.
 

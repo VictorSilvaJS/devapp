@@ -17,6 +17,8 @@ const {
   podeEditarCadernoEmFazenda,
   podeEditarVisita,
   podeExcluirProdutor,
+  podeGerenciarPeriodoProdutivo,
+  podeGerenciarPeriodoProdutivoEmFazenda,
   podeIncluirCaderno,
   podeIncluirCadernoEmFazenda,
   temAcessoProdutor,
@@ -242,6 +244,19 @@ const run = async () => {
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaNoEscopo), true);
     assert.equal(podeIncluirCadernoEmFazenda(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeIncluirCadernoEmFazenda(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('podeGerenciarPeriodoProdutivo bloqueia produtor e preserva escopo da equipe', () => {
+    const fazendaNoEscopo = fazendasBase[0];
+    const fazendaForaEscopo = fazendasBase[1];
+
+    assert.equal(podeGerenciarPeriodoProdutivo(produtorUser), false);
+    assert.equal(podeGerenciarPeriodoProdutivo(colaboradorUser), true);
+    assert.equal(podeGerenciarPeriodoProdutivo(adminUser), true);
+    assert.equal(podeGerenciarPeriodoProdutivoEmFazenda(produtorUser, fazendaNoEscopo), false);
+    assert.equal(podeGerenciarPeriodoProdutivoEmFazenda(colaboradorUser, fazendaNoEscopo), true);
+    assert.equal(podeGerenciarPeriodoProdutivoEmFazenda(colaboradorUser, fazendaForaEscopo), false);
+    assert.equal(podeGerenciarPeriodoProdutivoEmFazenda(adminUser, fazendaForaEscopo), true);
   });
 
   await test('podeEditarCadernoEmFazenda bloqueia produtor e preserva escopo da equipe', () => {

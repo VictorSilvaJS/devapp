@@ -53,6 +53,11 @@ O MVP deve incluir o registro e a consulta de visitas tecnicas ligadas ao contex
 
 O MVP deve incluir um caderno de campo orientado ao uso operacional, sem tentar cobrir desde o inicio um universo amplo e generico de funcionalidades agricolas.
 
+No corte demonstrativo atual, Safra/Safrinha pode existir como organizacao
+local e opcional por Propriedade para ajudar a contextualizar registros do
+Caderno. Isso nao transforma periodo produtivo em modelo final de backend nem
+em requisito obrigatorio para salvar registros.
+
 ### 6. Consulta em contexto de internet limitada
 
 O MVP deve considerar operacao em campo com conectividade ruim. A prioridade aqui e viabilizar consulta e visualizacao de forma segura e realista, sem prometer capacidades offline totais que ainda nao estejam definidas.

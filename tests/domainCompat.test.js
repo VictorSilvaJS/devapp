@@ -241,6 +241,27 @@ test('normalizeCadernoCampo migra produtor_id legado e centraliza autoria futura
   assert.equal(toCadernoCampoCompativelBorda(caderno).fazendaId, 'p1');
 });
 
+test('normalizeCadernoCampo preserva metadados opcionais de Safra/Safrinha', () => {
+  const caderno = normalizeCadernoCampo({
+    id: 'c_periodo',
+    fazenda_id: 'faz_1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'observacao',
+    periodo_produtivo_id: 'periodo_1',
+    periodoProdutivoId: 'periodo_1',
+    periodo_produtivo_label: 'Safra • Soja • 2025/2026',
+    tipo_periodo: 'safra',
+    cultura_periodo: 'Soja',
+    ano_agricola: '2025/2026',
+  });
+
+  assert.equal(caderno.periodo_produtivo_id, 'periodo_1');
+  assert.equal(caderno.periodoProdutivoId, 'periodo_1');
+  assert.equal(caderno.periodo_produtivo_label, 'Safra • Soja • 2025/2026');
+  assert.equal(toCadernoCampoCompativelBorda(caderno).periodo_produtivo_id, 'periodo_1');
+});
+
 test('normalizeLimiteArea migra produtor_id legado para fazenda_id', () => {
   const limite = normalizeLimiteArea({
     id: 'lt1',

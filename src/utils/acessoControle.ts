@@ -6,7 +6,9 @@
  * - colaborador: Mesmas funcionalidades do admin, mas LIMITADO à sua região/sub-regiões
  * - produtor: (= cliente = proprietário) - Dono da fazenda
  *   - Apenas visualização e download
- *   - Não cria, edita ou remove registros do caderno no MVP atual
+ *   - Pode registrar caderno de campo nas próprias fazendas
+ *   - Consulta Safra/Safrinha vinculada à sua Propriedade, sem gerenciar períodos
+ *   - Não edita ou remove registros do caderno no MVP atual
  *   - Um produtor pode ter VÁRIAS fazendas (1:N)
  *   - Várias pessoas podem ter login vinculado ao mesmo proprietário
  */
@@ -589,6 +591,20 @@ export const podeIncluirCaderno = (user) => {
 
 export const podeIncluirCadernoEmFazenda = (user, fazenda) => {
   if (!podeIncluirCaderno(user)) return false;
+  return temAcessoProdutor(user, fazenda);
+};
+
+/**
+ * Verifica se usuario pode gerenciar Safra/Safrinha local.
+ * Produtor consulta e usa o periodo no Caderno, mas nao cria/edita no MVP.
+ */
+export const podeGerenciarPeriodoProdutivo = (user) => {
+  if (!user) return false;
+  return podeGerenciar(user);
+};
+
+export const podeGerenciarPeriodoProdutivoEmFazenda = (user, fazenda) => {
+  if (!podeGerenciarPeriodoProdutivo(user)) return false;
   return temAcessoProdutor(user, fazenda);
 };
 

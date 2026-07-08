@@ -113,6 +113,15 @@ mas ficou bloqueada porque `adb devices -l` mostrou apenas o emulador
 instalacao e o smoke manual em Android fisico nao foram executados. Android
 fisico segue pendente e nao aprovado.
 
+Status em 2026-07-08 (Fase 17E): Safra/Safrinha foi implementada apenas como
+organizacao local e opcional por Propriedade, com metadados pequenos em
+`@tche:periodos-produtivos:v1` e vinculo opcional no Caderno de Campo.
+Admin/Colaborador autorizado podem criar/editar periodos locais; Produtor
+consulta e pode vincular ao registrar Caderno, mas nao gerencia periodos. A
+pendencia permanece aberta porque ainda nao ha modelagem final de periodo
+produtivo, backend/RBAC real, sync, auditoria, regras completas de
+encerramento/remocao, nem validacao em Android fisico.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -145,6 +154,12 @@ DocumentPicker real, PNG, ZIP de Prescricao e GeoJSON/talhoes permaneceu
 bloqueada pela ausencia de Android fisico autorizado no `adb`. A cobertura
 automatizada de compatibilidade continuou passando e o APK release foi gerado,
 mas isso nao substitui o smoke no aparelho.
+
+Status em 2026-07-08 (Fase 17E): o recorte temporal por Safra/Safrinha entrou
+como metadado local opcional separado de mapas e arquivos tecnicos. Isso nao
+fecha a taxonomia final de mapas nem o pipeline produtivo; PNG, ZIP e GeoJSON
+continuam com seus storages/chaves proprias e sem conteudo bruto em
+AsyncStorage.
 
 ### 5. Experiencia detalhada do produtor
 

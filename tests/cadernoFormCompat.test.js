@@ -1,11 +1,15 @@
 const assert = require('node:assert/strict');
 const {
   buildCadernoFazendaOptions,
+  buildCadernoPeriodoProdutivoOptions,
   buildCadernoPayload,
   findCadernoFazendaOption,
+  findCadernoPeriodoProdutivoOption,
   getCadernoFormFazendaId,
   getCadernoFormFazendaLabel,
+  getCadernoFormPeriodoProdutivoLabel,
   getCadernoOrigemLabel,
+  getCadernoPeriodoProdutivoLabel,
   getCadernoTalhaoLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
@@ -135,6 +139,38 @@ const run = async () => {
     assert.equal(payload.criado_por_user_id, 'u2');
     assert.equal(payload.origem_registro, 'produtor');
     assert.deepEqual(payload.produtos_utilizados, ['MAP', 'KCl']);
+  });
+
+  await test('helpers de Safra/Safrinha do caderno mantêm vínculo opcional no payload', () => {
+    const options = buildCadernoPeriodoProdutivoOptions([
+      {
+        id: 'periodo_1',
+        fazenda_id: 'faz_payload',
+        propriedade_id: 'faz_payload',
+        label: 'Safra • Soja • 2025/2026',
+        tipo_periodo: 'safra',
+        cultura: 'Soja',
+        ano_agricola: '2025/2026',
+        status: 'em_andamento',
+      },
+    ]);
+    const periodo = findCadernoPeriodoProdutivoOption(options, 'periodo_1');
+    const payload = buildCadernoPayload({
+      fazendaId: 'faz_payload',
+      dataAtividade: new Date('2026-04-20T00:00:00.000Z'),
+      tipoAtividade: 'observacao',
+      periodoProdutivo: periodo,
+    });
+
+    assert.equal(getCadernoFormPeriodoProdutivoLabel(periodo), 'Safra • Soja • 2025/2026');
+    assert.equal(payload.periodo_produtivo_id, 'periodo_1');
+    assert.equal(payload.periodoProdutivoId, 'periodo_1');
+    assert.equal(payload.periodo_produtivo_label, 'Safra • Soja • 2025/2026');
+    assert.equal(payload.tipo_periodo, 'safra');
+    assert.equal(payload.cultura_periodo, 'Soja');
+    assert.equal(payload.ano_agricola, '2025/2026');
+    assert.equal(getCadernoPeriodoProdutivoLabel(payload), 'Safra • Soja • 2025/2026');
+    assert.equal(getCadernoFormPeriodoProdutivoLabel(null), 'Sem Safra/Safrinha vinculada');
   });
 
   await test('helpers de apresentação do caderno cobrem tipo, talhão, visibilidade e ordenação', () => {

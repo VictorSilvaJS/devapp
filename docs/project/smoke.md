@@ -20,6 +20,27 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17E - Safra/Safrinha Local E Opcional**
+
+Observacao geral: checklist para validar a organizacao local de Safra/Safrinha
+por Propriedade. A implementacao e local/demonstrativa, guarda apenas
+metadados pequenos em `@tche:periodos-produtivos:v1` e nao abre backend,
+sync, upload, download, storage remoto, mapas novos, processamento de ZIP ou
+pipeline produtivo. Android fisico segue pendente ate haver aparelho
+autorizado no `adb`.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17E-01 | P0 | Admin | Propriedade | Abrir Sela de Prata I > Talhoes | Secao `Safras e Safrinha` aparece sem alterar Material tecnico | Reexecutar | Validar em emulador e depois Android fisico |
+| 17E-02 | P0 | Admin | Safra/Safrinha | Criar Safra com cultura, ano agricola, status e Talhao opcional | Periodo salva localmente e volta para a Propriedade | Reexecutar | Deve preservar `fazenda_id`/`fazendaId` |
+| 17E-03 | P0 | Admin | Safra/Safrinha | Editar periodo criado | Alteracoes aparecem no card sem criar duplicidade | Reexecutar | Sem backend/sync |
+| 17E-04 | P0 | Produtor | Propriedade | Abrir mesma Propriedade | Produtor consulta Safra/Safrinha sem botao de criar/editar | Reexecutar | Produtor nao gerencia periodos |
+| 17E-05 | P0 | Produtor | Caderno | Registrar Caderno e selecionar Safra/Safrinha opcional | Registro salva visivel ao produtor e mostra vinculo no detalhe/lista | Reexecutar | Sem obrigatoriedade de periodo |
+| 17E-06 | P0 | Admin/Colaborador | Caderno | Criar/editar Caderno removendo ou trocando periodo | Vínculo opcional atualiza sem trocar Propriedade | Reexecutar | Preservar contexto travado |
+| 17E-07 | P1 | Todos | Persistencia | Fechar app e reabrir | Periodos e vinculos locais continuam visiveis | Reexecutar | Validar storage local |
+| 17E-08 | P0 | Todos | Regressao | Abrir Material tecnico, PNG, ZIP e GeoJSON/talhoes | Fluxos 16F/16G/17C seguem funcionando | Reexecutar | Nao alterar `Mapa.list`/`LimiteArea.list` |
+| 17E-09 | P0 | Todos | Android fisico | Instalar APK e repetir casos em aparelho | Passa em Android fisico autorizado | Reexecutar | Pendente ate aparelho aparecer como `device` |
+
 **Rodada Fase 17D.4 - Validacao Android Fisico Do Caderno E Material Tecnico**
 
 Observacao geral em 2026-07-07: rodada iniciada para validar Caderno de Campo,

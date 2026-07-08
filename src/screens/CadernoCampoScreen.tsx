@@ -30,6 +30,7 @@ import {
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 import {
   getCadernoTalhaoLabel,
+  getCadernoPeriodoProdutivoLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
   isCadernoVisivelParaProdutor,
@@ -118,6 +119,9 @@ export default function CadernoCampoScreen() {
     return matchesFazendaUiBusca(fazenda, busca, [
       registro.tipo_atividade,
       registro.talhao,
+      registro.periodo_produtivo_label,
+      registro.ano_agricola,
+      registro.cultura_periodo,
       registro.colaborador_responsavel,
       registro.observacoes,
     ]);
@@ -199,6 +203,7 @@ export default function CadernoCampoScreen() {
             const tipoColor = getTipoColor(reg.tipo_atividade);
             const tipoLabel = getCadernoTipoLabel(reg.tipo_atividade);
             const talhaoLabel = getCadernoTalhaoLabel(reg);
+            const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(reg);
             const visivelParaProdutor = isCadernoVisivelParaProdutor(reg);
             const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
             
@@ -240,6 +245,14 @@ export default function CadernoCampoScreen() {
                     <Ionicons name="calendar-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                     <Text style={styles.infoText}>{formatarData(reg.data_atividade)}</Text>
                   </View>
+                  {periodoProdutivoLabel ? (
+                    <View style={styles.infoRow}>
+                      <Ionicons name="leaf-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
+                      <Text style={styles.infoText} numberOfLines={1}>
+                        Safra/Safrinha: {periodoProdutivoLabel}
+                      </Text>
+                    </View>
+                  ) : null}
                   <View style={styles.infoRow}>
                     <Ionicons name="person-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
                     <Text style={styles.infoText} numberOfLines={1}>

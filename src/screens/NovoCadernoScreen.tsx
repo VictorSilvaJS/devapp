@@ -19,6 +19,7 @@ import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   filtrarProdutoresPorAcesso,
@@ -30,9 +31,12 @@ import {
 import {
   CADERNO_TIPOS_ATIVIDADE,
   buildCadernoFazendaOptions,
+  buildCadernoPeriodoProdutivoOptions,
   buildCadernoPayload,
   findCadernoFazendaOption,
+  findCadernoPeriodoProdutivoOption,
   getCadernoFormFazendaLabel,
+  getCadernoFormPeriodoProdutivoLabel,
   parseCadernoAreaAplicada,
 } from '../utils/cadernoFormCompat';
 
@@ -42,7 +46,11 @@ export default function NovoCadernoScreen() {
   const toast = useToast();
   const { user } = useAuth();
 
-  const routeFazendaId = route.params?.fazendaId || route.params?.produtorId;
+  const routeFazendaId =
+    route.params?.fazendaId
+    || route.params?.produtorId
+    || route.params?.propriedadeId
+    || route.params?.fazenda_id;
   const routeTalhao = route.params?.talhaoNome || route.params?.talhao || '';
   const isProdutorView = user?.perfil === 'produtor';
   const responsavelInicial = user?.nome || user?.full_name || '';
@@ -58,18 +66,30 @@ export default function NovoCadernoScreen() {
   const [condicoesClima, setCondicoesClima] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [visivelParaProdutor, setVisivelParaProdutor] = useState(true);
+  const [periodoProdutivoId, setPeriodoProdutivoId] = useState('');
 
   const [fazendas, setFazendas] = useState([]);
+  const [periodosProdutivos, setPeriodosProdutivos] = useState([]);
   const [loadingFazendas, setLoadingFazendas] = useState(true);
+  const [loadingPeriodos, setLoadingPeriodos] = useState(false);
   const [saving, setSaving] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [showFazendaPicker, setShowFazendaPicker] = useState(false);
+  const [showPeriodoPicker, setShowPeriodoPicker] = useState(false);
   const [errors, setErrors] = useState<any>({});
 
   const fazendaOptions = useMemo(() => buildCadernoFazendaOptions(fazendas), [fazendas]);
+  const periodoOptions = useMemo(
+    () => buildCadernoPeriodoProdutivoOptions(periodosProdutivos),
+    [periodosProdutivos]
+  );
   const fazendaSelecionada = useMemo(
     () => findCadernoFazendaOption(fazendaOptions, fazendaId),
     [fazendaOptions, fazendaId]
+  );
+  const periodoSelecionado = useMemo(
+    () => findCadernoPeriodoProdutivoOption(periodoOptions, periodoProdutivoId),
+    [periodoOptions, periodoProdutivoId]
   );
   const semFazendasAutorizadas = !loadingFazendas && fazendaOptions.length === 0;
 
@@ -88,6 +108,36 @@ export default function NovoCadernoScreen() {
       setVisivelParaProdutor(true);
     }
   }, [isProdutorView]);
+
+  useEffect(() => {
+    void loadPeriodosProdutivos(fazendaId);
+  }, [fazendaId]);
+
+  const loadPeriodosProdutivos = async (contextoFazendaId) => {
+    const normalizedFazendaId = String(contextoFazendaId || '').trim();
+    setShowPeriodoPicker(false);
+
+    if (!normalizedFazendaId) {
+      setPeriodosProdutivos([]);
+      setPeriodoProdutivoId('');
+      return;
+    }
+
+    setLoadingPeriodos(true);
+    try {
+      const periodos = await PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(normalizedFazendaId);
+      setPeriodosProdutivos(periodos);
+      setPeriodoProdutivoId((current) => (
+        periodos.some((periodo) => periodo.id === current) ? current : ''
+      ));
+    } catch (error) {
+      console.error('Erro ao carregar periodos produtivos para caderno:', error);
+      setPeriodosProdutivos([]);
+      setPeriodoProdutivoId('');
+    } finally {
+      setLoadingPeriodos(false);
+    }
+  };
 
   const loadFazendas = async () => {
     setLoadingFazendas(true);
@@ -191,6 +241,7 @@ export default function NovoCadernoScreen() {
         colaboradorResponsavel: responsavel,
         criadoPorUserId: user?.id,
         origemRegistro: isProdutorView ? 'produtor' : 'equipe',
+        periodoProdutivo: periodoSelecionado,
       });
 
       if (!novoRegistro) {
@@ -281,6 +332,7 @@ export default function NovoCadernoScreen() {
                       ]}
                       onPress={() => {
                         setFazendaId(fazenda.id);
+                        setPeriodoProdutivoId('');
                         setShowFazendaPicker(false);
                         setErrors(prev => ({ ...prev, fazendaId: null }));
                       }}
@@ -298,6 +350,88 @@ export default function NovoCadernoScreen() {
                       </Text>
                     </TouchableOpacity>
                   ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Safra/Safrinha</Text>
+            <TouchableOpacity
+              style={styles.picker}
+              onPress={() => setShowPeriodoPicker(!showPeriodoPicker)}
+              disabled={!fazendaId || loadingPeriodos}
+            >
+              <Text style={[styles.pickerText, !periodoProdutivoId && styles.placeholder]}>
+                {loadingPeriodos
+                  ? 'Carregando...'
+                  : getCadernoFormPeriodoProdutivoLabel(periodoSelecionado)}
+              </Text>
+              <Ionicons
+                name={showPeriodoPicker ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={colors.muted}
+              />
+            </TouchableOpacity>
+            <Text style={styles.contextHint}>Opcional. O registro pode ficar sem Safra/Safrinha vinculada.</Text>
+
+            {showPeriodoPicker && (
+              <View style={styles.dropdownContainer}>
+                <ScrollView style={styles.dropdown} nestedScrollEnabled>
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownItem,
+                      !periodoProdutivoId && styles.dropdownItemSelected,
+                    ]}
+                    onPress={() => {
+                      setPeriodoProdutivoId('');
+                      setShowPeriodoPicker(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        !periodoProdutivoId && styles.dropdownItemTextSelected,
+                      ]}
+                    >
+                      Sem Safra/Safrinha vinculada
+                    </Text>
+                    <Text style={styles.dropdownItemSubtext}>Registro independente de período.</Text>
+                  </TouchableOpacity>
+
+                  {periodoOptions.length === 0 ? (
+                    <View style={styles.dropdownItem}>
+                      <Text style={styles.dropdownItemSubtext}>
+                        Nenhuma Safra/Safrinha local cadastrada para esta Propriedade.
+                      </Text>
+                    </View>
+                  ) : (
+                    periodoOptions.map((periodo) => (
+                      <TouchableOpacity
+                        key={periodo.id}
+                        style={[
+                          styles.dropdownItem,
+                          periodoProdutivoId === periodo.id && styles.dropdownItemSelected,
+                        ]}
+                        onPress={() => {
+                          setPeriodoProdutivoId(periodo.id);
+                          setShowPeriodoPicker(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            periodoProdutivoId === periodo.id && styles.dropdownItemTextSelected,
+                          ]}
+                        >
+                          {periodo.label}
+                        </Text>
+                        <Text style={styles.dropdownItemSubtext}>
+                          {[periodo.status, periodo.talhao].filter(Boolean).join(' • ') || 'Período da Propriedade'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  )}
                 </ScrollView>
               </View>
             )}

@@ -1,0 +1,513 @@
+import React, { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import Header from '../components/Header';
+import DatePicker from '../components/DatePicker';
+import FormField from '../components/FormField';
+import FormFooter from '../components/FormFooter';
+import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SectionCard from '../components/SectionCard';
+import { useToast } from '../components/Toast';
+import { Produtor } from '../api/mock';
+import { useAuth } from '../auth/AuthContext';
+import {
+  findFazendaById,
+  getFazendaId,
+  podeGerenciarPeriodoProdutivoEmFazenda,
+} from '../utils/acessoControle';
+import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
+import type { PeriodoProdutivoStatus, PeriodoProdutivoTipo } from '../types/periodoProdutivo';
+import { colors, shadows, spacing, typography } from '../theme';
+
+const TIPO_OPTIONS = [
+  {
+    value: 'safra',
+    label: 'Safra',
+    description: 'Período principal da cultura na Propriedade.',
+    icon: 'leaf-outline' as const,
+  },
+  {
+    value: 'safrinha',
+    label: 'Safrinha',
+    description: 'Segundo período ou cultura subsequente.',
+    icon: 'repeat-outline' as const,
+  },
+];
+
+const STATUS_OPTIONS = [
+  {
+    value: 'planejada',
+    label: 'Planejada',
+    description: 'Ainda em organização ou previsão.',
+    icon: 'time-outline' as const,
+  },
+  {
+    value: 'em_andamento',
+    label: 'Em andamento',
+    description: 'Período ativo no campo.',
+    icon: 'play-circle-outline' as const,
+  },
+  {
+    value: 'encerrada',
+    label: 'Encerrada',
+    description: 'Ciclo concluído para consulta histórica.',
+    icon: 'checkmark-circle-outline' as const,
+  },
+];
+
+const parseDate = (value?: string | null): Date | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const toIsoDate = (value?: Date | null): string | undefined =>
+  value instanceof Date && !Number.isNaN(value.getTime()) ? value.toISOString() : undefined;
+
+export default function PeriodoProdutivoFormScreen() {
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const toast = useToast();
+  const { user } = useAuth();
+
+  const periodoId = route.params?.periodoId || route.params?.id;
+  const routeFazendaId =
+    route.params?.fazendaId
+    || route.params?.produtorId
+    || route.params?.propriedadeId
+    || route.params?.fazenda_id;
+  const isEditing = Boolean(periodoId);
+
+  const [fazenda, setFazenda] = useState<any>(null);
+  const [periodoOriginal, setPeriodoOriginal] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [errors, setErrors] = useState<any>({});
+
+  const [tipoPeriodo, setTipoPeriodo] = useState<PeriodoProdutivoTipo>('safra');
+  const [cultura, setCultura] = useState('');
+  const [anoAgricola, setAnoAgricola] = useState('');
+  const [dataInicio, setDataInicio] = useState<Date | null>(null);
+  const [dataFim, setDataFim] = useState<Date | null>(null);
+  const [status, setStatus] = useState<PeriodoProdutivoStatus>('planejada');
+  const [talhao, setTalhao] = useState('');
+  const [observacoes, setObservacoes] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadContext();
+    }, [periodoId, routeFazendaId, user])
+  );
+
+  const loadContext = async () => {
+    setLoading(true);
+    setAccessDenied(false);
+
+    try {
+      const fazendas = await Produtor.list();
+      let fazendaContexto = null;
+      let periodo = null;
+
+      if (periodoId) {
+        periodo = await PeriodoProdutivoService.getPeriodoProdutivoById(periodoId);
+        if (!periodo) {
+          throw new Error('Periodo produtivo nao encontrado');
+        }
+
+        fazendaContexto = findFazendaById(fazendas, periodo.fazenda_id || periodo.fazendaId);
+      } else if (routeFazendaId) {
+        fazendaContexto = findFazendaById(fazendas, routeFazendaId);
+      }
+
+      if (!fazendaContexto || !podeGerenciarPeriodoProdutivoEmFazenda(user, fazendaContexto)) {
+        setAccessDenied(true);
+        setFazenda(null);
+        setPeriodoOriginal(null);
+        return;
+      }
+
+      setFazenda(fazendaContexto);
+      setPeriodoOriginal(periodo);
+
+      if (periodo) {
+        setTipoPeriodo(periodo.tipo_periodo === 'safrinha' ? 'safrinha' : 'safra');
+        setCultura(periodo.cultura || '');
+        setAnoAgricola(periodo.ano_agricola || '');
+        setDataInicio(parseDate(periodo.data_inicio));
+        setDataFim(parseDate(periodo.data_fim));
+        setStatus(
+          periodo.status === 'em_andamento' || periodo.status === 'encerrada'
+            ? periodo.status
+            : 'planejada'
+        );
+        setTalhao(periodo.talhao_nome || periodo.talhao || '');
+        setObservacoes(periodo.observacoes || '');
+      }
+    } catch (error) {
+      console.error('Erro ao carregar periodo produtivo:', error);
+      toast.showError('Erro ao carregar Safra/Safrinha');
+      navigation.goBack();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: any = {};
+
+    if (!fazenda) {
+      newErrors.fazenda = 'Propriedade não encontrada';
+    }
+
+    if (!tipoPeriodo) {
+      newErrors.tipoPeriodo = 'Selecione o tipo';
+    }
+
+    if (!cultura.trim()) {
+      newErrors.cultura = 'Informe a cultura';
+    }
+
+    if (!anoAgricola.trim()) {
+      newErrors.anoAgricola = 'Informe o ano agrícola';
+    }
+
+    if (dataInicio && dataFim && dataInicio.getTime() > dataFim.getTime()) {
+      newErrors.dataFim = 'A data final deve ser posterior ao início';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!fazenda || !podeGerenciarPeriodoProdutivoEmFazenda(user, fazenda)) {
+      toast.showWarning('Você não tem permissão para gerenciar Safra/Safrinha nesta propriedade.');
+      return;
+    }
+
+    if (!validateForm()) {
+      toast.showError('Preencha os campos obrigatórios');
+      return;
+    }
+
+    const fazendaId = getFazendaId(fazenda);
+    const fazendaInfo = getFazendaUiInfo(fazenda);
+    const payload = {
+      propriedade_id: fazendaId,
+      propriedadeId: fazendaId,
+      fazenda_id: fazendaId,
+      fazendaId,
+      nome_propriedade: fazendaInfo.fazendaNome,
+      tipo_periodo: tipoPeriodo,
+      cultura: cultura.trim(),
+      ano_agricola: anoAgricola.trim(),
+      data_inicio: toIsoDate(dataInicio),
+      data_fim: toIsoDate(dataFim),
+      status,
+      talhao_nome: talhao.trim() || undefined,
+      talhao: talhao.trim() || undefined,
+      observacoes: observacoes.trim() || undefined,
+      criado_por_user_id: periodoOriginal?.criado_por_user_id || user?.id,
+      criado_por_nome: periodoOriginal?.criado_por_nome || user?.nome || user?.full_name,
+      registro_status: 'ativo' as const,
+      origem: 'local' as const,
+    };
+
+    setSaving(true);
+    try {
+      if (isEditing) {
+        await PeriodoProdutivoService.updatePeriodoProdutivoMetadata(periodoId, payload);
+        toast.showSuccess('Safra/Safrinha atualizada.');
+      } else {
+        await PeriodoProdutivoService.createPeriodoProdutivoMetadata(payload);
+        toast.showSuccess('Safra/Safrinha criada.');
+      }
+
+      navigation.goBack();
+    } catch (error) {
+      console.error('Erro ao salvar periodo produtivo:', error);
+      toast.showError('Erro ao salvar Safra/Safrinha');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Header title={isEditing ? 'Editar Safra/Safrinha' : 'Nova Safra/Safrinha'} showBack />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.centeredText}>Carregando contexto...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (accessDenied || !fazenda) {
+    return (
+      <View style={styles.container}>
+        <Header title={isEditing ? 'Editar Safra/Safrinha' : 'Nova Safra/Safrinha'} showBack />
+        <View style={styles.centered}>
+          <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
+          <Text style={styles.blockedTitle}>Acesso restrito</Text>
+          <Text style={styles.centeredText}>Você não tem permissão para gerenciar Safra/Safrinha nesta Propriedade.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const fazendaInfo = getFazendaUiInfo(fazenda);
+
+  return (
+    <View style={styles.container}>
+      <Header title={isEditing ? 'Editar Safra/Safrinha' : 'Nova Safra/Safrinha'} showBack />
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <SectionCard title="Contexto" subtitle="O período será salvo localmente para esta Propriedade." icon="home-outline">
+          <View style={styles.lockedBox}>
+            <View style={styles.lockedIcon}>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.lockedContent}>
+              <Text style={styles.lockedTitle}>{fazendaInfo.fazendaNome || 'Propriedade'}</Text>
+              <Text style={styles.lockedText}>
+                {[fazendaInfo.titularNome, fazendaInfo.localizacao].filter(Boolean).join(' • ')}
+              </Text>
+            </View>
+          </View>
+          {errors.fazenda ? <Text style={styles.errorText}>{errors.fazenda}</Text> : null}
+        </SectionCard>
+
+        <SectionCard title="Período produtivo" subtitle="Organize a Safra/Safrinha de forma opcional para Caderno e consulta." icon="calendar-outline">
+          <Text style={styles.label}>
+            Tipo <Text style={styles.required}>*</Text>
+          </Text>
+          <RadioCardGroup
+            options={TIPO_OPTIONS}
+            value={tipoPeriodo}
+            onChange={(value) => {
+              setTipoPeriodo(value as PeriodoProdutivoTipo);
+              setErrors((prev) => ({ ...prev, tipoPeriodo: null }));
+            }}
+            error={errors.tipoPeriodo}
+          />
+
+          <FormField
+            label="Cultura"
+            required
+            value={cultura}
+            onChangeText={(value) => {
+              setCultura(value);
+              setErrors((prev) => ({ ...prev, cultura: null }));
+            }}
+            placeholder="Ex: Soja, Milho, Pousio"
+            error={errors.cultura}
+          />
+
+          <FormField
+            label="Ano agrícola"
+            required
+            value={anoAgricola}
+            onChangeText={(value) => {
+              setAnoAgricola(value);
+              setErrors((prev) => ({ ...prev, anoAgricola: null }));
+            }}
+            placeholder="Ex: 2025/2026"
+            error={errors.anoAgricola}
+          />
+
+          <FormField
+            label="Talhão"
+            value={talhao}
+            onChangeText={setTalhao}
+            placeholder="Opcional"
+            helperText="Deixe em branco para vincular o período à Propriedade inteira."
+          />
+
+          <DatePicker
+            label="Data de início"
+            value={dataInicio}
+            onChange={(date) => {
+              setDataInicio(date);
+              setErrors((prev) => ({ ...prev, dataFim: null }));
+            }}
+            placeholder="Opcional"
+            mode="date"
+          />
+          {dataInicio ? (
+            <TouchableOpacity style={styles.clearDateButton} onPress={() => setDataInicio(null)} activeOpacity={0.75}>
+              <Ionicons name="close-circle-outline" size={16} color={colors.muted} />
+              <Text style={styles.clearDateText}>Limpar início</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          <DatePicker
+            label="Data final"
+            value={dataFim}
+            onChange={(date) => {
+              setDataFim(date);
+              setErrors((prev) => ({ ...prev, dataFim: null }));
+            }}
+            placeholder="Opcional"
+            minimumDate={dataInicio || undefined}
+            mode="date"
+            error={errors.dataFim}
+          />
+          {dataFim ? (
+            <TouchableOpacity style={styles.clearDateButton} onPress={() => setDataFim(null)} activeOpacity={0.75}>
+              <Ionicons name="close-circle-outline" size={16} color={colors.muted} />
+              <Text style={styles.clearDateText}>Limpar final</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          <Text style={styles.label}>
+            Status <Text style={styles.required}>*</Text>
+          </Text>
+          <RadioCardGroup
+            options={STATUS_OPTIONS}
+            value={status}
+            onChange={(value) => setStatus(value as PeriodoProdutivoStatus)}
+          />
+
+          <FormField
+            label="Observações"
+            value={observacoes}
+            onChangeText={setObservacoes}
+            placeholder="Opcional"
+            textarea
+            numberOfLines={4}
+          />
+        </SectionCard>
+
+        <InfoBox message="A Safra/Safrinha é um vínculo local e opcional. Ela não altera mapas, GeoJSON, PNG, ZIP ou registros mockados existentes." />
+      </ScrollView>
+
+      <FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel={isEditing ? 'Salvar Período' : 'Criar Período'}
+        loading={saving}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xl * 2,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    gap: spacing.sm,
+  },
+  centeredText: {
+    fontSize: typography.fontBody,
+    color: colors.muted,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  blockedTitle: {
+    fontSize: typography.fontBody + 2,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  label: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightSemibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  required: {
+    color: colors.error,
+  },
+  lockedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: spacing.radiusSm,
+    padding: spacing.md,
+  },
+  lockedIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+    marginRight: spacing.sm,
+  },
+  lockedContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  lockedTitle: {
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    color: colors.text,
+  },
+  lockedText: {
+    marginTop: 2,
+    fontSize: typography.fontCaption + 1,
+    color: colors.muted,
+    lineHeight: 18,
+  },
+  clearDateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.backgroundAlt,
+  },
+  clearDateText: {
+    fontSize: typography.fontCaption + 1,
+    color: colors.muted,
+    fontWeight: typography.weightSemibold,
+  },
+  errorText: {
+    fontSize: typography.fontSmall,
+    color: colors.error,
+    marginTop: spacing.xs,
+  },
+  footer: {
+    padding: spacing.lg,
+    backgroundColor: colors.card,
+    borderTopWidth: 2,
+    borderTopColor: colors.border,
+    ...shadows.md,
+  },
+});
