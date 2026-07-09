@@ -3206,6 +3206,50 @@ Continuam pendentes:
 - manter a divergencia conhecida `expo@56.0.11`, esperado `~56.0.14`, para
   fase propria de alinhamento, sem misturar com este fechamento funcional.
 
+## Fase 17G.0 - Analise Tecnica De Localizacao Em Tempo Real Sobre Talhoes
+
+Status em 2026-07-09: foi criada a analise tecnica
+`docs/project/fase-17g-localizacao-tempo-real.md` para orientar uma fase futura
+de localizacao em tempo real sobre o mapa de Talhoes da Propriedade. Esta fase
+foi apenas documental: nenhuma localizacao foi implementada, nenhuma
+dependencia foi instalada e nenhuma coordenada do usuario foi salva.
+
+Diagnostico registrado:
+
+- `FazendaMapaScreen` e a tela ativa mais segura para uma primeira localizacao,
+  porque ja valida acesso por Propriedade, carrega Talhoes e usa
+  `MapaFazendaView`;
+- `MapaFazendaView` segue como componente ativo, com WebView/Leaflet,
+  OpenStreetMap online, comandos por `injectJavaScript` e fallback SVG;
+- `MapaFazendaNativoView` existe como experimento historico com
+  `react-native-maps`, mas nao esta em rota ou tela ativa;
+- `MapasScreen` e `ShapeRenderer` continuam como panorama/preview de Material
+  tecnico e consulta por Talhao, nao como ponto primario recomendado para GPS;
+- `GeoJsonTalhoesLayerService` decide entre seed/mock e GeoJSON local ativo,
+  sem persistir Talhoes normalizados;
+- `package.json` possui `react-native-maps`, mas nao possui `expo-location`;
+- `app.json` nao possui configuracao de permissao de localizacao.
+
+Recomendacao para 17G.1:
+
+- implementar, se aprovado depois, uma versao minima no
+  `FazendaMapaScreen`/`MapaFazendaView` atual;
+- usar localizacao foreground only, acionada por botao, sem background, sem
+  trilha/historico e sem persistencia;
+- passar latitude/longitude apenas em memoria para o WebView e atualizar um
+  marcador Leaflet por comando injetado;
+- nao exibir marcador em PNG, ZIP ou materiais tecnicos;
+- manter mapa nativo como alternativa futura, nao como primeira entrega do MVP.
+
+Continuam pendentes:
+
+- aprovar explicitamente a dependencia de localizacao antes da implementacao;
+- confirmar Android fisico para smoke de permissao, precisao e consumo;
+- manter PNG/ZIP como materiais nao georreferenciados;
+- repetir Material tecnico, PNG, ZIP e GeoJSON local em rodada propria depois
+  da limpeza do estado do emulador;
+- Android fisico segue pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
 Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar

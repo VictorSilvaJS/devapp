@@ -219,6 +219,32 @@ GeoJSON local. Isso nao invalida as aprovacoes anteriores de GeoJSON/PNG/ZIP,
 mas exige recriar imports locais para repetir a reabertura individual de PNG e
 ZIP. Android fisico segue pendente e nao aprovado.
 
+### 4A. Localizacao em tempo real sobre Talhoes
+
+A localizacao em tempo real ainda nao existe no app e nao deve ser tratada como
+funcionalidade aprovada ate haver decisao explicita de implementacao.
+
+Status em 2026-07-09 (Fase 17G.0): foi criada a analise tecnica
+`docs/project/fase-17g-localizacao-tempo-real.md`. A recomendacao para uma
+fase futura 17G.1 e implementar a localizacao minima sobre
+`FazendaMapaScreen`/`MapaFazendaView`, mantendo WebView/Leaflet, permissao
+foreground only, estado efemero em memoria e ausencia total de persistencia de
+coordenadas do usuario. `expo-location` nao esta instalado e deve depender de
+aprovacao explicita posterior. `react-native-maps` existe no projeto, mas
+`MapaFazendaNativoView` permanece experimento historico fora do fluxo ativo.
+
+Pontos que precisam ser confirmados antes da implementacao:
+
+- dependencia de localizacao a usar;
+- permissao foreground only, sem background;
+- garantia de nao persistir coordenadas, trilha, rota ou historico;
+- teste em Android fisico autorizado;
+- criterio para iOS ou registro formal de iOS pendente;
+- comportamento quando WebView/Leaflet cair no fallback SVG;
+- confirmacao de que PNG e ZIP continuam materiais nao georreferenciados;
+- confirmacao de que nao havera backend, sync, upload, download real ou
+  storage remoto.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
