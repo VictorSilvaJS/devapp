@@ -60,6 +60,7 @@ export default function EditarCadernoScreen() {
   const [dataAtividade, setDataAtividade] = useState<Date | null>(null);
   const [tipoAtividade, setTipoAtividade] = useState('observacao');
   const [responsavel, setResponsavel] = useState('');
+  const [talhaoId, setTalhaoId] = useState('');
   const [talhao, setTalhao] = useState('');
   const [produtosText, setProdutosText] = useState('');
   const [dosagem, setDosagem] = useState('');
@@ -165,6 +166,7 @@ export default function EditarCadernoScreen() {
       setDataAtividade(registroData.data_atividade ? new Date(registroData.data_atividade) : null);
       setTipoAtividade(registroData.tipo_atividade || 'observacao');
       setResponsavel(registroData.colaborador_responsavel || user?.nome || user?.full_name || '');
+      setTalhaoId(registroData.talhao_id || registroData.talhaoId || '');
       setTalhao(registroData.talhao || '');
       setProdutosText(Array.isArray(registroData.produtos_utilizados) ? registroData.produtos_utilizados.join(', ') : '');
       setDosagem(registroData.dosagem || '');
@@ -241,6 +243,7 @@ export default function EditarCadernoScreen() {
         fazendaId: contextoFazendaId,
         dataAtividade,
         tipoAtividade,
+        talhaoId,
         talhao,
         produtosText,
         dosagem,

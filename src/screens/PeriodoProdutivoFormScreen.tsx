@@ -86,6 +86,8 @@ export default function PeriodoProdutivoFormScreen() {
     || route.params?.produtorId
     || route.params?.propriedadeId
     || route.params?.fazenda_id;
+  const routeTalhaoId = route.params?.talhaoId || route.params?.talhao_id || '';
+  const routeTalhao = route.params?.talhaoNome || route.params?.talhao || '';
   const isEditing = Boolean(periodoId);
 
   const [fazenda, setFazenda] = useState<any>(null);
@@ -101,13 +103,14 @@ export default function PeriodoProdutivoFormScreen() {
   const [dataInicio, setDataInicio] = useState<Date | null>(null);
   const [dataFim, setDataFim] = useState<Date | null>(null);
   const [status, setStatus] = useState<PeriodoProdutivoStatus>('planejada');
+  const [talhaoId, setTalhaoId] = useState('');
   const [talhao, setTalhao] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
   useFocusEffect(
     useCallback(() => {
       void loadContext();
-    }, [periodoId, routeFazendaId, user])
+    }, [periodoId, routeFazendaId, routeTalhaoId, routeTalhao, user])
   );
 
   const loadContext = async () => {
@@ -151,8 +154,12 @@ export default function PeriodoProdutivoFormScreen() {
             ? periodo.status
             : 'planejada'
         );
+        setTalhaoId(periodo.talhao_id || periodo.talhaoId || '');
         setTalhao(periodo.talhao_nome || periodo.talhao || '');
         setObservacoes(periodo.observacoes || '');
+      } else {
+        setTalhaoId(routeTalhaoId);
+        setTalhao(routeTalhao);
       }
     } catch (error) {
       console.error('Erro ao carregar periodo produtivo:', error);
@@ -215,6 +222,8 @@ export default function PeriodoProdutivoFormScreen() {
       data_inicio: toIsoDate(dataInicio),
       data_fim: toIsoDate(dataFim),
       status,
+      talhao_id: talhao.trim() ? talhaoId || undefined : undefined,
+      talhaoId: talhao.trim() ? talhaoId || undefined : undefined,
       talhao_nome: talhao.trim() || undefined,
       talhao: talhao.trim() || undefined,
       observacoes: observacoes.trim() || undefined,

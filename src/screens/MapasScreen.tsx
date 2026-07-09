@@ -27,7 +27,7 @@ import {
   SegmentedChips,
   SelectField,
 } from '../components';
-import { Mapa, Produtor, LimiteArea } from '../api/mock';
+import { Mapa, Produtor, LimiteArea, CadernoCampo } from '../api/mock';
 import {
   buildFazendaMapaRouteParamsFromPropriedade,
   resolveRouteFazendaId,
@@ -39,10 +39,13 @@ import {
   avaliarAcessoFazendaPorId,
   filtrarLimitesPorFazendaIds,
   filtrarMapasPorFazendaIds,
+  filtrarCadernosPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaId,
   getLimiteAreaFazendaId,
   getMapaFazendaId,
+  podeGerenciarPeriodoProdutivoEmFazenda,
+  podeIncluirCadernoEmFazenda,
 } from '../utils/acessoControle';
 import {
   buildFazendaConsultaOptions,
@@ -118,6 +121,22 @@ import {
   replacePrescriptionZipForPropriedade,
 } from '../services/PrescriptionZipPropertyManageWorkflow';
 import type { PrescriptionZipImportMetadata } from '../types/anexoPrescricaoZipLocal';
+import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
+import {
+  filtrarRegistrosDoTalhao,
+  getTalhaoConsultaId,
+  getTalhaoConsultaNome,
+  getTalhaoOrigemDemarcacaoLabel,
+  separarMateriaisPorTalhao,
+  separarPeriodosPorTalhao,
+} from '../utils/talhaoConsultaCompat';
+import { buildPropriedadeContextRouteParams } from '../navigation/propriedadeRouteCompat';
+import {
+  getCadernoPeriodoProdutivoLabel,
+  getCadernoTalhaoLabel,
+  getCadernoTipoLabel,
+  ordenarCadernosPorDataRecente,
+} from '../utils/cadernoFormCompat';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -287,6 +306,8 @@ export default function MapasScreen({ route, navigation }) {
 
   // Estado de materiais técnicos
   const [mapas, setMapas] = useState([]);
+  const [cadernos, setCadernos] = useState([]);
+  const [periodosProdutivos, setPeriodosProdutivos] = useState([]);
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
   const [ordenacao, setOrdenacao] = useState('recente');
@@ -391,6 +412,8 @@ export default function MapasScreen({ route, navigation }) {
             fazendasPermitidas: fazendasComAcesso,
           });
           setMapas([]);
+          setCadernos([]);
+          setPeriodosProdutivos([]);
           setLimites([]);
           setAnosDisponiveis([]);
           setAnoFiltroLimite(null);
@@ -427,15 +450,25 @@ export default function MapasScreen({ route, navigation }) {
           : FILTRO_TODOS;
       });
 
-      const [todosMapas, todosLimites] = await Promise.all([
+      const [todosMapas, todosLimites, todosCadernos] = await Promise.all([
         Mapa.list(),
         LimiteArea.list(),
+        CadernoCampo.list(),
       ]);
 
       const mapasFiltrados = filtrarMapasPorFazendaIds(todosMapas, idsPermitidos, {
         somenteDisponiveisDownload: user?.perfil === 'produtor',
       });
+      const cadernosFiltrados = ordenarCadernosPorDataRecente(
+        filtrarCadernosPorFazendaIds(todosCadernos, idsPermitidos, {
+          somenteVisivelParaProdutor: user?.perfil === 'produtor',
+        })
+      );
       const limitesFiltrados = filtrarLimitesPorFazendaIds(todosLimites, idsPermitidos);
+      const periodosPromise = idsPermitidos.length > 0
+        ? Promise.all(idsPermitidos.map((id) => PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(id)))
+            .then((listas) => listas.flat())
+        : Promise.resolve([]);
       const pngImportsPromise = idsPermitidos.length > 0
         ? Promise.all(idsPermitidos.map((id) => listActivePngMapImportsForPropriedade(id)))
             .then((listas) => listas.flat())
@@ -444,7 +477,7 @@ export default function MapasScreen({ route, navigation }) {
         ? Promise.all(idsPermitidos.map((id) => listActivePrescriptionZipImportsForPropriedade(id)))
             .then((listas) => listas.flat())
         : Promise.resolve([]);
-      const [importsGeoJson, talhoesLayer, importsPng, importsPrescriptionZip] = await Promise.all([
+      const [importsGeoJson, talhoesLayer, periodosLocais, importsPng, importsPrescriptionZip] = await Promise.all([
         fazendaId && idsPermitidos.length === 1
           ? listGeoJsonImportsForPropriedade(idsPermitidos[0])
           : Promise.resolve([]),
@@ -454,11 +487,14 @@ export default function MapasScreen({ route, navigation }) {
               fazenda_id: idsPermitidos[0],
             })
           : Promise.resolve(null),
+        periodosPromise,
         pngImportsPromise,
         prescriptionZipImportsPromise,
       ]);
 
       setMapas(mapasFiltrados);
+      setCadernos(cadernosFiltrados);
+      setPeriodosProdutivos(periodosLocais);
       setLimites(limitesFiltrados);
       setGeoJsonImports(importsGeoJson);
       setPngImports(importsPng);
@@ -475,6 +511,8 @@ export default function MapasScreen({ route, navigation }) {
         return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
       });
     } catch (error) {
+      setCadernos([]);
+      setPeriodosProdutivos([]);
       setGeoJsonImports([]);
       setPngImports([]);
       setPrescriptionZipImports([]);
@@ -722,6 +760,33 @@ export default function MapasScreen({ route, navigation }) {
       .filter(cat => cat.mapas.length > 0);
   }, [mapasFiltrados]);
 
+  const periodosTalhaoConsulta = useMemo(
+    () => selectedTalhao
+      ? separarPeriodosPorTalhao(periodosProdutivos, selectedTalhao)
+      : { doTalhao: [], daPropriedade: [] },
+    [periodosProdutivos, selectedTalhao]
+  );
+  const cadernosTalhaoConsulta = useMemo(
+    () => selectedTalhao ? filtrarRegistrosDoTalhao(cadernos, selectedTalhao) : [],
+    [cadernos, selectedTalhao]
+  );
+  const materiaisTalhaoConsulta = useMemo(
+    () => selectedTalhao
+      ? separarMateriaisPorTalhao(materiaisTecnicosNoContexto, selectedTalhao)
+      : { doTalhao: [], daPropriedade: [] },
+    [materiaisTecnicosNoContexto, selectedTalhao]
+  );
+  const origemDemarcacaoTalhao = getTalhaoOrigemDemarcacaoLabel(
+    geoJsonTalhoesLayer?.source,
+    geoJsonTalhoesLocalAtivo
+  );
+  const podeCriarCadernoNoTalhao = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && podeIncluirCadernoEmFazenda(user, contextoConsulta.fazenda);
+  const podeGerenciarPeriodoNoTalhao = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && podeGerenciarPeriodoProdutivoEmFazenda(user, contextoConsulta.fazenda);
+
   // ──────────────────────────────────────────────
   // FILTROS DA DEMARCAÇÃO DO PANORAMA
   // ──────────────────────────────────────────────
@@ -958,6 +1023,88 @@ export default function MapasScreen({ route, navigation }) {
     setSelectedTalhao(talhao);
     setTalhaoDetailVisible(true);
   }, []);
+
+  const handleNovoCadernoTalhao = useCallback((talhao = selectedTalhao) => {
+    if (!consultaPorFazenda || !contextoConsulta.fazenda || !talhao) {
+      toast.showInfo('Abra uma Propriedade para registrar Caderno no Talhão.');
+      return;
+    }
+
+    if (!podeIncluirCadernoEmFazenda(user, contextoConsulta.fazenda)) {
+      toast.showWarning('Você não tem permissão para registrar Caderno neste Talhão.');
+      return;
+    }
+
+    const params = buildPropriedadeContextRouteParams(contextoConsulta.fazenda);
+    if (!params) return;
+
+    const talhaoNome = getTalhaoConsultaNome(talhao);
+    const talhaoId = getTalhaoConsultaId(talhao);
+    setTalhaoDetailVisible(false);
+    navigation.navigate('NovoCaderno', {
+      ...params,
+      talhaoId,
+      talhao_id: talhaoId,
+      talhaoNome,
+      talhao: talhaoNome,
+    });
+  }, [consultaPorFazenda, contextoConsulta.fazenda, navigation, selectedTalhao, toast, user]);
+
+  const handleNovoPeriodoTalhao = useCallback((talhao = selectedTalhao) => {
+    if (!consultaPorFazenda || !contextoConsulta.fazenda || !talhao) {
+      toast.showInfo('Abra uma Propriedade para criar Safra/Safrinha no Talhão.');
+      return;
+    }
+
+    if (!podeGerenciarPeriodoProdutivoEmFazenda(user, contextoConsulta.fazenda)) {
+      toast.showWarning('Você não tem permissão para gerenciar Safra/Safrinha neste Talhão.');
+      return;
+    }
+
+    const fazendaInfo = getFazendaUiInfo(contextoConsulta.fazenda);
+    const talhaoNome = getTalhaoConsultaNome(talhao);
+    const talhaoId = getTalhaoConsultaId(talhao);
+    setTalhaoDetailVisible(false);
+    navigation.navigate('NovoPeriodoProdutivo', {
+      fazendaId: fazendaInfo.id,
+      produtorId: fazendaInfo.id,
+      propriedadeId: fazendaInfo.id,
+      talhaoId,
+      talhao_id: talhaoId,
+      talhaoNome,
+      talhao: talhaoNome,
+    });
+  }, [consultaPorFazenda, contextoConsulta.fazenda, navigation, selectedTalhao, toast, user]);
+
+  const handleFiltrarMateriaisTalhao = useCallback((talhao = selectedTalhao) => {
+    const talhaoNome = getTalhaoConsultaNome(talhao);
+    if (!talhaoNome) return;
+    setTalhaoFiltroMapas(talhaoNome);
+    setTalhaoFiltroLimite(talhaoNome);
+    setCategoriaAtiva(FILTRO_TODOS);
+    setTalhaoDetailVisible(false);
+  }, [selectedTalhao]);
+
+  const handleVerTalhaoNoMapa = useCallback((talhao = selectedTalhao) => {
+    if (!contextoConsulta.fazenda || !talhao) return;
+
+    const talhaoNome = getTalhaoConsultaNome(talhao);
+    const params = buildFazendaMapaRouteParamsFromPropriedade(contextoConsulta.fazenda, {
+      talhaoId: getTalhaoConsultaId(talhao),
+      talhaoNome,
+      talhao: talhaoNome,
+      talhaoAno: talhao?.ano ? String(talhao.ano) : undefined,
+    });
+
+    setTalhaoDetailVisible(false);
+    navigation.navigate('FazendaMapa', params);
+  }, [contextoConsulta.fazenda, navigation, selectedTalhao]);
+
+  const handleAbrirCadernoTalhao = useCallback((registro) => {
+    if (!registro?.id) return;
+    setTalhaoDetailVisible(false);
+    navigation.navigate('CadernoDetail', { cadernoId: registro.id });
+  }, [navigation]);
 
   const handleTalhaoFiltroChange = (talhao) => {
     setTalhaoFiltroMapas(talhao);
@@ -3492,6 +3639,25 @@ export default function MapasScreen({ route, navigation }) {
       <TalhaoDetailModal
         visible={talhaoDetailVisible}
         talhao={selectedTalhao}
+        propriedadeNome={fazendaContextoInfo?.fazendaNome}
+        origemDemarcacao={origemDemarcacaoTalhao}
+        periodosTalhao={periodosTalhaoConsulta.doTalhao}
+        periodosPropriedade={periodosTalhaoConsulta.daPropriedade}
+        cadernosTalhao={cadernosTalhaoConsulta}
+        materiaisTalhao={materiaisTalhaoConsulta.doTalhao}
+        materiaisPropriedade={materiaisTalhaoConsulta.daPropriedade}
+        canCreateCaderno={podeCriarCadernoNoTalhao}
+        canManagePeriodo={podeGerenciarPeriodoNoTalhao}
+        isProdutorView={isProdutorView}
+        getCadernoTipoLabel={getCadernoTipoLabel}
+        getCadernoTalhaoLabel={getCadernoTalhaoLabel}
+        getCadernoPeriodoProdutivoLabel={getCadernoPeriodoProdutivoLabel}
+        onCreateCaderno={handleNovoCadernoTalhao}
+        onCreatePeriodo={handleNovoPeriodoTalhao}
+        onViewMateriaisTalhao={handleFiltrarMateriaisTalhao}
+        onViewMapa={handleVerTalhaoNoMapa}
+        onOpenCaderno={handleAbrirCadernoTalhao}
+        onOpenMaterial={handleDownload}
         onClose={() => {
           setTalhaoDetailVisible(false);
         }}

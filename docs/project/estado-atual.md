@@ -3063,13 +3063,71 @@ Limitacoes remanescentes:
   repetido em rodada de campo;
 - Android fisico segue pendente e nao aprovado.
 
+## Fase 17F - Talhao Como Centro De Consulta Da Propriedade
+
+Status em 2026-07-08: foi implementado um centro de consulta enxuto por
+Talhao dentro do fluxo atual de `Material tecnico`/panorama da Propriedade,
+sem criar nova modelagem pesada e sem alterar a origem dos limites/talhoes.
+
+Entregas implementadas:
+
+- a aba `Talhoes` do detalhe da Propriedade passou a indicar uma entrada clara
+  para abrir os detalhes dos Talhoes no panorama;
+- o modal de detalhe do Talhao foi enriquecido com resumo, Propriedade,
+  area/ano, origem da demarcacao segura (`Seed/mock` ou `GeoJSON local
+  ativo`), Safra/Safrinha, Caderno de Campo, Material tecnico e acoes
+  contextuais;
+- Safra/Safrinha mostra periodos especificos do Talhao e, quando nao houver,
+  periodos gerais da Propriedade com o label `Periodos da Propriedade`;
+- Caderno de Campo mostra somente registros vinculados ao Talhao; registros
+  antigos ou gerais sem Talhao nao aparecem como se fossem do Talhao;
+- Material tecnico separa materiais do Talhao e materiais da Propriedade
+  inteira, sem alterar PNG, ZIP, GeoJSON ou taxonomia principal;
+- `NovoCadernoScreen` aceita contexto de Talhao por rota, mantendo
+  Propriedade travada e preservando aliases `talhao_id`, `talhaoId`,
+  `talhao_nome` e `talhao`;
+- `PeriodoProdutivoFormScreen` aceita Talhao pre-selecionado por rota para
+  Admin/Colaborador autorizado, reaproveitando o fluxo local da Fase 17E;
+- foi criado `talhaoConsultaCompat.ts` para filtros de Talhao em periodos,
+  Caderno e materiais sem persistir coordenadas.
+
+Preservado nesta fase:
+
+- `src/api/mock.ts`, `Mapa.list`, `LimiteArea.list`, assets e seeds da Sela de
+  Prata I;
+- chaves locais `@tche:mock-mvp:v1`, `@tche:geojson-imports:v1`,
+  `@tche:png-map-imports:v1`, `@tche:prescription-zip-imports:v1` e
+  `@tche:periodos-produtivos:v1`;
+- Material tecnico restrito a Fertilidade, Correcao de solo e Prescricao;
+- ausencia de salvamento de coordenadas, GeoJSON bruto, PNG, ZIP, base64,
+  bytes, binario ou arquivo bruto em AsyncStorage;
+- ausencia de localizacao em tempo real, marcacao geografica, edicao de
+  limites, georreferenciamento de PNG, unzip/processamento de ZIP, backend,
+  RBAC real, sync, upload/download remoto ou storage remoto.
+
+Validacoes automaticas executadas nesta frente:
+
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `node tests/talhaoConsultaCompat.test.js`;
+- `node tests/cadernoFormCompat.test.js`.
+
+Limitacoes remanescentes:
+
+- smoke visual 17F em emulador ainda deve ser executado para Produtor,
+  Colaborador e Admin;
+- regressao individual de PNG, ZIP de Prescricao e GeoJSON/talhoes ainda deve
+  ser repetida na rodada visual;
+- Android fisico segue pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
 Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar
 um aparelho fisico com depuracao USB ativa, aceitar a chave RSA no aparelho,
 confirmar `adb devices -l` com status `device`, instalar o APK release atual e
-executar o roteiro manual completo de Caderno, Safra/Safrinha, Material
-tecnico, DocumentPicker, persistencia local e talhoes. A divergencia conhecida
+executar o roteiro manual completo de Caderno, Safra/Safrinha, consulta por
+Talhao, Material tecnico, DocumentPicker, persistencia local e talhoes. A
+divergencia conhecida
 `expo@56.0.11`, esperado `~56.0.14`, segue aceita temporariamente e deve ser
 tratada em fase propria de alinhamento de SDK, sem misturar com validacao
 funcional.

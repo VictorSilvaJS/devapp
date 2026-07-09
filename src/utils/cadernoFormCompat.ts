@@ -66,6 +66,7 @@ type BuildCadernoPayloadInput = {
   fazendaId: string;
   dataAtividade: Date | null;
   tipoAtividade: string;
+  talhaoId?: string;
   talhao?: string;
   produtosText?: string;
   dosagem?: string;
@@ -247,6 +248,7 @@ export const buildCadernoPayload = ({
   fazendaId,
   dataAtividade,
   tipoAtividade,
+  talhaoId = '',
   talhao = '',
   produtosText = '',
   dosagem = '',
@@ -268,13 +270,18 @@ export const buildCadernoPayload = ({
     return null;
   }
 
+  const talhaoNome = trimOrUndefined(talhao);
+  const talhaoIdNormalizado = trimOrUndefined(talhaoId);
   const payload: Record<string, any> = {
     fazenda_id: fazendaId,
     fazendaId,
     colaborador_responsavel: trimOrUndefined(colaboradorResponsavel) || 'Sistema',
     data_atividade: dataAtividade.toISOString(),
     tipo_atividade: tipoAtividade,
-    talhao: trimOrUndefined(talhao),
+    talhao: talhaoNome,
+    talhao_nome: talhaoNome,
+    talhao_id: talhaoNome ? talhaoIdNormalizado : undefined,
+    talhaoId: talhaoNome ? talhaoIdNormalizado : undefined,
     produtos_utilizados: parseCadernoProdutos(produtosText),
     dosagem: trimOrUndefined(dosagem),
     area_aplicada: areaAplicada,

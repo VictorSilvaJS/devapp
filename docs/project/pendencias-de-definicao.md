@@ -131,6 +131,15 @@ forma manual, registrar Caderno pelo Produtor com vinculo de periodo,
 revalidar PNG/ZIP individualmente e executar a rodada completa em Android
 fisico autorizado.
 
+Status em 2026-07-08 (Fase 17F): Talhao passou a funcionar como centro de
+consulta local dentro da Propriedade, reunindo periodos, Caderno e materiais
+relacionados sem persistir coordenadas ou criar nova modelagem produtiva.
+Caderno criado pelo contexto de Talhao preserva Propriedade travada e aliases
+de Talhao quando existirem. A pendencia permanece aberta porque o detalhe final
+do Caderno, regras de edicao/remocao pelo Produtor, auditoria, aprovacao,
+backend/RBAC real, sync e validacao visual completa em emulador/Android fisico
+ainda nao foram fechados.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -176,6 +185,12 @@ fertilidade/PNG permaneceram listados e GeoJSON/talhoes foram renderizados. A
 reabertura individual de anexos PNG e do detalhe de ZIP de Prescricao nao foi
 repetida nesta rodada e deve continuar no roteiro de Android fisico.
 
+Status em 2026-07-08 (Fase 17F): o detalhe do Talhao passou a separar
+materiais especificos do Talhao e materiais de Propriedade inteira, mantendo
+os tres tipos principais da taxonomia atual: Fertilidade, Correcao de solo e
+Prescricao. Isso nao fecha a taxonomia final, nao cria georreferenciamento de
+PNG, nao processa ZIP e nao altera o pipeline produtivo de mapas/arquivos.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
@@ -192,6 +207,13 @@ A pendencia permanece aberta porque isso nao fecha a experiencia final do
 produto, nao define backend/RBAC real, nao fecha matriz completa de permissoes
 por acao e ainda exige smoke visual em emulador e validacao final em Android
 fisico.
+
+Status em 2026-07-08 (Fase 17F): a experiencia do Produtor ganhou consulta
+por Talhao com resumo, Safra/Safrinha, Caderno e Material tecnico relacionados
+no contexto da propria Propriedade. A pendencia permanece aberta para validar
+o fluxo visual completo em emulador e Android fisico, incluindo Produtor
+registrando Caderno pelo Talhao e sem acesso a acoes administrativas de
+periodo/material.
 
 ### 6. Revisao do fluxo de cadastro de Propriedade e Produtor
 

@@ -919,6 +919,20 @@ export default function ProdutorScreen({ route, navigation }) {
         {activeTab === 'lavoura' && (
           <View style={styles.tabContent}>
             <SectionCard
+              title="Talhões da Propriedade"
+              subtitle="Abra um Talhão para consultar Safra/Safrinha, Caderno e materiais relacionados."
+              icon="git-network-outline"
+              actionLabel="Abrir detalhes"
+              actionIcon="chevron-forward-outline"
+              onActionPress={() => navigation.navigate('Mapas', mapasRouteParams)}
+            >
+              <InfoBox
+                message={`${limites.length} talhão${limites.length !== 1 ? 'es' : ''} disponível${limites.length !== 1 ? 'is' : ''} para consulta no panorama da Propriedade.`}
+                style={styles.infoBox}
+              />
+            </SectionCard>
+
+            <SectionCard
               title="Safras e Safrinha"
               subtitle="Organização local e opcional dos ciclos produtivos da Propriedade."
               icon="calendar-outline"

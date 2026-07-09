@@ -51,6 +51,7 @@ export default function NovoCadernoScreen() {
     || route.params?.produtorId
     || route.params?.propriedadeId
     || route.params?.fazenda_id;
+  const routeTalhaoId = route.params?.talhaoId || route.params?.talhao_id || '';
   const routeTalhao = route.params?.talhaoNome || route.params?.talhao || '';
   const isProdutorView = user?.perfil === 'produtor';
   const responsavelInicial = user?.nome || user?.full_name || '';
@@ -231,6 +232,7 @@ export default function NovoCadernoScreen() {
         fazendaId,
         dataAtividade,
         tipoAtividade,
+        talhaoId: routeTalhaoId,
         talhao,
         produtosText,
         dosagem,

@@ -78,10 +78,38 @@ function classificarElemento(nome, valor) {
  * - talhao: objeto do talhão (limite de área)
  * - onClose: callback para fechar
  */
-export default function TalhaoDetailModal({ visible, talhao, onClose }) {
+export default function TalhaoDetailModal({
+  visible,
+  talhao,
+  propriedadeNome,
+  origemDemarcacao,
+  periodosTalhao = [],
+  periodosPropriedade = [],
+  cadernosTalhao = [],
+  materiaisTalhao = [],
+  materiaisPropriedade = [],
+  canCreateCaderno = false,
+  canManagePeriodo = false,
+  isProdutorView = false,
+  getCadernoTipoLabel,
+  getCadernoTalhaoLabel,
+  getCadernoPeriodoProdutivoLabel,
+  onCreateCaderno,
+  onCreatePeriodo,
+  onViewMateriaisTalhao,
+  onViewMapa,
+  onOpenCaderno,
+  onOpenMaterial,
+  onClose,
+}) {
   if (!talhao) return null;
 
   const elementos = talhao.elementos || {};
+  const periodosDiretos = periodosTalhao || [];
+  const periodosGerais = periodosPropriedade || [];
+  const cadernos = cadernosTalhao || [];
+  const materiaisDiretos = materiaisTalhao || [];
+  const materiaisGerais = materiaisPropriedade || [];
   
   const elementosConfig = [
     { key: 'ph', nome: 'pH', unidade: '', icon: 'flask-outline' },
@@ -100,6 +128,102 @@ export default function TalhaoDetailModal({ visible, talhao, onClose }) {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleDateString('pt-BR');
   };
+
+  const formatShortDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  const getPeriodoStatusLabel = (status) => {
+    if (status === 'em_andamento') return 'Em andamento';
+    if (status === 'encerrada') return 'Encerrada';
+    return 'Planejada';
+  };
+
+  const getMaterialCategoriaLabel = (material) => {
+    if (material?.categoria === 'correcao') return 'Correção de solo';
+    if (material?.categoria === 'prescricao') return 'Prescrição';
+    return 'Fertilidade';
+  };
+
+  const renderPeriodoItem = (periodo) => (
+    <TouchableOpacity
+      key={periodo.id}
+      style={styles.contextItem}
+      activeOpacity={canManagePeriodo && onCreatePeriodo ? 0.82 : 1}
+      disabled
+    >
+      <View style={styles.contextIcon}>
+        <Ionicons
+          name={periodo.tipo_periodo === 'safrinha' ? 'repeat-outline' : 'leaf-outline'}
+          size={16}
+          color={colors.primary}
+        />
+      </View>
+      <View style={styles.contextText}>
+        <Text style={styles.contextTitle} numberOfLines={1}>
+          {periodo.label || 'Safra/Safrinha'}
+        </Text>
+        <Text style={styles.contextMeta} numberOfLines={1}>
+          {[periodo.cultura, periodo.ano_agricola, getPeriodoStatusLabel(periodo.status)].filter(Boolean).join(' • ')}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderCadernoItem = (registro) => (
+    <TouchableOpacity
+      key={registro.id}
+      style={styles.contextItem}
+      activeOpacity={0.82}
+      onPress={() => onOpenCaderno?.(registro)}
+    >
+      <View style={styles.contextIcon}>
+        <Ionicons name="book-outline" size={16} color={colors.primary} />
+      </View>
+      <View style={styles.contextText}>
+        <Text style={styles.contextTitle} numberOfLines={1}>
+          {getCadernoTipoLabel?.(registro.tipo_atividade) || registro.tipo_atividade || 'Registro'}
+        </Text>
+        <Text style={styles.contextMeta} numberOfLines={1}>
+          {[
+            formatShortDate(registro.data_atividade),
+            getCadernoTalhaoLabel?.(registro),
+            getCadernoPeriodoProdutivoLabel?.(registro),
+          ].filter(Boolean).join(' • ')}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward-outline" size={16} color={colors.muted} />
+    </TouchableOpacity>
+  );
+
+  const renderMaterialItem = (material) => (
+    <TouchableOpacity
+      key={material.id}
+      style={styles.contextItem}
+      activeOpacity={0.82}
+      onPress={() => onOpenMaterial?.(material)}
+    >
+      <View style={styles.contextIcon}>
+        <Ionicons name={material?.categoria === 'prescricao' ? 'map-outline' : 'images-outline'} size={16} color={colors.primary} />
+      </View>
+      <View style={styles.contextText}>
+        <Text style={styles.contextTitle} numberOfLines={1}>
+          {material.titulo || 'Material técnico'}
+        </Text>
+        <Text style={styles.contextMeta} numberOfLines={1}>
+          {[getMaterialCategoriaLabel(material), material.safra || material.ano, material.talhao_nome || material.talhao].filter(Boolean).join(' • ')}
+        </Text>
+      </View>
+      <Ionicons name="open-outline" size={16} color={colors.muted} />
+    </TouchableOpacity>
+  );
 
   return (
     <Modal
@@ -145,6 +269,109 @@ export default function TalhaoDetailModal({ visible, talhao, onClose }) {
                 <Text style={styles.infoValue}>{talhao.ano || '-'}</Text>
                 <Text style={styles.infoLabel}>Ano</Text>
               </View>
+            </View>
+
+            {/* Resumo do Talhão */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.primary} /> Resumo do Talhão
+              </Text>
+              <View style={styles.soloInfo}>
+                <View style={styles.soloRow}>
+                  <Text style={styles.soloLabel}>Propriedade:</Text>
+                  <Text style={styles.soloValue}>{propriedadeNome || 'Não informada'}</Text>
+                </View>
+                <View style={styles.soloRow}>
+                  <Text style={styles.soloLabel}>Identificação:</Text>
+                  <Text style={styles.soloValue}>{talhao.talhao || talhao.nome || 'Talhão sem nome'}</Text>
+                </View>
+                <View style={styles.soloRow}>
+                  <Text style={styles.soloLabel}>Origem:</Text>
+                  <Text style={styles.soloValue}>{origemDemarcacao || 'Seed/mock'}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Ações contextuais */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                <Ionicons name="flash-outline" size={18} color={colors.primary} /> Ações contextuais
+              </Text>
+              <View style={styles.actionGrid}>
+                {canCreateCaderno ? (
+                  <TouchableOpacity style={styles.actionButton} onPress={() => onCreateCaderno?.(talhao)}>
+                    <Ionicons name="book-outline" size={18} color={colors.white} />
+                    <Text style={styles.actionButtonText}>Registrar no Caderno</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {canManagePeriodo ? (
+                  <TouchableOpacity style={styles.secondaryActionButton} onPress={() => onCreatePeriodo?.(talhao)}>
+                    <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+                    <Text style={styles.secondaryActionText}>Nova Safra/Safrinha</Text>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity style={styles.secondaryActionButton} onPress={() => onViewMateriaisTalhao?.(talhao)}>
+                  <Ionicons name="images-outline" size={18} color={colors.primary} />
+                  <Text style={styles.secondaryActionText}>Ver materiais do Talhão</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.secondaryActionButton} onPress={() => onViewMapa?.(talhao)}>
+                  <Ionicons name="map-outline" size={18} color={colors.primary} />
+                  <Text style={styles.secondaryActionText}>Ver no mapa</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Safra/Safrinha */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                <Ionicons name="calendar-outline" size={18} color={colors.primary} /> Safra/Safrinha
+              </Text>
+              {periodosDiretos.length > 0 ? (
+                periodosDiretos.slice(0, 3).map(renderPeriodoItem)
+              ) : periodosGerais.length > 0 ? (
+                <View>
+                  <Text style={styles.contextHint}>Períodos da Propriedade</Text>
+                  {periodosGerais.slice(0, 3).map(renderPeriodoItem)}
+                </View>
+              ) : (
+                <Text style={styles.emptyContextText}>
+                  Nenhuma Safra/Safrinha vinculada a este Talhão ou à Propriedade.
+                </Text>
+              )}
+            </View>
+
+            {/* Caderno de Campo */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                <Ionicons name="book-outline" size={18} color={colors.primary} /> Caderno de Campo
+              </Text>
+              {cadernos.length > 0 ? (
+                cadernos.slice(0, 4).map(renderCadernoItem)
+              ) : (
+                <Text style={styles.emptyContextText}>
+                  Nenhum registro de Caderno vinculado diretamente a este Talhão.
+                </Text>
+              )}
+            </View>
+
+            {/* Material técnico */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                <Ionicons name="images-outline" size={18} color={colors.primary} /> Material técnico
+              </Text>
+              {materiaisDiretos.length > 0 ? (
+                materiaisDiretos.slice(0, 3).map(renderMaterialItem)
+              ) : (
+                <Text style={styles.emptyContextText}>
+                  Nenhum material técnico específico deste Talhão.
+                </Text>
+              )}
+              {materiaisGerais.length > 0 ? (
+                <View style={styles.contextGroup}>
+                  <Text style={styles.contextHint}>Materiais da Propriedade inteira</Text>
+                  {materiaisGerais.slice(0, 3).map(renderMaterialItem)}
+                </View>
+              ) : null}
             </View>
 
             {/* Características do Solo */}
@@ -341,6 +568,89 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightBold,
     color: colors.text,
     marginBottom: spacing.md,
+  },
+  actionGrid: {
+    gap: spacing.sm,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: spacing.radiusSm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  actionButtonText: {
+    color: colors.white,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
+  },
+  secondaryActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+  },
+  secondaryActionText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
+  },
+  contextItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.sm + 2,
+    marginBottom: spacing.sm,
+  },
+  contextIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contextText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  contextTitle: {
+    fontSize: typography.fontBody - 1,
+    color: colors.text,
+    fontWeight: typography.weightBold,
+  },
+  contextMeta: {
+    marginTop: 2,
+    fontSize: typography.fontCaption,
+    color: colors.muted,
+  },
+  contextHint: {
+    fontSize: typography.fontCaption,
+    color: colors.primary,
+    fontWeight: typography.weightBold,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+  },
+  contextGroup: {
+    marginTop: spacing.sm,
+  },
+  emptyContextText: {
+    fontSize: typography.fontBody - 1,
+    color: colors.muted,
+    lineHeight: 20,
   },
   soloInfo: {
     backgroundColor: colors.backgroundAlt,
