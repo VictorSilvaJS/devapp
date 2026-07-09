@@ -148,6 +148,14 @@ submissao visual completa do Caderno pelo Talhao, repeticao com
 Colaborador/Admin, reabertura individual de PNG/ZIP e validacao em Android
 fisico autorizado.
 
+Status em 2026-07-09 (Fase 17F.2): o ambiente do emulador foi corrigido e o
+APK release atual foi instalado. O smoke em emulador fechou o fluxo principal
+do Produtor registrando Caderno pelo Talhao `T01 - 230` e validou a consulta
+do Colaborador dentro do escopo da Sela de Prata I. A pendencia permanece
+aberta para criacao de Caderno pelo Talhao como Colaborador, validacao manual
+de Admin, reabertura individual de PNG/ZIP apos recriar imports locais e
+validacao em Android fisico autorizado.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -204,6 +212,13 @@ local dos Talhoes foram reabertos no emulador como Produtor, com GeoJSON local
 ativo e Talhoes renderizados. PNG e ZIP individuais nao foram reabertos nesta
 rodada e seguem no roteiro de repeticao.
 
+Status em 2026-07-09 (Fase 17F.2): apos a correcao de espaco do emulador, o
+estado local do app foi reiniciado. O Material tecnico abriu novamente na Sela
+de Prata I, com filtros de Demarcacao, Talhao e Safra e estado vazio de
+GeoJSON local. Isso nao invalida as aprovacoes anteriores de GeoJSON/PNG/ZIP,
+mas exige recriar imports locais para repetir a reabertura individual de PNG e
+ZIP. Android fisico segue pendente e nao aprovado.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
@@ -233,6 +248,12 @@ emulador consultando o Talhao `T01 - 230`, sem acao de criacao de
 Safra/Safrinha, e abrindo Novo Caderno com Talhao preenchido. O salvamento
 visual completo do Caderno pelo Talhao ainda deve ser reexecutado, assim como
 a validacao em Android fisico.
+
+Status em 2026-07-09 (Fase 17F.2): Produtor salvou um registro de Caderno a
+partir do Talhao `T01 - 230`; o detalhe exibiu Propriedade, Talhao, autoria do
+Produtor e nao exibiu editar/remover. A experiencia do Produtor em emulador
+fica coberta para esse fluxo principal, mas Android fisico segue pendente e
+nao aprovado.
 
 ### 6. Revisao do fluxo de cadastro de Propriedade e Produtor
 

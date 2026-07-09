@@ -178,7 +178,7 @@ export default function DashboardScreen() {
   const escopoLabel = isAdmin
     ? getFiltroAtivo()
     : user?.regiao
-      ? `${user.regiao} • ${microregioes.length} microrregião${microregioes.length === 1 ? '' : 'ões'}`
+      ? `${user.regiao} • ${microregioes.length} ${microregioes.length === 1 ? 'microrregião' : 'microrregiões'}`
       : 'Região não definida';
 
   if (isLoading) {

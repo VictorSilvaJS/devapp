@@ -3145,8 +3145,8 @@ Validado visualmente como Produtor:
 
 Ajuste pequeno aplicado durante o smoke:
 
-- correcao de pluralizacao visual de `talhãoes/disponívelis` para
-  `talhões/disponíveis` na aba do Produtor e no resumo do mapa legado.
+- correcao de pluralizacao visual de Talhoes/disponiveis na aba do Produtor e
+  no resumo do mapa legado.
 
 Continuam pendentes:
 
@@ -3157,6 +3157,54 @@ Continuam pendentes:
 - reabertura individual de PNG e ZIP de Prescricao nesta rodada;
 - instalacao/repeticao no Android fisico. Android fisico segue pendente e nao
   aprovado.
+
+## Fase 17F.2 - Fechamento Do Smoke Do Talhao Em Emulador
+
+Status em 2026-07-09: o ambiente do emulador `emulator-5554`
+(`Pixel_Tablet`) foi corrigido para permitir a instalacao do APK release atual.
+A causa operacional era falta de espaco em `/data`. A correcao foi limitada ao
+ambiente de teste: limpeza/desinstalacao do pacote do app e remocao do Expo Go
+no emulador, sem wipe do AVD e sem upgrade de SDK/dependencias. Como efeito
+colateral, o estado local do app foi reiniciado; por isso importacoes locais
+anteriores de GeoJSON, PNG e ZIP nao estavam presentes nesta rodada.
+
+Validado em emulador depois da reinstalacao do APK release:
+
+- Produtor abriu `Fazenda Sela de Prata I`, aba `Talhoes`, Material tecnico e
+  modal do Talhao `T01 - 230`;
+- Produtor nao viu acao administrativa `Nova Safra/Safrinha`;
+- `Registrar no Caderno` pelo Talhao abriu `NovoCadernoScreen` com
+  Propriedade travada, Talhao `T01 - 230` e Safra/Safrinha opcional;
+- registro de Caderno salvo pelo Produtor abriu detalhe com Propriedade,
+  Talhao, autoria `Registrado pelo produtor` e sem acoes de editar/remover;
+- Colaborador abriu Dashboard, lista de Propriedades, Sela de Prata I no
+  escopo, detalhe da Propriedade, aba `Talhoes` e Material tecnico;
+- Colaborador viu `15 talhoes disponiveis para consulta no panorama da
+  Propriedade`, acao autorizada de Safra/Safrinha e filtros de Material
+  tecnico por Demarcacao, Talhao e Safra;
+- Material tecnico exibiu estado vazio de GeoJSON local apos a limpeza do
+  ambiente, sem reimportar arquivos nesta fase;
+- pluralizacao visual de microrregioes no Dashboard do Colaborador foi
+  corrigida.
+
+Validacoes tecnicas executadas:
+
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `.\gradlew.bat :app:assembleRelease`;
+- instalacao do APK release por `adb install -r`;
+- dumps de UI por `uiautomator` no emulador.
+
+Continuam pendentes:
+
+- reabrir individualmente PNG local e ZIP de Prescricao apos recriar/importar
+  esses arquivos no estado local do emulador;
+- repetir a criacao de Caderno pelo Talhao como Colaborador e a validacao
+  manual de Admin;
+- executar a validacao em Android fisico autorizado. Android fisico segue
+  pendente e nao aprovado;
+- manter a divergencia conhecida `expo@56.0.11`, esperado `~56.0.14`, para
+  fase propria de alinhamento, sem misturar com este fechamento funcional.
 
 ## Proximo Passo Recomendado
 
