@@ -140,6 +140,14 @@ do Caderno, regras de edicao/remocao pelo Produtor, auditoria, aprovacao,
 backend/RBAC real, sync e validacao visual completa em emulador/Android fisico
 ainda nao foram fechados.
 
+Status em 2026-07-09 (Fase 17F.1): o smoke visual em emulador validou para
+Produtor a entrada por Propriedade/Talhao, o modal do Talhao, a consulta de
+Safra/Safrinha sem criacao de periodo e a abertura de Novo Caderno com
+Propriedade travada e Talhao preenchido. A pendencia permanece aberta para
+submissao visual completa do Caderno pelo Talhao, repeticao com
+Colaborador/Admin, reabertura individual de PNG/ZIP e validacao em Android
+fisico autorizado.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -191,6 +199,11 @@ os tres tipos principais da taxonomia atual: Fertilidade, Correcao de solo e
 Prescricao. Isso nao fecha a taxonomia final, nao cria georreferenciamento de
 PNG, nao processa ZIP e nao altera o pipeline produtivo de mapas/arquivos.
 
+Status em 2026-07-09 (Fase 17F.1): o panorama do Material tecnico e o mapa
+local dos Talhoes foram reabertos no emulador como Produtor, com GeoJSON local
+ativo e Talhoes renderizados. PNG e ZIP individuais nao foram reabertos nesta
+rodada e seguem no roteiro de repeticao.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
@@ -214,6 +227,12 @@ no contexto da propria Propriedade. A pendencia permanece aberta para validar
 o fluxo visual completo em emulador e Android fisico, incluindo Produtor
 registrando Caderno pelo Talhao e sem acesso a acoes administrativas de
 periodo/material.
+
+Status em 2026-07-09 (Fase 17F.1): Produtor foi validado visualmente no
+emulador consultando o Talhao `T01 - 230`, sem acao de criacao de
+Safra/Safrinha, e abrindo Novo Caderno com Talhao preenchido. O salvamento
+visual completo do Caderno pelo Talhao ainda deve ser reexecutado, assim como
+a validacao em Android fisico.
 
 ### 6. Revisao do fluxo de cadastro de Propriedade e Produtor
 

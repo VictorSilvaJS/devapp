@@ -22,6 +22,17 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 
 **Rodada Fase 17F - Talhao Como Centro De Consulta Da Propriedade**
 
+Observacao geral em 2026-07-09 (Fase 17F.1): smoke visual iniciado no
+emulador `emulator-5554` (`Pixel_Tablet`) com APK release ja instalado. A
+reinstalacao do APK release gerado ficou bloqueada por falta de espaco em
+`/data` no emulador; o pacote existente abriu normalmente. Validado como
+Produtor: Propriedade Sela de Prata I, aba Talhoes, panorama/Material tecnico,
+mapa local dos Talhoes, modal do Talhao `T01 - 230`, consulta de
+Safra/Safrinha sem acao de criacao de periodo, e abertura de Novo Caderno com
+Propriedade travada e Talhao preenchido. O salvamento completo do Caderno pelo
+Talhao, os perfis Colaborador/Admin e a reabertura individual de PNG/ZIP ainda
+devem ser reexecutados. Android fisico segue pendente e nao aprovado.
+
 Observacao geral: checklist para validar a consulta por Talhao dentro da
 Propriedade. A implementacao reutiliza o panorama/Material tecnico e guarda
 somente metadados ja existentes; nao salva coordenadas, GeoJSON bruto, PNG,
@@ -32,15 +43,15 @@ upload/download remoto ou storage remoto. Android fisico segue pendente.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
-| 17F-01 | P0 | Produtor | Propriedade | Abrir Sela de Prata I > Talhoes > detalhes de um Talhao | Modal mostra resumo, Propriedade, area/ano e origem segura da demarcacao | Reexecutar | Validar em emulador |
-| 17F-02 | P0 | Produtor | Safra/Safrinha | Consultar bloco do Talhao | Mostra periodos do Talhao ou `Periodos da Propriedade`; sem criar/editar periodo | Reexecutar | Produtor apenas consulta |
-| 17F-03 | P0 | Produtor | Caderno | Registrar no Caderno pelo Talhao | Novo Caderno abre com Propriedade travada, Talhao preenchido e periodo opcional | Reexecutar | Deve preservar `fazenda_id`/`fazendaId` e aliases de Talhao |
-| 17F-04 | P0 | Produtor | Caderno | Salvar registro do Talhao e voltar ao detalhe/lista | Registro aparece no Talhao; registros sem Talhao nao aparecem como especificos | Reexecutar | Preservar visibilidade do Produtor |
+| 17F-01 | P0 | Produtor | Propriedade | Abrir Sela de Prata I > Talhoes > detalhes de um Talhao | Modal mostra resumo, Propriedade, area/ano e origem segura da demarcacao | Passou | Emulador: modal `T01 - 230` abriu com Propriedade, area, ano e origem `GeoJSON local ativo` |
+| 17F-02 | P0 | Produtor | Safra/Safrinha | Consultar bloco do Talhao | Mostra periodos do Talhao ou `Periodos da Propriedade`; sem criar/editar periodo | Passou | Produtor viu periodo da Propriedade e nao viu `Nova Safra/Safrinha` |
+| 17F-03 | P0 | Produtor | Caderno | Registrar no Caderno pelo Talhao | Novo Caderno abre com Propriedade travada, Talhao preenchido e periodo opcional | Passou | Emulador: Propriedade travada em Sela de Prata I e campo Talhao preenchido com `T01 - 230` |
+| 17F-04 | P0 | Produtor | Caderno | Salvar registro do Talhao e voltar ao detalhe/lista | Registro aparece no Talhao; registros sem Talhao nao aparecem como especificos | Reexecutar | Abertura/preenchimento validado; submissao visual completa deve ser repetida |
 | 17F-05 | P0 | Colaborador | Talhao | Abrir Talhao dentro do escopo e criar Caderno | Colaborador ve contexto e salva Caderno no Talhao correto | Reexecutar | Colaborador fora do escopo continua bloqueado por acesso da Propriedade |
 | 17F-06 | P0 | Admin/Colaborador | Safra/Safrinha | Criar periodo pelo Talhao | Formulario reaproveitado abre com Propriedade travada e Talhao pre-selecionado | Reexecutar | Sem duplicar fluxo de periodo |
-| 17F-07 | P0 | Todos | Material tecnico | Abrir materiais do Talhao e Propriedade inteira | Materiais especificos e gerais aparecem separados; Produtor sem acoes administrativas | Reexecutar | Manter Fertilidade, Correcao de solo e Prescricao |
-| 17F-08 | P0 | Todos | Regressao | Reabrir PNG, ZIP e GeoJSON/talhoes | PNG abre como imagem; ZIP detalha sem unzip; Talhoes renderizam | Reexecutar | Nao alterar `Mapa.list`/`LimiteArea.list` |
-| 17F-09 | P0 | Todos | Storage | Auditar storage local | Nenhuma coordenada, GeoJSON bruto, PNG, ZIP, base64, bytes ou binario salvo em AsyncStorage | Reexecutar | Validar por testes e busca textual |
+| 17F-07 | P0 | Todos | Material tecnico | Abrir materiais do Talhao e Propriedade inteira | Materiais especificos e gerais aparecem separados; Produtor sem acoes administrativas | Reexecutar | Produtor validado parcialmente; perfis Colaborador/Admin e detalhe de materiais devem ser repetidos |
+| 17F-08 | P0 | Todos | Regressao | Reabrir PNG, ZIP e GeoJSON/talhoes | PNG abre como imagem; ZIP detalha sem unzip; Talhoes renderizam | Reexecutar | GeoJSON/talhoes renderizaram; PNG e ZIP individuais devem ser repetidos |
+| 17F-09 | P0 | Todos | Storage | Auditar storage local | Nenhuma coordenada, GeoJSON bruto, PNG, ZIP, base64, bytes ou binario salvo em AsyncStorage | Passou | Coberto por testes de dominio e busca textual nos arquivos alterados |
 | 17F-10 | P0 | Todos | Android fisico | Instalar APK e repetir casos em aparelho | Passa em Android fisico autorizado | Reexecutar | Android fisico segue pendente e nao aprovado |
 
 **Rodada Fase 17E - Safra/Safrinha Local E Opcional**

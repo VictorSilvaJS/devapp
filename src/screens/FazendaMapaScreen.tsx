@@ -386,7 +386,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const contextoCabecalho = consultaPorFazenda
     ? `Titular: ${titularNome || 'Não informado'}`
     : `${fazendasContexto.length} propriedade${fazendasContexto.length !== 1 ? 's' : ''} no escopo`;
-  const resumoTalhoes = `${talhoesExibidos.length} talhão${talhoesExibidos.length !== 1 ? 'es' : ''}  ·  ${fmt(areaTotal)} ha`;
+  const resumoTalhoes = `${talhoesExibidos.length} ${talhoesExibidos.length === 1 ? 'talhão' : 'talhões'}  ·  ${fmt(areaTotal)} ha`;
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
         icon: 'lock-closed-outline',

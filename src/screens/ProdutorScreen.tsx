@@ -927,7 +927,7 @@ export default function ProdutorScreen({ route, navigation }) {
               onActionPress={() => navigation.navigate('Mapas', mapasRouteParams)}
             >
               <InfoBox
-                message={`${limites.length} talhão${limites.length !== 1 ? 'es' : ''} disponível${limites.length !== 1 ? 'is' : ''} para consulta no panorama da Propriedade.`}
+                message={`${limites.length} ${limites.length === 1 ? 'talhão disponível' : 'talhões disponíveis'} para consulta no panorama da Propriedade.`}
                 style={styles.infoBox}
               />
             </SectionCard>

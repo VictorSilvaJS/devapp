@@ -3120,6 +3120,44 @@ Limitacoes remanescentes:
   ser repetida na rodada visual;
 - Android fisico segue pendente e nao aprovado.
 
+## Fase 17F.1 - Smoke Visual Do Talhao Como Centro De Consulta
+
+Status em 2026-07-09: smoke visual executado parcialmente no emulador
+`emulator-5554` (`Pixel_Tablet`) sobre o APK release ja instalado. A
+reinstalacao do APK release atual nao foi concluida porque o emulador estava
+com `/data` quase cheio e `adb install -r` retornou
+`INSTALL_FAILED_INSUFFICIENT_STORAGE`; o app existente abriu normalmente.
+
+Validado visualmente como Produtor:
+
+- entrada pela Propriedade `Fazenda Sela de Prata I` e aba `Talhoes`;
+- panorama `Material tecnico` com filtros de Talhao/Safra, indicador de
+  demarcacao e estatisticas de 15 Talhoes/1888.6 ha/7 materiais;
+- mapa local dos Talhoes renderizado no proprio panorama;
+- modal do Talhao `T01 - 230` com Propriedade, area, ano e origem
+  `GeoJSON local ativo`;
+- Produtor com `Registrar no Caderno`, `Ver materiais do Talhao` e `Ver no
+  mapa`, sem acao `Nova Safra/Safrinha`;
+- bloco `Safra/Safrinha` em modo de consulta, exibindo periodo da
+  Propriedade;
+- abertura de `Registrar no Caderno` a partir do Talhao com Propriedade
+  travada em Sela de Prata I e campo `Talhao` preenchido com `T01 - 230`.
+
+Ajuste pequeno aplicado durante o smoke:
+
+- correcao de pluralizacao visual de `talhãoes/disponívelis` para
+  `talhões/disponíveis` na aba do Produtor e no resumo do mapa legado.
+
+Continuam pendentes:
+
+- submissao visual completa do Caderno pelo Talhao e retorno para conferir o
+  registro no detalhe/lista;
+- repeticao visual com Colaborador e Admin para Caderno e Safra/Safrinha pelo
+  Talhao;
+- reabertura individual de PNG e ZIP de Prescricao nesta rodada;
+- instalacao/repeticao no Android fisico. Android fisico segue pendente e nao
+  aprovado.
+
 ## Proximo Passo Recomendado
 
 Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar
