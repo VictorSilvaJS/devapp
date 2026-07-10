@@ -3227,10 +3227,12 @@ Diagnostico registrado:
   tecnico e consulta por Talhao, nao como ponto primario recomendado para GPS;
 - `GeoJsonTalhoesLayerService` decide entre seed/mock e GeoJSON local ativo,
   sem persistir Talhoes normalizados;
-- `package.json` possui `react-native-maps`, mas nao possui `expo-location`;
-- `app.json` nao possui configuracao de permissao de localizacao.
+- naquele momento, `package.json` possuia `react-native-maps`, mas nao possuia
+  `expo-location`;
+- naquele momento, `app.json` nao possuia configuracao de permissao de
+  localizacao.
 
-Recomendacao para 17G.1:
+Recomendacao registrada na analise 17G.0:
 
 - implementar, se aprovado depois, uma versao minima no
   `FazendaMapaScreen`/`MapaFazendaView` atual;
@@ -3243,12 +3245,87 @@ Recomendacao para 17G.1:
 
 Continuam pendentes:
 
-- aprovar explicitamente a dependencia de localizacao antes da implementacao;
+- validar a dependencia de localizacao no build e smoke da implementacao 17G.1;
 - confirmar Android fisico para smoke de permissao, precisao e consumo;
 - manter PNG/ZIP como materiais nao georreferenciados;
 - repetir Material tecnico, PNG, ZIP e GeoJSON local em rodada propria depois
   da limpeza do estado do emulador;
 - Android fisico segue pendente e nao aprovado.
+
+## Fase 17G.1 - Localizacao Foreground No Mapa De Talhoes
+
+Status em 2026-07-09: implementada a primeira visualizacao de localizacao
+foreground no mapa de Talhoes da Propriedade, sobre o fluxo ativo
+`FazendaMapaScreen` + `MapaFazendaView` com WebView/Leaflet.
+
+O que mudou:
+
+- `expo-location@~56.0.20` foi instalado com
+  `npx expo install expo-location`;
+- `app.json` recebeu texto de permissao foreground e configuracao sem
+  background location;
+- foi criado `src/services/LocationForegroundService.ts` para solicitar
+  permissao foreground sob demanda, verificar servicos de localizacao e obter
+  uma leitura atual controlada;
+- `FazendaMapaScreen` recebeu o botao `Mostrar minha posicao`, visivel apenas
+  quando ha contexto de Propriedade e Talhoes exibidos;
+- a coordenada fica somente em state React e e descartada naturalmente ao sair
+  da tela ou trocar de Propriedade;
+- `MapaFazendaView` recebeu a prop transiente `userLocation` e injeta no
+  Leaflet um payload serializado com latitude, longitude, accuracy e
+  `capturedAt`;
+- o Leaflet cria/atualiza marcador e circulo de precisao em runtime, sem
+  alterar Talhoes, GeoJSON local, PNG, ZIP ou Caderno;
+- o fallback SVG nao desenha marcador e exibe a mensagem de que a posicao do
+  aparelho esta disponivel apenas no mapa interativo.
+
+Limites preservados:
+
+- nao ha localizacao em background;
+- nao ha `TaskManager`, `startLocationUpdatesAsync`, watch continuo,
+  geofencing, trilha, rota, historico, ultimo ponto persistido ou geotag;
+- nenhuma coordenada do usuario e salva em AsyncStorage;
+- nenhuma chave nova de storage de localizacao foi criada;
+- `src/api/mock.ts`, `Mapa.list`, `LimiteArea.list`, seeds/assets da Sela de
+  Prata I e as chaves locais existentes permanecem sem alteracao;
+- PNG e ZIP continuam materiais tecnicos/anexos nao georreferenciados;
+- Caderno de Campo nao recebe coordenada automaticamente;
+- backend, RBAC real, sync, upload, download real e storage remoto seguem fora
+  do escopo.
+
+Validacao tecnica inicial:
+
+- `npm run typecheck` passou apos a implementacao;
+- `npm run test:domain-compat` passou;
+- `npx expo install --check` reportou somente divergencia de Expo:
+  `expo@56.0.11 - expected version: ~56.0.15`;
+- essa divergencia foi mantida sem correcao nesta fase funcional.
+- `.\gradlew.bat :app:assembleRelease` falhou inicialmente por limite de
+  memoria no Kotlin daemon em `:expo:compileReleaseKotlin`;
+- a build release passou depois com Gradle em modo mais economico
+  (`--no-daemon --max-workers=1 --no-parallel`, Kotlin in-process e heap
+  limitado);
+- o APK `android/app/build/outputs/apk/release/app-release.apk` foi instalado
+  no emulador `emulator-5554` e aberto via `monkey` sem crash inicial;
+- `adb dumpsys package com.tcheagro.mobile` confirmou as permissoes
+  `ACCESS_FINE_LOCATION` e `ACCESS_COARSE_LOCATION` no pacote instalado, sem
+  `ACCESS_BACKGROUND_LOCATION`;
+- o app abriu como Colaborador, a lista de Propriedades exibiu Sela de Prata I
+  e a navegacao por `uiautomator` chegou ao contexto de Material tecnico da
+  Propriedade;
+- o estado local atual do emulador nao possuia GeoJSON local anexado para a
+  Propriedade, entao o smoke visual de marcador/permissao da localizacao nao
+  foi considerado aprovado nesta rodada.
+
+Continuam pendentes:
+
+- executar smoke manual em emulador com permissao concedida e negada;
+- validar visualmente o botao `Mostrar minha posicao` e o marcador sobre a
+  camada GeoJSON de Talhoes quando houver demarcacao local disponivel;
+- repetir Material tecnico, PNG, ZIP e GeoJSON local em rodada propria depois
+  de recriar imports locais quando necessario;
+- validar em Android fisico autorizado. Android fisico segue pendente e nao
+  aprovado.
 
 ## Proximo Passo Recomendado
 
@@ -3257,7 +3334,7 @@ um aparelho fisico com depuracao USB ativa, aceitar a chave RSA no aparelho,
 confirmar `adb devices -l` com status `device`, instalar o APK release atual e
 executar o roteiro manual completo de Caderno, Safra/Safrinha, consulta por
 Talhao, Material tecnico, DocumentPicker, persistencia local e talhoes. A
-divergencia conhecida
-`expo@56.0.11`, esperado `~56.0.14`, segue aceita temporariamente e deve ser
-tratada em fase propria de alinhamento de SDK, sem misturar com validacao
-funcional.
+divergencia conhecida de `expo@56.0.11` segue aceita temporariamente. Nesta
+rodada, `npx expo install --check` reportou esperado `~56.0.15`; a correcao
+continua reservada para fase propria de alinhamento de SDK, sem misturar com
+validacao funcional.

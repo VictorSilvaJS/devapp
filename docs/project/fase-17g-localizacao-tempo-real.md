@@ -1,15 +1,56 @@
-# Fase 17G.0 - Analise Tecnica De Localizacao Em Tempo Real Sobre Talhoes
+# Fase 17G - Localizacao Foreground Em Tempo Real Sobre Talhoes
 
-Status em 2026-07-09: analise tecnica concluida. Nenhuma localizacao foi
-implementada, nenhuma dependencia foi instalada e nenhuma coordenada do usuario
-foi salva.
+Status em 2026-07-09 (Fase 17G.0): analise tecnica concluida. Nenhuma
+localizacao foi implementada, nenhuma dependencia foi instalada e nenhuma
+coordenada do usuario foi salva nesta etapa documental.
 
-Esta fase documenta como uma fase futura pode exibir a posicao atual do usuario
-sobre o mapa de Talhoes da Propriedade. A localizacao so deve ser considerada
-sobre camada georreferenciada de Talhoes/GeoJSON. PNG e ZIP continuam sendo
-materiais tecnicos/anexos, nao mapas georreferenciados.
+Status em 2026-07-09 (Fase 17G.1): implementada a primeira visualizacao de
+localizacao foreground no mapa de Talhoes, acionada por botao, usando
+`expo-location` e a tela ativa `FazendaMapaScreen` + `MapaFazendaView`.
+A coordenada fica apenas em estado React e no runtime do Leaflet/WebView; nao
+ha AsyncStorage, chave nova, trilha, historico, rota, geotag, Caderno com
+coordenada, background location, TaskManager, geofencing, backend, sync,
+upload, download real ou storage remoto.
 
-## Escopo Da Analise
+Este arquivo documenta a analise 17G.0 e a implementacao minima 17G.1. A
+localizacao so deve ser considerada sobre camada georreferenciada de
+Talhoes/GeoJSON. PNG e ZIP continuam sendo materiais tecnicos/anexos, nao mapas
+georreferenciados.
+
+## Implementacao Da Fase 17G.1
+
+Arquivos principais:
+
+- `package.json` e `package-lock.json`: adicionam `expo-location@~56.0.20`.
+- `app.json`: configura permissao foreground de localizacao, sem permissao de
+  background e sem `UIBackgroundModes location`.
+- `src/services/LocationForegroundService.ts`: helper isolado para permissao
+  foreground, disponibilidade de servicos e leitura atual sob demanda.
+- `src/screens/FazendaMapaScreen.tsx`: adiciona botao `Mostrar minha posicao`,
+  estado transiente de localizacao e mensagem de precisao/horario.
+- `src/components/MapaFazendaView.tsx`: adiciona prop `userLocation`, injeta
+  payload serializado no Leaflet e cria/atualiza marcador e circulo de
+  precisao apenas no runtime do mapa interativo.
+
+Comportamento implementado:
+
+- botao aparece somente quando ha contexto de Propriedade e Talhoes exibidos;
+- permissao foreground e solicitada sob demanda;
+- uma unica leitura atual e obtida por toque, sem `watchPosition`;
+- latitude, longitude, accuracy e horario da leitura ficam apenas em memoria;
+- marcador azul e circulo de precisao aparecem no Leaflet;
+- fallback SVG nao tenta converter lat/lng e exibe aviso de que a posicao do
+  aparelho so esta disponivel no mapa interativo;
+- permissao negada, servicos desligados e erro de leitura retornam mensagens
+  controladas;
+- PNG e ZIP continuam sem marcador de localizacao;
+- Caderno de Campo nao recebe coordenada automaticamente.
+
+Observacao de compatibilidade Expo: `npx expo install --check` em 2026-07-09
+reportou `expo@56.0.11 - expected version: ~56.0.15`. A divergencia foi mantida
+sem correcao nesta fase funcional, conforme restricao do projeto.
+
+## Escopo Da Analise 17G.0
 
 - Diagnosticar o estado atual de mapas, Talhoes, GeoJSON local e dependencias.
 - Comparar implementacao futura no WebView/Leaflet atual versus mapa nativo.
@@ -17,7 +58,7 @@ materiais tecnicos/anexos, nao mapas georreferenciados.
 - Recomendar uma implementacao minima para a futura Fase 17G.1.
 - Registrar riscos e criterios antes de abrir implementacao.
 
-## Fora De Escopo Nesta Fase
+## Fora De Escopo Na Analise 17G.0
 
 - Implementar GPS/localizacao.
 - Instalar `expo-location` ou qualquer dependencia nova.
@@ -138,14 +179,16 @@ runtime do app.
 `package.json` registra:
 
 - `expo@~56.0.11`;
+- `expo-location@~56.0.20`;
 - `react-native-webview@13.16.1`;
 - `react-native-svg@15.15.4`;
 - `react-native-maps@1.27.2`;
 - `expo-document-picker@~56.0.4`;
 - `expo-file-system@~56.0.8`.
 
-Nao ha `expo-location` em `package.json`, nem configuracao de permissao de
-localizacao em `app.json`.
+`app.json` possui configuracao de permissao foreground para localizacao. Nao
+ha permissao de localizacao em background, nao ha `UIBackgroundModes location`
+e nao ha habilitacao de background location pelo plugin.
 
 `react-native-maps` existe como dependencia e e importado por
 `MapaFazendaNativoView.tsx`, mas esse componente nao aparece em nenhuma rota
@@ -174,7 +217,7 @@ Na futura 17G.1, adicionar localizacao foreground only no fluxo atual:
 ser ampliada com uma funcao no HTML:
 
 - `window.atualizarLocalizacaoUsuario(payload)`;
-- payload transiente: `{ latitude, longitude, accuracy, timestamp }`;
+- payload transiente: `{ latitude, longitude, accuracy, capturedAt }`;
 - validar numeros finitos antes de injetar;
 - no WebView, converter para `L.latLng(latitude, longitude)`;
 - atualizar marker/circle existentes em vez de recriar a camada toda;
@@ -241,10 +284,10 @@ integracao de posicao do usuario.
 Nao usar mapa nativo para a 17G.1 minima. Manter como alternativa futura, apos
 validar Android fisico, iOS, provider de mapa, permissoes e impacto de build.
 
-## Decisao Recomendada Para 17G.1
+## Decisao Aplicada Na 17G.1
 
-Implementar, se aprovado depois, a primeira localizacao sobre
-`FazendaMapaScreen` + `MapaFazendaView` com WebView/Leaflet.
+Foi implementada a primeira localizacao sobre `FazendaMapaScreen` +
+`MapaFazendaView` com WebView/Leaflet.
 
 O recurso deve ser:
 
@@ -257,12 +300,12 @@ O recurso deve ser:
 - sem overlay em PNG;
 - limitado a mapas com Talhoes georreferenciados carregados.
 
-Dependencia candidata: `expo-location`, apenas apos aprovacao explicita da
-fase de implementacao. Esta analise nao instala dependencia.
+Dependencia instalada: `expo-location@~56.0.20`, via
+`npx expo install expo-location`, sem instalar bibliotecas extras.
 
-## UX Sugerida Para 17G.1
+## UX Implementada Na 17G.1
 
-Adicionar em `FazendaMapaScreen` um botao discreto:
+`FazendaMapaScreen` recebeu um botao discreto:
 
 - "Mostrar minha posicao" ou "Usar minha localizacao";
 - icone de alvo/localizacao;
@@ -270,7 +313,7 @@ Adicionar em `FazendaMapaScreen` um botao discreto:
 - desabilitado ou oculto quando a tela nao tiver contexto de Propriedade ou
   demarcacao.
 
-Fluxo permitido:
+Fluxo implementado:
 
 1. Usuario toca no botao.
 2. App solicita permissao de localizacao foreground.
@@ -289,7 +332,7 @@ Fluxo permitido:
    - nao exibir marcador na primeira versao;
    - informar que a posicao fica disponivel no mapa interativo de Talhoes.
 7. Se nao houver Talhoes:
-   - nao mostrar localizacao sobre PNG/material tecnico.
+   - o botao nao aparece.
 
 ## Regras De Produto Para Localizacao
 
@@ -328,23 +371,23 @@ Fluxo permitido:
 - Sem helper point-in-polygon testado, nao afirmar com certeza que o usuario
   esta dentro de um Talhao especifico.
 
-## Checklist Futuro Para 17G.1
+## Checklist Da 17G.1
 
-- Confirmar dependencia de localizacao a usar.
-- Confirmar permissao foreground only.
-- Confirmar que nao havera persistencia de coordenadas.
-- Confirmar que Android fisico sera testado.
+- Dependencia de localizacao definida: `expo-location@~56.0.20`.
+- Permissao foreground only configurada.
+- Sem persistencia de coordenadas.
+- Android fisico ainda deve ser testado.
 - Confirmar criterio para iOS ou registrar iOS como pendente.
-- Confirmar que PNG/ZIP continuam materiais, nao camadas georreferenciadas.
-- Definir se a leitura sera unica sob demanda ou watch enquanto a tela estiver
-  aberta.
-- Definir comportamento quando Leaflet cair no fallback SVG.
-- Definir mensagens para permissao negada, GPS indisponivel e mapa sem Talhoes.
-- Criar testes de helper puro se houver calculo dentro/fora da Propriedade.
+- PNG/ZIP continuam materiais, nao camadas georreferenciadas.
+- Leitura implementada como unica sob demanda, sem watch continuo.
+- Fallback SVG mostra aviso e nao desenha marcador de localizacao.
+- Mensagens controladas para permissao negada, servicos desligados, erro de
+  leitura e mapa sem contexto.
+- Calculo dentro/fora da Propriedade/Talhao nao foi implementado.
 
-## Criterios De Aceite Para Implementacao Futura
+## Criterios De Aceite Da 17G.1
 
-- `expo-location` ou dependencia escolhida instalada somente em fase aprovada.
+- `expo-location` instalado somente na fase aprovada.
 - `app.json` configurado com textos de permissao necessarios, sem permissao de
   background.
 - Botao aparece apenas no mapa de Talhoes georreferenciado.
@@ -357,11 +400,38 @@ Fluxo permitido:
 - Nenhuma trilha/historico/rota e mantida.
 - Nenhum envio remoto e feito.
 - PNG/ZIP nao recebem marcador de localizacao.
-- Android fisico executa smoke especifico antes de aprovar campo.
+- Android fisico deve executar smoke especifico antes de aprovar campo.
+
+## Validacao Executada Na 17G.1
+
+- `npm run typecheck` passou.
+- `npm run test:domain-compat` passou.
+- `npx expo install --check` reportou somente a divergencia de Expo
+  `expo@56.0.11 - expected version: ~56.0.15`; ela foi mantida sem correcao.
+- `.\gradlew.bat :app:assembleRelease` falhou inicialmente por limite de
+  memoria no Kotlin daemon, mas passou depois com Gradle em modo economico
+  (`--no-daemon --max-workers=1 --no-parallel`, Kotlin in-process e heap
+  limitado).
+- O APK release gerado foi instalado no emulador `emulator-5554` e aberto por
+  `monkey` sem crash inicial.
+- `adb dumpsys package com.tcheagro.mobile` confirmou
+  `ACCESS_FINE_LOCATION` e `ACCESS_COARSE_LOCATION` no pacote instalado, sem
+  `ACCESS_BACKGROUND_LOCATION`.
+- A auditoria focada nao encontrou AsyncStorage, chave nova de storage,
+  `TaskManager`, background location, watch continuo ou geofencing nos
+  arquivos alterados.
+- A navegacao por `uiautomator` abriu Sela de Prata I e chegou ao contexto de
+  Material tecnico/Talhoes, mas o estado local do emulador estava sem GeoJSON
+  local anexado para a Propriedade. Por isso, o toque no botao
+  `Mostrar minha posicao`, o marcador, permissao concedida e permissao negada
+  seguem para reexecucao visual.
+- `adb devices -l` mostrou apenas `emulator-5554`; Android fisico segue
+  pendente e nao aprovado.
 
 ## Conclusao
 
-A 17G.1 deve ser uma evolucao pequena sobre o mapa WebView/Leaflet atual,
-mantendo a localizacao como estado efemero de UI em foreground. O mapa nativo
-deve permanecer como alternativa futura, porque reativar `MapaFazendaNativoView`
+A 17G.1 foi uma evolucao pequena sobre o mapa WebView/Leaflet atual, mantendo
+a localizacao como estado efemero de UI em foreground. O mapa nativo deve
+permanecer como alternativa futura, porque reativar `MapaFazendaNativoView`
 agora ampliaria o risco e mudaria uma base de Talhoes ja validada em emulador.
+Android fisico segue pendente e nao aprovado.

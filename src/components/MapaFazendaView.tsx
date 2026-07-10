@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { G, Polygon as SvgPolygon, Rect, Text as SvgText } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
 import { colors, spacing, typography } from '../theme';
+import type { ForegroundUserLocation } from '../services/LocationForegroundService';
 
 export interface PontoPoligono {
   lat: number;
@@ -46,6 +47,7 @@ export interface MapaFazendaViewRef {
 interface Props {
   talhoes: TalhaoMapa[];
   talhaoSelecionadoId?: string | null;
+  userLocation?: ForegroundUserLocation | null;
   onTalhaoPress?: (id: string) => void;
   onMapaReady?: () => void;
 }
@@ -243,6 +245,8 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
       var labelsById = {};
       var geojsonLayer = null;
       var map = null;
+      var userLocationMarker = null;
+      var userLocationAccuracyCircle = null;
 
       function post(tipo, payload) {
         try {
@@ -297,10 +301,115 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
           selectedLayer.bringToFront();
           map.panTo(selectedLayer.getBounds().getCenter(), { animate: true, duration: 0.45 });
         }
+
+        trazerLocalizacaoUsuarioParaFrente();
+      }
+
+      function isFiniteNumber(value) {
+        return typeof value === 'number' && isFinite(value);
+      }
+
+      function normalizarLocalizacaoUsuario(payload) {
+        if (!payload || typeof payload !== 'object') {
+          return null;
+        }
+
+        var latitude = Number(payload.latitude);
+        var longitude = Number(payload.longitude);
+        var accuracy = payload.accuracy == null ? null : Number(payload.accuracy);
+
+        if (!isFiniteNumber(latitude) || latitude < -90 || latitude > 90) {
+          return null;
+        }
+        if (!isFiniteNumber(longitude) || longitude < -180 || longitude > 180) {
+          return null;
+        }
+        if (accuracy != null && (!isFiniteNumber(accuracy) || accuracy < 0)) {
+          accuracy = null;
+        }
+
+        return {
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy,
+        };
+      }
+
+      function removerLocalizacaoUsuario() {
+        if (userLocationMarker) {
+          map.removeLayer(userLocationMarker);
+          userLocationMarker = null;
+        }
+        if (userLocationAccuracyCircle) {
+          map.removeLayer(userLocationAccuracyCircle);
+          userLocationAccuracyCircle = null;
+        }
+      }
+
+      function trazerLocalizacaoUsuarioParaFrente() {
+        if (userLocationAccuracyCircle && userLocationAccuracyCircle.bringToBack) {
+          userLocationAccuracyCircle.bringToBack();
+        }
+        if (userLocationMarker && userLocationMarker.bringToFront) {
+          userLocationMarker.bringToFront();
+        }
+      }
+
+      function atualizarLocalizacaoUsuario(payload) {
+        if (!payload) {
+          removerLocalizacaoUsuario();
+          return false;
+        }
+
+        var localizacao = normalizarLocalizacaoUsuario(payload);
+        if (!localizacao) {
+          return false;
+        }
+
+        var latLng = [localizacao.latitude, localizacao.longitude];
+
+        if (localizacao.accuracy != null) {
+          if (!userLocationAccuracyCircle) {
+            userLocationAccuracyCircle = L.circle(latLng, {
+              radius: localizacao.accuracy,
+              color: '#2563EB',
+              weight: 1.5,
+              opacity: 0.9,
+              fillColor: '#3B82F6',
+              fillOpacity: 0.16,
+              interactive: false
+            }).addTo(map);
+          } else {
+            userLocationAccuracyCircle.setLatLng(latLng);
+            userLocationAccuracyCircle.setRadius(localizacao.accuracy);
+          }
+        } else if (userLocationAccuracyCircle) {
+          map.removeLayer(userLocationAccuracyCircle);
+          userLocationAccuracyCircle = null;
+        }
+
+        if (!userLocationMarker) {
+          userLocationMarker = L.circleMarker(latLng, {
+            radius: 8,
+            color: '#FFFFFF',
+            weight: 3,
+            opacity: 1,
+            fillColor: '#2563EB',
+            fillOpacity: 1,
+            interactive: false
+          }).addTo(map);
+        } else {
+          userLocationMarker.setLatLng(latLng);
+        }
+
+        trazerLocalizacaoUsuarioParaFrente();
+        map.panTo(latLng, { animate: true, duration: 0.45 });
+        return true;
       }
 
       window.selecionarTalhao = selecionarTalhao;
       window.ajustarLimites = ajustarLimites;
+      window.atualizarLocalizacaoUsuario = atualizarLocalizacaoUsuario;
 
       try {
         map = L.map('map', {
@@ -370,6 +479,9 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
             if (data.tipo === 'ajustarLimites') {
               ajustarLimites();
             }
+            if (data.tipo === 'atualizarLocalizacaoUsuario') {
+              atualizarLocalizacaoUsuario(data.payload);
+            }
           } catch (err) {}
         }
 
@@ -392,10 +504,12 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
 function FallbackShapeMap({
   talhoes,
   talhaoSelecionadoId,
+  userLocation,
   onTalhaoPress,
 }: {
   talhoes: TalhaoMapa[];
   talhaoSelecionadoId?: string | null;
+  userLocation?: ForegroundUserLocation | null;
   onTalhaoPress?: (id: string) => void;
 }) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
@@ -447,12 +561,20 @@ function FallbackShapeMap({
           })}
         </Svg>
       )}
+      {userLocation ? (
+        <View style={styles.fallbackLocationNotice}>
+          <Ionicons name="locate-outline" size={15} color={colors.warningLight} />
+          <Text style={styles.fallbackLocationNoticeText}>
+            A posição do aparelho está disponível apenas no mapa interativo.
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
-  ({ talhoes, talhaoSelecionadoId, onTalhaoPress, onMapaReady }, ref) => {
+  ({ talhoes, talhaoSelecionadoId, userLocation, onTalhaoPress, onMapaReady }, ref) => {
     const webViewRef = useRef<WebView>(null);
     const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [mapaPronto, setMapaPronto] = useState(false);
@@ -488,6 +610,25 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
         onMapaReady?.();
       }
     }, [fallbackAtivo, onMapaReady]);
+
+    useEffect(() => {
+      if (!mapaPronto || fallbackAtivo) {
+        return;
+      }
+
+      const payload = userLocation
+        ? {
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            accuracy: userLocation.accuracy,
+            capturedAt: userLocation.capturedAt,
+          }
+        : null;
+
+      webViewRef.current?.injectJavaScript(
+        `window.atualizarLocalizacaoUsuario && window.atualizarLocalizacaoUsuario(${JSON.stringify(payload)}); true;`
+      );
+    }, [fallbackAtivo, mapaPronto, userLocation]);
 
     useImperativeHandle(ref, () => ({
       selecionarTalhao(id: string | null) {
@@ -542,6 +683,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
         <FallbackShapeMap
           talhoes={talhoes}
           talhaoSelecionadoId={talhaoSelecionadoId}
+          userLocation={userLocation}
           onTalhaoPress={onTalhaoPress}
         />
       );
@@ -617,5 +759,27 @@ const styles = StyleSheet.create({
   fallbackContainer: {
     flex: 1,
     backgroundColor: '#111827',
+  },
+  fallbackLocationNotice: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.74)',
+  },
+  fallbackLocationNoticeText: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
   },
 });

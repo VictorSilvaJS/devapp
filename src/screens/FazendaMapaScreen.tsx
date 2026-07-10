@@ -11,6 +11,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
   Dimensions,
   Animated,
   Modal,
@@ -45,6 +46,10 @@ import {
   loadGeoJsonTalhoesLayer,
   resolveEffectiveTalhoesLayer,
 } from '../services/GeoJsonTalhoesLayerService';
+import {
+  ForegroundUserLocation,
+  requestCurrentForegroundLocation,
+} from '../services/LocationForegroundService';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -60,6 +65,30 @@ const DRAWER_HEIGHT = Math.round(SCREEN_HEIGHT * 0.44);
 function fmt(val: number | undefined, casas = 1): string {
   if (val === undefined || val === null) return '—';
   return Number(val).toFixed(casas);
+}
+
+function fmtHoraLocalizacao(value?: string): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function buildLocationSuccessMessage(location: ForegroundUserLocation): string {
+  const precision = location.accuracy != null
+    ? `Precisão informada pelo GPS: ${Math.round(location.accuracy)} m`
+    : 'Precisão não informada pelo GPS';
+  const capturedAt = fmtHoraLocalizacao(location.capturedAt);
+
+  return [
+    'Posição aproximada do aparelho.',
+    precision,
+    capturedAt ? `Leitura às ${capturedAt}` : '',
+  ].filter(Boolean).join(' ');
 }
 
 function classificarPH(ph: number): { label: string; cor: string } {
@@ -183,6 +212,12 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
   const [fazendasContexto, setFazendasContexto] = useState<any[]>([]);
   const [geoJsonTalhoesLayer, setGeoJsonTalhoesLayer] = useState<GeoJsonTalhoesLayerResult | null>(null);
+  const [userLocation, setUserLocation] = useState<ForegroundUserLocation | null>(null);
+  const [locationMessage, setLocationMessage] = useState<{
+    type: 'info' | 'error';
+    text: string;
+  } | null>(null);
+  const [requestingLocation, setRequestingLocation] = useState(false);
 
   // Refs
   const mapaRef = useRef<MapaFazendaViewRef>(null);
@@ -207,6 +242,11 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   useEffect(() => {
     setFazendaNome(fazendaNomeParam ?? '');
   }, [fazendaNomeParam]);
+
+  useEffect(() => {
+    setUserLocation(null);
+    setLocationMessage(null);
+  }, [fazendaId]);
 
   const carregarDados = async () => {
     setCarregando(true);
@@ -380,6 +420,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
   // ── Título da tela ────────────────────────────────────────────
   const consultaPorFazenda = !!fazendaId && !estadoBloqueio;
+  const canUseForegroundLocation = consultaPorFazenda && talhoesExibidos.length > 0;
   const tituloCabecalho = consultaPorFazenda
     ? (fazendaNome || 'Limites da Propriedade')
     : 'Visão geral de limites';
@@ -398,6 +439,41 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         title: 'Propriedade não encontrada',
         text: 'Não foi possível localizar a propriedade informada para visualizar os limites.',
       };
+
+  const handleMostrarMinhaPosicao = useCallback(async () => {
+    if (!canUseForegroundLocation) {
+      setUserLocation(null);
+      setLocationMessage({
+        type: 'error',
+        text: 'Abra o mapa de Talhões de uma Propriedade para mostrar sua posição.',
+      });
+      return;
+    }
+
+    setRequestingLocation(true);
+    setLocationMessage({
+      type: 'info',
+      text: 'Obtendo a posição aproximada do aparelho...',
+    });
+
+    const result = await requestCurrentForegroundLocation();
+
+    if (result.status === 'ok') {
+      setUserLocation(result.location);
+      setLocationMessage({
+        type: 'info',
+        text: `${buildLocationSuccessMessage(result.location)} A posição será mostrada apenas no mapa de Talhões, não em PNGs ou prescrições.`,
+      });
+    } else {
+      setUserLocation(null);
+      setLocationMessage({
+        type: 'error',
+        text: result.message,
+      });
+    }
+
+    setRequestingLocation(false);
+  }, [canUseForegroundLocation]);
 
   // ── Estado de Loading ─────────────────────────────────────────
   if (carregando) {
@@ -523,6 +599,47 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             </Text>
           </View>
         )}
+
+        {canUseForegroundLocation && (
+          <View style={styles.localizacaoContainer}>
+            <TouchableOpacity
+              style={[
+                styles.localizacaoButton,
+                requestingLocation && styles.localizacaoButtonDisabled,
+              ]}
+              onPress={handleMostrarMinhaPosicao}
+              activeOpacity={0.82}
+              disabled={requestingLocation}
+            >
+              {requestingLocation ? (
+                <ActivityIndicator size="small" color={colors.white} />
+              ) : (
+                <Ionicons name="locate-outline" size={16} color={colors.white} />
+              )}
+              <Text style={styles.localizacaoButtonText}>
+                {requestingLocation ? 'Obtendo posição' : 'Mostrar minha posição'}
+              </Text>
+            </TouchableOpacity>
+
+            {locationMessage ? (
+              <View
+                style={[
+                  styles.localizacaoStatus,
+                  locationMessage.type === 'error' && styles.localizacaoStatusErro,
+                ]}
+              >
+                <Ionicons
+                  name={locationMessage.type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'}
+                  size={14}
+                  color={locationMessage.type === 'error' ? colors.warningLight : colors.white}
+                />
+                <Text style={styles.localizacaoStatusText} numberOfLines={2}>
+                  {locationMessage.text}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        )}
       </SafeAreaView>
 
       {/* ── MAPA LEAFLET ─────────────────────────────────────── */}
@@ -531,6 +648,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
           ref={mapaRef}
           talhoes={talhoesExibidos}
           talhaoSelecionadoId={talhaoSelecionadoId}
+          userLocation={userLocation}
           onTalhaoPress={handleTalhaoPress}
           onMapaReady={() => {
             if (talhaoSelecionadoId) {
@@ -946,6 +1064,57 @@ const styles = StyleSheet.create({
     minWidth: 0,
     color: colors.white,
     fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+  },
+  localizacaoContainer: {
+    alignSelf: 'flex-start',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    maxWidth: SCREEN_WIDTH - spacing.lg * 2,
+    gap: spacing.xs,
+  },
+  localizacaoButton: {
+    alignSelf: 'flex-start',
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 18,
+    backgroundColor: 'rgba(37,99,235,0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.32)',
+  },
+  localizacaoButtonDisabled: {
+    opacity: 0.76,
+  },
+  localizacaoButtonText: {
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
+  },
+  localizacaoStatus: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: 'rgba(0,0,0,0.68)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  localizacaoStatusErro: {
+    backgroundColor: 'rgba(0,0,0,0.76)',
+    borderColor: 'rgba(245,158,11,0.72)',
+  },
+  localizacaoStatusText: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    lineHeight: 16,
     fontWeight: typography.weightSemibold,
   },
 

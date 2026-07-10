@@ -221,21 +221,24 @@ ZIP. Android fisico segue pendente e nao aprovado.
 
 ### 4A. Localizacao em tempo real sobre Talhoes
 
-A localizacao em tempo real ainda nao existe no app e nao deve ser tratada como
-funcionalidade aprovada ate haver decisao explicita de implementacao.
+A localizacao em tempo real existe apenas em corte minimo foreground sobre o
+mapa de Talhoes. Ela nao deve ser tratada como funcionalidade de campo
+aprovada ate haver smoke em Android fisico autorizado e fechamento de
+plataformas.
 
 Status em 2026-07-09 (Fase 17G.0): foi criada a analise tecnica
 `docs/project/fase-17g-localizacao-tempo-real.md`. A recomendacao para uma
 fase futura 17G.1 e implementar a localizacao minima sobre
 `FazendaMapaScreen`/`MapaFazendaView`, mantendo WebView/Leaflet, permissao
 foreground only, estado efemero em memoria e ausencia total de persistencia de
-coordenadas do usuario. `expo-location` nao esta instalado e deve depender de
-aprovacao explicita posterior. `react-native-maps` existe no projeto, mas
-`MapaFazendaNativoView` permanece experimento historico fora do fluxo ativo.
+coordenadas do usuario. Naquele momento, `expo-location` nao estava instalado
+e deveria depender de aprovacao explicita posterior. `react-native-maps`
+existe no projeto, mas `MapaFazendaNativoView` permanece experimento historico
+fora do fluxo ativo.
 
-Pontos que precisam ser confirmados antes da implementacao:
+Pontos que seguem pendentes apos a implementacao minima:
 
-- dependencia de localizacao a usar;
+- dependencia de localizacao usada na fase 17G.1: `expo-location@~56.0.20`;
 - permissao foreground only, sem background;
 - garantia de nao persistir coordenadas, trilha, rota ou historico;
 - teste em Android fisico autorizado;
@@ -244,6 +247,22 @@ Pontos que precisam ser confirmados antes da implementacao:
 - confirmacao de que PNG e ZIP continuam materiais nao georreferenciados;
 - confirmacao de que nao havera backend, sync, upload, download real ou
   storage remoto.
+
+Status em 2026-07-09 (Fase 17G.1): foi implementado o botao `Mostrar minha
+posicao` em `FazendaMapaScreen`, usando permissao foreground sob demanda,
+leitura unica atual e estado React efemero. `MapaFazendaView` exibe marcador e
+circulo de precisao apenas no Leaflet/WebView; o fallback SVG informa que a
+posicao do aparelho esta disponivel somente no mapa interativo. Nao ha
+background location, TaskManager, watch continuo, geofencing, trilha,
+historico, rota, ultimo ponto persistido, chave nova de storage, coordenada no
+Caderno, backend, sync, upload, download real ou storage remoto. PNG e ZIP
+continuam materiais nao georreferenciados. A build release foi instalada e
+aberta em emulador, e o pacote instalado confirmou permissoes foreground
+`ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION`, sem background. A pendencia
+permanece aberta porque o smoke visual de botao/marcador/permissao ainda deve
+ser repetido com GeoJSON local disponivel, alem de Android fisico autorizado,
+criterio de iOS, precisao/consumo em campo e eventual politica futura de
+offline/mapa-base.
 
 ### 5. Experiencia detalhada do produtor
 

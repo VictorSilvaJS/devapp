@@ -11,7 +11,26 @@
     "platforms": ["ios","android","web"],
     "android": {
       "package": "com.tcheagro.mobile",
-      "versionCode": 1
-    }
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "ios": {
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localização apenas para mostrar a posição aproximada do aparelho no mapa de Talhões enquanto você usa a tela."
+      }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos sua localização apenas para mostrar a posição aproximada do aparelho no mapa de Talhões enquanto você usa a tela.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
+    ]
   }
 }

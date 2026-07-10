@@ -75,22 +75,32 @@ upload/download remoto ou storage remoto. Android fisico segue pendente.
 | 17F-09 | P0 | Todos | Storage | Auditar storage local | Nenhuma coordenada, GeoJSON bruto, PNG, ZIP, base64, bytes ou binario salvo em AsyncStorage | Passou | Coberto por testes de dominio, busca textual e diff restrito a pluralizacao visual |
 | 17F-10 | P0 | Todos | Android fisico | Instalar APK e repetir casos em aparelho | Passa em Android fisico autorizado | Reexecutar | Android fisico segue pendente e nao aprovado |
 
-**Rodada Futura Fase 17G.1 - Localizacao Em Tempo Real Sobre Talhoes**
+**Rodada Fase 17G.1 - Localizacao Foreground Sobre Talhoes**
 
-Observacao geral em 2026-07-09 (Fase 17G.0): checklist futuro criado a partir
-da analise tecnica `docs/project/fase-17g-localizacao-tempo-real.md`. Nenhuma
-localizacao foi implementada nesta fase, nenhuma dependencia foi instalada e
-nenhuma coordenada foi salva. A implementacao futura deve ser foreground only,
-sem background, sem trilha/historico, sem AsyncStorage, sem backend/sync e sem
-marcador em PNG/ZIP.
+Observacao geral em 2026-07-09 (Fase 17G.1): implementacao minima criada a
+partir da analise tecnica `docs/project/fase-17g-localizacao-tempo-real.md`.
+`expo-location@~56.0.20` foi instalado, `app.json` recebeu permissao
+foreground only, e o mapa ativo de Talhoes passou a ter botao `Mostrar minha
+posicao`. A localizacao permanece sem background, sem trilha/historico, sem
+AsyncStorage, sem backend/sync e sem marcador em PNG/ZIP.
+
+Validacao tecnica da rodada: `npm run typecheck` e
+`npm run test:domain-compat` passaram; `npx expo install --check` reportou
+somente `expo@56.0.11 - expected version: ~56.0.15`, mantido sem correcao.
+O APK release passou em build com Gradle em modo economico, foi instalado no
+emulador `emulator-5554` e abriu via `monkey` sem crash inicial. O pacote
+instalado possui `ACCESS_FINE_LOCATION` e `ACCESS_COARSE_LOCATION`, sem
+`ACCESS_BACKGROUND_LOCATION`. O smoke visual de marcador/permissao nao foi
+fechado porque o estado local atual do emulador nao possuia GeoJSON local
+anexado para a Sela de Prata I. Android fisico segue pendente e nao aprovado.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
-| 17G-01 | P0 | Todos | Dependencia | Confirmar dependencia e permissao | Dependencia aprovada explicitamente e permissao foreground only documentada | Reexecutar | Nao instalar sem aprovacao da fase 17G.1 |
-| 17G-02 | P0 | Todos | Mapa de Talhoes | Abrir Sela > mapa de Talhoes > Mostrar minha posicao | Marcador aparece apenas sobre Talhoes/GeoJSON georreferenciado | Reexecutar | Nao exibir localizacao em PNG, ZIP ou Material tecnico isolado |
-| 17G-03 | P0 | Todos | Permissao negada | Negar permissao de localizacao | Mensagem clara, sem crash e sem marcador | Reexecutar | Sem fallback para permissao background |
-| 17G-04 | P0 | Todos | GPS indisponivel | Simular indisponibilidade/erro de leitura | Mensagem clara e mapa segue navegavel | Reexecutar | Sem persistir erro como coordenada |
-| 17G-05 | P0 | Todos | Storage | Auditar AsyncStorage e codigo | Nenhuma coordenada, trilha, rota ou historico salvo | Reexecutar | Conferir chaves existentes e ausencia de nova chave de localizacao |
+| 17G-01 | P0 | Todos | Dependencia | Confirmar dependencia e permissao | Dependencia aprovada explicitamente e permissao foreground only documentada | Passou | `expo-location@~56.0.20` instalado; `app.json` sem background location |
+| 17G-02 | P0 | Todos | Mapa de Talhoes | Abrir Sela > mapa de Talhoes > Mostrar minha posicao | Marcador aparece apenas sobre Talhoes/GeoJSON georreferenciado | Reexecutar | APK abriu e Sela foi acessada; estado local sem GeoJSON local anexado impediu validar botao/marcador |
+| 17G-03 | P0 | Todos | Permissao negada | Negar permissao de localizacao | Mensagem clara, sem crash e sem marcador | Reexecutar | Nao executado nesta rodada; sem fallback para permissao background |
+| 17G-04 | P0 | Todos | GPS indisponivel | Simular indisponibilidade/erro de leitura | Mensagem clara e mapa segue navegavel | Reexecutar | Nao executado; sem persistir erro como coordenada |
+| 17G-05 | P0 | Todos | Storage | Auditar AsyncStorage e codigo | Nenhuma coordenada, trilha, rota ou historico salvo | Passou | Auditoria focada nao encontrou AsyncStorage/chave nova/background APIs nos arquivos alterados |
 | 17G-06 | P0 | Todos | Fallback | Forcar falha do Leaflet/WebView | Fallback SVG nao promete localizacao real sem helper seguro | Reexecutar | Preferir mensagem controlada na primeira versao |
 | 17G-07 | P0 | Todos | Android fisico | Repetir em aparelho autorizado | Permissao, precisao e consumo basico validados em campo | Reexecutar | Android fisico segue pendente e nao aprovado |
 
