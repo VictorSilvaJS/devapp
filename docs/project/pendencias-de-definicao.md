@@ -264,6 +264,17 @@ ser repetido com GeoJSON local disponivel, alem de Android fisico autorizado,
 criterio de iOS, precisao/consumo em campo e eventual politica futura de
 offline/mapa-base.
 
+Status em 2026-07-10 (Fase 17G.2): o smoke visual de botao, permissao concedida,
+permissao negada, servicos de localizacao desligados, marcador e nao
+restauracao apos `force-stop` foi executado em emulador sobre a camada de
+Talhoes seed/mock da Sela de Prata I. A auditoria confirmou ausencia de
+AsyncStorage, chave nova, watch continuo, TaskManager, background location,
+geofencing, historico, rota ou coordenada nova no Caderno. A pendencia continua
+aberta para reexecutar GeoJSON local via DocumentPicker nesta frente, forcar o
+fallback SVG/WebView, definir criterio de iOS, validar precisao/consumo em
+campo e executar Android fisico autorizado. Android fisico segue pendente e nao
+aprovado.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:

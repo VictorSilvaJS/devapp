@@ -77,32 +77,35 @@ upload/download remoto ou storage remoto. Android fisico segue pendente.
 
 **Rodada Fase 17G.1 - Localizacao Foreground Sobre Talhoes**
 
-Observacao geral em 2026-07-09 (Fase 17G.1): implementacao minima criada a
-partir da analise tecnica `docs/project/fase-17g-localizacao-tempo-real.md`.
-`expo-location@~56.0.20` foi instalado, `app.json` recebeu permissao
-foreground only, e o mapa ativo de Talhoes passou a ter botao `Mostrar minha
-posicao`. A localizacao permanece sem background, sem trilha/historico, sem
-AsyncStorage, sem backend/sync e sem marcador em PNG/ZIP.
+Observacao geral em 2026-07-10 (Fase 17G.2): o smoke visual da localizacao
+foreground foi executado em emulador sobre a camada de Talhoes seed/mock da
+Sela de Prata I. A localizacao permanece sem background, sem trilha/historico,
+sem AsyncStorage, sem backend/sync e sem marcador em PNG/ZIP. A rodada tambem
+confirmou permissao negada, servicos de localizacao desligados, nao restauracao
+apos `force-stop` e auditoria de nao persistencia. Android fisico segue
+pendente e nao aprovado.
 
 Validacao tecnica da rodada: `npm run typecheck` e
 `npm run test:domain-compat` passaram; `npx expo install --check` reportou
 somente `expo@56.0.11 - expected version: ~56.0.15`, mantido sem correcao.
-O APK release passou em build com Gradle em modo economico, foi instalado no
-emulador `emulator-5554` e abriu via `monkey` sem crash inicial. O pacote
-instalado possui `ACCESS_FINE_LOCATION` e `ACCESS_COARSE_LOCATION`, sem
-`ACCESS_BACKGROUND_LOCATION`. O smoke visual de marcador/permissao nao foi
-fechado porque o estado local atual do emulador nao possuia GeoJSON local
-anexado para a Sela de Prata I. Android fisico segue pendente e nao aprovado.
+O APK release foi gerado, instalado no emulador `emulator-5554` e aberto via
+`monkey` sem crash inicial. O pacote instalado possui `ACCESS_FINE_LOCATION` e
+`ACCESS_COARSE_LOCATION`, sem `ACCESS_BACKGROUND_LOCATION`. O reanexo de
+GeoJSON local via DocumentPicker e o fallback SVG/WebView forcado ainda devem
+ser repetidos em rodada propria.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
 | 17G-01 | P0 | Todos | Dependencia | Confirmar dependencia e permissao | Dependencia aprovada explicitamente e permissao foreground only documentada | Passou | `expo-location@~56.0.20` instalado; `app.json` sem background location |
-| 17G-02 | P0 | Todos | Mapa de Talhoes | Abrir Sela > mapa de Talhoes > Mostrar minha posicao | Marcador aparece apenas sobre Talhoes/GeoJSON georreferenciado | Reexecutar | APK abriu e Sela foi acessada; estado local sem GeoJSON local anexado impediu validar botao/marcador |
-| 17G-03 | P0 | Todos | Permissao negada | Negar permissao de localizacao | Mensagem clara, sem crash e sem marcador | Reexecutar | Nao executado nesta rodada; sem fallback para permissao background |
-| 17G-04 | P0 | Todos | GPS indisponivel | Simular indisponibilidade/erro de leitura | Mensagem clara e mapa segue navegavel | Reexecutar | Nao executado; sem persistir erro como coordenada |
-| 17G-05 | P0 | Todos | Storage | Auditar AsyncStorage e codigo | Nenhuma coordenada, trilha, rota ou historico salvo | Passou | Auditoria focada nao encontrou AsyncStorage/chave nova/background APIs nos arquivos alterados |
-| 17G-06 | P0 | Todos | Fallback | Forcar falha do Leaflet/WebView | Fallback SVG nao promete localizacao real sem helper seguro | Reexecutar | Preferir mensagem controlada na primeira versao |
+| 17G-02 | P0 | Todos | Mapa de Talhoes | Abrir Sela > mapa de Talhoes > Mostrar minha posicao | Marcador aparece apenas sobre Talhoes/GeoJSON georreferenciado | Passou | 17G.2: emulador Pixel Tablet, Talhoes seed/mock da Sela, sucesso com precisao de 8 m e marcador azul visivel acima dos rotulos |
+| 17G-03 | P0 | Todos | Permissao negada | Negar permissao de localizacao | Mensagem clara, sem crash e sem marcador | Passou | 17G.2: dialogo Android negado e app exibiu mensagem controlada sem quebrar mapa/Talhoes |
+| 17G-04 | P0 | Todos | GPS indisponivel | Simular indisponibilidade/erro de leitura | Mensagem clara e mapa segue navegavel | Passou | 17G.2: `cmd location set-location-enabled false` gerou mensagem para ativar localizacao do aparelho |
+| 17G-05 | P0 | Todos | Storage | Auditar AsyncStorage e codigo | Nenhuma coordenada, trilha, rota ou historico salvo | Passou | 17G.2: auditoria focada nao encontrou AsyncStorage/chave nova/watch/background/geofence; apos force-stop a posicao nao voltou |
+| 17G-06 | P0 | Todos | Fallback | Forcar falha do Leaflet/WebView | Fallback SVG nao promete localizacao real sem helper seguro | Reexecutar | Fallback SVG/WebView nao foi forcado manualmente nesta rodada |
 | 17G-07 | P0 | Todos | Android fisico | Repetir em aparelho autorizado | Permissao, precisao e consumo basico validados em campo | Reexecutar | Android fisico segue pendente e nao aprovado |
+| 17G-08 | P0 | Todos | Material tecnico | Abrir PNG/ZIP/Material tecnico | Nao ha botao/marcador de localizacao em materiais tecnicos | Passou | 17G.2: Material tecnico da Sela nao exibiu `Mostrar minha posicao`; regras de Produtor sem acoes admin permanecem cobertas por testes |
+| 17G-09 | P0 | Todos | Caderno | Auditar criacao/detalhe de Caderno | Caderno nao recebe coordenada automaticamente | Passou | Auditoria e `test:domain-compat` sem campos novos de latitude/longitude/accuracy/coords no Caderno; criacao manual nova nao foi repetida nesta rodada |
+| 17G-10 | P1 | Admin/Colaborador | GeoJSON local | Reanexar GeoJSON local e repetir mapa | Marcador funciona sobre GeoJSON local ativo, sem salvar GeoJSON bruto em AsyncStorage | Reexecutar | 17G.2 usou Talhoes seed/mock; reimport via DocumentPicker deve ser repetido |
 
 **Rodada Fase 17E - Safra/Safrinha Local E Opcional**
 

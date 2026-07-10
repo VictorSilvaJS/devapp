@@ -372,6 +372,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
           if (!userLocationAccuracyCircle) {
             userLocationAccuracyCircle = L.circle(latLng, {
               radius: localizacao.accuracy,
+              pane: 'user-location-pane',
               color: '#2563EB',
               weight: 1.5,
               opacity: 0.9,
@@ -391,6 +392,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
         if (!userLocationMarker) {
           userLocationMarker = L.circleMarker(latLng, {
             radius: 8,
+            pane: 'user-location-pane',
             color: '#FFFFFF',
             weight: 3,
             opacity: 1,
@@ -419,6 +421,10 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
           tap: true,
           zoomSnap: 0.25
         });
+
+        var userLocationPane = map.createPane('user-location-pane');
+        userLocationPane.style.zIndex = 720;
+        userLocationPane.style.pointerEvents = 'none';
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,

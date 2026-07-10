@@ -12,10 +12,17 @@ ha AsyncStorage, chave nova, trilha, historico, rota, geotag, Caderno com
 coordenada, background location, TaskManager, geofencing, backend, sync,
 upload, download real ou storage remoto.
 
-Este arquivo documenta a analise 17G.0 e a implementacao minima 17G.1. A
-localizacao so deve ser considerada sobre camada georreferenciada de
-Talhoes/GeoJSON. PNG e ZIP continuam sendo materiais tecnicos/anexos, nao mapas
-georreferenciados.
+Status em 2026-07-10 (Fase 17G.2): executado smoke visual em emulador do corte
+foreground sobre o mapa de Talhoes da Sela de Prata I. Foram feitos dois
+ajustes localizados: fallback para a ultima leitura recente do sistema quando a
+leitura atual expira no emulador, e pane propria no Leaflet para manter o
+marcador do usuario acima dos rotulos dos Talhoes. A auditoria continuou sem
+persistencia de coordenadas ou uso de APIs de background.
+
+Este arquivo documenta a analise 17G.0, a implementacao minima 17G.1 e o smoke
+visual 17G.2. A localizacao so deve ser considerada sobre camada
+georreferenciada de Talhoes/GeoJSON. PNG e ZIP continuam sendo materiais
+tecnicos/anexos, nao mapas georreferenciados.
 
 ## Implementacao Da Fase 17G.1
 
@@ -428,10 +435,83 @@ Fluxo implementado:
 - `adb devices -l` mostrou apenas `emulator-5554`; Android fisico segue
   pendente e nao aprovado.
 
+## Ajustes E Validacao Executada Na 17G.2
+
+A 17G.2 manteve o escopo funcional da 17G.1 e corrigiu apenas pontos
+necessarios para fechar o smoke visual em emulador:
+
+- `src/services/LocationForegroundService.ts` passou a tentar uma leitura
+  recente do sistema com `getLastKnownPositionAsync` quando
+  `getCurrentPositionAsync` expira. O limite usado e de 2 minutos e precisao
+  maxima requerida de 200 m, mantendo a leitura como estado efemero e sem
+  AsyncStorage.
+- `src/components/MapaFazendaView.tsx` passou a desenhar o marcador e o circulo
+  de precisao em uma pane Leaflet propria (`user-location-pane`), acima dos
+  rotulos de Talhao e sem interceptar toques.
+
+Validacao em emulador:
+
+- `npm run typecheck` passou.
+- `npm run test:domain-compat` passou.
+- `npx expo install --check` foi executado sem instalar dependencias; no
+  sandbox falhou com `ECONNREFUSED 127.0.0.1:9`, e fora do sandbox reportou
+  somente `expo@56.0.11 - expected version: ~56.0.15`. A divergencia foi
+  mantida sem correcao.
+- `.\gradlew.bat :app:assembleRelease` falhou inicialmente no sandbox por
+  acesso ao lock do Gradle em `%USERPROFILE%\.gradle`, mas passou quando
+  reexecutado com permissao para acessar o cache local.
+- O APK release foi instalado no emulador `emulator-5554` (`Pixel_Tablet`) com
+  `adb install -r` e aberto via `monkey`.
+- `adb devices -l` mostrou apenas o emulador; nenhum Android fisico apareceu
+  como `device`.
+- `adb dumpsys package com.tcheagro.mobile` confirmou
+  `ACCESS_FINE_LOCATION` e `ACCESS_COARSE_LOCATION`, sem
+  `ACCESS_BACKGROUND_LOCATION`.
+
+Smoke funcional em emulador:
+
+- Em Sela de Prata I > Panorama e Talhoes, o botao `Mostrar minha posicao`
+  apareceu no mapa de Talhoes seed/mock.
+- Com permissao concedida e posicao simulada no provedor do emulador, o app
+  exibiu mensagem de sucesso com precisao informada de 8 m e horario da
+  leitura; o marcador azul ficou visivel sobre os Talhoes.
+- A consulta do Talhao continuou funcional apos o marcador: o card/lista abriu
+  o detalhe de `T01 - 230`.
+- Ao negar permissao, o app exibiu mensagem controlada e nao quebrou a tela.
+- Com servicos de localizacao desligados no emulador, o app exibiu mensagem
+  controlada para ativar a localizacao do aparelho.
+- Apos `force-stop` e reabertura, a posicao anterior nao foi restaurada; o
+  botao voltou sem marcador/mensagem de sucesso ate novo toque.
+- Material tecnico da Sela foi reaberto e nao exibiu botao de localizacao.
+- As regras de Produtor sem acoes administrativas de PNG/ZIP permanecem
+  cobertas pelos testes de dominio existentes; nao foi feito login manual
+  separado de Produtor nesta rodada.
+
+Auditoria de nao persistencia:
+
+- Busca textual focada nao encontrou `watchPosition`,
+  `watchPositionAsync`, `startLocationUpdates`, `TaskManager`,
+  `ACCESS_BACKGROUND_LOCATION`, `UIBackgroundModes`, geofence/geofencing ou
+  nova chave `@tche:` ligada a localizacao.
+- Nos arquivos novos/alterados de localizacao nao ha `AsyncStorage` nem chave
+  persistente.
+- Auditoria do Caderno encontrou apenas localizacao textual da Propriedade em
+  detalhe e campos legados de contrato, sem latitude/longitude/accuracy/coords
+  novos no formulario, edicao, detalhe ou compatibilidade de Caderno.
+
+Limitacoes da 17G.2:
+
+- O reanexo/reimportacao de GeoJSON local via DocumentPicker nao foi repetido
+  nesta rodada; o smoke visual usou a camada seed/mock da Sela de Prata I.
+- O fallback SVG/WebView nao foi forçado manualmente.
+- Nao foi criado novo Caderno manual a partir do Talhao nesta rodada; a ausencia
+  de coordenadas no Caderno ficou coberta por auditoria e testes automatizados.
+- Android fisico segue pendente e nao aprovado.
+
 ## Conclusao
 
-A 17G.1 foi uma evolucao pequena sobre o mapa WebView/Leaflet atual, mantendo
-a localizacao como estado efemero de UI em foreground. O mapa nativo deve
-permanecer como alternativa futura, porque reativar `MapaFazendaNativoView`
-agora ampliaria o risco e mudaria uma base de Talhoes ja validada em emulador.
-Android fisico segue pendente e nao aprovado.
+A 17G.2 fecha o smoke visual em emulador para localizacao foreground no mapa de
+Talhoes seed/mock, mantendo a localizacao como estado efemero de UI em
+foreground. O mapa nativo deve permanecer como alternativa futura, porque
+reativar `MapaFazendaNativoView` agora ampliaria o risco e mudaria uma base de
+Talhoes ja validada em emulador. Android fisico segue pendente e nao aprovado.

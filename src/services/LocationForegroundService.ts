@@ -23,9 +23,12 @@ type ExpoLocationModule = Pick<
   | 'requestForegroundPermissionsAsync'
   | 'hasServicesEnabledAsync'
   | 'getCurrentPositionAsync'
-> & {
+> & Partial<Pick<typeof Location, 'getLastKnownPositionAsync'>> & {
   Accuracy?: typeof Location.Accuracy;
 };
+
+const LAST_KNOWN_MAX_AGE_MS = 2 * 60 * 1000;
+const LAST_KNOWN_REQUIRED_ACCURACY_METERS = 200;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -69,6 +72,31 @@ const normalizeLocationObject = (
   };
 };
 
+const getCurrentOrRecentLastKnownPosition = async (
+  locationModule: ExpoLocationModule
+): Promise<Location.LocationObject> => {
+  try {
+    return await locationModule.getCurrentPositionAsync({
+      accuracy: locationModule.Accuracy?.Balanced,
+    });
+  } catch (error) {
+    if (!locationModule.getLastKnownPositionAsync) {
+      throw error;
+    }
+
+    const recentLastKnown = await locationModule.getLastKnownPositionAsync({
+      maxAge: LAST_KNOWN_MAX_AGE_MS,
+      requiredAccuracy: LAST_KNOWN_REQUIRED_ACCURACY_METERS,
+    });
+
+    if (!recentLastKnown) {
+      throw error;
+    }
+
+    return recentLastKnown;
+  }
+};
+
 export interface RequestForegroundLocationOptions {
   locationModule?: ExpoLocationModule;
   now?: () => string;
@@ -101,9 +129,7 @@ export const requestCurrentForegroundLocation = async (
       };
     }
 
-    const locationObject = await locationModule.getCurrentPositionAsync({
-      accuracy: locationModule.Accuracy?.Balanced,
-    });
+    const locationObject = await getCurrentOrRecentLastKnownPosition(locationModule);
     const normalized = normalizeLocationObject(locationObject, now);
 
     if (!normalized) {

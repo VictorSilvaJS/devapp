@@ -3317,13 +3317,24 @@ Validacao tecnica inicial:
   Propriedade, entao o smoke visual de marcador/permissao da localizacao nao
   foi considerado aprovado nesta rodada.
 
+Status em 2026-07-10 (Fase 17G.2): o smoke visual da localizacao foreground foi
+executado em emulador na Sela de Prata I sobre a camada de Talhoes seed/mock.
+Foram feitos ajustes localizados para usar uma ultima leitura recente do sistema
+quando a leitura atual expira no emulador e para desenhar o marcador em uma
+pane Leaflet acima dos rotulos dos Talhoes. O botao `Mostrar minha posicao`
+exibiu sucesso com precisao de 8 m na posicao simulada, o marcador azul ficou
+visivel, a consulta de Talhao continuou funcional, permissao negada e servicos
+de localizacao desligados geraram mensagens controladas, e apos `force-stop` a
+posicao nao foi restaurada automaticamente. A auditoria confirmou ausencia de
+AsyncStorage, chave nova, watch continuo, TaskManager, background location,
+geofencing, historico, rota ou coordenada nova no Caderno.
+
 Continuam pendentes:
 
-- executar smoke manual em emulador com permissao concedida e negada;
-- validar visualmente o botao `Mostrar minha posicao` e o marcador sobre a
-  camada GeoJSON de Talhoes quando houver demarcacao local disponivel;
-- repetir Material tecnico, PNG, ZIP e GeoJSON local em rodada propria depois
-  de recriar imports locais quando necessario;
+- reexecutar anexo/importacao de GeoJSON local via DocumentPicker nesta frente;
+- forcar manualmente o fallback SVG/WebView;
+- repetir login manual separado de Produtor em Material tecnico quando houver
+  rodada visual dedicada;
 - validar em Android fisico autorizado. Android fisico segue pendente e nao
   aprovado.
 
