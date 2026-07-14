@@ -19,8 +19,17 @@ leitura atual expira no emulador, e pane propria no Leaflet para manter o
 marcador do usuario acima dos rotulos dos Talhoes. A auditoria continuou sem
 persistencia de coordenadas ou uso de APIs de background.
 
+Status em 2026-07-10 (Fase 17G.3): revalidacao concluida no emulador sobre
+GeoJSON local ativo. `limites_talhoes.geojson` foi reanexado pelo
+DocumentPicker com 15 Talhoes/37 partes, a localizacao foreground apareceu no
+Leaflet com precisao simulada de 8 m, o Talhao permaneceu clicavel e, apos
+`force-stop`, o GeoJSON continuou ativo sem restaurar o marcador. PNG local,
+ZIP de Prescricao, Caderno, permissao negada e localizacao desligada foram
+revalidados sem regressao. Fallback SVG/WebView e Android fisico permanecem
+pendentes.
+
 Este arquivo documenta a analise 17G.0, a implementacao minima 17G.1 e o smoke
-visual 17G.2. A localizacao so deve ser considerada sobre camada
+visual 17G.2/17G.3. A localizacao so deve ser considerada sobre camada
 georreferenciada de Talhoes/GeoJSON. PNG e ZIP continuam sendo materiais
 tecnicos/anexos, nao mapas georreferenciados.
 
@@ -508,10 +517,88 @@ Limitacoes da 17G.2:
   de coordenadas no Caderno ficou coberta por auditoria e testes automatizados.
 - Android fisico segue pendente e nao aprovado.
 
+## Revalidacao Executada Na 17G.3
+
+A 17G.3 revalidou o fluxo foreground no AVD `tche_test`, identificado pelo
+`adb` como `emulator-5554` (`Pixel_Tablet`, API 35), usando o APK release atual.
+Nenhuma feature nova ou correcao funcional foi necessaria.
+
+GeoJSON local e localizacao:
+
+- `limites_talhoes.geojson`, ja presente em `Downloads`, foi selecionado pelo
+  DocumentPicker e abriu a confirmacao com 15 Talhoes, 37 partes/poligonos,
+  geometrias `MultiPolygon`/`Polygon`, nome original e tamanho de 171,9 KB;
+- a associacao foi confirmada e a tela passou a mostrar `GeoJSON anexado`,
+  `limites_talhoes.geojson` e `Talhoes carregados do GeoJSON local`;
+- o mapa interativo mostrou a origem `GEOJSON LOCAL`, manteve os 15 Talhoes e
+  renderizou o marcador azul/circulo de precisao com leitura simulada de 8 m;
+- o card de `T01 - 230` continuou clicavel e abriu o detalhe do Talhao depois
+  da localizacao;
+- a UI nao afirmou que o aparelho estava dentro ou fora de um Talhao;
+- apos `adb shell am force-stop com.tcheagro.mobile`, o GeoJSON local voltou
+  ativo na reabertura, mas o marcador e a mensagem de sucesso nao voltaram;
+  foi necessario um novo toque em `Mostrar minha posicao`.
+
+Regressoes de Material tecnico e Caderno:
+
+- `smoke_ph_10a20.png` foi reanexado como PNG local de Fertilidade/pH, abriu
+  como imagem e nao mostrou botao, marcador ou circulo de localizacao;
+- `prescricao_taxa_variavel_2026.zip` foi reanexado como Prescricao e abriu
+  somente o detalhe do pacote tecnico, sem preview de imagem, unzip,
+  processamento ou localizacao;
+- em login separado de Produtor, PNG e ZIP continuaram consultaveis e seus
+  modais exibiram somente fechar, sem anexar, substituir ou remover;
+- o registro de Caderno `Observacao` do Talhao `T01 - 230` foi reaberto com a
+  Propriedade Sela de Prata I preservada, sem latitude, longitude, accuracy,
+  `capturedAt`, geotag ou campo novo de localizacao;
+- nao havia PDF invalido em `Downloads`; a rejeicao de PDF no fluxo ZIP
+  permaneceu coberta pelo teste automatizado do picker, sem novo caso manual.
+
+Mensagens controladas:
+
+- a permissao Android foi revogada e o caso `Don't allow` exibiu
+  `Permissao de localizacao negada...`, sem crash e sem marcador;
+- com `cmd location set-location-enabled false`, o app exibiu
+  `Ative a localizacao do aparelho para usar este recurso.`, mantendo o mapa;
+- a localizacao foi reativada ao fim da rodada e o provedor de teste do
+  emulador foi removido;
+- a camada seed/mock nao foi removida nesta rodada; o caso segue aprovado pela
+  17G.2 no mesmo fluxo, e a 17G.3 concentrou a revalidacao na camada local.
+
+Auditoria e validacoes:
+
+- `npm run typecheck` passou;
+- `npm run test:domain-compat` passou, incluindo GeoJSON, PNG, ZIP e Caderno;
+- `npx expo install --check` confirmou somente a divergencia conhecida
+  `expo@56.0.11 - expected version: ~56.0.15`, mantida sem correcao;
+- `.\gradlew.bat :app:assembleRelease` falhou primeiro apenas pelo bloqueio do
+  cache Gradle no sandbox e passou ao ser repetido com acesso ao cache local;
+- o APK foi instalado por `adb install -r` e aberto sem crash funcional;
+- `dumpsys package` confirmou `ACCESS_FINE_LOCATION` e
+  `ACCESS_COARSE_LOCATION`, sem `ACCESS_BACKGROUND_LOCATION`;
+- a busca ampla solicitada e buscas focadas nao encontraram AsyncStorage/chave
+  de localizacao nos arquivos do recurso, campos de coordenada no Caderno,
+  `watchPosition`, `startLocationUpdates`, `TaskManager`, geofencing ou
+  background location;
+- as chaves `@tche:*` continuaram restritas as sete chaves existentes, sem
+  chave nova de localizacao; GeoJSON, PNG e ZIP continuam com arquivo fisico
+  no storage interno e somente metadados pequenos em AsyncStorage.
+
+Pendencias preservadas:
+
+- o fallback SVG/WebView nao foi forcado porque nao ha chave segura de teste e
+  provocar falha exigiria alterar o app, limpar WebView ou interferir de forma
+  arriscada no ambiente; o caso permanece `Reexecutar`;
+- Android fisico segue pendente e nao aprovado;
+- iOS, precisao/consumo em campo, backend/RBAC real, sync, upload/download real
+  e storage remoto seguem fora deste fechamento.
+
 ## Conclusao
 
-A 17G.2 fecha o smoke visual em emulador para localizacao foreground no mapa de
-Talhoes seed/mock, mantendo a localizacao como estado efemero de UI em
-foreground. O mapa nativo deve permanecer como alternativa futura, porque
-reativar `MapaFazendaNativoView` agora ampliaria o risco e mudaria uma base de
-Talhoes ja validada em emulador. Android fisico segue pendente e nao aprovado.
+A 17G.3 fecha a revalidacao em emulador para localizacao foreground sobre
+GeoJSON local ativo e confirma ausencia de regressao em PNG, ZIP e Caderno. A
+localizacao continua efemera, sem background, trilha, historico, rota, geotag
+ou coordenada persistida. O mapa nativo deve permanecer como alternativa
+futura, porque reativar `MapaFazendaNativoView` agora ampliaria o risco e
+mudaria uma base de Talhoes ja validada em emulador. Fallback forcado e Android
+fisico seguem pendentes; Android fisico nao esta aprovado.

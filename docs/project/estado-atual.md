@@ -3329,7 +3329,7 @@ posicao nao foi restaurada automaticamente. A auditoria confirmou ausencia de
 AsyncStorage, chave nova, watch continuo, TaskManager, background location,
 geofencing, historico, rota ou coordenada nova no Caderno.
 
-Continuam pendentes:
+Pendencias registradas ao fim da 17G.2, tratadas quando indicado na 17G.3 abaixo:
 
 - reexecutar anexo/importacao de GeoJSON local via DocumentPicker nesta frente;
 - forcar manualmente o fallback SVG/WebView;
@@ -3337,6 +3337,72 @@ Continuam pendentes:
   rodada visual dedicada;
 - validar em Android fisico autorizado. Android fisico segue pendente e nao
   aprovado.
+
+## Fase 17G.3 - Revalidacao GeoJSON Local, PNG/ZIP E Foreground
+
+Status em 2026-07-10: a localizacao foreground foi revalidada no emulador
+`emulator-5554` (`Pixel_Tablet`, API 35) sobre GeoJSON local ativo da Sela de
+Prata I, sem implementar feature nova e sem exigir correcao de codigo.
+
+Resultado da rodada:
+
+- `limites_talhoes.geojson` foi reanexado pelo DocumentPicker e confirmado com
+  15 Talhoes, 37 partes/poligonos e geometrias `MultiPolygon`/`Polygon`;
+- a tela e o Leaflet passaram a indicar `GeoJSON local`/`GEOJSON LOCAL`, com os
+  Talhoes renderizados e clicaveis;
+- uma posicao simulada no emulador apareceu como marcador azul e circulo de
+  precisao de 8 m, sem afirmar dentro/fora de Talhao;
+- o detalhe de `T01 - 230` continuou abrindo depois da localizacao;
+- apos `force-stop`, o GeoJSON local permaneceu ativo, mas a posicao anterior
+  nao foi restaurada e o marcador so voltou apos nova solicitacao;
+- `smoke_ph_10a20.png` abriu como imagem local, sem localizacao;
+- `prescricao_taxa_variavel_2026.zip` abriu apenas o detalhe do pacote, sem
+  preview, unzip, processamento ou localizacao;
+- um registro de Caderno do Talhao `T01 - 230` preservou Propriedade e Talhao
+  e nao exibiu latitude, longitude, accuracy, `capturedAt`, geotag ou campo de
+  localizacao;
+- Produtor reabriu PNG e ZIP sem acoes de anexar, substituir ou remover;
+- permissao negada e servicos de localizacao desligados voltaram a exibir
+  mensagens controladas, sem crash.
+
+Auditoria da 17G.3:
+
+- localizacao continua foreground only e acionada por botao;
+- nao ha background location, `TaskManager`, `startLocationUpdates`, watch
+  continuo, geofencing, trilha, rota, historico, ultimo ponto ou geotag;
+- nenhuma coordenada e salva em AsyncStorage, Caderno, mock ou logs;
+- nenhuma chave `@tche:*` de localizacao foi criada;
+- GeoJSON, PNG e ZIP continuam guardando arquivo fisico no storage interno e
+  apenas metadados pequenos nas chaves locais existentes;
+- PNG e ZIP continuam nao georreferenciados.
+
+Validacoes executadas:
+
+- `npm run typecheck`;
+- `npm run test:domain-compat`;
+- `npx expo install --check`, mantendo a divergencia conhecida
+  `expo@56.0.11` versus `~56.0.15`;
+- `.\gradlew.bat :app:assembleRelease`, com repeticao fora do sandbox apenas
+  para acessar o cache Gradle local;
+- `adb install -r android\app\build\outputs\apk\release\app-release.apk`;
+- `adb shell am start`/`monkey`, `uiautomator`, capturas de tela, simulacao de
+  localizacao, `force-stop`, revogacao de permissao e desligamento dos servicos;
+- auditoria ampla por `rg` e buscas focadas de storage/localizacao;
+- `dumpsys package` com `ACCESS_FINE_LOCATION` e `ACCESS_COARSE_LOCATION`, sem
+  `ACCESS_BACKGROUND_LOCATION`.
+
+Pendencias remanescentes:
+
+- forcar o fallback SVG/WebView continua `Reexecutar`, porque nao existe chave
+  segura de teste sem alterar o app ou interferir de forma arriscada no
+  WebView;
+- o caso seed/mock permanece aprovado pela 17G.2 e nao foi removido/repetido
+  durante a revalidacao da camada local;
+- Android fisico segue pendente e nao aprovado;
+- iOS, precisao/consumo em campo e politica futura de mapa-base/offline seguem
+  pendentes;
+- backend, RBAC real, sync, upload/download real e storage remoto continuam
+  fora do escopo.
 
 ## Proximo Passo Recomendado
 

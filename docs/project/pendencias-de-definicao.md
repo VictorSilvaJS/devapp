@@ -275,6 +275,21 @@ fallback SVG/WebView, definir criterio de iOS, validar precisao/consumo em
 campo e executar Android fisico autorizado. Android fisico segue pendente e nao
 aprovado.
 
+Status em 2026-07-10 (Fase 17G.3): o GeoJSON local foi reanexado pelo
+DocumentPicker na Sela de Prata I e permaneceu ativo com 15 Talhoes/37 partes.
+A localizacao foreground apareceu no Leaflet sobre a camada local com precisao
+simulada de 8 m, o Talhao continuou clicavel e a posicao nao foi restaurada
+depois de `force-stop`, embora o GeoJSON tenha persistido. PNG local e ZIP de
+Prescricao foram reanexados/reabertos sem localizacao, georreferenciamento,
+preview de ZIP, unzip ou processamento; Caderno preservou Propriedade/Talhao
+sem coordenadas; Produtor continuou sem acoes administrativas; permissao
+negada e localizacao desligada passaram novamente. A auditoria manteve
+foreground only, sem AsyncStorage de coordenadas, chave nova, watch continuo,
+TaskManager, background, geofencing, trilha, historico, rota ou geotag. A
+pendencia permanece aberta apenas para forcar o fallback SVG/WebView de forma
+segura, definir criterio de iOS, validar precisao/consumo em campo e executar
+Android fisico autorizado. Android fisico segue pendente e nao aprovado.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
