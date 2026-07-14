@@ -3404,6 +3404,53 @@ Pendencias remanescentes:
 - backend, RBAC real, sync, upload/download real e storage remoto continuam
   fora do escopo.
 
+## Fase 17H.0 - Analise Tecnica De Marcacoes De Campo
+
+Status em 2026-07-14: foi criada a analise tecnica
+`docs/project/fase-17h-marcacoes-campo.md` para orientar uma futura
+implementacao de marcacoes de campo vinculadas ao Caderno. Esta fase foi apenas
+documental: nenhuma marcacao foi implementada, nenhum storage novo foi criado,
+nenhuma chave `@tche:` nova foi criada e nenhuma coordenada foi salva.
+
+Diagnostico registrado:
+
+- localizacao foreground da 17G continua apenas temporaria no mapa de Talhoes,
+  acionada por `Mostrar minha posicao`;
+- Caderno atual ja preserva Propriedade, `fazenda_id`/`fazendaId`, Talhao,
+  autoria, visibilidade e Safra/Safrinha opcional;
+- `TalhaoDetailModal` ja possui acao `Registrar no Caderno`, que pode ser o
+  encaixe futuro para uma acao explicita de ponto;
+- PNG e ZIP continuam materiais tecnicos nao georreferenciados;
+- Caderno ainda nao possui campos de latitude, longitude, accuracy,
+  `capturedAt`, geotag ou localizacao do registro.
+
+Recomendacao da analise:
+
+- para o MVP demonstravel, preferir Caderno com metadados opcionais de
+  localizacao em fase futura;
+- nao criar `@tche:field-markers:v1` no primeiro corte;
+- salvar coordenada somente apos acao explicita como `Registrar ponto` ou
+  `Usar minha posicao neste registro` e somente junto com o salvamento do
+  Caderno;
+- manter Caderno sem coordenada como fluxo normal;
+- nunca salvar coordenada apenas por abrir mapa, tocar em `Mostrar minha
+  posicao`, abrir Talhao ou abrir Caderno;
+- manter sem background, sem `TaskManager`, sem watch continuo, sem geofencing,
+  sem trilha, sem rota, sem historico, sem ultimo ponto e sem tracking.
+
+Pendencias para 17H.1:
+
+- confirmar decisao final de armazenamento no Caderno ou aprovar storage
+  auxiliar;
+- definir campos opcionais finais;
+- confirmar mensagem de consentimento e UX de remover localizacao antes de
+  salvar;
+- testar cancelamento sem persistencia e persistencia apenas ao salvar
+  Caderno;
+- confirmar que PNG/ZIP seguem sem marcador ou georreferenciamento;
+- validar Android fisico autorizado ou aceitar explicitamente a pendencia antes
+  de abrir implementacao. Android fisico segue pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
 Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar

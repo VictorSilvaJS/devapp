@@ -20,6 +20,30 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0 - Analise De Marcacoes De Campo**
+
+Observacao geral em 2026-07-14 (Fase 17H.0): rodada apenas documental para
+analisar marcacoes de campo vinculadas ao Caderno. Nenhuma marcacao foi
+implementada, nenhuma coordenada foi salva, nenhum storage novo foi criado e
+nenhuma chave `@tche:` nova foi criada. A recomendacao para uma futura 17H.1 e
+usar o Caderno como armazenamento principal do MVP demonstravel, com metadados
+opcionais de localizacao salvos somente por acao explicita e apenas junto com o
+salvamento do registro. Localizacao continua foreground only, sem background,
+tracking, watch, TaskManager, geofencing, trilha, rota, historico ou marcador
+em PNG/ZIP. Android fisico segue pendente e nao aprovado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H-00 | P0 | Todos | Analise | Criar documento tecnico 17H.0 | Diagnostico, recomendacao, modelo futuro, permissoes, UX, riscos e criterios 17H.1 documentados | Passou | `docs/project/fase-17h-marcacoes-campo.md` criado sem alterar codigo |
+| 17H-01 | P0 | Todos | Escopo | Confirmar ausencia de implementacao | Nenhuma marcacao, coordenada, storage novo ou chave nova criada | Passou | Fase documental; validar por diff e auditoria textual |
+| 17H1-01 | P0 | Todos | Caderno | Criar Caderno sem coordenada | Fluxo atual continua permitido e sem campo obrigatorio de localizacao | Reexecutar | Caso da futura 17H.1; nao existe implementacao de ponto nesta rodada |
+| 17H1-02 | P0 | Todos | Consentimento | Usar posicao atual no registro e salvar | Coordenada persiste somente apos acao explicita e salvamento do Caderno | Reexecutar | Exige implementacao futura |
+| 17H1-03 | P0 | Todos | Cancelamento | Capturar posicao e cancelar formulario | Nenhuma coordenada e salva | Reexecutar | Exige implementacao futura |
+| 17H1-04 | P0 | Todos | Remocao | Remover localizacao antes de salvar | Caderno salva sem coordenada | Reexecutar | Exige implementacao futura |
+| 17H1-05 | P0 | Todos | Material tecnico | Abrir PNG/ZIP com marcacoes futuras existentes | PNG/ZIP seguem sem marcador, georreferenciamento, unzip ou processamento | Reexecutar | Deve permanecer separado do mapa de Talhoes |
+| 17H1-06 | P0 | Todos | Tracking | Auditar APIs de localizacao | Sem background, TaskManager, watch continuo, geofencing, trilha, rota ou historico | Reexecutar | Deve ser repetido quando houver codigo da 17H.1 |
+| 17H1-07 | P0 | Todos | Android fisico | Repetir fluxo em aparelho autorizado | Permissao, precisao, consentimento e persistencia explicita validados em campo | Reexecutar | Android fisico segue pendente e nao aprovado |
+
 **Rodada Fase 17F - Talhao Como Centro De Consulta Da Propriedade**
 
 Observacao geral em 2026-07-09 (Fase 17F.2): ambiente do emulador

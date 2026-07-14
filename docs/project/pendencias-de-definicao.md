@@ -290,6 +290,34 @@ pendencia permanece aberta apenas para forcar o fallback SVG/WebView de forma
 segura, definir criterio de iOS, validar precisao/consumo em campo e executar
 Android fisico autorizado. Android fisico segue pendente e nao aprovado.
 
+### 4B. Marcacoes de campo vinculadas ao Caderno
+
+Marcacoes de campo com ponto geografico ainda nao existem no produto. Elas nao
+devem ser confundidas com a localizacao temporaria do mapa de Talhoes nem com
+PNG/ZIP de Material tecnico.
+
+Status em 2026-07-14 (Fase 17H.0): foi criada a analise tecnica
+`docs/project/fase-17h-marcacoes-campo.md`. A recomendacao para uma futura
+17H.1 e usar o Caderno como armazenamento principal do MVP demonstravel, com
+metadados opcionais de localizacao salvos somente quando houver acao explicita
+do usuario e salvamento do registro. Nenhuma implementacao foi feita nesta
+fase, nenhuma coordenada foi salva, nenhum storage novo foi criado e nenhuma
+chave `@tche:` nova foi criada.
+
+Pontos pendentes antes de implementar:
+
+- confirmar se a 17H.1 usara Caderno com campos opcionais ou storage auxiliar;
+- definir campos finais de localizacao e compatibilidade com registros antigos;
+- definir texto de consentimento e UX para remover localizacao antes de salvar;
+- garantir teste de cancelamento sem persistencia;
+- garantir teste de persistencia apenas ao salvar Caderno;
+- garantir que `Mostrar minha posicao` continue sem salvar coordenada sozinho;
+- confirmar que PNG/ZIP seguem sem marcador e sem georreferenciamento;
+- manter sem background, `TaskManager`, watch continuo, geofencing, trilha,
+  rota, historico, ultimo ponto ou tracking;
+- validar Android fisico autorizado ou aceitar explicitamente a pendencia antes
+  da implementacao. Android fisico segue pendente e nao aprovado.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
