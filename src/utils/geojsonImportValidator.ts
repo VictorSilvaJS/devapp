@@ -310,7 +310,7 @@ const normalizePolygonCoordinates = (
   if (coordinates.length > 1) {
     context.addWarning({
       code: 'INTERIOR_RING_IGNORED',
-      message: 'Aneis internos foram ignorados nesta fase; apenas o anel externo foi normalizado.',
+      message: 'Anéis internos foram ignorados nesta fase; apenas o anel externo foi normalizado.',
       ...featureContext,
     });
   }
@@ -348,7 +348,7 @@ const normalizeMultiPolygonCoordinates = (
     if (polygonCoordinates.length > 1) {
       context.addWarning({
         code: 'INTERIOR_RING_IGNORED',
-        message: 'Aneis internos foram ignorados nesta fase; apenas o anel externo foi normalizado.',
+        message: 'Anéis internos foram ignorados nesta fase; apenas o anel externo foi normalizado.',
         ...featureContext,
       });
     }
@@ -555,7 +555,7 @@ export const validateAndNormalizeGeoJson = (
       data_upload: normalizeOptionalString(options?.data_upload),
       safra: normalizeOptionalString(options?.safra) ?? normalizeOptionalString(properties.safra),
       disponivel_offline: true,
-      observacoes: 'Talhao normalizado de GeoJSON local. Aneis internos, quando existirem, nao sao usados nesta fase.',
+      observacoes: 'Talhão carregado de um GeoJSON local. Anéis internos, quando existirem, não são exibidos nesta etapa.',
     };
 
     talhoes.push(normalizedTalhao);

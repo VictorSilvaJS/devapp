@@ -662,7 +662,7 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Ionicons name="book-outline" size={20} color={colors.primary} />
                   <Text style={styles.quickActionTitle}>Caderno de campo</Text>
                   <Text style={styles.quickActionText}>
-                    {isProdutorView ? 'Ver e registrar campo' : 'Ver registros liberados'}
+                    {isProdutorView ? 'Ver e registrar ocorrências' : 'Ver registros liberados'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -878,7 +878,9 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Ionicons name="git-network" size={16} color={colors.primary} />
                   <Text style={styles.infoLabel}>Talhões</Text>
                 </View>
-                <Text style={styles.infoValue}>{limites.length} talhão{limites.length !== 1 ? 'es' : ''}</Text>
+                <Text style={styles.infoValue}>
+                  {limites.length} {limites.length === 1 ? 'talhão' : 'talhões'}
+                </Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>

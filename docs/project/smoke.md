@@ -44,6 +44,27 @@ em PNG/ZIP. Android fisico segue pendente e nao aprovado.
 | 17H1-06 | P0 | Todos | Tracking | Auditar APIs de localizacao | Sem background, TaskManager, watch continuo, geofencing, trilha, rota ou historico | Reexecutar | Deve ser repetido quando houver codigo da 17H.1 |
 | 17H1-07 | P0 | Todos | Android fisico | Repetir fluxo em aparelho autorizado | Permissao, precisao, consentimento e persistencia explicita validados em campo | Reexecutar | Android fisico segue pendente e nao aprovado |
 
+**Rodada De Estabilizacao Visual E Rotas - 2026-07-14**
+
+Observacao geral: rodada executada no `emulator-5554` (`Pixel_Tablet`, API 35)
+com perfis Admin e Produtor. Foram corrigidas somente falhas visuais
+reproduziveis de pluralizacao e texto. As rotas de Propriedade, Talhoes,
+Material tecnico, Panorama/mapa e Caderno preservaram contexto e permissao. O
+APK release foi gerado e reinstalado por cima, preservando o GeoJSON local. O
+provider de localizacao do boot headless nao retornou coordenada; o erro foi
+controlado, mas o marcador deve ser repetido no Android fisico.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| EST-01 | P0 | Todos | Baseline | Executar typecheck e suite de compatibilidade | Nenhuma regressao tecnica ou de dominio | Passou | `npm run typecheck` e `npm run test:domain-compat` passaram integralmente |
+| EST-02 | P0 | Admin | Rotas | Abrir Sela > Talhoes > Material tecnico > Panorama > T01 | Contexto da Propriedade e GeoJSON local permanecem ativos | Passou | Fluxo completo abriu; detalhe de `T01 - 230` permaneceu consultavel |
+| EST-03 | P0 | Produtor | Permissao/rotas | Abrir a propria Sela, Talhoes, Material, mapa e Caderno | Sem acao administrativa e sem acesso fora da propria realidade | Passou | Produtor viu somente a propria Propriedade e abriu `Registrar no Caderno` com Propriedade travada |
+| EST-04 | P1 | Todos | Texto visual | Conferir plural de Talhao, observacao GeoJSON e atalho do Caderno | Textos corretos e legiveis | Passou | APK exibiu `15 talhoes`, `Talhao carregado de um GeoJSON local...` e `Ver e registrar ocorrencias` |
+| EST-05 | P0 | Todos | Build/APK | Gerar, instalar por cima e abrir release | APK atual abre e preserva dados locais | Passou | `:app:assembleRelease`, `adb install -r` e abertura passaram; GeoJSON local permaneceu ativo |
+| EST-06 | P0 | Todos | Localizacao indisponivel | Solicitar posicao sem leitura do provider | Mensagem controlada, sem crash e mapa navegavel | Passou | Permissoes concedidas; exibiu mensagem de impossibilidade de obter posicao |
+| EST-07 | P0 | Todos | Marcador/localizacao | Injetar coordenada e solicitar posicao | Marcador e precisao aparecem no mapa | Reexecutar | Boot headless nao entregou leitura ao Expo; sucesso anterior permanece coberto pela 17G.3 e deve ser repetido no fisico |
+| EST-08 | P0 | Todos | Android fisico | Instalar APK e repetir rotas/campo | Fluxos, teclado, GPS e persistencia passam no aparelho | Reexecutar | Nenhum Android fisico autorizado apareceu em `adb devices -l` |
+
 **Rodada Fase 17F - Talhao Como Centro De Consulta Da Propriedade**
 
 Observacao geral em 2026-07-09 (Fase 17F.2): ambiente do emulador

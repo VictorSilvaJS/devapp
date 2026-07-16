@@ -3451,6 +3451,75 @@ Pendencias para 17H.1:
 - validar Android fisico autorizado ou aceitar explicitamente a pendencia antes
   de abrir implementacao. Android fisico segue pendente e nao aprovado.
 
+## Rodada De Estabilizacao Visual E Rotas - 2026-07-14
+
+Status em 2026-07-14: foi executada uma rodada de estabilizacao sobre o APK
+release e o emulador `emulator-5554` (`Pixel_Tablet`, API 35), sem abrir feature
+nova, alterar regra de acesso, contrato de rota, storage ou dependencia.
+
+Correcoes aplicadas a partir de falhas visuais reproduzidas:
+
+- o resumo do GeoJSON passou a exibir corretamente `talhao`/`talhoes`, sem a
+  forma incorreta `talhaos`;
+- a contagem de Talhoes no contexto da Propriedade passou a usar o plural
+  correto, sem formar `talhaoes`;
+- a observacao tecnica do Talhao carregado de GeoJSON foi reescrita com
+  acentuacao e linguagem consultiva;
+- os warnings de aneis internos do validador GeoJSON receberam acentuacao;
+- o atalho do Caderno para Produtor passou de `Ver e registrar campo` para
+  `Ver e registrar ocorrencias`.
+
+Smoke visual e de rotas:
+
+- Admin abriu Dashboard, Propriedades, Sela de Prata I, aba Talhoes, Material
+  tecnico, GeoJSON local ativo, Panorama/mapa e detalhe de `T01 - 230`;
+- Produtor abriu Minhas Propriedades, Sela de Prata I, Talhoes, Material
+  tecnico, Panorama/mapa e Caderno, sem acoes administrativas;
+- `Registrar no Caderno` abriu `NovoCaderno` com a Propriedade Sela de Prata I
+  travada pelo contexto da rota e Safra/Safrinha opcional;
+- a reinstalacao com `adb install -r` e o boot frio preservaram sessao e
+  GeoJSON local;
+- o APK corrigido exibiu `15 talhoes`, `Ver e registrar ocorrencias` e a nova
+  observacao do GeoJSON;
+- nenhuma rota quebrada ou perda de `fazenda_id` foi reproduzida nessa rodada.
+
+Localizacao:
+
+- `dumpsys package` confirmou `ACCESS_FINE_LOCATION` e
+  `ACCESS_COARSE_LOCATION` concedidas;
+- no boot headless, o provider do emulador nao entregou coordenada nem depois
+  de `adb emu geo fix`; o app exibiu `Nao foi possivel obter a posicao atual do
+  aparelho.` sem crash e manteve o mapa navegavel;
+- o marcador de sucesso nao foi reprovado, pois permanece coberto pela 17G.3,
+  mas ficou como `Reexecutar` nesta rodada e segue obrigatorio no Android
+  fisico.
+
+Validacoes executadas:
+
+- `npm run typecheck`: passou;
+- `npm run test:domain-compat`: passou integralmente;
+- `npx expo install --check`: manteve somente a divergencia conhecida
+  `expo@56.0.11` versus `~56.0.15`, sem alteracao de dependencia;
+- a primeira build release caiu por falta de memoria nativa da JVM com heap de
+  2 GiB; o ambiente Android gerado localmente foi ajustado para heap de 1 GiB,
+  Kotlin in-process, sem paralelismo e um worker;
+- `:app:packageRelease` passou na repeticao isolada e a validacao final
+  `:app:assembleRelease` concluiu com `BUILD SUCCESSFUL`, gerando
+  `android/app/build/outputs/apk/release/app-release.apk` com 91.881.352 bytes
+  e SHA-256
+  `D7965DCFB61536E42917A3A80F078E846EAF2765DBC1B4D7A14075983AF2D4E5`;
+- o APK foi reinstalado e aberto no emulador sem crash inicial.
+
+Pendencias remanescentes:
+
+- repetir o marcador de localizacao em Android fisico autorizado;
+- repetir Colaborador manualmente em aparelho fisico; o perfil permaneceu
+  coberto pela suite automatizada e pelos smokes anteriores;
+- alinhar a versao Expo somente em fase propria;
+- a configuracao economica foi aplicada em `android/`, pasta gerada e ignorada
+  pelo Git, portanto deve ser reaplicada apos uma regeneracao nativa se a
+  maquina voltar a apresentar falta de memoria.
+
 ## Proximo Passo Recomendado
 
 Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar

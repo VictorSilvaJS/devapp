@@ -2219,7 +2219,7 @@ export default function MapasScreen({ route, navigation }) {
               </Text>
               <Text style={styles.geoJsonImportSummaryMeta}>
                 {[
-                  `${geoJsonImportAtivo.talhoes_count ?? 0} talhão${geoJsonImportAtivo.talhoes_count === 1 ? '' : 's'}`,
+                  `${geoJsonImportAtivo.talhoes_count ?? 0} ${(geoJsonImportAtivo.talhoes_count ?? 0) === 1 ? 'talhão' : 'talhões'}`,
                   formatarData(geoJsonImportAtivo.importado_em),
                   geoJsonImportAtivo.status,
                 ].join(' • ')}
