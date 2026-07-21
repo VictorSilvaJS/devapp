@@ -300,9 +300,10 @@ automatizada do adapter nativo e Android fisico.
 
 ### 4B. Marcacoes de campo vinculadas ao Caderno
 
-Marcacoes de campo com ponto geografico ainda nao existem no produto. Elas nao
-devem ser confundidas com a localizacao temporaria do mapa de Talhoes nem com
-PNG/ZIP de Material tecnico.
+O contrato tecnico do primeiro ponto geografico opcional existe no Caderno,
+mas a UI e a captura ainda nao existem no produto. O contrato nao deve ser
+confundido com a localizacao temporaria do mapa de Talhoes nem com PNG/ZIP de
+Material tecnico.
 
 Status em 2026-07-14 (Fase 17H.0): foi criada a analise tecnica
 `docs/project/fase-17h-marcacoes-campo.md`. A recomendacao para uma futura
@@ -323,12 +324,18 @@ escopo atual e Admin o acesso global local/mockado, sem RBAC novo. Background,
 tracking, trilha, rota, historico, geofencing e watch continuo permanecem
 proibidos no corte.
 
+Status em 2026-07-21 (Fase 17H.1A): o shape final, helper puro, validators e a
+compatibilidade de create/get/list/update/remocao foram implementados e
+validados no emulador. Os seis campos planos vivem somente no Caderno; o
+snapshot continua em `@tche:mock-mvp:v1`; registros antigos permanecem
+validos; remocao nao deixa sentinel ou residuo. Nenhuma UI, captura, chamada de
+Location API ou chave nova foi criada.
+
 Pontos que continuam pendentes para implementacao e evidencia:
 
-- definir o shape final dos campos opcionais e validators, preservando
-  compatibilidade com registros antigos;
 - definir o texto visual de consentimento e a apresentacao de precisao/horario;
-- implementar o ponto opcional no Caderno em fase propria;
+- implementar a UI e a captura foreground explicita em fase propria, usando o
+  contrato ja validado;
 - testar cancelamento, remocao e persistencia somente apos submit;
 - reauditar que `Mostrar minha posicao`, PNG e ZIP continuam sem persistencia
   ou georreferenciamento implicito;
@@ -396,13 +403,15 @@ Pendencias P2/futuras:
 
 Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
 
-- implementar futuramente o ponto opcional no Caderno;
+- implementar futuramente a UI/captura explicita do ponto opcional no Caderno;
 - implementar foto real apenas em fase propria;
 - implementar backend/processamento externo quando essa trilha for aberta.
 
 Classificacao atual relevante:
 
-- marcacoes de campo: `SOMENTE_DOCUMENTADO`;
+- contrato do ponto opcional no Caderno:
+  `IMPLEMENTADO_VALIDADO_EMULADOR`;
+- UI/captura do ponto opcional: `NAO_IMPLEMENTADO`;
 - area/perimetro: `PARCIAL`;
 - semantica de area: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva

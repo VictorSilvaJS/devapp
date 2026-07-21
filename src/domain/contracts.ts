@@ -200,6 +200,12 @@ export interface CadernoCampoCanonico {
   tipo_periodo?: string;
   cultura_periodo?: string;
   ano_agricola?: string;
+  localizacao_latitude?: number;
+  localizacao_longitude?: number;
+  localizacao_accuracy?: number | null;
+  localizacao_captured_at?: string;
+  localizacao_captured_by?: string;
+  localizacao_origem?: 'foreground_explicit';
   /**
    * Campo reservado para consolidacao futura de autoria sem reabrir a modelagem agora.
    */
@@ -335,6 +341,12 @@ export interface CadernoCampoLegado {
   tipo_periodo?: string;
   cultura_periodo?: string;
   ano_agricola?: string;
+  localizacao_latitude?: number;
+  localizacao_longitude?: number;
+  localizacao_accuracy?: number | null;
+  localizacao_captured_at?: string;
+  localizacao_captured_by?: string;
+  localizacao_origem?: 'foreground_explicit';
   criado_por?: string;
   criado_por_user_id?: string;
   origem_registro?: 'produtor' | 'equipe' | string;

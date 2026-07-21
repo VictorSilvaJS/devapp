@@ -139,6 +139,10 @@ const run = async () => {
     assert.equal(payload.criado_por_user_id, 'u2');
     assert.equal(payload.origem_registro, 'produtor');
     assert.deepEqual(payload.produtos_utilizados, ['MAP', 'KCl']);
+    assert.equal(
+      Object.keys(payload).some((key) => key.startsWith('localizacao_')),
+      false
+    );
   });
 
   await test('helpers de Safra/Safrinha do caderno mantêm vínculo opcional no payload', () => {

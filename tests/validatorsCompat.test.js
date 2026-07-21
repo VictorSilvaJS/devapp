@@ -121,6 +121,31 @@ test('validateCadernoCampo aceita Safra/Safrinha opcional como metadado', () => 
   }), true);
 });
 
+test('validateCadernoCampo aceita localização opcional completa e válida', () => {
+  assert.equal(validateCadernoCampo({
+    fazenda_id: 'p1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'observacao',
+    localizacao_latitude: 12.345678,
+    localizacao_longitude: -45.678901,
+    localizacao_accuracy: 8,
+    localizacao_captured_at: '2026-07-21T15:30:00.000Z',
+    localizacao_captured_by: 'usuario_teste',
+    localizacao_origem: 'foreground_explicit',
+  }), true);
+});
+
+test('validateCadernoCampo rejeita grupo parcial de localização', () => {
+  assert.throws(() => validateCadernoCampo({
+    fazenda_id: 'p1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'observacao',
+    localizacao_latitude: 12.345678,
+  }), /Latitude e longitude da localização devem ser informadas juntas/);
+});
+
 test('validateLimiteArea aceita fazenda_id canônico', () => {
   assert.equal(validateLimiteArea({
     nome: 'LT 2025 - Talhão A',

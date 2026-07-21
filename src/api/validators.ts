@@ -13,6 +13,7 @@ import {
 } from '../domain';
 import { normalizeMockFazendaInput } from './produtorCompat';
 import { CADERNO_TIPO_VALUES } from '../utils/cadernoFormCompat';
+import { validateCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
 
 const isMissingValue = (value) =>
   value === undefined ||
@@ -113,6 +114,11 @@ export const validateVisita = (data) => {
 
 // Validador de CadernoCampo
 export const validateCadernoCampo = (data) => {
+  const localizacaoResult = validateCadernoLocalizacao(data);
+  if (localizacaoResult.valid === false) {
+    throw new Error(`CadernoCampo.localizacao: ${localizacaoResult.error}`);
+  }
+
   const normalized = normalizeCadernoCampo(data);
 
   validateRequired(normalized, ['fazenda_id', 'colaborador_responsavel', 'data_atividade', 'tipo_atividade'], 'CadernoCampo');

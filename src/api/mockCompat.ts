@@ -8,6 +8,12 @@ import {
   toMapaCompativelBorda,
   toVisitaCompativelBorda,
 } from '../domain';
+import {
+  buildCadernoLocalizacaoFields,
+  clearCadernoLocalizacaoFields,
+  hasCadernoLocalizacaoFieldIntent,
+  isCadernoLocalizacaoRemovalPatch,
+} from '../utils/cadernoLocalizacaoCompat';
 
 const cloneRecord = <T extends Record<string, any>>(record: T): T => ({ ...record });
 
@@ -48,9 +54,24 @@ export const filterMockCadernosCampo = (records: any[], query?: Record<string, a
 export const persistMockCadernoCampo = ({ id, data, existing }: { id?: any; data: any; existing?: any }) => {
   const current = existing ? readMockCadernoCampo(existing) : null;
   const nextFazendaId = data?.fazenda_id ?? data?.fazendaId ?? data?.produtor_id ?? current?.fazenda_id ?? current?.fazendaId;
+  const hasLocalizacaoIntent = hasCadernoLocalizacaoFieldIntent(data);
+  let localizacaoFields = buildCadernoLocalizacaoFields(current);
+
+  if (hasLocalizacaoIntent) {
+    if (isCadernoLocalizacaoRemovalPatch(data)) {
+      localizacaoFields = {};
+    } else {
+      localizacaoFields = buildCadernoLocalizacaoFields(data);
+      if (Object.keys(localizacaoFields).length === 0) {
+        throw new Error('CadernoCampo.localizacao: Grupo parcial de localização inválido para escrita.');
+      }
+    }
+  }
+
   const normalized = normalizeCadernoCampo({
-    ...(current || {}),
-    ...(data || {}),
+    ...clearCadernoLocalizacaoFields(current || {}),
+    ...clearCadernoLocalizacaoFields(data || {}),
+    ...localizacaoFields,
     id: id ?? data?.id ?? current?.id,
     fazenda_id: nextFazendaId,
     fazendaId: nextFazendaId,

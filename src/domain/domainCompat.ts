@@ -19,6 +19,10 @@ import type {
   VisitaCompativelBorda,
   VisitaLegada,
 } from './contracts';
+import {
+  clearCadernoLocalizacaoFields,
+  normalizeCadernoLocalizacao,
+} from '../utils/cadernoLocalizacaoCompat';
 
 const hasOwn = (value: unknown, key: string) =>
   typeof value === 'object' && value !== null && Object.prototype.hasOwnProperty.call(value, key);
@@ -225,9 +229,11 @@ export const normalizeCadernoCampo = (
   const { produtor_id, criado_por, fazenda_id, fazendaId, ...rest } =
     raw as CadernoCampoLegado & CadernoCampoCanonico & CadernoCampoCompativelBorda;
   const contextoFazendaId = firstNonEmptyString(fazenda_id, fazendaId, produtor_id) ?? '';
+  const localizacao = normalizeCadernoLocalizacao(raw);
 
   return {
-    ...rest,
+    ...clearCadernoLocalizacaoFields(rest),
+    ...(localizacao || {}),
     id: raw.id,
     fazenda_id: contextoFazendaId,
     fazendaId: contextoFazendaId,

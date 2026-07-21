@@ -20,6 +20,29 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.1A - Contrato Do Ponto Opcional No Caderno**
+
+Observacao geral em 2026-07-21: rodada executada no AVD Pixel Tablet, Android
+15/API 35, com APK release instalado por cima. Esta fase valida o contrato por
+testes e apenas a ausencia de regressao visual; nao existe UI de localizacao e
+nenhum ponto deve ser criado pela interface. Nao foram usados `pm clear`,
+desinstalacao ou `Wipe Data`. Android fisico continua pendente e nao aprovado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H1A-01 | P0 | Todos | Shape canonico | Auditar contratos e helper | Somente seis campos planos opcionais no Caderno | Passou | Sem objeto `localizacao`, `coords` ou alias camelCase no snapshot |
+| 17H1A-02 | P0 | Todos | Helper puro | Executar testes de validacao/normalizacao/intencao | Sem UI, Expo, storage, filesystem, mock, navegacao, log ou timestamp automatico | Passou | 51 cenarios novos no total |
+| 17H1A-03 | P0 | Todos | Registros antigos | Ler Caderno ausente e grupo parcial legado | Ausencia e valida; parcial nao derruba nem vaza para UI | Passou | Cobertura direta do helper e `normalizeCadernoCampo` |
+| 17H1A-04 | P0 | Todos | Validators | Validar Caderno comum, grupo completo e parcial | Comum/completo passam; parcial falha de forma controlada | Passou | `validatorsCompat` e teste novo passaram |
+| 17H1A-05 | P0 | Todos | Create/get | Criar por codigo e consultar get/list | Seis campos validos fazem round-trip | Passou | Coordenadas ficticias somente em teste |
+| 17H1A-06 | P0 | Todos | Update preserve | Atualizar campo comum sem `localizacao_*` | Ponto e `captured_at` permanecem inalterados | Passou | Cobertura automatizada na API publica mockada |
+| 17H1A-07 | P0 | Todos | Update replace | Fornecer novo grupo valido | Grupo anterior e integralmente substituido | Passou | Opcionais antigos nao vazam para o novo ponto |
+| 17H1A-08 | P0 | Todos | Update remove | Aplicar patch explicito de remocao | Registro/snapshot terminam sem os seis campos e sem sentinel | Passou | Serializacao JSON confirmada |
+| 17H1A-09 | P0 | Todos | Restauracao | Recarregar snapshot antes/depois da remocao | Ponto valido permanece; removido nao reaparece | Passou | Somente `@tche:mock-mvp:v1` foi usado |
+| 17H1A-10 | P0 | Admin | Nao regressao visual | Abrir Caderno, novo, detalhe e edicao | Fluxos abrem sem secao ou acao de localizacao | Passou | Sessao/dados, Propriedade, Talhao e Safra permaneceram |
+| 17H1A-11 | P0 | Admin | Auditoria/regressao | Conferir mapa, materiais, visitas, chaves e APIs | Posicao segue transitoria; sem captura/chave/tracking; fluxos anteriores intactos | Passou | 15 Talhoes, areas 6200/1888,6; filtros Fertilidade/Correcao/Prescricao; Visita sem Camera/Galeria |
+| 17H1A-12 | P0 | Todos | Android fisico | Instalar e repetir o roteiro em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
+
 **Rodada Fase 17H.0.7 - Alinhamento Tecnico Pontual Do Expo SDK 56**
 
 Observacao geral em 2026-07-21: rodada executada no AVD `Teste_Tche`, Pixel

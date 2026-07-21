@@ -180,11 +180,12 @@ Decisao recomendada: para 17H.1, usar a Opcao A. O storage auxiliar deve ficar
 reservado para uma fase posterior, caso o produto evolua para camadas
 geograficas independentes do Caderno.
 
-## Modelo De Dados Futuro
+## Modelo De Dados Do Primeiro Corte
 
-Recomendacao: persistir campos opcionais planos no registro de Caderno, por
-compatibilidade com o padrao atual de payloads e validadores, e derivar um
-objeto `localizacao` apenas na UI/helper se isso ajudar a leitura.
+Status em 2026-07-21 (Fase 17H.1A): os campos opcionais planos foram adotados
+no contrato do Caderno e na borda de persistencia local. Um objeto
+`localizacao` continua proibido no snapshot; o helper pode devolver uma visao
+normalizada sem criar estrutura persistida paralela.
 
 Campos sugeridos para 17H.1:
 
@@ -442,5 +443,40 @@ Decisoes fechadas:
 - desenvolvimento pode seguir em emulador;
 - Android fisico continua obrigatorio antes de declarar aptidao para campo.
 
-Esta consolidacao nao implementa o ponto, nao altera contrato, nao cria
-storage e nao salva coordenada.
+Esta consolidacao nao implementou o ponto, nao alterou contrato, nao criou
+storage e nao salvou coordenada. A implementacao contratual posterior esta
+registrada abaixo.
+
+## Implementacao Contratual Da Fase 17H.1A
+
+Em 2026-07-21, a 17H.1A implementou o shape plano opcional, helper puro,
+validators e compatibilidade de create/get/list/update/remocao no snapshot
+existente do Caderno. Registros antigos continuam validos; leitura parcial e
+controlada, enquanto escrita parcial e rejeitada. Remocao usa um patch
+transitorio com os seis campos em `undefined`, convertido pela borda em
+registro final sem campos, sentinel ou `null` residual.
+
+Foram aprovados 51 cenarios novos, a suite completa, checks focados, Expo
+install check, build release, instalacao por cima, launcher e smoke minimo no
+Pixel Tablet/API 35. O relato completo esta em
+`fase-17h-1a-contrato-ponto-caderno.md`.
+
+Nenhuma tela ou servico de captura foi alterado. Nao existe botao novo, chamada
+de Location API, persistencia de `Mostrar minha posicao`, chave `@tche:` nova,
+background, tracking, trilha ou historico. Android fisico segue pendente e nao
+aprovado.
+
+| ID | Area | Criterio | Status |
+|---|---|---|---|
+| 17H1A-01 | Shape canonico | Seis campos planos opcionais somente no Caderno | Passou |
+| 17H1A-02 | Helper puro | Normalizacao, validacao e intencao sem dependencia de UI/nativo/storage | Passou |
+| 17H1A-03 | Registros antigos | Ausencia continua valida e leitura parcial nao derruba o fluxo | Passou |
+| 17H1A-04 | Validators | Grupo valido passa; parcial/invalido falha de forma controlada | Passou |
+| 17H1A-05 | Create/get | Ponto valido faz round-trip por create/get/list | Passou |
+| 17H1A-06 | Update preserve | Update comum mantem o ponto e o timestamp existentes | Passou |
+| 17H1A-07 | Update replace | Novo grupo validado substitui integralmente o anterior | Passou |
+| 17H1A-08 | Update remove | Seis campos sao removidos sem sentinel ou residuo no snapshot | Passou |
+| 17H1A-09 | Serializacao | Restore preserva ponto valido e nao ressuscita ponto removido | Passou |
+| 17H1A-10 | Comportamento visual | Nenhuma UI/captura criada; formularios continuam sem localizacao | Passou |
+| 17H1A-11 | Auditoria | Nenhuma chave, Location API, tracking/background ou shape proibido novo | Passou |
+| 17H1A-12 | Android fisico | Repetir instalacao e smoke em aparelho autorizado | Reexecutar |

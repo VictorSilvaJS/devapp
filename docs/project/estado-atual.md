@@ -3815,11 +3815,57 @@ Nao houve `npm update`, `npm audit fix`, `expo install --fix`, prebuild,
 regeneracao nativa, nova chave `@tche:`, coordenada persistida, camera/foto
 real, backend ou sync. Android fisico continua pendente e nao aprovado.
 
+## Fase 17H.1A - Contrato Do Ponto Opcional No Caderno
+
+Status em 2026-07-21: `IMPLEMENTADO_VALIDADO_EMULADOR`. O primeiro ponto
+geografico opcional agora possui contrato tecnico, validacao e compatibilidade
+de persistencia local no Caderno, ainda sem qualquer UI ou captura.
+
+Shape canonico:
+
+- `localizacao_latitude` e `localizacao_longitude` finitas, presentes juntas e
+  dentro dos limites geograficos;
+- `localizacao_captured_at` como ISO string valida e `localizacao_origem`
+  restrita a `foreground_explicit`;
+- `localizacao_accuracy` ausente, nula ou nao negativa e
+  `localizacao_captured_by` opcional, mas nao vazio quando informado;
+- os seis campos ficam ausentes em Caderno sem ponto. Nao existe objeto
+  `localizacao`, `coords` ou alias camelCase persistido.
+
+`cadernoLocalizacaoCompat` e puro e implementa leitura defensiva, validacao e
+as intencoes `preserve`, `replace` e `remove`. A borda `mockCompat` preserva o
+ponto em update comum, substitui o grupo integralmente e converte a remocao em
+registro final sem campos ou sentinel. O snapshot permanece exclusivamente em
+`@tche:mock-mvp:v1`.
+
+Validacoes aprovadas:
+
+- `npm run typecheck`, `npm run test:domain-compat` e todos os testes focados;
+- 51 cenarios novos de contrato/persistencia/restauracao;
+- `npx expo install --check` com `Dependencies are up to date`;
+- build release pelo fallback de um worker, APK com 91.899.152 bytes e
+  SHA-256
+  `08BD45C2AF986B00B3591AE2CBEF5979B97DD2AA6410F57F7EB9EB8E0F27DEEC`;
+- `adb install -r`, `monkey` e smoke minimo no Pixel Tablet/API 35.
+
+O smoke preservou sessao/dados, Caderno comum e formularios sem secao de
+localizacao, 15 Talhoes e areas seguras, Material tecnico com Fertilidade,
+Correcao e Prescricao e Visitas sem Camera/Galeria. `Mostrar minha posicao`
+continuou transitorio e terminou com falha controlada do provider do AVD, sem
+persistencia.
+
+Nao foram alterados `src/api/mock.ts`, telas de Caderno/mapa, servico de
+localizacao, listas, seeds/assets, GeoJSON, PNG, ZIP, dependencias, app.json ou
+fontes nativas. Nenhuma UI, captura, chave nova, coordenada real, background,
+tracking, trilha ou historico foi criado. Android fisico continua pendente e
+nao aprovado. O relato completo esta em
+`fase-17h-1a-contrato-ponto-caderno.md`.
+
 ## Proximo Passo Recomendado
 
-Com o baseline funcional, a semantica de area, a segregacao dos placeholders
-de foto e o alinhamento Expo fechados em emulador, a 17H.1 pode ser preparada
-conforme as decisoes 15 a 17. A origem produtiva de perimetro, fotos reais e
-os avisos remanescentes do Expo Doctor permanecem em trilhas proprias. Nenhum
-resultado pode ser declarado apto para campo antes do smoke em Android fisico
-autorizado.
+Com o contrato da 17H.1A fechado, uma microfase posterior pode implementar a
+UI e a captura foreground explicita, com consentimento e submit do Caderno,
+sem ampliar o escopo para tracking ou storage separado. A origem produtiva de
+perimetro, fotos reais e os avisos remanescentes do Expo Doctor permanecem em
+trilhas proprias. Nenhum resultado pode ser declarado apto para campo antes do
+smoke em Android fisico autorizado.
