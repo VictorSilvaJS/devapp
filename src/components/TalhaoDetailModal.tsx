@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, shadows } from '../theme';
+import { formatAreaHa, formatPerimeter } from '../utils/talhaoMedidasCompat';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -110,6 +111,11 @@ export default function TalhaoDetailModal({
   const cadernos = cadernosTalhao || [];
   const materiaisDiretos = materiaisTalhao || [];
   const materiaisGerais = materiaisPropriedade || [];
+  const perimetroFormatado = formatPerimeter(
+    talhao.perimetro_km,
+    'km',
+    talhao.perimetro_origem
+  );
   
   const elementosConfig = [
     { key: 'ph', nome: 'pH', unidade: '', icon: 'flask-outline' },
@@ -256,12 +262,12 @@ export default function TalhaoDetailModal({
             <View style={styles.infoRow}>
               <View style={styles.infoCard}>
                 <Ionicons name="resize-outline" size={22} color={colors.primary} />
-                <Text style={styles.infoValue}>{talhao.area_hectares || '-'} ha</Text>
-                <Text style={styles.infoLabel}>Área</Text>
+                <Text style={styles.infoValue}>{formatAreaHa(talhao.area_hectares)}</Text>
+                <Text style={styles.infoLabel}>Área do Talhão</Text>
               </View>
               <View style={styles.infoCard}>
                 <Ionicons name="git-network-outline" size={22} color={colors.secondary} />
-                <Text style={styles.infoValue}>{talhao.perimetro_km || '-'} km</Text>
+                <Text style={styles.infoValue}>{perimetroFormatado}</Text>
                 <Text style={styles.infoLabel}>Perímetro</Text>
               </View>
               <View style={styles.infoCard}>

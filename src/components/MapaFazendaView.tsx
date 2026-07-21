@@ -19,6 +19,7 @@ import Svg, { G, Polygon as SvgPolygon, Rect, Text as SvgText } from 'react-nati
 import { WebView } from 'react-native-webview';
 import { colors, spacing, typography } from '../theme';
 import type { ForegroundUserLocation } from '../services/LocationForegroundService';
+import { formatAreaHa } from '../utils/talhaoMedidasCompat';
 
 export interface PontoPoligono {
   lat: number;
@@ -167,7 +168,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
       properties: {
         id: talhao.id,
         talhao: talhao.talhao,
-        area_hectares: talhao.area_hectares,
+        area_formatada: formatAreaHa(talhao.area_hectares),
         cor: normalizeHexColor(talhao.cor),
         cultura_atual: talhao.cultura_atual || '',
         textura: talhao.textura || '',
@@ -450,7 +451,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
               var label = feature.properties.talhao || '';
               var labelHtml =
                 '<div class="talhao-label-text">' + escapeLabel(label) + '</div>' +
-                '<div class="talhao-label-area">' + Number(feature.properties.area_hectares || 0).toFixed(1) + ' ha</div>';
+                '<div class="talhao-label-area">' + escapeLabel(feature.properties.area_formatada || 'Não informado') + '</div>';
               var icon = L.divIcon({
                 className: 'talhao-label',
                 html: labelHtml,

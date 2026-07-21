@@ -24,10 +24,9 @@ upload/download real, descompactacao de ZIP ou desenho de Talhao foi criado.
 - Caderno por Talhao e Safra/Safrinha possuem implementacao, cobertura
   automatizada e fechamento manual em emulador na Fase 17H.0.3; Android fisico
   continua pendente e nao aprovado.
-- Area/perimetro e parcial: existe area total informada para a Propriedade e
-  area mapeada em parte dos dados processados, mas o perimetro nao esta
-  comprovado no pipeline da Sela de Prata I e a UI atual pode confundir area
-  ausente, area mapeada e area total.
+- Area/perimetro permanece parcial: a 17H.0.5 corrigiu e validou em emulador a
+  semantica de area total informada, area mapeada, parcial e ausente; o
+  perimetro continua sem origem comprovada no pipeline da Sela de Prata I.
 - Marcacoes de fertilizacao/correcao permanecem somente documentadas.
 - Processamento remoto, publicacao, sincronizacao e download real dependem de
   backend e infraestrutura que nao existem no produto atual.
@@ -89,7 +88,7 @@ smoke das telas e APIs nativas.
 | 5. Caderno associado ao Talhao e historico por datas | rotas, formulario, detalhe, filtros por Talhao, visibilidade, autoria e ordenacao recente | Caderno, acesso, validators e consulta por Talhao passaram | 17H.0.3 passou para Colaborador, Admin e Produtor no `T01 - 230`; historico e vinculos persistiram apos `force-stop` | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir em Android fisico autorizado |
 | 6. Safra e Safrinha | storage local de metadados, formulario, permissao e vinculo opcional no Caderno | `periodoProdutivoService` e compatibilidade do Caderno passaram | 17H.0.3 passou para criacao/edicao Admin pelo Talhao e vinculo opcional no Caderno do Produtor, inclusive apos `force-stop` | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir em Android fisico autorizado |
 | 7. Gestao de Talhoes importados/processados, sem desenho no celular | importacao/validacao/copia/ativacao/substituicao/remocao de GeoJSON, runtime Polygon/MultiPolygon e fallback seed/mock | suites GeoJSON e consulta por Talhao passaram | DocumentPicker, reabertura, force-stop e mapa local passaram em rodadas 16H/17G | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir fluxo de campo; pipeline produtivo de preparo/publicacao continua externo |
-| 8. Area e perimetro dos Talhoes | area pode vir do GeoJSON/asset processado; conversor local calcula area aproximada; UI soma areas; perimetro nao e calculado para a Sela | validator cobre area opcional, mas nao existe teste de calculo/proveniencia de perimetro nem da semantica visual | area da amostra foi exibida; sem evidencia de perimetro processado | pendente e nao aprovado | PARCIAL | separar visualmente area total informada de area mapeada, tratar ausencia sem `0 ha` e definir origem/confiabilidade do perimetro |
+| 8. Area e perimetro dos Talhoes | helper puro normaliza somente medidas positivas; UI separa area total informada, mapeada, parcial/ausente e exige proveniencia para perimetro | 23 cenarios de `talhaoMedidasCompat`, validator e camada GeoJSON passaram | 17H.0.5 exibiu 6200 ha cadastrais, 1888,6 ha mapeados e 274,1 ha no T01 sem inventar perimetro | pendente e nao aprovado | PARCIAL | area: `IMPLEMENTADO_VALIDADO_EMULADOR`; perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, dependente de processamento externo/backend |
 | 9. Processamento externo futuro de mapas | servicos locais e stubs/mocks; nenhuma API produtiva, publicacao, sync ou download real | ha compatibilidade de sync mockado e referencias locais, nao integracao produtiva | UI local nao gera mapas; nenhum fluxo remoto produtivo foi validado | nao aplicavel ao backend inexistente | DEPENDE_BACKEND | projetar e implementar ingestao, processamento, storage, publicacao, permissao e download no servidor |
 | 10. Fotos com data, hora, latitude e longitude | apenas arrays/URLs demonstrativas e botoes simulados de Visita; sem camera, arquivo fisico, metadado geografico ou consentimento | compatibilidade de Visita preserva arrays existentes, mas nao testa foto real | nenhum smoke de captura/geotag; ausencia confirmada por auditoria | nao testavel | NAO_IMPLEMENTADO | criar fase propria somente apos decisao de escopo, privacidade, storage e Android fisico |
 
@@ -104,7 +103,8 @@ principal da implementacao. Android fisico continua pendente e nao aprovado.
   importados/processados.
 - Implementadas com smoke incompleto: Caderno por Talhao/historico e
   Safra/Safrinha.
-- Parcial: area/perimetro dos Talhoes.
+- Parcial: area/perimetro dos Talhoes; a area esta validada em emulador e o
+  perimetro nao esta disponivel no pipeline atual.
 - Somente documentada: marcacoes futuras de fertilizacao/correcao.
 - Dependente de backend: processamento externo, publicacao, sync e download
   real.
@@ -288,7 +288,7 @@ testado nem aprovado.
 | AUD-04 | Colaborador cria Caderno pelo Talhao | Passou | `T01 - 230`; `AUD04-COLAB-T01-20260721-EDITADO` preservou Propriedade/Talhao, detalhe, historico e edicao sem duplicar |
 | AUD-05 | Admin abre Talhao, Caderno e Safra/Safrinha | Passou | Caderno `AUD05-ADMIN-T01-20260721`; Safra `AUD05-ADMIN-PERIODO-20260721`, `2026/2027`, `T01 - 230`, editada para Em andamento |
 | AUD-06 | Produtor cria Caderno com Safra/Safrinha opcional | Passou | `AUD06-PRODUTOR-SAFRA-20260721` vinculou explicitamente a Safra do AUD-05; autoria/visibilidade preservadas e gestao de periodo ausente |
-| AUD-07 | GeoJSON local, area mapeada e selecao de Talhao | Passou | 16H.6/17G.3; ressalva de semantica da area registrada como bug P1 |
+| AUD-07 | GeoJSON local, area mapeada e selecao de Talhao | Passou | 16H.6/17G.3 e 17H.0.5; 15 Talhoes, 1888,6 ha mapeados, selecao do T01 e suites GeoJSON sem regressao |
 | AUD-08 | Localizacao foreground, permissao negada e GPS desligado | Passou | 17G.2/17G.3 em emulador |
 | AUD-09 | PNG e ZIP nao recebem localizacao | Passou | auditoria de contratos/storage e 17G.3 |
 | AUD-10 | Processamento/download remoto nao e apresentado como pronto | Passou | fluxos visiveis permanecem locais; stubs/mocks nao estao integrados como servidor produtivo |
@@ -343,18 +343,16 @@ a rastreabilidade da auditoria 17H.0.1.
 
 ### P1 - Corrigir Antes Do APK De Campo
 
-#### P1-01 - Area Ausente Exibida Como Zero E Area Mapeada Rotulada Como Total
+#### P1-01 - Encerrado: Semantica Segura De Area
 
-- Descricao: o mapa soma valores opcionais com fallback zero e sempre mostra
-  `ha total`.
-- Reproducao: importar GeoJSON valido sem area e abrir o mapa; observar
-  `0 ha total`. Na Sela, comparar o rotulo com 6200 ha informados e 1888,6 ha
-  mapeados.
-- Impacto: informacao agronomica/cadastral ambigua, sem perda de dado.
-- Evidencia/arquivo provavel: `src/screens/FazendaMapaScreen.tsx`.
-- Teste que detectou: auditoria de codigo e manifesto; falta teste de helper/UI.
-- Microfase recomendada: `17H.0.5 - Semantica de area e perimetro`.
-- Tipo: codigo, linguagem de produto e testes.
+- Status 17H.0.5: encerrado em emulador. Ausencia nao vira zero, a soma dos
+  Talhoes e `Area mapeada`/`Area mapeada parcial`, e `area_total` permanece
+  `Area total informada`.
+- Evidencia: helper puro, 23 cenarios automatizados, suite de dominio e smoke
+  visual da Sela com 6200 ha, 1888,6 ha e `T01 - 230` com 274,1 ha.
+- Limite: a obtencao produtiva de perimetro permanece em P2/backend e Android
+  fisico continua pendente.
+- Tipo: codigo, linguagem de produto e testes concluidos em emulador.
 
 #### P1-02 - Camera/Galeria Simuladas Podem Parecer Funcionais
 
@@ -434,13 +432,13 @@ a rastreabilidade da auditoria 17H.0.1.
 
 ## Ordem Recomendada Das Proximas Fases
 
-Atualizacao 17H.0.3: P0-01, P0-02 e P0-03 estao encerrados no escopo
+Atualizacao 17H.0.5: P0-01, P0-02, P0-03 e P1-01 estao encerrados no escopo
 documental/emulador. A ordem atual passa a ser:
 
 1. Especificar na 17H.1 o shape opcional e o texto visual de consentimento,
    respeitando as decisoes 15 a 17.
-2. Corrigir em microfases isoladas P1-01 e P1-02, com testes, antes de chamar
-   o APK de apto a campo.
+2. Corrigir P1-02 em microfase isolada, com testes, antes de chamar o APK de
+   apto a campo.
 3. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
 4. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
    sem background, tracking ou nova chave dedicada no primeiro corte.
@@ -463,6 +461,16 @@ documental/emulador. A ordem atual passa a ser:
 - `android/.\gradlew.bat :app:assembleRelease`: `BUILD SUCCESSFUL`.
 - `adb install -r` e `adb shell monkey`: passaram na atualizacao 17H.0.3 no
   AVD `Teste_Tche`; na fotografia original 17H.0.1 nao havia dispositivo.
+
+Atualizacao 17H.0.5:
+
+- `npm run typecheck`, `npm run test:domain-compat`, os 23 cenarios de medidas,
+  consulta por Talhao e testes focados de validator/camada GeoJSON passaram;
+- `:app:assembleRelease`, instalacao `-r` e `monkey` passaram no Pixel
+  Tablet/API 35, sem limpar ou desinstalar o app;
+- o smoke visual confirmou as medidas separadas, selecao de Talhao,
+  localizacao disponivel, categorias de Material tecnico e Caderno/Safra;
+- Android fisico permaneceu pendente e nao aprovado.
 
 Atualizacao em 2026-07-21: a Fase 17H.0.2 alterou
 `docs/project/decisoes-consolidadas.md` para fechar as decisoes 15 a 21. A

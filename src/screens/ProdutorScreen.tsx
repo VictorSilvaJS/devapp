@@ -36,6 +36,7 @@ import {
   temAcessoProdutor,
 } from '../utils/acessoControle';
 import { buildFazendaDetailContext, getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { formatAreaHa, resolveAreaTotalInformada } from '../utils/talhaoMedidasCompat';
 import {
   getColaboradoresRelacionadosAPropriedade,
   getUsuariosProdutoresDaPropriedade,
@@ -501,8 +502,8 @@ export default function ProdutorScreen({ route, navigation }) {
             <View style={[styles.statIconCompact, { backgroundColor: colors.borderLight }]}>
               <Ionicons name="resize-outline" size={20} color={colors.primary} />
             </View>
-            <Text style={styles.statValueCompact}>{produtor.area_total} ha</Text>
-            <Text style={styles.statLabelCompact}>Área Total</Text>
+            <Text style={styles.statValueCompact}>{formatAreaHa(resolveAreaTotalInformada(produtor))}</Text>
+            <Text style={styles.statLabelCompact}>Área total informada</Text>
           </View>
           
           <View style={styles.statCardCompact}>
@@ -686,9 +687,9 @@ export default function ProdutorScreen({ route, navigation }) {
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="resize-outline" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Área Total</Text>
+                  <Text style={styles.infoLabel}>Área total informada</Text>
                 </View>
-                <Text style={styles.infoValue}>{produtor.area_total} hectares</Text>
+                <Text style={styles.infoValue}>{formatAreaHa(resolveAreaTotalInformada(produtor))}</Text>
               </View>
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>

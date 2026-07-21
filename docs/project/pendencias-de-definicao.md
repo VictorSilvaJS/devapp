@@ -360,11 +360,14 @@ Esses itens deixam de ser pendencias de definicao/evidencia em emulador. Eles
 continuam incluidos no smoke fisico obrigatorio e nao representam aprovacao de
 campo.
 
+Status em 2026-07-21 (Fase 17H.0.5): a pendencia P1 de apresentacao de area foi
+encerrada no emulador. A UI separa `Area total informada`, `Area mapeada` e
+`Area mapeada parcial`, usa `Nao informado` para ausencia e nao exibe
+perimetro sem valor, unidade e origem comprovados. Os 6200 ha cadastrais e os
+1888,6 ha mapeados da Sela permanecem distintos e inalterados.
+
 Pendencias P1 antes de declarar APK apto a campo:
 
-- corrigir a semantica de area no mapa: ausencia deve ser `Nao informado`, a
-  soma dos Talhoes deve ser `Area mapeada` e `Area total informada` deve ficar
-  separada;
 - nao apresentar Camera/Galeria simuladas por `picsum.photos` como se fossem
   captura funcional;
 - executar smoke completo em Android fisico autorizado;
@@ -384,7 +387,6 @@ Pendencias P2/futuras:
 
 Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
 
-- corrigir a apresentacao de area em microfase propria;
 - remover ou desativar as acoes ativas de foto simulada, preservando leitura
   dos mocks;
 - alinhar Expo em fase tecnica isolada;
@@ -396,6 +398,9 @@ Classificacao atual relevante:
 
 - marcacoes de campo: `SOMENTE_DOCUMENTADO`;
 - area/perimetro: `PARCIAL`;
+- semantica de area: `IMPLEMENTADO_VALIDADO_EMULADOR`;
+- perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva
+  dependente de processamento externo/backend;
 - processamento externo real: `DEPENDE_BACKEND`;
 - fotos com data, hora, latitude e longitude: `NAO_IMPLEMENTADO`;
 - Android fisico: `BLOQUEADO_ANDROID_FISICO` como bloqueio adicional dos

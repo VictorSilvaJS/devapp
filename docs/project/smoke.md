@@ -20,6 +20,25 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0.5 - Semantica Segura De Area E Perimetro**
+
+Observacao geral em 2026-07-21: rodada executada no AVD `Teste_Tche`, Pixel
+Tablet, Android 15/API 35, com APK release instalado por cima. Nao foram usados
+`pm clear`, desinstalacao ou `Wipe Data`. O cenario visual nao possui Talhao sem
+area; cobertura parcial/ausente foi validada pelo teste automatizado sem criar
+dado mockado. Android fisico continua pendente e nao aprovado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H05-01 | P0 | Todos | Helper/normalizacao | Executar teste novo e suite de dominio | Somente numeros finitos positivos; ausencia nunca vira zero | Passou | 23 cenarios; `test:domain-compat` passou |
+| 17H05-02 | P0 | Produtor | Area total informada | Abrir Sela de Prata I | Exibir `Area total informada: 6.200 ha` sem alterar o cadastro | Passou | Card, detalhe e painel final exibiram 6200 ha |
+| 17H05-03 | P0 | Produtor | Area mapeada | Abrir panorama e mapa de Talhoes | Exibir `Area mapeada: 1.888,6 ha`, sem `ha total` | Passou | 15 Talhoes; valor igual ao manifesto processado |
+| 17H05-04 | P0 | Todos | Area parcial/ausente | Exercitar resumo com parte/nenhuma area valida | Usar `Area mapeada parcial` ou `Nao informado`, nunca zero | Passou | Cobertura automatizada; nao havia fixture visual ausente |
+| 17H05-05 | P0 | Produtor | Area do Talhao | Selecionar `T01 - 230` | Detalhe mostra `Area do Talhao: 274,1 ha`; selecao continua funcional | Passou | Card, poligono e drawer continuaram clicaveis |
+| 17H05-06 | P0 | Todos | Perimetro | Auditar detalhe e helper | Nao exibir/formatar sem valor, unidade e origem comprovados | Passou | Sela nao exibiu perimetro; casos invalidos/sem origem cobertos por teste |
+| 17H05-07 | P0 | Produtor | Regressao | Conferir GeoJSON/Talhoes/localizacao, Material tecnico, Caderno e Safra | Fluxos existentes continuam abrindo sem coordenada persistida | Passou | Suites GeoJSON passaram; mapa abriu 15 Talhoes; botao de posicao presente; Fertilidade/Correcao/Prescricao, Caderno e Safra visiveis |
+| 17H05-08 | P0 | Todos | Android fisico | Repetir roteiro em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
+
 **Rodada Fase 17H.0.3 - Fechamento Manual Do Baseline Caderno/Talhao/Safra**
 
 Observacao geral em 2026-07-21: rodada executada no AVD `Teste_Tche`, Pixel

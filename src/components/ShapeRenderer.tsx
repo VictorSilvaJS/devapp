@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Svg, { Polygon, G, Text as SvgText, Circle } from 'react-native-svg';
 import { colors, spacing, typography, shadows } from '../theme';
+import { formatAreaHa } from '../utils/talhaoMedidasCompat';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SVG_PADDING = 30;
@@ -170,7 +171,7 @@ export default function ShapeRenderer({
               <View style={[styles.legendColor, { backgroundColor: t.cor }]} />
               <View style={styles.legendInfo}>
                 <Text style={styles.legendName} numberOfLines={1}>{t.talhao}</Text>
-                <Text style={styles.legendArea}>{t.area_hectares} ha</Text>
+                <Text style={styles.legendArea}>{formatAreaHa(t.area_hectares)}</Text>
               </View>
             </TouchableOpacity>
           ))}

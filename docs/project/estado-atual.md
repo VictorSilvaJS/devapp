@@ -3666,10 +3666,66 @@ area/perimetro, fotos simuladas, Expo/dependencias, backend e storage remoto
 nao foram alterados. Nenhuma coordenada/geotag foi persistida e nenhuma chave
 `@tche:` foi criada. Android fisico continua pendente e nao aprovado.
 
+## Fase 17H.0.5 - Semantica Segura De Area E Perimetro
+
+Status em 2026-07-21: a apresentacao de medidas foi corrigida e validada no
+AVD `Teste_Tche`, Pixel Tablet, Android 15/API 35. O requisito geral de
+area/perimetro permanece `PARCIAL`: a semantica de area esta
+`IMPLEMENTADO_VALIDADO_EMULADOR`, enquanto o perimetro esta
+`NAO_DISPONIVEL_NO_PIPELINE_ATUAL`.
+
+Origem e leitura das medidas:
+
+- `area_total` do cadastro da Propriedade e exibida como `Area total
+  informada`; na Sela de Prata I permanece 6200 ha;
+- apenas valores numericos finitos e positivos de `area_hectares` dos Talhoes
+  entram em `Area mapeada`; os 15 Talhoes da amostra permanecem em 1888,6 ha;
+- se parte dos Talhoes nao tiver area valida, a UI usa `Area mapeada parcial`;
+  sem nenhuma area valida, usa `Nao informado`, nunca zero como fallback;
+- o detalhe usa `Area do Talhao`; o `T01 - 230` exibiu 274,1 ha;
+- perimetro exige valor positivo, unidade conhecida e origem especifica da
+  medida. A camada atual da Sela nao possui essa proveniencia, portanto nenhum
+  perimetro foi inventado ou derivado da geometria.
+
+Implementacao e cobertura:
+
+- `src/utils/talhaoMedidasCompat.ts` centraliza normalizacao, formatacao,
+  resumo de cobertura das areas e gate de perimetro, sem storage, filesystem,
+  GeoJSON bruto, arrays de coordenadas ou APIs de mapa;
+- mapa, panorama, cards e detalhes deixaram de usar `ha total`, zero ou hifen
+  com unidade para representar ausencia;
+- `tests/talhaoMedidasCompat.test.js` cobre 23 cenarios, inclusive a fixture
+  minima das 15 areas da Sela, separacao 6200/1888,6, cobertura completa,
+  parcial/ausente e proveniencia do perimetro;
+- o teste novo foi incorporado a `test:domain-compat` e ao recorte do
+  `tsconfig.domain-compat.json`.
+
+Validacoes aprovadas:
+
+- `npm run typecheck`, `npm run test:domain-compat`, teste novo, consulta por
+  Talhao e testes focados de validacao/camada GeoJSON;
+- `:app:assembleRelease`, `adb install -r` e `monkey`; APK final com
+  91.892.900 bytes e SHA-256
+  `4206B1A3DBFBC5BEE4EAA38164C45EBA5E0F2570672BD65B6DE364271642AB22`;
+- smoke visual confirmou `Area total informada: 6.200 ha`, `Area mapeada:
+  1.888,6 ha`, selecao do `T01 - 230`, `Area do Talhao: 274,1 ha`, botao
+  `Mostrar minha posicao`, categorias de Material tecnico e reabertura de
+  Caderno/Safra;
+- nao havia cenario visual de area ausente; cobertura parcial/ausente foi
+  validada pelo teste automatizado, sem criar dado mockado para o smoke.
+
+Nao foram alterados `src/api/mock.ts`, `Mapa.list`, `LimiteArea.list`,
+seeds/assets, manifesto ou GeoJSON da Sela. Nenhuma medida ou coordenada foi
+calculada/persistida, nenhuma chave `@tche:` foi criada e fotos, Expo,
+dependencias, backend e storage remoto continuaram fora do escopo. A instalacao
+preservou o estado: nao houve `pm clear`, desinstalacao ou `Wipe Data`. Android
+fisico continua pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Com o baseline funcional fechado em emulador, executar separadamente as
-microfases de area, fotos simuladas e alinhamento Expo quando priorizadas. A
-17H.1 pode ser preparada conforme as decisoes 15 a 17, mas nenhum resultado
-pode ser declarado apto para campo antes do smoke em Android fisico
-autorizado.
+Com o baseline funcional e a semantica de area fechados em emulador, executar
+separadamente a segregacao das fotos simuladas e o alinhamento Expo quando
+priorizados. A origem produtiva de perimetro permanece na trilha futura de
+processamento externo/backend. A 17H.1 pode ser preparada conforme as decisoes
+15 a 17, mas nenhum resultado pode ser declarado apto para campo antes do
+smoke em Android fisico autorizado.

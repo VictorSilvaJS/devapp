@@ -52,6 +52,7 @@ import {
   buildFazendaUiInfoMap,
   getFazendaUiInfo,
 } from '../utils/fazendaUiCompat';
+import { formatAreaHa, summarizeMappedArea } from '../utils/talhaoMedidasCompat';
 import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 import {
   PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
@@ -661,7 +662,7 @@ export default function MapasScreen({ route, navigation }) {
         options.push({
           value: id,
           label: nome,
-          description: talhao?.area_hectares ? `${talhao.area_hectares} ha` : undefined,
+          description: formatAreaHa(talhao?.area_hectares),
         });
       });
 
@@ -1808,9 +1809,7 @@ export default function MapasScreen({ route, navigation }) {
   const talhaoFiltroAtual = talhaoFiltroLimite !== FILTRO_TODOS
     ? talhaoFiltroLimite
     : talhaoFiltroMapas;
-  const areaLimitesFiltrados = limitesFiltrados
-    .reduce((s, l) => s + (l.area_hectares || 0), 0)
-    .toFixed(1);
+  const resumoAreaMapeada = summarizeMappedArea(limitesFiltrados);
   const categoriasNoContexto = new Set(
     materiaisTecnicosNoContexto.map((mapa) => mapa.categoria).filter(Boolean)
   );
@@ -2159,7 +2158,7 @@ export default function MapasScreen({ route, navigation }) {
           )}
         </View>
         <View style={styles.talhaoCardRight}>
-          <Text style={styles.talhaoCardArea}>{talhao.area_hectares} ha</Text>
+          <Text style={styles.talhaoCardArea}>{formatAreaHa(talhao.area_hectares)}</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </View>
       </View>
@@ -2600,14 +2599,17 @@ export default function MapasScreen({ route, navigation }) {
           <Text style={styles.statLabel}>Talhões</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumero}>{areaLimitesFiltrados}</Text>
-          <Text style={styles.statLabel}>ha</Text>
+          <Text style={styles.statNumero} numberOfLines={1}>{resumoAreaMapeada.valorFormatado}</Text>
+          <Text style={styles.statLabel}>{resumoAreaMapeada.label}</Text>
         </View>
         <View style={styles.statBox}>
           <Text style={styles.statNumero}>{materiaisTecnicosNoContexto.length}</Text>
           <Text style={styles.statLabel}>Materiais</Text>
         </View>
       </View>
+      <Text style={styles.areaMapeadaApoio}>
+        A área mapeada corresponde aos Talhões que possuem medida disponível na camada atual.
+      </Text>
 
       {limitesFiltrados.length === 0 ? (
         <EmptyState
@@ -4085,6 +4087,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     fontWeight: typography.weightBold,
     color: colors.primary,
+    textAlign: 'center',
+  },
+  areaMapeadaApoio: {
+    marginTop: -spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    color: colors.textLight,
+    fontSize: typography.fontCaption,
+    lineHeight: 16,
     textAlign: 'center',
   },
   geoJsonManageButtonTextDanger: {

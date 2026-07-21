@@ -40,6 +40,13 @@ import {
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import {
+  MEDIDA_NAO_INFORMADA,
+  formatAreaHa,
+  formatPerimeter,
+  resolveAreaTotalInformada,
+  summarizeMappedArea,
+} from '../utils/talhaoMedidasCompat';
+import {
   GeoJsonTalhoesLayerResult,
   isGeoJsonTalhoesLayerActive,
   isGeoJsonTalhoesLayerFallback,
@@ -149,7 +156,7 @@ function CardTalhao({
           {talhao.talhao}
         </Text>
         <Text style={styles.cardTalhaoDetalhe}>
-          {fmt(talhao.area_hectares)} ha
+          {formatAreaHa(talhao.area_hectares)}
           {talhao.cultura_atual ? `  ·  ${talhao.cultura_atual}` : ''}
         </Text>
       </View>
@@ -344,10 +351,13 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
     [talhoesExibidos, talhaoSelecionadoId]
   );
 
-  // ── Área total ───────────────────────────────────────────────
-  const areaTotal = useMemo(
-    () => talhoesExibidos.reduce((sum, t) => sum + (t.area_hectares || 0), 0),
+  // ── Medidas apresentadas sem inferir cobertura da Propriedade ─
+  const resumoAreaMapeada = useMemo(
+    () => summarizeMappedArea(talhoesExibidos),
     [talhoesExibidos]
+  );
+  const areaTotalInformada = resolveAreaTotalInformada(
+    fazendaId && fazendasContexto.length === 1 ? fazendasContexto[0] : null
   );
   const geoJsonTalhoesLocalAtivo = isGeoJsonTalhoesLayerActive(geoJsonTalhoesLayer);
   const geoJsonTalhoesLocalErro = isGeoJsonTalhoesLayerFallback(geoJsonTalhoesLayer);
@@ -427,7 +437,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const contextoCabecalho = consultaPorFazenda
     ? `Titular: ${titularNome || 'Não informado'}`
     : `${fazendasContexto.length} propriedade${fazendasContexto.length !== 1 ? 's' : ''} no escopo`;
-  const resumoTalhoes = `${talhoesExibidos.length} ${talhoesExibidos.length === 1 ? 'talhão' : 'talhões'}  ·  ${fmt(areaTotal)} ha`;
+  const resumoTalhoes = `${talhoesExibidos.length} ${talhoesExibidos.length === 1 ? 'talhão' : 'talhões'}  ·  ${resumoAreaMapeada.label}: ${resumoAreaMapeada.valorFormatado}`;
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
         icon: 'lock-closed-outline',
@@ -546,6 +556,11 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
               {contextoCabecalho}
             </Text>
+            {consultaPorFazenda && (
+              <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
+                Área total informada: {formatAreaHa(areaTotalInformada)}
+              </Text>
+            )}
             <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
               {resumoTalhoes}
             </Text>
@@ -707,7 +722,9 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             </View>
           </View>
           <View style={styles.painelCabecalhoDir}>
-            <Text style={styles.painelAreaTotal}>{fmt(areaTotal)} ha total</Text>
+            <Text style={styles.painelAreaTotal} numberOfLines={1}>
+              {resumoAreaMapeada.label}: {resumoAreaMapeada.valorFormatado}
+            </Text>
             <Ionicons
               name={listaExpandida ? 'chevron-down' : 'chevron-up'}
               size={18}
@@ -775,10 +792,15 @@ function DrawerDetalheTalhao({
   talhao,
   onFechar,
 }: {
-  talhao: MapaTalhao & { elementos?: any; observacoes?: string; perimetro_km?: number; tipo_solo?: string; safra?: string };
+  talhao: MapaTalhao & { elementos?: any; observacoes?: string; perimetro_km?: number; perimetro_origem?: string; tipo_solo?: string; safra?: string };
   onFechar: () => void;
 }) {
   const phInfo = talhao.elementos?.ph != null ? classificarPH(talhao.elementos.ph) : null;
+  const perimetroFormatado = formatPerimeter(
+    talhao.perimetro_km,
+    'km',
+    talhao.perimetro_origem
+  );
 
   return (
     <ScrollView
@@ -826,13 +848,13 @@ function DrawerDetalheTalhao({
       {/* Métricas principais */}
       <View style={styles.drawerMetricas}>
         <View style={styles.metricaBox}>
-          <Text style={styles.metricaValor}>{fmt(talhao.area_hectares)}</Text>
-          <Text style={styles.metricaLabel}>hectares</Text>
+          <Text style={styles.metricaValor}>{formatAreaHa(talhao.area_hectares)}</Text>
+          <Text style={styles.metricaLabel}>Área do Talhão</Text>
         </View>
-        {talhao.perimetro_km != null && (
+        {perimetroFormatado !== MEDIDA_NAO_INFORMADA && (
           <View style={[styles.metricaBox, styles.metricaBoxBorder]}>
-            <Text style={styles.metricaValor}>{fmt(talhao.perimetro_km)} km</Text>
-            <Text style={styles.metricaLabel}>perímetro</Text>
+            <Text style={styles.metricaValor}>{perimetroFormatado}</Text>
+            <Text style={styles.metricaLabel}>Perímetro</Text>
           </View>
         )}
         {talhao.elementos?.ph != null && (

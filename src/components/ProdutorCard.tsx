@@ -4,13 +4,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, border, shadows } from '../theme';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { formatAreaHa, resolveAreaTotalInformada } from '../utils/talhaoMedidasCompat';
 
 export default function ProdutorCard({ produtor, onPress }) {
   const fazendaInfo = getFazendaUiInfo(produtor);
   const nomeFazenda = fazendaInfo.fazendaNome || 'Propriedade sem nome';
   const nomeTitular = fazendaInfo.titularNome || 'Titular não informado';
   const localizacao = [fazendaInfo.localizacao, produtor.regiao].filter(Boolean).join(' • ');
-  const areaTotal = Number(produtor.area_total || 0);
+  const areaTotalInformada = formatAreaHa(resolveAreaTotalInformada(produtor));
 
   const getStatusInfo = () => {
     switch (produtor.status) {
@@ -81,7 +82,7 @@ export default function ProdutorCard({ produtor, onPress }) {
             <View style={styles.metaDivider} />
             <View style={styles.metaItem}>
               <Ionicons name="resize" size={13} color={colors.muted} />
-              <Text style={styles.meta}>{areaTotal} ha</Text>
+              <Text style={styles.meta}>Área total informada: {areaTotalInformada}</Text>
             </View>
           </View>
         </View>

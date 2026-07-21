@@ -322,7 +322,7 @@ export default function PropriedadesScreen() {
                 <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
               </View>
               <Text style={styles.metricValue}>{formatarArea(metricasFazendas.areaTotal)}</Text>
-              <Text style={styles.metricLabel}>Área Total</Text>
+              <Text style={styles.metricLabel}>Área total informada</Text>
             </View>
             
             <View style={styles.metricCard}>

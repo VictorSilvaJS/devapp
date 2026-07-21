@@ -25,6 +25,7 @@ import {
   getFazendaIds,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { formatAreaHa, resolveAreaTotalInformada } from '../utils/talhaoMedidasCompat';
 import {
   buildDashboardScopeData,
   buildDashboardSummary,
@@ -269,7 +270,7 @@ export default function ClienteDashboardScreen() {
                     {fazendaInfo.localizacao || 'Localização não informada'}
                   </Text>
                   <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
-                    Titular: {fazendaInfo.titularNome || 'Não informado'} • {prop.area_total} ha • {prop.cultura_atual || 'N/A'}
+                    Titular: {fazendaInfo.titularNome || 'Não informado'} • Área total informada: {formatAreaHa(resolveAreaTotalInformada(prop))} • {prop.cultura_atual || 'N/A'}
                   </Text>
                   <Text style={styles.propriedadeStatus}>Status: {getPropriedadeStatusLabel(prop)}</Text>
                 </View>
@@ -296,7 +297,7 @@ export default function ClienteDashboardScreen() {
               }}
             />
             <StatCard
-              label="Área Total"
+              label="Área total informada"
               value={resumo.areaTotalLabel}
               icon={<Ionicons name="resize-outline" size={24} color={colors.secondary} />}
               accent={{
