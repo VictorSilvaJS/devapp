@@ -3861,11 +3861,62 @@ tracking, trilha ou historico foi criado. Android fisico continua pendente e
 nao aprovado. O relato completo esta em
 `fase-17h-1a-contrato-ponto-caderno.md`.
 
+## Fase 17H.1B - UI E Captura Explicita Do Ponto No Caderno
+
+Status em 2026-07-21: `IMPLEMENTADO_VALIDADO_EMULADOR`. Novo e Editar Caderno
+agora exibem uma secao opcional de localizacao, sem captura automatica. A
+leitura foreground unica so inicia depois da acao explicita do usuario, passa
+por `LocationForegroundService` e permanece em state React ate o submit.
+
+Comportamento atual:
+
+- Caderno sem ponto continua emitindo o payload anterior, sem qualquer
+  `localizacao_*`;
+- captura valida acrescenta somente os seis campos canonicos imediatamente
+  antes de `CadernoCampo.create` ou `CadernoCampo.update`;
+- captura pendente bloqueia submit concorrente, tem timeout finito de 15
+  segundos e descarta resposta antiga, posterior a cancelamento ou
+  desmontagem;
+- mudanca de Propriedade remove o draft; Talhao nao e selecionado nem validado
+  automaticamente pela coordenada;
+- edicao inicia em `preserve`; `replace` e `remove` ficam pendentes em memoria
+  e so alteram o registro ao salvar; a remocao pode ser desfeita;
+- detalhe mostra somente ponto canonico valido, com coordenadas formatadas,
+  precisao, horario e nome resolvido sem expor id tecnico cru;
+- cards de Caderno na listagem, detalhe da Propriedade e modal do Talhao
+  mostram apenas o selo `Com ponto geográfico` quando o ponto e valido.
+
+Validacoes aprovadas:
+
+- `npm run typecheck`, `npm run test:domain-compat` e testes focados de
+  Caderno, acesso, validators, periodo e consulta por Talhao;
+- 33 cenarios no novo teste puro de UI/localizacao e cobertura adicional nos
+  testes contratuais/formulario/validators;
+- `npx expo install --check` com `Dependencies are up to date`;
+- `:app:assembleRelease`, `adb install -r` e `monkey` no Pixel Tablet,
+  Android 15/API 35. APK com 91.922.508 bytes e SHA-256
+  `3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`;
+- smoke com create sem/com ponto, erro/timeout controlado, GPS simulado, baixa
+  precisao, aviso de Talhao, detalhe/nome, selo, `preserve`, `replace`,
+  `remove`, desfazer e remocao persistida. O provider simulado foi restaurado
+  ao final. O fluxo do Produtor tambem passou pela Sela de Prata I e pelo
+  Talhao `T01 - 230`, com create sem ponto e com ponto de 18 m.
+
+Nao foram criados storage ou chave `@tche:` novos, background, tracking,
+watch, TaskManager, trilha, rota, historico, geofencing, point-in-polygon ou
+marcador persistido no mapa. `Mostrar minha posição` continua transitorio.
+Auditoria estatica confirmou Visita, PNG, ZIP, GeoJSON e mapa sem
+`localizacao_*`.
+
+Android fisico e a regressao interativa exaustiva de PNG/ZIP continuam
+pendentes e nao aprovados. O relato completo esta em
+`fase-17h-1b-ui-ponto-caderno.md`.
+
 ## Proximo Passo Recomendado
 
-Com o contrato da 17H.1A fechado, uma microfase posterior pode implementar a
-UI e a captura foreground explicita, com consentimento e submit do Caderno,
-sem ampliar o escopo para tracking ou storage separado. A origem produtiva de
-perimetro, fotos reais e os avisos remanescentes do Expo Doctor permanecem em
-trilhas proprias. Nenhum resultado pode ser declarado apto para campo antes do
-smoke em Android fisico autorizado.
+Com a UI/captura da 17H.1B fechada em emulador, a 17H.1.1 deve executar a
+regressao interativa exaustiva de PNG/ZIP e consolidar as evidencias restantes
+do ponto opcional. Depois disso, o mesmo roteiro ainda precisa ser repetido em
+Android fisico autorizado antes de qualquer declaracao de aptidao para campo.
+A origem produtiva de perimetro, fotos reais e os avisos remanescentes do Expo
+Doctor permanecem em trilhas proprias.

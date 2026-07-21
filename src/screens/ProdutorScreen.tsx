@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
+import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
@@ -1286,6 +1287,7 @@ export default function ProdutorScreen({ route, navigation }) {
                             <Text style={styles.cadernoMetaText}>{periodoProdutivoLabel}</Text>
                           </View>
                         )}
+                        <CadernoLocalizacaoBadge registro={registro} />
                         {user?.perfil !== 'produtor' && (
                           <View style={styles.cadernoMetaItem}>
                             <Ionicons

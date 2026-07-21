@@ -44,6 +44,7 @@
     "src/contexts/filtroCompat.ts",
     "src/utils/cadernoFormCompat.ts",
     "src/utils/cadernoLocalizacaoCompat.ts",
+    "src/utils/cadernoLocalizacaoUiCompat.ts",
     "src/utils/talhaoConsultaCompat.ts",
     "src/utils/talhaoMedidasCompat.ts",
     "src/utils/visitaFormCompat.ts",

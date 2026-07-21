@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
+import CadernoLocalizacaoSection from '../components/CadernoLocalizacaoSection';
 import DatePicker from '../components/DatePicker';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
@@ -20,6 +21,7 @@ import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
+import { useCadernoLocalizacaoCapture } from '../hooks/useCadernoLocalizacaoCapture';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
@@ -38,6 +40,14 @@ import {
   parseCadernoAreaAplicada,
   resolveCadernoEdicaoFazendaId,
 } from '../utils/cadernoFormCompat';
+import type { CadernoLocalizacaoExplicita } from '../utils/cadernoLocalizacaoCompat';
+import {
+  buildCadernoLocalizacaoEditPatch,
+  getInitialCadernoLocalizacaoEditState,
+  setCadernoLocalizacaoEditRemoval,
+  setCadernoLocalizacaoEditReplacement,
+  undoCadernoLocalizacaoEditRemoval,
+} from '../utils/cadernoLocalizacaoUiCompat';
 
 export default function EditarCadernoScreen() {
   const navigation = useNavigation<any>();
@@ -72,6 +82,43 @@ export default function EditarCadernoScreen() {
   const [periodosProdutivos, setPeriodosProdutivos] = useState<any[]>([]);
   const [loadingPeriodos, setLoadingPeriodos] = useState(false);
   const [showPeriodoPicker, setShowPeriodoPicker] = useState(false);
+  const [localizacaoState, setLocalizacaoState] = useState(() =>
+    getInitialCadernoLocalizacaoEditState(null)
+  );
+  const savingRef = useRef(false);
+  const editLoadGenerationRef = useRef(0);
+
+  const handleLocationCaptured = useCallback((
+    draft: CadernoLocalizacaoExplicita,
+    capturedForFazendaId?: string
+  ) => {
+    setLocalizacaoState((current) =>
+      setCadernoLocalizacaoEditReplacement(current, draft, capturedForFazendaId)
+    );
+  }, []);
+
+  const {
+    loading: loadingLocalizacao,
+    errorMessage: localizacaoError,
+    capture: captureLocalizacao,
+    isCapturePending,
+    cancelPending: cancelPendingLocalizacao,
+    clearCaptureError,
+  } = useCadernoLocalizacaoCapture({
+    capturedBy: typeof user?.id === 'string' ? user.id : null,
+    onCaptured: handleLocationCaptured,
+  });
+
+  const discardPendingLocalizacao = useCallback(() => {
+    cancelPendingLocalizacao();
+    clearCaptureError();
+    setLocalizacaoState((current) => undoCadernoLocalizacaoEditRemoval(current));
+  }, [cancelPendingLocalizacao, clearCaptureError]);
+
+  const handleCancel = useCallback(() => {
+    discardPendingLocalizacao();
+    navigation.goBack();
+  }, [discardPendingLocalizacao, navigation]);
 
   const periodoOptions = useMemo(() => {
     const options = buildCadernoPeriodoProdutivoOptions(periodosProdutivos);
@@ -99,23 +146,40 @@ export default function EditarCadernoScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadRegistro();
-    }, [cadernoRouteId, user])
+      const loadGeneration = ++editLoadGenerationRef.current;
+      void loadRegistro(loadGeneration);
+
+      return () => {
+        if (editLoadGenerationRef.current === loadGeneration) {
+          editLoadGenerationRef.current += 1;
+        }
+        discardPendingLocalizacao();
+      };
+    }, [cadernoRouteId, user, discardPendingLocalizacao])
   );
 
-  const loadPeriodosProdutivos = async (contextoFazendaId, periodoAtualId = '') => {
+  const loadPeriodosProdutivos = async (
+    contextoFazendaId: unknown,
+    periodoAtualId = '',
+    loadGeneration: number
+  ) => {
+    if (editLoadGenerationRef.current !== loadGeneration) return;
+
     const normalizedFazendaId = String(contextoFazendaId || '').trim();
     setShowPeriodoPicker(false);
 
     if (!normalizedFazendaId) {
       setPeriodosProdutivos([]);
       setPeriodoProdutivoId(periodoAtualId || '');
+      setLoadingPeriodos(false);
       return;
     }
 
     setLoadingPeriodos(true);
     try {
       const periodos = await PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(normalizedFazendaId);
+      if (editLoadGenerationRef.current !== loadGeneration) return;
+
       setPeriodosProdutivos(periodos);
       setPeriodoProdutivoId((current) => {
         const selected = current || periodoAtualId;
@@ -126,16 +190,23 @@ export default function EditarCadernoScreen() {
           : '';
       });
     } catch (error) {
+      if (editLoadGenerationRef.current !== loadGeneration) return;
+
       console.error('Erro ao carregar periodos produtivos para edição do caderno:', error);
       setPeriodosProdutivos([]);
       setPeriodoProdutivoId(periodoAtualId || '');
     } finally {
-      setLoadingPeriodos(false);
+      if (editLoadGenerationRef.current === loadGeneration) {
+        setLoadingPeriodos(false);
+      }
     }
   };
 
-  const loadRegistro = async () => {
+  const loadRegistro = async (loadGeneration: number) => {
+    if (editLoadGenerationRef.current !== loadGeneration) return;
+
     setLoading(true);
+    setLoadingPeriodos(false);
     setAccessDenied(false);
 
     try {
@@ -147,12 +218,14 @@ export default function EditarCadernoScreen() {
         CadernoCampo.get(cadernoRouteId),
         Produtor.list(),
       ]);
+      if (editLoadGenerationRef.current !== loadGeneration) return;
 
       const acesso = avaliarAcessoCaderno(user, registroData, fazendasData);
 
       if (acesso.status !== 'permitido' || !podeEditarCadernoEmFazenda(user, registroData, acesso.fazenda)) {
         setRegistroOriginal(null);
         setFazenda(null);
+        setLocalizacaoState(getInitialCadernoLocalizacaoEditState(null));
         setAccessDenied(true);
         toast.showWarning('Você não tem permissão para editar este registro.');
         return;
@@ -160,6 +233,7 @@ export default function EditarCadernoScreen() {
 
       const contextoFazendaId = resolveCadernoEdicaoFazendaId(registroData, acesso.fazendaId);
       setRegistroOriginal(registroData);
+      setLocalizacaoState(getInitialCadernoLocalizacaoEditState(registroData));
       setFazenda(acesso.fazenda);
       setFazendas(fazendasData);
       setFazendaId(contextoFazendaId);
@@ -180,13 +254,17 @@ export default function EditarCadernoScreen() {
       setVisivelParaProdutor(isCadernoVisivelParaProdutor(registroData));
       const periodoAtualId = String(registroData.periodo_produtivo_id || registroData.periodoProdutivoId || '').trim();
       setPeriodoProdutivoId(periodoAtualId);
-      await loadPeriodosProdutivos(contextoFazendaId, periodoAtualId);
+      await loadPeriodosProdutivos(contextoFazendaId, periodoAtualId, loadGeneration);
     } catch (error) {
+      if (editLoadGenerationRef.current !== loadGeneration) return;
+
       console.error('Erro ao carregar registro para edição:', error);
       toast.showError('Erro ao carregar edição do caderno');
       navigation.goBack();
     } finally {
-      setLoading(false);
+      if (editLoadGenerationRef.current === loadGeneration) {
+        setLoading(false);
+      }
     }
   };
 
@@ -218,6 +296,8 @@ export default function EditarCadernoScreen() {
   };
 
   const handleSave = async () => {
+    if (savingRef.current || loadingLocalizacao || isCapturePending()) return;
+
     if (!registroOriginal) {
       toast.showWarning('Registro não carregado para edição.');
       return;
@@ -237,6 +317,7 @@ export default function EditarCadernoScreen() {
       return;
     }
 
+    savingRef.current = true;
     setSaving(true);
     try {
       const payload = buildCadernoPayload({
@@ -270,7 +351,15 @@ export default function EditarCadernoScreen() {
         payload.ano_agricola = null;
       }
 
-      await CadernoCampo.update(cadernoRouteId, payload);
+      const localizacaoPatch = buildCadernoLocalizacaoEditPatch(
+        localizacaoState.intent,
+        localizacaoState.draftLocation
+      );
+
+      await CadernoCampo.update(cadernoRouteId, {
+        ...payload,
+        ...localizacaoPatch,
+      });
       toast.showSuccess('Registro de caderno atualizado!');
 
       if (navigation.canGoBack()) {
@@ -282,6 +371,7 @@ export default function EditarCadernoScreen() {
       console.error('Erro ao atualizar registro de caderno:', error);
       toast.showError('Erro ao atualizar registro de caderno');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -289,7 +379,7 @@ export default function EditarCadernoScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Registro" showBack />
+        <Header title="Editar Registro" showBack onBack={handleCancel} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Carregando registro...</Text>
@@ -301,7 +391,7 @@ export default function EditarCadernoScreen() {
   if (accessDenied || !registroOriginal) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Registro" showBack />
+        <Header title="Editar Registro" showBack onBack={handleCancel} />
         <View style={styles.blockedContainer}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
           <Text style={styles.blockedText}>Acesso restrito</Text>
@@ -320,7 +410,7 @@ export default function EditarCadernoScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Editar Registro" showBack />
+      <Header title="Editar Registro" showBack onBack={handleCancel} />
 
       <ScrollView
         style={styles.scrollView}
@@ -514,6 +604,31 @@ export default function EditarCadernoScreen() {
           />
         </SectionCard>
 
+        <CadernoLocalizacaoSection
+          mode="edit"
+          currentLocation={
+            localizacaoState.intent === 'replace' ? localizacaoState.draftLocation : null
+          }
+          existingLocation={localizacaoState.existingLocation}
+          loading={loadingLocalizacao}
+          errorMessage={localizacaoError}
+          removalPending={localizacaoState.intent === 'remove'}
+          hasTalhaoContext={Boolean(talhaoId || talhao.trim())}
+          disabled={saving}
+          onCapture={() => {
+            if (!savingRef.current) void captureLocalizacao(contextoFazendaId);
+          }}
+          onRemove={() => {
+            cancelPendingLocalizacao();
+            clearCaptureError();
+            setLocalizacaoState((current) => setCadernoLocalizacaoEditRemoval(current));
+          }}
+          onUndoRemove={() => {
+            clearCaptureError();
+            setLocalizacaoState((current) => undoCadernoLocalizacaoEditRemoval(current));
+          }}
+        />
+
         <SectionCard title="Visibilidade" subtitle="Controle se o registro aparece para o produtor.">
           <Text style={styles.label}>
             Visibilidade para Produtor <Text style={styles.required}>*</Text>
@@ -540,10 +655,11 @@ export default function EditarCadernoScreen() {
       </ScrollView>
 
       <FormFooter
-        onCancel={() => navigation.goBack()}
+        onCancel={handleCancel}
         onSubmit={handleSave}
         submitLabel="Salvar Alterações"
         loading={saving}
+        disabled={loadingLocalizacao}
       />
     </View>
   );

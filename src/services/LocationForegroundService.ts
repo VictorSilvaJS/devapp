@@ -29,6 +29,7 @@ type ExpoLocationModule = Pick<
 
 const LAST_KNOWN_MAX_AGE_MS = 2 * 60 * 1000;
 const LAST_KNOWN_REQUIRED_ACCURACY_METERS = 200;
+const POSITION_REQUEST_TIMEOUT_MS = 15 * 1000;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -52,6 +53,25 @@ const normalizeTimestamp = (value: unknown, now: () => string): string => {
 
   return now();
 };
+
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('Foreground location request timed out')),
+      timeoutMs
+    );
+
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 
 const normalizeLocationObject = (
   locationObject: Location.LocationObject,
@@ -100,6 +120,7 @@ const getCurrentOrRecentLastKnownPosition = async (
 export interface RequestForegroundLocationOptions {
   locationModule?: ExpoLocationModule;
   now?: () => string;
+  positionTimeoutMs?: number;
 }
 
 export const requestCurrentForegroundLocation = async (
@@ -107,6 +128,10 @@ export const requestCurrentForegroundLocation = async (
 ): Promise<ForegroundLocationResult> => {
   const locationModule = options.locationModule ?? Location;
   const now = options.now ?? (() => new Date().toISOString());
+  const positionTimeoutMs = Number.isFinite(options.positionTimeoutMs)
+    && Number(options.positionTimeoutMs) >= 0
+    ? Number(options.positionTimeoutMs)
+    : POSITION_REQUEST_TIMEOUT_MS;
 
   try {
     const currentPermission = await locationModule.getForegroundPermissionsAsync();
@@ -129,7 +154,19 @@ export const requestCurrentForegroundLocation = async (
       };
     }
 
-    const locationObject = await getCurrentOrRecentLastKnownPosition(locationModule);
+    let locationObject: Location.LocationObject;
+    try {
+      locationObject = await withTimeout(
+        getCurrentOrRecentLastKnownPosition(locationModule),
+        positionTimeoutMs
+      );
+    } catch {
+      return {
+        status: 'unavailable',
+        message: 'Não foi possível obter a posição atual do aparelho.',
+      };
+    }
+
     const normalized = normalizeLocationObject(locationObject, now);
 
     if (!normalized) {

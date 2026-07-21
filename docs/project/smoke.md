@@ -20,6 +20,35 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.1B - UI, Captura Foreground E Persistencia Explicita Do Ponto No Caderno**
+
+Observacao geral em 2026-07-21: rodada executada no AVD Pixel Tablet,
+Android 15/API 35, com APK release instalado por cima. O fluxo foi exercitado
+com provider indisponivel/timeout e depois com GPS simulado, incluindo leitura
+de baixa precisao. O provider simulado foi restaurado ao final. Nao foram
+usados `pm clear`, desinstalacao ou `Wipe Data`. Android fisico e a regressao
+interativa exaustiva de PNG/ZIP continuam pendentes e nao aprovados.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H1B-01 | P0 | Produtor/Admin | Secao opcional | Abrir Novo/Editar Caderno sem tocar na acao | Secao aparece e nenhuma captura ocorre automaticamente | Passou | Produtor abriu pela Sela de Prata I/Talhao `T01 - 230`; formulario permaneceu comum ate o toque explicito |
+| 17H1B-02 | P0 | Produtor/Admin | Captura foreground | Tocar em `Usar minha posição neste registro` | Uma unica leitura foreground inicia; submit fica indisponivel enquanto pendente | Passou | Sem chamada direta de Expo Location na tela e sem watch |
+| 17H1B-03 | P0 | Produtor/Admin | Transparencia | Concluir captura simulada e exercitar accuracy baixa | Mostrar horario, precisao e aviso sem bloquear submit | Passou | Produtor viu 18 m/horario; Admin confirmou baixa precisao e aviso de contexto do Talhao |
+| 17H1B-04 | P0 | Produtor/Admin | Create sem ponto | Salvar Caderno sem usar localizacao | Registro e detalhe ficam sem grupo/secao de ponto | Passou | Fluxo do Produtor pelo `T01 - 230` e fluxo global do Admin passaram sem `localizacao_*` |
+| 17H1B-05 | P0 | Produtor/Admin | Create com ponto | Capturar GPS simulado e salvar | Grupo canonico persiste somente depois do submit | Passou | Detalhe do Produtor mostrou 18 m e nome resolvido; nenhum draft foi persistido antes |
+| 17H1B-06 | P0 | Admin | Erro/timeout | Tentar capturar com provider indisponivel | Mensagem controlada e Caderno sem ponto continua permitido | Passou | Timeout terminou como indisponivel, sem crash ou grupo parcial |
+| 17H1B-07 | P0 | Admin | Edit preserve | Abrir ponto existente, alterar campo comum e salvar | Coordenadas e `captured_at` permanecem | Passou | Abrir a edicao nao disparou nova captura |
+| 17H1B-08 | P0 | Admin | Edit replace | Usar nova posicao simulada e salvar | Novo grupo substitui integralmente o anterior no submit | Passou | Substituicao ficou apenas em state antes de salvar |
+| 17H1B-09 | P0 | Admin | Edit remove/desfazer | Marcar remocao, desfazer, marcar novamente e salvar | Desfazer restaura `preserve`; remocao persiste somente no submit | Passou | Detalhe e selo desapareceram depois da remocao salva |
+| 17H1B-10 | P0 | Admin | Detalhe e selo | Abrir detalhe e cards com ponto valido | Mostrar coordenadas/nome no detalhe e apenas selo nos cards | Passou | Nome foi resolvido sem exibir id tecnico cru; cards nao mostraram coordenadas |
+| 17H1B-11 | P0 | Todos | Auditoria | Buscar storage, chaves, tracking e shapes proibidos | Sem chave nova, background, tracking, trilha, historico ou campos extras | Passou | Localizacao entra somente no submit do Caderno |
+| 17H1B-12 | P0 | Todos | Regressao PNG/ZIP/mapa | Auditar e reabrir todos os materiais/mapa | Nenhum `localizacao_*` ou ponto persistido fora do Caderno | Reexecutar | Auditoria estatica passou para Visita/PNG/ZIP/GeoJSON/mapa; regressao interativa exaustiva de PNG/ZIP fica para 17H.1.1 |
+| 17H1B-13 | P0 | Todos | Android fisico | Repetir permissao, captura, precisao, submit e edicao em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
+
+Build desta rodada: `:app:assembleRelease`, `adb install -r` e `monkey`
+passaram. APK com 91.922.508 bytes e SHA-256
+`3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`.
+
 **Rodada Fase 17H.1A - Contrato Do Ponto Opcional No Caderno**
 
 Observacao geral em 2026-07-21: rodada executada no AVD Pixel Tablet, Android

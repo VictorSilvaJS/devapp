@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import CadernoLocalizacaoSection from '../components/CadernoLocalizacaoSection';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
 import FormField from '../components/FormField';
@@ -20,6 +21,7 @@ import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
+import { useCadernoLocalizacaoCapture } from '../hooks/useCadernoLocalizacaoCapture';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   filtrarProdutoresPorAcesso,
@@ -39,6 +41,12 @@ import {
   getCadernoFormPeriodoProdutivoLabel,
   parseCadernoAreaAplicada,
 } from '../utils/cadernoFormCompat';
+import type { CadernoLocalizacaoExplicita } from '../utils/cadernoLocalizacaoCompat';
+import {
+  CADERNO_LOCALIZACAO_PROPERTY_CHANGED_MESSAGE,
+  appendCadernoLocalizacaoDraft,
+  shouldDiscardCadernoLocalizacaoDraftForPropertyChange,
+} from '../utils/cadernoLocalizacaoUiCompat';
 
 export default function NovoCadernoScreen() {
   const navigation = useNavigation<any>();
@@ -78,6 +86,76 @@ export default function NovoCadernoScreen() {
   const [showFazendaPicker, setShowFazendaPicker] = useState(false);
   const [showPeriodoPicker, setShowPeriodoPicker] = useState(false);
   const [errors, setErrors] = useState<any>({});
+  const [localizacaoDraft, setLocalizacaoDraft] = useState<CadernoLocalizacaoExplicita | null>(null);
+  const [localizacaoFazendaId, setLocalizacaoFazendaId] = useState<string | null>(null);
+  const [localizacaoNotice, setLocalizacaoNotice] = useState('');
+  const savingRef = useRef(false);
+  const fazendaIdRef = useRef(fazendaId);
+  fazendaIdRef.current = fazendaId;
+
+  const handleLocationCaptured = useCallback((
+    draft: CadernoLocalizacaoExplicita,
+    capturedForFazendaId?: string
+  ) => {
+    const currentFazendaId = String(fazendaIdRef.current || '').trim();
+    const capturedContextId = String(capturedForFazendaId || '').trim();
+
+    if (!currentFazendaId || capturedContextId !== currentFazendaId) {
+      setLocalizacaoDraft(null);
+      setLocalizacaoFazendaId(null);
+      setLocalizacaoNotice(CADERNO_LOCALIZACAO_PROPERTY_CHANGED_MESSAGE);
+      return;
+    }
+
+    setLocalizacaoDraft(draft);
+    setLocalizacaoFazendaId(capturedContextId);
+    setLocalizacaoNotice('');
+  }, []);
+
+  const {
+    loading: loadingLocalizacao,
+    errorMessage: localizacaoError,
+    capture: captureLocalizacao,
+    isCapturePending,
+    cancelPending: cancelPendingLocalizacao,
+    clearCaptureError,
+  } = useCadernoLocalizacaoCapture({
+    capturedBy: typeof user?.id === 'string' ? user.id : null,
+    onCaptured: handleLocationCaptured,
+  });
+
+  const discardLocalizacao = useCallback(() => {
+    cancelPendingLocalizacao();
+    clearCaptureError();
+    setLocalizacaoDraft(null);
+    setLocalizacaoFazendaId(null);
+    setLocalizacaoNotice('');
+  }, [cancelPendingLocalizacao, clearCaptureError]);
+
+  const handleCancel = useCallback(() => {
+    discardLocalizacao();
+    navigation.goBack();
+  }, [discardLocalizacao, navigation]);
+
+  useFocusEffect(
+    useCallback(() => () => {
+      discardLocalizacao();
+    }, [discardLocalizacao])
+  );
+
+  useEffect(() => {
+    cancelPendingLocalizacao();
+    clearCaptureError();
+
+    if (
+      localizacaoDraft
+      && shouldDiscardCadernoLocalizacaoDraftForPropertyChange(localizacaoFazendaId, fazendaId)
+    ) {
+      setLocalizacaoDraft(null);
+      setLocalizacaoFazendaId(null);
+      setLocalizacaoNotice(CADERNO_LOCALIZACAO_PROPERTY_CHANGED_MESSAGE);
+    }
+  }, [fazendaId]);
 
   const fazendaOptions = useMemo(() => buildCadernoFazendaOptions(fazendas), [fazendas]);
   const periodoOptions = useMemo(
@@ -208,6 +286,8 @@ export default function NovoCadernoScreen() {
   };
 
   const handleSave = async () => {
+    if (savingRef.current || loadingLocalizacao || isCapturePending()) return;
+
     if (!podeIncluirCaderno(user)) {
       toast.showWarning('Você não tem permissão para criar registro de caderno.');
       return;
@@ -225,6 +305,23 @@ export default function NovoCadernoScreen() {
       return;
     }
 
+    const draftPertenceAFazenda = !localizacaoDraft
+      || (
+        String(localizacaoFazendaId || '').trim().length > 0
+        && String(localizacaoFazendaId || '').trim() === String(fazendaId || '').trim()
+      );
+
+    if (!draftPertenceAFazenda) {
+      cancelPendingLocalizacao();
+      clearCaptureError();
+      setLocalizacaoDraft(null);
+      setLocalizacaoFazendaId(null);
+      setLocalizacaoNotice(CADERNO_LOCALIZACAO_PROPERTY_CHANGED_MESSAGE);
+      toast.showWarning(CADERNO_LOCALIZACAO_PROPERTY_CHANGED_MESSAGE);
+      return;
+    }
+
+    savingRef.current = true;
     setSaving(true);
     try {
       const visibilidadeEfetiva = isProdutorView ? true : visivelParaProdutor;
@@ -250,13 +347,18 @@ export default function NovoCadernoScreen() {
         throw new Error('Não foi possível montar o payload do caderno');
       }
 
-      const criado = await CadernoCampo.create(novoRegistro);
+      const payloadComLocalizacao = appendCadernoLocalizacaoDraft(novoRegistro, localizacaoDraft);
+      const criado = await CadernoCampo.create(payloadComLocalizacao);
+      setLocalizacaoDraft(null);
+      setLocalizacaoFazendaId(null);
+      setLocalizacaoNotice('');
       toast.showSuccess(isProdutorView ? 'Registro enviado ao Caderno!' : 'Registro de caderno criado com sucesso!');
       navigation.replace('CadernoDetail', { cadernoId: criado.id });
     } catch (error) {
       console.error('Erro ao salvar registro de caderno:', error);
       toast.showError('Erro ao criar registro de caderno');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -264,7 +366,7 @@ export default function NovoCadernoScreen() {
   if (loadingFazendas) {
     return (
       <View style={styles.container}>
-        <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack />
+        <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack onBack={handleCancel} />
         <View style={styles.blockedContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.blockedSubtext}>Carregando propriedades autorizadas...</Text>
@@ -276,7 +378,7 @@ export default function NovoCadernoScreen() {
   if (accessDenied) {
     return (
       <View style={styles.container}>
-        <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack />
+        <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack onBack={handleCancel} />
         <View style={styles.blockedContainer}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
           <Text style={styles.blockedText}>Acesso restrito</Text>
@@ -288,7 +390,7 @@ export default function NovoCadernoScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack />
+      <Header title={isProdutorView ? 'Registrar no Caderno' : 'Novo Registro'} showBack onBack={handleCancel} />
 
       <ScrollView
         style={styles.scrollView}
@@ -533,6 +635,26 @@ export default function NovoCadernoScreen() {
           />
         </SectionCard>
 
+        <CadernoLocalizacaoSection
+          mode="create"
+          currentLocation={localizacaoDraft}
+          loading={loadingLocalizacao}
+          errorMessage={localizacaoError}
+          noticeMessage={localizacaoNotice}
+          hasTalhaoContext={Boolean(routeTalhaoId || talhao.trim())}
+          disabled={saving || !fazendaId}
+          onCapture={() => {
+            if (!savingRef.current) void captureLocalizacao(fazendaId);
+          }}
+          onRemove={() => {
+            cancelPendingLocalizacao();
+            clearCaptureError();
+            setLocalizacaoDraft(null);
+            setLocalizacaoFazendaId(null);
+            setLocalizacaoNotice('');
+          }}
+        />
+
         {isProdutorView ? (
           <InfoBox message="O registro ficará visível para você e para a equipe autorizada da Propriedade." />
         ) : (
@@ -563,11 +685,11 @@ export default function NovoCadernoScreen() {
       </ScrollView>
 
       <FormFooter
-        onCancel={() => navigation.goBack()}
+        onCancel={handleCancel}
         onSubmit={handleSave}
         submitLabel={isProdutorView ? 'Registrar no Caderno' : 'Salvar Registro'}
         loading={saving}
-        disabled={loadingFazendas || semFazendasAutorizadas}
+        disabled={loadingFazendas || semFazendasAutorizadas || loadingLocalizacao}
       />
     </View>
   );

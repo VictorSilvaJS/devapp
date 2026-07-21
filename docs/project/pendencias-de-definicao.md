@@ -300,10 +300,11 @@ automatizada do adapter nativo e Android fisico.
 
 ### 4B. Marcacoes de campo vinculadas ao Caderno
 
-O contrato tecnico do primeiro ponto geografico opcional existe no Caderno,
-mas a UI e a captura ainda nao existem no produto. O contrato nao deve ser
-confundido com a localizacao temporaria do mapa de Talhoes nem com PNG/ZIP de
-Material tecnico.
+O contrato tecnico, a UI e a captura foreground explicita do primeiro ponto
+geografico opcional existem no Caderno e foram validados em emulador. O ponto
+nao deve ser confundido com a localizacao temporaria do mapa de Talhoes nem
+com PNG/ZIP de Material tecnico. Aprovacao de campo continua bloqueada ate
+Android fisico autorizado.
 
 Status em 2026-07-14 (Fase 17H.0): foi criada a analise tecnica
 `docs/project/fase-17h-marcacoes-campo.md`. A recomendacao para uma futura
@@ -331,16 +332,25 @@ snapshot continua em `@tche:mock-mvp:v1`; registros antigos permanecem
 validos; remocao nao deixa sentinel ou residuo. Nenhuma UI, captura, chamada de
 Location API ou chave nova foi criada.
 
-Pontos que continuam pendentes para implementacao e evidencia:
+Status em 2026-07-21 (Fase 17H.1B): a UI opcional, leitura foreground unica,
+state transitorio, submit explicito, detalhe e selo foram implementados e
+validados no emulador. Create sem/com ponto, erro/timeout, baixa precisao,
+contexto de Talhao, `preserve`, `replace`, `remove`, desfazer e remocao
+persistida passaram com GPS simulado; o provider foi restaurado ao final.
+Nenhuma captura automatica, chave nova, background, tracking, trilha,
+historico, point-in-polygon ou ponto persistido no mapa foi criado.
 
-- definir o texto visual de consentimento e a apresentacao de precisao/horario;
-- implementar a UI e a captura foreground explicita em fase propria, usando o
-  contrato ja validado;
-- testar cancelamento, remocao e persistencia somente apos submit;
-- reauditar que `Mostrar minha posicao`, PNG e ZIP continuam sem persistencia
-  ou georreferenciamento implicito;
-- executar smoke em emulador e Android fisico autorizado. Android fisico segue
-  pendente e nao aprovado, embora nao bloqueie o desenvolvimento em emulador.
+Pontos que continuam pendentes para evidencia:
+
+- executar a regressao interativa exaustiva de PNG e ZIP na 17H.1.1; a
+  auditoria estatica ja confirmou PNG, ZIP, GeoJSON, Visita e mapa sem
+  `localizacao_*`;
+- repetir permissao, captura, timeout, precisao, create/edit/remove e
+  persistencia em Android fisico autorizado;
+- validar precisao e comportamento do provider em condicao real de campo.
+
+Android fisico segue pendente e nao aprovado, embora nao bloqueie o
+desenvolvimento e o smoke tecnico em emulador.
 
 ### 4C. Fechamento funcional antes de coordenadas, marcacoes e fotos
 
@@ -386,8 +396,16 @@ typecheck, suites, build, instalacao e smoke passaram em emulador. Os avisos
 preexistentes de schema `splash` e `expo-font` ficaram registrados para fase
 propria; Android fisico continua pendente e nao aprovado.
 
+Status em 2026-07-21 (Fase 17H.1B): a implementacao de UI/captura do ponto
+opcional foi encerrada no emulador. O ponto permanece em state ate o submit do
+Caderno; create sem ponto continua inalterado; edicao preserva, substitui ou
+remove apenas ao salvar; detalhe e selo reconhecem somente grupo valido. A
+auditoria confirmou ausencia de chave nova, captura automatica,
+background/tracking e `localizacao_*` em Visita, PNG, ZIP, GeoJSON ou mapa.
+
 Pendencias P1 antes de declarar APK apto a campo:
 
+- concluir a regressao interativa exaustiva de PNG/ZIP da 17H.1B na 17H.1.1;
 - executar smoke completo em Android fisico autorizado.
 
 Pendencias P2/futuras:
@@ -403,7 +421,8 @@ Pendencias P2/futuras:
 
 Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
 
-- implementar futuramente a UI/captura explicita do ponto opcional no Caderno;
+- reexecutar a regressao interativa exaustiva de PNG/ZIP da 17H.1B na 17H.1.1;
+- validar o ponto opcional em Android fisico autorizado;
 - implementar foto real apenas em fase propria;
 - implementar backend/processamento externo quando essa trilha for aberta.
 
@@ -411,7 +430,7 @@ Classificacao atual relevante:
 
 - contrato do ponto opcional no Caderno:
   `IMPLEMENTADO_VALIDADO_EMULADOR`;
-- UI/captura do ponto opcional: `NAO_IMPLEMENTADO`;
+- UI/captura do ponto opcional: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - area/perimetro: `PARCIAL`;
 - semantica de area: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva

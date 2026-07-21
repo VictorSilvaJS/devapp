@@ -480,3 +480,51 @@ aprovado.
 | 17H1A-10 | Comportamento visual | Nenhuma UI/captura criada; formularios continuam sem localizacao | Passou |
 | 17H1A-11 | Auditoria | Nenhuma chave, Location API, tracking/background ou shape proibido novo | Passou |
 | 17H1A-12 | Android fisico | Repetir instalacao e smoke em aparelho autorizado | Reexecutar |
+
+## Implementacao De UI E Captura Da Fase 17H.1B
+
+Em 2026-07-21, a 17H.1B conectou o contrato da 17H.1A ao Novo/Editar
+Caderno. A secao `Localização do registro` e opcional, nao captura ao abrir e
+usa uma leitura unica de `LocationForegroundService` somente depois de acao
+explicita. O resultado fica em state React; os campos canonicos entram no
+create/update apenas no submit.
+
+O fluxo de criacao continua aceitando Caderno sem ponto. Na edicao,
+Admin/Colaborador podem preservar, substituir ou marcar a remocao do ponto;
+substituicao e remocao so chegam a persistencia quando o formulario e salvo.
+Produtor segue sem editar/remover. Mudanca de Propriedade descarta o draft;
+Talhao nao e inferido pela coordenada e nao existe point-in-polygon.
+
+Detalhe e cards mostram somente ponto canonico valido. O detalhe apresenta
+coordenadas, precisao, horario e nome resolvido com seguranca; os cards exibem
+apenas o selo `Com ponto geográfico`. Registro ausente/parcial continua sem
+secao e sem quebra.
+
+Typecheck, suite completa, testes focados, Expo install check, build release,
+instalacao por cima e `monkey` passaram. O smoke no Pixel Tablet/API 35
+confirmou create sem/com ponto, erro/timeout controlado, GPS simulado, baixa
+precisao, aviso de Talhao, detalhe/nome, selo, `preserve`, `replace`,
+`remove`, desfazer e remocao persistida; o provider simulado foi restaurado.
+O relato completo esta em `fase-17h-1b-ui-ponto-caderno.md`.
+
+Nao foi criada chave `@tche:`, storage separado, captura automatica,
+background, tracking, watch, trilha, rota, historico, geofencing ou marcador
+persistido no mapa. Auditoria estatica confirmou Visita, PNG, ZIP, GeoJSON e
+mapa sem `localizacao_*`. Android fisico e a regressao interativa exaustiva de
+PNG/ZIP continuam pendentes.
+
+| ID | Area | Criterio | Status |
+|---|---|---|---|
+| 17H1B-01 | UI | Secao opcional sem captura automatica | Passou |
+| 17H1B-02 | Captura | Captura foreground explicita e unica | Passou |
+| 17H1B-03 | Transparencia | Precisao e horario apresentados antes do submit | Passou |
+| 17H1B-04 | Create sem ponto | Caderno comum continua sem `localizacao_*` | Passou |
+| 17H1B-05 | Create com ponto | Ponto valido persiste somente no submit | Passou |
+| 17H1B-06 | Erro | Falha/timeout permite Caderno sem ponto | Passou |
+| 17H1B-07 | Edit preserve | Edicao comum preserva o ponto | Passou |
+| 17H1B-08 | Edit replace | Nova captura substitui o grupo no submit | Passou |
+| 17H1B-09 | Edit remove/desfazer | Remocao pendente, desfazer e persistencia no submit | Passou |
+| 17H1B-10 | Detalhe e selo | Detalhe seguro e selo somente para ponto valido | Passou |
+| 17H1B-11 | Auditoria | Sem chave nova, background ou tracking | Passou |
+| 17H1B-12 | Regressao PNG/ZIP/mapa | Auditoria estatica passou; smoke exaustivo deve ser repetido | Reexecutar |
+| 17H1B-13 | Android fisico | Repetir o roteiro em aparelho autorizado | Reexecutar |

@@ -155,6 +155,17 @@ const run = async () => {
     assert.equal(validateCadernoLocalizacao(validLocation({ localizacao_accuracy: null })).valid, true);
   });
 
+  await test('grupo mínimo válido aceita accuracy null e omite captured_by', () => {
+    const value = validLocation({ localizacao_accuracy: null });
+    delete value.localizacao_captured_by;
+    const result = validateCadernoLocalizacao(value);
+
+    assert.equal(result.valid, true);
+    assert.equal(result.status, 'valid');
+    assert.equal(result.value.localizacao_accuracy, null);
+    assert.equal(hasOwn(result.value, 'localizacao_captured_by'), false);
+  });
+
   await test('accuracy zero é válida', () => {
     assert.equal(validateCadernoLocalizacao(validLocation({ localizacao_accuracy: 0 })).valid, true);
   });

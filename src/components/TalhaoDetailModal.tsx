@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, typography, shadows } from '../theme';
 import { formatAreaHa, formatPerimeter } from '../utils/talhaoMedidasCompat';
+import { CadernoLocalizacaoBadge } from './CadernoLocalizacaoSection';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -204,6 +205,7 @@ export default function TalhaoDetailModal({
             getCadernoPeriodoProdutivoLabel?.(registro),
           ].filter(Boolean).join(' • ')}
         </Text>
+        <CadernoLocalizacaoBadge registro={registro} />
       </View>
       <Ionicons name="chevron-forward-outline" size={16} color={colors.muted} />
     </TouchableOpacity>

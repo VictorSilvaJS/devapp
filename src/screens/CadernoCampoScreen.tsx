@@ -14,6 +14,7 @@ import EmptyState from '../components/EmptyState';
 import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
+import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -276,6 +277,7 @@ export default function CadernoCampoScreen() {
                       <Text style={styles.infoText}>{reg.area_aplicada} ha</Text>
                     </View>
                   )}
+                  <CadernoLocalizacaoBadge registro={reg} />
                 </View>
 
                 {/* Produtos e Dosagem */}

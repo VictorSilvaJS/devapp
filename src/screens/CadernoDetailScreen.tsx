@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import { useToast } from '../components/Toast';
-import { CadernoCampo, Produtor } from '../api/mock';
+import { CadernoCampo, Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
@@ -31,6 +31,8 @@ import {
   isCadernoVisivelParaProdutor,
 } from '../utils/cadernoFormCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
+import { normalizeCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
+import { getCadernoLocalizacaoPresentation } from '../utils/cadernoLocalizacaoUiCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -45,6 +47,7 @@ export default function CadernoDetailScreen() {
 
   const [registro, setRegistro] = useState(null);
   const [fazenda, setFazenda] = useState(null);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -60,9 +63,10 @@ export default function CadernoDetailScreen() {
         throw new Error('Registro de caderno não informado');
       }
 
-      const [registroData, fazendas] = await Promise.all([
+      const [registroData, fazendas, usuariosData] = await Promise.all([
         CadernoCampo.get(cadernoRouteId),
         Produtor.list(),
+        User.list().catch(() => []),
       ]);
 
       const acesso = avaliarAcessoCaderno(user, registroData, fazendas);
@@ -70,6 +74,7 @@ export default function CadernoDetailScreen() {
       if (acesso.status !== 'permitido') {
         setRegistro(null);
         setFazenda(null);
+        setUsuarios([]);
         toast.showWarning('Você não tem permissão para acessar este registro.');
         navigation.goBack();
         return;
@@ -77,6 +82,7 @@ export default function CadernoDetailScreen() {
 
       setRegistro(registroData);
       setFazenda(acesso.fazenda);
+      setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (error) {
       console.error('Erro ao carregar registro de caderno:', error);
       toast.showError('Erro ao carregar detalhe do caderno');
@@ -165,6 +171,12 @@ export default function CadernoDetailScreen() {
   const registradoPeloProdutor = isCadernoRegistradoPeloProdutor(registro);
   const fotos = Array.isArray(registro.fotos) ? registro.fotos : [];
   const produtos = Array.isArray(registro.produtos_utilizados) ? registro.produtos_utilizados : [];
+  const localizacao = normalizeCadernoLocalizacao(registro);
+  const localizacaoPresentation = getCadernoLocalizacaoPresentation(localizacao);
+  const usuarioCaptura = localizacao?.localizacao_captured_by
+    ? usuarios.find((usuario) => String(usuario?.id || '').trim() === localizacao.localizacao_captured_by)
+    : null;
+  const nomeUsuarioCaptura = String(usuarioCaptura?.nome || usuarioCaptura?.full_name || '').trim();
 
   return (
     <View style={styles.container}>
@@ -290,6 +302,70 @@ export default function CadernoDetailScreen() {
             </View>
           )}
         </View>
+
+        {localizacao ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="pin-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Ponto registrado em campo</Text>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoValue}>Localização registrada por ação explícita</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="navigate-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Latitude</Text>
+                <Text style={styles.infoValue}>{localizacaoPresentation?.latitudeText}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="navigate-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Longitude</Text>
+                <Text style={styles.infoValue}>{localizacaoPresentation?.longitudeText}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="locate-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Precisão informada</Text>
+                <Text style={styles.infoValue}>
+                  {localizacaoPresentation?.accuracyValueText}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.infoRow}>
+              <Ionicons name="time-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Capturada em</Text>
+                <Text style={styles.infoValue}>{localizacaoPresentation?.capturedAtText}</Text>
+              </View>
+            </View>
+
+            {nomeUsuarioCaptura ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="person-outline" size={20} color={colors.muted} />
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Capturada por</Text>
+                  <Text style={styles.infoValue}>{nomeUsuarioCaptura}</Text>
+                </View>
+              </View>
+            ) : null}
+
+            <Text style={styles.locationExplanation}>
+              A posição representa a leitura aproximada informada pelo aparelho no momento do registro.
+            </Text>
+          </View>
+        ) : null}
 
         {produtos.length > 0 && (
           <View style={styles.card}>
@@ -487,6 +563,11 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     fontWeight: '600',
     color: colors.text,
+  },
+  locationExplanation: {
+    fontSize: typography.fontSmall,
+    color: colors.textLight,
+    lineHeight: 19,
   },
   productList: {
     flexDirection: 'row',

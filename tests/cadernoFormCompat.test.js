@@ -177,6 +177,29 @@ const run = async () => {
     assert.equal(getCadernoFormPeriodoProdutivoLabel(null), 'Sem Safra/Safrinha vinculada');
   });
 
+  await test('estado auxiliar da UI de localização não entra no payload comum do formulário', () => {
+    const payload = buildCadernoPayload({
+      fazendaId: 'faz_payload',
+      dataAtividade: new Date('2026-07-21T12:00:00.000Z'),
+      tipoAtividade: 'observacao',
+      talhaoId: 'talhao_2',
+      talhao: 'Talhão alterado na UI',
+      localizacaoDraft: {
+        localizacao_latitude: -29.123456,
+        localizacao_longitude: -51.123456,
+      },
+      capturedForPropertyId: 'faz_payload',
+      removalPending: true,
+    });
+
+    assert.equal(payload.talhao_id, 'talhao_2');
+    assert.equal(payload.talhao, 'Talhão alterado na UI');
+    assert.equal(Object.keys(payload).some((key) => key.startsWith('localizacao_')), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(payload, 'localizacaoDraft'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(payload, 'capturedForPropertyId'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(payload, 'removalPending'), false);
+  });
+
   await test('helpers de apresentação do caderno cobrem tipo, talhão, visibilidade e ordenação', () => {
     assert.equal(getCadernoTipoLabel('correcao_solo'), 'Correção de solo');
     assert.equal(getCadernoTipoLabel('ocorrencia'), 'Ocorrência');

@@ -146,6 +146,42 @@ test('validateCadernoCampo rejeita grupo parcial de localização', () => {
   }), /Latitude e longitude da localização devem ser informadas juntas/);
 });
 
+test('validateCadernoCampo aceita accuracy null e captured_by ausente', () => {
+  assert.equal(validateCadernoCampo({
+    fazenda_id: 'p1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'observacao',
+    localizacao_latitude: -29.123456,
+    localizacao_longitude: -51.123456,
+    localizacao_accuracy: null,
+    localizacao_captured_at: '2026-07-21T15:30:00.000Z',
+    localizacao_origem: 'foreground_explicit',
+  }), true);
+});
+
+test('validateCadernoCampo rejeita timestamp ou origem inválidos', () => {
+  const base = {
+    fazenda_id: 'p1',
+    colaborador_responsavel: 'Ana Santos',
+    data_atividade: '2026-04-14T10:00:00.000Z',
+    tipo_atividade: 'observacao',
+    localizacao_latitude: -29.123456,
+    localizacao_longitude: -51.123456,
+    localizacao_captured_at: '2026-07-21T15:30:00.000Z',
+    localizacao_origem: 'foreground_explicit',
+  };
+
+  assert.throws(
+    () => validateCadernoCampo({ ...base, localizacao_captured_at: '21/07/2026' }),
+    /Data\/hora da localização inválida/
+  );
+  assert.throws(
+    () => validateCadernoCampo({ ...base, localizacao_origem: 'background' }),
+    /Origem da localização inválida/
+  );
+});
+
 test('validateLimiteArea aceita fazenda_id canônico', () => {
   assert.equal(validateLimiteArea({
     nome: 'LT 2025 - Talhão A',
