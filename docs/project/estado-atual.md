@@ -3520,14 +3520,62 @@ Pendencias remanescentes:
   pelo Git, portanto deve ser reaplicada apos uma regeneracao nativa se a
   maquina voltar a apresentar falta de memoria.
 
+## Fase 17H.0.1 - Auditoria Consolidada Das Pendencias Do MVP
+
+Status em 2026-07-21: foi concluida a auditoria anterior a qualquer
+implementacao de persistencia de coordenadas, marcacoes de campo ou fotos
+georreferenciadas. A matriz completa, evidencias, storage, checklist
+AUD-01..AUD-12 e problemas P0/P1/P2 estao em
+`docs/project/auditoria-pendencias-mvp-antes-evidencias.md`.
+
+Classificacao consolidada:
+
+- Material tecnico, Prescricao ZIP, localizacao foreground e gestao local de
+  Talhoes importados: `IMPLEMENTADO_VALIDADO_EMULADOR`, com Android fisico
+  pendente;
+- Caderno por Talhao/historico e Safra/Safrinha:
+  `IMPLEMENTADO_SMOKE_INCOMPLETO`, por faltarem casos manuais especificos de
+  Colaborador, Admin, Produtor com periodo e force-stop do historico;
+- area/perimetro: `PARCIAL`; 6200 ha e area total informada da Propriedade,
+  1888,6 ha e soma mapeada no manifesto processado, e nao ha perimetro
+  processado comprovado para a Sela de Prata I;
+- marcacoes de fertilizacao/correcao: `SOMENTE_DOCUMENTADO`;
+- processamento remoto, publicacao, sync e download real:
+  `DEPENDE_BACKEND`;
+- fotos com data, hora, latitude e longitude: `NAO_IMPLEMENTADO`.
+
+Achados funcionais registrados, sem correcao nesta fase:
+
+- `FazendaMapaScreen` pode exibir area ausente como `0 ha total` e chamar a
+  soma mapeada dos Talhoes de area total;
+- Nova/Editar Visita ainda oferecem Camera/Galeria simuladas por URLs
+  `picsum.photos`, sem camera, arquivo local ou geotag real.
+
+Validacoes da auditoria:
+
+- baseline Git estava limpo, sem arquivo modificado ou nao rastreado;
+- `npm run typecheck`, `npm run test:domain-compat` e os grupos focados de
+  Caderno, acesso, validators, periodo, Talhao, GeoJSON, PNG e ZIP passaram;
+- `npx expo install --check` reportou o esperado atual `expo ~56.0.16` e
+  `expo-location ~56.0.21` para as versoes instaladas 56.0.11/56.0.20; nenhuma
+  dependencia foi alterada;
+- `:app:assembleRelease` concluiu com `BUILD SUCCESSFUL` e preservou o APK de
+  91.881.352 bytes;
+- `adb devices -l` permaneceu vazio; nao houve instalacao, `monkey` ou novo
+  smoke interativo. Android fisico continua pendente e nao aprovado.
+
+Nenhuma funcionalidade foi implementada, nenhuma chave `@tche:` foi criada e
+nenhuma coordenada foi persistida. `decisoes-consolidadas.md` nao foi alterado
+porque a auditoria nao fechou decisao nova.
+
 ## Proximo Passo Recomendado
 
-Com Android fisico ainda pendente, o proximo trabalho recomendado e conectar
-um aparelho fisico com depuracao USB ativa, aceitar a chave RSA no aparelho,
-confirmar `adb devices -l` com status `device`, instalar o APK release atual e
-executar o roteiro manual completo de Caderno, Safra/Safrinha, consulta por
-Talhao, Material tecnico, DocumentPicker, persistencia local e talhoes. A
-divergencia conhecida de `expo@56.0.11` segue aceita temporariamente. Nesta
-rodada, `npx expo install --check` reportou esperado `~56.0.15`; a correcao
-continua reservada para fase propria de alinhamento de SDK, sem misturar com
-validacao funcional.
+Antes de abrir a 17H.1, o proximo trabalho recomendado e fechar a decisao do
+contrato/consentimento do ponto opcional no Caderno, decidir explicitamente se
+a implementacao pode comecar com Android fisico pendente e executar em
+emulador AUD-04, AUD-05, AUD-06 e o force-stop do historico. Em microfases
+separadas, corrigir a semantica visual de area e segregar os placeholders de
+foto antes do APK de campo. O alinhamento de `expo`/`expo-location` continua
+reservado para fase tecnica propria. Depois desses gates, implementar o menor
+corte 17H.1 e validar tudo em Android fisico autorizado antes de aprovar uso em
+campo.

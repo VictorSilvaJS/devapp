@@ -20,6 +20,43 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0.1 - Auditoria Consolidada Das Pendencias Do MVP**
+
+Observacao geral em 2026-07-21: esta foi uma auditoria de codigo, contratos,
+storage, testes e evidencias anteriores de smoke. Nao havia emulador nem
+Android fisico listado em `adb devices -l`, portanto nao ocorreu nova rodada
+interativa, instalacao ou `monkey`. `Passou` consolida evidencia anterior de
+emulador ou uma verificacao estatica explicita; `Reexecutar` identifica os
+casos manuais ainda sem fechamento. O APK release foi gerado com sucesso.
+Nenhuma funcionalidade, chave `@tche:` ou coordenada persistida foi criada.
+Android fisico segue pendente e nao aprovado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| AUD-01 | P0 | Todos | Material tecnico | Conferir Fertilidade, Correcao de solo e Prescricao | Somente os tres tipos principais; PNG sem Prescricao | Passou | Codigo/testes e smoke 17C.1 |
+| AUD-02 | P0 | Admin/Colaborador/Produtor | Prescricao ZIP | Anexar, abrir detalhe, substituir, remover e tentar invalido | ZIP local por metadados, sem unzip/processamento; Produtor somente consulta | Passou | Suites ZIP e smoke 17C.1 |
+| AUD-03 | P0 | Produtor | Caderno por Talhao | Criar pelo Talhao e ver historico | Registro permanece no Talhao correto e aparece por data | Passou | 17F.2 e testes de consulta/Caderno |
+| AUD-04 | P0 | Colaborador | Caderno por Talhao | Criar pelo Talhao dentro do escopo | Contexto, autoria, visibilidade e ordenacao preservados | Reexecutar | Permissao coberta por teste; falta caso manual especifico |
+| AUD-05 | P0 | Admin | Talhao/Caderno/Safra | Abrir Talhao, Caderno e Safra/Safrinha | Consulta e gestao autorizadas sem perda de contexto | Reexecutar | Falta roteiro manual consolidado de Admin |
+| AUD-06 | P0 | Produtor | Caderno/Safra | Criar Caderno com Safra/Safrinha opcional | Vinculo opcional persiste sem dar gestao do periodo ao Produtor | Reexecutar | Contrato coberto; falta caso manual do Produtor |
+| AUD-07 | P1 | Admin/Colaborador | GeoJSON/Talhao | Abrir GeoJSON local, area mapeada e selecionar Talhao | Polygon/MultiPolygon e Talhao funcionam; area aparece somente quando disponivel | Passou | 16H.6/17G.3; bug de rotulo/zero registrado para microfase propria |
+| AUD-08 | P0 | Todos | Localizacao | Testar sucesso foreground, negacao e GPS desligado | Posicao aproximada do aparelho e precisao informada, sem persistencia ou crash | Passou | 17G.2/17G.3 em emulador |
+| AUD-09 | P0 | Todos | Material/localizacao | Abrir PNG e ZIP apos usar localizacao | Nenhuma coordenada ou marcador entra em PNG/ZIP | Passou | Auditoria de contratos/storage e evidencia 17G.3 |
+| AUD-10 | P1 | Todos | Processamento externo | Conferir linguagem e fluxos remotos | Stubs/mocks nao aparecem como servidor, processamento ou download real pronto | Passou | Fluxos visiveis permanecem locais; backend continua inexistente |
+| AUD-11 | P1 | Todos | Fotos | Confirmar ausencia de foto georreferenciada | Sem camera, permissao, arquivo, geotag, consentimento, teste ou smoke real | Passou | Botoes simulados de Visita registrados como problema P1 |
+| AUD-12 | P0 | Todos | Android fisico | Instalar APK e repetir roteiro de campo | Dispositivo autorizado listado, app instalado e fluxo validado | Reexecutar | `adb devices -l` vazio; Android fisico nao aprovado |
+
+Problemas que devem permanecer visiveis no proximo smoke:
+
+- a tela do mapa pode exibir area ausente como `0 ha total` e chamar area
+  mapeada de area total;
+- Camera/Galeria em Nova/Editar Visita ainda sao simuladas com
+  `picsum.photos`, sem captura/geotag real;
+- historico do Caderno apos `force-stop` deve ser reexecutado junto com
+  AUD-04, AUD-05 e AUD-06;
+- `npx expo install --check` reportou esperado `expo ~56.0.16` e
+  `expo-location ~56.0.21`; nao corrigir dentro do smoke funcional.
+
 **Rodada Fase 17H.0 - Analise De Marcacoes De Campo**
 
 Observacao geral em 2026-07-14 (Fase 17H.0): rodada apenas documental para

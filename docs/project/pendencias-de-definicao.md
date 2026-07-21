@@ -318,6 +318,53 @@ Pontos pendentes antes de implementar:
 - validar Android fisico autorizado ou aceitar explicitamente a pendencia antes
   da implementacao. Android fisico segue pendente e nao aprovado.
 
+### 4C. Fechamento funcional antes de coordenadas, marcacoes e fotos
+
+Status em 2026-07-21 (Fase 17H.0.1): a auditoria consolidada foi registrada em
+`docs/project/auditoria-pendencias-mvp-antes-evidencias.md`. Ela nao
+implementou funcionalidade nem corrigiu bugs; apenas classificou codigo,
+testes, smoke e bloqueios.
+
+Pendencias P0 antes de abrir a proxima implementacao:
+
+- fechar contrato, campos opcionais, permissao, consentimento e remocao da
+  localizacao futura no Caderno;
+- decidir explicitamente se a 17H.1 pode comecar com Android fisico pendente;
+- reexecutar Colaborador criando Caderno pelo Talhao, Admin em
+  Talhao/Caderno/Safra, Produtor criando Caderno com periodo e historico apos
+  `force-stop`.
+
+Pendencias P1 antes de declarar APK apto a campo:
+
+- corrigir a semantica de area no mapa: ausencia deve ser `Nao informado`, a
+  soma dos Talhoes deve ser `Area mapeada` e `Area total informada` deve ficar
+  separada;
+- nao apresentar Camera/Galeria simuladas por `picsum.photos` como se fossem
+  captura funcional;
+- executar smoke completo em Android fisico autorizado;
+- alinhar `expo` e `expo-location` somente em fase tecnica propria. A consulta
+  de 2026-07-21 reportou esperados `~56.0.16` e `~56.0.21`, respectivamente.
+
+Pendencias P2/futuras:
+
+- definir fonte, metodo, unidade e confiabilidade do perimetro processado;
+- confirmar a relacao entre 6200 ha informados e 1888,6 ha mapeados na Sela de
+  Prata I, sem alterar os valores por inferencia;
+- criar eventual fluxo real de fotos somente em fase propria, com decisao de
+  camera/arquivo, storage, consentimento, data/hora, latitude/longitude,
+  accuracy, privacidade e sincronizacao;
+- implementar pipeline produtivo de mapas, publicacao, download e sync no
+  backend.
+
+Classificacao atual relevante:
+
+- marcacoes de campo: `SOMENTE_DOCUMENTADO`;
+- area/perimetro: `PARCIAL`;
+- processamento externo real: `DEPENDE_BACKEND`;
+- fotos com data, hora, latitude e longitude: `NAO_IMPLEMENTADO`;
+- Android fisico: `BLOQUEADO_ANDROID_FISICO` como bloqueio adicional dos
+  fluxos nativos, ainda pendente e nao aprovado.
+
 ### 5. Experiencia detalhada do produtor
 
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
@@ -569,6 +616,14 @@ remocao de ZIP local, persistencia visual na listagem e consulta do Produtor
 sem acoes administrativas. Isso nao fecha a estrategia produtiva de ingestao:
 backend/storage real, pipeline de revisao/publicacao, sincronizacao, download
 real e validacao em Android fisico continuam pendentes.
+
+Status em 2026-07-21 (Fase 17H.0.1): a auditoria confirmou que o celular nao
+gera mapas e que GeoJSON/PNG/ZIP atuais sao preparados previamente ou
+importados localmente. `MapaSincronizacaoService`, endpoints simulados e
+helpers de referencia nao formam servidor produtivo nem download/publicacao
+real. A direcao arquitetural continua documentada, a implementacao local tem
+evidencia em emulador e servidor/download/sync reais permanecem
+`DEPENDE_BACKEND`.
 
 Permanece pendente definir e implementar:
 
