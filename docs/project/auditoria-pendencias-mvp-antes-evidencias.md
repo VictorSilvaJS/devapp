@@ -291,11 +291,19 @@ auditoria estatica; `Reexecutar` nao deve ser promovido por inferencia.
 
 ### P0 - Bloqueia A Proxima Implementacao
 
-#### P0-01 - Contrato E Consentimento De Marcacao Ainda Nao Decididos
+Atualizacao em 2026-07-21 (Fase 17H.0.2): P0-01 e P0-03 foram encerrados
+como decisoes funcionais. Desenvolvimento e smoke tecnico em emulador estao
+autorizados; campo continua bloqueado ate Android fisico. P0-02 permanece
+aberto como lacuna de evidencia. Os dois itens encerrados permanecem abaixo
+apenas para preservar a rastreabilidade da auditoria 17H.0.1.
 
-- Descricao: falta fechar se a coordenada opcional ficara no Caderno, quais
-  campos serao aceitos, quem pode registrar/ver/remover e qual texto de
-  consentimento sera usado.
+#### P0-01 - Encerrado: Direcao De Contrato E Consentimento Da Marcacao
+
+- Status 17H.0.2: encerrado como decisao. O ponto ficara como metadado
+  opcional do Caderno, sem chave dedicada, com acao explicita e persistencia
+  somente no submit. Permissoes reutilizam as regras atuais do Caderno.
+- Trabalho remanescente: shape final dos campos, texto visual de consentimento,
+  implementacao e testes continuam pendentes.
 - Evidencia: `docs/project/fase-17h-marcacoes-campo.md` e pendencia 4B.
 - Arquivo provavel: tipos/helpers/formularios do Caderno, somente depois da
   decisao.
@@ -315,10 +323,11 @@ auditoria estatica; `Reexecutar` nao deve ser promovido por inferencia.
 - Microfase recomendada: `17H.0.3 - Fechamento do baseline em emulador`.
 - Tipo: smoke em emulador; Android fisico continua como bloqueio adicional.
 
-#### P0-03 - Criterio Para Abrir 17H.1 Com Android Fisico Pendente
+#### P0-03 - Encerrado: Gate Para Emulador E Android Fisico
 
-- Descricao: a documentacao exige validar aparelho autorizado ou aceitar
-  explicitamente a pendencia antes de implementar persistencia de ponto.
+- Status 17H.0.2: encerrado como decisao. Desenvolvimento e smoke tecnico
+  podem continuar em emulador; aprovacao para campo permanece bloqueada ate
+  Android fisico autorizado.
 - Evidencia: Fase 17H.0 e `adb devices -l` vazio nesta auditoria.
 - Arquivo provavel: documentos de decisao/pendencia, nao codigo.
 - Teste que detectou: verificacao ADB.
@@ -418,15 +427,18 @@ auditoria estatica; `Reexecutar` nao deve ser promovido por inferencia.
 
 ## Ordem Recomendada Das Proximas Fases
 
-1. Fechar P0-01 e P0-03: contrato/consentimento e gate de Android fisico.
-2. Executar P0-02 em emulador: AUD-04, AUD-05, AUD-06 e force-stop do
+Atualizacao 17H.0.2: P0-01 e P0-03 deixaram de ser gates decisorios. A ordem
+atual passa a ser:
+
+1. Executar P0-02 em emulador: AUD-04, AUD-05, AUD-06 e force-stop do
    historico do Caderno.
+2. Especificar na 17H.1 o shape opcional e o texto visual de consentimento,
+   respeitando as decisoes 15 a 17.
 3. Corrigir em microfases isoladas P1-01 e P1-02, com testes, antes de chamar
    o APK de apto a campo.
 4. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
-5. Somente entao abrir 17H.1 para coordenada opcional no Caderno por acao
-   explicita, sem background, tracking ou nova chave dedicada no primeiro
-   corte.
+5. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
+   sem background, tracking ou nova chave dedicada no primeiro corte.
 6. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
    permissao e cancelamento estarem provados.
 7. Executar smoke completo em Android fisico autorizado antes de aprovacao de
@@ -447,6 +459,7 @@ auditoria estatica; `Reexecutar` nao deve ser promovido por inferencia.
 - `adb install -r` e `adb shell monkey`: nao executados por ausencia de
   dispositivo listado.
 
-`docs/project/decisoes-consolidadas.md` nao foi alterado porque esta auditoria
-nao fechou decisao nova; ela confirmou implementacoes, lacunas e decisoes ainda
-pendentes.
+Atualizacao em 2026-07-21: a Fase 17H.0.2 alterou
+`docs/project/decisoes-consolidadas.md` para fechar as decisoes 15 a 21. A
+auditoria 17H.0.1 permanece como fotografia das evidencias; as decisoes nao
+mudam os status de implementacao nem promovem Android fisico.

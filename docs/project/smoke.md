@@ -20,6 +20,27 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0.2 - Consolidacao Das Decisoes Funcionais**
+
+Observacao geral em 2026-07-21: rodada exclusivamente documental. As decisoes
+15 a 21 foram consolidadas sem executar novo smoke interativo e sem promover
+evidencia anterior. Nenhuma funcionalidade, coordenada, chave de storage,
+dependencia, contrato, mock, seed ou asset foi alterado.
+
+- `DECISOES_CONSOLIDADAS_PARA_FECHAMENTO_DO_BASELINE`
+- `DESENVOLVIMENTO_EM_EMULADOR_AUTORIZADO`
+- `CAMPO_BLOQUEADO_ATE_ANDROID_FISICO`
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H02-01 | P0 | Todos | Decisoes | Registrar gate de emulador/campo | Desenvolvimento pode seguir em emulador; campo exige Android fisico autorizado | Passou | Decisao 15 consolidada; nao e aprovacao fisica |
+| 17H02-02 | P0 | Todos | Caderno/ponto | Registrar armazenamento e persistencia futura | Metadado opcional no Caderno, sem chave dedicada, somente por acao explicita e submit | Passou | Decisoes 16 e 17 consolidadas; nenhuma implementacao criada |
+| 17H02-03 | P1 | Todos | Area/perimetro | Registrar linguagem segura | Area total informada, area mapeada, ausencia nao informada e perimetro somente com origem | Passou | Decisao 18; correcao de UI continua pendente |
+| 17H02-04 | P1 | Todos | Fotos | Registrar natureza dos placeholders | `picsum.photos` permanece simulacao e sera segregado em microfase propria | Passou | Decisao 19; foto real continua fora do escopo |
+| 17H02-05 | P2 | Todos | Backend/dependencias | Registrar limites tecnicos | Celular nao processa mapas; backend e alinhamento Expo ficam em fases isoladas | Passou | Decisoes 20 e 21; nenhuma dependencia alterada |
+| 17H02-06 | P0 | Colaborador/Admin/Produtor | Baseline | Executar AUD-04, AUD-05, AUD-06 e force-stop | Evidencias manuais fechadas sem regressao | Reexecutar | Permanecem pendentes; decisao documental nao substitui smoke |
+| 17H02-07 | P0 | Todos | Android fisico | Executar roteiro em aparelho autorizado | Validado fisicamente antes de declarar apto para campo | Reexecutar | Android fisico segue pendente e nao aprovado |
+
 **Rodada Fase 17H.0.1 - Auditoria Consolidada Das Pendencias Do MVP**
 
 Observacao geral em 2026-07-21: esta foi uma auditoria de codigo, contratos,

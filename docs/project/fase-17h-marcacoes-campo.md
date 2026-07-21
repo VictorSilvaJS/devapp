@@ -367,25 +367,33 @@ Sem implementar na 17H.0, a visualizacao futura pode seguir estas regras:
 
 ## Criterios Para Abrir A 17H.1
 
-Antes de implementar, a proxima fase deve fechar:
+Status em 2026-07-21 (Fase 17H.0.2): os criterios de direcao foram fechados.
+Desenvolvimento e smoke tecnico podem continuar em emulador, mas campo segue
+bloqueado ate Android fisico autorizado. O armazenamento do primeiro corte
+sera o proprio Caderno, com metadados opcionais e sem chave nova. Permissoes
+reutilizam as regras atuais. Persistencia exige acao explicita e submit; abrir
+telas, mostrar posicao, cancelar ou remover antes do submit nao persiste.
+Background, tracking, watch continuo, geofencing, trilha, rota e historico
+continuam fora do corte.
 
-- aceitar explicitamente Android fisico como pendente ou validar 17G em
-  aparelho autorizado antes de seguir;
-- confirmar que o armazenamento principal sera o Caderno, sem chave nova, ou
-  aprovar formalmente storage auxiliar;
-- definir campos opcionais finais;
+Permanecem como criterios de implementacao e evidencia da 17H.1:
+
+- definir campos opcionais finais e validators compativeis com registros
+  antigos;
 - definir se o tipo visivel continua `aplicacao` ou se entra `fertilizacao`;
-- confirmar regra de permissao por perfil;
-- definir mensagem de consentimento;
+- definir a mensagem visual de consentimento;
 - definir exibicao de precisao e horario;
+- implementar sem criar `@tche:field-markers:v1`;
 - testar que cancelar formulario nao persiste coordenada;
 - testar que remover localizacao salva Caderno sem coordenada;
 - testar que `Mostrar minha posicao` nunca salva coordenada sozinho;
 - testar que coordenada so persiste ao salvar Caderno;
-- confirmar que PNG/ZIP nao recebem marcador;
-- confirmar que nao havera background, tracking, watch continuo, geofencing,
-  trilha, rota ou historico;
-- manter `fazenda_id` e `fazendaId` no payload do Caderno.
+- confirmar por teste que PNG/ZIP nao recebem marcador;
+- confirmar por auditoria que nao entrou background, tracking, watch continuo,
+  geofencing, trilha, rota ou historico;
+- manter `fazenda_id` e `fazendaId` no payload do Caderno;
+- executar smoke em emulador e, antes de aprovar campo, em Android fisico
+  autorizado.
 
 ## Checklist Futuro Para 17H.1
 
@@ -410,3 +418,29 @@ A recomendacao tecnica para a proxima fase e implementar marcacao de campo como
 metadado opcional do Caderno, acionado apenas por escolha explicita do usuario
 e persistido somente junto com o salvamento do registro. A 17H.0 nao altera o
 app, nao cria storage, nao cria chave nova e nao salva coordenadas.
+
+## Consolidacao Funcional Da Fase 17H.0.2
+
+Em 2026-07-21, a recomendacao de armazenamento e as regras de gate/permissao
+foram promovidas a decisoes consolidadas 15 a 17 em
+`docs/project/decisoes-consolidadas.md`.
+
+- `DECISOES_CONSOLIDADAS_PARA_FECHAMENTO_DO_BASELINE`
+- `DESENVOLVIMENTO_EM_EMULADOR_AUTORIZADO`
+- `CAMPO_BLOQUEADO_ATE_ANDROID_FISICO`
+
+Decisoes fechadas:
+
+- primeiro ponto persistido como metadado opcional do Caderno;
+- nenhuma `@tche:field-markers:v1` no primeiro corte;
+- registros antigos sem localizacao permanecem validos;
+- persistencia somente apos acao explicita e submit;
+- cancelamento/remocao antes do submit nao persistem;
+- `Mostrar minha posicao` e abertura de telas nunca persistem;
+- Produtor, Colaborador e Admin reutilizam as regras atuais do Caderno, sem
+  RBAC novo;
+- desenvolvimento pode seguir em emulador;
+- Android fisico continua obrigatorio antes de declarar aptidao para campo.
+
+Esta consolidacao nao implementa o ponto, nao altera contrato, nao cria
+storage e nao salva coordenada.

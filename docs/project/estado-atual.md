@@ -3568,14 +3568,68 @@ Nenhuma funcionalidade foi implementada, nenhuma chave `@tche:` foi criada e
 nenhuma coordenada foi persistida. `decisoes-consolidadas.md` nao foi alterado
 porque a auditoria nao fechou decisao nova.
 
+## Fase 17H.0.2 - Consolidacao Das Decisoes Funcionais
+
+Status em 2026-07-21: as direcoes funcionais com maturidade suficiente foram
+promovidas a decisoes 15 a 21 em
+`docs/project/decisoes-consolidadas.md`, sem alterar codigo, contratos,
+storage, dependencias, mocks, seeds ou assets.
+
+- `DECISOES_CONSOLIDADAS_PARA_FECHAMENTO_DO_BASELINE`
+- `DESENVOLVIMENTO_EM_EMULADOR_AUTORIZADO`
+- `CAMPO_BLOQUEADO_ATE_ANDROID_FISICO`
+
+Decisoes consolidadas:
+
+- desenvolvimento, testes e smoke tecnico podem continuar em emulador;
+- Android fisico autorizado continua obrigatorio para validacao fisica e
+  aprovacao de campo;
+- o primeiro ponto persistido sera metadado opcional do Caderno, sem
+  `@tche:field-markers:v1`, somente apos acao explicita e submit;
+- abrir mapa/Talhao/Caderno, usar `Mostrar minha posicao`, cancelar ou remover
+  a localizacao antes de salvar nunca persiste coordenada;
+- a marcacao reutilizara as permissoes atuais do Caderno, sem RBAC novo;
+- `area_total` deve aparecer como `Area total informada`, a soma disponivel dos
+  Talhoes como `Area mapeada`, ausencia como `Nao informado` e perimetro apenas
+  com valor/origem comprovados;
+- as acoes `picsum.photos` sao simulacoes e devem ser removidas ou desativadas
+  em microfase posterior, preservando leitura dos mocks;
+- o celular nao gera mapas e processamento/publicacao/sync/download reais
+  continuam na trilha de backend;
+- Expo e `expo-location` serao alinhados somente em fase tecnica isolada, sem
+  `npm audit fix`.
+
+Pendencias de decisao removidas:
+
+- Caderno versus storage auxiliar no primeiro corte;
+- gate entre desenvolvimento em emulador e aprovacao de campo;
+- permissao dos perfis para o ponto futuro;
+- semantica de apresentacao de area/perimetro;
+- classificacao das fotos atuais como simulacao;
+- limite do processamento local versus backend;
+- separacao entre alinhamento Expo e correcoes funcionais.
+
+Pendencias mantidas:
+
+- AUD-04, AUD-05, AUD-06 e historico do Caderno apos `force-stop`;
+- Android fisico autorizado e aprovacao de campo;
+- implementacao/testes da correcao de area;
+- remocao ou desativacao dos placeholders ativos de foto;
+- alinhamento tecnico Expo;
+- shape final, UX, implementacao e testes do ponto opcional no Caderno;
+- foto real/georreferenciada em fase propria;
+- backend e processamento externo produtivo.
+
+Nenhuma funcionalidade foi implementada, nenhuma coordenada foi salva e
+nenhuma chave `@tche:` foi criada na 17H.0.2. Android fisico segue pendente e
+nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Antes de abrir a 17H.1, o proximo trabalho recomendado e fechar a decisao do
-contrato/consentimento do ponto opcional no Caderno, decidir explicitamente se
-a implementacao pode comecar com Android fisico pendente e executar em
-emulador AUD-04, AUD-05, AUD-06 e o force-stop do historico. Em microfases
-separadas, corrigir a semantica visual de area e segregar os placeholders de
-foto antes do APK de campo. O alinhamento de `expo`/`expo-location` continua
-reservado para fase tecnica propria. Depois desses gates, implementar o menor
-corte 17H.1 e validar tudo em Android fisico autorizado antes de aprovar uso em
-campo.
+Com as decisoes funcionais fechadas, o proximo trabalho recomendado e executar
+em emulador AUD-04, AUD-05, AUD-06 e o force-stop do historico. Em microfases
+separadas, corrigir a semantica visual de area, remover/desativar as acoes
+simuladas de foto e alinhar `expo`/`expo-location`. A 17H.1 pode ser preparada
+e implementada em emulador conforme as decisoes 15 a 17, mas nenhum resultado
+pode ser declarado apto para campo antes do smoke em Android fisico
+autorizado.

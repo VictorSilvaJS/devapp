@@ -290,6 +290,14 @@ pendencia permanece aberta apenas para forcar o fallback SVG/WebView de forma
 segura, definir criterio de iOS, validar precisao/consumo em campo e executar
 Android fisico autorizado. Android fisico segue pendente e nao aprovado.
 
+Status em 2026-07-21 (Fase 17H.0.2): ficou consolidado que desenvolvimento e
+smoke tecnico podem continuar em emulador, enquanto aprovacao para campo
+permanece bloqueada ate Android fisico autorizado. Foreground pontual, ausencia
+de persistencia implicita e ausencia de background/tracking passaram a ser
+restricoes consolidadas, nao escolhas em aberto. Permanecem pendentes o
+fallback SVG/WebView, criterio de iOS, precisao/consumo em campo, cobertura
+automatizada do adapter nativo e Android fisico.
+
 ### 4B. Marcacoes de campo vinculadas ao Caderno
 
 Marcacoes de campo com ponto geografico ainda nao existem no produto. Elas nao
@@ -304,19 +312,28 @@ do usuario e salvamento do registro. Nenhuma implementacao foi feita nesta
 fase, nenhuma coordenada foi salva, nenhum storage novo foi criado e nenhuma
 chave `@tche:` nova foi criada.
 
-Pontos pendentes antes de implementar:
+Status em 2026-07-21 (Fase 17H.0.2): a direcao deixou de ser recomendacao e
+virou decisao consolidada. O primeiro ponto persistido sera metadado opcional
+do Caderno, sem `@tche:field-markers:v1`; registros antigos continuam sem
+localizacao; somente acao explicita seguida do submit do Caderno podera
+persistir; cancelamento e remocao antes de salvar nao persistem; abrir mapa,
+Talhao/Caderno ou tocar em `Mostrar minha posicao` nunca salva. Produtor segue
+a regra da propria Propriedade/Talhao sem editar/remover, Colaborador segue o
+escopo atual e Admin o acesso global local/mockado, sem RBAC novo. Background,
+tracking, trilha, rota, historico, geofencing e watch continuo permanecem
+proibidos no corte.
 
-- confirmar se a 17H.1 usara Caderno com campos opcionais ou storage auxiliar;
-- definir campos finais de localizacao e compatibilidade com registros antigos;
-- definir texto de consentimento e UX para remover localizacao antes de salvar;
-- garantir teste de cancelamento sem persistencia;
-- garantir teste de persistencia apenas ao salvar Caderno;
-- garantir que `Mostrar minha posicao` continue sem salvar coordenada sozinho;
-- confirmar que PNG/ZIP seguem sem marcador e sem georreferenciamento;
-- manter sem background, `TaskManager`, watch continuo, geofencing, trilha,
-  rota, historico, ultimo ponto ou tracking;
-- validar Android fisico autorizado ou aceitar explicitamente a pendencia antes
-  da implementacao. Android fisico segue pendente e nao aprovado.
+Pontos que continuam pendentes para implementacao e evidencia:
+
+- definir o shape final dos campos opcionais e validators, preservando
+  compatibilidade com registros antigos;
+- definir o texto visual de consentimento e a apresentacao de precisao/horario;
+- implementar o ponto opcional no Caderno em fase propria;
+- testar cancelamento, remocao e persistencia somente apos submit;
+- reauditar que `Mostrar minha posicao`, PNG e ZIP continuam sem persistencia
+  ou georreferenciamento implicito;
+- executar smoke em emulador e Android fisico autorizado. Android fisico segue
+  pendente e nao aprovado, embora nao bloqueie o desenvolvimento em emulador.
 
 ### 4C. Fechamento funcional antes de coordenadas, marcacoes e fotos
 
@@ -325,14 +342,19 @@ Status em 2026-07-21 (Fase 17H.0.1): a auditoria consolidada foi registrada em
 implementou funcionalidade nem corrigiu bugs; apenas classificou codigo,
 testes, smoke e bloqueios.
 
-Pendencias P0 antes de abrir a proxima implementacao:
+Status em 2026-07-21 (Fase 17H.0.2): foram removidas como pendencias de
+decisao a escolha entre Caderno/storage auxiliar, a regra de persistencia
+explicita/cancelamento/remocao, as permissoes por perfil, o gate de
+emulador/campo, a linguagem de area/perimetro, a natureza simulada das fotos,
+o limite do processamento externo e o isolamento do alinhamento Expo. Essas
+regras estao nas decisoes 15 a 21 de `decisoes-consolidadas.md`.
 
-- fechar contrato, campos opcionais, permissao, consentimento e remocao da
-  localizacao futura no Caderno;
-- decidir explicitamente se a 17H.1 pode comecar com Android fisico pendente;
-- reexecutar Colaborador criando Caderno pelo Talhao, Admin em
-  Talhao/Caderno/Safra, Produtor criando Caderno com periodo e historico apos
-  `force-stop`.
+Pendencias P0 de evidencia que continuam abertas:
+
+- reexecutar Colaborador criando Caderno pelo Talhao (AUD-04);
+- reexecutar Admin em Talhao/Caderno/Safra (AUD-05);
+- reexecutar Produtor criando Caderno com periodo (AUD-06);
+- reexecutar historico do Caderno apos `force-stop`.
 
 Pendencias P1 antes de declarar APK apto a campo:
 
@@ -355,6 +377,16 @@ Pendencias P2/futuras:
   accuracy, privacidade e sincronizacao;
 - implementar pipeline produtivo de mapas, publicacao, download e sync no
   backend.
+
+Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
+
+- corrigir a apresentacao de area em microfase propria;
+- remover ou desativar as acoes ativas de foto simulada, preservando leitura
+  dos mocks;
+- alinhar Expo em fase tecnica isolada;
+- implementar futuramente o ponto opcional no Caderno;
+- implementar foto real apenas em fase propria;
+- implementar backend/processamento externo quando essa trilha for aberta.
 
 Classificacao atual relevante:
 

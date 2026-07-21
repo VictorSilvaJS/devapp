@@ -309,3 +309,198 @@ Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingest
 - Para SHP, nomes de talhoes devem ser obtidos dos campos do `.dbf`; para KML/KMZ, dos elementos `<name>`; para GeoJSON pronto, das `properties`.
 - Cada importacao real deve registrar manifesto com campos encontrados, campo de nome usado, quantidade de talhoes, quantidade de poligonos/partes e status de revisao.
 - O fluxo real deve ter pre-visualizacao e aprovacao por equipe autorizada antes de publicar o GeoJSON/JSON final no app ou backend.
+
+---
+
+## Marco Da Fase 17H.0.2
+
+As decisoes 15 a 21 abaixo consolidam o fechamento funcional do baseline
+anterior a novas evidencias e a qualquer implementacao de coordenadas,
+marcacoes ou fotos reais.
+
+- `DECISOES_CONSOLIDADAS_PARA_FECHAMENTO_DO_BASELINE`
+- `DESENVOLVIMENTO_EM_EMULADOR_AUTORIZADO`
+- `CAMPO_BLOQUEADO_ATE_ANDROID_FISICO`
+
+Esses marcadores nao aprovam Android fisico nem uso de campo. Eles separam
+explicitamente decisao, implementacao, validacao em emulador, validacao em
+Android fisico e aptidao para campo.
+
+---
+
+## 15. Desenvolvimento pode continuar em emulador, mas campo exige Android fisico
+
+### Decisao
+
+Desenvolvimento, testes automatizados e smoke tecnico podem continuar em
+emulador. A aprovacao para campo permanece bloqueada ate existir Android
+fisico autorizado e o roteiro aplicavel ter sido executado com evidencia.
+
+### Alcance
+
+Afeta planejamento de fases, linguagem de status, criterio de pronto e
+aprovacao de APK para uso operacional.
+
+### Impacto
+
+- `implementado` descreve existencia no codigo;
+- `validado em emulador` descreve evidencia tecnica no ambiente virtual;
+- `validado em Android fisico` exige aparelho autorizado e evidencia propria;
+- `apto para campo` exige Android fisico e fechamento dos bloqueios funcionais
+  aplicaveis;
+- nenhuma evidencia de emulador pode ser promovida automaticamente a aprovacao
+  de campo;
+- Android fisico continua pendente e nao aprovado na Fase 17H.0.2.
+
+---
+
+## 16. O primeiro ponto persistido sera metadado opcional do Caderno
+
+### Decisao
+
+No primeiro corte futuro, o ponto geografico persistido deve fazer parte do
+proprio registro do Caderno como metadado opcional. Nao sera criada a chave
+`@tche:field-markers:v1` nesse corte.
+
+A coordenada somente podera persistir depois de acao explicita do usuario e do
+submit bem-sucedido do Caderno. `Mostrar minha posicao`, abrir mapa, Talhao ou
+Caderno nunca salva coordenada. Cancelar o formulario nunca persiste. Remover
+a localizacao antes de salvar produz Caderno sem localizacao.
+
+### Alcance
+
+Afeta a futura implementacao do Caderno, consentimento, compatibilidade de
+registros e testes de persistencia. Nao altera o contrato atual nesta fase.
+
+### Impacto
+
+- registros antigos continuam validos sem localizacao;
+- criar Caderno sem localizacao continua sendo o fluxo normal;
+- os campos finais permanecem opcionais e devem ser especificados na fase de
+  implementacao sem quebrar registros antigos;
+- nao existe persistencia automatica ou implicita;
+- nao havera background, tracking, trilha, rota, historico de posicoes,
+  geofencing, watch continuo ou ultimo ponto separado;
+- PNG e ZIP permanecem sem marcador e sem georreferenciamento;
+- nenhuma coordenada foi salva e nenhuma chave foi criada na 17H.0.2.
+
+---
+
+## 17. A futura marcacao reutilizara as permissoes atuais do Caderno
+
+### Decisao
+
+A futura marcacao nao criara RBAC novo. Ela reutilizara a regra atual do
+Caderno e o contexto operacional de Propriedade/Talhao.
+
+### Alcance
+
+Afeta criacao, consulta e edicao futura de Caderno com ponto no MVP
+local/mockado.
+
+### Impacto
+
+- Produtor podera registrar ponto em Caderno da propria Propriedade/Talhao;
+- Produtor continuara sem editar ou remover registro;
+- Colaborador podera registrar e editar dentro do escopo atual;
+- Admin seguira com acesso global local/mockado;
+- nenhuma permissao desta decisao substitui validacao futura por acao,
+  Propriedade e perfil;
+- backend/RBAC real permanece fora do escopo desta fase.
+
+---
+
+## 18. Area total informada, area mapeada e perimetro sao conceitos distintos
+
+### Decisao
+
+`area_total` da Propriedade deve ser apresentada como `Area total informada`.
+A soma das areas disponiveis dos Talhoes deve ser apresentada como
+`Area mapeada`. Ausencia de area deve ser apresentada como `Nao informado`,
+sem conversao para zero e sem chamar area mapeada de area total.
+
+Perimetro somente pode aparecer quando houver valor e origem comprovados. Para
+a Sela de Prata I, nao se deve afirmar `Perimetro processado` no estado atual.
+
+### Alcance
+
+Afeta linguagem de UI, helpers de apresentacao, testes e futura proveniencia
+das medidas. Nao autoriza correcao funcional nesta fase.
+
+### Impacto
+
+- 6200 ha permanecem como area total informada da Propriedade;
+- 1888,6 ha permanecem como soma mapeada da amostra processada;
+- nenhum dos valores pode ser alterado ou equiparado por inferencia;
+- a relacao de cobertura entre os valores continua pendente de comprovacao;
+- a correcao da UI que hoje pode exibir `0 ha total` permanece em microfase
+  propria.
+
+---
+
+## 19. Fotos simuladas nao representam captura real
+
+### Decisao
+
+As acoes atuais de Camera/Galeria que geram URLs `picsum.photos` sao
+simulacoes e nao podem ser apresentadas como captura real. Em microfase
+posterior, essas acoes ativas devem ser removidas ou desativadas, preservando a
+leitura das fotos mockadas ja existentes.
+
+### Alcance
+
+Afeta linguagem de produto, preparacao do APK de campo e futura segregacao dos
+placeholders. Nao implementa camera nem foto nesta fase.
+
+### Impacto
+
+- foto real e foto georreferenciada continuam fora do escopo ate fase propria;
+- nenhuma permissao, dependencia, storage ou contrato de foto e criado agora;
+- os registros demonstrativos existentes continuam consultaveis;
+- a segregacao dos botoes simulados permanece trabalho funcional pendente.
+
+---
+
+## 20. O celular consome mapas preparados e nao executa processamento produtivo
+
+### Decisao
+
+O celular nao gera mapas. O MVP atual consome arquivos previamente preparados
+ou importados localmente. Nao existe servidor produtivo, publicacao, sync ou
+download real no produto atual.
+
+### Alcance
+
+Afeta comunicacao da capacidade atual, arquitetura futura e criterio de
+prontidao dos servicos/stubs existentes.
+
+### Impacto
+
+- GeoJSON, PNG e ZIP locais permanecem no corte demonstrativo atual;
+- stubs, endpoints simulados e helpers nao podem ser descritos como backend
+  funcional;
+- processamento externo, storage, revisao, publicacao, permissao, historico,
+  sync e download reais permanecem na trilha futura de backend.
+
+---
+
+## 21. Alinhamento Expo deve ocorrer em fase tecnica isolada
+
+### Decisao
+
+`expo` e `expo-location` devem ser alinhados somente em fase tecnica isolada,
+sem misturar atualizacao de dependencia com correcao funcional. Nao se deve
+usar `npm audit fix` para realizar esse alinhamento.
+
+### Alcance
+
+Afeta planejamento tecnico, validacao de build e rastreabilidade de regressao.
+
+### Impacto
+
+- a divergencia atual permanece registrada como pendencia tecnica;
+- nenhuma dependencia e alterada na Fase 17H.0.2;
+- a fase de alinhamento deve executar sua propria matriz de typecheck, testes,
+  build e smoke;
+- correcoes de area, fotos simuladas, Caderno ou marcacoes devem permanecer em
+  microfases separadas.
