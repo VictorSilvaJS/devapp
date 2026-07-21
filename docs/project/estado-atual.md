@@ -3769,11 +3769,57 @@ geotag, chave `@tche:` ou storage de foto foi criado. A instalacao preservou o
 estado: nao houve `pm clear`, desinstalacao ou `Wipe Data`. Android fisico
 continua pendente e nao aprovado.
 
+## Fase 17H.0.7 - Alinhamento Tecnico Pontual Do Expo SDK 56
+
+Status em 2026-07-21: `APROVADA_EM_EMULADOR`. O projeto permaneceu no Expo
+SDK 56 e somente as dependencias diretas `expo` e `expo-location` foram
+alinhadas com as versoes indicadas pela consulta oficial executada nesta fase:
+
+- `expo`: `~56.0.11`/56.0.11 -> `~56.0.16`/56.0.16;
+- `expo-location`: `~56.0.20`/56.0.20 -> `~56.0.21`/56.0.21;
+- `npx expo install --check` e o check dirigido dos dois pacotes passaram
+  depois da instalacao com `Dependencies are up to date`;
+- React 19.2.3, React Native 0.85.3, TypeScript 6.0.3 e as demais dependencias
+  diretas permaneceram inalteradas;
+- o lockfile recebeu apenas a resolucao transitiva correspondente aos patches
+  do Expo SDK 56. `app.json`, `android/`, `ios/`, codigo funcional, mocks,
+  listas, contratos e assets nao mudaram.
+
+O Expo Doctor passou de 17/21 para 18/21. A divergencia de `expo` e
+`expo-location` foi eliminada; ficaram registrados, sem correcao fora do
+escopo, os avisos preexistentes de schema `splash`, peer direto `expo-font` e
+duplicidade de `expo-font`.
+
+Validacoes aprovadas:
+
+- `npm run typecheck` e `npm run test:domain-compat` passaram antes e depois;
+- a suite completa cobriu Caderno, acesso, validators, Periodo Produtivo,
+  Talhao, Visitas, GeoJSON, PNG, ZIP e autenticacao local;
+- o build inicial revelou falta de `Metaspace`; o fallback local sem daemon,
+  com um worker e sem paralelismo passou sem alterar configuracao;
+- APK release com 91.892.916 bytes, SHA-256
+  `6254AB718E716CDD76D45E42DF1A9B7BE4126EF7ACC47465F4FE932A6300C26A`;
+- `adb install -r`, `monkey` e abertura do Dashboard passaram no Pixel
+  Tablet/API 35, preservando sessao e estado;
+- `dumpsys package` confirmou localizacao fina/aproximada e ausencia de
+  background location, camera e permissoes de galeria/arquivos.
+
+No smoke, a Sela preservou 6200 ha informados, 1888,6 ha mapeados, 15 Talhoes
+e `T01 - 230` com 274,1 ha; PNG de Fosforo, Caderno/Safra e imagens
+demonstrativas de Visita abriram. O provider do AVD nao retornou posicao e o
+app exibiu a mensagem controlada, sem crash ou persistencia; nao havia GeoJSON
+ou ZIP local ativo no snapshot, e suas suites focadas passaram. O relato
+completo esta em `fase-17h-07-alinhamento-expo-sdk56.md`.
+
+Nao houve `npm update`, `npm audit fix`, `expo install --fix`, prebuild,
+regeneracao nativa, nova chave `@tche:`, coordenada persistida, camera/foto
+real, backend ou sync. Android fisico continua pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Com o baseline funcional, a semantica de area e a segregacao dos placeholders
-de foto fechados em emulador, tratar o alinhamento Expo somente em fase tecnica
-isolada. A origem produtiva de perimetro e fotos reais permanecem em trilhas
-futuras proprias. A 17H.1 pode ser preparada conforme as decisoes 15 a 17, mas
-nenhum resultado pode ser declarado apto para campo antes do smoke em Android
-fisico autorizado.
+Com o baseline funcional, a semantica de area, a segregacao dos placeholders
+de foto e o alinhamento Expo fechados em emulador, a 17H.1 pode ser preparada
+conforme as decisoes 15 a 17. A origem produtiva de perimetro, fotos reais e
+os avisos remanescentes do Expo Doctor permanecem em trilhas proprias. Nenhum
+resultado pode ser declarado apto para campo antes do smoke em Android fisico
+autorizado.

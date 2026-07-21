@@ -378,15 +378,17 @@ a rastreabilidade da auditoria 17H.0.1.
 - Microfase recomendada: `17H.PHY - Smoke Android fisico consolidado`.
 - Tipo: Android fisico autorizado.
 
-#### P1-04 - Divergencia De Pacotes Expo
+#### P1-04 - Encerrado: Divergencia De Pacotes Expo
 
-- Descricao: a checagem atual espera `expo ~56.0.16` e `expo-location
-  ~56.0.21`, enquanto o projeto usa 56.0.11/56.0.20.
-- Evidencia: `npx expo install --check` falhou por dependencias desatualizadas.
-- Arquivo provavel: `package.json`/lockfile, somente em fase propria.
-- Teste que detectou: checagem oficial Expo.
-- Microfase recomendada: fase tecnica isolada de alinhamento SDK 56.
-- Tipo: dependencia; proibido corrigir nesta auditoria.
+- Status 17H.0.7: encerrado em emulador e mantido no SDK 56.
+- Mudanca: `expo` 56.0.11 -> 56.0.16 e `expo-location` 56.0.20 ->
+  56.0.21; nenhuma outra dependencia direta mudou.
+- Evidencia: os dois comandos de `expo install --check` retornaram
+  `Dependencies are up to date`; typecheck, suites, build, instalacao e smoke
+  passaram.
+- Limite: avisos preexistentes de schema `splash` e `expo-font` ficaram fora
+  do escopo e Android fisico continua pendente.
+- Tipo: dependencia concluida em fase tecnica isolada.
 
 ### P2 - Evolucao Futura Ou Backend
 
@@ -435,20 +437,19 @@ a rastreabilidade da auditoria 17H.0.1.
 
 ## Ordem Recomendada Das Proximas Fases
 
-Atualizacao 17H.0.6: P0-01, P0-02, P0-03, P1-01 e P1-02 estao encerrados no
-escopo documental/emulador. A ordem atual passa a ser:
+Atualizacao 17H.0.7: P0-01, P0-02, P0-03, P1-01, P1-02 e P1-04 estao
+encerrados no escopo documental/emulador. A ordem atual passa a ser:
 
 1. Especificar na 17H.1 o shape opcional e o texto visual de consentimento,
    respeitando as decisoes 15 a 17.
-2. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
-3. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
+2. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
    sem background, tracking ou nova chave dedicada no primeiro corte.
-4. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
+3. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
    permissao e cancelamento estarem provados.
-5. Executar smoke completo em Android fisico autorizado antes de aprovacao de
+4. Executar smoke completo em Android fisico autorizado antes de aprovacao de
    campo.
-6. Tratar fotos reais/georreferenciadas em fase propria posterior.
-7. Manter processamento/publicacao/download reais na trilha de backend.
+5. Tratar fotos reais/georreferenciadas em fase propria posterior.
+6. Manter processamento/publicacao/download reais na trilha de backend.
 
 ## Validacoes Executadas
 
@@ -485,6 +486,23 @@ Atualizacao 17H.0.6:
   identificacao demonstrativa e reabriu Caderno/Safra, Talhoes e Material
   tecnico;
 - Android fisico permaneceu pendente e nao aprovado.
+
+Atualizacao 17H.0.7:
+
+- `expo`/`expo-location` foram alinhados para 56.0.16/56.0.21, ainda no SDK
+  56, e somente esses dois pacotes mudaram entre dependencias diretas;
+- os checks finais retornaram `Dependencies are up to date`; Expo Doctor
+  melhorou de 17/21 para 18/21 e manteve tres avisos preexistentes fora do
+  escopo;
+- `npm run typecheck` e `npm run test:domain-compat` passaram antes e depois;
+- apos uma falha de `Metaspace`, o build com um worker e sem paralelismo
+  passou; instalacao `-r` e `monkey` passaram no Pixel Tablet/API 35;
+- `dumpsys` confirmou foreground location sem background, camera ou galeria;
+- areas, Talhoes, PNG, Caderno/Safra e Visitas passaram no smoke. O provider
+  do AVD exerceu a mensagem controlada de posicao indisponivel; GeoJSON/ZIP
+  nao estavam ativos no snapshot e suas suites focadas passaram;
+- nenhuma coordenada ou chave foi criada e Android fisico permaneceu pendente
+  e nao aprovado.
 
 Atualizacao em 2026-07-21: a Fase 17H.0.2 alterou
 `docs/project/decisoes-consolidadas.md` para fechar as decisoes 15 a 21. A

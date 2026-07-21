@@ -372,11 +372,16 @@ foi encerrada no emulador. Nova/Editar Visita nao geram mais URLs
 de outro campo passaram; e fotos demonstrativas existentes permaneceram
 legiveis e preservadas. Isso nao implementa foto real ou georreferenciada.
 
+Status em 2026-07-21 (Fase 17H.0.7): a divergencia P1 de `expo` e
+`expo-location` foi encerrada no SDK 56. Os pacotes foram alinhados de
+56.0.11/56.0.20 para 56.0.16/56.0.21, `expo install --check` ficou limpo,
+typecheck, suites, build, instalacao e smoke passaram em emulador. Os avisos
+preexistentes de schema `splash` e `expo-font` ficaram registrados para fase
+propria; Android fisico continua pendente e nao aprovado.
+
 Pendencias P1 antes de declarar APK apto a campo:
 
-- executar smoke completo em Android fisico autorizado;
-- alinhar `expo` e `expo-location` somente em fase tecnica propria. A consulta
-  de 2026-07-21 reportou esperados `~56.0.16` e `~56.0.21`, respectivamente.
+- executar smoke completo em Android fisico autorizado.
 
 Pendencias P2/futuras:
 
@@ -391,7 +396,6 @@ Pendencias P2/futuras:
 
 Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
 
-- alinhar Expo em fase tecnica isolada;
 - implementar futuramente o ponto opcional no Caderno;
 - implementar foto real apenas em fase propria;
 - implementar backend/processamento externo quando essa trilha for aberta.
@@ -404,6 +408,8 @@ Classificacao atual relevante:
 - perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva
   dependente de processamento externo/backend;
 - segregacao dos placeholders de foto: `IMPLEMENTADO_VALIDADO_EMULADOR`;
+- alinhamento Expo SDK 56: `IMPLEMENTADO_VALIDADO_EMULADOR`;
+- avisos remanescentes do Expo Doctor: `PENDENTE_FASE_TECNICA_PROPRIA`;
 - processamento externo real: `DEPENDE_BACKEND`;
 - fotos com data, hora, latitude e longitude: `NAO_IMPLEMENTADO`;
 - Android fisico: `BLOQUEADO_ANDROID_FISICO` como bloqueio adicional dos

@@ -20,6 +20,31 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0.7 - Alinhamento Tecnico Pontual Do Expo SDK 56**
+
+Observacao geral em 2026-07-21: rodada executada no AVD `Teste_Tche`, Pixel
+Tablet, Android 15/API 35, com APK release instalado por cima. O projeto
+permaneceu no SDK 56; somente `expo` e `expo-location` mudaram entre
+dependencias diretas. Nao foram usados `pm clear`, desinstalacao ou `Wipe
+Data`. O provider do AVD nao entregou posicao e o app mostrou o fallback
+controlado. Nao havia GeoJSON ou ZIP local ativo na Sela; as suites focadas
+passaram. Android fisico continua pendente e nao aprovado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H07-01 | P0 | Todos | Baseline | Registrar Git, runtime, versoes e suites antes | Estado inicial conhecido sem descartar mudancas | Passou | Git limpo; Node 22.20.0; npm 10.9.3; Expo CLI 56.1.15; typecheck/dominio passaram |
+| 17H07-02 | P0 | Todos | Versoes indicadas | Executar checks oficiais sem correcao automatica | Capturar apenas os patches atuais do SDK 56 | Passou | `expo ~56.0.16` e `expo-location ~56.0.21`; nenhum outro pacote apontado |
+| 17H07-03 | P0 | Todos | Dependencias | Atualizar somente os dois pacotes autorizados | Apenas duas dependencias diretas mudam | Passou | React, React Native, TypeScript e demais dependencias diretas permaneceram |
+| 17H07-04 | P0 | Todos | Expo check | Repetir check geral e dirigido | `Dependencies are up to date` | Passou | Os dois comandos passaram depois da instalacao |
+| 17H07-05 | P1 | Todos | Expo Doctor | Comparar diagnostico antes/depois | Divergencia alvo removida; avisos alheios registrados | Passou | 17/21 -> 18/21; restaram `splash` e dois avisos de `expo-font` preexistentes |
+| 17H07-06 | P0 | Todos | Typecheck/suites | Executar validacao completa depois | Nenhuma regressao automatizada | Passou | Typecheck e suite completa de dominio passaram antes/depois |
+| 17H07-07 | P0 | Todos | Build/APK | Gerar release, instalar por cima e abrir | Build e launcher passam sem limpar estado | Passou | Fallback de Metaspace com um worker; APK 91.892.916 bytes; install/monkey passaram |
+| 17H07-08 | P0 | Admin | Localizacao foreground | Abrir mapa e solicitar posicao | Talhoes clicaveis e fallback controlado se provider falhar | Passou | 15 Talhoes e T01 abriram; provider nao respondeu e app mostrou mensagem controlada; sem background/persistencia |
+| 17H07-09 | P0 | Admin | GeoJSON/PNG/ZIP | Reabrir materiais e executar suites focadas | Fluxos locais nao regridem | Passou | Sem GeoJSON/ZIP ativo no snapshot; camada de 15 Talhoes e PNG de Fosforo abriram; suites GeoJSON/PNG/ZIP passaram |
+| 17H07-10 | P0 | Admin | Caderno/Safra/Visitas | Reabrir estado preservado e formularios | AUD-04/05/06, Safra e segregacao de fotos permanecem | Passou | Cadernos/periodo visiveis; Nova Visita sem Camera/Galeria; visita antiga com label demonstrativo |
+| 17H07-11 | P0 | Todos | Storage/permissoes | Auditar codigo, app.json e pacote instalado | Sem coordenada/chave/camera/background novo | Passou | Fine/Coarse presentes; background, camera e galeria ausentes; nenhuma chave ou coordenada criada |
+| 17H07-12 | P0 | Todos | Android fisico | Repetir roteiro em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
+
 **Rodada Fase 17H.0.6 - Segregacao Dos Placeholders De Foto Em Visitas**
 
 Observacao geral em 2026-07-21: rodada executada com Admin no AVD `Teste_Tche`,
