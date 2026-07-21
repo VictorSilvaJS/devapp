@@ -535,7 +535,7 @@ export default function VisitasScreen() {
                   <View style={styles.fotosBox}>
                     <Ionicons name="images-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
                     <Text style={styles.fotosText}>
-                      {visita.fotos.length} foto(s) anexada(s)
+                      {visita.fotos.length} {visita.fotos.length === 1 ? 'imagem demonstrativa' : 'imagens demonstrativas'}
                     </Text>
                   </View>
                 )}

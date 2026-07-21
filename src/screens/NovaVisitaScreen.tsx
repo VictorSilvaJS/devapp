@@ -5,13 +5,11 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
-import ConfirmDialog from '../components/ConfirmDialog';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
@@ -29,6 +27,7 @@ import {
 } from '../utils/acessoControle';
 import {
   VISITA_FLUXOS_OPERACIONAIS,
+  VISITA_FOTOS_MVP_INFO,
   VISITA_STATUS_AGENDADA,
   VISITA_STATUS_REALIZADA,
   buildVisitaFazendaOptions,
@@ -56,9 +55,6 @@ export default function NovaVisitaScreen() {
   const [recomendacoes, setRecomendacoes] = useState('');
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
-  const [fotos, setFotos] = useState([]);
-  const [removePhotoDialog, setRemovePhotoDialog] = useState({ visible: false, fotoId: null });
-
   // Estados de controle
   const [loading, setLoading] = useState(false);
   const [fazendas, setFazendas] = useState([]);
@@ -190,7 +186,7 @@ export default function NovaVisitaScreen() {
         clima,
         proximaVisita,
         status,
-        fotos,
+        fotos: [],
         tecnicoResponsavel: user?.nome || user?.full_name || 'Sistema',
       });
 
@@ -221,30 +217,6 @@ export default function NovaVisitaScreen() {
     { value: 'entrega_material', label: 'Entrega de Material' },
     { value: 'outro', label: 'Outro' },
   ];
-
-  const adicionarFotoSimulada = (tipo) => {
-    const timestamp = Date.now();
-    const novaFoto = {
-      id: `foto_${timestamp}`,
-      uri: tipo === 'camera' 
-        ? `https://picsum.photos/400/300?random=${timestamp}` 
-        : `https://picsum.photos/400/300?random=${timestamp + 1}`,
-      tipo: tipo,
-      dataCaptura: new Date().toISOString(),
-    };
-    setFotos(prev => [...prev, novaFoto]);
-    toast.showSuccess(`Foto ${tipo === 'camera' ? 'capturada' : 'selecionada'} com sucesso!`);
-  };
-
-  const removerFoto = (fotoId) => {
-    setRemovePhotoDialog({ visible: true, fotoId });
-  };
-
-  const confirmRemoverFoto = () => {
-    setFotos(prev => prev.filter(f => f.id !== removePhotoDialog.fotoId));
-    setRemovePhotoDialog({ visible: false, fotoId: null });
-    toast.showSuccess('Foto removida');
-  };
 
   if (!canCreateVisit) {
     return (
@@ -445,41 +417,12 @@ export default function NovaVisitaScreen() {
           />
         </SectionCard>
 
-        <SectionCard title="Fotos" subtitle="Anexe imagens simuladas ao registro da visita.">
-          <View style={styles.fotoBotoesContainer}>
-            <TouchableOpacity
-              style={styles.fotoBotao}
-              onPress={() => adicionarFotoSimulada('camera')}
-            >
-              <Ionicons name="camera-outline" size={24} color={colors.primary} />
-              <Text style={styles.fotoBotaoText}>Câmera</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.fotoBotao}
-              onPress={() => adicionarFotoSimulada('galeria')}
-            >
-              <Ionicons name="images-outline" size={24} color={colors.primary} />
-              <Text style={styles.fotoBotaoText}>Galeria</Text>
-            </TouchableOpacity>
-          </View>
-          {fotos.length > 0 && (
-            <View style={styles.fotosGrid}>
-              {fotos.map((foto) => (
-                <View key={foto.id} style={styles.fotoContainer}>
-                  <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
-                  <TouchableOpacity
-                    style={styles.fotoRemover}
-                    onPress={() => removerFoto(foto.id)}
-                  >
-                    <Ionicons name="close-circle" size={22} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
-          {fotos.length > 0 && (
-            <Text style={styles.fotosCount}>{fotos.length} foto(s) anexada(s)</Text>
-          )}
+        <SectionCard title="Fotos" subtitle="Este registro pode ser salvo normalmente sem imagens.">
+          <InfoBox
+            title={VISITA_FOTOS_MVP_INFO.title}
+            message={VISITA_FOTOS_MVP_INFO.message}
+            style={styles.photoInfoBox}
+          />
         </SectionCard>
 
         <InfoBox message={fluxoInfo.infoText} />
@@ -493,16 +436,6 @@ export default function NovaVisitaScreen() {
         disabled={loadingFazendas || semFazendasAutorizadas}
       />
 
-      <ConfirmDialog
-        visible={removePhotoDialog.visible}
-        title="Remover Foto"
-        message="Deseja remover esta foto?"
-        type="danger"
-        confirmText="Remover"
-        cancelText="Cancelar"
-        onConfirm={confirmRemoverFoto}
-        onCancel={() => setRemovePhotoDialog({ visible: false, fotoId: null })}
-      />
     </View>
   );
 }
@@ -677,61 +610,8 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     lineHeight: 18,
   },
-  fotoBotoesContainer: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  fotoBotao: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    backgroundColor: colors.accent,
-  },
-  fotoBotaoText: {
-    fontSize: typography.fontBody,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  fotosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: spacing.sm,
-  },
-  fotoContainer: {
-    position: 'relative',
-    width: 90,
-    height: 90,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  fotoPreview: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  fotoRemover: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: colors.whiteTranslucent,
-    borderRadius: 11,
-  },
-  fotosCount: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSmall,
-    color: colors.textLight,
-    fontWeight: '500',
+  photoInfoBox: {
+    marginBottom: 0,
   },
   footer: {
     flexDirection: 'row',

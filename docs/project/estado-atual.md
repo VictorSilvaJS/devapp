@@ -3721,11 +3721,59 @@ dependencias, backend e storage remoto continuaram fora do escopo. A instalacao
 preservou o estado: nao houve `pm clear`, desinstalacao ou `Wipe Data`. Android
 fisico continua pendente e nao aprovado.
 
+## Fase 17H.0.6 - Segregacao Dos Placeholders De Foto Em Visitas
+
+Status em 2026-07-21: a pendencia P1-02 foi encerrada no emulador. Nova e
+Editar Visita nao oferecem mais acoes de Camera/Galeria, nao geram
+`picsum.photos` e nao criam instante para simular captura. A segregacao dos
+placeholders esta `IMPLEMENTADO_VALIDADO_EMULADOR`; foto real e foto
+georreferenciada continuam `NAO_IMPLEMENTADO`.
+
+Comportamento atual:
+
+- Nova Visita exibe o aviso `Fotos no MVP local`, continua salvando sem foto e
+  emite o campo legado `fotos` como array vazio;
+- Editar Visita preserva o array `fotos` exatamente como foi carregado quando
+  outro campo e alterado. A remocao explicita existente continua disponivel e
+  remove somente o item escolhido;
+- `VisitaDetailScreen` e a listagem identificam as imagens existentes como
+  demonstrativas. Falha de URL no detalhe produz `Imagem indisponivel`, sem
+  crash e sem impedir a leitura do registro;
+- `getVisitaFotoUri` e `removeVisitaFotoAtIndex` foram adicionados ao helper
+  puro `visitaFormCompat`, sem storage, arquivo, camera, EXIF ou coordenadas;
+- o contrato/array legado `fotos` e os aliases operacionais de Propriedade
+  permaneceram inalterados.
+
+Validacoes aprovadas:
+
+- `npm run typecheck`, `npm run test:domain-compat`, `validatorsCompat`,
+  `mockCompat` e os 16 cenarios de `visitaFormCompat` passaram;
+- a auditoria textual nao encontrou gerador ativo, `adicionarFotoSimulada`,
+  acao Camera/Galeria, biblioteca de camera/seletor, geotag ou storage novo nos
+  formularios. `picsum.photos` permanece somente no seed demonstrativo
+  preservado e nas fixtures de compatibilidade;
+- `:app:assembleRelease`, `adb install -r` e `monkey` passaram no AVD
+  `Teste_Tche`, Pixel Tablet, Android 15/API 35. O APK possui 91.891.676 bytes
+  e SHA-256
+  `BFA15F6D8492A808BA3BD5394F9AB59DA7894C06401572FBBBC48DCB2067E124`;
+- no smoke, Admin criou Visita sem foto, abriu o detalhe sem secao vazia,
+  editou o status e salvou. Um registro legado com duas imagens continuou
+  exibindo as duas apos edicao de outro campo, com o label demonstrativo;
+- Caderno abriu com Safra/Safrinha, o mapa abriu 15 Talhoes com a acao de
+  localizacao disponivel e Material tecnico abriu no contexto da Sela.
+
+Nao foram alterados `src/api/mock.ts`, contratos de dominio, validators,
+listas, seeds/assets, Caderno, Safra/Safrinha, GeoJSON, PNG, ZIP, package ou
+permissoes. Nenhuma camera/galeria real, arquivo, upload, base64, coordenada,
+geotag, chave `@tche:` ou storage de foto foi criado. A instalacao preservou o
+estado: nao houve `pm clear`, desinstalacao ou `Wipe Data`. Android fisico
+continua pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Com o baseline funcional e a semantica de area fechados em emulador, executar
-separadamente a segregacao das fotos simuladas e o alinhamento Expo quando
-priorizados. A origem produtiva de perimetro permanece na trilha futura de
-processamento externo/backend. A 17H.1 pode ser preparada conforme as decisoes
-15 a 17, mas nenhum resultado pode ser declarado apto para campo antes do
-smoke em Android fisico autorizado.
+Com o baseline funcional, a semantica de area e a segregacao dos placeholders
+de foto fechados em emulador, tratar o alinhamento Expo somente em fase tecnica
+isolada. A origem produtiva de perimetro e fotos reais permanecem em trilhas
+futuras proprias. A 17H.1 pode ser preparada conforme as decisoes 15 a 17, mas
+nenhum resultado pode ser declarado apto para campo antes do smoke em Android
+fisico autorizado.

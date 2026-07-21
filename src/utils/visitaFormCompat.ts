@@ -16,6 +16,12 @@ export const VISITA_STATUS_AGENDADA = 'agendada';
 export const VISITA_STATUS_REALIZADA = 'realizada';
 export const VISITA_STATUS_CANCELADA = 'cancelada';
 
+export const VISITA_FOTOS_MVP_INFO = {
+  title: 'Fotos no MVP local',
+  message:
+    'A captura e a seleção de fotos ainda não estão disponíveis neste MVP. As imagens existentes em alguns registros são apenas exemplos demonstrativos.',
+} as const;
+
 export const VISITA_FLUXOS_OPERACIONAIS = [
   {
     value: VISITA_STATUS_AGENDADA,
@@ -110,6 +116,35 @@ export const getVisitaFormFazendaId = (visita: any): string =>
 
 export const resolveVisitaEdicaoFazendaId = (visita: any, fallbackFazendaId = ''): string =>
   getVisitaFormFazendaId(visita) || fallbackFazendaId;
+
+export const getVisitaFotoUri = (foto: unknown): string | null => {
+  if (typeof foto === 'string') {
+    const uri = foto.trim();
+    return uri.length > 0 ? uri : null;
+  }
+
+  if (foto && typeof foto === 'object' && 'uri' in foto) {
+    const uri = (foto as { uri?: unknown }).uri;
+    if (typeof uri === 'string' && uri.trim().length > 0) {
+      return uri.trim();
+    }
+  }
+
+  return null;
+};
+
+export const removeVisitaFotoAtIndex = (
+  fotos: readonly unknown[] | null | undefined,
+  index: number
+): unknown[] => {
+  const items = Array.isArray(fotos) ? fotos : [];
+
+  if (!Number.isInteger(index) || index < 0 || index >= items.length) {
+    return [...items];
+  }
+
+  return items.filter((_, itemIndex) => itemIndex !== index);
+};
 
 export const getVisitaFormFazendaLabel = (
   option?: VisitaFazendaOption | null,

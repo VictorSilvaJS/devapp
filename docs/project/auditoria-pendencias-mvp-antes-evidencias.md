@@ -30,8 +30,9 @@ upload/download real, descompactacao de ZIP ou desenho de Talhao foi criado.
 - Marcacoes de fertilizacao/correcao permanecem somente documentadas.
 - Processamento remoto, publicacao, sincronizacao e download real dependem de
   backend e infraestrutura que nao existem no produto atual.
-- Fotos com data, hora, latitude e longitude nao estao implementadas. As telas
-  de Visita ainda possuem botoes simulados, sem camera ou geotag real.
+- Fotos com data, hora, latitude e longitude nao estao implementadas. A 17H.0.6
+  removeu os botoes simulados de Nova/Editar Visita e preservou somente a
+  leitura identificada das imagens demonstrativas existentes.
 - Na auditoria 17H.0.1 nao havia dispositivo ADB; a 17H.0.3 iniciou um AVD
   existente, instalou o APK por cima e concluiu a rodada interativa. Android
   fisico continuou ausente e nao aprovado.
@@ -90,7 +91,7 @@ smoke das telas e APIs nativas.
 | 7. Gestao de Talhoes importados/processados, sem desenho no celular | importacao/validacao/copia/ativacao/substituicao/remocao de GeoJSON, runtime Polygon/MultiPolygon e fallback seed/mock | suites GeoJSON e consulta por Talhao passaram | DocumentPicker, reabertura, force-stop e mapa local passaram em rodadas 16H/17G | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir fluxo de campo; pipeline produtivo de preparo/publicacao continua externo |
 | 8. Area e perimetro dos Talhoes | helper puro normaliza somente medidas positivas; UI separa area total informada, mapeada, parcial/ausente e exige proveniencia para perimetro | 23 cenarios de `talhaoMedidasCompat`, validator e camada GeoJSON passaram | 17H.0.5 exibiu 6200 ha cadastrais, 1888,6 ha mapeados e 274,1 ha no T01 sem inventar perimetro | pendente e nao aprovado | PARCIAL | area: `IMPLEMENTADO_VALIDADO_EMULADOR`; perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, dependente de processamento externo/backend |
 | 9. Processamento externo futuro de mapas | servicos locais e stubs/mocks; nenhuma API produtiva, publicacao, sync ou download real | ha compatibilidade de sync mockado e referencias locais, nao integracao produtiva | UI local nao gera mapas; nenhum fluxo remoto produtivo foi validado | nao aplicavel ao backend inexistente | DEPENDE_BACKEND | projetar e implementar ingestao, processamento, storage, publicacao, permissao e download no servidor |
-| 10. Fotos com data, hora, latitude e longitude | apenas arrays/URLs demonstrativas e botoes simulados de Visita; sem camera, arquivo fisico, metadado geografico ou consentimento | compatibilidade de Visita preserva arrays existentes, mas nao testa foto real | nenhum smoke de captura/geotag; ausencia confirmada por auditoria | nao testavel | NAO_IMPLEMENTADO | criar fase propria somente apos decisao de escopo, privacidade, storage e Android fisico |
+| 10. Fotos com data, hora, latitude e longitude | somente arrays/URLs demonstrativas legadas; botoes simulados removidos de Nova/Editar Visita; sem camera, arquivo fisico, metadado geografico ou consentimento | 16 cenarios de Visita cobrem criacao vazia, preservacao, remocao explicita e ausencia de gerador/geotag/storage | 17H.0.6 criou/editou sem foto e preservou duas imagens demonstrativas existentes, sem acao de captura | nao testavel como foto real | NAO_IMPLEMENTADO | segregacao da UI esta `IMPLEMENTADO_VALIDADO_EMULADOR`; foto real/georreferenciada exige fase propria de produto, privacidade, storage e Android fisico |
 
 Os bloqueios adicionais `BLOQUEADO_ANDROID_FISICO` se aplicam a todos os
 fluxos nativos que precisam de aprovacao de campo, mas nao substituem o status
@@ -108,6 +109,8 @@ principal da implementacao. Android fisico continua pendente e nao aprovado.
 - Somente documentada: marcacoes futuras de fertilizacao/correcao.
 - Dependente de backend: processamento externo, publicacao, sync e download
   real.
+- Segregacao concluida em emulador: placeholders ativos de foto em Visita,
+  preservando leitura dos registros demonstrativos.
 - Inexistente como funcionalidade real: fotos com data, hora, latitude e
   longitude.
 
@@ -354,17 +357,16 @@ a rastreabilidade da auditoria 17H.0.1.
   fisico continua pendente.
 - Tipo: codigo, linguagem de produto e testes concluidos em emulador.
 
-#### P1-02 - Camera/Galeria Simuladas Podem Parecer Funcionais
+#### P1-02 - Encerrado: Camera/Galeria Simuladas
 
-- Descricao: botoes de Visita geram URLs `picsum.photos` e instante simulado,
-  sem camera, arquivo local ou geotag.
-- Reproducao: abrir Nova/Editar Visita e tocar em Camera ou Galeria.
-- Impacto: falsa expectativa no APK de campo e dependencia de URL externa.
-- Evidencia/arquivo provavel: `NovaVisitaScreen.tsx` e
-  `EditarVisitaScreen.tsx`.
-- Teste que detectou: auditoria textual; nao existe teste de foto real.
-- Microfase recomendada: `17H.0.6 - Segregacao dos placeholders de foto`.
-- Tipo: decisao e codigo; nao implica implementar camera.
+- Status 17H.0.6: encerrado em emulador. Nova/Editar Visita nao exibem acoes
+  Camera/Galeria e nao geram URL ou instante simulado.
+- Evidencia: helper/testes de compatibilidade, auditoria textual e smoke de
+  criacao sem foto, edicao e preservacao de duas imagens legadas.
+- Limite: `picsum.photos` permanece somente no seed demonstrativo e nas
+  fixtures de compatibilidade; foto real/georreferenciada continua P2 e
+  `NAO_IMPLEMENTADO`.
+- Tipo: codigo, linguagem de produto e testes concluidos em emulador.
 
 #### P1-03 - Android Fisico Ainda Nao Validado
 
@@ -413,7 +415,8 @@ a rastreabilidade da auditoria 17H.0.1.
 - Descricao: falta decidir origem da foto, permissao, storage, privacidade,
   consentimento, data/hora, latitude/longitude, accuracy, associacao e
   sincronizacao.
-- Evidencia: ausencia de dependencias/permissoes/contratos; UI simulada.
+- Evidencia: ausencia de dependencias/permissoes/contratos; a UI simulada foi
+  segregada na 17H.0.6 sem implementar captura real.
 - Arquivo provavel: fase futura de foto, tipos e storage/backend.
 - Teste que detectou: auditoria textual; nao existe teste/smoke real.
 - Microfase recomendada: somente apos estabilizar 17H.1 e Android fisico.
@@ -432,22 +435,20 @@ a rastreabilidade da auditoria 17H.0.1.
 
 ## Ordem Recomendada Das Proximas Fases
 
-Atualizacao 17H.0.5: P0-01, P0-02, P0-03 e P1-01 estao encerrados no escopo
-documental/emulador. A ordem atual passa a ser:
+Atualizacao 17H.0.6: P0-01, P0-02, P0-03, P1-01 e P1-02 estao encerrados no
+escopo documental/emulador. A ordem atual passa a ser:
 
 1. Especificar na 17H.1 o shape opcional e o texto visual de consentimento,
    respeitando as decisoes 15 a 17.
-2. Corrigir P1-02 em microfase isolada, com testes, antes de chamar o APK de
-   apto a campo.
-3. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
-4. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
+2. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
+3. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
    sem background, tracking ou nova chave dedicada no primeiro corte.
-5. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
+4. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
    permissao e cancelamento estarem provados.
-6. Executar smoke completo em Android fisico autorizado antes de aprovacao de
+5. Executar smoke completo em Android fisico autorizado antes de aprovacao de
    campo.
-7. Tratar fotos reais/georreferenciadas em fase propria posterior.
-8. Manter processamento/publicacao/download reais na trilha de backend.
+6. Tratar fotos reais/georreferenciadas em fase propria posterior.
+7. Manter processamento/publicacao/download reais na trilha de backend.
 
 ## Validacoes Executadas
 
@@ -470,6 +471,19 @@ Atualizacao 17H.0.5:
   Tablet/API 35, sem limpar ou desinstalar o app;
 - o smoke visual confirmou as medidas separadas, selecao de Talhao,
   localizacao disponivel, categorias de Material tecnico e Caderno/Safra;
+- Android fisico permaneceu pendente e nao aprovado.
+
+Atualizacao 17H.0.6:
+
+- `npm run typecheck`, `npm run test:domain-compat`, `validatorsCompat`,
+  `mockCompat` e os 16 cenarios de `visitaFormCompat` passaram;
+- auditoria textual confirmou ausencia de gerador ativo, acoes Camera/Galeria,
+  biblioteca de camera/seletor, geotag e storage novo nos formularios;
+- `:app:assembleRelease`, instalacao `-r` e `monkey` passaram no Pixel
+  Tablet/API 35, sem limpar ou desinstalar o app;
+- o smoke criou e editou Visita sem foto, preservou duas imagens legadas com
+  identificacao demonstrativa e reabriu Caderno/Safra, Talhoes e Material
+  tecnico;
 - Android fisico permaneceu pendente e nao aprovado.
 
 Atualizacao em 2026-07-21: a Fase 17H.0.2 alterou

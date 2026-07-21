@@ -366,10 +366,14 @@ encerrada no emulador. A UI separa `Area total informada`, `Area mapeada` e
 perimetro sem valor, unidade e origem comprovados. Os 6200 ha cadastrais e os
 1888,6 ha mapeados da Sela permanecem distintos e inalterados.
 
+Status em 2026-07-21 (Fase 17H.0.6): a pendencia P1 de Camera/Galeria simuladas
+foi encerrada no emulador. Nova/Editar Visita nao geram mais URLs
+`picsum.photos`; exibem aviso explicito do MVP local; criacao sem foto e edicao
+de outro campo passaram; e fotos demonstrativas existentes permaneceram
+legiveis e preservadas. Isso nao implementa foto real ou georreferenciada.
+
 Pendencias P1 antes de declarar APK apto a campo:
 
-- nao apresentar Camera/Galeria simuladas por `picsum.photos` como se fossem
-  captura funcional;
 - executar smoke completo em Android fisico autorizado;
 - alinhar `expo` e `expo-location` somente em fase tecnica propria. A consulta
   de 2026-07-21 reportou esperados `~56.0.16` e `~56.0.21`, respectivamente.
@@ -387,8 +391,6 @@ Pendencias P2/futuras:
 
 Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
 
-- remover ou desativar as acoes ativas de foto simulada, preservando leitura
-  dos mocks;
 - alinhar Expo em fase tecnica isolada;
 - implementar futuramente o ponto opcional no Caderno;
 - implementar foto real apenas em fase propria;
@@ -401,6 +403,7 @@ Classificacao atual relevante:
 - semantica de area: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva
   dependente de processamento externo/backend;
+- segregacao dos placeholders de foto: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - processamento externo real: `DEPENDE_BACKEND`;
 - fotos com data, hora, latitude e longitude: `NAO_IMPLEMENTADO`;
 - Android fisico: `BLOQUEADO_ANDROID_FISICO` como bloqueio adicional dos

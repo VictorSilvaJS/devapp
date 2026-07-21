@@ -20,6 +20,25 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0.6 - Segregacao Dos Placeholders De Foto Em Visitas**
+
+Observacao geral em 2026-07-21: rodada executada com Admin no AVD `Teste_Tche`,
+Pixel Tablet, Android 15/API 35, com APK release instalado por cima. Nao foram
+usados `pm clear`, desinstalacao ou `Wipe Data`. As URLs demonstrativas do seed
+foram preservadas somente para leitura; nenhuma foto real foi criada. Android
+fisico continua pendente e nao aprovado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H06-01 | P0 | Todos | Geracao simulada | Auditar producao e testes | Nenhum gerador ativo de `picsum.photos` | Passou | Ocorrencias ficaram somente no seed preservado e fixtures de compatibilidade |
+| 17H06-02 | P0 | Admin | Nova Visita | Abrir formulario e secao Fotos | Sem Camera/Galeria; aviso `Fotos no MVP local` visivel | Passou | Formulario permaneceu utilizavel e informou que pode salvar sem imagens |
+| 17H06-03 | P0 | Admin | Editar Visita | Abrir registro com e sem foto | Sem Camera/Galeria; fotos existentes somente para consulta/remocao explicita | Passou | Aviso visivel nos dois cenarios; nenhuma acao de adicionar imagem |
+| 17H06-04 | P0 | Admin | Criacao sem foto | Criar e abrir Visita sem imagem | Registro salva e detalhe nao exibe secao vazia problematica | Passou | Visita de Consultoria criada, aberta, editada para Cancelada e salva |
+| 17H06-05 | P0 | Admin | Foto demonstrativa | Editar outro campo de registro legado com duas imagens | Array existente permanece e detalhe identifica exemplo visual | Passou | Duas imagens permaneceram apos salvar; label `Imagem demonstrativa` visivel |
+| 17H06-06 | P0 | Todos | Camera/permissao/geotag | Executar auditoria textual e testes | Nenhuma integracao, permissao, coordenada, EXIF, chave ou storage novo | Passou | 16 cenarios de Visita, validators, mock e auditoria textual passaram |
+| 17H06-07 | P0 | Admin | Regressao | Abrir Caderno/Safra, Talhoes/mapa e Material tecnico | Fluxos existentes continuam acessiveis | Passou | Caderno mostrou Safra vinculada; mapa abriu 15 Talhoes/localizacao; Material tecnico abriu na Sela |
+| 17H06-08 | P0 | Todos | Android fisico | Repetir roteiro em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
+
 **Rodada Fase 17H.0.5 - Semantica Segura De Area E Perimetro**
 
 Observacao geral em 2026-07-21: rodada executada no AVD `Teste_Tche`, Pixel

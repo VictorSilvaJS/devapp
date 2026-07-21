@@ -23,6 +23,7 @@ import {
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
+import { getVisitaFotoUri } from '../utils/visitaFormCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -39,6 +40,7 @@ export default function VisitaDetailScreen() {
   const [fazenda, setFazenda] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [photoLoadErrors, setPhotoLoadErrors] = useState<Record<number, boolean>>({});
 
   // Estados de modais
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -75,6 +77,7 @@ export default function VisitaDetailScreen() {
 
       setVisita(visitaData);
       setFazenda(acesso.fazenda);
+      setPhotoLoadErrors({});
     } catch (error) {
       console.error('Erro ao carregar visita:', error);
       toast.showError('Erro ao carregar detalhes da visita');
@@ -366,17 +369,38 @@ export default function VisitaDetailScreen() {
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Ionicons name="images-outline" size={24} color={colors.primary} />
-              <Text style={styles.cardTitle}>Fotos ({visita.fotos.length})</Text>
+              <Text style={styles.cardTitle}>Imagens do registro ({visita.fotos.length})</Text>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosContainer}>
-              {visita.fotos.map((foto, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: typeof foto === 'string' ? foto : foto.uri }}
-                  style={styles.photo}
-                  resizeMode="cover"
-                />
-              ))}
+            <Text style={styles.photoNotice}>Imagem demonstrativa</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.photosContainer}
+              contentContainerStyle={styles.photosContent}
+            >
+              {visita.fotos.map((foto, index) => {
+                const fotoUri = getVisitaFotoUri(foto);
+                const imagemIndisponivel = !fotoUri || photoLoadErrors[index];
+
+                return (
+                  <View key={`${fotoUri || 'imagem'}_${index}`} style={styles.photoItem}>
+                    {imagemIndisponivel ? (
+                      <View style={[styles.photo, styles.photoUnavailable]}>
+                        <Ionicons name="image-outline" size={32} color={colors.muted} />
+                        <Text style={styles.photoUnavailableText}>Imagem indisponível</Text>
+                      </View>
+                    ) : (
+                      <Image
+                        source={{ uri: fotoUri }}
+                        style={styles.photo}
+                        resizeMode="cover"
+                        onError={() => setPhotoLoadErrors((current) => ({ ...current, [index]: true }))}
+                      />
+                    )}
+                    <Text style={styles.photoCaption}>Exemplo visual do registro</Text>
+                  </View>
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -578,11 +602,38 @@ const styles = StyleSheet.create({
   photosContainer: {
     marginTop: spacing.sm,
   },
-  photo: {
+  photosContent: {
+    gap: spacing.md,
+  },
+  photoNotice: {
+    color: colors.textLight,
+    fontSize: typography.fontSmall,
+    lineHeight: 18,
+  },
+  photoItem: {
     width: width * 0.6,
+  },
+  photo: {
+    width: '100%',
     height: width * 0.4,
     borderRadius: spacing.radiusSm,
-    marginRight: spacing.md,
+  },
+  photoUnavailable: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.borderLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  photoUnavailableText: {
+    color: colors.textLight,
+    fontSize: typography.fontSmall,
+  },
+  photoCaption: {
+    marginTop: spacing.xs,
+    color: colors.muted,
+    fontSize: typography.fontCaption,
   },
   footer: {
     flexDirection: 'row',

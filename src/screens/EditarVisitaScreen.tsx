@@ -29,11 +29,14 @@ import {
   podeEditarVisita,
 } from '../utils/acessoControle';
 import {
+  VISITA_FOTOS_MVP_INFO,
   buildVisitaFazendaOptions,
   buildVisitaPayload,
+  getVisitaFotoUri,
   getVisitaFluxoUi,
   getVisitaFormFazendaId,
   getVisitaFormFazendaLabel,
+  removeVisitaFotoAtIndex,
   resolveVisitaEdicaoFazendaId,
 } from '../utils/visitaFormCompat';
 
@@ -56,8 +59,11 @@ export default function EditarVisitaScreen() {
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
   const [status, setStatus] = useState('agendada');
-  const [fotos, setFotos] = useState([]);
-  const [removePhotoDialog, setRemovePhotoDialog] = useState({ visible: false, fotoId: null });
+  const [fotos, setFotos] = useState<any[]>([]);
+  const [removePhotoDialog, setRemovePhotoDialog] = useState<{
+    visible: boolean;
+    fotoIndex: number | null;
+  }>({ visible: false, fotoIndex: null });
 
   // Estados de controle
   const [loading, setLoading] = useState(true);
@@ -121,15 +127,8 @@ export default function EditarVisitaScreen() {
           setProximaVisita(new Date(visitaData.proximaVisita));
         }
 
-        // Carregar fotos existentes
-        if (visitaData.fotos && visitaData.fotos.length > 0) {
-          setFotos(visitaData.fotos.map((f, i) => ({
-            id: f.id || `foto_existente_${i}`,
-            uri: f.uri || f,
-            tipo: f.tipo || 'existente',
-            dataCaptura: f.dataCaptura || visitaData.data_visita,
-          })));
-        }
+        // Preservar o array legado exatamente como foi carregado.
+        setFotos(Array.isArray(visitaData.fotos) ? visitaData.fotos : []);
       }
 
       const fazendasFiltradas = user ? filtrarProdutoresPorAcesso(fazendasDisponiveis, user) : fazendasDisponiveis;
@@ -240,28 +239,21 @@ export default function EditarVisitaScreen() {
     { value: 'cancelada', label: 'Cancelada' },
   ];
 
-  const adicionarFotoSimulada = (tipo) => {
-    const timestamp = Date.now();
-    const novaFoto = {
-      id: `foto_${timestamp}`,
-      uri: tipo === 'camera' 
-        ? `https://picsum.photos/400/300?random=${timestamp}` 
-        : `https://picsum.photos/400/300?random=${timestamp + 1}`,
-      tipo: tipo,
-      dataCaptura: new Date().toISOString(),
-    };
-    setFotos(prev => [...prev, novaFoto]);
-    toast.showSuccess(`Foto ${tipo === 'camera' ? 'capturada' : 'selecionada'} com sucesso!`);
-  };
-
-  const removerFoto = (fotoId) => {
-    setRemovePhotoDialog({ visible: true, fotoId });
+  const removerFoto = (fotoIndex: number) => {
+    setRemovePhotoDialog({ visible: true, fotoIndex });
   };
 
   const confirmRemoverFoto = () => {
-    setFotos(prev => prev.filter(f => f.id !== removePhotoDialog.fotoId));
-    setRemovePhotoDialog({ visible: false, fotoId: null });
-    toast.showSuccess('Foto removida');
+    const fotoIndex = removePhotoDialog.fotoIndex;
+
+    if (fotoIndex == null) {
+      setRemovePhotoDialog({ visible: false, fotoIndex: null });
+      return;
+    }
+
+    setFotos(prev => removeVisitaFotoAtIndex(prev, fotoIndex));
+    setRemovePhotoDialog({ visible: false, fotoIndex: null });
+    toast.showSuccess('Imagem demonstrativa removida');
   };
 
   if (loading) {
@@ -408,40 +400,42 @@ export default function EditarVisitaScreen() {
           />
         </SectionCard>
 
-        <SectionCard title="Fotos" subtitle="Anexe imagens simuladas ao registro da visita.">
-          <View style={styles.fotoBotoesContainer}>
-            <TouchableOpacity
-              style={styles.fotoBotao}
-              onPress={() => adicionarFotoSimulada('camera')}
-            >
-              <Ionicons name="camera-outline" size={24} color={colors.primary} />
-              <Text style={styles.fotoBotaoText}>Câmera</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.fotoBotao}
-              onPress={() => adicionarFotoSimulada('galeria')}
-            >
-              <Ionicons name="images-outline" size={24} color={colors.primary} />
-              <Text style={styles.fotoBotaoText}>Galeria</Text>
-            </TouchableOpacity>
-          </View>
+        <SectionCard title="Fotos" subtitle="As imagens demonstrativas existentes podem ser consultadas ou removidas explicitamente.">
+          <InfoBox
+            title={VISITA_FOTOS_MVP_INFO.title}
+            message={VISITA_FOTOS_MVP_INFO.message}
+            style={styles.photoInfoBox}
+          />
           {fotos.length > 0 && (
             <View style={styles.fotosGrid}>
-              {fotos.map((foto) => (
-                <View key={foto.id} style={styles.fotoContainer}>
-                  <Image source={{ uri: foto.uri }} style={styles.fotoPreview} />
-                  <TouchableOpacity
-                    style={styles.fotoRemover}
-                    onPress={() => removerFoto(foto.id)}
-                  >
-                    <Ionicons name="close-circle" size={22} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              ))}
+              {fotos.map((foto, index) => {
+                const fotoUri = getVisitaFotoUri(foto);
+
+                return (
+                  <View key={`${fotoUri || 'imagem'}_${index}`} style={styles.fotoContainer}>
+                    {fotoUri ? (
+                      <Image source={{ uri: fotoUri }} style={styles.fotoPreview} />
+                    ) : (
+                      <View style={[styles.fotoPreview, styles.fotoIndisponivel]}>
+                        <Ionicons name="image-outline" size={24} color={colors.muted} />
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      style={styles.fotoRemover}
+                      onPress={() => removerFoto(index)}
+                      accessibilityLabel={`Remover imagem demonstrativa ${index + 1}`}
+                    >
+                      <Ionicons name="close-circle" size={22} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
             </View>
           )}
           {fotos.length > 0 && (
-            <Text style={styles.fotosCount}>{fotos.length} foto(s) anexada(s)</Text>
+            <Text style={styles.fotosCount}>
+              {fotos.length} {fotos.length === 1 ? 'imagem demonstrativa' : 'imagens demonstrativas'} no registro
+            </Text>
           )}
         </SectionCard>
 
@@ -457,13 +451,13 @@ export default function EditarVisitaScreen() {
 
       <ConfirmDialog
         visible={removePhotoDialog.visible}
-        title="Remover Foto"
-        message="Deseja remover esta foto?"
+        title="Remover imagem"
+        message="Deseja remover esta imagem demonstrativa do registro?"
         type="danger"
         confirmText="Remover"
         cancelText="Cancelar"
         onConfirm={confirmRemoverFoto}
-        onCancel={() => setRemovePhotoDialog({ visible: false, fotoId: null })}
+        onCancel={() => setRemovePhotoDialog({ visible: false, fotoIndex: null })}
       />
     </View>
   );
@@ -645,28 +639,8 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     lineHeight: 18,
   },
-  fotoBotoesContainer: {
-    flexDirection: 'row',
-    gap: spacing.md,
+  photoInfoBox: {
     marginBottom: spacing.sm,
-  },
-  fotoBotao: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: spacing.radius,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    backgroundColor: colors.accent,
-  },
-  fotoBotaoText: {
-    fontSize: typography.fontBody,
-    fontWeight: '600',
-    color: colors.primary,
   },
   fotosGrid: {
     flexDirection: 'row',
@@ -687,6 +661,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: spacing.radiusSm,
+  },
+  fotoIndisponivel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.borderLight,
   },
   fotoRemover: {
     position: 'absolute',
