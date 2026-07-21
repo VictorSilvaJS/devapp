@@ -21,8 +21,9 @@ upload/download real, descompactacao de ZIP ou desenho de Talhao foi criado.
 - Material tecnico, Prescricao em ZIP, localizacao foreground e gestao local
   de Talhoes importados possuem implementacao e evidencia de smoke anterior em
   emulador.
-- Caderno por Talhao e Safra/Safrinha possuem implementacao e cobertura
-  automatizada, mas ainda mantem casos manuais especificos sem fechamento.
+- Caderno por Talhao e Safra/Safrinha possuem implementacao, cobertura
+  automatizada e fechamento manual em emulador na Fase 17H.0.3; Android fisico
+  continua pendente e nao aprovado.
 - Area/perimetro e parcial: existe area total informada para a Propriedade e
   area mapeada em parte dos dados processados, mas o perimetro nao esta
   comprovado no pipeline da Sela de Prata I e a UI atual pode confundir area
@@ -32,8 +33,9 @@ upload/download real, descompactacao de ZIP ou desenho de Talhao foi criado.
   backend e infraestrutura que nao existem no produto atual.
 - Fotos com data, hora, latitude e longitude nao estao implementadas. As telas
   de Visita ainda possuem botoes simulados, sem camera ou geotag real.
-- O APK release foi gerado, mas nao havia emulador nem Android fisico listado
-  no ADB para instalacao e nova rodada interativa.
+- Na auditoria 17H.0.1 nao havia dispositivo ADB; a 17H.0.3 iniciou um AVD
+  existente, instalou o APK por cima e concluiu a rodada interativa. Android
+  fisico continuou ausente e nao aprovado.
 
 ## Fotografia Do Repositorio E Ambiente
 
@@ -49,6 +51,11 @@ upload/download real, descompactacao de ZIP ou desenho de Talhao foi criado.
 | `adb devices -l` | lista vazia; sem emulador e sem Android fisico |
 | APK release | `:app:assembleRelease` passou; arquivo com 91.881.352 bytes e SHA-256 `D7965DCFB61536E42917A3A80F078E846EAF2765DBC1B4D7A14075983AF2D4E5` |
 | Instalacao e `monkey` | nao executados porque nao havia dispositivo ADB |
+
+Atualizacao 17H.0.3: o AVD `Teste_Tche` apareceu como `emulator-5554`, Pixel
+Tablet, Android 15/API 35, com cerca de 10 GiB livres em `/data`. O pacote
+release ja estava instalado e havia sessao/estado local anterior. A build
+release, `adb install -r` e `monkey` passaram sem limpar ou desinstalar o app.
 
 `npx expo install --check` confirmou a divergencia conhecida e, na consulta
 feita nesta auditoria, reportou `expo@56.0.11` com esperado `~56.0.16` e
@@ -79,8 +86,8 @@ smoke das telas e APIs nativas.
 | 2. Prescricao em ZIP | picker, validacao leve, copia local, metadados, detalhe, substituicao e remocao; nenhum unzip/processamento | suites `prescriptionZip*` passaram | 17C.1 passou inclusive arquivo invalido, substituicao, remocao e Produtor consultivo | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir em aparelho fisico; pipeline produtivo continua externo |
 | 3. Localizacao foreground sobre Talhoes | `LocationForegroundService`, botao no mapa, marcador temporario e circulo de precisao; sem persistencia | typecheck passa; nao ha teste automatizado do modulo nativo de localizacao | 17G.2/17G.3 passaram sobre seed/mock e GeoJSON local, incluindo negacao e GPS desligado | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | validar permissao, provider e precisao informada em aparelho fisico |
 | 4. Marcacoes futuras de fertilizacao/correcao | nenhum contrato, storage, criacao ou camada de marcadores; apenas proposta 17H.0 | inexistente | nao aplicavel enquanto nao houver implementacao | futuro | SOMENTE_DOCUMENTADO | fechar decisao de contrato, consentimento, permissao e UX antes da 17H.1 |
-| 5. Caderno associado ao Talhao e historico por datas | rotas, formulario, detalhe, filtros por Talhao, visibilidade, autoria e ordenacao recente | Caderno, acesso, validators e consulta por Talhao passaram | Produtor pelo Talhao passou; Colaborador pelo Talhao, Admin e force-stop especifico continuam sem fechamento | pendente e nao aprovado | IMPLEMENTADO_SMOKE_INCOMPLETO | executar AUD-04, AUD-05 e persistencia do historico apos force-stop |
-| 6. Safra e Safrinha | storage local de metadados, formulario, permissao e vinculo opcional no Caderno | `periodoProdutivoService` e compatibilidade do Caderno passaram | Colaborador e persistencia do periodo passaram; Admin, Produtor com periodo no Caderno e criacao pelo Talhao permanecem incompletos | pendente e nao aprovado | IMPLEMENTADO_SMOKE_INCOMPLETO | executar AUD-05/AUD-06 e criacao pelo contexto do Talhao |
+| 5. Caderno associado ao Talhao e historico por datas | rotas, formulario, detalhe, filtros por Talhao, visibilidade, autoria e ordenacao recente | Caderno, acesso, validators e consulta por Talhao passaram | 17H.0.3 passou para Colaborador, Admin e Produtor no `T01 - 230`; historico e vinculos persistiram apos `force-stop` | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir em Android fisico autorizado |
+| 6. Safra e Safrinha | storage local de metadados, formulario, permissao e vinculo opcional no Caderno | `periodoProdutivoService` e compatibilidade do Caderno passaram | 17H.0.3 passou para criacao/edicao Admin pelo Talhao e vinculo opcional no Caderno do Produtor, inclusive apos `force-stop` | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir em Android fisico autorizado |
 | 7. Gestao de Talhoes importados/processados, sem desenho no celular | importacao/validacao/copia/ativacao/substituicao/remocao de GeoJSON, runtime Polygon/MultiPolygon e fallback seed/mock | suites GeoJSON e consulta por Talhao passaram | DocumentPicker, reabertura, force-stop e mapa local passaram em rodadas 16H/17G | pendente e nao aprovado | IMPLEMENTADO_VALIDADO_EMULADOR | repetir fluxo de campo; pipeline produtivo de preparo/publicacao continua externo |
 | 8. Area e perimetro dos Talhoes | area pode vir do GeoJSON/asset processado; conversor local calcula area aproximada; UI soma areas; perimetro nao e calculado para a Sela | validator cobre area opcional, mas nao existe teste de calculo/proveniencia de perimetro nem da semantica visual | area da amostra foi exibida; sem evidencia de perimetro processado | pendente e nao aprovado | PARCIAL | separar visualmente area total informada de area mapeada, tratar ausencia sem `0 ha` e definir origem/confiabilidade do perimetro |
 | 9. Processamento externo futuro de mapas | servicos locais e stubs/mocks; nenhuma API produtiva, publicacao, sync ou download real | ha compatibilidade de sync mockado e referencias locais, nao integracao produtiva | UI local nao gera mapas; nenhum fluxo remoto produtivo foi validado | nao aplicavel ao backend inexistente | DEPENDE_BACKEND | projetar e implementar ingestao, processamento, storage, publicacao, permissao e download no servidor |
@@ -268,18 +275,19 @@ tratar o placeholder como fluxo real.
 
 ## Checklist Consolidado AUD-01 A AUD-12
 
-Esta rodada nao teve novo smoke interativo porque `adb devices -l` ficou sem
-dispositivos. `Passou` abaixo consolida evidencia anterior de emulador ou
-auditoria estatica; `Reexecutar` nao deve ser promovido por inferencia.
+Atualizacao em 2026-07-21 (Fase 17H.0.3): o AVD `Teste_Tche`, Pixel Tablet,
+Android 15/API 35, permitiu fechar AUD-04, AUD-05, AUD-06 e o historico apos
+`force-stop`. `Reexecutar` continua aplicado ao Android fisico, que nao foi
+testado nem aprovado.
 
 | ID | Cenario | Status | Evidencia/pendencia |
 |---|---|---|---|
 | AUD-01 | Tipos Fertilidade/Correcao/Prescricao | Passou | codigo, testes e smoke 17C.1 |
 | AUD-02 | ZIP Prescricao: anexar, detalhe, substituir, remover e invalido | Passou | suites ZIP e smoke 17C.1 |
 | AUD-03 | Produtor cria Caderno pelo Talhao e ve historico | Passou | 17F.2; regras e filtro cobertos por teste |
-| AUD-04 | Colaborador cria Caderno pelo Talhao | Reexecutar | codigo/permissao cobertos; caso manual especifico nao fechado |
-| AUD-05 | Admin abre Talhao, Caderno e Safra/Safrinha | Reexecutar | permissao automatizada; roteiro manual consolidado nao fechado |
-| AUD-06 | Produtor cria Caderno com Safra/Safrinha opcional | Reexecutar | contrato opcional coberto; caso manual do Produtor nao fechado |
+| AUD-04 | Colaborador cria Caderno pelo Talhao | Passou | `T01 - 230`; `AUD04-COLAB-T01-20260721-EDITADO` preservou Propriedade/Talhao, detalhe, historico e edicao sem duplicar |
+| AUD-05 | Admin abre Talhao, Caderno e Safra/Safrinha | Passou | Caderno `AUD05-ADMIN-T01-20260721`; Safra `AUD05-ADMIN-PERIODO-20260721`, `2026/2027`, `T01 - 230`, editada para Em andamento |
+| AUD-06 | Produtor cria Caderno com Safra/Safrinha opcional | Passou | `AUD06-PRODUTOR-SAFRA-20260721` vinculou explicitamente a Safra do AUD-05; autoria/visibilidade preservadas e gestao de periodo ausente |
 | AUD-07 | GeoJSON local, area mapeada e selecao de Talhao | Passou | 16H.6/17G.3; ressalva de semantica da area registrada como bug P1 |
 | AUD-08 | Localizacao foreground, permissao negada e GPS desligado | Passou | 17G.2/17G.3 em emulador |
 | AUD-09 | PNG e ZIP nao recebem localizacao | Passou | auditoria de contratos/storage e 17G.3 |
@@ -291,11 +299,11 @@ auditoria estatica; `Reexecutar` nao deve ser promovido por inferencia.
 
 ### P0 - Bloqueia A Proxima Implementacao
 
-Atualizacao em 2026-07-21 (Fase 17H.0.2): P0-01 e P0-03 foram encerrados
-como decisoes funcionais. Desenvolvimento e smoke tecnico em emulador estao
-autorizados; campo continua bloqueado ate Android fisico. P0-02 permanece
-aberto como lacuna de evidencia. Os dois itens encerrados permanecem abaixo
-apenas para preservar a rastreabilidade da auditoria 17H.0.1.
+Atualizacao em 2026-07-21 (Fase 17H.0.3): P0-01 e P0-03 foram encerrados como
+decisoes funcionais, e P0-02 foi encerrado por smoke em emulador.
+Desenvolvimento e smoke tecnico em emulador estao autorizados; campo continua
+bloqueado ate Android fisico. Os itens permanecem abaixo apenas para preservar
+a rastreabilidade da auditoria 17H.0.1.
 
 #### P0-01 - Encerrado: Direcao De Contrato E Consentimento Da Marcacao
 
@@ -311,17 +319,16 @@ apenas para preservar a rastreabilidade da auditoria 17H.0.1.
 - Microfase recomendada: `17H.0.2 - Decisao final do contrato de ponto`.
 - Tipo: decisao de produto/privacidade; nao exige codigo nesta etapa.
 
-#### P0-02 - Baseline Manual De Caderno/Safra Ainda Tem Lacunas
+#### P0-02 - Encerrado: Baseline Manual De Caderno/Safra
 
-- Descricao: AUD-04, AUD-05, AUD-06 e o historico do Caderno apos force-stop
-  nao estao fechados; adicionar coordenadas antes disso mistura regressao nova
-  com evidencia antiga incompleta.
-- Evidencia: roteiros 17D/17E/17F em `smoke.md`.
-- Arquivo provavel: nenhum por padrao; corrigir codigo apenas se o smoke
-  reproduzir falha.
-- Teste que detectou: comparacao entre checklist ativo e evidencias de smoke.
-- Microfase recomendada: `17H.0.3 - Fechamento do baseline em emulador`.
-- Tipo: smoke em emulador; Android fisico continua como bloqueio adicional.
+- Status 17H.0.3: encerrado em emulador. AUD-04, AUD-05, AUD-06 e o historico
+  do Caderno apos `force-stop` passaram no `T01 - 230`, sem perda de
+  Propriedade, Talhao, periodo, autoria, visibilidade ou ordenacao.
+- Evidencia: rodada 17H.0.3 em `smoke.md`, com os identificadores AUD-04/05/06
+  e o periodo do Admin.
+- Correcao/teste novo: nenhum; nao houve bug funcional reproduzido.
+- Tipo: smoke em emulador concluido; Android fisico continua como bloqueio
+  adicional para campo.
 
 #### P0-03 - Encerrado: Gate Para Emulador E Android Fisico
 
@@ -427,24 +434,22 @@ apenas para preservar a rastreabilidade da auditoria 17H.0.1.
 
 ## Ordem Recomendada Das Proximas Fases
 
-Atualizacao 17H.0.2: P0-01 e P0-03 deixaram de ser gates decisorios. A ordem
-atual passa a ser:
+Atualizacao 17H.0.3: P0-01, P0-02 e P0-03 estao encerrados no escopo
+documental/emulador. A ordem atual passa a ser:
 
-1. Executar P0-02 em emulador: AUD-04, AUD-05, AUD-06 e force-stop do
-   historico do Caderno.
-2. Especificar na 17H.1 o shape opcional e o texto visual de consentimento,
+1. Especificar na 17H.1 o shape opcional e o texto visual de consentimento,
    respeitando as decisoes 15 a 17.
-3. Corrigir em microfases isoladas P1-01 e P1-02, com testes, antes de chamar
+2. Corrigir em microfases isoladas P1-01 e P1-02, com testes, antes de chamar
    o APK de apto a campo.
-4. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
-5. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
+3. Alinhar Expo/`expo-location` em fase tecnica separada e revalidar o APK.
+4. Implementar a 17H.1 para coordenada opcional no Caderno por acao explicita,
    sem background, tracking ou nova chave dedicada no primeiro corte.
-6. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
+5. Abrir visualizacao de marcacoes no mapa apenas depois de persistencia,
    permissao e cancelamento estarem provados.
-7. Executar smoke completo em Android fisico autorizado antes de aprovacao de
+6. Executar smoke completo em Android fisico autorizado antes de aprovacao de
    campo.
-8. Tratar fotos reais/georreferenciadas em fase propria posterior.
-9. Manter processamento/publicacao/download reais na trilha de backend.
+7. Tratar fotos reais/georreferenciadas em fase propria posterior.
+8. Manter processamento/publicacao/download reais na trilha de backend.
 
 ## Validacoes Executadas
 
@@ -456,8 +461,8 @@ atual passa a ser:
   versao descritas; nenhuma dependencia foi alterada.
 - `git diff --check` antes da documentacao: passou.
 - `android/.\gradlew.bat :app:assembleRelease`: `BUILD SUCCESSFUL`.
-- `adb install -r` e `adb shell monkey`: nao executados por ausencia de
-  dispositivo listado.
+- `adb install -r` e `adb shell monkey`: passaram na atualizacao 17H.0.3 no
+  AVD `Teste_Tche`; na fotografia original 17H.0.1 nao havia dispositivo.
 
 Atualizacao em 2026-07-21: a Fase 17H.0.2 alterou
 `docs/project/decisoes-consolidadas.md` para fechar as decisoes 15 a 21. A

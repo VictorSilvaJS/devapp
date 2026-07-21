@@ -20,6 +20,26 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.0.3 - Fechamento Manual Do Baseline Caderno/Talhao/Safra**
+
+Observacao geral em 2026-07-21: rodada executada no AVD `Teste_Tche`, Pixel
+Tablet, Android 15/API 35. O app ja estava instalado e possuia sessao/estado
+local anterior; o APK release foi instalado por cima. Nao foram usados
+`pm clear`, desinstalacao ou `Wipe Data`. Nenhuma funcionalidade, coordenada,
+chave `@tche:`, dependencia, mock, lista, seed ou asset foi alterado.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H03-01 | P0 | Todos | Ambiente | Fotografar Git, ADB, pacote e espaco | Emulador utilizavel sem limpar estado anterior | Passou | Git limpo; `emulator-5554`; Pixel Tablet/API 35; cerca de 10 GiB livres em `/data`; app release ja instalado |
+| 17H03-02 | P0 | Todos | Regressao | Executar typecheck, dominio e testes focados | Suites passam antes do smoke | Passou | `typecheck`, `test:domain-compat`, Caderno, acesso, validators, periodo e consulta por Talhao passaram |
+| 17H03-03 | P0 | Todos | APK | Montar release, instalar por cima e abrir | APK abre sem perda previa de estado | Passou | `:app:assembleRelease` passou; `adb install -r` e `monkey` passaram |
+| 17H03-04 | P0 | Colaborador | AUD-04 | Criar, detalhar, localizar no Talhao e editar Caderno | Contexto preservado e sem duplicidade | Passou | `T01 - 230`; `AUD04-COLAB-T01-20260721-EDITADO`; Propriedade, Talhao, autoria e visibilidade preservados |
+| 17H03-05 | P0 | Admin | AUD-05 | Criar Caderno e criar/editar periodo pelo Talhao | Caderno e periodo preservam Propriedade/Talhao | Passou | Caderno `AUD05-ADMIN-T01-20260721`; Safra `AUD05-ADMIN-PERIODO-20260721`, `2026/2027`, editada para Em andamento com observacao `-EDITADO` |
+| 17H03-06 | P0 | Produtor | AUD-06 | Vincular periodo opcional ao novo Caderno | Vinculo persiste sem conceder gestao do periodo | Passou | `AUD06-PRODUTOR-SAFRA-20260721`; detalhe mostrou autoria do Produtor, visibilidade liberada, `T01 - 230` e Safra do AUD-05; sem criar/editar/remover periodo |
+| 17H03-07 | P0 | Todos | Persistencia | Executar `force-stop`, reabrir e conferir historico | Sessao, Cadernos, Talhao, periodo e ordem permanecem | Passou | Sessao Produtor restaurada; AUD-06, AUD-05 e AUD-04 editado reapareceram na ordem recente; Admin reencontrou periodo editado e tres Cadernos no historico especifico do Talhao, sem duplicidade |
+| 17H03-08 | P0 | Todos | Nao regressao | Auditar coordenadas, chaves e aliases | Nenhuma coordenada/chave nova; aliases preservados | Passou | Buscas focadas e diff confirmaram ausencia de alteracao em codigo, contratos, mocks, area, fotos e dependencias |
+| 17H03-09 | P0 | Todos | Android fisico | Repetir em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Emulador nao substitui aparelho fisico; campo continua pendente e nao aprovado |
+
 **Rodada Fase 17H.0.2 - Consolidacao Das Decisoes Funcionais**
 
 Observacao geral em 2026-07-21: rodada exclusivamente documental. As decisoes
@@ -38,7 +58,7 @@ dependencia, contrato, mock, seed ou asset foi alterado.
 | 17H02-03 | P1 | Todos | Area/perimetro | Registrar linguagem segura | Area total informada, area mapeada, ausencia nao informada e perimetro somente com origem | Passou | Decisao 18; correcao de UI continua pendente |
 | 17H02-04 | P1 | Todos | Fotos | Registrar natureza dos placeholders | `picsum.photos` permanece simulacao e sera segregado em microfase propria | Passou | Decisao 19; foto real continua fora do escopo |
 | 17H02-05 | P2 | Todos | Backend/dependencias | Registrar limites tecnicos | Celular nao processa mapas; backend e alinhamento Expo ficam em fases isoladas | Passou | Decisoes 20 e 21; nenhuma dependencia alterada |
-| 17H02-06 | P0 | Colaborador/Admin/Produtor | Baseline | Executar AUD-04, AUD-05, AUD-06 e force-stop | Evidencias manuais fechadas sem regressao | Reexecutar | Permanecem pendentes; decisao documental nao substitui smoke |
+| 17H02-06 | P0 | Colaborador/Admin/Produtor | Baseline | Executar AUD-04, AUD-05, AUD-06 e force-stop | Evidencias manuais fechadas sem regressao | Passou | Executado na 17H.0.3 em Pixel Tablet/API 35; Android fisico permanece em 17H02-07 |
 | 17H02-07 | P0 | Todos | Android fisico | Executar roteiro em aparelho autorizado | Validado fisicamente antes de declarar apto para campo | Reexecutar | Android fisico segue pendente e nao aprovado |
 
 **Rodada Fase 17H.0.1 - Auditoria Consolidada Das Pendencias Do MVP**
@@ -57,9 +77,9 @@ Android fisico segue pendente e nao aprovado.
 | AUD-01 | P0 | Todos | Material tecnico | Conferir Fertilidade, Correcao de solo e Prescricao | Somente os tres tipos principais; PNG sem Prescricao | Passou | Codigo/testes e smoke 17C.1 |
 | AUD-02 | P0 | Admin/Colaborador/Produtor | Prescricao ZIP | Anexar, abrir detalhe, substituir, remover e tentar invalido | ZIP local por metadados, sem unzip/processamento; Produtor somente consulta | Passou | Suites ZIP e smoke 17C.1 |
 | AUD-03 | P0 | Produtor | Caderno por Talhao | Criar pelo Talhao e ver historico | Registro permanece no Talhao correto e aparece por data | Passou | 17F.2 e testes de consulta/Caderno |
-| AUD-04 | P0 | Colaborador | Caderno por Talhao | Criar pelo Talhao dentro do escopo | Contexto, autoria, visibilidade e ordenacao preservados | Reexecutar | Permissao coberta por teste; falta caso manual especifico |
-| AUD-05 | P0 | Admin | Talhao/Caderno/Safra | Abrir Talhao, Caderno e Safra/Safrinha | Consulta e gestao autorizadas sem perda de contexto | Reexecutar | Falta roteiro manual consolidado de Admin |
-| AUD-06 | P0 | Produtor | Caderno/Safra | Criar Caderno com Safra/Safrinha opcional | Vinculo opcional persiste sem dar gestao do periodo ao Produtor | Reexecutar | Contrato coberto; falta caso manual do Produtor |
+| AUD-04 | P0 | Colaborador | Caderno por Talhao | Criar pelo Talhao dentro do escopo | Contexto, autoria, visibilidade e ordenacao preservados | Passou | 17H.0.3: `T01 - 230`, detalhe/historico e edicao `AUD04-COLAB-T01-20260721-EDITADO` sem duplicidade |
+| AUD-05 | P0 | Admin | Talhao/Caderno/Safra | Abrir Talhao, Caderno e Safra/Safrinha | Consulta e gestao autorizadas sem perda de contexto | Passou | 17H.0.3: Caderno AUD-05 e Safra AUD-05 criados/editados no mesmo Talhao; contexto preservado |
+| AUD-06 | P0 | Produtor | Caderno/Safra | Criar Caderno com Safra/Safrinha opcional | Vinculo opcional persiste sem dar gestao do periodo ao Produtor | Passou | 17H.0.3: periodo selecionado explicitamente em AUD-06; detalhe/lista e permissoes corretos |
 | AUD-07 | P1 | Admin/Colaborador | GeoJSON/Talhao | Abrir GeoJSON local, area mapeada e selecionar Talhao | Polygon/MultiPolygon e Talhao funcionam; area aparece somente quando disponivel | Passou | 16H.6/17G.3; bug de rotulo/zero registrado para microfase propria |
 | AUD-08 | P0 | Todos | Localizacao | Testar sucesso foreground, negacao e GPS desligado | Posicao aproximada do aparelho e precisao informada, sem persistencia ou crash | Passou | 17G.2/17G.3 em emulador |
 | AUD-09 | P0 | Todos | Material/localizacao | Abrir PNG e ZIP apos usar localizacao | Nenhuma coordenada ou marcador entra em PNG/ZIP | Passou | Auditoria de contratos/storage e evidencia 17G.3 |
@@ -73,8 +93,8 @@ Problemas que devem permanecer visiveis no proximo smoke:
   mapeada de area total;
 - Camera/Galeria em Nova/Editar Visita ainda sao simuladas com
   `picsum.photos`, sem captura/geotag real;
-- historico do Caderno apos `force-stop` deve ser reexecutado junto com
-  AUD-04, AUD-05 e AUD-06;
+- historico do Caderno apos `force-stop` passou na 17H.0.3 com AUD-04, AUD-05,
+  AUD-06 e o periodo do Admin; repetir somente no smoke fisico obrigatorio;
 - `npx expo install --check` reportou esperado `expo ~56.0.16` e
   `expo-location ~56.0.21`; nao corrigir dentro do smoke funcional.
 
@@ -171,8 +191,8 @@ upload/download remoto ou storage remoto. Android fisico segue pendente.
 | 17F-02 | P0 | Produtor | Safra/Safrinha | Consultar bloco do Talhao | Mostra periodos do Talhao ou `Periodos da Propriedade`; sem criar/editar periodo | Passou | Produtor nao viu `Nova Safra/Safrinha`; permissao administrativa segue bloqueada no perfil |
 | 17F-03 | P0 | Produtor | Caderno | Registrar no Caderno pelo Talhao | Novo Caderno abre com Propriedade travada, Talhao preenchido e periodo opcional | Passou | 17F.2: Propriedade travada em Sela de Prata I, Talhao `T01 - 230` e periodo opcional `Sem Safra/Safrinha vinculada` |
 | 17F-04 | P0 | Produtor | Caderno | Salvar registro do Talhao e voltar ao detalhe/lista | Registro aparece no Talhao; registros sem Talhao nao aparecem como especificos | Passou | 17F.2: registro salvo como Produtor, detalhe abriu com Talhao `T01 - 230`, Propriedade correta, autoria do Produtor e sem editar/remover |
-| 17F-05 | P0 | Colaborador | Talhao | Abrir Talhao dentro do escopo e criar Caderno | Colaborador ve contexto e salva Caderno no Talhao correto | Reexecutar | 17F.2: Colaborador abriu Sela no escopo e Talhoes; criacao de Caderno pelo Talhao como Colaborador deve ser repetida |
-| 17F-06 | P0 | Admin/Colaborador | Safra/Safrinha | Criar periodo pelo Talhao | Formulario reaproveitado abre com Propriedade travada e Talhao pre-selecionado | Reexecutar | 17F.2: Colaborador viu acao autorizada `Novo`; criacao manual de periodo pelo Talhao e Admin manual ficam para repeticao |
+| 17F-05 | P0 | Colaborador | Talhao | Abrir Talhao dentro do escopo e criar Caderno | Colaborador ve contexto e salva Caderno no Talhao correto | Passou | 17H.0.3: `AUD04-COLAB-T01-20260721-EDITADO` criado/editado no `T01 - 230`, sem perder contexto |
+| 17F-06 | P0 | Admin/Colaborador | Safra/Safrinha | Criar periodo pelo Talhao | Formulario reaproveitado abre com Propriedade travada e Talhao pre-selecionado | Passou | 17H.0.3: Admin criou pelo Talhao e editou `AUD05-ADMIN-PERIODO-20260721`; Propriedade/Talhao preservados |
 | 17F-07 | P0 | Todos | Material tecnico | Abrir materiais do Talhao e Propriedade inteira | Materiais especificos e gerais aparecem separados; Produtor sem acoes administrativas | Passou | 17F.2: Material tecnico abriu para Produtor/Colaborador com filtros de Propriedade, Demarcacao, Talhao e Safra; Admin manual deve repetir no fisico |
 | 17F-08 | P0 | Todos | Regressao | Reabrir PNG, ZIP e GeoJSON/talhoes | PNG abre como imagem; ZIP detalha sem unzip; Talhoes renderizam | Reexecutar | 17F.2: Talhoes seed/mock renderizados; imports locais de GeoJSON/PNG/ZIP foram apagados pela correcao de ambiente e devem ser recriados/reabertos |
 | 17F-09 | P0 | Todos | Storage | Auditar storage local | Nenhuma coordenada, GeoJSON bruto, PNG, ZIP, base64, bytes ou binario salvo em AsyncStorage | Passou | Coberto por testes de dominio, busca textual e diff restrito a pluralizacao visual |
@@ -228,9 +248,9 @@ Android fisico segue pendente ate haver aparelho autorizado no `adb`.
 | 17E-02 | P0 | Admin | Safra/Safrinha | Criar Safra com cultura, ano agricola, status e Talhao opcional | Periodo salva localmente e volta para a Propriedade | Passou | Criada Safra `Soja` `2025/2026` na Sela; validacao obrigatoria funcionou; repetir Admin manual |
 | 17E-03 | P0 | Admin | Safra/Safrinha | Editar periodo criado | Alteracoes aparecem no card sem criar duplicidade | Passou | Periodo salvo em edicao sem duplicar; contador permaneceu `1` |
 | 17E-04 | P0 | Produtor | Propriedade | Abrir mesma Propriedade | Produtor consulta Safra/Safrinha sem botao de criar/editar | Passou | Produtor viu `Safras = 1` e card sem `Novo`/editar |
-| 17E-05 | P0 | Produtor | Caderno | Registrar Caderno e selecionar Safra/Safrinha opcional | Registro salva visivel ao produtor e mostra vinculo no detalhe/lista | Reexecutar | Produtor consulta validada; registro de Caderno pelo Produtor com periodo deve ser repetido manualmente |
+| 17E-05 | P0 | Produtor | Caderno | Registrar Caderno e selecionar Safra/Safrinha opcional | Registro salva visivel ao produtor e mostra vinculo no detalhe/lista | Passou | 17H.0.3: `AUD06-PRODUTOR-SAFRA-20260721` vinculou explicitamente a Safra AUD-05 e persistiu no detalhe/lista apos `force-stop` |
 | 17E-06 | P0 | Admin/Colaborador | Caderno | Criar/editar Caderno removendo ou trocando periodo | Vinculo opcional atualiza sem trocar Propriedade | Passou | Colaborador criou Caderno com periodo, viu no detalhe e removeu o vinculo preservando a Propriedade |
-| 17E-07 | P1 | Todos | Persistencia | Fechar app e reabrir | Periodos e vinculos locais continuam visiveis | Passou | `force-stop` e reabertura preservaram Safra `Soja` `2025/2026` e contador `Safras = 1` |
+| 17E-07 | P1 | Todos | Persistencia | Fechar app e reabrir | Periodos e vinculos locais continuam visiveis | Passou | 17H.0.3 confirmou novamente: Safra AUD-05 editada e vinculo do Caderno AUD-06 permaneceram apos `force-stop` |
 | 17E-08 | P0 | Todos | Regressao | Abrir Material tecnico, PNG, ZIP e GeoJSON/talhoes | Fluxos 16F/16G/17C seguem funcionando | Reexecutar | Material tecnico e GeoJSON/talhoes abriram; item PNG base visivel; detalhe PNG/ZIP individual deve ser repetido |
 | 17E-09 | P0 | Todos | Android fisico | Instalar APK e repetir casos em aparelho | Passa em Android fisico autorizado | Reexecutar | Android fisico segue pendente e nao aprovado |
 

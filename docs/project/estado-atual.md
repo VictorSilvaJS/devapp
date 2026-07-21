@@ -3624,12 +3624,52 @@ Nenhuma funcionalidade foi implementada, nenhuma coordenada foi salva e
 nenhuma chave `@tche:` foi criada na 17H.0.2. Android fisico segue pendente e
 nao aprovado.
 
+## Fase 17H.0.3 - Fechamento Manual Do Baseline Caderno/Talhao/Safra
+
+Status em 2026-07-21: AUD-04, AUD-05, AUD-06 e a persistencia do historico
+apos `force-stop` passaram no AVD `Teste_Tche`, Pixel Tablet, Android 15/API
+35. O APK release foi instalado por cima com `adb install -r`; nao houve
+`pm clear`, desinstalacao ou `Wipe Data`.
+
+Evidencias funcionais no `T01 - 230` da Fazenda Sela de Prata I:
+
+- Colaborador criou, abriu e editou o Caderno
+  `AUD04-COLAB-T01-20260721-EDITADO`, preservando Propriedade, Talhao,
+  autoria, visibilidade e um unico registro no historico especifico;
+- Admin criou o Caderno `AUD05-ADMIN-T01-20260721` e a Safra
+  `AUD05-ADMIN-PERIODO-20260721`, ano `2026/2027`, vinculada ao mesmo Talhao;
+  a edicao alterou o status para `Em andamento` e registrou a observacao
+  `AUD05-ADMIN-PERIODO-20260721-EDITADO` sem duplicar o periodo;
+- Produtor consultou o periodo sem acoes de criar/editar/remover e criou
+  `AUD06-PRODUTOR-SAFRA-20260721`, selecionando explicitamente a Safra do
+  Admin; o detalhe preservou autoria do Produtor, visibilidade liberada,
+  Propriedade, Talhao e vinculo opcional;
+- apos `am force-stop` e reabertura por `monkey`, a sessao do Produtor foi
+  restaurada. Produtor e Admin reencontraram AUD-06, AUD-05 e AUD-04 editado
+  na ordem recente; o Admin reencontrou o periodo editado e o historico
+  especifico do Talhao com os tres registros, sem converter registros gerais
+  em registros especificos.
+
+Validacoes executadas e aprovadas:
+
+- `npm run typecheck` e `npm run test:domain-compat`;
+- testes focados de Caderno, acesso, validators, periodo produtivo e consulta
+  por Talhao;
+- `:app:assembleRelease`, instalacao `-r`, abertura por `monkey` e
+  `git diff --check`;
+- buscas de nao regressao para coordenadas/chaves e aliases de
+  Propriedade/Talhao/periodo.
+
+Nenhum bug funcional foi reproduzido, portanto nenhum codigo ou teste novo foi
+adicionado. `src/api/mock.ts`, listas, seeds/assets, 6200 ha, 1888,6 ha,
+area/perimetro, fotos simuladas, Expo/dependencias, backend e storage remoto
+nao foram alterados. Nenhuma coordenada/geotag foi persistida e nenhuma chave
+`@tche:` foi criada. Android fisico continua pendente e nao aprovado.
+
 ## Proximo Passo Recomendado
 
-Com as decisoes funcionais fechadas, o proximo trabalho recomendado e executar
-em emulador AUD-04, AUD-05, AUD-06 e o force-stop do historico. Em microfases
-separadas, corrigir a semantica visual de area, remover/desativar as acoes
-simuladas de foto e alinhar `expo`/`expo-location`. A 17H.1 pode ser preparada
-e implementada em emulador conforme as decisoes 15 a 17, mas nenhum resultado
+Com o baseline funcional fechado em emulador, executar separadamente as
+microfases de area, fotos simuladas e alinhamento Expo quando priorizadas. A
+17H.1 pode ser preparada conforme as decisoes 15 a 17, mas nenhum resultado
 pode ser declarado apto para campo antes do smoke em Android fisico
 autorizado.

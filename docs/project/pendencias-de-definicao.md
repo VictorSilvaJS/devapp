@@ -349,12 +349,16 @@ emulador/campo, a linguagem de area/perimetro, a natureza simulada das fotos,
 o limite do processamento externo e o isolamento do alinhamento Expo. Essas
 regras estao nas decisoes 15 a 21 de `decisoes-consolidadas.md`.
 
-Pendencias P0 de evidencia que continuam abertas:
+Status em 2026-07-21 (Fase 17H.0.3): as pendencias P0 de evidencia do baseline
+foram encerradas em emulador. AUD-04, AUD-05 e AUD-06 passaram no Talhao
+`T01 - 230`; o periodo `AUD05-ADMIN-PERIODO-20260721` foi criado e editado
+pelo Admin; o Produtor o vinculou explicitamente ao Caderno; e Cadernos,
+Talhao, periodo, sessao e ordenacao permaneceram apos `force-stop`. Nenhum bug
+funcional foi reproduzido e nenhum patch foi necessario.
 
-- reexecutar Colaborador criando Caderno pelo Talhao (AUD-04);
-- reexecutar Admin em Talhao/Caderno/Safra (AUD-05);
-- reexecutar Produtor criando Caderno com periodo (AUD-06);
-- reexecutar historico do Caderno apos `force-stop`.
+Esses itens deixam de ser pendencias de definicao/evidencia em emulador. Eles
+continuam incluidos no smoke fisico obrigatorio e nao representam aprovacao de
+campo.
 
 Pendencias P1 antes de declarar APK apto a campo:
 
