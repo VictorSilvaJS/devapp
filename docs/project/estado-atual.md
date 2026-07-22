@@ -3951,9 +3951,9 @@ repositorio com 286 B, copiada para `Download` e importada no fluxo real. O
 detalhe e a associacao local persistiram apos `force-stop`; o Produtor viu o
 item sem acoes de gestao. Mapa, PNG e ZIP permaneceram sem ponto do Caderno, e
 a fixture externa foi removida ao final. Assim, `17H111-26` e `17H1B-12`
-passaram. `17H111-30` e `17H1B-13` ficam `Reexecutar`, pois somente
-`emulator-5554` estava disponivel e Android fisico continua pendente e nao
-aprovado.
+passaram. Naquela rodada, `17H111-30` e `17H1B-13` ficaram `Reexecutar`, pois
+somente `emulator-5554` estava disponivel e Android fisico continuava pendente
+e nao aprovado.
 
 Nao houve rebuild ou reinstalacao na 17H.1.2. O APK local e o `base.apk`
 instalado tinham os mesmos 91.922.508 bytes e SHA-256
@@ -3962,9 +3962,56 @@ portanto o release existente foi reutilizado.
 O relato completo esta em
 `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
 
+## Fase 17H.1.3 - Validacao Android Fisico Do Ponto Opcional
+
+Status final em 2026-07-22: `PARCIAL_ANDROID_FISICO`.
+
+O build release confirmou o artefato atual, que foi instalado por cima e
+aberto em um aparelho Android fisico autorizado. A abertura, os tres logins locais e as telas funcionais
+basicas previstas no roteiro passaram. Tambem passaram permissoes foreground, create sem ponto, permissao negada,
+localizacao desligada, GeoJSON, PNG, ZIP, teclado/usabilidade, ausencia de
+background e limpeza.
+
+O provider foi acionado tres vezes em ambiente interno, sem ceu razoavelmente
+visivel. As tres tentativas terminaram de forma controlada entre
+aproximadamente 38 e 53 segundos, sem entregar leitura ou precisao. Nao houve
+crash, espera infinita ou grupo parcial, e o Caderno continuou utilizavel sem
+ponto. Nenhuma localizacao fisica foi persistida.
+
+Resultado do checklist 17H113:
+
+- `Passou`: `17H113-01`, `17H113-02`, `17H113-03`, `17H113-05`,
+  `17H113-09`, `17H113-10`, `17H113-15`, `17H113-16`, `17H113-17`,
+  `17H113-18`, `17H113-19` e `17H113-20`;
+- `Reexecutar`: `17H113-04`, `17H113-06`, `17H113-07`, `17H113-08`,
+  `17H113-11`, `17H113-12`, `17H113-13` e `17H113-14`.
+
+As fixtures sinteticas e nao sensiveis de GeoJSON, PNG e ZIP foram
+selecionadas no DocumentPicker, persistiram depois de `force-stop` e foram
+consultadas pelo Produtor sem acoes de gestao. Nenhum ponto do Caderno foi
+exibido nesses materiais. As associacoes foram removidas pelo fluxo normal do
+aplicativo e os temporarios foram apagados ao final.
+
+Como observacao P2, os acessos rapidos do login ficaram apertados e
+parcialmente cortados em paisagem no aparelho testado, sem bloquear o fluxo em
+retrato. A revisao visual permanece registrada em
+`pendencias-de-definicao.md`.
+
+Nao foi criada captura automatica, background, tracking, watch, geofencing,
+storage ou chave nova. Nenhum ponto persistido foi desenhado no mapa. A
+17H.1.1 permanece `APROVADA_EM_EMULADOR`, com 29/29 casos executaveis no
+emulador aprovados; `17H111-30` e `17H1B-13` permanecem `Reexecutar`.
+
+Os oito casos dependentes de leitura real devem ser repetidos em area aberta
+ou com ceu razoavelmente visivel. Ate esse fechamento, a Fase 17H.2 nao pode
+ser aberta. O relato completo esta em
+`fase-17h-1-3-android-fisico-ponto-caderno.md`.
+
 ## Proximo Passo Recomendado
 
-Repetir o roteiro aplicavel do ponto opcional em Android fisico autorizado
-antes de qualquer declaracao de aptidao para campo ou abertura da visualizacao
-de pontos persistidos no mapa. A origem produtiva de perimetro, fotos reais e
-os avisos remanescentes do Expo Doctor permanecem em trilhas proprias.
+Repetir em area aberta ou com ceu razoavelmente visivel os casos
+`17H113-04`, `17H113-06`, `17H113-07`, `17H113-08`, `17H113-11`,
+`17H113-12`, `17H113-13` e `17H113-14`. A visualizacao de pontos persistidos
+no mapa, prevista para a 17H.2, permanece bloqueada. A origem produtiva de
+perimetro, fotos reais e os avisos remanescentes do Expo Doctor continuam em
+trilhas proprias.

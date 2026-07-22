@@ -352,14 +352,31 @@ dominios. A lacuna do ZIP foi fechada com fixture valida de 286 B criada fora
 do repositorio, importada pelo picker real, reaberta apos `force-stop` e
 consultada pelo Produtor sem acoes de gestao.
 
+Status em 2026-07-22 (Fase 17H.1.3): `PARCIAL_ANDROID_FISICO`. O release foi
+instalado; abertura, logins locais e telas funcionais basicas passaram. Do checklist fisico, passaram
+`17H113-01`, `17H113-02`, `17H113-03`, `17H113-05`, `17H113-09`,
+`17H113-10` e `17H113-15` a `17H113-20`. Tres tentativas do provider em
+ambiente interno, sem ceu razoavelmente visivel, terminaram de forma
+controlada entre aproximadamente 38 e 53 segundos, sem leitura ou precisao.
+Por isso, `17H113-04`, `17H113-06`, `17H113-07`, `17H113-08`, `17H113-11`,
+`17H113-12`, `17H113-13` e `17H113-14` permanecem `Reexecutar`.
+
+Nenhuma localizacao fisica foi persistida. GeoJSON, PNG e ZIP sinteticos
+passaram, persistiram apos `force-stop`, foram consultados pelo Produtor sem
+gestao e depois removidos pelo fluxo normal do aplicativo; os temporarios
+foram apagados. A ausencia de background/tracking foi preservada. O relato
+esta em `fase-17h-1-3-android-fisico-ponto-caderno.md`.
+
 Pontos que continuam pendentes para evidencia:
 
-- repetir permissao, captura, timeout, precisao, create/edit/remove e
-  persistencia em Android fisico autorizado;
-- validar precisao e comportamento do provider em condicao real de campo.
+- repetir em area aberta ou com ceu razoavelmente visivel a posicao temporaria
+  do mapa, create com ponto, captura/cancelamento e remocao antes do submit;
+- obter leitura e precisao do provider para entao repetir
+  `preserve`/`replace`/`remove`, visibilidade e `force-stop` com ponto
+  salvo/removido.
 
-Android fisico segue pendente e nao aprovado, embora nao bloqueie o
-desenvolvimento e o smoke tecnico em emulador.
+A evidencia Android fisica segue parcial. A Fase 17H.2 permanece bloqueada ate
+o fechamento desses oito casos.
 
 ### 4C. Fechamento funcional antes de coordenadas, marcacoes e fotos
 
@@ -415,17 +432,32 @@ background/tracking e `localizacao_*` em Visita, PNG, ZIP, GeoJSON ou mapa.
 Status em 2026-07-22 (Fases 17H.1.1/17H.1.2): 29 de 29 casos executaveis no
 emulador passaram. `17H111-26` passou com fixture ZIP temporaria valida,
 DocumentPicker, detalhe, `force-stop`, Produtor e regressao sem localizacao fora
-do Caderno. `17H111-30` permanece `Reexecutar` por ausencia de Android fisico.
+do Caderno. Naquele fechamento, `17H111-30` permaneceu `Reexecutar` porque
+nenhum Android fisico estava disponivel.
 A rodada confirmou que cancelamento nao persiste, localizacao somente persiste
 no submit, `Mostrar minha posição` continua transitorio, ponto removido nao
 reaparece e registro interno com ponto nao vaza ao Produtor.
 
+Status em 2026-07-22 (Fase 17H.1.3): o aparelho autorizado, a instalacao do
+release e 12 de 20 casos fisicos passaram, mas a rodada terminou
+`PARCIAL_ANDROID_FISICO`. Sem leitura nas tres tentativas internas do
+provider, oito casos dependentes de captura real ficaram `Reexecutar`:
+`17H113-04`, `17H113-06`, `17H113-07`, `17H113-08`, `17H113-11`,
+`17H113-12`, `17H113-13` e `17H113-14`. Nenhuma localizacao fisica foi
+persistida, e a regressao de GeoJSON/PNG/ZIP, a limpeza e a ausencia de
+background/tracking passaram.
+
 Pendencias P1 antes de declarar APK apto a campo:
 
-- executar smoke completo em Android fisico autorizado.
+- repetir os oito casos fisicos dependentes do provider em area aberta ou com
+  ceu razoavelmente visivel;
+- manter a Fase 17H.2 bloqueada ate a captura real e seus fluxos dependentes
+  passarem.
 
 Pendencias P2/futuras:
 
+- revisar os acessos rapidos do login em paisagem; no aparelho testado eles
+  ficaram apertados e parcialmente cortados, sem bloquear o uso em retrato;
 - definir fonte, metodo, unidade e confiabilidade do perimetro processado;
 - confirmar a relacao entre 6200 ha informados e 1888,6 ha mapeados na Sela de
   Prata I, sem alterar os valores por inferencia;
@@ -435,9 +467,10 @@ Pendencias P2/futuras:
 - implementar pipeline produtivo de mapas, publicacao, download e sync no
   backend.
 
-Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
+Implementacoes/evidencias mantidas como pendentes, sem ambiguidade decisoria:
 
-- validar o ponto opcional em Android fisico autorizado;
+- concluir a validacao fisica do ponto opcional em condicao adequada para o
+  provider;
 - implementar foto real apenas em fase propria;
 - implementar backend/processamento externo quando essa trilha for aberta.
 
@@ -447,7 +480,10 @@ Classificacao atual relevante:
   `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - UI/captura do ponto opcional: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - smoke de seguranca/regressao 17H.1.1: `APROVADA_EM_EMULADOR`, com 29/29
-  casos executaveis aprovados e somente Android fisico em `Reexecutar`;
+  casos executaveis aprovados; `17H111-30` e `17H1B-13` continuam
+  `Reexecutar`;
+- validacao Android fisica 17H.1.3: `PARCIAL_ANDROID_FISICO`, com 12/20 casos
+  aprovados e 8 casos dependentes de captura real em `Reexecutar`;
 - area/perimetro: `PARCIAL`;
 - semantica de area: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva
@@ -457,8 +493,9 @@ Classificacao atual relevante:
 - avisos remanescentes do Expo Doctor: `PENDENTE_FASE_TECNICA_PROPRIA`;
 - processamento externo real: `DEPENDE_BACKEND`;
 - fotos com data, hora, latitude e longitude: `NAO_IMPLEMENTADO`;
-- Android fisico: `BLOQUEADO_ANDROID_FISICO` como bloqueio adicional dos
-  fluxos nativos, ainda pendente e nao aprovado.
+- Android fisico: `PARCIAL_ANDROID_FISICO`; release e parte do roteiro
+  passaram, mas o gate do ponto continua inconclusivo e bloqueia a Fase
+  17H.2.
 
 ### 5. Experiencia detalhada do produtor
 

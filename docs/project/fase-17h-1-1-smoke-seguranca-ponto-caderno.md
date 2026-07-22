@@ -12,9 +12,9 @@ O fechamento complementar da Fase 17H.1.2 reexecutou a lacuna visual com um
 ZIP temporario valido, criado fora do repositorio e selecionado pelo
 DocumentPicker real. Importacao, detalhe, `force-stop`, reabertura, consulta do
 Produtor e regressao de Caderno/mapa/PNG/ZIP passaram. Assim, os 29/29 casos
-executaveis no emulador estao aprovados. `17H111-30` permanece `Reexecutar`:
-somente `emulator-5554` estava disponivel e Android fisico segue pendente e
-nao aprovado.
+executaveis no emulador estao aprovados. O gate fisico foi iniciado depois, na
+Fase 17H.1.3, mas terminou `PARCIAL_ANDROID_FISICO`; por isso `17H111-30`
+permanece `Reexecutar` e a aptidao para campo nao foi aprovada.
 
 Nenhuma funcionalidade nova, patch de codigo ou teste foi criado nesta fase.
 O objetivo foi exclusivamente exercitar seguranca, cancelamento, persistencia,
@@ -164,7 +164,7 @@ exata nem pertencimento automatico a qualquer Talhao.
 | 17H111-27 | Material tecnico | Passou | Filtros Fertilidade, Correcao de solo e Prescricao funcionaram sem secao, marcador ou acao de ponto do Caderno |
 | 17H111-28 | Visitas | Passou | Nova Visita sem Camera/Galeria/localizacao; registro antigo mostrou `Imagens do registro (2)`, `Imagem demonstrativa` e `Exemplo visual do registro`, sem geotag |
 | 17H111-29 | Auditoria sem chave/tracking | Passou | Sem chave nova, objeto bruto persistido, background, tracking, watch, trilha, historico ou `localizacao_*` fora do Caderno |
-| 17H111-30 | Android fisico | Reexecutar | `adb devices -l` mostrou apenas `emulator-5554`; aparelho fisico segue pendente e nao aprovado |
+| 17H111-30 | Android fisico | Reexecutar | A Fase 17H.1.3 usou aparelho fisico autorizado, mas o provider real encerrou tres tentativas em timeout controlado e os casos dependentes de ponto real ficaram pendentes |
 
 ## Force-stop E Perfis
 
@@ -198,8 +198,35 @@ Por perfil:
   inclusive depois de `force-stop` e como Produtor, sem preview, processamento,
   descompactacao ou ponto do Caderno.
 
-Assim, `17H1B-12` passou. `17H1B-13` continua `Reexecutar` ate aparelho fisico
-autorizado.
+Assim, `17H1B-12` passou. `17H1B-13` continua `Reexecutar` ate a captura e os
+cenarios dependentes de um ponto real serem concluidos no aparelho fisico.
+
+## Gate Android Fisico Da Fase 17H.1.3
+
+Status em 2026-07-22: `PARCIAL_ANDROID_FISICO`.
+
+Um aparelho Android fisico autorizado recebeu o APK release e abriu o app sem
+crash. Permissoes foreground, Caderno sem ponto, negativa de permissao,
+localizacao do sistema desligada, GeoJSON, PNG, ZIP, teclado/usabilidade e
+ausencia de background passaram. Nenhuma coordenada real, endereco ou serial
+do aparelho foi registrado nesta documentacao.
+
+Em ambiente interno, sem ceu razoavelmente visivel, o provider real encerrou
+tres tentativas com timeouts controlados em aproximadamente 38 a 53 segundos. Nao houve
+leitura nem precisao a registrar. Por isso permaneceram pendentes a posicao
+temporaria no mapa, create com ponto, cancelamento e remocao de um draft com
+ponto, fluxos de Colaborador/Admin dependentes de ponto e a persistencia/
+remocao desse ponto apos `force-stop`.
+
+O `force-stop` passou para dados sem ponto e para as fixtures importadas, mas
+nao exercitou ponto salvo ou removido. A limpeza removeu as fixtures
+temporarias; nenhuma localizacao real chegou a ser persistida, portanto essa
+limpeza nao substitui a remocao de um ponto salvo pelo fluxo normal do app.
+
+O resultado nao altera a aprovacao dos 29/29 casos executaveis no emulador,
+nao promove `17H111-30` nem `17H1B-13` e nao autoriza abrir a Fase 17H.2. O
+relato completo esta em
+`fase-17h-1-3-android-fisico-ponto-caderno.md`.
 
 ## Auditoria Tecnica
 
@@ -240,6 +267,7 @@ arquivos da entrega sao documentos ativos da fase.
 ## Arquivos Documentais Da Entrega
 
 - `docs/project/fase-17h-1-1-smoke-seguranca-ponto-caderno.md`;
+- `docs/project/fase-17h-1-3-android-fisico-ponto-caderno.md`;
 - `docs/project/fase-17h-1b-ui-ponto-caderno.md`;
 - `docs/project/fase-17h-marcacoes-campo.md`;
 - `docs/project/estado-atual.md`;
@@ -251,10 +279,10 @@ decisao nova nesta rodada.
 
 ## Pendencias Para A Proxima Etapa
 
-- repetir `17H111-01` a `17H111-29`, conforme aplicavel, em Android fisico
-  autorizado antes de qualquer aprovacao de campo;
-- validar precisao, permissionamento e comportamento do provider em condicao
-  real;
+- repetir o provider real em condicao ambiental adequada, com ceu visivel, e
+  registrar somente tempo aproximado e precisao informada, sem coordenadas;
+- concluir no aparelho fisico os casos dependentes de ponto real: create,
+  cancelamento, remocao antes do submit, perfis, visibilidade e `force-stop`;
 - manter fora da 17H.2 qualquer marcador persistido ate o gate documental e
   de evidencia correspondente ser explicitamente aberto.
 
@@ -268,4 +296,5 @@ decisao nova nesta rodada.
 - Nao existe chave nova.
 - Nao existe background, tracking, trilha, rota ou historico.
 - Pontos persistidos do Caderno ainda nao sao desenhados no mapa.
-- Android fisico segue pendente e nao aprovado.
+- Android fisico esta `PARCIAL_ANDROID_FISICO`, ainda pendente e nao aprovado
+  para liberar a Fase 17H.2.

@@ -8,9 +8,11 @@ somente em state React durante o formulario e os campos canonicos so entram
 em `CadernoCampo.create` ou `CadernoCampo.update` no submit. Caderno sem ponto
 continua sendo o fluxo normal.
 
-Android fisico segue pendente e nao aprovado. A implementacao nao cria
-background, tracking, trilha, historico, geofencing, point-in-polygon, chave
-de storage ou marcador persistido no mapa.
+O gate Android fisico foi iniciado na Fase 17H.1.3, mas terminou
+`PARCIAL_ANDROID_FISICO` porque o provider real nao entregou leitura no
+ambiente interno do teste. A implementacao nao cria background, tracking,
+trilha, historico, geofencing, point-in-polygon, chave de storage ou marcador
+persistido no mapa.
 
 ## Superficies Alteradas
 
@@ -212,10 +214,11 @@ Ao final, o provider/GPS simulado do AVD foi restaurado ao estado anterior.
 
 Permanecem pendentes:
 
-- repetir todo o roteiro em Android fisico autorizado antes de qualquer
-  aprovacao de campo;
-- fechar as validacoes fisicas de permissao, precisao, timeout e uso real em
-  campo.
+- repetir o provider real em condicao ambiental adequada, com ceu visivel;
+- concluir no aparelho fisico create com ponto, cancelamento, remocao,
+  `preserve`/`replace`, visibilidade e persistencia apos `force-stop`;
+- obter e registrar somente a precisao informada pelo aparelho, sem coordenada
+  real, antes de qualquer liberacao da Fase 17H.2.
 
 A auditoria estatica e a reabertura visual minima da Fase 17H.1.2 cobrem a
 ausencia de georreferenciamento em PNG, ZIP, GeoJSON, Visita e mapa. Nenhum
@@ -237,7 +240,7 @@ georreferenciados.
 | 17H1B-10 | Detalhe e selo | Ponto valido aparece sem expor id cru ou coordenadas no card | Passou |
 | 17H1B-11 | Auditoria | Sem chave nova, background, tracking, trilha ou historico | Passou |
 | 17H1B-12 | Regressao PNG/ZIP/mapa | Caderno com ponto preservou selo/secao; mapa, PNG e ZIP foram reabertos sem ponto persistido fora do Caderno | Passou |
-| 17H1B-13 | Android fisico | Repetir permissao, captura, precisao e persistencia em aparelho autorizado | Reexecutar |
+| 17H1B-13 | Android fisico | Completar captura, precisao e persistencia de ponto real no aparelho autorizado; a rodada 17H.1.3 ficou parcial | Reexecutar |
 
 ## Revalidacao De Seguranca Na Fase 17H.1.1
 
@@ -267,8 +270,32 @@ substituir ou remover. Caderno com ponto, mapa, PNG e ZIP foram reabertos e
 confirmaram a segregacao visual.
 
 Assim, `17H1B-12` passou e os 29/29 casos executaveis no emulador estao
-aprovados. `17H1B-13` permanece `Reexecutar`, pois apenas `emulator-5554`
-estava disponivel e Android fisico continua nao aprovado.
+aprovados. `17H1B-13` permanece `Reexecutar`: o aparelho fisico foi usado na
+Fase 17H.1.3, mas os cenarios dependentes de uma leitura real nao foram
+concluidos.
 
 O relato e o checklist 17H111-01 a 17H111-30 estao em
 `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
+
+## Validacao Parcial Em Android Fisico Na Fase 17H.1.3
+
+Status em 2026-07-22: `PARCIAL_ANDROID_FISICO`.
+
+No aparelho fisico autorizado, APK release, permissao foreground, Caderno sem
+ponto, negativa de permissao, localizacao do sistema desligada, GeoJSON, PNG,
+ZIP, teclado/usabilidade e ausencia de background passaram. O provider real,
+testado tres vezes em ambiente interno sem ceu razoavelmente visivel, terminou
+em timeouts controlados de aproximadamente 38 a 53 segundos, sem leitura e
+sem precisao a registrar.
+
+Consequentemente, create com ponto, cancelamento/remocao de ponto, semanticas
+de edicao dos perfis, visibilidade com ponto real e `force-stop` de ponto
+salvo/removido continuam pendentes. O `force-stop` foi confirmado apenas para
+dados sem ponto e fixtures; a limpeza removeu as fixtures temporarias, mas nao
+substitui a remocao de um ponto salvo, pois nenhuma localizacao real foi
+persistida.
+
+Nenhuma coordenada real, endereco ou serial foi documentado. Este resultado
+nao significa aprovacao para producao, outros modelos Android, precisao
+agronomica ou backend, e nao autoriza abrir a Fase 17H.2. O relato completo
+esta em `fase-17h-1-3-android-fisico-ponto-caderno.md`.

@@ -20,6 +20,48 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.1.3 - Validacao Android Fisico Do Ponto Opcional No Caderno**
+
+Status geral em 2026-07-22: `PARCIAL_ANDROID_FISICO`. Um aparelho fisico
+autorizado recebeu e abriu o APK release. Foreground, Caderno sem ponto,
+negativa de permissao, localizacao do sistema desligada, GeoJSON, PNG, ZIP,
+teclado/usabilidade e ausencia de background passaram. Nenhuma coordenada real,
+endereco ou serial do aparelho foi registrado.
+
+O provider real encerrou tres tentativas com timeout controlado em
+aproximadamente 38 a 53 segundos, em ambiente interno sem ceu razoavelmente visivel. Nao
+houve leitura nem precisao a registrar; os cenarios dependentes de ponto real
+continuam pendentes. A Fase 17H.2 nao esta autorizada. Relato completo em
+`fase-17h-1-3-android-fisico-ponto-caderno.md`.
+
+| ID | Criticidade | Area | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|
+| 17H113-01 | P0 | Aparelho fisico | Dispositivo autorizado e selecionado explicitamente | Passou | Aparelho fisico autorizado reconhecido; serial omitido |
+| 17H113-02 | P0 | Instalacao release | APK release instala e abre sem crash | Passou | Instalacao e abertura do pacote release passaram |
+| 17H113-03 | P0 | Permissoes foreground | Localizacao limitada ao uso foreground, sem permissao inesperada | Passou | Permissoes foreground confirmadas; nenhuma autorizacao de background |
+| 17H113-04 | P0 | Posicao temporaria no mapa | Leitura real aparece somente em runtime e nao persiste | Reexecutar | Provider terminou em timeout; marcador temporario real nao pôde ser confirmado |
+| 17H113-05 | P0 | Create sem ponto | Caderno comum salva sem secao, selo ou grupo de localizacao | Passou | Registro sem ponto permaneceu o fluxo normal |
+| 17H113-06 | P0 | Create com ponto | Captura explicita persiste somente no submit | Reexecutar | Sem leitura do provider, nenhum ponto real foi criado |
+| 17H113-07 | P0 | Cancelamento | Sair apos capturar nao persiste draft ou registro | Reexecutar | Captura real nao foi obtida; cancelamento de draft com ponto ficou pendente |
+| 17H113-08 | P0 | Remocao antes do submit | Remover captura e salvar produz registro sem ponto | Reexecutar | Sem captura real, remocao do draft com ponto nao foi exercitada |
+| 17H113-09 | P0 | Permissao negada | Falha controlada e Caderno sem ponto continua permitido | Passou | Negativa foi recuperavel, sem crash ou persistencia de localizacao |
+| 17H113-10 | P0 | Localizacao desligada | Mensagem controlada, sem espera infinita, e submit sem ponto | Passou | Location off foi recuperavel e o sistema foi restaurado ao final |
+| 17H113-11 | P0 | Provider real/precisao | Obter leitura e registrar apenas tempo/precisao informada | Reexecutar | Tres timeouts controlados de aproximadamente 38 a 53 s em ambiente interno sem ceu razoavelmente visivel; sem precisao |
+| 17H113-12 | P0 | Colaborador | Exercitar ponto real, `preserve`, `replace` e `remove` | Reexecutar | Sem leitura real, as semanticas de ponto do perfil nao foram exercitadas |
+| 17H113-13 | P0 | Admin/visibilidade | Validar ponto interno/liberado sem vazamento | Reexecutar | Visibilidade dependente de ponto real permaneceu pendente |
+| 17H113-14 | P0 | Force-stop | Restaurar somente ponto salvo e manter ponto removido ausente | Reexecutar | Parcial para dados sem ponto e fixtures; ponto salvo/removido nao foi exercitado |
+| 17H113-15 | P0 | GeoJSON | Selecionar, renderizar Talhoes e manter Caderno segregado | Passou | DocumentPicker e Talhoes passaram, sem ponto do Caderno |
+| 17H113-16 | P0 | PNG | Selecionar e abrir imagem sem ponto | Passou | PNG abriu como imagem, sem marcador ou localizacao do Caderno |
+| 17H113-17 | P0 | ZIP | Selecionar e abrir detalhe sem preview ou processamento | Passou | ZIP abriu somente metadados, sem preview, unzip, processamento ou ponto |
+| 17H113-18 | P1 | Teclado/usabilidade | Campos, rolagem e submit permanecem alcancaveis e legiveis | Passou | Formulario permaneceu utilizavel no aparelho testado |
+| 17H113-19 | P0 | Ausencia de background | Sem atualizacao, notificacao ou leitura automatica fora da tela | Passou | Nenhum comportamento de background ou tracking foi observado |
+| 17H113-20 | P0 | Limpeza | Remover dados temporarios sem manipular storage interno | Passou | Nenhuma localizacao real persistiu; fixtures foram limpas, sem substituir a remocao de ponto salvo |
+
+Os casos `17H113-04`, `17H113-06`, `17H113-07`, `17H113-08`,
+`17H113-11`, `17H113-12`, `17H113-13` e `17H113-14` devem ser reexecutados em
+condicao adequada ao provider real. O resultado nao declara producao, cobertura
+de todos os Android, precisao garantida ou backend prontos.
+
 **Rodada Fase 17H.1.1 - Smoke De Seguranca, Cancelamento E Regressao Do Ponto Opcional No Caderno**
 
 Status geral em 2026-07-22: `APROVADA_EM_EMULADOR`. Rodada executada no
@@ -66,7 +108,7 @@ continua pendente e nao aprovado.
 | 17H111-27 | P0 | Todos | Material tecnico | Conferir tres filtros e detalhes | Nenhuma UI ou marcador do ponto | Passou | Fertilidade, Correcao de solo e Prescricao funcionaram sem localizacao |
 | 17H111-28 | P0 | Todos | Visitas | Abrir Nova e registro demonstrativo | Sem Camera/Galeria, geotag ou campos do Caderno | Passou | `Imagens do registro (2)`, `Imagem demonstrativa` e `Exemplo visual do registro` preservados |
 | 17H111-29 | P0 | Todos | Auditoria | Buscar chaves, APIs e contaminacao | Sem storage novo, tracking/background ou localizacao fora do Caderno | Passou | Seis campos somente no Caderno; mapa temporario; nenhuma ocorrencia em PNG/ZIP/GeoJSON/Visita |
-| 17H111-30 | P0 | Todos | Android fisico | Repetir em aparelho autorizado | Evidencia fisica antes de campo | Reexecutar | Apenas `emulator-5554`; Android fisico segue pendente e nao aprovado |
+| 17H111-30 | P0 | Todos | Android fisico | Completar o gate fisico antes de campo | Evidencia fisica antes de campo | Reexecutar | A 17H.1.3 usou aparelho autorizado, mas os casos dependentes de ponto real ficaram pendentes |
 
 Build desta rodada: APK de 91.922.508 bytes, SHA-256
 `3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`;
@@ -99,7 +141,7 @@ PNG/ZIP/mapa passou na 17H.1.2; Android fisico continua pendente e nao aprovado.
 | 17H1B-10 | P0 | Admin | Detalhe e selo | Abrir detalhe e cards com ponto valido | Mostrar coordenadas/nome no detalhe e apenas selo nos cards | Passou | Nome foi resolvido sem exibir id tecnico cru; cards nao mostraram coordenadas |
 | 17H1B-11 | P0 | Todos | Auditoria | Buscar storage, chaves, tracking e shapes proibidos | Sem chave nova, background, tracking, trilha, historico ou campos extras | Passou | Localizacao entra somente no submit do Caderno |
 | 17H1B-12 | P0 | Todos | Regressao PNG/ZIP/mapa | Auditar e reabrir todos os materiais/mapa | Nenhum `localizacao_*` ou ponto persistido fora do Caderno | Passou | Caderno liberado manteve selo/secao de ponto; mapa de 15 Talhoes, PNG local e ZIP real foram reabertos sem ponto persistido fora do Caderno |
-| 17H1B-13 | P0 | Todos | Android fisico | Repetir permissao, captura, precisao, submit e edicao em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
+| 17H1B-13 | P0 | Todos | Android fisico | Completar captura, precisao, submit e edicao com ponto real | Validacao fisica antes de campo | Reexecutar | A rodada fisica 17H.1.3 ficou parcial apos timeouts controlados do provider |
 
 Build desta rodada: `:app:assembleRelease`, `adb install -r` e `monkey`
 passaram. APK com 91.922.508 bytes e SHA-256

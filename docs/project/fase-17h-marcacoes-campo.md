@@ -5,11 +5,13 @@ implementacao futura de marcacoes de campo vinculadas ao Caderno. Nenhuma
 marcacao foi implementada, nenhum storage novo foi criado, nenhuma chave
 `@tche:` nova foi criada e nenhuma coordenada foi salva nesta fase.
 
-Estado corrente em 2026-07-22, depois do fechamento 17H.1.2: o contrato e a UI
-do ponto opcional do Caderno estao implementados e a 17H.1.1 esta
-`APROVADA_EM_EMULADOR`. Os 29/29 casos executaveis no emulador passaram,
-incluindo a abertura visual do ZIP de Prescricao. Android fisico continua
-pendente e nao aprovado.
+Estado corrente em 2026-07-22, depois da validacao 17H.1.3: o contrato e a UI
+do ponto opcional do Caderno estao implementados e a 17H.1.1 permanece
+`APROVADA_EM_EMULADOR`, com 29/29 casos executaveis no emulador aprovados. A
+rodada em aparelho autorizado terminou `PARCIAL_ANDROID_FISICO`: release,
+abertura, logins locais e telas funcionais basicas passaram, mas o provider
+nao entregou leitura nas tres tentativas internas. A Fase 17H.2 permanece
+bloqueada.
 
 A analise parte do estado validado ate a 17G.3: localizacao foreground minima
 aprovada em emulador sobre Talhoes seed/mock e GeoJSON local ativo, acionada
@@ -18,9 +20,9 @@ Leaflet/WebView. A localizacao segue sem background, sem `TaskManager`, sem
 watch continuo, sem geofencing, sem trilha, sem rota, sem historico, sem ultimo
 ponto, sem geotag e sem coordenada no Caderno.
 
-Android fisico segue pendente e nao aprovado. O projeto usa `expo@56.0.16` e
-`expo-location@56.0.21`; `npx expo install --check` retorna
-`Dependencies are up to date`.
+A evidencia Android fisica segue parcial e nao fecha os fluxos dependentes de
+captura real. O projeto usa `expo@56.0.16` e `expo-location@56.0.21`;
+`npx expo install --check` retorna `Dependencies are up to date`.
 
 ## Objetivo Da Analise
 
@@ -596,5 +598,64 @@ limitacoes, esta em
 `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`. `17H1B-12` e `17H1B-13`
 foram consolidados respectivamente como `Passou` e `Reexecutar`; nenhum ponto
 persistido do Caderno foi aberto para visualizacao no mapa. Os 29/29 casos
-executaveis no emulador passaram, mas `17H111-30`/`17H1B-13` ainda exigem
-Android fisico autorizado.
+executaveis no emulador passaram, mas `17H111-30`/`17H1B-13` ainda exigem a
+conclusao do gate no Android fisico autorizado.
+
+## Validacao Android Fisico Da Fase 17H.1.3
+
+Status final em 2026-07-22: `PARCIAL_ANDROID_FISICO`.
+
+O APK release atual foi instalado por cima e abriu no aparelho Android fisico
+autorizado. Permissoes foreground, Caderno sem ponto, negativa de permissao,
+localizacao do sistema desligada, DocumentPicker, teclado/usabilidade e
+ausencia de background passaram. A abertura, os tres logins locais e as telas
+funcionais basicas previstas no roteiro tambem passaram.
+
+Foram feitas tres tentativas reais de leitura em ambiente interno, sem ceu
+razoavelmente visivel. Todas terminaram de forma controlada entre
+aproximadamente 38 e 53 segundos, sem leitura ou precisao informada, sem crash,
+espera infinita, draft reaproveitado ou grupo parcial. Nenhuma localizacao
+fisica foi persistida. Assim, os fluxos que exigem uma captura valida continuam
+sem evidencia fisica conclusiva.
+
+| ID | Area | Status |
+|---|---|---|
+| 17H113-01 | Aparelho fisico autorizado | Passou |
+| 17H113-02 | Instalacao release | Passou |
+| 17H113-03 | Permissoes foreground | Passou |
+| 17H113-04 | Posicao temporaria no mapa | Reexecutar |
+| 17H113-05 | Create sem ponto | Passou |
+| 17H113-06 | Create com ponto | Reexecutar |
+| 17H113-07 | Captura e cancelamento | Reexecutar |
+| 17H113-08 | Remocao antes do submit | Reexecutar |
+| 17H113-09 | Permissao negada | Passou |
+| 17H113-10 | Localizacao desligada | Passou |
+| 17H113-11 | Provider real e precisao | Reexecutar |
+| 17H113-12 | Colaborador preserve/replace/remove | Reexecutar |
+| 17H113-13 | Admin e visibilidade | Reexecutar |
+| 17H113-14 | Force-stop com ponto salvo/removido | Reexecutar |
+| 17H113-15 | GeoJSON | Passou |
+| 17H113-16 | PNG | Passou |
+| 17H113-17 | ZIP | Passou |
+| 17H113-18 | Teclado e usabilidade | Passou |
+| 17H113-19 | Ausencia de background | Passou |
+| 17H113-20 | Limpeza | Passou |
+
+Resultado: 12 de 20 casos fisicos passaram e 8 permanecem `Reexecutar`. As
+fixtures sinteticas e nao sensiveis de GeoJSON, PNG e ZIP passaram pelo fluxo
+real, persistiram apos `force-stop` e foram consultadas pelo Produtor sem acoes
+de gestao. Nenhum ponto do Caderno apareceu nesses materiais. Ao final, as
+associacoes foram removidas pelo fluxo normal do aplicativo e os arquivos
+temporarios foram apagados.
+
+A configuracao e a observacao do aparelho mantiveram a ausencia de captura
+automatica, background, tracking, watch continuo ou geofencing. Nenhum ponto
+persistido do Caderno foi desenhado no mapa. `17H111-30` e `17H1B-13`
+permanecem `Reexecutar`, enquanto a 17H.1.1 conserva o status
+`APROVADA_EM_EMULADOR` e seus 29/29 casos executaveis aprovados.
+
+Os casos `17H113-04`, `17H113-06`, `17H113-07`, `17H113-08`, `17H113-11`,
+`17H113-12`, `17H113-13` e `17H113-14` devem ser repetidos em area aberta ou
+com ceu razoavelmente visivel. A Fase 17H.2 nao pode ser aberta antes desse
+fechamento. O relato completo esta em
+`fase-17h-1-3-android-fisico-ponto-caderno.md`.
