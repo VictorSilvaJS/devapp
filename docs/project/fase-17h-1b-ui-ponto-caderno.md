@@ -214,14 +214,13 @@ Permanecem pendentes:
 
 - repetir todo o roteiro em Android fisico autorizado antes de qualquer
   aprovacao de campo;
-- executar a regressao interativa exaustiva de PNG e ZIP na rodada 17H.1.1;
 - fechar as validacoes fisicas de permissao, precisao, timeout e uso real em
   campo.
 
-A auditoria estatica cobre a ausencia de georreferenciamento em PNG, ZIP,
-GeoJSON, Visita e mapa, mas nao substitui a reabertura visual exaustiva desses
-fluxos. Nenhum ponto persistido foi desenhado no mapa. `Mostrar minha posição`
-continua transitorio e independente do Caderno. PNG e ZIP continuam nao
+A auditoria estatica e a reabertura visual minima da Fase 17H.1.2 cobrem a
+ausencia de georreferenciamento em PNG, ZIP, GeoJSON, Visita e mapa. Nenhum
+ponto persistido foi desenhado no mapa. `Mostrar minha posição` continua
+transitorio e independente do Caderno. PNG e ZIP continuam nao
 georreferenciados.
 
 | ID | Area | Criterio | Status |
@@ -237,12 +236,12 @@ georreferenciados.
 | 17H1B-09 | Edit remove/desfazer | Remocao fica pendente, pode ser desfeita e persiste so ao salvar | Passou |
 | 17H1B-10 | Detalhe e selo | Ponto valido aparece sem expor id cru ou coordenadas no card | Passou |
 | 17H1B-11 | Auditoria | Sem chave nova, background, tracking, trilha ou historico | Passou |
-| 17H1B-12 | Regressao PNG/ZIP/mapa | Auditoria estatica passou; regressao interativa exaustiva pendente | Reexecutar |
+| 17H1B-12 | Regressao PNG/ZIP/mapa | Caderno com ponto preservou selo/secao; mapa, PNG e ZIP foram reabertos sem ponto persistido fora do Caderno | Passou |
 | 17H1B-13 | Android fisico | Repetir permissao, captura, precisao e persistencia em aparelho autorizado | Reexecutar |
 
 ## Revalidacao De Seguranca Na Fase 17H.1.1
 
-Status em 2026-07-21: `PARCIAL_EM_EMULADOR`.
+Status em 2026-07-22: `APROVADA_EM_EMULADOR`.
 
 A rodada 17H.1.1 ampliou a evidencia interativa de seguranca da UI desta fase.
 Passaram captura seguida de cancelamento, remocao antes do primeiro submit,
@@ -259,11 +258,17 @@ GeoJSON/Talhoes, PNG, Material tecnico e Visitas foram reabertos sem ponto ou
 campos do Caderno. A auditoria estatica permaneceu limpa para chaves,
 background, tracking, objeto bruto do provider e contaminacao entre dominios.
 
-O item `17H1B-12` permanece `Reexecutar`, porque o snapshot atual nao tinha ZIP
-local e nao existe fixture ZIP valida no repositorio nem em `Download`; as
-suites focadas de ZIP passaram, mas a evidencia visual da 17G.3 foi mantida
-somente como historica. `17H1B-13` tambem permanece `Reexecutar`, pois apenas
-`emulator-5554` estava disponivel e Android fisico continua nao aprovado.
+O fechamento 17H.1.2 criou uma fixture ZIP valida de 286 B fora do repositorio,
+selecionou-a pelo DocumentPicker e importou-a como Prescricao da Propriedade.
+O detalhe mostrou somente metadados e a mensagem de pacote local, sem preview,
+descompactacao, processamento ou localizacao. Item e associacao reapareceram
+apos `force-stop`; o Produtor consultou o mesmo detalhe sem acoes de anexar,
+substituir ou remover. Caderno com ponto, mapa, PNG e ZIP foram reabertos e
+confirmaram a segregacao visual.
+
+Assim, `17H1B-12` passou e os 29/29 casos executaveis no emulador estao
+aprovados. `17H1B-13` permanece `Reexecutar`, pois apenas `emulator-5554`
+estava disponivel e Android fisico continua nao aprovado.
 
 O relato e o checklist 17H111-01 a 17H111-30 estao em
 `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.

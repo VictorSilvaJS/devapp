@@ -1,6 +1,6 @@
 # Fase 17H.1.1 - Smoke De Seguranca, Cancelamento E Regressao Do Ponto Opcional No Caderno
 
-Status em 2026-07-21: `PARCIAL_EM_EMULADOR`.
+Status em 2026-07-22: `APROVADA_EM_EMULADOR`.
 
 A rodada confirmou em emulador que a localizacao opcional somente persiste
 depois de acao explicita e submit do Caderno. Cancelamento, remocao antes do
@@ -8,13 +8,13 @@ primeiro submit, `replace` cancelado e `remove` cancelado nao alteraram o
 registro persistido. Permissao negada, GPS desligado e timeout do provider
 foram recuperaveis e nao impediram salvar um Caderno comum sem ponto.
 
-O status permanece parcial por uma limitacao concreta da evidencia atual:
-`17H111-26` nao pôde ser reexecutado visualmente porque o snapshot nao tinha
-ZIP local e nao existe fixture ZIP valida no repositorio nem em `Download`.
-As suites automatizadas de Prescricao ZIP passaram. A abertura de ZIP da
-17G.3 e apenas evidencia historica e nao foi promovida a smoke desta rodada.
-`17H111-30` tambem permanece `Reexecutar`: somente `emulator-5554` estava
-disponivel e Android fisico segue pendente e nao aprovado.
+O fechamento complementar da Fase 17H.1.2 reexecutou a lacuna visual com um
+ZIP temporario valido, criado fora do repositorio e selecionado pelo
+DocumentPicker real. Importacao, detalhe, `force-stop`, reabertura, consulta do
+Produtor e regressao de Caderno/mapa/PNG/ZIP passaram. Assim, os 29/29 casos
+executaveis no emulador estao aprovados. `17H111-30` permanece `Reexecutar`:
+somente `emulator-5554` estava disponivel e Android fisico segue pendente e
+nao aprovado.
 
 Nenhuma funcionalidade nova, patch de codigo ou teste foi criado nesta fase.
 O objetivo foi exclusivamente exercitar seguranca, cancelamento, persistencia,
@@ -56,8 +56,9 @@ Passaram:
 - `git diff --check`.
 
 As suites de ZIP comprovam contrato, picker, importacao, storage, associacao e
-compatibilidade sem processar ou descompactar o pacote. Elas nao substituem a
-reabertura visual que ficou sem fixture nesta sessao.
+compatibilidade sem processar ou descompactar o pacote. Na Fase 17H.1.2, essa
+cobertura foi complementada pela reabertura visual real com fixture temporaria
+valida.
 
 ## Build E Instalacao
 
@@ -73,6 +74,40 @@ APK gerado em 2026-07-21 14:29:03, horario local:
 - tamanho: 91.922.508 bytes;
 - SHA-256:
   `3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`.
+
+## Fechamento Visual Do ZIP Na Fase 17H.1.2
+
+Em 2026-07-22, a unica lacuna executavel no emulador foi fechada no mesmo
+`emulator-5554`, preservando o estado local:
+
+- a fixture `prescricao_smoke_17h112.zip` foi criada com `Compress-Archive` em
+  `%LOCALAPPDATA%\Temp\tche-17h112-zip`, fora do repositorio;
+- o ZIP tinha 286 bytes, assinatura `PK`, uma unica entrada textual ficticia e
+  SHA-256
+  `DFD247D617505FC34AE6D621FF98743B21B3C779B95919E9992122BCBBD3E27D`;
+- o arquivo foi enviado para `Download`, selecionado pelo DocumentPicker real
+  e importado como `prescricao smoke 17h112`, camada `Prescrição`, ano `2026`,
+  escopo `Propriedade inteira` e visivel ao Produtor;
+- a listagem e o detalhe mostraram nome original, 286 B e formato ZIP, com o
+  aviso de que abertura ou processamento nao fazem parte do MVP, sem preview,
+  descompactacao, coordenada ou acao de Caderno;
+- depois de `force-stop`, sessao, item, metadados e associacao local
+  reapareceram;
+- o Produtor consultou o mesmo item e detalhe, sem `Anexar prescrição ZIP`,
+  `Substituir ZIP` ou `Remover prescrição local`;
+- o registro liberado do Caderno manteve selo `Com ponto geográfico` e secao
+  `Ponto registrado em campo`, enquanto mapa de 15 Talhoes, PNG local e ZIP
+  permaneceram sem ponto persistido do Caderno;
+- a auditoria confirmou chaves separadas, ausencia de `localizacao_*` no fluxo
+  ZIP/mapa e ausencia de leitura binaria, preview ou descompactacao do pacote;
+- a fixture externa foi removida do `Download` e do diretorio temporario ao
+  final; nenhum ZIP foi adicionado ao repositorio.
+
+Nao houve rebuild nem reinstalacao nesta complementacao. O `base.apk`
+instalado foi comparado ao release atual e tinha os mesmos 91.922.508 bytes e
+o mesmo SHA-256 documentado acima, portanto o APK existente foi reutilizado.
+`npm run typecheck`, `npm run test:domain-compat`, suites focadas de ZIP/PNG/
+GeoJSON/Caderno, `npx expo install --check` e `git diff --check` passaram.
 
 ## Registros E Evidencias
 
@@ -125,7 +160,7 @@ exata nem pertencimento automatico a qualquer Talhao.
 | 17H111-23 | Posicao temporaria do mapa | Passou | Mapa mostrou posicao de 18 m/01:57 somente em runtime; apos force-stop nao restaurou marcador, nao criou Caderno e novo formulario abriu limpo |
 | 17H111-24 | GeoJSON/Talhoes | Passou | `limites_talhoes.geojson` reanexado pelo picker; 15 Talhoes/37 partes, `GEOJSON LOCAL` e `T01` clicavel, sem pontos do Caderno ou point-in-polygon |
 | 17H111-25 | PNG | Passou | Asset existente `ph_10a20.png` foi usado como fixture em `Download`; `smoke_ph_10a20.png` e PNG base abriram sem ponto, coordenada ou controle de localizacao |
-| 17H111-26 | ZIP de Prescricao | Reexecutar | Nao havia ZIP local e nao existe fixture ZIP valida no repositorio/`Download`; suites passaram; evidencia visual da 17G.3 permanece apenas historica |
+| 17H111-26 | ZIP de Prescricao | Passou | Fixture temporaria valida de 286 B foi selecionada pelo picker, importada e reaberta apos `force-stop`; Admin e Produtor viram somente metadados/detalhe, sem preview, unzip, processamento ou localizacao |
 | 17H111-27 | Material tecnico | Passou | Filtros Fertilidade, Correcao de solo e Prescricao funcionaram sem secao, marcador ou acao de ponto do Caderno |
 | 17H111-28 | Visitas | Passou | Nova Visita sem Camera/Galeria/localizacao; registro antigo mostrou `Imagens do registro (2)`, `Imagem demonstrativa` e `Exemplo visual do registro`, sem geotag |
 | 17H111-29 | Auditoria sem chave/tracking | Passou | Sem chave nova, objeto bruto persistido, background, tracking, watch, trilha, historico ou `localizacao_*` fora do Caderno |
@@ -159,11 +194,12 @@ Por perfil:
   botao de localizacao.
 - Material tecnico preservou os tres filtros e nao ganhou UI do ponto.
 - Visita permaneceu sem captura real, geotag ou campos do Caderno.
-- As suites de ZIP passaram como cobertura complementar, mas a abertura visual
-  atual ficou `Reexecutar` pela ausencia de fixture valida.
+- O ZIP temporario valido foi importado e reaberto como detalhe de pacote,
+  inclusive depois de `force-stop` e como Produtor, sem preview, processamento,
+  descompactacao ou ponto do Caderno.
 
-Por isso, `17H1B-12` continua `Reexecutar`: a regressao interativa atual nao
-foi completa. `17H1B-13` tambem continua `Reexecutar` ate aparelho fisico.
+Assim, `17H1B-12` passou. `17H1B-13` continua `Reexecutar` ate aparelho fisico
+autorizado.
 
 ## Auditoria Tecnica
 
@@ -215,8 +251,6 @@ decisao nova nesta rodada.
 
 ## Pendencias Para A Proxima Etapa
 
-- reexecutar `17H111-26` quando houver ZIP de Prescricao local ou fixture ZIP
-  valida, sem fabricar arquivo invalido nem promover evidencia historica;
 - repetir `17H111-01` a `17H111-29`, conforme aplicavel, em Android fisico
   autorizado antes de qualquer aprovacao de campo;
 - validar precisao, permissionamento e comportamento do provider em condicao

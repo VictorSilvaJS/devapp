@@ -3908,18 +3908,19 @@ marcador persistido no mapa. `Mostrar minha posição` continua transitorio.
 Auditoria estatica confirmou Visita, PNG, ZIP, GeoJSON e mapa sem
 `localizacao_*`.
 
-Android fisico e a regressao interativa exaustiva de PNG/ZIP continuam
-pendentes e nao aprovados. O relato completo esta em
+Android fisico continua pendente e nao aprovado. A regressao visual minima de
+PNG/ZIP/mapa foi fechada na 17H.1.2. O relato completo esta em
 `fase-17h-1b-ui-ponto-caderno.md`.
 
 ## Fase 17H.1.1 - Smoke De Seguranca E Regressao Do Ponto Opcional
 
-Status em 2026-07-21: `PARCIAL_EM_EMULADOR`. A rodada de evidencia nao alterou
-codigo, contratos, dependencias, mocks, seeds ou assets. Typecheck, suite
+Status em 2026-07-22: `APROVADA_EM_EMULADOR`. A rodada original e o fechamento
+visual 17H.1.2 nao alteraram codigo, contratos, dependencias, mocks, seeds ou
+assets. Os 29/29 casos executaveis no emulador passaram. Typecheck, suite
 completa, testes focados de Caderno/acesso/validators/periodo/Talhao e suites
-de GeoJSON, PNG, ZIP e Visita passaram. `expo install --check` permaneceu
-limpo. Build release, instalacao por cima e `monkey` tambem passaram no Pixel
-Tablet, Android 15/API 35.
+de GeoJSON, PNG, ZIP e Visita passaram; `expo install --check` permaneceu
+limpo. Na rodada original, build release, instalacao por cima e `monkey`
+passaram no Pixel Tablet, Android 15/API 35.
 
 O smoke confirmou:
 
@@ -3939,27 +3940,31 @@ O smoke confirmou:
   Novo Caderno e sem restauracao depois de force-stop;
 - GeoJSON local com 15 Talhoes/37 partes, PNG base/local, filtros de Material
   tecnico e Visitas sem ponto, coordenada ou geotag do Caderno;
+- ZIP temporario valido selecionado pelo DocumentPicker, importado e reaberto
+  depois de `force-stop`, inclusive como Produtor, somente com metadados e sem
+  preview, descompactacao, processamento ou localizacao;
 - auditoria sem chave nova, objeto bruto persistido, background, tracking,
   watch, trilha, historico ou `localizacao_*` fora do Caderno.
 
-O resultado nao e `APROVADA_EM_EMULADOR` porque a reabertura visual do ZIP de
-Prescricao nao pôde ser repetida: o snapshot nao possuia ZIP local e nao
-existe fixture ZIP valida no repositorio nem em `Download`. As suites de ZIP
-passaram; a evidencia visual anterior da 17G.3 permanece apenas historica.
-Assim, `17H111-26` e `17H1B-12` ficam `Reexecutar`. `17H111-30` e `17H1B-13`
-tambem ficam `Reexecutar`, pois somente `emulator-5554` estava disponivel e
-Android fisico continua pendente e nao aprovado.
+Na 17H.1.2, a fixture `prescricao_smoke_17h112.zip` foi criada fora do
+repositorio com 286 B, copiada para `Download` e importada no fluxo real. O
+detalhe e a associacao local persistiram apos `force-stop`; o Produtor viu o
+item sem acoes de gestao. Mapa, PNG e ZIP permaneceram sem ponto do Caderno, e
+a fixture externa foi removida ao final. Assim, `17H111-26` e `17H1B-12`
+passaram. `17H111-30` e `17H1B-13` ficam `Reexecutar`, pois somente
+`emulator-5554` estava disponivel e Android fisico continua pendente e nao
+aprovado.
 
-O APK mantem 91.922.508 bytes e SHA-256
-`3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`.
+Nao houve rebuild ou reinstalacao na 17H.1.2. O APK local e o `base.apk`
+instalado tinham os mesmos 91.922.508 bytes e SHA-256
+`3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`,
+portanto o release existente foi reutilizado.
 O relato completo esta em
 `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
 
 ## Proximo Passo Recomendado
 
-Reexecutar somente a lacuna visual do ZIP de Prescricao quando houver fixture
-valida, sem fabricar pacote nem promover evidencia historica. Depois, repetir
-o roteiro aplicavel do ponto opcional em Android fisico autorizado antes de
-qualquer declaracao de aptidao para campo ou abertura da visualizacao de pontos
-persistidos no mapa. A origem produtiva de perimetro, fotos reais e os avisos
-remanescentes do Expo Doctor permanecem em trilhas proprias.
+Repetir o roteiro aplicavel do ponto opcional em Android fisico autorizado
+antes de qualquer declaracao de aptidao para campo ou abertura da visualizacao
+de pontos persistidos no mapa. A origem produtiva de perimetro, fotos reais e
+os avisos remanescentes do Expo Doctor permanecem em trilhas proprias.

@@ -340,22 +340,20 @@ persistida passaram com GPS simulado; o provider foi restaurado ao final.
 Nenhuma captura automatica, chave nova, background, tracking, trilha,
 historico, point-in-polygon ou ponto persistido no mapa foi criado.
 
-Status em 2026-07-21 (Fase 17H.1.1): o smoke de seguranca confirmou em
-emulador cancelamento sem persistencia, remocao antes do primeiro submit,
-falhas recuperaveis de permissao/GPS/provider, protecao de concorrencia,
-troca de Propriedade/Talhao, semanticas completas de `preserve`/`replace`/
-`remove`, force-stop e regras dos tres perfis. GeoJSON/Talhoes, PNG, Material
-tecnico e Visitas foram reabertos sem localizacao do Caderno; a auditoria
+Status em 2026-07-22 (Fases 17H.1.1/17H.1.2): o smoke de seguranca tem status
+`APROVADA_EM_EMULADOR`, com 29 de 29 casos executaveis no emulador aprovados.
+Cancelamento sem persistencia, remocao antes do primeiro submit, falhas
+recuperaveis de permissao/GPS/provider, protecao de concorrencia, troca de
+Propriedade/Talhao, semanticas completas de `preserve`/`replace`/`remove`,
+force-stop e regras dos tres perfis passaram. GeoJSON/Talhoes, PNG, Material
+tecnico, ZIP e Visitas foram reabertos sem localizacao do Caderno; a auditoria
 permaneceu limpa para storage, background/tracking e contaminacao entre
-dominios. O status da rodada e `PARCIAL_EM_EMULADOR`, porque nao havia ZIP
-local nem fixture ZIP valida no repositorio/`Download` para repetir a abertura
-visual. As suites de ZIP passaram; a evidencia visual da 17G.3 permanece
-somente historica.
+dominios. A lacuna do ZIP foi fechada com fixture valida de 286 B criada fora
+do repositorio, importada pelo picker real, reaberta apos `force-stop` e
+consultada pelo Produtor sem acoes de gestao.
 
 Pontos que continuam pendentes para evidencia:
 
-- reexecutar visualmente o ZIP de Prescricao quando houver ZIP local ou
-  fixture valida; ate la, `17H111-26` e `17H1B-12` ficam `Reexecutar`;
 - repetir permissao, captura, timeout, precisao, create/edit/remove e
   persistencia em Android fisico autorizado;
 - validar precisao e comportamento do provider em condicao real de campo.
@@ -414,18 +412,16 @@ remove apenas ao salvar; detalhe e selo reconhecem somente grupo valido. A
 auditoria confirmou ausencia de chave nova, captura automatica,
 background/tracking e `localizacao_*` em Visita, PNG, ZIP, GeoJSON ou mapa.
 
-Status em 2026-07-21 (Fase 17H.1.1): 28 dos 30 casos passaram em emulador.
-`17H111-26` ficou `Reexecutar` por ausencia de ZIP local/fixture valida, sem
-promover a evidencia historica da 17G.3, e `17H111-30` ficou `Reexecutar` por
-ausencia de Android fisico. A rodada confirmou que cancelamento nao persiste,
-localizacao somente persiste no submit, `Mostrar minha posição` continua
-transitorio, ponto removido nao reaparece e registro interno com ponto nao
-vaza ao Produtor.
+Status em 2026-07-22 (Fases 17H.1.1/17H.1.2): 29 de 29 casos executaveis no
+emulador passaram. `17H111-26` passou com fixture ZIP temporaria valida,
+DocumentPicker, detalhe, `force-stop`, Produtor e regressao sem localizacao fora
+do Caderno. `17H111-30` permanece `Reexecutar` por ausencia de Android fisico.
+A rodada confirmou que cancelamento nao persiste, localizacao somente persiste
+no submit, `Mostrar minha posição` continua transitorio, ponto removido nao
+reaparece e registro interno com ponto nao vaza ao Produtor.
 
 Pendencias P1 antes de declarar APK apto a campo:
 
-- reexecutar a abertura visual do ZIP de Prescricao com fixture valida e
-  concluir `17H111-26`/`17H1B-12`;
 - executar smoke completo em Android fisico autorizado.
 
 Pendencias P2/futuras:
@@ -441,7 +437,6 @@ Pendencias P2/futuras:
 
 Implementacoes mantidas como pendentes, sem ambiguidade decisoria:
 
-- reexecutar somente a lacuna visual atual do ZIP de Prescricao;
 - validar o ponto opcional em Android fisico autorizado;
 - implementar foto real apenas em fase propria;
 - implementar backend/processamento externo quando essa trilha for aberta.
@@ -451,8 +446,8 @@ Classificacao atual relevante:
 - contrato do ponto opcional no Caderno:
   `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - UI/captura do ponto opcional: `IMPLEMENTADO_VALIDADO_EMULADOR`;
-- smoke de seguranca/regressao 17H.1.1: `PARCIAL_EM_EMULADOR`, com ZIP visual
-  e Android fisico em `Reexecutar`;
+- smoke de seguranca/regressao 17H.1.1: `APROVADA_EM_EMULADOR`, com 29/29
+  casos executaveis aprovados e somente Android fisico em `Reexecutar`;
 - area/perimetro: `PARCIAL`;
 - semantica de area: `IMPLEMENTADO_VALIDADO_EMULADOR`;
 - perimetro: `NAO_DISPONIVEL_NO_PIPELINE_ATUAL`, com obtencao produtiva

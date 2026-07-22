@@ -5,11 +5,11 @@ implementacao futura de marcacoes de campo vinculadas ao Caderno. Nenhuma
 marcacao foi implementada, nenhum storage novo foi criado, nenhuma chave
 `@tche:` nova foi criada e nenhuma coordenada foi salva nesta fase.
 
-Estado corrente em 2026-07-21, depois da 17H.1.1: o contrato e a UI do ponto
-opcional do Caderno estao implementados e validados em emulador. O smoke de
-seguranca/regressao esta `PARCIAL_EM_EMULADOR` apenas porque a abertura visual
-do ZIP de Prescricao nao teve fixture valida nesta sessao. Android fisico
-continua pendente e nao aprovado.
+Estado corrente em 2026-07-22, depois do fechamento 17H.1.2: o contrato e a UI
+do ponto opcional do Caderno estao implementados e a 17H.1.1 esta
+`APROVADA_EM_EMULADOR`. Os 29/29 casos executaveis no emulador passaram,
+incluindo a abertura visual do ZIP de Prescricao. Android fisico continua
+pendente e nao aprovado.
 
 A analise parte do estado validado ate a 17G.3: localizacao foreground minima
 aprovada em emulador sobre Talhoes seed/mock e GeoJSON local ativo, acionada
@@ -18,9 +18,9 @@ Leaflet/WebView. A localizacao segue sem background, sem `TaskManager`, sem
 watch continuo, sem geofencing, sem trilha, sem rota, sem historico, sem ultimo
 ponto, sem geotag e sem coordenada no Caderno.
 
-Android fisico segue pendente e nao aprovado. A divergencia conhecida
-`expo@56.0.11` versus esperado `~56.0.15` segue aceita temporariamente e nao
-deve ser corrigida nesta frente.
+Android fisico segue pendente e nao aprovado. O projeto usa `expo@56.0.16` e
+`expo-location@56.0.21`; `npx expo install --check` retorna
+`Dependencies are up to date`.
 
 ## Objetivo Da Analise
 
@@ -516,8 +516,8 @@ O relato completo esta em `fase-17h-1b-ui-ponto-caderno.md`.
 Nao foi criada chave `@tche:`, storage separado, captura automatica,
 background, tracking, watch, trilha, rota, historico, geofencing ou marcador
 persistido no mapa. Auditoria estatica confirmou Visita, PNG, ZIP, GeoJSON e
-mapa sem `localizacao_*`. Android fisico e a regressao interativa exaustiva de
-PNG/ZIP continuam pendentes.
+mapa sem `localizacao_*`. A regressao visual minima de PNG/ZIP/mapa passou na
+17H.1.2; Android fisico continua pendente.
 
 | ID | Area | Criterio | Status |
 |---|---|---|---|
@@ -532,12 +532,12 @@ PNG/ZIP continuam pendentes.
 | 17H1B-09 | Edit remove/desfazer | Remocao pendente, desfazer e persistencia no submit | Passou |
 | 17H1B-10 | Detalhe e selo | Detalhe seguro e selo somente para ponto valido | Passou |
 | 17H1B-11 | Auditoria | Sem chave nova, background ou tracking | Passou |
-| 17H1B-12 | Regressao PNG/ZIP/mapa | Auditoria estatica passou; smoke exaustivo deve ser repetido | Reexecutar |
+| 17H1B-12 | Regressao PNG/ZIP/mapa | Auditoria e reabertura visual minima confirmaram ponto somente no Caderno | Passou |
 | 17H1B-13 | Android fisico | Repetir o roteiro em aparelho autorizado | Reexecutar |
 
 ## Smoke De Seguranca E Regressao Da Fase 17H.1.1
 
-Status em 2026-07-21: `PARCIAL_EM_EMULADOR`.
+Status em 2026-07-22: `APROVADA_EM_EMULADOR`.
 
 A 17H.1.1 nao abriu funcionalidade nova. Ela confirmou que draft, substituicao
 e remocao permanecem transitorios ate o submit; cancelamentos nao alteram o
@@ -550,11 +550,13 @@ Admin permaneceu invisivel. A localizacao temporaria do mapa nao entrou no
 Caderno. GeoJSON/Talhoes, PNG, Material tecnico e Visitas permaneceram sem
 localizacao do Caderno.
 
-O fechamento em emulador ficou parcial exclusivamente pela ausencia de uma
-fixture ZIP valida para reexecutar visualmente `17H111-26`. Nao havia ZIP local
-no snapshot, repositorio ou `Download`; as suites focadas passaram e a
-evidencia visual da 17G.3 continua classificada somente como historica. Android
-fisico tambem nao estava conectado e permanece nao aprovado.
+O fechamento 17H.1.2 criou fora do repositorio uma fixture ZIP valida de 286 B,
+selecionou-a pelo DocumentPicker, importou-a como Prescricao e abriu o detalhe
+sem preview, descompactacao, processamento ou localizacao. Item e metadados
+reapareceram apos `force-stop`; o Produtor consultou o pacote sem acoes de
+gestao. Mapa, PNG e ZIP permaneceram sem pontos persistidos, enquanto o ponto
+do Caderno continuou no selo e detalhe proprios. Android fisico nao estava
+conectado e permanece nao aprovado.
 
 | ID | Area | Status |
 |---|---|---|
@@ -583,7 +585,7 @@ fisico tambem nao estava conectado e permanece nao aprovado.
 | 17H111-23 | Posicao temporaria do mapa | Passou |
 | 17H111-24 | GeoJSON/Talhoes | Passou |
 | 17H111-25 | PNG | Passou |
-| 17H111-26 | ZIP de Prescricao | Reexecutar |
+| 17H111-26 | ZIP de Prescricao | Passou |
 | 17H111-27 | Material tecnico | Passou |
 | 17H111-28 | Visitas | Passou |
 | 17H111-29 | Auditoria sem chave/tracking | Passou |
@@ -592,5 +594,7 @@ fisico tambem nao estava conectado e permanece nao aprovado.
 O relato detalhado, com ambiente, registros, valores, force-stop, comandos e
 limitacoes, esta em
 `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`. `17H1B-12` e `17H1B-13`
-continuam `Reexecutar`; nenhum ponto persistido do Caderno foi aberto para
-visualizacao no mapa.
+foram consolidados respectivamente como `Passou` e `Reexecutar`; nenhum ponto
+persistido do Caderno foi aberto para visualizacao no mapa. Os 29/29 casos
+executaveis no emulador passaram, mas `17H111-30`/`17H1B-13` ainda exigem
+Android fisico autorizado.

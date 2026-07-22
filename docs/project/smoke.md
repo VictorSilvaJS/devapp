@@ -22,16 +22,18 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 
 **Rodada Fase 17H.1.1 - Smoke De Seguranca, Cancelamento E Regressao Do Ponto Opcional No Caderno**
 
-Status geral em 2026-07-21: `PARCIAL_EM_EMULADOR`. Rodada executada no
+Status geral em 2026-07-22: `APROVADA_EM_EMULADOR`. Rodada executada no
 `emulator-5554`, Pixel Tablet, Android 15/API 35, preservando sessao e estado
 local. Nao foram usados `pm clear`, desinstalacao, `Wipe Data` ou restauracao
 do seed. Typecheck, suite completa, testes focados, build release, instalacao
-por cima e `monkey` passaram. Android fisico continua pendente e nao aprovado.
+por cima e `monkey` passaram na rodada original.
 
-A abertura visual do ZIP nao pôde ser repetida: o snapshot nao tinha ZIP
-local e nao existe fixture ZIP valida no repositorio nem em `Download`. As
-suites focadas passaram, mas a evidencia da 17G.3 permanece somente historica.
-Por isso `17H111-26` e `17H1B-12` ficam `Reexecutar`.
+O complemento 17H.1.2 fechou a abertura visual do ZIP com fixture valida de
+286 B criada fora do repositorio, importada pelo DocumentPicker e removida ao
+final. Detalhe, `force-stop`, Produtor e regressao Caderno/mapa/PNG/ZIP
+passaram, sem preview, descompactacao, processamento ou localizacao fora do
+Caderno. Assim, os 29/29 casos executaveis no emulador passaram. Android fisico
+continua pendente e nao aprovado.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
@@ -60,7 +62,7 @@ Por isso `17H111-26` e `17H1B-12` ficam `Reexecutar`.
 | 17H111-23 | P0 | Todos | Posicao do mapa | Mostrar posicao, sair e executar force-stop | Marcador somente transitorio e sem Caderno | Passou | 18 m/01:57 no mapa; nao restaurou marcador nem preencheu Novo Caderno |
 | 17H111-24 | P0 | Admin/Produtor | GeoJSON/Talhoes | Reanexar fixture existente e abrir mapa | Talhoes clicaveis sem pontos do Caderno | Passou | `limites_talhoes.geojson`, 15 Talhoes/37 partes, `GEOJSON LOCAL`, T01 clicavel |
 | 17H111-25 | P0 | Admin/Colaborador | PNG | Importar/abrir PNG local e base | Sem marcador, coordenada ou controle de ponto | Passou | Asset `ph_10a20.png` copiado para `Download`; `smoke_ph_10a20.png` e base abriram |
-| 17H111-26 | P0 | Admin/Colaborador | ZIP de Prescricao | Abrir ZIP local valido e detalhe | Pacote sem preview, unzip, processamento ou localizacao | Reexecutar | Sem ZIP local/fixture valida nesta sessao; suites passaram; 17G.3 permanece historica |
+| 17H111-26 | P0 | Admin/Colaborador | ZIP de Prescricao | Abrir ZIP local valido e detalhe | Pacote sem preview, unzip, processamento ou localizacao | Passou | Fixture temporaria de 286 B passou pelo picker/importacao, persistiu apos `force-stop` e foi consultada pelo Produtor somente como detalhe/metadados |
 | 17H111-27 | P0 | Todos | Material tecnico | Conferir tres filtros e detalhes | Nenhuma UI ou marcador do ponto | Passou | Fertilidade, Correcao de solo e Prescricao funcionaram sem localizacao |
 | 17H111-28 | P0 | Todos | Visitas | Abrir Nova e registro demonstrativo | Sem Camera/Galeria, geotag ou campos do Caderno | Passou | `Imagens do registro (2)`, `Imagem demonstrativa` e `Exemplo visual do registro` preservados |
 | 17H111-29 | P0 | Todos | Auditoria | Buscar chaves, APIs e contaminacao | Sem storage novo, tracking/background ou localizacao fora do Caderno | Passou | Seis campos somente no Caderno; mapa temporario; nenhuma ocorrencia em PNG/ZIP/GeoJSON/Visita |
@@ -71,14 +73,17 @@ Build desta rodada: APK de 91.922.508 bytes, SHA-256
 `:app:assembleRelease`, `adb install -r` e `monkey` passaram. Relato completo
 em `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
 
+Na 17H.1.2 nao houve novo build ou instalacao: o `base.apk` instalado foi
+comparado ao release atual, com mesmo tamanho e SHA-256, e reutilizado.
+
 **Rodada Fase 17H.1B - UI, Captura Foreground E Persistencia Explicita Do Ponto No Caderno**
 
 Observacao geral em 2026-07-21: rodada executada no AVD Pixel Tablet,
 Android 15/API 35, com APK release instalado por cima. O fluxo foi exercitado
 com provider indisponivel/timeout e depois com GPS simulado, incluindo leitura
 de baixa precisao. O provider simulado foi restaurado ao final. Nao foram
-usados `pm clear`, desinstalacao ou `Wipe Data`. Android fisico e a regressao
-interativa exaustiva de PNG/ZIP continuam pendentes e nao aprovados.
+usados `pm clear`, desinstalacao ou `Wipe Data`. A regressao visual minima de
+PNG/ZIP/mapa passou na 17H.1.2; Android fisico continua pendente e nao aprovado.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
@@ -93,7 +98,7 @@ interativa exaustiva de PNG/ZIP continuam pendentes e nao aprovados.
 | 17H1B-09 | P0 | Admin | Edit remove/desfazer | Marcar remocao, desfazer, marcar novamente e salvar | Desfazer restaura `preserve`; remocao persiste somente no submit | Passou | Detalhe e selo desapareceram depois da remocao salva |
 | 17H1B-10 | P0 | Admin | Detalhe e selo | Abrir detalhe e cards com ponto valido | Mostrar coordenadas/nome no detalhe e apenas selo nos cards | Passou | Nome foi resolvido sem exibir id tecnico cru; cards nao mostraram coordenadas |
 | 17H1B-11 | P0 | Todos | Auditoria | Buscar storage, chaves, tracking e shapes proibidos | Sem chave nova, background, tracking, trilha, historico ou campos extras | Passou | Localizacao entra somente no submit do Caderno |
-| 17H1B-12 | P0 | Todos | Regressao PNG/ZIP/mapa | Auditar e reabrir todos os materiais/mapa | Nenhum `localizacao_*` ou ponto persistido fora do Caderno | Reexecutar | 17H.1.1 reabriu mapa/GeoJSON, PNG, Material e Visita; ZIP visual ficou sem fixture valida e permanece pendente |
+| 17H1B-12 | P0 | Todos | Regressao PNG/ZIP/mapa | Auditar e reabrir todos os materiais/mapa | Nenhum `localizacao_*` ou ponto persistido fora do Caderno | Passou | Caderno liberado manteve selo/secao de ponto; mapa de 15 Talhoes, PNG local e ZIP real foram reabertos sem ponto persistido fora do Caderno |
 | 17H1B-13 | P0 | Todos | Android fisico | Repetir permissao, captura, precisao, submit e edicao em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
 
 Build desta rodada: `:app:assembleRelease`, `adb install -r` e `monkey`
