@@ -20,6 +20,57 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada Fase 17H.1.1 - Smoke De Seguranca, Cancelamento E Regressao Do Ponto Opcional No Caderno**
+
+Status geral em 2026-07-21: `PARCIAL_EM_EMULADOR`. Rodada executada no
+`emulator-5554`, Pixel Tablet, Android 15/API 35, preservando sessao e estado
+local. Nao foram usados `pm clear`, desinstalacao, `Wipe Data` ou restauracao
+do seed. Typecheck, suite completa, testes focados, build release, instalacao
+por cima e `monkey` passaram. Android fisico continua pendente e nao aprovado.
+
+A abertura visual do ZIP nao pôde ser repetida: o snapshot nao tinha ZIP
+local e nao existe fixture ZIP valida no repositorio nem em `Download`. As
+suites focadas passaram, mas a evidencia da 17G.3 permanece somente historica.
+Por isso `17H111-26` e `17H1B-12` ficam `Reexecutar`.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| 17H111-01 | P0 | Produtor | Create sem ponto | Criar pelo `T01 - 230` sem tocar em localizacao | Registro sem seis campos, secao ou selo | Passou | `17H111-SEM-PONTO-20260721`; Propriedade/Talhao preservados e sem Editar/Remover |
+| 17H111-02 | P0 | Produtor | Create com ponto | Capturar e salvar | Ponto aparece somente depois do submit | Passou | `17H111-COM-PONTO-20260721`; `-9,87`/`-56,09`, 15 m, 01:25, autoria Produtor e selo |
+| 17H111-03 | P0 | Produtor/Admin | Cancelamento | Capturar e cancelar sem salvar | Nenhum registro, selo ou draft reaproveitado | Passou | `17H111-CANCELADO-20260721` nao gerou id e Novo Caderno reabriu limpo |
+| 17H111-04 | P0 | Produtor/Admin | Remocao pre-submit | Capturar, remover e salvar | Caderno termina sem ponto | Passou | `17H111-REMOVIDO-ANTES-SALVAR-20260721` sem secao, selo ou campos |
+| 17H111-05 | P0 | Produtor/Admin | Permissao negada | Negar permissao e salvar Caderno comum | Mensagem controlada e nenhum ponto | Passou | `17H111-PERMISSAO-NEGADA-20260721` salvo sem ponto; permissao restaurada |
+| 17H111-06 | P0 | Produtor/Admin | GPS desligado | Desligar localizacao, capturar e salvar | Orientacao controlada e nenhum ponto | Passou | `17H111-GPS-DESLIGADO-20260721` salvo sem ponto; GPS restaurado |
+| 17H111-07 | P0 | Produtor/Admin | Provider/timeout | Deixar provider sem leitura | Sair de espera em ate 15 s e liberar submit | Passou | Timeout real mostrou erro recuperavel, sem crash, loop ou grupo parcial |
+| 17H111-08 | P0 | Produtor/Admin | Concorrencia | Duplo toque e saida durante leitura | Uma operacao; nenhuma resposta tardia aplicada | Passou | Sem segunda operacao, crash, alerta, draft ou registro |
+| 17H111-09 | P1 | Produtor/Admin | Baixa precisao | Fornecer leitura de 100 m | Aviso sem alterar valor ou bloquear submit | Passou | 100 m exibidos integralmente, sem afirmacao de posicao exata |
+| 17H111-10 | P0 | Admin | Troca de Propriedade | Capturar em Boa Vista e trocar para Horizonte | Remover draft e nao reaproveitar ao voltar | Passou | Aviso de remocao exibido; nenhum campo tecnico auxiliar no payload |
+| 17H111-11 | P0 | Admin | Troca de Talhao | Capturar no T01 e selecionar T02 | Coordenada permanece sem inferencia geografica | Passou | Leitura/horario preservados e aviso sem texto `dentro do Talhão` |
+| 17H111-12 | P0 | Admin | Preserve | Editar somente observacao | Ponto e `captured_at` permanecem | Passou | `-9,87`/`-56,09`, 15 m e 01:25 mantidos; sem captura ao abrir |
+| 17H111-13 | P0 | Admin | Replace cancelado | Capturar ponto diferente e cancelar | Ponto anterior permanece integralmente | Passou | Draft `-10`/`-57`, 25 m, 01:41 foi descartado |
+| 17H111-14 | P0 | Admin | Replace salvo | Capturar ponto diferente e salvar | Um unico grupo novo substitui o anterior | Passou | `-10,1`/`-57,1`, 20 m, 01:42 e autoria Admin, sem opcionais antigos |
+| 17H111-15 | P0 | Admin | Remove cancelado | Marcar remocao e cancelar | Ponto anterior permanece | Passou | Detalhe reabriu com ponto e selo |
+| 17H111-16 | P0 | Admin | Remove/desfazer | Marcar, desfazer e salvar outro campo | Voltar a `preserve` | Passou | Observacao final `17H111-COM-PONTO-20260721-PRESERVE-UNDO`; ponto preservado |
+| 17H111-17 | P0 | Admin | Remove salvo | Marcar remocao e salvar | Eliminar os seis campos sem residuo | Passou | Secao/selo desapareceram e edicao reabriu limpa, sem `null` ou sentinel |
+| 17H111-18 | P0 | Produtor | Perfil | Criar/consultar na propria Propriedade | Contexto travado e sem acoes administrativas | Passou | Criou/viu detalhe e selo; sem Editar/Remover; rotas protegidas por teste |
+| 17H111-19 | P0 | Colaborador | Perfil/escopo | Criar no escopo e editar em preserve | Autoria/contexto/ponto preservados | Passou | `17H111-COLAB-PONTO-20260721`, T01, `-9,88`/`-56,1`, 12 m, 01:48; fora do escopo por teste |
+| 17H111-20 | P0 | Admin | Perfil/global | Criar interno e exercitar edicao | Operacao global sem ampliar outros perfis | Passou | `17H111-ADMIN-PONTO-20260721`, Sela/`T01`, `-9,89`/`-56,11`, 10 m, 01:52; semanticas exercitadas no registro controlado da sessao |
+| 17H111-21 | P0 | Todos | Visibilidade | Comparar liberado e interno | Sem vazamento do interno ao Produtor | Passou | Produtor viu Colaborador com selo; busca do Admin interno retornou `Nenhum` |
+| 17H111-22 | P0 | Todos | Force-stop | Parar/reabrir e conferir todos os estados | Restaurar somente o que foi salvo | Passou | Sem ponto/erros sem selo; Colaborador com selo; cancelado ausente; removido nao voltou; novo form limpo |
+| 17H111-23 | P0 | Todos | Posicao do mapa | Mostrar posicao, sair e executar force-stop | Marcador somente transitorio e sem Caderno | Passou | 18 m/01:57 no mapa; nao restaurou marcador nem preencheu Novo Caderno |
+| 17H111-24 | P0 | Admin/Produtor | GeoJSON/Talhoes | Reanexar fixture existente e abrir mapa | Talhoes clicaveis sem pontos do Caderno | Passou | `limites_talhoes.geojson`, 15 Talhoes/37 partes, `GEOJSON LOCAL`, T01 clicavel |
+| 17H111-25 | P0 | Admin/Colaborador | PNG | Importar/abrir PNG local e base | Sem marcador, coordenada ou controle de ponto | Passou | Asset `ph_10a20.png` copiado para `Download`; `smoke_ph_10a20.png` e base abriram |
+| 17H111-26 | P0 | Admin/Colaborador | ZIP de Prescricao | Abrir ZIP local valido e detalhe | Pacote sem preview, unzip, processamento ou localizacao | Reexecutar | Sem ZIP local/fixture valida nesta sessao; suites passaram; 17G.3 permanece historica |
+| 17H111-27 | P0 | Todos | Material tecnico | Conferir tres filtros e detalhes | Nenhuma UI ou marcador do ponto | Passou | Fertilidade, Correcao de solo e Prescricao funcionaram sem localizacao |
+| 17H111-28 | P0 | Todos | Visitas | Abrir Nova e registro demonstrativo | Sem Camera/Galeria, geotag ou campos do Caderno | Passou | `Imagens do registro (2)`, `Imagem demonstrativa` e `Exemplo visual do registro` preservados |
+| 17H111-29 | P0 | Todos | Auditoria | Buscar chaves, APIs e contaminacao | Sem storage novo, tracking/background ou localizacao fora do Caderno | Passou | Seis campos somente no Caderno; mapa temporario; nenhuma ocorrencia em PNG/ZIP/GeoJSON/Visita |
+| 17H111-30 | P0 | Todos | Android fisico | Repetir em aparelho autorizado | Evidencia fisica antes de campo | Reexecutar | Apenas `emulator-5554`; Android fisico segue pendente e nao aprovado |
+
+Build desta rodada: APK de 91.922.508 bytes, SHA-256
+`3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`;
+`:app:assembleRelease`, `adb install -r` e `monkey` passaram. Relato completo
+em `fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
+
 **Rodada Fase 17H.1B - UI, Captura Foreground E Persistencia Explicita Do Ponto No Caderno**
 
 Observacao geral em 2026-07-21: rodada executada no AVD Pixel Tablet,
@@ -42,7 +93,7 @@ interativa exaustiva de PNG/ZIP continuam pendentes e nao aprovados.
 | 17H1B-09 | P0 | Admin | Edit remove/desfazer | Marcar remocao, desfazer, marcar novamente e salvar | Desfazer restaura `preserve`; remocao persiste somente no submit | Passou | Detalhe e selo desapareceram depois da remocao salva |
 | 17H1B-10 | P0 | Admin | Detalhe e selo | Abrir detalhe e cards com ponto valido | Mostrar coordenadas/nome no detalhe e apenas selo nos cards | Passou | Nome foi resolvido sem exibir id tecnico cru; cards nao mostraram coordenadas |
 | 17H1B-11 | P0 | Todos | Auditoria | Buscar storage, chaves, tracking e shapes proibidos | Sem chave nova, background, tracking, trilha, historico ou campos extras | Passou | Localizacao entra somente no submit do Caderno |
-| 17H1B-12 | P0 | Todos | Regressao PNG/ZIP/mapa | Auditar e reabrir todos os materiais/mapa | Nenhum `localizacao_*` ou ponto persistido fora do Caderno | Reexecutar | Auditoria estatica passou para Visita/PNG/ZIP/GeoJSON/mapa; regressao interativa exaustiva de PNG/ZIP fica para 17H.1.1 |
+| 17H1B-12 | P0 | Todos | Regressao PNG/ZIP/mapa | Auditar e reabrir todos os materiais/mapa | Nenhum `localizacao_*` ou ponto persistido fora do Caderno | Reexecutar | 17H.1.1 reabriu mapa/GeoJSON, PNG, Material e Visita; ZIP visual ficou sem fixture valida e permanece pendente |
 | 17H1B-13 | P0 | Todos | Android fisico | Repetir permissao, captura, precisao, submit e edicao em aparelho autorizado | Validacao fisica antes de campo | Reexecutar | Somente emulador; Android fisico segue pendente e nao aprovado |
 
 Build desta rodada: `:app:assembleRelease`, `adb install -r` e `monkey`

@@ -5,6 +5,12 @@ implementacao futura de marcacoes de campo vinculadas ao Caderno. Nenhuma
 marcacao foi implementada, nenhum storage novo foi criado, nenhuma chave
 `@tche:` nova foi criada e nenhuma coordenada foi salva nesta fase.
 
+Estado corrente em 2026-07-21, depois da 17H.1.1: o contrato e a UI do ponto
+opcional do Caderno estao implementados e validados em emulador. O smoke de
+seguranca/regressao esta `PARCIAL_EM_EMULADOR` apenas porque a abertura visual
+do ZIP de Prescricao nao teve fixture valida nesta sessao. Android fisico
+continua pendente e nao aprovado.
+
 A analise parte do estado validado ate a 17G.3: localizacao foreground minima
 aprovada em emulador sobre Talhoes seed/mock e GeoJSON local ativo, acionada
 por `Mostrar minha posicao`, com coordenada apenas em state React e runtime
@@ -528,3 +534,63 @@ PNG/ZIP continuam pendentes.
 | 17H1B-11 | Auditoria | Sem chave nova, background ou tracking | Passou |
 | 17H1B-12 | Regressao PNG/ZIP/mapa | Auditoria estatica passou; smoke exaustivo deve ser repetido | Reexecutar |
 | 17H1B-13 | Android fisico | Repetir o roteiro em aparelho autorizado | Reexecutar |
+
+## Smoke De Seguranca E Regressao Da Fase 17H.1.1
+
+Status em 2026-07-21: `PARCIAL_EM_EMULADOR`.
+
+A 17H.1.1 nao abriu funcionalidade nova. Ela confirmou que draft, substituicao
+e remocao permanecem transitorios ate o submit; cancelamentos nao alteram o
+snapshot; erros de permissao, GPS e provider permitem continuar sem ponto; e
+force-stop restaura apenas o que foi efetivamente salvo.
+
+Os tres perfis preservaram as regras atuais. O registro liberado do
+Colaborador ficou visivel ao Produtor com selo, enquanto o registro interno do
+Admin permaneceu invisivel. A localizacao temporaria do mapa nao entrou no
+Caderno. GeoJSON/Talhoes, PNG, Material tecnico e Visitas permaneceram sem
+localizacao do Caderno.
+
+O fechamento em emulador ficou parcial exclusivamente pela ausencia de uma
+fixture ZIP valida para reexecutar visualmente `17H111-26`. Nao havia ZIP local
+no snapshot, repositorio ou `Download`; as suites focadas passaram e a
+evidencia visual da 17G.3 continua classificada somente como historica. Android
+fisico tambem nao estava conectado e permanece nao aprovado.
+
+| ID | Area | Status |
+|---|---|---|
+| 17H111-01 | Create sem ponto | Passou |
+| 17H111-02 | Create com ponto | Passou |
+| 17H111-03 | Captura e cancelamento | Passou |
+| 17H111-04 | Remocao antes do submit | Passou |
+| 17H111-05 | Permissao negada | Passou |
+| 17H111-06 | GPS desligado | Passou |
+| 17H111-07 | Provider/timeout | Passou |
+| 17H111-08 | Concorrencia/resposta tardia | Passou |
+| 17H111-09 | Baixa precisao | Passou |
+| 17H111-10 | Troca de Propriedade | Passou |
+| 17H111-11 | Troca de Talhao | Passou |
+| 17H111-12 | Preserve | Passou |
+| 17H111-13 | Replace cancelado | Passou |
+| 17H111-14 | Replace salvo | Passou |
+| 17H111-15 | Remove cancelado | Passou |
+| 17H111-16 | Remove/desfazer | Passou |
+| 17H111-17 | Remove salvo | Passou |
+| 17H111-18 | Produtor | Passou |
+| 17H111-19 | Colaborador | Passou |
+| 17H111-20 | Admin | Passou |
+| 17H111-21 | Visibilidade | Passou |
+| 17H111-22 | Force-stop | Passou |
+| 17H111-23 | Posicao temporaria do mapa | Passou |
+| 17H111-24 | GeoJSON/Talhoes | Passou |
+| 17H111-25 | PNG | Passou |
+| 17H111-26 | ZIP de Prescricao | Reexecutar |
+| 17H111-27 | Material tecnico | Passou |
+| 17H111-28 | Visitas | Passou |
+| 17H111-29 | Auditoria sem chave/tracking | Passou |
+| 17H111-30 | Android fisico | Reexecutar |
+
+O relato detalhado, com ambiente, registros, valores, force-stop, comandos e
+limitacoes, esta em
+`fase-17h-1-1-smoke-seguranca-ponto-caderno.md`. `17H1B-12` e `17H1B-13`
+continuam `Reexecutar`; nenhum ponto persistido do Caderno foi aberto para
+visualizacao no mapa.

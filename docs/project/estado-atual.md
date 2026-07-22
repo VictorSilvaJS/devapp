@@ -3912,11 +3912,54 @@ Android fisico e a regressao interativa exaustiva de PNG/ZIP continuam
 pendentes e nao aprovados. O relato completo esta em
 `fase-17h-1b-ui-ponto-caderno.md`.
 
+## Fase 17H.1.1 - Smoke De Seguranca E Regressao Do Ponto Opcional
+
+Status em 2026-07-21: `PARCIAL_EM_EMULADOR`. A rodada de evidencia nao alterou
+codigo, contratos, dependencias, mocks, seeds ou assets. Typecheck, suite
+completa, testes focados de Caderno/acesso/validators/periodo/Talhao e suites
+de GeoJSON, PNG, ZIP e Visita passaram. `expo install --check` permaneceu
+limpo. Build release, instalacao por cima e `monkey` tambem passaram no Pixel
+Tablet, Android 15/API 35.
+
+O smoke confirmou:
+
+- create sem/com ponto e persistencia somente no submit;
+- captura cancelada e remocao antes do primeiro submit sem persistencia;
+- permissao negada, GPS desligado e timeout de 15 segundos como falhas
+  recuperaveis, sem bloquear Caderno comum;
+- duplo toque e resposta tardia sem segunda operacao, crash, alerta ou draft;
+- baixa precisao sem alteracao do valor e sem afirmacao de posicao exata;
+- troca de Propriedade descartando draft e troca de Talhao sem inferencia;
+- `preserve`, `replace` e `remove`, incluindo cancelamento, desfazer e submit;
+- regras de Produtor, Colaborador e Admin, inclusive registro interno do Admin
+  invisivel ao Produtor;
+- force-stop restaurando somente registros/pontos salvos e sem ressuscitar
+  draft, ponto removido ou ultimo ponto global;
+- `Mostrar minha posição` somente em state/runtime do mapa, sem alimentar
+  Novo Caderno e sem restauracao depois de force-stop;
+- GeoJSON local com 15 Talhoes/37 partes, PNG base/local, filtros de Material
+  tecnico e Visitas sem ponto, coordenada ou geotag do Caderno;
+- auditoria sem chave nova, objeto bruto persistido, background, tracking,
+  watch, trilha, historico ou `localizacao_*` fora do Caderno.
+
+O resultado nao e `APROVADA_EM_EMULADOR` porque a reabertura visual do ZIP de
+Prescricao nao pôde ser repetida: o snapshot nao possuia ZIP local e nao
+existe fixture ZIP valida no repositorio nem em `Download`. As suites de ZIP
+passaram; a evidencia visual anterior da 17G.3 permanece apenas historica.
+Assim, `17H111-26` e `17H1B-12` ficam `Reexecutar`. `17H111-30` e `17H1B-13`
+tambem ficam `Reexecutar`, pois somente `emulator-5554` estava disponivel e
+Android fisico continua pendente e nao aprovado.
+
+O APK mantem 91.922.508 bytes e SHA-256
+`3EC83F8B165EE9F941CA39E058CD6474A702DE6229A5BDCA7A6221A0AC76107B`.
+O relato completo esta em
+`fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
+
 ## Proximo Passo Recomendado
 
-Com a UI/captura da 17H.1B fechada em emulador, a 17H.1.1 deve executar a
-regressao interativa exaustiva de PNG/ZIP e consolidar as evidencias restantes
-do ponto opcional. Depois disso, o mesmo roteiro ainda precisa ser repetido em
-Android fisico autorizado antes de qualquer declaracao de aptidao para campo.
-A origem produtiva de perimetro, fotos reais e os avisos remanescentes do Expo
-Doctor permanecem em trilhas proprias.
+Reexecutar somente a lacuna visual do ZIP de Prescricao quando houver fixture
+valida, sem fabricar pacote nem promover evidencia historica. Depois, repetir
+o roteiro aplicavel do ponto opcional em Android fisico autorizado antes de
+qualquer declaracao de aptidao para campo ou abertura da visualizacao de pontos
+persistidos no mapa. A origem produtiva de perimetro, fotos reais e os avisos
+remanescentes do Expo Doctor permanecem em trilhas proprias.

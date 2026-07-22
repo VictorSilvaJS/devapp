@@ -239,3 +239,31 @@ georreferenciados.
 | 17H1B-11 | Auditoria | Sem chave nova, background, tracking, trilha ou historico | Passou |
 | 17H1B-12 | Regressao PNG/ZIP/mapa | Auditoria estatica passou; regressao interativa exaustiva pendente | Reexecutar |
 | 17H1B-13 | Android fisico | Repetir permissao, captura, precisao e persistencia em aparelho autorizado | Reexecutar |
+
+## Revalidacao De Seguranca Na Fase 17H.1.1
+
+Status em 2026-07-21: `PARCIAL_EM_EMULADOR`.
+
+A rodada 17H.1.1 ampliou a evidencia interativa de seguranca da UI desta fase.
+Passaram captura seguida de cancelamento, remocao antes do primeiro submit,
+permissao negada, GPS desligado, timeout real de 15 segundos, duplo toque,
+resposta posterior a saida da tela, baixa precisao, troca de Propriedade,
+troca de Talhao, `preserve`, `replace` salvo/cancelado, `remove`
+salvo/cancelado e desfazer. O force-stop restaurou somente dados efetivamente
+submetidos e nao restaurou draft, ultimo ponto global ou marcador temporario
+do mapa.
+
+Produtor, Colaborador e Admin mantiveram o acesso atual do Caderno. O Produtor
+viu o registro liberado com selo e nao viu o registro interno do Admin.
+GeoJSON/Talhoes, PNG, Material tecnico e Visitas foram reabertos sem ponto ou
+campos do Caderno. A auditoria estatica permaneceu limpa para chaves,
+background, tracking, objeto bruto do provider e contaminacao entre dominios.
+
+O item `17H1B-12` permanece `Reexecutar`, porque o snapshot atual nao tinha ZIP
+local e nao existe fixture ZIP valida no repositorio nem em `Download`; as
+suites focadas de ZIP passaram, mas a evidencia visual da 17G.3 foi mantida
+somente como historica. `17H1B-13` tambem permanece `Reexecutar`, pois apenas
+`emulator-5554` estava disponivel e Android fisico continua nao aprovado.
+
+O relato e o checklist 17H111-01 a 17H111-30 estao em
+`fase-17h-1-1-smoke-seguranca-ponto-caderno.md`.
