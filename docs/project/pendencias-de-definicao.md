@@ -228,6 +228,16 @@ PNG e ZIP anteriores permanecem legiveis. Isso fecha a organizacao minima do
 MVP local, mas nao fecha taxonomia agronomica final, elementos/subcategorias,
 agrupamento de varias representacoes, pipeline produtivo, backend ou sync.
 
+Status em 2026-07-23: uma rodada complementar em Android fisico 15/API 35
+validou parcialmente, como Admin, o DocumentPicker real, cadastro e abertura
+de PNG/PDF/ZIP, organizacao por ano/categoria, campos condicionais,
+persistencia apos `force-stop` e remocao isolada das fixtures. O material
+anterior permaneceu e nao houve crash fatal. A pendencia fisica fica reduzida,
+mas continua aberta para Colaborador/Produtor, entradas invalidas/limites,
+periodo produtivo, variantes restantes, multiplos anos, regressao completa e
+offline com conectividade explicitamente desligada. Backend/storage remoto,
+publicacao, download e sync continuam nao implementados.
+
 ### 4A. Localizacao em tempo real sobre Talhoes
 
 A localizacao em tempo real existe apenas em corte minimo foreground sobre o

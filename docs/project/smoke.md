@@ -47,6 +47,39 @@ promessa de visualizacao ou processamento.
 | MTU-13 | P0 | Admin/Colaborador | Seguranca local | Remover item novo e, se necessario, anexar outro arquivo | Somente arquivo em diretorio seguro e metadado correspondente mudam; outra Propriedade, seed, PNG/ZIP legado e GeoJSON permanecem | Reexecutar | Validar rollback em falha de metadado |
 | MTU-14 | P0 | Todos | Regressao | Abrir GeoJSON/Talhoes, Caderno, Safra e materiais antigos | Contexto, acesso e fluxos existentes continuam funcionando | Reexecutar | Executar `typecheck` e `test:domain-compat` antes do smoke |
 
+**Execucao parcial em Android fisico - 2026-07-23**
+
+Status: `PARCIAL_ANDROID_FISICO`. O build debug foi gerado por
+`npm run android`, instalado por cima e aberto em aparelho Android 15/API 35,
+sem limpar dados. A rodada usou o perfil Admin e o DocumentPicker real.
+
+Evidencias aprovadas nesta execucao:
+
+- o fluxo unico aceitou PNG, PDF e ZIP validos e preservou os nomes originais;
+- Fertilidade salvou PNG com profundidade `Nao informada`;
+- Correcao de solo salvou PDF com profundidade `10-20 cm`, escopo Talhao e
+  `T01 - 230`;
+- Prescricao salvou ZIP sem pedir profundidade/escopo/Talhao e apresentou a
+  indicacao informativa `Potassio` para o nome contendo `KCL`;
+- os tres registros apareceram em `Ano 2026`, separados por categoria;
+- PNG abriu como imagem; PDF e ZIP exibiram apenas metadados e as limitacoes
+  reais, sem prometer visualizador, preview, descompactacao ou processamento;
+- depois de `force-stop`, a sessao, os arquivos privados e os metadados de PDF
+  e ZIP reapareceram na interface;
+- a remocao pelo fluxo normal apagou somente cada fixture nova. O material
+  local anterior da Propriedade permaneceu, e os tres arquivos temporarios em
+  `Download` foram removidos ao final;
+- o processo corrente terminou a verificacao sem crash ou excecao fatal no
+  log.
+
+Permanecem em `Reexecutar`: Colaborador dentro/fora do escopo, Produtor e rota
+direta, arquivo invalido/acima do limite, periodo Safra/Safrinha, dois anos,
+variantes condicionais restantes, nome de Prescricao desconhecido, rollback
+em falha de metadado, regressao funcional completa e o caso offline com a
+conectividade explicitamente desligada. A reabertura comprovou persistencia
+local, mas o build debug precisou do servidor de desenvolvimento; por isso nao
+fecha sozinho o requisito offline de `MTU-12`.
+
 **Rodada Fase 17H.1.3 - Validacao Android Fisico Do Ponto Opcional No Caderno**
 
 Status geral em 2026-07-22: `PARCIAL_ANDROID_FISICO`. Um aparelho fisico

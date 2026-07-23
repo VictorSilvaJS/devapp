@@ -4058,6 +4058,34 @@ ela descreve a evolucao posterior para novos anexos. GeoJSON/talhoes,
 `Mapa.list`, assets da Sela e regras de acesso por Propriedade continuam
 preservados.
 
+## Validacao Fisica Complementar De Material Tecnico - 2026-07-23
+
+Status: `PARCIAL_ANDROID_FISICO`.
+
+Um build debug atual foi gerado com `npm run android`, instalado por cima e
+aberto em aparelho Android 15/API 35, preservando o estado. Como Admin, o
+DocumentPicker real importou fixtures controladas em PNG, PDF e ZIP para a
+Sela de Prata I. A interface confirmou nome original, ano, categoria e campos
+condicionais: Fertilidade com profundidade nao informada, Correcao de solo
+`10-20 cm` no Talhao `T01 - 230` e Prescricao sem campos residuais, com
+inferencia apenas informativa de Potassio para `KCL`.
+
+O catalogo agrupou os itens em `Ano 2026` e nas tres categorias. PNG abriu
+como imagem; PDF e ZIP mantiveram detalhes honestos, sem falso
+preview/processamento. Depois de `force-stop`, a sessao voltou e os arquivos e
+metadados de PDF/ZIP permaneceram consultaveis. Os tres itens de teste foram
+removidos pela propria interface; somente as fixtures correspondentes
+mudaram, o material local anterior permaneceu e os temporarios de `Download`
+foram apagados. O processo corrente nao apresentou crash ou excecao fatal no
+log.
+
+Esta rodada nao fecha aprovacao de campo nem offline total. Continuam
+pendentes os perfis Colaborador/Produtor, limites de formato/tamanho,
+Safra/Safrinha, todas as variantes de campos, multiplos anos, rota direta,
+rollback, regressao funcional completa e reabertura com a conectividade
+explicitamente desligada. O build debug dependeu do servidor de
+desenvolvimento para carregar o bundle.
+
 ## Proximo Passo Recomendado
 
 Repetir em area aberta ou com ceu razoavelmente visivel os casos
