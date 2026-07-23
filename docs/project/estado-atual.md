@@ -198,11 +198,22 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - a importacao controlada da propriedade Sela de Prata I possui manifesto em `data/processados/p_sela1/2025/manifesto.json`, registrando campos de origem, campo de nome usado, contagens e status de revisao da amostra
 - a biblioteca mock de mapas agora aceita material tecnico por `fazenda_id`, campo/talhao e elemento/camada; esse identificador permanece como chave tecnica interna do contexto de propriedade; a propriedade Sela de Prata I possui uma amostra pequena de PNGs de diagnostico de fertilidade como anexos visuais por pH, argila, materia organica, fosforo e potassio
 - a entidade `Mapa` possui `profundidade` como campo opcional simples, usado no mock para exibir recortes como `10-20 cm` quando essa informacao aparece no nome do arquivo
-- `MapasScreen.tsx` usa nomenclatura visual padronizada para a area de materiais, incluindo `Anexos de fertilidade`, `Anexo de fertilidade PNG`, `Mapa de fertilidade`, `Material tecnico` e `Abrir anexo`
+- `MapasScreen.tsx` usa `Material tecnico` como nome da area e organiza a
+  consulta por ano e pelas categorias Fertilidade, Correcao de solo e
+  Prescricao; nomes especificos de itens legados permanecem apenas na leitura
+  de seus respectivos registros
 - `MapasScreen.tsx` exibe metadados de elemento, safra, talhao/propriedade inteira, profundidade e nome original quando esses dados existem, usando campos futuros com fallback para campos legados
-- `MapasScreen.tsx` possui fluxo local demonstrativo para anexar e gerir PNG por Propriedade com botao `Anexar PNG`, formulario minimo, copia para storage interno e metadados em `@tche:png-map-imports:v1`; os PNGs locais ativos aparecem na listagem principal por lista derivada em runtime, sem alterar `Mapa.list`
+- Os fluxos anteriores de PNG por `@tche:png-map-imports:v1` e Prescricao ZIP
+  por `@tche:prescription-zip-imports:v1` permanecem legiveis como
+  compatibilidade, sem alterar `Mapa.list` nem os assets demonstrativos.
 - `src/utils/pngMapToMapaCompat.ts` converte metadados PNG locais em itens compativeis com a listagem de mapas, preservando `arquivo_uri_local`, visibilidade por perfil e indicador `PNG local`; PNG local ativo agora abre em modal com `Image` e source `{ uri: arquivo_uri_local }` apos validacao de URI segura e existencia no storage interno, e pode ser substituido/removido localmente por Admin ou Colaborador autorizado
-- Em 2026-07-01, a interface de mapas passou a destacar a taxonomia operacional inicial de fertilidade, correcao de solo e prescricao. A area de materiais usa o titulo visual `Material tecnico`, os filtros principais foram reduzidos para esses tres tipos, PNG local ficou restrito a fertilidade/correcao de solo e prescricao passou a ter fluxo local demonstrativo por ZIP. O ZIP e copiado para storage interno em `tche-prescription-zips/{propriedade_id}/`, guarda apenas metadados pequenos em `@tche:prescription-zip-imports:v1`, aparece na listagem como `Prescrição` e abre em modal de detalhe do pacote tecnico, sem preview de imagem, unzip, leitura de bytes, upload/backend, sync ou download real.
+- Para novos anexos, `Material tecnico` usa contrato local unificado por
+  Propriedade, ano e categoria, aceita PNG/PDF/ZIP, preserva o nome original,
+  gera titulo automaticamente e guarda apenas metadados pequenos em
+  `@tche:material-tecnico-imports:v1`; o arquivo fisico continua no storage
+  interno. Fertilidade, Correcao de solo e Prescricao possuem campos
+  condicionais conforme `modelo-material-tecnico.md`. PDF e ZIP nao possuem
+  promessa de visualizacao ou processamento.
 - `src/services/MapaSincronizacaoService.ts` e `src/services/MapaCacheService.ts` ainda estao incompletos
 
 ## O Que Ja Funciona
@@ -227,7 +238,12 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
 - registros mockados de `Mapa` para uma amostra pequena de PNGs de fertilidade da propriedade Sela de Prata I
 - exibicao de profundidade, elemento, safra, talhao/propriedade inteira e nome original em materiais/anexos quando esses campos estiverem preenchidos
-- anexo local demonstrativo de PNG por Propriedade para Admin e Colaborador dentro do escopo, com formulario minimo, resumo local, presenca na listagem principal de materiais e substituicao/remocao local segura
+- leitura e gestao segura dos PNGs locais legados por Propriedade para Admin e
+  Colaborador dentro do escopo; novos anexos usam o fluxo unificado de Material
+  tecnico
+- fluxo unificado para novos anexos de Material tecnico em PNG, PDF ou ZIP,
+  organizado por Propriedade, ano e Fertilidade/Correcao de solo/Prescricao,
+  preservando a leitura dos PNGs e ZIPs legados
 - empty states de mapas/anexos diferenciando ausencia de demarcacao/talhoes e ausencia de materiais tecnicos
 - base visual reutilizavel para formularios, detalhes e listagens, aplicada sem alterar backend, mocks, rotas, permissoes ou payloads
 
@@ -4006,6 +4022,41 @@ Os oito casos dependentes de leitura real devem ser repetidos em area aberta
 ou com ceu razoavelmente visivel. Ate esse fechamento, a Fase 17H.2 nao pode
 ser aberta. O relato completo esta em
 `fase-17h-1-3-android-fisico-ponto-caderno.md`.
+
+## Atualizacao De Material Tecnico Unificado - 2026-07-22
+
+O contrato canonico para novos anexos locais passou a ser
+`docs/project/modelo-material-tecnico.md`. A organizacao visivel espelha
+`Propriedade -> Ano -> Fertilidade/Correcao de solo/Prescricao`, sem usar o
+caminho de pastas ou o nome do arquivo como relacionamento principal.
+
+Comportamento consolidado para novos anexos:
+
+- um unico fluxo de `Anexar material` aceita PNG, PDF ou ZIP;
+- ano e categoria sao obrigatorios;
+- nome original e preservado e o titulo e gerado automaticamente;
+- Safra/Safrinha e opcional e referencia periodo ativo da mesma Propriedade;
+- Fertilidade solicita profundidade e usa escopo da Propriedade;
+- Correcao solicita profundidade e permite Propriedade inteira ou Talhao;
+- Prescricao nao solicita profundidade, camada ou Talhao;
+- `Nao informada` e valor explicito de profundidade quando o acervo nao a
+  comprova;
+- visibilidade para o Produtor continua explicita;
+- arquivo fisico fica no storage interno e o indice
+  `@tche:material-tecnico-imports:v1` guarda somente metadados pequenos;
+- registros mockados, PNG local e Prescricao ZIP anteriores continuam
+  legiveis, sem migracao destrutiva ou duplicacao automatica.
+
+PNG pode abrir como imagem quando o arquivo local existir e a URI for segura.
+PDF e ZIP entram no catalogo e no detalhe por metadados; nao ha visualizador
+PDF integrado, preview/unzip/processamento de ZIP, backend, upload/download
+remoto ou sincronizacao. A consulta sem conexao vale somente para os arquivos
+ja presentes no mesmo aparelho e nao deve ser comunicada como offline total.
+
+Esta atualizacao nao reescreve nem invalida a evidencia historica da Fase 17C;
+ela descreve a evolucao posterior para novos anexos. GeoJSON/talhoes,
+`Mapa.list`, assets da Sela e regras de acesso por Propriedade continuam
+preservados.
 
 ## Proximo Passo Recomendado
 

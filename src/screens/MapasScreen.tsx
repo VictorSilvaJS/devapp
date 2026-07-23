@@ -65,6 +65,12 @@ import {
   isPrescriptionZipLocalMapa,
   mergeMapasWithPrescriptionZipImports,
 } from '../utils/prescriptionZipToMapaCompat';
+import {
+  MATERIAL_TECNICO_LOCAL_OPEN_ERROR_MESSAGE,
+  isMaterialTecnicoLocalMapa,
+  mergeMapasWithMaterialTecnicoImports,
+  resolveMaterialTecnicoImageSource,
+} from '../utils/materialTecnicoToMapaCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
   confirmGeoJsonPropertyImport,
@@ -87,17 +93,24 @@ import {
   loadGeoJsonTalhoesLayer,
 } from '../services/GeoJsonTalhoesLayerService';
 import type { GeoJsonImportMetadata } from '../types/geojsonImport';
+import { listActivePngMapImportsForPropriedade } from '../services/PngMapPropertyImportWorkflow';
 import {
-  PNG_MAP_PROPERTY_CATEGORY_OPTIONS,
-  canStartPngMapPropertyImport,
-  confirmPngMapPropertyImport,
-  listActivePngMapImportsForPropriedade,
-  preparePngMapPropertyImport,
-} from '../services/PngMapPropertyImportWorkflow';
+  MATERIAL_TECNICO_CATEGORY_OPTIONS,
+  MATERIAL_TECNICO_ESCOPO_OPTIONS,
+  MATERIAL_TECNICO_PROFUNDIDADE_OPTIONS,
+  canStartMaterialTecnicoPropertyImport,
+  confirmMaterialTecnicoPropertyImport,
+  listActiveMaterialTecnicoImportsForPropriedade,
+  prepareMaterialTecnicoPropertyImport,
+} from '../services/MaterialTecnicoPropertyImportWorkflow';
 import type {
-  PngMapPropertyImportFormInput,
-  PngMapPropertyImportPreview,
-} from '../services/PngMapPropertyImportWorkflow';
+  MaterialTecnicoPropertyImportFormInput,
+  MaterialTecnicoPropertyImportPreview,
+} from '../services/MaterialTecnicoPropertyImportWorkflow';
+import {
+  canManageMaterialTecnicoItem,
+  removeMaterialTecnicoForPropriedade,
+} from '../services/MaterialTecnicoPropertyManageWorkflow';
 import {
   canManagePngMapItem,
   removePngMapForPropriedade,
@@ -105,23 +118,18 @@ import {
 } from '../services/PngMapPropertyManageWorkflow';
 import { PngStorageService } from '../services/PngStorageService';
 import type { PngMapImportMetadata } from '../types/anexoPngLocal';
-import {
-  PRESCRIPTION_ZIP_LAYER_OPTIONS,
-  canStartPrescriptionZipPropertyImport,
-  confirmPrescriptionZipPropertyImport,
-  listActivePrescriptionZipImportsForPropriedade,
-  preparePrescriptionZipPropertyImport,
-} from '../services/PrescriptionZipPropertyImportWorkflow';
-import type {
-  PrescriptionZipPropertyImportFormInput,
-  PrescriptionZipPropertyImportPreview,
-} from '../services/PrescriptionZipPropertyImportWorkflow';
+import { listActivePrescriptionZipImportsForPropriedade } from '../services/PrescriptionZipPropertyImportWorkflow';
 import {
   canManagePrescriptionZipItem,
   removePrescriptionZipForPropriedade,
   replacePrescriptionZipForPropriedade,
 } from '../services/PrescriptionZipPropertyManageWorkflow';
 import type { PrescriptionZipImportMetadata } from '../types/anexoPrescricaoZipLocal';
+import type {
+  MaterialTecnicoCategoria,
+  MaterialTecnicoImportMetadata,
+} from '../types/materialTecnicoLocal';
+import { MaterialTecnicoStorageService } from '../services/MaterialTecnicoStorageService';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import {
   filtrarRegistrosDoTalhao,
@@ -164,41 +172,14 @@ const ORDENACOES_MATERIAIS = [
   { key: 'titulo', label: 'Título', icon: 'text-outline' },
 ];
 
-const PNG_ESCOPO_OPTIONS = [
-  {
-    value: 'propriedade',
-    label: 'Propriedade inteira',
-    description: 'Anexo vinculado ao contexto completo da Propriedade.',
-  },
-  {
-    value: 'talhao',
-    label: 'Talhão específico',
-    description: 'Anexo vinculado a um talhão informado.',
-  },
-];
-
-const EMPTY_PNG_FORM: PngMapPropertyImportFormInput = {
-  titulo: '',
-  elemento: 'ph',
-  safra: '',
+const EMPTY_MATERIAL_TECNICO_FORM: MaterialTecnicoPropertyImportFormInput = {
   ano: '',
-  profundidade: '',
+  periodo_produtivo_id: '',
+  periodo_produtivo_label: '',
+  profundidade: 'nao_informada',
   escopo: 'propriedade',
   talhao_id: '',
   talhao_nome: '',
-  descricao: '',
-  visivel_para_produtor: true,
-};
-
-const EMPTY_PRESCRIPTION_ZIP_FORM: PrescriptionZipPropertyImportFormInput = {
-  titulo: '',
-  camada: 'prescricao',
-  safra: '',
-  ano: '',
-  escopo: 'propriedade',
-  talhao_id: '',
-  talhao_nome: '',
-  descricao: '',
   visivel_para_produtor: true,
 };
 
@@ -217,12 +198,27 @@ const getAnoData = (data?: string | null): number | null => {
   return Number.isFinite(year) ? year : null;
 };
 
-const getMapaSafra = (mapa: any): string => {
-  const safra = typeof mapa?.safra === 'string' ? mapa.safra.trim() : '';
-  if (safra) return safra;
+const getMapaAno = (mapa: any): string => {
+  const anoDireto = typeof mapa?.ano === 'number'
+    ? mapa.ano
+    : typeof mapa?.ano === 'string' && /^\d{4}$/.test(mapa.ano.trim())
+      ? Number.parseInt(mapa.ano.trim(), 10)
+      : null;
 
-  const ano = getAnoData(mapa?.data_criacao);
-  return ano ? String(ano) : '';
+  if (anoDireto && Number.isFinite(anoDireto)) return String(anoDireto);
+
+  const anoData = getAnoData(mapa?.data_criacao || mapa?.importado_em);
+  return anoData ? String(anoData) : '';
+};
+
+const getMapaSafra = (mapa: any): string => {
+  const periodoLabel = typeof mapa?.periodo_produtivo_label === 'string'
+    ? mapa.periodo_produtivo_label.trim()
+    : '';
+  if (periodoLabel) return periodoLabel;
+
+  const safra = typeof mapa?.safra === 'string' ? mapa.safra.trim() : '';
+  return safra;
 };
 
 const getMapaTalhao = (mapa: any): string => {
@@ -240,8 +236,10 @@ const getCategoriaMapaLabel = (categoria?: string): string => {
 const isCategoriaMaterialTecnico = (categoria?: unknown): boolean =>
   typeof categoria === 'string' && CATEGORIAS_MATERIAIS_TECNICOS.includes(categoria);
 
-const getMapaProfundidade = (mapa: any): string =>
-  typeof mapa?.profundidade === 'string' ? mapa.profundidade.trim() : '';
+const getMapaProfundidade = (mapa: any): string => {
+  const profundidade = typeof mapa?.profundidade === 'string' ? mapa.profundidade.trim() : '';
+  return profundidade === 'nao_informada' ? 'Não informada' : profundidade;
+};
 
 const ELEMENTO_LABELS: Record<string, string> = {
   argila: 'Argila',
@@ -286,6 +284,10 @@ const buildSafraOptions = (mapas: any[]): string[] =>
   buildOptionsOrdenadas(mapas.map(getMapaSafra))
     .sort((a, b) => getSafraSortValue(b) - getSafraSortValue(a) || a.localeCompare(b));
 
+const buildAnoOptions = (mapas: any[]): string[] =>
+  buildOptionsOrdenadas(mapas.map(getMapaAno))
+    .sort((a, b) => Number(b) - Number(a));
+
 // ──────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
 // ──────────────────────────────────────────────
@@ -313,6 +315,7 @@ export default function MapasScreen({ route, navigation }) {
   const [busca, setBusca] = useState('');
   const [ordenacao, setOrdenacao] = useState('recente');
   const [fazendaFiltroOperacional, setFazendaFiltroOperacional] = useState(FILTRO_TODOS);
+  const [anoFiltroMateriais, setAnoFiltroMateriais] = useState(FILTRO_TODOS);
   const [safraFiltroMapas, setSafraFiltroMapas] = useState(FILTRO_TODOS);
   const [talhaoFiltroMapas, setTalhaoFiltroMapas] = useState(FILTRO_TODOS);
   const [downloadDialog, setDownloadDialog] = useState<any>({
@@ -338,17 +341,20 @@ export default function MapasScreen({ route, navigation }) {
   const [geoJsonPreview, setGeoJsonPreview] = useState<GeoJsonPropertyImportPreview | null>(null);
   const [geoJsonPreviewMode, setGeoJsonPreviewMode] = useState<GeoJsonImportMode>('attach');
   const [pngImports, setPngImports] = useState<PngMapImportMetadata[]>([]);
-  const [pngImporting, setPngImporting] = useState(false);
-  const [pngConfirming, setPngConfirming] = useState(false);
-  const [pngPreview, setPngPreview] = useState<PngMapPropertyImportPreview | null>(null);
-  const [pngForm, setPngForm] = useState<PngMapPropertyImportFormInput>(EMPTY_PNG_FORM);
-  const [pngFormErrors, setPngFormErrors] = useState<Record<string, string>>({});
   const [prescriptionZipImports, setPrescriptionZipImports] = useState<PrescriptionZipImportMetadata[]>([]);
-  const [prescriptionZipImporting, setPrescriptionZipImporting] = useState(false);
-  const [prescriptionZipConfirming, setPrescriptionZipConfirming] = useState(false);
-  const [prescriptionZipPreview, setPrescriptionZipPreview] = useState<PrescriptionZipPropertyImportPreview | null>(null);
-  const [prescriptionZipForm, setPrescriptionZipForm] = useState<PrescriptionZipPropertyImportFormInput>(EMPTY_PRESCRIPTION_ZIP_FORM);
-  const [prescriptionZipFormErrors, setPrescriptionZipFormErrors] = useState<Record<string, string>>({});
+  const [materialTecnicoImports, setMaterialTecnicoImports] = useState<MaterialTecnicoImportMetadata[]>([]);
+  const [materialCategoriaPickerVisible, setMaterialCategoriaPickerVisible] = useState(false);
+  const [materialCategoriaSelecionada, setMaterialCategoriaSelecionada] = useState<MaterialTecnicoCategoria>('fertilidade');
+  const [materialTecnicoImporting, setMaterialTecnicoImporting] = useState(false);
+  const [materialTecnicoConfirming, setMaterialTecnicoConfirming] = useState(false);
+  const [materialTecnicoPreview, setMaterialTecnicoPreview] = useState<MaterialTecnicoPropertyImportPreview | null>(null);
+  const [materialTecnicoForm, setMaterialTecnicoForm] = useState<MaterialTecnicoPropertyImportFormInput>(EMPTY_MATERIAL_TECNICO_FORM);
+  const [materialTecnicoFormErrors, setMaterialTecnicoFormErrors] = useState<Record<string, string>>({});
+  const [materialTecnicoRemoveDialog, setMaterialTecnicoRemoveDialog] = useState<any>({
+    visible: false,
+    mapa: null,
+    loading: false,
+  });
   const [geoJsonManageDialog, setGeoJsonManageDialog] = useState<{
     visible: boolean;
     action: GeoJsonManageDialogAction;
@@ -424,6 +430,7 @@ export default function MapasScreen({ route, navigation }) {
           setGeoJsonImports([]);
           setPngImports([]);
           setPrescriptionZipImports([]);
+          setMaterialTecnicoImports([]);
           setGeoJsonTalhoesLayer(null);
           return;
         }
@@ -478,7 +485,11 @@ export default function MapasScreen({ route, navigation }) {
         ? Promise.all(idsPermitidos.map((id) => listActivePrescriptionZipImportsForPropriedade(id)))
             .then((listas) => listas.flat())
         : Promise.resolve([]);
-      const [importsGeoJson, talhoesLayer, periodosLocais, importsPng, importsPrescriptionZip] = await Promise.all([
+      const materialTecnicoImportsPromise = idsPermitidos.length > 0
+        ? Promise.all(idsPermitidos.map((id) => listActiveMaterialTecnicoImportsForPropriedade(id)))
+            .then((listas) => listas.flat())
+        : Promise.resolve([]);
+      const [importsGeoJson, talhoesLayer, periodosLocais, importsPng, importsPrescriptionZip, importsMaterialTecnico] = await Promise.all([
         fazendaId && idsPermitidos.length === 1
           ? listGeoJsonImportsForPropriedade(idsPermitidos[0])
           : Promise.resolve([]),
@@ -491,6 +502,7 @@ export default function MapasScreen({ route, navigation }) {
         periodosPromise,
         pngImportsPromise,
         prescriptionZipImportsPromise,
+        materialTecnicoImportsPromise,
       ]);
 
       setMapas(mapasFiltrados);
@@ -500,6 +512,7 @@ export default function MapasScreen({ route, navigation }) {
       setGeoJsonImports(importsGeoJson);
       setPngImports(importsPng);
       setPrescriptionZipImports(importsPrescriptionZip);
+      setMaterialTecnicoImports(importsMaterialTecnico);
       setGeoJsonTalhoesLayer(talhoesLayer);
 
       const baseTalhoesParaAno = isGeoJsonTalhoesLayerActive(talhoesLayer)
@@ -517,6 +530,7 @@ export default function MapasScreen({ route, navigation }) {
       setGeoJsonImports([]);
       setPngImports([]);
       setPrescriptionZipImports([]);
+      setMaterialTecnicoImports([]);
       setGeoJsonTalhoesLayer(null);
       toast.showError('Não foi possível carregar os dados');
     } finally {
@@ -544,12 +558,9 @@ export default function MapasScreen({ route, navigation }) {
     && !!contextoConsulta.fazenda
     && canManageGeoJsonForPropriedade(user, contextoConsulta.fazenda);
   const podeAnexarGeoJson = podeGerenciarGeoJson;
-  const podeAnexarPng = consultaPorFazenda
+  const podeAnexarMaterialTecnico = consultaPorFazenda
     && !!contextoConsulta.fazenda
-    && canStartPngMapPropertyImport(user, contextoConsulta.fazenda);
-  const podeAnexarPrescriptionZip = consultaPorFazenda
-    && !!contextoConsulta.fazenda
-    && canStartPrescriptionZipPropertyImport(user, contextoConsulta.fazenda);
+    && canStartMaterialTecnicoPropertyImport(user, contextoConsulta.fazenda);
   const pngImportsAtivos = useMemo(
     () => pngImports.filter((item) => item.status === 'ativo'),
     [pngImports]
@@ -561,6 +572,10 @@ export default function MapasScreen({ route, navigation }) {
   const prescriptionZipImportsAtivos = useMemo(
     () => prescriptionZipImports.filter((item) => item.status === 'ativo'),
     [prescriptionZipImports]
+  );
+  const materialTecnicoImportsAtivos = useMemo(
+    () => materialTecnicoImports.filter((item) => item.status === 'ativo'),
+    [materialTecnicoImports]
   );
   const fazendaOptions = useMemo(
     () => buildFazendaConsultaOptions(contextoConsulta.fazendasPermitidas || []),
@@ -594,11 +609,18 @@ export default function MapasScreen({ route, navigation }) {
     }),
     [mapasComPngLocal, prescriptionZipImports, propriedadeIdsPermitidos, user?.perfil]
   );
+  const mapasComTodosMateriaisLocais = useMemo(
+    () => mergeMapasWithMaterialTecnicoImports(mapasComMateriaisLocais, materialTecnicoImports, {
+      propriedadeIds: propriedadeIdsPermitidos,
+      perfil: user?.perfil,
+    }),
+    [mapasComMateriaisLocais, materialTecnicoImports, propriedadeIdsPermitidos, user?.perfil]
+  );
 
   const mapasNoContexto = useMemo(() => {
-    if (!fazendaFiltroId) return mapasComMateriaisLocais;
-    return mapasComMateriaisLocais.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
-  }, [mapasComMateriaisLocais, fazendaFiltroId]);
+    if (!fazendaFiltroId) return mapasComTodosMateriaisLocais;
+    return mapasComTodosMateriaisLocais.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
+  }, [mapasComTodosMateriaisLocais, fazendaFiltroId]);
   const materiaisTecnicosNoContexto = useMemo(
     () => mapasNoContexto.filter((mapa) => isCategoriaMaterialTecnico(mapa?.categoria)),
     [mapasNoContexto]
@@ -622,6 +644,11 @@ export default function MapasScreen({ route, navigation }) {
     [materiaisTecnicosNoContexto]
   );
 
+  const anosMateriais = useMemo(
+    () => buildAnoOptions(materiaisTecnicosNoContexto),
+    [materiaisTecnicosNoContexto]
+  );
+
   const talhoesMapas = useMemo(
     () => buildOptionsOrdenadas(materiaisTecnicosNoContexto.map(getMapaTalhao)),
     [materiaisTecnicosNoContexto]
@@ -634,14 +661,6 @@ export default function MapasScreen({ route, navigation }) {
   const talhoesPanorama = useMemo(
     () => buildOptionsOrdenadas([...talhoesLimite, ...talhoesMapas]),
     [talhoesLimite, talhoesMapas]
-  );
-  const pngCategoryOptions = useMemo(
-    () => PNG_MAP_PROPERTY_CATEGORY_OPTIONS.map((option) => ({
-      value: option.value,
-      label: option.label,
-      description: option.categoria_label,
-    })),
-    []
   );
   const pngTalhaoOptions = useMemo<Array<{ value: string; label: string; description?: string }>>(() => {
     const seen = new Set<string>();
@@ -668,14 +687,36 @@ export default function MapasScreen({ route, navigation }) {
 
     return options;
   }, [talhoesDemarcacaoNoContexto]);
-  const prescriptionZipLayerOptions = useMemo(
-    () => PRESCRIPTION_ZIP_LAYER_OPTIONS.map((option) => ({
-      value: option.value,
-      label: option.label,
-      description: 'Prescrição',
-    })),
-    []
-  );
+  const materialPeriodoOptions = useMemo(() => {
+    const propriedadeId = fazendaContextoInfo?.id || '';
+    const options = periodosProdutivos
+      .filter((periodo: any) => {
+        const periodoPropriedadeId = periodo?.propriedade_id
+          || periodo?.propriedadeId
+          || periodo?.fazenda_id
+          || periodo?.fazendaId;
+        return propriedadeId && periodoPropriedadeId === propriedadeId;
+      })
+      .map((periodo: any) => ({
+        value: String(periodo.id),
+        label: String(periodo.label || [
+          periodo.tipo_periodo_label,
+          periodo.cultura,
+          periodo.ano_agricola,
+        ].filter(Boolean).join(' • ')),
+      }));
+
+    return [
+      { value: '', label: 'Não relacionar' },
+      ...options,
+    ];
+  }, [fazendaContextoInfo?.id, periodosProdutivos]);
+
+  useEffect(() => {
+    if (anoFiltroMateriais !== FILTRO_TODOS && !anosMateriais.includes(anoFiltroMateriais)) {
+      setAnoFiltroMateriais(FILTRO_TODOS);
+    }
+  }, [anosMateriais, anoFiltroMateriais]);
 
   useEffect(() => {
     if (safraFiltroMapas !== FILTRO_TODOS && !safrasMapas.includes(safraFiltroMapas)) {
@@ -703,10 +744,12 @@ export default function MapasScreen({ route, navigation }) {
 
     return materiaisTecnicosNoContexto.filter(m => {
       const fazendaInfo = fazendaInfoPorId.get(getMapaFazendaId(m));
+      const anoMapa = getMapaAno(m);
       const safraMapa = getMapaSafra(m);
       const talhaoMapa = getMapaTalhao(m);
       const profundidadeMapa = getMapaProfundidade(m);
       const matchCategoria = categoriaAtiva === FILTRO_TODOS || m.categoria === categoriaAtiva;
+      const matchAno = anoFiltroMateriais === FILTRO_TODOS || anoMapa === anoFiltroMateriais;
       const matchSafra = safraFiltroMapas === FILTRO_TODOS || safraMapa === safraFiltroMapas;
       const matchTalhao = talhaoFiltroMapas === FILTRO_TODOS || talhaoMapa === talhaoFiltroMapas;
       const textoBusca = [
@@ -720,6 +763,7 @@ export default function MapasScreen({ route, navigation }) {
         m.tipo_material,
         m.tipo_anexo,
         getCategoriaMapaLabel(m.categoria),
+        anoMapa,
         m.categoria === 'correcao' ? 'correcao de solo corretivo calcario gesso' : '',
         m.categoria === 'prescricao' ? 'prescricao taxa variavel zip' : '',
         talhaoMapa,
@@ -732,7 +776,7 @@ export default function MapasScreen({ route, navigation }) {
       ].map(normalizarBusca).filter(Boolean).join(' ');
       const matchBusca = !termoBusca || textoBusca.includes(termoBusca);
 
-      return matchCategoria && matchBusca && matchSafra && matchTalhao;
+      return matchCategoria && matchBusca && matchAno && matchSafra && matchTalhao;
     }).sort((a, b) => {
       if (ordenacao === 'recente') {
         return new Date(b.data_criacao || 0).getTime() - new Date(a.data_criacao || 0).getTime();
@@ -746,20 +790,38 @@ export default function MapasScreen({ route, navigation }) {
     fazendaInfoPorId,
     categoriaAtiva,
     busca,
+    anoFiltroMateriais,
     safraFiltroMapas,
     talhaoFiltroMapas,
     ordenacao,
   ]);
 
-  const mapasPorCategoria = useMemo(() => {
-    return CATEGORIAS
-      .filter(cat => cat.id !== 'todos')
-      .map(cat => ({
-        ...cat,
-        mapas: mapasFiltrados.filter(m => m.categoria === cat.id)
-      }))
-      .filter(cat => cat.mapas.length > 0);
-  }, [mapasFiltrados]);
+  const mapasPorAnoECategoria = useMemo(() => {
+    const grupos = new Map<string, any[]>();
+
+    mapasFiltrados.forEach((mapa) => {
+      const ano = getMapaAno(mapa) || 'nao-informado';
+      grupos.set(ano, [...(grupos.get(ano) || []), mapa]);
+    });
+
+    return [...grupos.entries()]
+      .sort(([anoA], [anoB]) => {
+        if (anoA === 'nao-informado') return 1;
+        if (anoB === 'nao-informado') return -1;
+        return Number(anoB) - Number(anoA);
+      })
+      .map(([ano, materiais]) => ({
+        ano,
+        categorias: CATEGORIAS
+          .filter((categoria) => categoria.id !== FILTRO_TODOS)
+          .filter((categoria) => categoriaAtiva === FILTRO_TODOS || categoria.id === categoriaAtiva)
+          .map((categoria) => ({
+            ...categoria,
+            mapas: materiais.filter((mapa) => mapa.categoria === categoria.id),
+          }))
+          .filter((categoria) => categoria.mapas.length > 0),
+      }));
+  }, [mapasFiltrados, categoriaAtiva]);
 
   const periodosTalhaoConsulta = useMemo(
     () => selectedTalhao
@@ -873,6 +935,12 @@ export default function MapasScreen({ route, navigation }) {
     return importsAtualizados;
   }, []);
 
+  const recarregarMaterialTecnicoLocal = useCallback(async (propriedadeId: string) => {
+    const importsAtualizados = await listActiveMaterialTecnicoImportsForPropriedade(propriedadeId);
+    setMaterialTecnicoImports(importsAtualizados);
+    return importsAtualizados;
+  }, []);
+
   // ──────────────────────────────────────────────
   // HANDLERS
   // ──────────────────────────────────────────────
@@ -904,9 +972,11 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const handleImagePreviewError = () => {
-    const message = isPngLocalMapa(imagePreview.mapa)
-      ? PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE
-      : 'Não foi possível carregar este anexo.';
+    const message = isMaterialTecnicoLocalMapa(imagePreview.mapa)
+      ? MATERIAL_TECNICO_LOCAL_OPEN_ERROR_MESSAGE
+      : isPngLocalMapa(imagePreview.mapa)
+        ? PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE
+        : 'Não foi possível carregar este anexo.';
 
     setImagePreview((current) => ({
       ...current,
@@ -939,6 +1009,30 @@ export default function MapasScreen({ route, navigation }) {
   }, [prescriptionZipImports]);
 
   const handleDownload = async (mapa) => {
+    if (isMaterialTecnicoLocalMapa(mapa)) {
+      if (getFormatoArquivo(mapa) !== 'png') {
+        openPrescriptionZipDetail(mapa);
+        return;
+      }
+
+      try {
+        const result = await resolveMaterialTecnicoImageSource(mapa, {
+          isSafeMaterialTecnicoStorageUri: MaterialTecnicoStorageService.isSafeMaterialTecnicoStorageUri,
+          getStoredMaterialTecnicoInfo: MaterialTecnicoStorageService.getStoredMaterialTecnicoInfo,
+        });
+
+        if (!result.ok || !result.source) {
+          toast.showError(result.message || MATERIAL_TECNICO_LOCAL_OPEN_ERROR_MESSAGE);
+          return;
+        }
+
+        openImagePreview(mapa, result.source);
+      } catch {
+        toast.showError(MATERIAL_TECNICO_LOCAL_OPEN_ERROR_MESSAGE);
+      }
+      return;
+    }
+
     if (isPrescriptionZipLocalMapa(mapa)) {
       openPrescriptionZipDetail(mapa);
       return;
@@ -980,6 +1074,13 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const confirmDownload = async () => {
+    if (isMaterialTecnicoLocalMapa(downloadDialog.mapa)) {
+      const mapaSelecionado = downloadDialog.mapa;
+      setDownloadDialog({ visible: false, mapa: null, status: null });
+      await handleDownload(mapaSelecionado);
+      return;
+    }
+
     if (isPrescriptionZipLocalMapa(downloadDialog.mapa)) {
       const mapaSelecionado = downloadDialog.mapa;
       setDownloadDialog({ visible: false, mapa: null, status: null });
@@ -1114,6 +1215,7 @@ export default function MapasScreen({ route, navigation }) {
 
   const limparFiltrosPanorama = () => {
     setCategoriaAtiva(FILTRO_TODOS);
+    setAnoFiltroMateriais(FILTRO_TODOS);
     setSafraFiltroMapas(FILTRO_TODOS);
     setTalhaoFiltroMapas(FILTRO_TODOS);
     setTalhaoFiltroLimite(FILTRO_TODOS);
@@ -1559,12 +1661,12 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const updatePngForm = (patch: Partial<PngMapPropertyImportFormInput>) => {
-    setPngForm((current) => ({
+  const updateMaterialTecnicoForm = (patch: Partial<MaterialTecnicoPropertyImportFormInput>) => {
+    setMaterialTecnicoForm((current) => ({
       ...current,
       ...patch,
     }));
-    setPngFormErrors((current) => {
+    setMaterialTecnicoFormErrors((current) => {
       const next = { ...current };
       Object.keys(patch).forEach((key) => {
         delete next[key];
@@ -1576,203 +1678,173 @@ export default function MapasScreen({ route, navigation }) {
     });
   };
 
-  const handlePngTalhaoChange = (talhaoId: string) => {
+  const handleMaterialPeriodoChange = (periodoId: string) => {
+    const option = materialPeriodoOptions.find((item) => item.value === periodoId);
+    updateMaterialTecnicoForm({
+      periodo_produtivo_id: periodoId,
+      periodo_produtivo_label: periodoId ? option?.label || '' : '',
+    });
+  };
+
+  const handleMaterialTalhaoChange = (talhaoId: string) => {
     const option = pngTalhaoOptions.find((item: any) => item?.value === talhaoId) as any;
-    updatePngForm({
+    updateMaterialTecnicoForm({
       talhao_id: talhaoId,
       talhao_nome: option?.label || '',
     });
   };
 
-  const handleAnexarPng = async () => {
-    if (!podeAnexarPng || !contextoConsulta.fazenda) {
-      toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar PNG.');
+  const handlePrepararMaterialTecnico = async () => {
+    if (!podeAnexarMaterialTecnico || !contextoConsulta.fazenda) {
+      toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar material.');
       return;
     }
 
-    setPngImporting(true);
+    setMaterialCategoriaPickerVisible(false);
+    setMaterialTecnicoImporting(true);
     try {
-      const result = await preparePngMapPropertyImport({
+      const result = await prepareMaterialTecnicoPropertyImport({
         user,
         propriedade: contextoConsulta.fazenda,
+        categoria: materialCategoriaSelecionada,
       });
 
       if (!result.ok || !result.preview) {
         if (result.error?.code !== 'PICKER_CANCELLED') {
-          toast.showError(result.error?.message || 'Não foi possível validar o PNG selecionado.');
+          toast.showError(result.error?.message || 'Não foi possível validar o arquivo selecionado.');
         }
         return;
       }
 
-      setPngPreview(result.preview);
-      setPngForm({
-        ...EMPTY_PNG_FORM,
+      setMaterialCategoriaSelecionada(result.preview.categoria);
+      setMaterialTecnicoPreview(result.preview);
+      setMaterialTecnicoForm({
+        ...EMPTY_MATERIAL_TECNICO_FORM,
         ...result.preview.form,
         ano: result.preview.form.ano ? String(result.preview.form.ano) : '',
+        profundidade: result.preview.categoria === 'prescricao'
+          ? undefined
+          : result.preview.form.profundidade || 'nao_informada',
+        escopo: result.preview.categoria === 'correcao'
+          ? result.preview.form.escopo || 'propriedade'
+          : 'propriedade',
       });
-      setPngFormErrors({});
-    } catch (error) {
-      toast.showError('Não foi possível preparar o PNG selecionado.');
-    } finally {
-      setPngImporting(false);
-    }
-  };
-
-  const handleCancelarPngPreview = () => {
-    if (pngConfirming) return;
-    setPngPreview(null);
-    setPngForm(EMPTY_PNG_FORM);
-    setPngFormErrors({});
-  };
-
-  const handleConfirmarPngPreview = async () => {
-    if (!pngPreview) return;
-
-    setPngConfirming(true);
-    try {
-      const result = await confirmPngMapPropertyImport(pngPreview, pngForm);
-
-      if (!result.ok) {
-        if (result.error?.code === 'FORM_INVALID') {
-          setPngFormErrors((result.error.details as Record<string, string>) || {});
-          toast.showError('Revise os campos obrigatórios do mapa PNG.');
-          return;
-        }
-
-        toast.showError(result.error?.message || 'Não foi possível anexar o mapa PNG.');
-        return;
-      }
-
-      setPngPreview(null);
-      setPngForm(EMPTY_PNG_FORM);
-      setPngFormErrors({});
-      setPngImports(result.imports || (result.metadata ? [result.metadata] : []));
-
-      try {
-        await recarregarPngLocal(pngPreview.resolvedContext.propriedade_id);
-      } catch {
-        toast.showWarning('PNG salvo, mas não foi possível recarregar o resumo local agora.');
-      }
-
-      toast.showSuccess('Mapa PNG anexado à Propriedade.');
-      toast.showInfo('PNG local também aparece na listagem principal de materiais.');
-      if (result.warnings && result.warnings.length > 0) {
-        toast.showWarning(result.warnings[0].message);
-      }
-    } catch (error) {
-      toast.showError('Não foi possível concluir o anexo do PNG.');
-    } finally {
-      setPngConfirming(false);
-    }
-  };
-
-  const updatePrescriptionZipForm = (patch: Partial<PrescriptionZipPropertyImportFormInput>) => {
-    setPrescriptionZipForm((current) => ({
-      ...current,
-      ...patch,
-    }));
-    setPrescriptionZipFormErrors((current) => {
-      const next = { ...current };
-      Object.keys(patch).forEach((key) => {
-        delete next[key];
-      });
-      if ('talhao_id' in patch || 'talhao_nome' in patch || 'escopo' in patch) {
-        delete next.talhao;
-      }
-      return next;
-    });
-  };
-
-  const handlePrescriptionZipTalhaoChange = (talhaoId: string) => {
-    const option = pngTalhaoOptions.find((item: any) => item?.value === talhaoId) as any;
-    updatePrescriptionZipForm({
-      talhao_id: talhaoId,
-      talhao_nome: option?.label || '',
-    });
-  };
-
-  const handleAnexarPrescriptionZip = async () => {
-    if (!podeAnexarPrescriptionZip || !contextoConsulta.fazenda) {
-      toast.showInfo('Abra uma Propriedade dentro do seu escopo para anexar prescrição.');
-      return;
-    }
-
-    setPrescriptionZipImporting(true);
-    try {
-      const result = await preparePrescriptionZipPropertyImport({
-        user,
-        propriedade: contextoConsulta.fazenda,
-      });
-
-      if (!result.ok || !result.preview) {
-        if (result.error?.code !== 'PICKER_CANCELLED') {
-          toast.showError(result.error?.message || 'Não foi possível validar o ZIP selecionado.');
-        }
-        return;
-      }
-
-      setPrescriptionZipPreview(result.preview);
-      setPrescriptionZipForm({
-        ...EMPTY_PRESCRIPTION_ZIP_FORM,
-        ...result.preview.form,
-        ano: result.preview.form.ano ? String(result.preview.form.ano) : '',
-      });
-      setPrescriptionZipFormErrors({});
+      setMaterialTecnicoFormErrors({});
     } catch {
-      toast.showError('Não foi possível preparar o ZIP selecionado.');
+      toast.showError('Não foi possível preparar o material selecionado.');
     } finally {
-      setPrescriptionZipImporting(false);
+      setMaterialTecnicoImporting(false);
     }
   };
 
-  const handleCancelarPrescriptionZipPreview = () => {
-    if (prescriptionZipConfirming) return;
-    setPrescriptionZipPreview(null);
-    setPrescriptionZipForm(EMPTY_PRESCRIPTION_ZIP_FORM);
-    setPrescriptionZipFormErrors({});
+  const handleCancelarMaterialTecnicoPreview = () => {
+    if (materialTecnicoConfirming) return;
+    setMaterialTecnicoPreview(null);
+    setMaterialTecnicoForm(EMPTY_MATERIAL_TECNICO_FORM);
+    setMaterialTecnicoFormErrors({});
   };
 
-  const handleConfirmarPrescriptionZipPreview = async () => {
-    if (!prescriptionZipPreview) return;
+  const handleConfirmarMaterialTecnico = async () => {
+    if (!materialTecnicoPreview) return;
 
-    setPrescriptionZipConfirming(true);
+    setMaterialTecnicoConfirming(true);
     try {
-      const result = await confirmPrescriptionZipPropertyImport(
-        prescriptionZipPreview,
-        prescriptionZipForm
+      const result = await confirmMaterialTecnicoPropertyImport(
+        materialTecnicoPreview,
+        materialTecnicoForm
       );
 
       if (!result.ok) {
         if (result.error?.code === 'FORM_INVALID') {
-          setPrescriptionZipFormErrors((result.error.details as Record<string, string>) || {});
-          toast.showError('Revise os campos obrigatórios da prescrição.');
+          setMaterialTecnicoFormErrors((result.error.details as Record<string, string>) || {});
+          toast.showError('Revise os campos obrigatórios do material.');
           return;
         }
 
-        toast.showError(result.error?.message || 'Não foi possível anexar a prescrição.');
+        toast.showError(result.error?.message || 'Não foi possível anexar o material.');
         return;
       }
 
-      setPrescriptionZipPreview(null);
-      setPrescriptionZipForm(EMPTY_PRESCRIPTION_ZIP_FORM);
-      setPrescriptionZipFormErrors({});
-      setPrescriptionZipImports(result.imports || (result.metadata ? [result.metadata] : []));
+      const propriedadeId = materialTecnicoPreview.resolvedContext.propriedade_id;
+      setMaterialTecnicoPreview(null);
+      setMaterialTecnicoForm(EMPTY_MATERIAL_TECNICO_FORM);
+      setMaterialTecnicoFormErrors({});
+      setMaterialTecnicoImports(result.imports || (result.metadata ? [result.metadata] : []));
 
       try {
-        await recarregarPrescriptionZipLocal(prescriptionZipPreview.resolvedContext.propriedade_id);
+        await recarregarMaterialTecnicoLocal(propriedadeId);
       } catch {
-        toast.showWarning('Prescrição salva, mas não foi possível recarregar o resumo local agora.');
+        toast.showWarning('Material salvo, mas não foi possível recarregar o catálogo local agora.');
       }
 
-      toast.showSuccess('Prescrição ZIP anexada à Propriedade.');
-      toast.showInfo('A prescrição aparece em Material técnico sem abrir ou processar o ZIP.');
+      toast.showSuccess('Material anexado à Propriedade.');
       if (result.warnings && result.warnings.length > 0) {
         toast.showWarning(result.warnings[0].message);
       }
     } catch {
-      toast.showError('Não foi possível concluir o anexo da prescrição.');
+      toast.showError('Não foi possível concluir o anexo do material.');
     } finally {
-      setPrescriptionZipConfirming(false);
+      setMaterialTecnicoConfirming(false);
+    }
+  };
+
+  const handleSolicitarRemoverMaterialTecnico = (mapa: any) => {
+    if (
+      !contextoConsulta.fazenda
+      || !canManageMaterialTecnicoItem(user, contextoConsulta.fazenda, mapa)
+    ) {
+      toast.showInfo('Abra um material local de uma Propriedade dentro do seu escopo para remover.');
+      return;
+    }
+
+    setMaterialTecnicoRemoveDialog({ visible: true, mapa, loading: false });
+  };
+
+  const handleCancelarRemocaoMaterialTecnico = () => {
+    if (materialTecnicoRemoveDialog.loading) return;
+    setMaterialTecnicoRemoveDialog({ visible: false, mapa: null, loading: false });
+  };
+
+  const handleConfirmarRemocaoMaterialTecnico = async () => {
+    const mapa = materialTecnicoRemoveDialog.mapa;
+    const propriedade = contextoConsulta.fazenda;
+    if (!mapa || !propriedade) {
+      handleCancelarRemocaoMaterialTecnico();
+      return;
+    }
+
+    setMaterialTecnicoRemoveDialog((current) => ({ ...current, loading: true }));
+    try {
+      const result = await removeMaterialTecnicoForPropriedade({
+        user,
+        propriedade,
+        mapa,
+      });
+      if (!result.ok) {
+        toast.showError(result.error?.message || 'Não foi possível remover o material local.');
+        return;
+      }
+
+      if (Array.isArray(result.imports)) setMaterialTecnicoImports(result.imports);
+      const propriedadeId = result.activeMetadata?.propriedade_id || getFazendaId(propriedade);
+      if (propriedadeId) {
+        try {
+          await recarregarMaterialTecnicoLocal(propriedadeId);
+        } catch {
+          toast.showWarning('O material foi removido, mas o catálogo não pôde ser recarregado agora.');
+        }
+      }
+
+      closeImagePreview();
+      closePrescriptionZipDetail();
+      toast.showSuccess('Material local removido.');
+      if (result.warnings && result.warnings.length > 0) {
+        toast.showWarning(result.warnings[0].message);
+      }
+    } catch {
+      toast.showError('Não foi possível concluir a remoção do material local.');
+    } finally {
+      setMaterialTecnicoRemoveDialog({ visible: false, mapa: null, loading: false });
     }
   };
 
@@ -1795,6 +1867,7 @@ export default function MapasScreen({ route, navigation }) {
     : `${contextoConsulta.fazendasPermitidas.length} propriedade${contextoConsulta.fazendasPermitidas.length !== 1 ? 's' : ''} no escopo atual`;
   const mapaSateliteFazendaInfo = fazendaContextoInfo || fazendaFiltroInfo;
   const temFiltroPanoramaAtivo = categoriaAtiva !== FILTRO_TODOS
+    || anoFiltroMateriais !== FILTRO_TODOS
     || safraFiltroMapas !== FILTRO_TODOS
     || talhaoFiltroMapas !== FILTRO_TODOS
     || talhaoFiltroLimite !== FILTRO_TODOS
@@ -1802,6 +1875,7 @@ export default function MapasScreen({ route, navigation }) {
     || busca.trim().length > 0
     || !!fazendaFiltroInfo;
   const temFiltroMaterialAtivo = categoriaAtiva !== FILTRO_TODOS
+    || anoFiltroMateriais !== FILTRO_TODOS
     || safraFiltroMapas !== FILTRO_TODOS
     || talhaoFiltroMapas !== FILTRO_TODOS
     || busca.trim().length > 0
@@ -1870,6 +1944,16 @@ export default function MapasScreen({ route, navigation }) {
     ],
     [safrasMapas]
   );
+  const anoMaterialFiltroOptions = useMemo(
+    () => [
+      { value: FILTRO_TODOS, label: 'Todos' },
+      ...anosMateriais.map((ano) => ({
+        value: ano,
+        label: ano,
+      })),
+    ],
+    [anosMateriais]
+  );
 
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
@@ -1911,6 +1995,7 @@ export default function MapasScreen({ route, navigation }) {
   const getIconeFormato = (formato) => {
     switch (formato) {
       case 'pdf': return 'document-text';
+      case 'zip': return 'archive';
       case 'dwg': return 'hammer';
       case 'jpg':
       case 'png': return 'image';
@@ -1936,6 +2021,9 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const getImagePreviewTipoLabel = (mapa) => {
+    if (isMaterialTecnicoLocalMapa(mapa)) {
+      return `${getCategoriaMapaLabel(mapa?.categoria)} • PNG local`;
+    }
     if (isProdutorView && (isPngLocalMapa(mapa) || mapa?.tipo_anexo === 'anexo_fertilidade')) {
       return 'Anexo técnico';
     }
@@ -1947,6 +2035,9 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const getMaterialTipoLabel = (mapa) => {
+    if (isMaterialTecnicoLocalMapa(mapa)) {
+      return getCategoriaMapaLabel(mapa?.categoria);
+    }
     if (isPrescriptionZipLocalMapa(mapa)) return 'Prescrição';
     if (isProdutorView && (isPngLocalMapa(mapa) || mapa?.tipo_anexo === 'anexo_fertilidade')) {
       return 'Anexo técnico';
@@ -1963,7 +2054,10 @@ export default function MapasScreen({ route, navigation }) {
   const buildImagePreviewMetaItems = (mapa) => {
     if (!mapa) return [];
 
-    const elementoLabel = getMapaElementoLabel(mapa) || mapa?.categoria_label || mapa?.subcategoria;
+    const isMaterialLocal = isMaterialTecnicoLocalMapa(mapa);
+    const elementoLabel = getMapaElementoLabel(mapa)
+      || (!isMaterialLocal ? mapa?.categoria_label || mapa?.subcategoria : '');
+    const anoMapa = getMapaAno(mapa);
     const safraMapa = getMapaSafra(mapa);
     const talhaoMapa = getMapaTalhao(mapa);
     const profundidadeMapa = getMapaProfundidade(mapa);
@@ -1971,8 +2065,9 @@ export default function MapasScreen({ route, navigation }) {
 
     return [
       { icon: 'image-outline', label: 'Tipo', value: getImagePreviewTipoLabel(mapa) },
-      { icon: 'layers-outline', label: 'Camada', value: elementoLabel },
-      { icon: 'calendar-outline', label: 'Safra/ano', value: safraMapa },
+      { icon: 'layers-outline', label: isMaterialLocal ? 'Indicação do nome' : 'Camada', value: elementoLabel },
+      { icon: 'calendar-outline', label: 'Ano', value: anoMapa },
+      { icon: 'leaf-outline', label: 'Safra/Safrinha', value: safraMapa },
       { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
       { icon: 'resize-outline', label: 'Profundidade', value: profundidadeMapa },
       { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
@@ -1982,7 +2077,10 @@ export default function MapasScreen({ route, navigation }) {
   const buildPrescriptionZipMetaItems = (mapa) => {
     if (!mapa) return [];
 
-    const camadaLabel = getMapaElementoLabel(mapa) || mapa?.camada_label || mapa?.subcategoria;
+    const isMaterialLocal = isMaterialTecnicoLocalMapa(mapa);
+    const camadaLabel = getMapaElementoLabel(mapa)
+      || (!isMaterialLocal ? mapa?.camada_label || mapa?.subcategoria : '');
+    const anoMapa = getMapaAno(mapa);
     const safraMapa = getMapaSafra(mapa);
     const talhaoMapa = getMapaTalhao(mapa);
     const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
@@ -1990,14 +2088,20 @@ export default function MapasScreen({ route, navigation }) {
       ? formatarTamanhoArquivo(mapa.tamanho_arquivo)
       : '';
 
+    const formatoArquivo = getFormatoArquivo(mapa).toUpperCase();
+    const tipoLabel = isMaterialTecnicoLocalMapa(mapa)
+      ? getCategoriaMapaLabel(mapa?.categoria)
+      : 'Prescrição';
+
     return [
-      { icon: 'archive-outline', label: 'Tipo', value: 'Prescrição' },
-      { icon: 'layers-outline', label: 'Camada', value: camadaLabel },
-      { icon: 'calendar-outline', label: 'Safra/ano', value: safraMapa },
+      { icon: formatoArquivo === 'PDF' ? 'document-text-outline' : 'archive-outline', label: 'Tipo', value: tipoLabel },
+      { icon: 'layers-outline', label: isMaterialLocal ? 'Indicação do nome' : 'Camada', value: camadaLabel },
+      { icon: 'calendar-outline', label: 'Ano', value: anoMapa },
+      { icon: 'leaf-outline', label: 'Safra/Safrinha', value: safraMapa },
       { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
       { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
       { icon: 'server-outline', label: 'Tamanho', value: tamanhoArquivo },
-      { icon: 'file-tray-full-outline', label: 'Formato', value: 'ZIP' },
+      { icon: 'file-tray-full-outline', label: 'Formato', value: formatoArquivo || 'ZIP' },
     ].filter((item) => item.value);
   };
 
@@ -2015,6 +2119,7 @@ export default function MapasScreen({ route, navigation }) {
   // RENDER: Card de Mapa
   // ──────────────────────────────────────────────
   const renderMapaCard = (mapa) => {
+    const anoMapa = getMapaAno(mapa);
     const safraMapa = getMapaSafra(mapa);
     const elementoLabel = getMapaElementoLabel(mapa);
     const profundidadeMapa = getMapaProfundidade(mapa);
@@ -2023,11 +2128,14 @@ export default function MapasScreen({ route, navigation }) {
     const statusDownload = avaliarDownloadMapa(mapa);
     const formatoArquivo = getFormatoArquivo(mapa);
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
+    const isMaterialTecnicoLocal = isMaterialTecnicoLocalMapa(mapa);
     const isPngLocal = isPngLocalMapa(mapa);
     const isPrescriptionZip = isPrescriptionZipLocalMapa(mapa);
     const isAnexoFertilidade = mapa?.tipo_anexo === 'anexo_fertilidade';
     const tipoArquivoLabel = getMaterialTipoLabel(mapa);
-    const abrirMaterialLabel = isPngLocal
+    const abrirMaterialLabel = isMaterialTecnicoLocal
+      ? formatoArquivo === 'png' ? 'Abrir anexo' : 'Ver detalhes'
+      : isPngLocal
       ? 'Abrir anexo'
       : isPrescriptionZip
       ? 'Ver detalhes'
@@ -2036,20 +2144,29 @@ export default function MapasScreen({ route, navigation }) {
         ? 'Abrir anexo'
         : 'Abrir material'
       : 'Arquivo não disponível';
-    const tipoMaterialLabel = isPngLocal
+    const tipoMaterialLabel = isMaterialTecnicoLocal
+      ? isProdutorView ? '' : `${formatoArquivo.toUpperCase()} local`
+      : isPngLocal
       ? isProdutorView ? '' : 'Imagem local'
       : isPrescriptionZip
       ? isProdutorView ? '' : 'ZIP local'
       : formatarTipoMaterial(mapa.tipo_material);
-    const podeAcionarMapa = isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
-    const indicadorDisponivel = isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
+    const podeAcionarMapa = isMaterialTecnicoLocal || isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
+    const indicadorDisponivel = isMaterialTecnicoLocal || isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
       || fazendaFiltroInfo;
     const mapaMetaChips = [
-      renderMapaMetaChip('layers-outline', 'Camada', elementoLabel),
+      renderMapaMetaChip(
+        'layers-outline',
+        isMaterialTecnicoLocal ? 'Indicação do nome' : 'Camada',
+        isMaterialTecnicoLocal && elementoLabel === getCategoriaMapaLabel(mapa?.categoria)
+          ? ''
+          : elementoLabel
+      ),
       renderMapaMetaChip('resize-outline', 'Profundidade', profundidadeMapa),
-      renderMapaMetaChip('calendar-outline', 'Safra/ano', safraMapa || formatarData(mapa.data_criacao)),
+      renderMapaMetaChip('calendar-outline', 'Ano', anoMapa),
+      renderMapaMetaChip('leaf-outline', 'Safra/Safrinha', safraMapa),
       renderMapaMetaChip('location-outline', 'Talhão', talhaoMapa),
       renderMapaMetaChip('home-outline', 'Propriedade', fazendaMapaInfo?.fazendaNome),
       renderMapaMetaChip('document-attach-outline', 'Nome original', arquivoNomeOriginal),
@@ -2119,7 +2236,7 @@ export default function MapasScreen({ route, navigation }) {
           </Text>
         </View>
       </View>
-      {!isPngLocal && !isPrescriptionZip && !statusDownload.podeAbrir && (
+      {!isMaterialTecnicoLocal && !isPngLocal && !isPrescriptionZip && !statusDownload.podeAbrir && (
         <Text style={styles.materialIndisponivelTexto}>
           Este material ainda não possui arquivo disponível para consulta.
         </Text>
@@ -2313,7 +2430,7 @@ export default function MapasScreen({ route, navigation }) {
   };
 
   const renderPngImportPanel = () => {
-    if (!podeAnexarPng && !podeAnexarPrescriptionZip) return null;
+    if (!podeAnexarMaterialTecnico) return null;
 
     return (
       <View style={styles.pngImportPanel}>
@@ -2322,12 +2439,47 @@ export default function MapasScreen({ route, navigation }) {
             <Ionicons name="image-outline" size={18} color={colors.info} />
           </View>
           <View style={styles.pngImportHeaderText}>
-            <Text style={styles.pngImportTitle}>PNG local de mapa</Text>
+            <Text style={styles.pngImportTitle}>Materiais locais da Propriedade</Text>
             <Text style={styles.pngImportSubtitle}>
-              Anexos locais classificados por fertilidade ou correção de solo.
+              Novos anexos seguem a organização por ano e categoria, preservando os fluxos locais anteriores.
             </Text>
           </View>
         </View>
+
+        {materialTecnicoImportsAtivos.length > 0 ? (
+          <View style={styles.pngImportSummaryList}>
+            {materialTecnicoImportsAtivos.slice(0, 3).map((item) => (
+              <View key={item.id} style={styles.pngImportSummaryItem}>
+                <View style={styles.pngImportSummaryIcon}>
+                  <Ionicons
+                    name={item.formato_arquivo === 'png' ? 'image-outline' : item.formato_arquivo === 'pdf' ? 'document-text-outline' : 'archive-outline'}
+                    size={18}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.pngImportSummaryText}>
+                  <Text style={styles.pngImportSummaryTitle} numberOfLines={1}>
+                    {item.arquivo_nome_original}
+                  </Text>
+                  <Text style={styles.pngImportSummaryMeta} numberOfLines={2}>
+                    {[
+                      item.ano,
+                      item.categoria_label,
+                      item.periodo_produtivo_label,
+                      item.profundidade === 'nao_informada' ? 'Profundidade não informada' : item.profundidade,
+                      item.escopo === 'talhao' ? item.talhao_nome : null,
+                    ].filter(Boolean).join(' • ')}
+                  </Text>
+                </View>
+              </View>
+            ))}
+            {materialTecnicoImportsAtivos.length > 3 ? (
+              <Text style={styles.pngImportMoreText}>
+                +{materialTecnicoImportsAtivos.length - 3} outros materiais no catálogo local.
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {pngImportsMateriaisAtivos.length > 0 ? (
           <View style={styles.pngImportSummaryList}>
@@ -2365,13 +2517,13 @@ export default function MapasScreen({ route, navigation }) {
               </Text>
             ) : null}
           </View>
-        ) : (
+        ) : materialTecnicoImportsAtivos.length === 0 && prescriptionZipImportsAtivos.length === 0 ? (
           <View style={styles.pngImportEmpty}>
             <Text style={styles.pngImportEmptyText}>
-              Nenhum PNG local de material técnico nesta Propriedade.
+              Nenhum material local anexado a esta Propriedade.
             </Text>
           </View>
-        )}
+        ) : null}
 
         {prescriptionZipImportsAtivos.length > 0 ? (
           <View style={styles.pngImportSummaryList}>
@@ -2407,53 +2559,29 @@ export default function MapasScreen({ route, navigation }) {
         ) : null}
 
         <View style={styles.materialImportActions}>
-          {podeAnexarPng ? (
-            <TouchableOpacity
-              style={[
-                styles.geoJsonImportButton,
-                styles.materialImportActionButton,
-                pngImporting && styles.geoJsonImportButtonDisabled,
-              ]}
-              onPress={handleAnexarPng}
-              activeOpacity={0.78}
-              disabled={pngImporting}
-            >
-              {pngImporting ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Ionicons name="image-outline" size={18} color={colors.white} />
-              )}
-              <Text style={styles.geoJsonImportButtonText}>
-                Anexar PNG
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {podeAnexarPrescriptionZip ? (
-            <TouchableOpacity
-              style={[
-                styles.geoJsonImportButton,
-                styles.materialImportActionButton,
-                prescriptionZipImporting && styles.geoJsonImportButtonDisabled,
-              ]}
-              onPress={handleAnexarPrescriptionZip}
-              activeOpacity={0.78}
-              disabled={prescriptionZipImporting}
-            >
-              {prescriptionZipImporting ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Ionicons name="archive-outline" size={18} color={colors.white} />
-              )}
-              <Text style={styles.geoJsonImportButtonText}>
-                Anexar prescrição ZIP
-              </Text>
-            </TouchableOpacity>
-          ) : null}
+          <TouchableOpacity
+            style={[
+              styles.geoJsonImportButton,
+              styles.materialImportActionButton,
+              materialTecnicoImporting && styles.geoJsonImportButtonDisabled,
+            ]}
+            onPress={() => setMaterialCategoriaPickerVisible(true)}
+            activeOpacity={0.78}
+            disabled={materialTecnicoImporting}
+          >
+            {materialTecnicoImporting ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Ionicons name="attach-outline" size={18} color={colors.white} />
+            )}
+            <Text style={styles.geoJsonImportButtonText}>
+              Anexar material
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.pngImportNextStep}>
-          PNG abre como imagem. Prescrição ZIP abre apenas como detalhe do pacote técnico.
+          PNG abre como imagem. PDF e ZIP exibem detalhes honestos do arquivo local, sem processamento no aparelho.
         </Text>
       </View>
     );
@@ -2480,7 +2608,7 @@ export default function MapasScreen({ route, navigation }) {
           value={busca}
           onChangeText={setBusca}
           onClear={() => setBusca('')}
-          placeholder="Buscar material, talhão, safra, propriedade..."
+          placeholder="Buscar material, ano, talhão, safra, propriedade..."
         />
       </View>
 
@@ -2541,10 +2669,25 @@ export default function MapasScreen({ route, navigation }) {
         </View>
       )}
 
+      {anosMateriais.length > 0 && (
+        <View style={styles.anoFilterContainer}>
+          <Text style={styles.anoFilterLabel}>
+            <Ionicons name="calendar-outline" size={14} color={colors.text} /> Ano dos materiais:
+          </Text>
+          <SegmentedChips
+            options={anoMaterialFiltroOptions}
+            value={anoFiltroMateriais}
+            onChange={setAnoFiltroMateriais}
+            horizontal
+            contentStyle={styles.anoFilterContent}
+          />
+        </View>
+      )}
+
       {safrasMapas.length > 0 && (
         <View style={styles.anoFilterContainer}>
           <Text style={styles.anoFilterLabel}>
-            <Ionicons name="leaf-outline" size={14} color={colors.text} /> Safra dos materiais:
+            <Ionicons name="leaf-outline" size={14} color={colors.text} /> Safra/Safrinha:
           </Text>
           <SegmentedChips
             options={safraFiltroOptions}
@@ -2703,7 +2846,7 @@ export default function MapasScreen({ route, navigation }) {
           message={
             isProdutorView
               ? 'Consulte os mapas e arquivos técnicos liberados para esta Propriedade.'
-              : 'Consulte os mapas e arquivos técnicos disponíveis, incluindo PNGs locais anexados neste aparelho. Esta tela não envia nem publica arquivos.'
+              : 'Consulte materiais locais em PNG, PDF ou ZIP e os anexos legados deste aparelho. Esta tela não envia nem publica arquivos.'
           }
           style={styles.materiaisDescription}
         />
@@ -2743,7 +2886,7 @@ export default function MapasScreen({ route, navigation }) {
           }
           message={
             temFiltroMaterialAtivo
-              ? 'Tente ajustar safra, talhão, categoria ou busca.'
+              ? 'Tente ajustar ano, Safra/Safrinha, talhão, categoria ou busca.'
               : isProdutorView
                 ? 'Nenhum material técnico liberado para consulta nesta Propriedade.'
                 : 'Quando materiais previamente preparados forem liberados para este contexto, eles aparecerão aqui para consulta.'
@@ -2752,22 +2895,39 @@ export default function MapasScreen({ route, navigation }) {
         />
       ) : (
         <View style={styles.mapasLista}>
-          {categoriaAtiva === 'todos' ? (
-            mapasPorCategoria.map(cat => (
-              <View key={cat.id} style={styles.categoriaSecao}>
+          {mapasPorAnoECategoria.map((grupo) => {
+            const totalDoAno = grupo.categorias.reduce(
+              (total, categoria) => total + categoria.mapas.length,
+              0
+            );
+
+            return (
+              <View key={grupo.ano} style={styles.categoriaSecao}>
                 <View style={styles.categoriaHeader}>
-                  <Ionicons name={cat.icon} size={28} color={colors.primary} />
-                  <Text style={styles.categoriaTitulo}>{cat.nome}</Text>
+                  <Ionicons name="calendar-outline" size={28} color={colors.primary} />
+                  <Text style={styles.categoriaTitulo}>
+                    {grupo.ano === 'nao-informado' ? 'Ano não informado' : `Ano ${grupo.ano}`}
+                  </Text>
                   <View style={styles.categoriaBadge}>
-                    <Text style={styles.categoriaBadgeTexto}>{cat.mapas.length}</Text>
+                    <Text style={styles.categoriaBadgeTexto}>{totalDoAno}</Text>
                   </View>
                 </View>
-                {cat.mapas.map(mapa => renderMapaCard(mapa))}
+
+                {grupo.categorias.map((categoria) => (
+                  <View key={`${grupo.ano}:${categoria.id}`} style={styles.categoriaSecao}>
+                    <View style={styles.categoriaHeader}>
+                      <Ionicons name={categoria.icon} size={24} color={colors.primary} />
+                      <Text style={styles.categoriaTitulo}>{categoria.nome}</Text>
+                      <View style={styles.categoriaBadge}>
+                        <Text style={styles.categoriaBadgeTexto}>{categoria.mapas.length}</Text>
+                      </View>
+                    </View>
+                    {categoria.mapas.map((mapa) => renderMapaCard(mapa))}
+                  </View>
+                ))}
               </View>
-            ))
-          ) : (
-            mapasFiltrados.map(mapa => renderMapaCard(mapa))
-          )}
+            );
+          })}
         </View>
       )}
 
@@ -2780,12 +2940,27 @@ export default function MapasScreen({ route, navigation }) {
   // ──────────────────────────────────────────────
   const imagePreviewMetaItems = buildImagePreviewMetaItems(imagePreview.mapa);
   const prescriptionZipMetaItems = buildPrescriptionZipMetaItems(prescriptionZipDetail.mapa);
+  const isUnifiedMaterialDetail = isMaterialTecnicoLocalMapa(prescriptionZipDetail.mapa);
+  const unifiedMaterialDetailFormat = getFormatoArquivo(prescriptionZipDetail.mapa).toUpperCase();
+  const materialDetailMessage = isUnifiedMaterialDetail
+    ? unifiedMaterialDetailFormat === 'PDF'
+      ? 'PDF salvo localmente neste aparelho. O MVP atual apresenta os metadados e o nome original, sem afirmar visualização integrada do documento.'
+      : 'ZIP salvo localmente neste aparelho. O MVP atual não descompacta, interpreta nem exibe uma prévia do pacote.'
+    : PRESCRIPTION_ZIP_DETAILS_MESSAGE;
   const canManageImagePreviewPng = consultaPorFazenda
     && !!contextoConsulta.fazenda
+    && !isMaterialTecnicoLocalMapa(imagePreview.mapa)
     && canManagePngMapItem(user, contextoConsulta.fazenda, imagePreview.mapa);
+  const canManageUnifiedImagePreview = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canManageMaterialTecnicoItem(user, contextoConsulta.fazenda, imagePreview.mapa);
   const canManagePrescriptionZipDetail = consultaPorFazenda
     && !!contextoConsulta.fazenda
+    && !isUnifiedMaterialDetail
     && canManagePrescriptionZipItem(user, contextoConsulta.fazenda, prescriptionZipDetail.mapa);
+  const canManageUnifiedMaterialDetail = consultaPorFazenda
+    && !!contextoConsulta.fazenda
+    && canManageMaterialTecnicoItem(user, contextoConsulta.fazenda, prescriptionZipDetail.mapa);
 
   if (loading) {
     return (
@@ -2927,6 +3102,290 @@ export default function MapasScreen({ route, navigation }) {
         onCancel={handleCancelarPrescriptionZipManageDialog}
       />
 
+      <ConfirmDialog
+        visible={materialTecnicoRemoveDialog.visible}
+        title="Remover material local"
+        message={[
+          `Deseja remover "${materialTecnicoRemoveDialog.mapa?.titulo || 'este material'}" deste aparelho?`,
+          'A Propriedade, o GeoJSON, os anexos legados e os demais materiais não serão alterados.',
+        ].join('\n\n')}
+        type="danger"
+        confirmText="Remover"
+        cancelText="Cancelar"
+        loading={materialTecnicoRemoveDialog.loading}
+        onConfirm={handleConfirmarRemocaoMaterialTecnico}
+        onCancel={handleCancelarRemocaoMaterialTecnico}
+      />
+
+      <Modal
+        visible={materialCategoriaPickerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMaterialCategoriaPickerVisible(false)}
+      >
+        <View style={styles.geoJsonPreviewOverlay}>
+          <View style={styles.geoJsonPreviewDialog}>
+            <View style={styles.geoJsonPreviewHeader}>
+              <View style={styles.geoJsonPreviewTitleWrap}>
+                <Text style={styles.geoJsonPreviewTitle}>Anexar material</Text>
+                <Text style={styles.geoJsonPreviewSubtitle}>
+                  Escolha primeiro onde o arquivo será organizado.
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setMaterialCategoriaPickerVisible(false)}
+                style={styles.geoJsonPreviewClose}
+                disabled={materialTecnicoImporting}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.geoJsonPreviewContent}>
+              <SelectField
+                label="Categoria do material"
+                required
+                value={materialCategoriaSelecionada}
+                options={MATERIAL_TECNICO_CATEGORY_OPTIONS}
+                onChange={(categoria) => setMaterialCategoriaSelecionada(categoria as MaterialTecnicoCategoria)}
+              />
+              <InfoBox
+                variant="info"
+                title="Organização"
+                message="O arquivo ficará vinculado à Propriedade, ao ano informado e à categoria escolhida. São aceitos PNG, PDF e ZIP."
+              />
+            </View>
+
+            <View style={styles.geoJsonPreviewFooter}>
+              <TouchableOpacity
+                style={styles.geoJsonPreviewCancelButton}
+                onPress={() => setMaterialCategoriaPickerVisible(false)}
+                disabled={materialTecnicoImporting}
+              >
+                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonPreviewConfirmButton,
+                  materialTecnicoImporting && styles.geoJsonPreviewConfirmButtonDisabled,
+                ]}
+                onPress={handlePrepararMaterialTecnico}
+                disabled={materialTecnicoImporting}
+              >
+                {materialTecnicoImporting ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="document-attach-outline" size={18} color={colors.white} />
+                )}
+                <Text style={styles.geoJsonPreviewConfirmText}>Escolher arquivo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={!!materialTecnicoPreview}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCancelarMaterialTecnicoPreview}
+      >
+        <View style={styles.geoJsonPreviewOverlay}>
+          <View style={styles.geoJsonPreviewDialog}>
+            <View style={styles.geoJsonPreviewHeader}>
+              <View style={styles.geoJsonPreviewTitleWrap}>
+                <Text style={styles.geoJsonPreviewTitle}>Confirmar material</Text>
+                <Text style={styles.geoJsonPreviewSubtitle}>
+                  {getCategoriaMapaLabel(materialCategoriaSelecionada)} • título gerado pelo nome original
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleCancelarMaterialTecnicoPreview}
+                style={styles.geoJsonPreviewClose}
+                disabled={materialTecnicoConfirming}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.geoJsonPreviewBody}
+              contentContainerStyle={styles.geoJsonPreviewContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {materialTecnicoPreview ? (
+                <>
+                  <View style={styles.pngFileBox}>
+                    <View style={styles.pngFileIcon}>
+                      <Ionicons
+                        name={materialTecnicoPreview.file.formato === 'png'
+                          ? 'image-outline'
+                          : materialTecnicoPreview.file.formato === 'pdf'
+                            ? 'document-text-outline'
+                            : 'archive-outline'}
+                        size={20}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={styles.pngFileText}>
+                      <Text style={styles.pngFileLabel}>Arquivo selecionado</Text>
+                      <Text style={styles.pngFileName} numberOfLines={2}>
+                        {materialTecnicoPreview.file.name}
+                      </Text>
+                      <Text style={styles.pngFileMeta} numberOfLines={2}>
+                        {[
+                          materialTecnicoPreview.tituloAutomatico,
+                          materialTecnicoPreview.file.formato?.toUpperCase(),
+                          formatarTamanhoArquivo(materialTecnicoPreview.file.size),
+                        ].filter(Boolean).join(' • ')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <FormField
+                    label="Ano do arquivo"
+                    required
+                    value={materialTecnicoForm.ano ? String(materialTecnicoForm.ano) : ''}
+                    onChangeText={(ano) => updateMaterialTecnicoForm({ ano })}
+                    error={materialTecnicoFormErrors.ano}
+                    keyboardType="number-pad"
+                    placeholder="2025"
+                    leftIcon="calendar-outline"
+                  />
+
+                  <SelectField
+                    label="Safra/Safrinha (opcional)"
+                    value={materialTecnicoForm.periodo_produtivo_id || ''}
+                    options={materialPeriodoOptions}
+                    onChange={handleMaterialPeriodoChange}
+                    error={materialTecnicoFormErrors.periodo_produtivo_id}
+                    helperText="Somente períodos ativos desta Propriedade."
+                  />
+
+                  {materialCategoriaSelecionada === 'fertilidade' || materialCategoriaSelecionada === 'correcao' ? (
+                    <SelectField
+                      label="Profundidade"
+                      required
+                      value={materialTecnicoForm.profundidade || 'nao_informada'}
+                      options={MATERIAL_TECNICO_PROFUNDIDADE_OPTIONS}
+                      onChange={(profundidade) => updateMaterialTecnicoForm({ profundidade })}
+                      error={materialTecnicoFormErrors.profundidade}
+                    />
+                  ) : null}
+
+                  {materialCategoriaSelecionada === 'correcao' ? (
+                    <>
+                      <SelectField
+                        label="Escopo"
+                        required
+                        value={materialTecnicoForm.escopo || 'propriedade'}
+                        options={MATERIAL_TECNICO_ESCOPO_OPTIONS}
+                        onChange={(escopo) => updateMaterialTecnicoForm({
+                          escopo: escopo === 'talhao' ? 'talhao' : 'propriedade',
+                          talhao_id: '',
+                          talhao_nome: '',
+                        })}
+                        error={materialTecnicoFormErrors.escopo}
+                      />
+
+                      {materialTecnicoForm.escopo === 'talhao' ? (
+                        pngTalhaoOptions.length > 0 ? (
+                          <SelectField
+                            label="Talhão"
+                            required
+                            value={materialTecnicoForm.talhao_id || ''}
+                            options={pngTalhaoOptions}
+                            onChange={handleMaterialTalhaoChange}
+                            error={materialTecnicoFormErrors.talhao}
+                            placeholder="Selecione o Talhão"
+                          />
+                        ) : (
+                          <FormField
+                            label="Nome do Talhão"
+                            required
+                            value={materialTecnicoForm.talhao_nome || ''}
+                            onChangeText={(talhao_nome) => updateMaterialTecnicoForm({ talhao_nome })}
+                            error={materialTecnicoFormErrors.talhao}
+                            placeholder="Informe o Talhão"
+                            leftIcon="location-outline"
+                          />
+                        )
+                      ) : null}
+                    </>
+                  ) : null}
+
+                  <TouchableOpacity
+                    style={styles.pngVisibilityToggle}
+                    onPress={() => updateMaterialTecnicoForm({
+                      visivel_para_produtor: !materialTecnicoForm.visivel_para_produtor,
+                    })}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={materialTecnicoForm.visivel_para_produtor ? 'checkbox-outline' : 'square-outline'}
+                      size={22}
+                      color={materialTecnicoForm.visivel_para_produtor ? colors.primary : colors.muted}
+                    />
+                    <View style={styles.pngVisibilityText}>
+                      <Text style={styles.pngVisibilityTitle}>Visível para Produtor</Text>
+                      <Text style={styles.pngVisibilitySubtitle}>
+                        O material ficará disponível na consulta do Produtor quando permitido.
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <InfoBox
+                    variant="info"
+                    title="Arquivo local"
+                    message={materialTecnicoPreview.file.formato === 'png'
+                      ? 'O PNG poderá ser aberto como imagem neste aparelho.'
+                      : materialTecnicoPreview.file.formato === 'pdf'
+                        ? 'O PDF ficará salvo localmente; o MVP não afirma visualizador integrado.'
+                        : 'O ZIP ficará salvo localmente, sem descompactação ou processamento no aparelho.'}
+                  />
+
+                  {materialTecnicoPreview.warnings?.length > 0 ? (
+                    <View style={styles.geoJsonWarningsBox}>
+                      <Text style={styles.geoJsonWarningsTitle}>Avisos da validação</Text>
+                      {materialTecnicoPreview.warnings.slice(0, 4).map((warning: any) => (
+                        <Text key={`${warning.code}-${warning.message}`} style={styles.geoJsonWarningItem}>
+                          {warning.message}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : null}
+                </>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.geoJsonPreviewFooter}>
+              <TouchableOpacity
+                style={styles.geoJsonPreviewCancelButton}
+                onPress={handleCancelarMaterialTecnicoPreview}
+                disabled={materialTecnicoConfirming}
+              >
+                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.geoJsonPreviewConfirmButton,
+                  materialTecnicoConfirming && styles.geoJsonPreviewConfirmButtonDisabled,
+                ]}
+                onPress={handleConfirmarMaterialTecnico}
+                disabled={materialTecnicoConfirming}
+              >
+                {materialTecnicoConfirming ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="checkmark-outline" size={18} color={colors.white} />
+                )}
+                <Text style={styles.geoJsonPreviewConfirmText}>Anexar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Modal
         visible={!!geoJsonPreview}
         transparent
@@ -3067,414 +3526,6 @@ export default function MapasScreen({ route, navigation }) {
       </Modal>
 
       <Modal
-        visible={!!pngPreview}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelarPngPreview}
-      >
-        <View style={styles.geoJsonPreviewOverlay}>
-          <View style={styles.geoJsonPreviewDialog}>
-            <View style={styles.geoJsonPreviewHeader}>
-              <View style={styles.geoJsonPreviewTitleWrap}>
-                <Text style={styles.geoJsonPreviewTitle}>
-                  Anexar PNG
-                </Text>
-                <Text style={styles.geoJsonPreviewSubtitle}>
-                  Classifique o material técnico e vincule ao contexto correto.
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={handleCancelarPngPreview}
-                style={styles.geoJsonPreviewClose}
-                disabled={pngConfirming}
-              >
-                <Ionicons name="close" size={22} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={styles.geoJsonPreviewBody}
-              contentContainerStyle={styles.geoJsonPreviewContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              {pngPreview ? (
-                <>
-                  <View style={styles.pngFileBox}>
-                    <View style={styles.pngFileIcon}>
-                      <Ionicons name="image-outline" size={20} color={colors.info} />
-                    </View>
-                    <View style={styles.pngFileText}>
-                      <Text style={styles.pngFileLabel}>Arquivo selecionado</Text>
-                      <Text style={styles.pngFileName} numberOfLines={2}>
-                        {pngPreview.file.name}
-                      </Text>
-                      <Text style={styles.pngFileMeta}>
-                        {formatarTamanhoArquivo(pngPreview.file.size)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <FormField
-                    label="Título"
-                    required
-                    value={pngForm.titulo || ''}
-                    onChangeText={(titulo) => updatePngForm({ titulo })}
-                    error={pngFormErrors.titulo}
-                    placeholder="Ex.: Mapa de pH 2025"
-                    leftIcon="text-outline"
-                  />
-
-                  <SelectField
-                    label="Tipo de mapa/camada"
-                    required
-                    value={pngForm.elemento ? String(pngForm.elemento) : ''}
-                    options={pngCategoryOptions}
-                    onChange={(elemento) => updatePngForm({ elemento })}
-                    error={pngFormErrors.elemento}
-                    placeholder="Selecione o tipo de mapa"
-                  />
-
-                  <View style={styles.pngFormRow}>
-                    <FormField
-                      label="Safra"
-                      value={pngForm.safra || ''}
-                      onChangeText={(safra) => updatePngForm({ safra })}
-                      placeholder="Ex.: 2025/2026"
-                      leftIcon="leaf-outline"
-                      containerStyle={styles.pngFormRowItem}
-                    />
-                    <FormField
-                      label="Ano"
-                      value={pngForm.ano ? String(pngForm.ano) : ''}
-                      onChangeText={(ano) => updatePngForm({ ano })}
-                      error={pngFormErrors.ano}
-                      keyboardType="number-pad"
-                      placeholder="2025"
-                      leftIcon="calendar-outline"
-                      containerStyle={styles.pngFormRowItem}
-                    />
-                  </View>
-
-                  <FormField
-                    label="Profundidade"
-                    value={pngForm.profundidade || ''}
-                    onChangeText={(profundidade) => updatePngForm({ profundidade })}
-                    placeholder="Ex.: 10-20 cm"
-                    leftIcon="resize-outline"
-                  />
-
-                  <SelectField
-                    label="Escopo"
-                    required
-                    value={pngForm.escopo || 'propriedade'}
-                    options={PNG_ESCOPO_OPTIONS}
-                    onChange={(escopo) => updatePngForm({
-                      escopo: escopo === 'talhao' ? 'talhao' : 'propriedade',
-                      talhao_id: '',
-                      talhao_nome: '',
-                    })}
-                    error={pngFormErrors.escopo}
-                  />
-
-                  {pngForm.escopo === 'talhao' ? (
-                    pngTalhaoOptions.length > 0 ? (
-                      <SelectField
-                        label="Talhão"
-                        required
-                        value={pngForm.talhao_id || ''}
-                        options={pngTalhaoOptions}
-                        onChange={handlePngTalhaoChange}
-                        error={pngFormErrors.talhao}
-                        placeholder="Selecione o talhão"
-                      />
-                    ) : (
-                      <FormField
-                        label="Nome do talhão"
-                        required
-                        value={pngForm.talhao_nome || ''}
-                        onChangeText={(talhao_nome) => updatePngForm({ talhao_nome })}
-                        error={pngFormErrors.talhao}
-                        placeholder="Informe o talhão"
-                        leftIcon="location-outline"
-                      />
-                    )
-                  ) : null}
-
-                  <FormField
-                    label="Observações"
-                    value={pngForm.descricao || ''}
-                    onChangeText={(descricao) => updatePngForm({ descricao })}
-                    placeholder="Observação técnica opcional"
-                    leftIcon="document-text-outline"
-                    textarea
-                    maxLength={420}
-                  />
-
-                  <TouchableOpacity
-                    style={styles.pngVisibilityToggle}
-                    onPress={() => updatePngForm({
-                      visivel_para_produtor: !pngForm.visivel_para_produtor,
-                    })}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons
-                      name={pngForm.visivel_para_produtor ? 'checkbox-outline' : 'square-outline'}
-                      size={22}
-                      color={pngForm.visivel_para_produtor ? colors.primary : colors.muted}
-                    />
-                    <View style={styles.pngVisibilityText}>
-                      <Text style={styles.pngVisibilityTitle}>Visível para produtor</Text>
-                      <Text style={styles.pngVisibilitySubtitle}>
-                        O anexo será marcado para consulta do Produtor na listagem principal quando permitido.
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  {pngPreview.warnings.length > 0 ? (
-                    <View style={styles.geoJsonWarningsBox}>
-                      <Text style={styles.geoJsonWarningsTitle}>Avisos da validação</Text>
-                      {pngPreview.warnings.slice(0, 4).map((warning) => (
-                        <Text key={`${warning.code}-${warning.message}`} style={styles.geoJsonWarningItem}>
-                          {warning.message}
-                        </Text>
-                      ))}
-                      {pngPreview.warnings.length > 4 ? (
-                        <Text style={styles.geoJsonWarningItem}>
-                          +{pngPreview.warnings.length - 4} aviso(s)
-                        </Text>
-                      ) : null}
-                    </View>
-                  ) : null}
-                </>
-              ) : null}
-            </ScrollView>
-
-            <View style={styles.geoJsonPreviewFooter}>
-              <TouchableOpacity
-                style={styles.geoJsonPreviewCancelButton}
-                onPress={handleCancelarPngPreview}
-                disabled={pngConfirming}
-              >
-                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.geoJsonPreviewConfirmButton,
-                  pngConfirming && styles.geoJsonPreviewConfirmButtonDisabled,
-                ]}
-                onPress={handleConfirmarPngPreview}
-                disabled={pngConfirming}
-              >
-                {pngConfirming ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <Ionicons name="checkmark-outline" size={18} color={colors.white} />
-                )}
-                <Text style={styles.geoJsonPreviewConfirmText}>
-                  Anexar PNG
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={!!prescriptionZipPreview}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelarPrescriptionZipPreview}
-      >
-        <View style={styles.geoJsonPreviewOverlay}>
-          <View style={styles.geoJsonPreviewDialog}>
-            <View style={styles.geoJsonPreviewHeader}>
-              <View style={styles.geoJsonPreviewTitleWrap}>
-                <Text style={styles.geoJsonPreviewTitle}>
-                  Anexar prescrição ZIP
-                </Text>
-                <Text style={styles.geoJsonPreviewSubtitle}>
-                  Classifique o pacote técnico sem abrir ou processar o ZIP.
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={handleCancelarPrescriptionZipPreview}
-                style={styles.geoJsonPreviewClose}
-                disabled={prescriptionZipConfirming}
-              >
-                <Ionicons name="close" size={22} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              style={styles.geoJsonPreviewBody}
-              contentContainerStyle={styles.geoJsonPreviewContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              {prescriptionZipPreview ? (
-                <>
-                  <View style={styles.pngFileBox}>
-                    <View style={styles.pngFileIcon}>
-                      <Ionicons name="archive-outline" size={20} color={colors.primary} />
-                    </View>
-                    <View style={styles.pngFileText}>
-                      <Text style={styles.pngFileLabel}>Arquivo selecionado</Text>
-                      <Text style={styles.pngFileName} numberOfLines={2}>
-                        {prescriptionZipPreview.file.name}
-                      </Text>
-                      <Text style={styles.pngFileMeta}>
-                        {formatarTamanhoArquivo(prescriptionZipPreview.file.size)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <FormField
-                    label="Título"
-                    required
-                    value={prescriptionZipForm.titulo || ''}
-                    onChangeText={(titulo) => updatePrescriptionZipForm({ titulo })}
-                    error={prescriptionZipFormErrors.titulo}
-                    placeholder="Ex.: Prescrição 2025"
-                    leftIcon="text-outline"
-                  />
-
-                  <SelectField
-                    label="Camada"
-                    required
-                    value={prescriptionZipForm.camada ? String(prescriptionZipForm.camada) : ''}
-                    options={prescriptionZipLayerOptions}
-                    onChange={(camada) => updatePrescriptionZipForm({ camada })}
-                    error={prescriptionZipFormErrors.camada}
-                    placeholder="Selecione a camada"
-                  />
-
-                  <View style={styles.pngFormRow}>
-                    <FormField
-                      label="Safra"
-                      value={prescriptionZipForm.safra || ''}
-                      onChangeText={(safra) => updatePrescriptionZipForm({ safra })}
-                      placeholder="Ex.: 2025/2026"
-                      leftIcon="leaf-outline"
-                      containerStyle={styles.pngFormRowItem}
-                    />
-                    <FormField
-                      label="Ano"
-                      value={prescriptionZipForm.ano ? String(prescriptionZipForm.ano) : ''}
-                      onChangeText={(ano) => updatePrescriptionZipForm({ ano })}
-                      error={prescriptionZipFormErrors.ano}
-                      keyboardType="number-pad"
-                      placeholder="2025"
-                      leftIcon="calendar-outline"
-                      containerStyle={styles.pngFormRowItem}
-                    />
-                  </View>
-
-                  <SelectField
-                    label="Escopo"
-                    required
-                    value={prescriptionZipForm.escopo || 'propriedade'}
-                    options={PNG_ESCOPO_OPTIONS}
-                    onChange={(escopo) => updatePrescriptionZipForm({
-                      escopo: escopo === 'talhao' ? 'talhao' : 'propriedade',
-                      talhao_id: '',
-                      talhao_nome: '',
-                    })}
-                    error={prescriptionZipFormErrors.escopo}
-                  />
-
-                  {prescriptionZipForm.escopo === 'talhao' ? (
-                    pngTalhaoOptions.length > 0 ? (
-                      <SelectField
-                        label="Talhão"
-                        required
-                        value={prescriptionZipForm.talhao_id || ''}
-                        options={pngTalhaoOptions}
-                        onChange={handlePrescriptionZipTalhaoChange}
-                        error={prescriptionZipFormErrors.talhao}
-                        placeholder="Selecione o talhão"
-                      />
-                    ) : (
-                      <FormField
-                        label="Nome do talhão"
-                        required
-                        value={prescriptionZipForm.talhao_nome || ''}
-                        onChangeText={(talhao_nome) => updatePrescriptionZipForm({ talhao_nome })}
-                        error={prescriptionZipFormErrors.talhao}
-                        placeholder="Informe o talhão"
-                        leftIcon="location-outline"
-                      />
-                    )
-                  ) : null}
-
-                  <FormField
-                    label="Observações"
-                    value={prescriptionZipForm.descricao || ''}
-                    onChangeText={(descricao) => updatePrescriptionZipForm({ descricao })}
-                    placeholder="Observação técnica opcional"
-                    leftIcon="document-text-outline"
-                    textarea
-                    maxLength={420}
-                  />
-
-                  <TouchableOpacity
-                    style={styles.pngVisibilityToggle}
-                    onPress={() => updatePrescriptionZipForm({
-                      visivel_para_produtor: !prescriptionZipForm.visivel_para_produtor,
-                    })}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons
-                      name={prescriptionZipForm.visivel_para_produtor ? 'checkbox-outline' : 'square-outline'}
-                      size={22}
-                      color={prescriptionZipForm.visivel_para_produtor ? colors.primary : colors.muted}
-                    />
-                    <View style={styles.pngVisibilityText}>
-                      <Text style={styles.pngVisibilityTitle}>Visível para produtor</Text>
-                      <Text style={styles.pngVisibilitySubtitle}>
-                        A prescrição será marcada para consulta quando permitido.
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  <InfoBox
-                    variant="info"
-                    title="Pacote técnico"
-                    message={PRESCRIPTION_ZIP_DETAILS_MESSAGE}
-                  />
-                </>
-              ) : null}
-            </ScrollView>
-
-            <View style={styles.geoJsonPreviewFooter}>
-              <TouchableOpacity
-                style={styles.geoJsonPreviewCancelButton}
-                onPress={handleCancelarPrescriptionZipPreview}
-                disabled={prescriptionZipConfirming}
-              >
-                <Text style={styles.geoJsonPreviewCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.geoJsonPreviewConfirmButton,
-                  prescriptionZipConfirming && styles.geoJsonPreviewConfirmButtonDisabled,
-                ]}
-                onPress={handleConfirmarPrescriptionZipPreview}
-                disabled={prescriptionZipConfirming}
-              >
-                {prescriptionZipConfirming ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <Ionicons name="checkmark-outline" size={18} color={colors.white} />
-                )}
-                <Text style={styles.geoJsonPreviewConfirmText}>
-                  Anexar ZIP
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
         visible={imagePreview.visible}
         transparent
         animationType="fade"
@@ -3542,6 +3593,25 @@ export default function MapasScreen({ route, navigation }) {
                 </TouchableOpacity>
               </View>
             ) : null}
+            {canManageUnifiedImagePreview ? (
+              <View style={styles.imagePreviewManagePanel}>
+                <TouchableOpacity
+                  style={[
+                    styles.geoJsonManageButton,
+                    styles.geoJsonManageButtonDanger,
+                    materialTecnicoRemoveDialog.loading && styles.geoJsonImportButtonDisabled,
+                  ]}
+                  onPress={() => handleSolicitarRemoverMaterialTecnico(imagePreview.mapa)}
+                  activeOpacity={0.78}
+                  disabled={materialTecnicoRemoveDialog.loading}
+                >
+                  <Ionicons name="trash-outline" size={17} color={colors.error} />
+                  <Text style={styles.geoJsonManageButtonTextDanger}>
+                    Remover material local
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
             {imagePreview.loadError ? (
               <View style={styles.imagePreviewErrorBox}>
                 <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
@@ -3576,7 +3646,9 @@ export default function MapasScreen({ route, navigation }) {
                   {prescriptionZipDetail.mapa?.titulo || 'Prescrição'}
                 </Text>
                 <Text style={styles.imagePreviewSubtitle}>
-                  Pacote técnico ZIP
+                  {isUnifiedMaterialDetail
+                    ? `${getCategoriaMapaLabel(prescriptionZipDetail.mapa?.categoria)} • ${unifiedMaterialDetailFormat || 'Arquivo local'}`
+                    : 'Pacote técnico ZIP'}
                 </Text>
               </View>
               <TouchableOpacity
@@ -3595,8 +3667,8 @@ export default function MapasScreen({ route, navigation }) {
 
             <InfoBox
               variant="info"
-              title="Prescrição"
-              message={PRESCRIPTION_ZIP_DETAILS_MESSAGE}
+              title={isUnifiedMaterialDetail ? 'Arquivo local' : 'Prescrição'}
+              message={materialDetailMessage}
             />
 
             {canManagePrescriptionZipDetail ? (
@@ -3629,6 +3701,25 @@ export default function MapasScreen({ route, navigation }) {
                   <Ionicons name="trash-outline" size={17} color={colors.error} />
                   <Text style={styles.geoJsonManageButtonTextDanger}>
                     Remover prescrição local
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+            {canManageUnifiedMaterialDetail ? (
+              <View style={styles.imagePreviewManagePanel}>
+                <TouchableOpacity
+                  style={[
+                    styles.geoJsonManageButton,
+                    styles.geoJsonManageButtonDanger,
+                    materialTecnicoRemoveDialog.loading && styles.geoJsonImportButtonDisabled,
+                  ]}
+                  onPress={() => handleSolicitarRemoverMaterialTecnico(prescriptionZipDetail.mapa)}
+                  activeOpacity={0.78}
+                  disabled={materialTecnicoRemoveDialog.loading}
+                >
+                  <Ionicons name="trash-outline" size={17} color={colors.error} />
+                  <Text style={styles.geoJsonManageButtonTextDanger}>
+                    Remover material local
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -4488,14 +4579,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.textLight,
     marginTop: 2,
-  },
-  pngFormRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  pngFormRowItem: {
-    flex: 1,
-    minWidth: 0,
   },
   pngVisibilityToggle: {
     flexDirection: 'row',

@@ -297,12 +297,33 @@ Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingest
 - `LimiteArea` permanece como camada tecnica de demarcacao dos talhoes, vinculada a `fazenda_id` enquanto essa for a chave interna do contexto de propriedade.
 - A tela de mapas deve tratar a demarcacao como base do panorama, e nao como uma aba funcional separada.
 - Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da propriedade.
-- Para a primeira versao de testes, materiais tecnicos devem ser organizados por `fazenda_id`, campo/talhao, recorte temporal e elemento/camada quando aplicavel.
+- Para novos anexos do MVP local, materiais tecnicos devem ser organizados por
+  `Propriedade -> Ano -> Categoria`, preservando `fazenda_id` como alias
+  tecnico enquanto houver compatibilidade.
 - O foco inicial dos materiais liberaveis deve ser mapas de diagnostico, especialmente fertilidade por elemento/camada, como argila, fosforo, pH, potassio e materia organica.
-- A taxonomia operacional inicial da biblioteca de mapas passa a destacar tres tipos principais: mapas de fertilidade, mapas de correcao de solo e prescricoes. Na interface atual, os filtros principais de materiais tecnicos devem ficar restritos a esses tres tipos.
+- A taxonomia operacional da biblioteca de mapas possui tres categorias
+  principais: Fertilidade, Correcao de solo e Prescricao. Os filtros principais
+  de materiais tecnicos devem ficar restritos a essas tres categorias.
+- O fluxo principal para novos anexos e unificado e aceita PNG, PDF ou ZIP. O
+  nome original e preservado, o titulo e gerado automaticamente e o ano e
+  obrigatorio. Safra/Safrinha e referencia opcional a periodo produtivo da
+  mesma Propriedade.
+- Fertilidade registra profundidade no escopo da Propriedade; Correcao registra
+  profundidade e escolhe Propriedade inteira ou Talhao; Prescricao nao exige
+  profundidade, camada ou Talhao no corte atual. `Nao informada` e uma opcao
+  explicita quando a profundidade nao estiver comprovada.
 - No MVP atual, o mapa interativo e apenas a base de talhoes/limites. Mapas de elementos, como PNGs de fertilidade, devem ser tratados como anexos visuais da biblioteca de materiais.
 - PNGs de elementos nao devem ser sobrepostos ao mapa interativo nesta etapa. A experiencia esperada e abrir o PNG como imagem/anexo para consulta.
-- Arquivos de prescricao devem ser tratados como anexos tecnicos de pacote, preferencialmente ZIP, sem sobreposicao no mapa interativo. No MVP atual, o ZIP pode ser anexado localmente de forma demonstrativa, guardando apenas metadados pequenos e exibindo detalhe do pacote, sem unzip, leitura de bytes, processamento, upload/backend, sync ou download real.
+- PDF e ZIP devem ser catalogados por metadados e nome original. O MVP nao
+  afirma visualizador PDF, preview de ZIP, unzip, leitura de bytes ou
+  processamento desses formatos.
+- O arquivo fisico local fica no storage interno do aplicativo e o
+  `AsyncStorage` guarda somente o indice de metadados. Registros PNG/ZIP
+  anteriores continuam legiveis, sem copia ou duplicacao automatica no indice
+  unificado.
+- A consulta local no mesmo aparelho pode funcionar sem conexao, mas nao
+  representa sync, download remoto, restauracao entre aparelhos ou offline
+  total.
 - Arquivos tecnicos operacionais disponiveis no acervo, como sementes ou linhas de plantio, podem ser anexados e liberados quando fizerem sentido para a propriedade, mas nao devem virar uma experiencia separada da biblioteca de materiais da propriedade.
 - O app deve consumir um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, em vez de carregar no celular o pacote bruto de arquivos `.shp`, `.shx`, `.dbf`, `.prj`, `.kml`, `.kmz` ou metadados auxiliares.
 - Para acelerar o MVP, a validacao local pode usar um conversor de desenvolvimento que gera o arquivo final a partir dos originais, mas a conversao produtiva futura deve acontecer fora do app, em backend ou processo operacional controlado.

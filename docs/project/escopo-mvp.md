@@ -39,7 +39,26 @@ Nao implica, por si so, que todos os fluxos de upload, download ou processamento
 
 Para a primeira versao de testes, o corte funcional da biblioteca de materiais deve priorizar mapas tecnicos que produtor e equipe possam acessar, principalmente diagnosticos como fertilidade por elemento/camada, por exemplo argila, fosforo, pH, potassio e materia organica. Outros arquivos tecnicos disponiveis no acervo, como sementes, linhas de plantio ou materiais operacionais, podem aparecer quando forem liberados, mas nao devem deslocar o foco inicial dos diagnosticos.
 
-Na evolucao operacional da biblioteca de mapas, a interface deve organizar os materiais principalmente em mapas de fertilidade, mapas de correcao de solo e prescricoes, com filtros principais restritos a esses tres tipos. No MVP atual, PNG local cobre fertilidade e correcao de solo; prescricoes podem existir como pacote tecnico/anexo ZIP local demonstrativo. Isso nao implica upload real, backend, processamento, unzip, leitura de conteudo ou publicacao automatica.
+Na evolucao operacional da biblioteca de mapas, a interface deve organizar os
+materiais no contexto `Propriedade -> Ano -> Categoria`, com as categorias
+principais restritas a Fertilidade, Correcao de solo e Prescricao. Para novos
+anexos do MVP local, um fluxo unificado aceita PNG, PDF ou ZIP, preserva o nome
+original e gera o titulo automaticamente. Ano e obrigatorio; Safra/Safrinha e
+um vinculo opcional com periodo produtivo da mesma Propriedade.
+
+Os campos adicionais sao condicionais: Fertilidade registra profundidade e
+fica no escopo da Propriedade; Correcao registra profundidade e escolhe entre
+Propriedade inteira ou Talhao; Prescricao nao exige profundidade, camada ou
+Talhao no corte atual. A opcao `Nao informada` evita inventar profundidade
+quando o acervo nao a comprova. A visibilidade para o Produtor continua
+explicita. O contrato canonico esta em `modelo-material-tecnico.md`.
+
+O fluxo e local/demonstrativo: o arquivo fisico fica no storage interno e
+apenas metadados pequenos ficam no indice local. PNG pode abrir como imagem;
+PDF e ZIP podem ser catalogados e consultados por seus metadados, sem afirmar
+visualizador PDF, preview de ZIP, unzip, leitura/processamento de conteudo,
+upload, backend, sincronizacao, download remoto ou publicacao automatica.
+Registros PNG e ZIP anteriores continuam legiveis por compatibilidade.
 
 Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 

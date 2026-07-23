@@ -219,6 +219,15 @@ GeoJSON local. Isso nao invalida as aprovacoes anteriores de GeoJSON/PNG/ZIP,
 mas exige recriar imports locais para repetir a reabertura individual de PNG e
 ZIP. Android fisico segue pendente e nao aprovado.
 
+Status em 2026-07-22: o corte operacional para novos anexos locais foi
+consolidado em `modelo-material-tecnico.md`: navegacao por
+`Propriedade -> Ano -> Fertilidade/Correcao de solo/Prescricao`, fluxo
+unificado para PNG/PDF/ZIP, nome original preservado, titulo automatico,
+periodo produtivo opcional e campos condicionais por categoria. Os contratos
+PNG e ZIP anteriores permanecem legiveis. Isso fecha a organizacao minima do
+MVP local, mas nao fecha taxonomia agronomica final, elementos/subcategorias,
+agrupamento de varias representacoes, pipeline produtivo, backend ou sync.
+
 ### 4A. Localizacao em tempo real sobre Talhoes
 
 A localizacao em tempo real existe apenas em corte minimo foreground sobre o
@@ -757,11 +766,22 @@ real. A direcao arquitetural continua documentada, a implementacao local tem
 evidencia em emulador e servidor/download/sync reais permanecem
 `DEPENDE_BACKEND`.
 
+Status em 2026-07-22: novos anexos do MVP local passaram a usar o modelo
+unificado de `Material tecnico`, com formatos PNG/PDF/ZIP, indice separado de
+metadados pequenos e arquivo fisico no storage interno. Ano e obrigatorio;
+Safra/Safrinha e referencia opcional; profundidade e escopo seguem regras
+condicionais. A leitura dos indices PNG/ZIP anteriores deve ser preservada sem
+duplicacao. PDF e ZIP podem ser catalogados, mas nao possuem promessa de
+visualizacao, download remoto ou processamento. Essa entrega nao fecha a
+estrategia produtiva de ingestao e disponibilizacao.
+
 Permanece pendente definir e implementar:
 
-- integracao futura de `AnexoFertilidade` ao dominio real, sem quebrar a compatibilidade atual
-- fluxo administrativo real para cadastrar/liberar PNGs e outros anexos
-- estrategia de armazenamento persistente dos arquivos
+- migracao futura do contrato local canonico de `Material tecnico` para o
+  dominio/backend real, sem quebrar PNG/ZIP legados
+- fluxo administrativo produtivo para cadastrar, revisar e liberar PNG, PDF,
+  ZIP e outros anexos autorizados
+- estrategia de armazenamento remoto persistente dos arquivos
 - backend/storage/upload para anexos e materiais tecnicos
 - API/backend para anexos de mapas
 - fluxo de confirmacao manual dos metadados antes da publicacao

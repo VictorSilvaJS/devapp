@@ -17,6 +17,7 @@
     "src/types/geojsonImport.ts",
     "src/types/anexoPngLocal.ts",
     "src/types/anexoPrescricaoZipLocal.ts",
+    "src/types/materialTecnicoLocal.ts",
     "src/types/periodoProdutivo.ts",
     "src/api/validators.ts",
     "src/api/mockCompat.ts",
@@ -35,6 +36,7 @@
     "src/utils/mapaDownloadCompat.ts",
     "src/utils/pngMapToMapaCompat.ts",
     "src/utils/prescriptionZipToMapaCompat.ts",
+    "src/utils/materialTecnicoToMapaCompat.ts",
     "src/utils/usuarioAdminCompat.ts",
     "src/utils/usuarioLocalAccessAdmin.ts",
     "src/utils/dashboardCompat.ts",
@@ -67,6 +69,11 @@
     "src/services/PrescriptionZipStorageService.ts",
     "src/services/PrescriptionZipPropertyImportWorkflow.ts",
     "src/services/PrescriptionZipPropertyManageWorkflow.ts",
+    "src/services/MaterialTecnicoFilePickerService.ts",
+    "src/services/MaterialTecnicoStorageService.ts",
+    "src/services/MaterialTecnicoImportService.ts",
+    "src/services/MaterialTecnicoPropertyImportWorkflow.ts",
+    "src/services/MaterialTecnicoPropertyManageWorkflow.ts",
     "src/services/PeriodoProdutivoService.ts"
   ]
 }

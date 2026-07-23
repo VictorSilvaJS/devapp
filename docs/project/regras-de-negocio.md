@@ -193,9 +193,36 @@ campo.
 ## Regra sobre Mapas e Arquivos
 
 - Mapas e arquivos pertencem ao contexto da propriedade.
-- Na primeira versao de testes, cada material tecnico deve estar vinculado ao campo/talhao correspondente e, quando for diagnostico, ao elemento/camada representado, como argila, fosforo, pH ou outro atributo tecnico.
+- Novos anexos locais devem ser organizados por `Propriedade -> Ano ->
+  Categoria`, usando somente Fertilidade, Correcao de solo e Prescricao como
+  categorias principais do MVP.
+- Ano do arquivo e obrigatorio. Safra/Safrinha, quando informada, deve
+  referenciar um periodo produtivo ativo da mesma Propriedade e nao substitui
+  o ano.
+- O nome original do arquivo deve ser preservado. O titulo pode ser gerado
+  automaticamente a partir dele, sem transformar o nome em fonte exclusiva
+  para Propriedade, ano, categoria ou permissao.
+- Fertilidade pertence ao escopo da Propriedade e registra profundidade;
+  Correcao de solo registra profundidade e pode pertencer a Propriedade inteira
+  ou a um Talhao; Prescricao nao exige profundidade, camada ou Talhao no corte
+  atual.
+- Quando a profundidade nao for comprovada, deve ser registrada como `Nao
+  informada`, sem inferencia silenciosa. Elemento ou subcategoria inferidos do
+  nome sao informativos e nunca devem inventar classificacao desconhecida.
+- PNG, PDF e ZIP podem ser catalogados como materiais locais. PNG pode ter
+  visualizacao como imagem; PDF e ZIP nao devem ser apresentados como
+  visualizados, descompactados ou processados quando essa capacidade nao
+  existir.
+- Arquivos fisicos devem ficar fora do `AsyncStorage`; o indice local guarda
+  somente metadados pequenos.
+- Registros mockados, PNG local e Prescricao ZIP anteriores permanecem
+  legiveis por compatibilidade e nao devem ser duplicados automaticamente no
+  indice unificado.
 - A disponibilizacao desses materiais deve respeitar regra de perfil e liberacao.
-- O produtor pode consultar e baixar materiais autorizados.
+- No MVP local, o Produtor consulta apenas material ativo e marcado como
+  visivel em Propriedade do proprio vinculo, sem anexar, substituir ou remover.
+- Download remoto, quando existir, deve ser autorizado pelo backend; a copia
+  local atual nao deve ser descrita como download ou sincronizacao produtiva.
 - Fluxos de ingestao, upload ou processamento interno devem ficar sob responsabilidade da equipe autorizada, quando existirem.
 
 ## Regra sobre Visitas Tecnicas

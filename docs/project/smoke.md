@@ -16,9 +16,36 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 6. Criação de visita pelo detalhe da propriedade: `NovaVisita` deve pré-selecionar/travar a propriedade contextual e manter bloqueio fora de escopo.
 7. Mapas/Arquivos técnicos: consulta deve ser priorizada e a associação interna de referência não deve aparecer no fluxo de campo.
 8. Padronização visual: componentes-base devem preservar comportamento, filtros, permissões, rotas e linguagem visível de `Propriedade` onde aplicável.
-9. Mapas/anexos de fertilidade: nomenclatura visual deve diferenciar `Anexos de fertilidade`, `Mapa de fertilidade` e `Arquivo técnico`, sem alterar abertura, filtros, permissões ou contratos.
+9. Material tecnico: novos anexos devem seguir Propriedade, ano e
+   Fertilidade/Correcao de solo/Prescricao, preservando nome original,
+   visibilidade, compatibilidade dos materiais antigos e separacao de
+   GeoJSON/talhoes.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
+
+**Rodada Material Tecnico Unificado - Novos Anexos Locais**
+
+Checklist para validar a evolucao posterior a Fase 17C. A evidencia historica
+da 17C permanece inalterada. O fluxo novo e local/demonstrativo, aceita PNG,
+PDF e ZIP e preserva a leitura dos indices anteriores. PDF e ZIP nao possuem
+promessa de visualizacao ou processamento.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MTU-01 | P0 | Admin/Colaborador | Entrada | Abrir uma Propriedade e tocar `Anexar material` | Existe um unico fluxo para novo material, restrito a usuario autorizado | Reexecutar | Validar tambem Colaborador fora do escopo |
+| MTU-02 | P0 | Admin/Colaborador | Arquivo | Selecionar separadamente PNG, PDF e ZIP validos | Os tres formatos sao aceitos; arquivo invalido ou acima do limite falha sem criar metadado | Reexecutar | Usar DocumentPicker real |
+| MTU-03 | P0 | Admin/Colaborador | Campos comuns | Selecionar categoria e ano, mantendo periodo vazio | Ano/categoria obrigatorios; periodo e opcional; nome original e preservado e titulo nasce automaticamente | Reexecutar | Ano nao deve ser confundido com Safra/Safrinha |
+| MTU-04 | P0 | Admin/Colaborador | Periodo | Vincular Safra/Safrinha | Somente periodo ativo da mesma Propriedade e referenciado por id/label | Reexecutar | Material tambem salva sem periodo |
+| MTU-05 | P0 | Admin/Colaborador | Fertilidade | Anexar com profundidade e repetir com `Nao informada` | Profundidade e confirmada; escopo fica Propriedade; Talhao nao aparece nem persiste | Reexecutar | Troca de categoria limpa campos residuais |
+| MTU-06 | P0 | Admin/Colaborador | Correcao | Anexar para Propriedade inteira e para Talhao | Profundidade e exigida; Talhao e exigido apenas no escopo Talhao | Reexecutar | Escopo Propriedade nao guarda Talhao residual |
+| MTU-07 | P0 | Admin/Colaborador | Prescricao | Anexar arquivo com nome reconhecivel e outro desconhecido | Nao pede profundidade/camada/Talhao; inferencia e apenas informativa e nome desconhecido continua valido | Reexecutar | Nao inventar elemento |
+| MTU-08 | P0 | Todos | Organizacao | Criar materiais em dois anos e alternar ano/categoria | Catalogo espelha Propriedade > Ano > Fertilidade/Correcao/Prescricao sem misturar outra Propriedade | Reexecutar | `Todos` pode existir apenas como agregador |
+| MTU-09 | P0 | Produtor | Visibilidade | Abrir como Produtor apos criar item visivel e item interno | Ve somente ativo+visivel da propria Propriedade e nao ve anexar/substituir/remover | Reexecutar | Repetir rota direta e outra Propriedade |
+| MTU-10 | P0 | Todos | Compatibilidade | Abrir catalogo com Mapa mock, PNG local antigo, ZIP antigo e item novo | Legados continuam legiveis uma unica vez; nenhuma migracao destrutiva ou duplicacao | Reexecutar | Preservar `fazenda_id`/`propriedade_id` |
+| MTU-11 | P0 | Todos | Abertura | Abrir PNG, PDF e ZIP locais | PNG abre como imagem; PDF/ZIP mostram somente capacidade realmente existente, sem falso preview/unzip/processamento | Reexecutar | Nome original e formato permanecem visiveis |
+| MTU-12 | P0 | Todos | Persistencia local | Executar `force-stop`, reabrir sem rede e consultar os tres formatos | Metadados e arquivos ja copiados continuam no mesmo aparelho; UI nao chama isso de sync/download remoto | Reexecutar | Nao promete restauracao apos desinstalar |
+| MTU-13 | P0 | Admin/Colaborador | Seguranca local | Remover item novo e, se necessario, anexar outro arquivo | Somente arquivo em diretorio seguro e metadado correspondente mudam; outra Propriedade, seed, PNG/ZIP legado e GeoJSON permanecem | Reexecutar | Validar rollback em falha de metadado |
+| MTU-14 | P0 | Todos | Regressao | Abrir GeoJSON/Talhoes, Caderno, Safra e materiais antigos | Contexto, acesso e fluxos existentes continuam funcionando | Reexecutar | Executar `typecheck` e `test:domain-compat` antes do smoke |
 
 **Rodada Fase 17H.1.3 - Validacao Android Fisico Do Ponto Opcional No Caderno**
 

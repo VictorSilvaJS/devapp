@@ -1,5 +1,11 @@
 # Modelo Conceitual de Anexos de Fertilidade
 
+> **Documento substituido para novos anexos.** O modelo canonico atual e
+> [`modelo-material-tecnico.md`](modelo-material-tecnico.md), que cobre o fluxo
+> unificado por Propriedade, ano e categoria, com PNG, PDF e ZIP. Este arquivo
+> permanece como historico conceitual e referencia de compatibilidade para os
+> anexos de fertilidade e PNGs legados; ele nao deve orientar novos contratos.
+
 Este documento consolida o modelo conceitual para PNGs e outros arquivos tecnicos importados do acervo/Drive quando eles representam materiais ligados a fertilidade, talhoes, safras e propriedades.
 
 Ele nao altera o comportamento atual do app. O projeto continua mockado, sem upload real, storage real, backend real ou mudanca na logica de download.
