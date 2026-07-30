@@ -662,3 +662,34 @@ visibilidade, offline, sincronizacao, backend e auditoria dos tres perfis.
 - campos obrigatorios por tipo ficam em `MP-25`;
 - implementacao no app e fechamento produtivo permanecem em `MP-25` e
   `MP-36`.
+
+---
+
+## 26. Visita usa maquina de estados e comandos auditados
+
+### Decisao
+
+O contrato canonico fica em `estados-visita.md`.
+
+- Visita pode nascer `agendada` ou ser registrada diretamente como
+  `realizada` pelo fluxo de conclusao;
+- `agendada` pode ser reagendada, concluida ou cancelada;
+- `realizada` nao regride e somente recebe complemento, correcao ou anulacao;
+- `cancelada` e terminal e pode originar nova Visita vinculada;
+- atraso e indicador derivado, nao estado persistido;
+- conclusao e cancelamento exigem formularios proprios;
+- toda transicao valida estado, versao, permissao e escopo.
+
+### Alcance
+
+Afeta Nova Visita, edicao, detalhe, listagem, historico, offline, notificacoes,
+backend e regras de acesso dos tres perfis.
+
+### Impacto
+
+- seletor livre de status e updates diretos atuais continuam limitacao do mock;
+- Visita realizada/cancelada nao abre edicao geral;
+- Admin nao exclui fisicamente Visita persistida;
+- registros legados sao preservados sem historico inventado;
+- implementacao permanece em `MP-27`;
+- organizacao visual das listas permanece em `MP-22`.

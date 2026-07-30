@@ -1010,6 +1010,29 @@ persistencia auditavel.
 | MP04-13 | P0 | Produtor | Sessao offline valida | Criar rascunho e tentar enviar offline | Rascunho local permanece; envio exige reconexao, revisao e confirmacao | Bloqueado | Sem envio automatico |
 | MP04-14 | P0 | Admin/Colaborador | Registro fora do escopo | Tentar complemento/correcao por rota direta | Operacao recusada sem criar evento ou revelar dados adicionais | Bloqueado | Exige autorizacao server-side |
 
+**Rodada MP-05 - Estados De Visita**
+
+Esta matriz prepara `MP-27` e a validacao produtiva correspondente. A MP-05
+nao altera o mock; portanto, os casos permanecem `Bloqueado`.
+
+| ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP05-01 | P1 | Admin/Colaborador | Nova Visita | Escolher Agendar e salvar data futura | Cria `agendada` com evento inicial e Propriedade preservada | Bloqueado | Comando tipado |
+| MP05-02 | P1 | Admin/Colaborador | Nova Visita | Escolher Registrar realizada e concluir formulario | Cria `realizada` com os mesmos minimos da conclusao | Bloqueado | Nao passa por `agendada` ficticia |
+| MP05-03 | P1 | Admin/Colaborador | Visita agendada futura | Reagendar com motivo | Continua `agendada` e registra data anterior/nova, autor e versao | Bloqueado | Propriedade nao muda |
+| MP05-04 | P1 | Todos | Visita agendada com horario vencido | Abrir lista e detalhe | Exibe `Agendada · Atrasada` sem mudar estado automaticamente | Bloqueado | Comparacao pelo servidor |
+| MP05-05 | P1 | Admin/Colaborador | Visita agendada autorizada | Concluir | Exige confirmacao, inicio real e resumo antes de virar `realizada` | Bloqueado | Acao imediata atual deve sair |
+| MP05-06 | P1 | Admin/Colaborador | Visita agendada autorizada | Cancelar | Exibe contexto completo, exige motivo e grava evento `cancelada` | Bloqueado | Sem exclusao |
+| MP05-07 | P1 | Admin/Colaborador | Visita realizada | Tentar voltar para agendada ou cancelar pela UI/payload | Transicao recusada sem alterar registro ou historico | Bloqueado | Rota direta incluida |
+| MP05-08 | P1 | Admin/Colaborador | Visita cancelada | Tentar reativar/realizar; depois criar nova vinculada | Antiga fica somente leitura; nova possui `visita_origem_id` | Bloqueado | Nao reutilizar ID |
+| MP05-09 | P1 | Admin/Colaborador | Visita realizada e permissao explicita | Complementar ou corrigir com motivo | Eventos separados preservam conclusao e antes/depois | Bloqueado | Sem edicao geral |
+| MP05-10 | P1 | Admin | Visita realizada | Anular com justificativa | Estado vira `anulada`, historico permanece e nenhuma exclusao ocorre | Bloqueado | Estado terminal |
+| MP05-11 | P1 | Admin | Qualquer Visita persistida | Tentar excluir pela UI, rota direta e API | Exclusao fisica recusada; usar cancelamento/anulacao cabivel | Bloqueado | Remove botao atual |
+| MP05-12 | P1 | Dois operadores | Mesma Visita/versao carregada | Primeiro conclui; segundo tenta cancelar | Segundo recebe conflito e estado realizado permanece | Bloqueado | Validar estado e versao |
+| MP05-13 | P1 | Produtor | Visita da propria Propriedade | Consultar e tentar comandos diretos | Consulta permitida; toda mutacao recusada | Bloqueado | Perfil consultivo |
+| MP05-14 | P1 | Colaborador | Visita fora do escopo | Tentar reagendar/concluir/cancelar por rota direta | Operacao recusada sem evento ou vazamento | Bloqueado | Autorizacao server-side |
+| MP05-15 | P1 | Todos | Sessao offline valida | Consultar e tentar mudar estado | Consulta local autorizada; mutacao exige conexao | Bloqueado | Sem fila offline |
+
 **Rodada Admin - Sincronizacao Territorial E Vinculos Visuais Mockados**
 
 Login principal de teste: usuario admin mockado disponivel no app.

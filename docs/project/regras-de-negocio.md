@@ -268,9 +268,23 @@ campo.
 
 ## Regra sobre Visitas Tecnicas
 
+O contrato canonico de estados esta em `estados-visita.md`.
+
 - Visitas devem estar associadas ao produtor e a propriedade atendida.
 - Seu registro deve servir ao acompanhamento tecnico e ao historico operacional.
 - Permissoes de criacao, edicao e consulta devem respeitar o perfil do usuario e o escopo de acesso.
+- Criacao pode agendar uma Visita futura ou registrar diretamente uma Visita ja
+  realizada pelo formulario de conclusao.
+- `agendada` pode ser reagendada, concluida ou cancelada.
+- `realizada` nao volta de estado; recebe apenas complemento, correcao auditada
+  ou anulacao.
+- `cancelada` e somente leitura e pode originar nova Visita vinculada.
+- `atrasada` e indicador derivado de uma Visita ainda agendada com horario
+  vencido.
+- Conclusao exige confirmacao e dados minimos; cancelamento exige motivo.
+- Estado nao pode ser alterado por update generico, rota direta ou payload
+  manipulado.
+- Nenhuma Visita persistida deve ser excluida fisicamente pelo fluxo comum.
 
 ## Regra sobre Caderno de Campo
 

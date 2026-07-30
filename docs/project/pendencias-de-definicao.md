@@ -80,6 +80,12 @@ pendente o formato funcional minimo. Permanecem pendentes backend, banco,
 retencao final, cache cifrado, allowlist implementada, push e testes negativos
 em `MP-34`.
 
+Status em 2026-07-30 (`MP-05`): `estados-visita.md` definiu criacao agendada
+ou realizada, reagendamento, atraso derivado, conclusao, cancelamento,
+complemento, correcao, anulacao, concorrencia e auditoria. Nao permanece
+pendente a maquina de estados. Permanecem pendentes implementacao em `MP-27`,
+organizacao visual em `MP-22`, persistencia de eventos e validacao no backend.
+
 ## Pendencias Funcionais
 
 ### 3. Escopo final do caderno de campo
@@ -717,6 +723,12 @@ correcao, visibilidade, arquivamento, reativacao ou anulacao, sempre dentro do
 escopo. Permanecem pendentes implementar e testar essa matriz em `MP-25` e
 `MP-36`.
 
+Status em 2026-07-30 (`MP-05`): permissao para abrir Visita nao implica poder
+de mudar estado. Produtor permanece em consulta. Colaborador/Admin dependem de
+acao explicita e escopo para reagendar, concluir, cancelar, complementar,
+corrigir ou anular. Status livre, exclusao fisica, rota direta e payload
+manipulado devem ser recusados pelo dominio/backend em `MP-27`.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
@@ -788,6 +800,12 @@ organizacao e Propriedade. Envio, complemento, correcao, visibilidade,
 arquivamento, reativacao e anulacao exigem conexao, revalidacao e confirmacao.
 Permanecem pendentes implementar conflito, idempotencia, armazenamento seguro
 e sincronizacao em `MP-25`/`MP-36`.
+
+Status em 2026-07-30 (`MP-05`): Visitas em cache podem ser consultadas dentro
+da sessao e do ultimo escopo autorizados. Agendar, registrar realizada,
+reagendar, concluir, cancelar, complementar, corrigir e anular exigem conexao.
+Nao ha fila de transicao offline nem sucesso otimista no primeiro contrato.
+Implementacao e testes permanecem em `MP-27`.
 
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 

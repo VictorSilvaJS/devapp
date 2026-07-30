@@ -4175,3 +4175,23 @@ consolidados na migracao, sem inventar historico.
 Implementacao do ciclo, obrigatorios por tipo e protecoes locais permanecem em
 `MP-25`. Banco imutavel, autorizacao e concorrencia produtiva permanecem em
 `MP-36`.
+
+## MP-05 - Estados De Visita
+
+Status em 2026-07-30: a maquina de estados canonica foi definida em
+`estados-visita.md`, sem alteracao de codigo.
+
+Visita pode nascer agendada ou ser registrada diretamente como realizada pelo
+fluxo de conclusao. Agendada pode ser reagendada, concluida ou cancelada.
+Realizada nao regride e somente recebe complemento, correcao ou anulacao.
+Cancelada fica somente leitura e pode originar nova Visita vinculada. Atraso e
+indicador derivado, sem transicao automatica.
+
+O estado efetivo continua inalterado: `EditarVisitaScreen` oferece os tres
+status livremente, `Visita.update` nao valida transicao, conclusao no detalhe e
+imediata, cancelamento nao persiste motivo e Admin ainda pode excluir o
+registro. Nao existe historico ou controle de concorrencia.
+
+Implementacao no dominio/interface permanece em `MP-27`; a organizacao visual
+da lista permanece em `MP-22`. Validacao e autorizacao produtivas dependem do
+backend.

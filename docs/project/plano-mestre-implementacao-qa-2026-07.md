@@ -4,7 +4,7 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa: `MP-05 — Estados de Visita` em conversa própria
+> Próxima tarefa: `MP-06 — Contrato de versão do GeoJSON` em conversa própria
 
 ## 1. Objetivo
 
@@ -148,7 +148,7 @@ nova registrada neste documento.
 | 3 | `MP-02` Modelo territorial e bloqueio de autoedição | `QA-P0-02`, `QA-P2-08` | Separar Município/UF de Regional/Área e impedir autoatribuição territorial | `MP-00` | `CONCLUIDO` |
 | 4 | `MP-03` Contrato de notificações | `QA-P0-01` | Definir destinatário, escopo, recurso, persistência e navegação segura | `MP-00` | `CONCLUIDO` |
 | 5 | `MP-04` Ciclo de vida do Caderno | `QA-P0-03` | Formalizar rascunho, registro imutável, complemento, correção, anulação e auditoria | `MP-00` | `CONCLUIDO` |
-| 6 | `MP-05` Estados de Visita | `QA-P1-04` | Formalizar transições, atraso, conclusão, cancelamento e correção auditada | `MP-00` | `BACKLOG` |
+| 6 | `MP-05` Estados de Visita | `QA-P1-04` | Formalizar transições, atraso, conclusão, cancelamento e correção auditada | `MP-00` | `CONCLUIDO` |
 | 7 | `MP-06` Contrato de versão do GeoJSON | `QA-P1-06` | Formalizar identidade lógica, versões, reconciliação e linhagem de Talhões | `MP-00` | `BACKLOG` |
 
 #### Entregas mínimas da Fase 0
@@ -364,27 +364,28 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-02` | `CONCLUIDO` | `appteste` / árvore de trabalho | typecheck, domain-compat e 7 testes focados passaram; `git diff --check` passou; smoke Android não reexecutado por `adb` ausente | `docs/project/modelo-territorial.md`; `dist/qa-session-2026-07-30/mp-02-modelo-territorial-autoedicao.md` | backend, migração, auditoria e revalidação produtiva permanecem em `MP-35` |
 | 2026-07-30 | `MP-03` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/contrato-notificacoes.md`; `dist/qa-session-2026-07-30/mp-03-contrato-notificacoes.md` | implementação, isolamento, persistência e testes negativos permanecem em `MP-34` |
 | 2026-07-30 | `MP-04` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/ciclo-vida-caderno.md`; `dist/qa-session-2026-07-30/mp-04-ciclo-vida-caderno.md` | implementação no app permanece em `MP-25`; backend append-only e auditoria produtiva em `MP-36` |
+| 2026-07-30 | `MP-05` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/estados-visita.md`; `dist/qa-session-2026-07-30/mp-05-estados-visita.md` | implementação permanece em `MP-27`; organização visual da lista em `MP-22`; validação produtiva depende do backend |
 
 ## 12. Próxima ação
 
-`MP-04` foi concluída em 2026-07-30 como contrato documental, sem alterar a
-edição destrutiva ainda existente no mock do Caderno.
+`MP-05` foi concluída em 2026-07-30 como contrato documental, sem alterar as
+transições livres ainda existentes no mock de Visitas.
 
 Resultado registrado:
 
-- estados de rascunho, registrado, arquivado e anulado definidos;
-- snapshot original consolidado como imutável;
-- complemento, correção e visibilidade separados em eventos;
-- correção delimitada por motivo, antes/depois e versão base;
-- arquivamento e anulação sem exclusão destrutiva;
-- autoria, concorrência, idempotência e offline delimitados;
-- contrato registrado em `docs/project/ciclo-vida-caderno.md`;
-- implementação mantida em `MP-25` e fechamento produtivo em `MP-36`.
+- estados agendada, realizada, cancelada e anulada definidos;
+- criação agendada ou realizada separada por fluxo;
+- atraso derivado sem mudar o estado;
+- reagendamento, conclusão e cancelamento formalizados;
+- complemento, correção e anulação separados em eventos;
+- concorrência, idempotência, perfis e offline delimitados;
+- contrato registrado em `docs/project/estados-visita.md`;
+- implementação mantida em `MP-27`.
 
-Iniciar `MP-05 — Estados de Visita` somente em
+Iniciar `MP-06 — Contrato de versão do GeoJSON` somente em
 conversa própria.
 
-Depois de especificar `MP-05` e `MP-06`, `MP-07 — Login responsivo` será o
+Depois de especificar `MP-06`, `MP-07 — Login responsivo` será o
 primeiro ajuste de código recomendado por ser delimitado, reproduzível e
 independente do backend. Os contratos P0 avançam primeiro como documentação
 ativa, sem serem confundidos com segurança produtiva já implementada.
