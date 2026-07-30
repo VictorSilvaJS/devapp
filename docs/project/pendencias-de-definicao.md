@@ -724,6 +724,15 @@ Permanecem pendentes a validacao em Android fisico, politica de migracao entre
 versoes do snapshot, tratamento de limite/cota de armazenamento, criptografia
 quando houver dado real e estrategia produtiva futura com backend.
 
+Status em 2026-07-30 (`MP-01`): `politica-sessao.md` fechou a fronteira da
+sessao produtiva para offline. Uma sessao previamente revalidada pode consultar
+dados locais por ate 24 horas desde a ultima revalidacao, dentro do ultimo
+escopo autorizado e com retomada segura. Nao ha login ou troca de usuario
+offline e, ate cada fluxo possuir contrato proprio, o corte produtivo e
+somente leitura. Continua pendente definir por fluxo o que pode ser consultado,
+rascunhado, sincronizado ou exigir conexao, alem de retencao, criptografia,
+conflitos e limpeza dos caches.
+
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
 O produto ja depende de mapas e arquivos no contexto da propriedade. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.

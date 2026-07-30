@@ -4,7 +4,7 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa: `MP-00 — Baseline técnico antes das correções`
+> Próxima tarefa: `MP-02 — Modelo territorial e bloqueio de autoedição` em conversa própria
 
 ## 1. Objetivo
 
@@ -143,8 +143,8 @@ nova registrada neste documento.
 
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
-| 1 | `MP-00` Baseline técnico | todos | Registrar estado inicial, testes, build e riscos antes das correções | nenhuma | `PRONTO` |
-| 2 | `MP-01` Política de sessão | `QA-P0-04` | Definir expiração, revalidação, logout, offline e retomada segura | `MP-00` | `BACKLOG` |
+| 1 | `MP-00` Baseline técnico | todos | Registrar estado inicial, testes, build e riscos antes das correções | nenhuma | `CONCLUIDO` |
+| 2 | `MP-01` Política de sessão | `QA-P0-04` | Definir expiração, revalidação, logout, offline e retomada segura | `MP-00` | `CONCLUIDO` |
 | 3 | `MP-02` Modelo territorial e bloqueio de autoedição | `QA-P0-02`, `QA-P2-08` | Separar Município/UF de Regional/Área e impedir autoatribuição territorial | `MP-00` | `BACKLOG` |
 | 4 | `MP-03` Contrato de notificações | `QA-P0-01` | Definir destinatário, escopo, recurso, persistência e navegação segura | `MP-00` | `BACKLOG` |
 | 5 | `MP-04` Ciclo de vida do Caderno | `QA-P0-03` | Formalizar rascunho, registro imutável, complemento, correção, anulação e auditoria | `MP-00` | `BACKLOG` |
@@ -359,22 +359,26 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 
 | Data | Tarefa | Estado final da rodada | Branch/commit | Validações | Evidências | Pendência |
 |---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — |
+| 2026-07-30 | `MP-00` | `CONCLUIDO` | `appteste` / `fdf2934` | typecheck, domain-compat e assembleRelease passaram; smoke manual não reexecutado por `adb` ausente | `dist/qa-session-2026-07-30/mp-00-baseline-tecnico.md` | assinatura debug no release, avisos Gradle/`NODE_ENV`, divergência de Java, checagem Expo online e smoke Android pendentes |
+| 2026-07-30 | `MP-01` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check` e validação de links locais; sem suíte de código por ser mudança documental | `docs/project/politica-sessao.md`; `dist/qa-session-2026-07-30/mp-01-politica-sessao.md` | implementação produtiva permanece bloqueada até `MP-33` e definição offline por fluxo |
 
 ## 12. Próxima ação
 
-Iniciar `MP-00` em uma conversa própria.
+`MP-01` foi concluída em 2026-07-30 como contrato documental, sem implementar
+autenticação ou alterar código.
 
-Resultado esperado:
+Resultado registrado:
 
-- confirmar árvore de trabalho;
-- registrar versão/build usada como baseline;
-- executar `npm run typecheck`;
-- executar `npm run test:domain-compat`;
-- identificar testes focados disponíveis;
-- confirmar o roteiro de smoke;
-- criar a pasta de evidências da primeira implementação;
-- somente então liberar `MP-01` para planejamento.
+- estado atual de `@tche:user` e da restauração indefinida confirmado;
+- tempos de token, inatividade e janela offline definidos;
+- gatilhos de revalidação e término de sessão definidos;
+- logout, troca de usuário, cache e retomada segura delimitados;
+- PIN/biometria avaliados como desbloqueio opcional de sessão ainda válida;
+- contrato registrado em `docs/project/politica-sessao.md`;
+- fechamento produtivo mantido em `MP-33`.
+
+Iniciar `MP-02 — Modelo territorial e bloqueio de autoedição` somente em
+conversa própria.
 
 Depois de especificar `MP-01` a `MP-06`, `MP-07 — Login responsivo` será o
 primeiro ajuste de código recomendado por ser delimitado, reproduzível e

@@ -4094,3 +4094,23 @@ Repetir em area aberta ou com ceu razoavelmente visivel os casos
 no mapa, prevista para a 17H.2, permanece bloqueada. A origem produtiva de
 perimetro, fotos reais e os avisos remanescentes do Expo Doctor continuam em
 trilhas proprias.
+
+## MP-01 - Politica De Sessao
+
+Status em 2026-07-30: a politica de sessao produtiva foi definida em
+`politica-sessao.md`, sem alteracao de codigo.
+
+O contrato inicial usa access token de 15 minutos, refresh token rotativo com
+validade absoluta de 30 dias, bloqueio local depois de 15 minutos de
+inatividade/background e consulta offline por ate 24 horas desde a ultima
+revalidacao. Perfil, status, organizacao e escopo devem ser revalidados na
+renovacao, na reconexao e antes de liberar sessao restaurada quando houver
+rede. Logout deve limpar e bloquear o estado local imediatamente e revogar a
+sessao remota quando possivel.
+
+O estado efetivo do repositorio nao mudou: `AuthContext` ainda restaura o
+usuario sanitizado de `@tche:user` sem token, expiracao, revogacao,
+revalidacao, janela offline ou bloqueio por inatividade. Esse comportamento
+continua local/demonstrativo e nao deve ser descrito como seguranca produtiva.
+A implementacao real permanece bloqueada por backend, storage seguro,
+autorizacao no servidor e `MP-33`.

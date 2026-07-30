@@ -525,3 +525,38 @@ Afeta planejamento tecnico, validacao de build e rastreabilidade de regressao.
   build e smoke;
 - correcoes de area, fotos simuladas, Caderno ou marcacoes devem permanecer em
   microfases separadas.
+
+---
+
+## 22. Sessao produtiva deve expirar, revalidar e bloquear retomada insegura
+
+### Decisao
+
+A politica canonica fica em `politica-sessao.md`.
+
+O primeiro corte produtivo deve usar access token de 15 minutos, refresh token
+rotativo com validade absoluta de 30 dias, bloqueio local depois de 15 minutos
+de inatividade/background e janela maxima de consulta offline de 24 horas
+desde a ultima revalidacao.
+
+Perfil, status, organizacao e escopo devem ser revalidados na renovacao, na
+reconexao e antes de liberar sessao restaurada quando houver rede. Logout deve
+bloquear e limpar a sessao local imediatamente e revogar a sessao remota
+quando possivel.
+
+### Alcance
+
+Afeta autenticacao futura, backend, storage seguro, ciclo de vida do app,
+reconexao, cache por usuario, logout, troca de usuario, rotas diretas e testes
+dos tres perfis.
+
+### Impacto
+
+- `@tche:user` continua sendo somente persistencia demonstrativa do mock;
+- token e segredo nao podem ficar em `AsyncStorage`;
+- consulta offline fica limitada ao ultimo escopo autorizado e, ate contrato
+  proprio por fluxo, e somente leitura;
+- PIN/biometria podem destravar sessao ainda valida, mas nao substituem
+  credencial, token ou revalidacao;
+- rota direta e notificacao continuam sujeitas a autorizacao no servidor;
+- a decisao nao implementa seguranca produtiva e depende de `MP-33`.

@@ -270,6 +270,29 @@ Essas validacoes continuam sendo regras do mock administrativo e nao substituem 
 - A prioridade do offline deve comecar por consulta e visualizacao.
 - Nao se deve prometer experiencia offline total sem definicao tecnica e funcional clara.
 
+## Regra Sobre Sessao E Retomada Segura
+
+O contrato canonico esta em `politica-sessao.md`.
+
+- A restauracao local atual de `@tche:user` e apenas comportamento do mock e
+  nao representa sessao produtiva.
+- Sessao produtiva usa access token curto de 15 minutos e refresh token
+  protegido, rotativo e com validade absoluta de 30 dias.
+- Perfil, status e escopo devem ser revalidados na renovacao, na reconexao e
+  antes de liberar uma sessao restaurada quando houver rede.
+- Depois de 15 minutos de inatividade/background, a interface deve exigir
+  retomada segura antes de mostrar dados.
+- A janela inicial de consulta offline e de 24 horas desde a ultima
+  revalidacao, limitada a dados locais e ao ultimo escopo autorizado.
+- Ate cada fluxo possuir contrato proprio, offline produtivo e somente leitura
+  e rascunho local nao equivale a registro aceito pelo servidor.
+- Logout limpa e bloqueia a sessao local imediatamente, revoga a sessao remota
+  quando possivel e impede vazamento para o proximo usuario.
+- PIN ou biometria podem destravar sessao ainda valida, mas nao substituem
+  token, credencial, expiracao, revogacao ou autorizacao no backend.
+- Rota direta, notificacao, cache e interface nunca substituem validacao de
+  permissao por acao e Propriedade no servidor.
+
 ## Regra de Uso Deste Documento
 
 Antes de propor mudanca de codigo, modelagem ou UX, use estas regras para verificar se a proposta:
