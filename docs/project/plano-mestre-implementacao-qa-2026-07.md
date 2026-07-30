@@ -5,8 +5,8 @@
 > Criado em: 2026-07-30
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
-> IME que respeite o modo inline em paisagem; `MP-08` foi concluída e
-> `MP-09` foi concluída; `MP-10` não foi iniciada
+> IME que respeite o modo inline em paisagem; `MP-08`, `MP-09` e `MP-10`
+> foram concluídas; `MP-11` não foi iniciada
 
 ## 1. Objetivo
 
@@ -167,7 +167,7 @@ nova registrada neste documento.
 | 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `PARCIAL` |
 | 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `CONCLUIDO` |
 | 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `CONCLUIDO` |
-| 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `BACKLOG` |
+| 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `CONCLUIDO` |
 | 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `BACKLOG` |
 | 13 | `MP-12` Linguagem e formatação | `QA-P2-17`, `QA-P3-01` | Padronizar Coleta de Solo, áreas, rótulos e nomes técnicos | `MP-00` | `BACKLOG` |
 | 14 | `MP-13` Validação visual dos formulários | `QA-P2-16` | Sinalizar obrigatórios, focar primeiro erro e manter mensagens junto ao campo | `MP-00` | `BACKLOG` |
@@ -371,6 +371,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-07` | `PARCIAL` | `appQA` / árvore de trabalho | typecheck, domain-compat e assembleRelease passaram; smoke físico passou em retrato e paisagem com teclado fechado, e em retrato com teclado aberto | `dist/qa-session-2026-07-30/mp-07-login-responsivo/` | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração em paisagem; repetir com IME/aparelho que permita teclado inline antes de concluir |
 | 2026-07-30 | `MP-08` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em Propriedades e Visitas | `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/` | bottom sheet comum e gesto de arraste permanecem fora deste corte, em `MP-09` |
 | 2026-07-30 | `MP-09` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou nas cinco telas, teclado e paisagem | `dist/qa-session-2026-07-30/mp-09-filtros-padrao/` | reorganização funcional dos filtros de Materiais permanece em `MP-17`; `MP-10` não foi iniciada |
+| 2026-07-30 | `MP-10` | `CONCLUIDO` | `appQA` / árvore de trabalho | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato e paisagem | `dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/` | reorganização da Propriedade permanece em `MP-15`; contraste em `MP-11`; `MP-11` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -411,4 +412,16 @@ os filtros de contexto do panorama reservados para `MP-17`.
 Typecheck, suíte `domain-compat`, `git diff --check` e build release passaram.
 O smoke Android confirmou teclado no primeiro toque, X, backdrop, Voltar,
 arraste, Aplicar, Limpar, badge/chips e conteúdo rolável, inclusive em
-paisagem. `MP-10` e `MP-17` não foram iniciadas.
+paisagem. A reorganização funcional de Materiais permanece em `MP-17`.
+
+`MP-10` foi concluída em 2026-07-30. O cabeçalho comum agora usa um único
+contrato `showBack`, com seta acessível e fallback para `navigation.goBack()`.
+As rotas internas de Propriedade, Notificações e autoedição que ainda exibiam
+a marca receberam retorno explícito; o alias legado `showBackButton` foi
+removido. Notificações também deixou de empilhar outra cópia da própria tela.
+
+O teste focado audita as 18 rotas internas do native stack, todos os estados
+de `Header`, as telas-raiz sem seta e o retorno próprio do mapa de limites.
+Typecheck, suíte `domain-compat`, `git diff --check`, build release e instalação
+passaram. No Android físico, seta e botão do sistema preservaram filtro, busca,
+aba da Propriedade e contexto em retrato e paisagem. `MP-11` não foi iniciada.

@@ -177,7 +177,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Propriedade" showBackButton />
+        <Header title="Editar Propriedade" showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.loadingText}>Carregando...</Text>
@@ -189,7 +189,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   if (accessDenied) {
     return (
       <View style={styles.container}>
-        <Header title="Editar Propriedade" showBackButton />
+        <Header title="Editar Propriedade" showBack />
         <View style={styles.loadingContainer}>
           <Ionicons name="lock-closed-outline" size={42} color={theme.colors.muted} />
           <Text style={styles.loadingText}>Você não tem permissão para editar esta propriedade.</Text>
@@ -244,7 +244,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Editar Propriedade" showBackButton />
+      <Header title="Editar Propriedade" showBack />
       
       <ScrollView
         style={styles.scrollView}

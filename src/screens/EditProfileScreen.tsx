@@ -32,7 +32,7 @@ export default function EditProfileScreen({ navigation }) {
   if (perfil === 'produtor') {
     return (
       <View style={styles.container}>
-        <Header title="Dados cadastrais" />
+        <Header title="Dados cadastrais" showBack />
         <ScrollView contentContainerStyle={styles.content}>
           <InfoBox
             variant="warning"
@@ -45,7 +45,7 @@ export default function EditProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Editar dados" />
+      <Header title="Editar dados" showBack />
       <ScrollView contentContainerStyle={styles.content}>
         <SectionCard title="Dados cadastrais" icon="person-circle-outline">
           <FormField

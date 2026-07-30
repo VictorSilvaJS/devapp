@@ -1238,3 +1238,21 @@ Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
 
 Evidências completas:
 `dist/qa-session-2026-07-30/mp-09-filtros-padrao/`.
+
+## MP-10 - Cabecalhos E Retorno
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP10-01 | P1 | Telas-raiz | Inspecionar Dashboard e Propriedades | Marca permanece; nenhuma seta indevida | Passou | `00-raiz-sem-seta-retrato.png` e `11-retorno-seta-preserva-filtro.png` |
+| MP10-02 | P1 | Notificacoes | Abrir pelo sino e voltar pela seta | Seta acessivel aparece; retorna ao Dashboard sem empilhar a propria tela | Passou | `02-notificacoes-seta-retrato.png` |
+| MP10-03 | P1 | Propriedade | Aplicar Pendente, abrir detalhe e voltar pela seta | Retorna a mesma aba principal com filtro intacto | Passou | `11-retorno-seta-preserva-filtro.png` |
+| MP10-04 | P1 | Propriedade | Abrir detalhe e usar Voltar do Android | Retorna a mesma lista com filtro intacto | Passou | XML e PNG de seta/Android ficaram identicos |
+| MP10-05 | P1 | Propriedade/Caderno | Abrir Caderno, abrir registro e usar Voltar do Android | Retorna ao detalhe na aba Caderno e na mesma Propriedade | Passou | `10-retorno-android-preserva-aba-caderno.png` |
+| MP10-06 | P1 | Busca e filtro | Buscar `S`, abrir detalhe e voltar pela seta | Busca `S`, chip Pendente e card do Sitio Esperanca permanecem | Passou | `16-retorno-seta-preserva-busca-e-filtro.xml` |
+| MP10-07 | P1 | Paisagem | Inspecionar lista filtrada e detalhe | Cabecalho, seta e contexto permanecem integros | Passou | `13-filtro-preservado-paisagem.png` e `14-propriedade-seta-paisagem.png` |
+
+Evidencias completas:
+`dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/`.

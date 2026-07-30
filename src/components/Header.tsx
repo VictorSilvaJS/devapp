@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, border, shadows } from '../theme';
@@ -17,14 +17,13 @@ type HeaderProps = {
   showUser?: boolean;
   showNotifications?: boolean;
   showBack?: boolean;
-  showBackButton?: boolean;
   onBack?: () => void;
   onActionPress?: () => void;
   actionIcon?: string;
   actionLabel?: string;
 };
 
-export default function Header({ title, showUser = true, showNotifications = true, showBack = false, showBackButton = false, onBack, onActionPress, actionIcon, actionLabel }: HeaderProps) {
+export default function Header({ title, showUser = true, showNotifications = true, showBack = false, onBack, onActionPress, actionIcon, actionLabel }: HeaderProps) {
   const { user } = useAuthState();
   const { contarNaoLidas } = useNotificacao();
   const navigation = useNavigation();
@@ -41,10 +40,14 @@ export default function Header({ title, showUser = true, showNotifications = tru
         style={styles.gradient}
       >
         <View style={styles.logoContainer}>
-          {(showBack || showBackButton) ? (
+          {showBack ? (
             <TouchableOpacity 
               style={styles.backButton}
               onPress={() => onBack ? onBack() : navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              accessibilityHint="Retorna à tela anterior"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>

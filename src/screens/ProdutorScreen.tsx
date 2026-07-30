@@ -240,7 +240,7 @@ export default function ProdutorScreen({ route, navigation }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Header title="Propriedade" />
+        <Header title="Propriedade" showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Carregando propriedade...</Text>
@@ -252,7 +252,7 @@ export default function ProdutorScreen({ route, navigation }) {
   if (!produtor) {
     return (
       <View style={styles.container}>
-        <Header title="Propriedade" />
+        <Header title="Propriedade" showBack />
         <View style={styles.loadingContainer}>
           <Text style={styles.body}>
             {accessDenied ? 'Você não tem permissão para acessar esta propriedade.' : 'Propriedade não encontrada.'}
@@ -410,7 +410,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title={fazendaInfo.fazendaNome || 'Propriedade'} />
+      <Header title={fazendaInfo.fazendaNome || 'Propriedade'} showBack />
       <ScrollView contentContainerStyle={styles.content}>
         {/* Cabeçalho com Avatar e Informações Básicas */}
         <View style={styles.profileHeader}>

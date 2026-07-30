@@ -272,7 +272,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Nova Propriedade" showBackButton />
+      <Header title="Nova Propriedade" showBack />
 
       <ScrollView
         style={styles.scrollView}

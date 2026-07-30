@@ -78,7 +78,7 @@ export default function NotificacoesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Header title="Notificações" />
+      <Header title="Notificações" showBack showNotifications={false} />
 
       {/* Cabeçalho com ações */}
       {notificacoes.length > 0 && (

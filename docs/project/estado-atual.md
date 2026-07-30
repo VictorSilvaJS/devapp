@@ -4294,4 +4294,37 @@ paisagem e os caminhos de cancelamento/aplicacao. Evidencias:
 `dist/qa-session-2026-07-30/mp-09-filtros-padrao/`.
 
 A reorganizacao funcional dos filtros de contexto de Materiais permanece em
-`MP-17`. `MP-10` e `MP-17` nao foram iniciadas.
+`MP-17`. `MP-10` foi concluida depois deste corte; `MP-17` nao foi iniciada.
+
+## MP-10 - Cabecalhos E Retorno
+
+Status em 2026-07-30: `CONCLUIDO`.
+
+O `Header` comum passou a oferecer um unico contrato `showBack`. A seta tem
+rotulo e dica de acessibilidade, area de toque ampliada e executa o `onBack`
+especifico quando fornecido ou `navigation.goBack()` nos demais fluxos. O
+alias duplicado `showBackButton` foi removido e seus usos foram migrados.
+
+Todas as rotas internas do native stack agora possuem retorno superior. O
+detalhe da Propriedade exibe a seta tambem em carregamento, erro ou acesso
+negado; Notificacoes exibe retorno e nao oferece atalho para empilhar outra
+copia da propria tela; autoedicao exibe retorno nos dois estados de perfil. O
+mapa de limites preserva seu cabecalho proprio, que ja oferecia retorno nos
+estados normal, carregando, erro e bloqueio. As telas-raiz das abas continuam
+exibindo a marca sem seta.
+
+O retorno superior e o botao Android usam o historico do native stack, sem
+reset ou navegacao para uma rota substituta. Assim a instancia anterior
+permanece montada. No smoke fisico foram preservados o filtro `Pendente`, a
+busca `S`, a aba `Caderno` e o contexto do `Sitio Esperanca`, tanto pela seta
+quanto pelo botao do sistema.
+
+O teste `navigationHeaderCompat.test.js` audita o contrato comum, todos os
+estados de `Header` das telas internas, as telas-raiz sem seta, o cabecalho
+proprio do mapa e as 18 rotas internas. Typecheck, `test:domain-compat`,
+`git diff --check` e `assembleRelease` passaram. O APK release foi instalado
+via `adb`; o smoke passou em retrato e paisagem. Evidencias:
+`dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/`.
+
+Arquitetura de informacao da Propriedade permanece em `MP-15`, contraste em
+`MP-11` e filtros de Materiais em `MP-17`. `MP-11` nao foi iniciada.
