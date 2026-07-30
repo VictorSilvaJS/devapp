@@ -4,7 +4,7 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa: `MP-06 — Contrato de versão do GeoJSON` em conversa própria
+> Próxima tarefa: `MP-07 — Login responsivo` em conversa própria
 
 ## 1. Objetivo
 
@@ -149,7 +149,7 @@ nova registrada neste documento.
 | 4 | `MP-03` Contrato de notificações | `QA-P0-01` | Definir destinatário, escopo, recurso, persistência e navegação segura | `MP-00` | `CONCLUIDO` |
 | 5 | `MP-04` Ciclo de vida do Caderno | `QA-P0-03` | Formalizar rascunho, registro imutável, complemento, correção, anulação e auditoria | `MP-00` | `CONCLUIDO` |
 | 6 | `MP-05` Estados de Visita | `QA-P1-04` | Formalizar transições, atraso, conclusão, cancelamento e correção auditada | `MP-00` | `CONCLUIDO` |
-| 7 | `MP-06` Contrato de versão do GeoJSON | `QA-P1-06` | Formalizar identidade lógica, versões, reconciliação e linhagem de Talhões | `MP-00` | `BACKLOG` |
+| 7 | `MP-06` Contrato de versão do GeoJSON | `QA-P1-06` | Formalizar identidade lógica, versões, reconciliação e linhagem de Talhões | `MP-00` | `CONCLUIDO` |
 
 #### Entregas mínimas da Fase 0
 
@@ -365,27 +365,25 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-03` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/contrato-notificacoes.md`; `dist/qa-session-2026-07-30/mp-03-contrato-notificacoes.md` | implementação, isolamento, persistência e testes negativos permanecem em `MP-34` |
 | 2026-07-30 | `MP-04` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/ciclo-vida-caderno.md`; `dist/qa-session-2026-07-30/mp-04-ciclo-vida-caderno.md` | implementação no app permanece em `MP-25`; backend append-only e auditoria produtiva em `MP-36` |
 | 2026-07-30 | `MP-05` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/estados-visita.md`; `dist/qa-session-2026-07-30/mp-05-estados-visita.md` | implementação permanece em `MP-27`; organização visual da lista em `MP-22`; validação produtiva depende do backend |
+| 2026-07-30 | `MP-06` | `CONCLUIDO` | `appQA` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/versionamento-geojson-talhoes.md`; `dist/qa-session-2026-07-30/mp-06-versionamento-geojson-talhoes.md` | IDs e vínculos ficam em `MP-24`; implementação produtiva em `MP-37`; regressão histórica em `MP-39` |
 
 ## 12. Próxima ação
 
-`MP-05` foi concluída em 2026-07-30 como contrato documental, sem alterar as
-transições livres ainda existentes no mock de Visitas.
+`MP-06` foi concluída em 2026-07-30 como contrato documental, sem alterar o
+fluxo local destrutivo ainda existente para GeoJSON.
 
 Resultado registrado:
 
-- estados agendada, realizada, cancelada e anulada definidos;
-- criação agendada ou realizada separada por fluxo;
-- atraso derivado sem mudar o estado;
-- reagendamento, conclusão e cancelamento formalizados;
-- complemento, correção e anulação separados em eventos;
-- concorrência, idempotência, perfis e offline delimitados;
-- contrato registrado em `docs/project/estados-visita.md`;
-- implementação mantida em `MP-27`.
+- `talhao_id` logico separado de nome, codigo e geometria;
+- importacao e versao geometrica imutaveis e auditadas;
+- rascunho, revisao, publicacao e arquivamento formalizados;
+- reconciliacao de renome, contorno, area, ausencia, divisao e fusao;
+- vigencia e consulta da geometria historica definidas;
+- linhagem de predecessores e sucessores preservada;
+- migracao textual, perfis, concorrencia e offline delimitados;
+- contrato registrado em `docs/project/versionamento-geojson-talhoes.md`;
+- implementacao mantida em `MP-37` e regressao em `MP-39`.
 
-Iniciar `MP-06 — Contrato de versão do GeoJSON` somente em
-conversa própria.
-
-Depois de especificar `MP-06`, `MP-07 — Login responsivo` será o
-primeiro ajuste de código recomendado por ser delimitado, reproduzível e
-independente do backend. Os contratos P0 avançam primeiro como documentação
-ativa, sem serem confundidos com segurança produtiva já implementada.
+Iniciar `MP-07 — Login responsivo` somente em conversa propria. E o primeiro
+ajuste de codigo recomendado depois dos contratos da Fase 0, por ser
+delimitado, reproduzivel e independente do backend.

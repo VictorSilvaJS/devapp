@@ -1033,6 +1033,31 @@ nao altera o mock; portanto, os casos permanecem `Bloqueado`.
 | MP05-14 | P1 | Colaborador | Visita fora do escopo | Tentar reagendar/concluir/cancelar por rota direta | Operacao recusada sem evento ou vazamento | Bloqueado | Autorizacao server-side |
 | MP05-15 | P1 | Todos | Sessao offline valida | Consultar e tentar mudar estado | Consulta local autorizada; mutacao exige conexao | Bloqueado | Sem fila offline |
 
+**Rodada MP-06 - Versionamento De GeoJSON E Talhoes**
+
+Esta matriz prepara `MP-37` e `MP-39`. A MP-06 nao altera o importador local;
+portanto, os casos produtivos permanecem `Bloqueado`.
+
+| ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP06-01 | P1 | Admin/Tecnico | Versao publicada A | Importar arquivo B | A permanece consultavel; B nasce rascunho e nao muda o mapa publicado | Bloqueado | Arquivo imutavel |
+| MP06-02 | P1 | Admin/Tecnico | Rascunho B reconciliado | Publicar B | B vira publicada atomicamente e A e arquivada sem exclusao | Bloqueado | Uma vigente por instante |
+| MP06-03 | P1 | Todos | A e B publicadas em vigencias sucessivas | Consultar registro criado durante A | Resolve a geometria A, mesmo com B vigente hoje | Bloqueado | Por ID salvo ou data |
+| MP06-04 | P1 | Admin/Tecnico | Mesmo Talhao com nome novo | Reconciliar B | Mantem `talhao_id`, registra alias e snapshot anterior | Bloqueado | Nome nao e chave |
+| MP06-05 | P1 | Admin/Tecnico | Mesmo arquivo com features reordenadas | Reconciliar B | Ordem nao troca identidades nem cria Talhoes | Bloqueado | Indice nao e chave |
+| MP06-06 | P1 | Admin/Tecnico | Mesmo Talhao com contorno/area nova | Reconciliar e publicar | Mantem `talhao_id` e cria nova versao geometrica | Bloqueado | Antes/depois auditado |
+| MP06-07 | P1 | Admin/Tecnico | Talhao ausente em B | Tentar publicar sem decisao | Publicacao bloqueada ate manter ou encerrar explicitamente | Bloqueado | Sem exclusao automatica |
+| MP06-08 | P1 | Admin/Tecnico | Um Talhao dividido em dois | Reconciliar e publicar | Predecessor e encerrado; sucessores novos preservam linhagem | Bloqueado | Registros antigos ficam no predecessor |
+| MP06-09 | P1 | Admin/Tecnico | Dois Talhoes fundidos | Reconciliar e publicar | Predecessores encerrados; resultado novo preserva todas as relacoes | Bloqueado | Sem reatribuicao historica |
+| MP06-10 | P1 | Admin/Tecnico | Feature sem ID e correspondencia ambigua | Tentar submeter/publicar | Exige decisao humana e bloqueia enquanto ambigua | Bloqueado | Nome/sobreposicao sao sugestoes |
+| MP06-11 | P1 | Colaborador | Propriedade dentro do escopo | Criar rascunho, reconciliar e tentar publicar | Pode preparar/submeter conforme permissao; publicacao e recusada | Bloqueado | Primeiro contrato |
+| MP06-12 | P1 | Produtor | Propria Propriedade | Consultar atual/historico e tentar importacao por rota direta | Ve somente versoes autorizadas; toda mutacao e recusada | Bloqueado | Sem rascunhos administrativos |
+| MP06-13 | P1 | Dois revisores | Mesma versao base A | Primeiro publica B; segundo tenta publicar C reconciliada sobre A | Segundo recebe conflito e precisa reconciliar novamente | Bloqueado | Sem `last write wins` |
+| MP06-14 | P1 | Todos | Versao publicada em cache e sessao offline valida | Consultar e tentar publicar/restaurar | Consulta informa versao/vigencia; mutacoes exigem conexao | Bloqueado | Sem publicacao otimista |
+| MP06-15 | P1 | Admin/Tecnico | Registro legado com Talhao textual | Executar migracao | Correspondencia confirmada recebe ID; ambigua fica nao resolvida e preserva texto | Bloqueado | Sem historico inventado |
+| MP06-16 | P1 | Admin/Tecnico | Versao A arquivada e B vigente | Restaurar conteudo de A | Cria nova publicacao/vigencia auditada; B continua preservada | Bloqueado | Restauracao nao reescreve |
+| MP06-17 | P1 | Admin/Tecnico | Arquivo identico ao ja importado | Repetir comando/chave | Checksum sinaliza duplicata e idempotencia nao cria versao/evento duplicado | Bloqueado | Checksum nao define Talhao |
+
 **Rodada Admin - Sincronizacao Territorial E Vinculos Visuais Mockados**
 
 Login principal de teste: usuario admin mockado disponivel no app.

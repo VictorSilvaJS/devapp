@@ -86,6 +86,14 @@ complemento, correcao, anulacao, concorrencia e auditoria. Nao permanece
 pendente a maquina de estados. Permanecem pendentes implementacao em `MP-27`,
 organizacao visual em `MP-22`, persistencia de eventos e validacao no backend.
 
+Status em 2026-07-30 (`MP-06`): `versionamento-geojson-talhoes.md` separou
+Talhao logico, importacao imutavel, versao geometrica e linhagem; definiu
+vigencia, reconciliacao, publicacao revisada, consulta historica, permissoes,
+offline e migracao textual. Nao permanece pendente o contrato minimo de
+identidade/versionamento. Permanecem pendentes IDs selecionaveis em `MP-24`,
+limiares de similaridade, retencao de rascunhos/rejeitados, banco, storage,
+migracao e fluxo produtivo em `MP-37`, alem da regressao em `MP-39`.
+
 ## Pendencias Funcionais
 
 ### 3. Escopo final do caderno de campo
@@ -264,6 +272,14 @@ mas continua aberta para Colaborador/Produtor, entradas invalidas/limites,
 periodo produtivo, variantes restantes, multiplos anos, regressao completa e
 offline com conectividade explicitamente desligada. Backend/storage remoto,
 publicacao, download e sync continuam nao implementados.
+
+Status em 2026-07-30 (`MP-06`): o GeoJSON de Talhoes ganhou contrato proprio
+em `versionamento-geojson-talhoes.md`. Importacao GeoJSON nao e material
+tecnico comum: possui reconciliacao, vigencia, versao geometrica e publicacao
+proprias. Isso fecha a regra estrutural de demarcacao, mas nao a taxonomia
+agronomica final de PNG/PDF/ZIP nem o pipeline produtivo. O comportamento
+local de `ativo`/`substituido` e exclusao fisica continua inalterado ate
+`MP-37`.
 
 ### 4A. Localizacao em tempo real sobre Talhoes
 
@@ -807,6 +823,14 @@ reagendar, concluir, cancelar, complementar, corrigir e anular exigem conexao.
 Nao ha fila de transicao offline nem sucesso otimista no primeiro contrato.
 Implementacao e testes permanecem em `MP-27`.
 
+Status em 2026-07-30 (`MP-06`): versoes GeoJSON publicadas previamente
+armazenadas podem ser consultadas offline dentro da sessao e do ultimo escopo,
+sempre exibindo fonte, numero e vigencia. Geometria referenciada por registro
+local pendente nao pode ser removida do cache. Importar produtivamente,
+reconciliar, revisar, publicar, arquivar e restaurar exigem conexao; nao ha
+publicacao otimista nem fila offline. Limites e retencao do cache permanecem
+em `MP-37`.
+
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 
 O produto ja depende de mapas e arquivos no contexto da propriedade. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
@@ -867,6 +891,14 @@ condicionais. A leitura dos indices PNG/ZIP anteriores deve ser preservada sem
 duplicacao. PDF e ZIP podem ser catalogados, mas nao possuem promessa de
 visualizacao, download remoto ou processamento. Essa entrega nao fecha a
 estrategia produtiva de ingestao e disponibilizacao.
+
+Status em 2026-07-30 (`MP-06`): o pipeline conceitual do GeoJSON foi
+formalizado: preservar original/checksum, comparar com a versao publicada,
+reconciliar, revisar, publicar atomicamente e arquivar sem exclusao. Nome,
+codigo, ordem e geometria ficaram separados da identidade logica do Talhao.
+Permanecem pendentes a implementacao em banco/storage, APIs, limites
+geometricos, migracao, cache e testes de multiplas versoes em `MP-37`/`MP-39`.
+PNG/PDF/ZIP continuam sujeitos ao pipeline proprio de Material tecnico.
 
 Permanece pendente definir e implementar:
 

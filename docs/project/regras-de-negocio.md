@@ -266,6 +266,39 @@ campo.
   local atual nao deve ser descrita como download ou sincronizacao produtiva.
 - Fluxos de ingestao, upload ou processamento interno devem ficar sob responsabilidade da equipe autorizada, quando existirem.
 
+### GeoJSON e identidade de Talhoes
+
+O contrato canonico esta em `versionamento-geojson-talhoes.md`.
+
+- `talhao_id` e a identidade logica estavel; nome, codigo, indice da feature,
+  ano e geometria nao sao chaves.
+- Importacao, Talhao logico, versao geometrica e linhagem sao registros
+  distintos.
+- Cada arquivo cria importacao imutavel com original, checksum, Propriedade,
+  vigencia, autor e auditoria.
+- Rascunho e revisao nao alteram a demarcacao publicada.
+- Publicacao exige reconciliacao concluida, permissao explicita e validacao de
+  versao base no servidor.
+- Nova publicacao arquiva a anterior ao fim de sua vigencia, sem apagar
+  arquivo, geometria, reconciliacao ou vinculos historicos.
+- Renome preserva `talhao_id`; mudanca de contorno cria nova versao geometrica
+  quando a unidade operacional continua a mesma.
+- Divisao e fusao encerram predecessores, criam sucessores e registram
+  linhagem; registros antigos nao sao reatribuidos.
+- Talhao ausente em arquivo novo exige revisao e nao e encerrado
+  automaticamente.
+- Caderno, Visitas, Safra/Safrinha e Materiais devem referenciar `talhao_id` e
+  preservar snapshot textual; quando houver avaliacao espacial, devem
+  preservar tambem `talhao_geometria_versao_id`.
+- IDs locais derivados de indice/nome e textos legados exigem reconciliacao e
+  nao podem ser promovidos automaticamente.
+- Produtor consulta somente versoes publicadas e autorizadas; Colaborador
+  autorizado prepara/reconcilia; publicacao cabe a Admin ou papel tecnico
+  explicito no primeiro contrato.
+- Importar, reconciliar, revisar, publicar, arquivar ou restaurar exige
+  conexao. Cache offline de versao publicada deve informar fonte, versao e
+  vigencia.
+
 ## Regra sobre Visitas Tecnicas
 
 O contrato canonico de estados esta em `estados-visita.md`.

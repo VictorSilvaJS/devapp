@@ -693,3 +693,39 @@ backend e regras de acesso dos tres perfis.
 - registros legados sao preservados sem historico inventado;
 - implementacao permanece em `MP-27`;
 - organizacao visual das listas permanece em `MP-22`.
+
+---
+
+## 27. GeoJSON usa versoes imutaveis e Talhao possui identidade logica
+
+### Decisao
+
+O contrato canonico fica em `versionamento-geojson-talhoes.md`.
+
+- `talhao_id` e estavel e separado do nome, codigo e geometria;
+- cada GeoJSON recebido cria importacao imutavel e auditavel;
+- geometria possui versao e vigencia proprias;
+- rascunho e revisao nao substituem a camada publicada;
+- publicacao exige reconciliacao e permissao explicita;
+- versao publicada anterior e arquivada, nunca apagada automaticamente;
+- renome mantem identidade;
+- divisao e fusao criam sucessores e preservam linhagem;
+- modulos operacionais usam `talhao_id` e, quando necessario,
+  `talhao_geometria_versao_id`;
+- migracao textual preserva snapshots e nao inventa correspondencias.
+
+### Alcance
+
+Afeta Talhoes, mapas, importacao GeoJSON, Caderno, Visitas, Safra/Safrinha,
+Materiais, localizacao, backend, storage, cache offline, auditoria e migracao.
+
+### Impacto
+
+- o fluxo local de um GeoJSON `ativo` continua demonstrativo e incompativel
+  com o contrato produtivo;
+- IDs derivados de indice/nome nao podem ser tratados como identidade;
+- substituir/remover localmente ainda pode apagar arquivo ate `MP-37`;
+- Colaborador prepara e reconcilia; publicacao fica com Admin ou papel tecnico
+  explicito no primeiro contrato;
+- implementacao produtiva permanece em `MP-37`;
+- IDs selecionaveis dependem de `MP-24` e a regressao historica de `MP-39`.

@@ -4195,3 +4195,29 @@ registro. Nao existe historico ou controle de concorrencia.
 Implementacao no dominio/interface permanece em `MP-27`; a organizacao visual
 da lista permanece em `MP-22`. Validacao e autorizacao produtivas dependem do
 backend.
+
+## MP-06 - Contrato De Versao Do GeoJSON
+
+Status em 2026-07-30: o contrato canonico foi definido em
+`versionamento-geojson-talhoes.md`, sem alteracao de codigo.
+
+Talhao logico, importacao, versao geometrica e linhagem passaram a ser
+conceitos separados. `talhao_id` e estavel; nome, codigo, indice, ordem e
+geometria nao definem identidade. Cada arquivo produtivo deve gerar importacao
+imutavel com original, checksum, vigencia e auditoria.
+
+O fluxo aprovado e rascunho, revisao, publicacao e arquivamento. Publicar exige
+reconciliacao de mantidos, renomeados, alterados, novos, ausentes, divisoes,
+fusoes e ambiguidades. Renome preserva identidade, mudanca de contorno cria
+nova geometria, e divisao/fusao preservam predecessores e sucessores. Versao
+publicada anterior nunca e apagada automaticamente.
+
+O estado efetivo continua inalterado: `GeoJsonImportService` mantem um item
+`ativo` por Propriedade; `GeoJsonPropertyManageWorkflow` tenta apagar o
+arquivo anterior; `GeoJsonTalhoesLayerService` le somente o ativo; e o
+validador gera IDs a partir de Propriedade, indice e nome. `versao = 1`
+continua sendo versao do schema local, nao da demarcacao.
+
+IDs estaveis e migracao dos vinculos textuais permanecem em `MP-24`;
+persistencia, storage, reconciliacao, publicacao, historico e cache em
+`MP-37`; regressao de renome, area, divisao, fusao e restauracao em `MP-39`.
