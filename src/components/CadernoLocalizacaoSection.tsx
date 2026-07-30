@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SectionCard from './SectionCard';
-import { badgeStyles, buttonStyles, colors, spacing, typography } from '../theme';
+import { badgeStyles, buttonStyles, colors, semanticColors, spacing, typography } from '../theme';
 import {
   CadernoLocalizacaoExplicita,
   hasCadernoLocalizacao,
@@ -100,6 +100,7 @@ export function CadernoLocalizacaoSection({
   const isNewCapture = Boolean(normalizedCurrent);
   const isExistingLocation = mode === 'edit' && !isNewCapture && Boolean(normalizedExisting);
   const captureDisabled = disabled || loading;
+  const removeDisabled = disabled || loading;
 
   const captureLabel = loading
     ? 'Obtendo posição...'
@@ -131,8 +132,8 @@ export function CadernoLocalizacaoSection({
               disabled={disabled}
               activeOpacity={0.78}
             >
-              <Ionicons name="arrow-undo-outline" size={18} color={colors.primary} />
-              <Text style={styles.secondaryButtonText}>Desfazer remoção</Text>
+              <Ionicons name="arrow-undo-outline" size={18} color={disabled ? semanticColors.disabled.text : colors.primary} />
+              <Text style={[styles.secondaryButtonText, disabled ? styles.disabledText : null]}>Desfazer remoção</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -182,23 +183,23 @@ export function CadernoLocalizacaoSection({
               activeOpacity={0.78}
             >
               {loading ? (
-                <ActivityIndicator size="small" color={colors.white} />
+                <ActivityIndicator size="small" color={semanticColors.disabled.text} />
               ) : (
-                <Ionicons name="locate-outline" size={19} color={colors.white} />
+                <Ionicons name="locate-outline" size={19} color={captureDisabled ? semanticColors.disabled.text : colors.white} />
               )}
-              <Text style={styles.primaryButtonText}>{captureLabel}</Text>
+              <Text style={[styles.primaryButtonText, captureDisabled ? styles.disabledText : null]}>{captureLabel}</Text>
             </TouchableOpacity>
           ) : null}
 
           {onRemove ? (
             <TouchableOpacity
-              style={[styles.removeButton, disabled || loading ? styles.disabled : null]}
+              style={[styles.removeButton, removeDisabled ? styles.disabled : null]}
               onPress={onRemove}
-              disabled={disabled || loading}
+              disabled={removeDisabled}
               activeOpacity={0.78}
             >
-              <Ionicons name="trash-outline" size={18} color={colors.error} />
-              <Text style={styles.removeButtonText}>Remover localização</Text>
+              <Ionicons name="trash-outline" size={18} color={removeDisabled ? semanticColors.disabled.text : colors.error} />
+              <Text style={[styles.removeButtonText, removeDisabled ? styles.disabledText : null]}>Remover localização</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -210,11 +211,11 @@ export function CadernoLocalizacaoSection({
           activeOpacity={0.78}
         >
           {loading ? (
-            <ActivityIndicator size="small" color={colors.white} />
+            <ActivityIndicator size="small" color={semanticColors.disabled.text} />
           ) : (
-            <Ionicons name="locate-outline" size={19} color={colors.white} />
+            <Ionicons name="locate-outline" size={19} color={captureDisabled ? semanticColors.disabled.text : colors.white} />
           )}
-          <Text style={styles.primaryButtonText}>{captureLabel}</Text>
+          <Text style={[styles.primaryButtonText, captureDisabled ? styles.disabledText : null]}>{captureLabel}</Text>
         </TouchableOpacity>
       )}
     </SectionCard>
@@ -344,7 +345,11 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
   },
   disabled: {
-    opacity: 0.5,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
+  },
+  disabledText: {
+    color: semanticColors.disabled.text,
   },
   badge: {
     ...(badgeStyles.container as ViewStyle),

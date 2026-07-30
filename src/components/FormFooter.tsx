@@ -9,7 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { buttonStyles, colors, shadows, spacing, typography } from '../theme';
+import { buttonStyles, colors, semanticColors, shadows, spacing, typography } from '../theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -39,18 +39,19 @@ export default function FormFooter({
   style,
 }: FormFooterProps) {
   const submitDisabled = loading || disabled;
+  const cancelDisabled = loading || !onCancel;
 
   return (
     <View style={[styles.footer, style]}>
       {showCancel ? (
         <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
+          style={[styles.button, styles.cancelButton, cancelDisabled ? styles.disabled : null]}
           onPress={onCancel}
-          disabled={loading || !onCancel}
+          disabled={cancelDisabled}
           activeOpacity={0.78}
         >
-          {cancelIcon ? <Ionicons name={cancelIcon} size={20} color={colors.text} /> : null}
-          <Text style={styles.cancelText}>{cancelLabel}</Text>
+          {cancelIcon ? <Ionicons name={cancelIcon} size={20} color={cancelDisabled ? semanticColors.disabled.text : colors.text} /> : null}
+          <Text style={[styles.cancelText, cancelDisabled ? styles.disabledText : null]}>{cancelLabel}</Text>
         </TouchableOpacity>
       ) : null}
 
@@ -61,11 +62,11 @@ export default function FormFooter({
         activeOpacity={0.78}
       >
         {loading ? (
-          <ActivityIndicator color={colors.white} size="small" />
+          <ActivityIndicator color={semanticColors.disabled.text} size="small" />
         ) : (
           <>
-            {submitIcon ? <Ionicons name={submitIcon} size={20} color={colors.white} /> : null}
-            <Text style={styles.submitText}>{submitLabel}</Text>
+            {submitIcon ? <Ionicons name={submitIcon} size={20} color={submitDisabled ? semanticColors.disabled.text : colors.white} /> : null}
+            <Text style={[styles.submitText, submitDisabled ? styles.disabledText : null]}>{submitLabel}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -104,6 +105,10 @@ const styles = StyleSheet.create({
     ...buttonStyles.primaryText,
   },
   disabled: {
-    opacity: 0.6,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
+  },
+  disabledText: {
+    color: semanticColors.disabled.text,
   },
 });

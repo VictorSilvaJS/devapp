@@ -11,7 +11,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, inputStyles, spacing, typography } from '../theme';
+import { colors, inputStyles, semanticColors, spacing, typography } from '../theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -68,7 +68,7 @@ export default function FormField({
         ]}
       >
         {leftIcon ? (
-          <Ionicons name={leftIcon} size={20} color={colors.muted} style={styles.leftIcon} />
+          <Ionicons name={leftIcon} size={20} color={disabled ? semanticColors.disabled.text : colors.muted} style={styles.leftIcon} />
         ) : null}
 
         <TextInput
@@ -77,7 +77,7 @@ export default function FormField({
           multiline={isMultiline}
           placeholderTextColor={inputProps.placeholderTextColor || colors.muted}
           textAlignVertical={isMultiline ? 'top' : 'center'}
-          style={[styles.input, isMultiline ? styles.textarea : null, inputStyle]}
+          style={[styles.input, disabled ? styles.inputTextDisabled : null, isMultiline ? styles.textarea : null, inputStyle]}
         />
 
         {rightIcon ? (
@@ -87,7 +87,7 @@ export default function FormField({
             disabled={!onRightIconPress}
             activeOpacity={0.75}
           >
-            <Ionicons name={rightIcon} size={20} color={colors.muted} />
+            <Ionicons name={rightIcon} size={20} color={disabled ? semanticColors.disabled.text : colors.muted} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   inputDisabled: {
-    backgroundColor: colors.backgroundAlt,
-    opacity: 0.72,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
   },
   inputError: {
     borderColor: colors.error,
@@ -131,6 +131,9 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     paddingVertical: spacing.md,
     minHeight: 48,
+  },
+  inputTextDisabled: {
+    color: semanticColors.disabled.text,
   },
   textarea: {
     minHeight: 96,

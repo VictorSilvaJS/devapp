@@ -1109,7 +1109,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.32)',
   },
   localizacaoButtonDisabled: {
-    opacity: 0.76,
+    borderWidth: 2,
+    borderColor: colors.disabledBorder,
+    borderStyle: 'dashed',
   },
   localizacaoButtonText: {
     color: colors.white,

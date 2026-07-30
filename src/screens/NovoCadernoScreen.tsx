@@ -812,9 +812,6 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.accent,
   },
-  radioButtonLocked: {
-    opacity: 0.75,
-  },
   radio: {
     width: 20,
     height: 20,
@@ -903,9 +900,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     fontWeight: '700',
     color: colors.card,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
   blockedContainer: {
     flex: 1,

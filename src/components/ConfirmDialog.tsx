@@ -9,7 +9,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography, shadows } from '../theme';
+import { colors, semanticColors, spacing, typography, shadows } from '../theme';
 
 /**
  * ConfirmDialog Component
@@ -97,11 +97,11 @@ export default function ConfirmDialog({
           {/* Ações */}
           <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
+              style={[styles.button, styles.cancelButton, loading && styles.buttonDisabled]}
               onPress={onCancel}
               disabled={loading}
             >
-              <Text style={styles.cancelButtonText}>{cancelText}</Text>
+              <Text style={[styles.cancelButtonText, loading && styles.buttonDisabledText]}>{cancelText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -115,7 +115,7 @@ export default function ConfirmDialog({
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color={colors.white} size="small" />
+                <ActivityIndicator color={semanticColors.disabled.text} size="small" />
               ) : (
                 <Text style={styles.confirmButtonText}>{confirmText}</Text>
               )}
@@ -198,6 +198,10 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
+  },
+  buttonDisabledText: {
+    color: semanticColors.disabled.text,
   },
 });

@@ -4323,7 +4323,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   geoJsonImportButtonDisabled: {
-    opacity: 0.65,
+    borderWidth: 2,
+    borderColor: colors.disabledBorder,
+    borderStyle: 'dashed',
   },
   geoJsonImportButtonText: {
     fontSize: typography.fontBody,
@@ -4517,7 +4519,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   geoJsonPreviewConfirmButtonDisabled: {
-    opacity: 0.65,
+    borderWidth: 2,
+    borderColor: colors.disabledBorder,
+    borderStyle: 'dashed',
   },
   geoJsonPreviewConfirmText: {
     fontSize: typography.fontBody,

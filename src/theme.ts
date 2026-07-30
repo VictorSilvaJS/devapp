@@ -1,7 +1,7 @@
 export const colors = {
-  primary: '#228B22',
-  primaryDark: '#1a6b1a',
-  primaryLight: '#2fa82f',
+  primary: '#1F7A1F',
+  primaryDark: '#155E15',
+  primaryLight: '#E4F3E1',
   secondary: '#8B6244',
   secondaryLight: '#a17757',
   accent: '#d9ead3',
@@ -14,14 +14,14 @@ export const colors = {
   textLight: '#4a5c4a',
   textSecondary: '#6B7280',
   muted: '#6B7280',
-  mutedLight: '#9ca3af',
-  success: '#10B981',
+  mutedLight: '#64748B',
+  success: '#047857',
   successLight: '#34d399',
-  warning: '#F59E0B',
+  warning: '#B45309',
   warningLight: '#fbbf24',
-  error: '#EF4444',
+  error: '#C02626',
   errorLight: '#f87171',
-  danger: '#EF4444',       // alias para error (compatibilidade)
+  danger: '#C02626',       // alias para error (compatibilidade)
   dangerLight: '#f87171',  // alias para errorLight
   white: '#FFFFFF',
   black: '#000000',
@@ -32,15 +32,15 @@ export const colors = {
   shadowDark: 'rgba(0, 0, 0, 0.1)',
   overlay: 'rgba(0, 0, 0, 0.5)',
   // Cores semânticas para categorias/tipos
-  info: '#3B82F6',
+  info: '#1D4ED8',
   infoLight: '#dbeafe',
-  purple: '#7c3aed',
+  purple: '#6D28D9',
   purpleLight: '#ede9fe',
-  amber: '#d97706',
+  amber: '#B45309',
   amberLight: '#fef3c7',
-  cyan: '#06B6D4',
+  cyan: '#0E7490',
   cyanLight: '#cffafe',
-  orange: '#F97316',
+  orange: '#C2410C',
   orangeLight: '#fff7ed',
   // Gradientes
   gradientStart: 'rgba(139, 98, 68, 0.05)',
@@ -63,7 +63,43 @@ export const colors = {
   errorBgLight: '#FFF5F5',
   errorBgMedium: '#FFE5E5',
   errorBorder: '#FFD6D6',
+  disabledSurface: '#E2E8F0',
+  disabledText: '#475569',
+  disabledBorder: '#64748B',
 };
+
+export const semanticColors = {
+  primary: {
+    surface: colors.primaryLight,
+    text: colors.primary,
+    border: colors.primary,
+  },
+  success: {
+    surface: colors.successBg,
+    text: colors.success,
+    border: colors.success,
+  },
+  warning: {
+    surface: colors.amberLight,
+    text: colors.warning,
+    border: colors.warning,
+  },
+  info: {
+    surface: colors.infoLight,
+    text: colors.info,
+    border: colors.info,
+  },
+  error: {
+    surface: colors.errorBgLight,
+    text: colors.error,
+    border: colors.error,
+  },
+  disabled: {
+    surface: colors.disabledSurface,
+    text: colors.disabledText,
+    border: colors.disabledBorder,
+  },
+} as const;
 
 export const spacing = {
   xs: 4,
@@ -312,7 +348,11 @@ export const buttonStyles = {
   },
   // Disabled
   disabled: {
-    opacity: 0.5,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
+  },
+  disabledText: {
+    color: semanticColors.disabled.text,
   },
 };
 
@@ -488,6 +528,7 @@ export const searchBarStyles = {
 
 export default {
   colors,
+  semanticColors,
   spacing,
   typography,
   border,

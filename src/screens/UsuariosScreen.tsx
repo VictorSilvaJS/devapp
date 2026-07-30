@@ -23,7 +23,7 @@ import FilterBottomSheet, {
 } from '../components/FilterBottomSheet';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
-import { colors, shadows, spacing, typography } from '../theme';
+import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import {
   PERFIS_USUARIO_ADMIN,
   buildUsuarioVinculoPrincipal,
@@ -41,9 +41,9 @@ const getPerfilColor = (perfil?: string) => {
 };
 
 const getStatusColors = (status: any) => {
-  if (status.key === 'ativo') return { bg: colors.successBg, text: colors.success };
-  if (status.key === 'pendente') return { bg: colors.amberLight, text: colors.warning };
-  return { bg: colors.errorBgLight, text: colors.error };
+  if (status.key === 'ativo') return { bg: semanticColors.success.surface, text: semanticColors.success.text };
+  if (status.key === 'pendente') return { bg: semanticColors.warning.surface, text: semanticColors.warning.text };
+  return { bg: semanticColors.error.surface, text: semanticColors.error.text };
 };
 
 export default function UsuariosScreen() {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
+import { colors, semanticColors, spacing, typography } from '../theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 type InfoBoxVariant = 'info' | 'success' | 'warning' | 'error';
@@ -16,10 +16,10 @@ type InfoBoxProps = {
 };
 
 const variantConfig: Record<InfoBoxVariant, { color: string; background: string; icon: IconName }> = {
-  info: { color: colors.primary, background: colors.accent, icon: 'information-circle-outline' },
-  success: { color: colors.success, background: colors.successBg, icon: 'checkmark-circle-outline' },
-  warning: { color: colors.warning, background: colors.amberLight, icon: 'alert-circle-outline' },
-  error: { color: colors.error, background: colors.errorBgLight, icon: 'alert-circle-outline' },
+  info: { color: semanticColors.primary.text, background: semanticColors.primary.surface, icon: 'information-circle-outline' },
+  success: { color: semanticColors.success.text, background: semanticColors.success.surface, icon: 'checkmark-circle-outline' },
+  warning: { color: semanticColors.warning.text, background: semanticColors.warning.surface, icon: 'alert-circle-outline' },
+  error: { color: semanticColors.error.text, background: semanticColors.error.surface, icon: 'alert-circle-outline' },
 };
 
 export default function InfoBox({

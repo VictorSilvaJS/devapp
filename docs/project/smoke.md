@@ -1256,3 +1256,24 @@ Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
 
 Evidencias completas:
 `dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/`.
+
+## MP-11 - Contraste E Opacidade
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP11-01 | P2 | Dashboard | Inspecionar indicadores em retrato | Textos, icones e superficies permanecem legiveis | Passou | `dashboard-retrato.png` |
+| MP11-02 | P2 | Usuarios | Inspecionar cards e chips de status | Estado ativo usa par explicito sem perder hierarquia | Passou | `usuarios-status-retrato.png` |
+| MP11-03 | P2 | Propriedade | Inspecionar acao bloqueada | Desabilitado e distinguivel sem opacidade global nem aparencia ativa | Passou | `sela-detalhe-retrato.png` |
+| MP11-04 | P2 | Materiais da Propriedade | Rolar ate `Ver mais 2 materiais` em retrato | Texto e icone legiveis sobre superficie clara | Passou | `ver-mais-materiais-retrato.png` |
+| MP11-05 | P2 | Materiais da Propriedade | Girar para paisagem e reenquadrar o mesmo controle | Par semantico e layout permanecem integros | Passou | `ver-mais-materiais-paisagem.png` |
+| MP11-06 | P2 | Busca de Propriedades | Focar a busca em retrato | Campo e texto permanecem legiveis com teclado aberto | Passou | `busca-sela-teclado.png` |
+
+O seed atual nao possui Caderno com `origem_registro = produtor`. O badge
+`Registrado pelo produtor` foi validado pelo teste de contrato e pela auditoria
+do uso do mesmo par semantico, sem criacao de dado artificial no smoke.
+
+Evidencias completas:
+`dist/qa-session-2026-07-30/mp-11-contraste-opacidade/`.

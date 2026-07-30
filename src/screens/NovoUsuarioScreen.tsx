@@ -1014,9 +1014,6 @@ const styles = StyleSheet.create({
     borderRadius: spacing.radius,
     backgroundColor: colors.primary,
   },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
   saveText: {
     color: colors.white,
     fontSize: typography.fontBody,

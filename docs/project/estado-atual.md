@@ -4326,5 +4326,32 @@ proprio do mapa e as 18 rotas internas. Typecheck, `test:domain-compat`,
 via `adb`; o smoke passou em retrato e paisagem. Evidencias:
 `dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/`.
 
-Arquitetura de informacao da Propriedade permanece em `MP-15`, contraste em
-`MP-11` e filtros de Materiais em `MP-17`. `MP-11` nao foi iniciada.
+Arquitetura de informacao da Propriedade permanece em `MP-15` e filtros de
+Materiais em `MP-17`. `MP-11` foi executada na sequencia.
+
+## MP-11 - Contraste E Opacidade
+
+Status em 2026-07-30: `CONCLUIDO`.
+
+O tema agora define pares semanticos explicitos de superficie, texto e borda
+para estados primario, sucesso, aviso, informacao, erro e desabilitado. Os
+tokens de primeiro plano relevantes atendem 4,5:1 para texto normal; icones e
+bordas essenciais atendem 3:1. `primaryLight` passou a ser uma superficie
+clara, enquanto `primary` permanece como primeiro plano.
+
+Os exemplos `Registrado pelo produtor` e `Ver mais 2 materiais`, as caixas
+informativas e os status de Usuarios usam esses pares. Controles reutilizaveis
+de formulario, selecao, confirmacao, data, chips, radio e localizacao deixaram
+de aplicar opacidade ao componente inteiro quando desabilitados; eles usam
+superficie, texto e borda especificos.
+
+O teste `themeContrastCompat.test.js` calcula os contrastes diretamente dos
+tokens e audita os contratos semanticos e os estados desabilitados. Typecheck,
+`test:domain-compat`, `git diff --check` e `assembleRelease` passaram. O APK
+release foi instalado via `adb`; o smoke passou em retrato e paisagem no
+Dashboard, status de Usuarios, estado desabilitado, busca com teclado e
+materiais da Sela de Prata. Evidencias:
+`dist/qa-session-2026-07-30/mp-11-contraste-opacidade/`.
+
+O sistema de cartoes permanece em `MP-21` e a matriz completa de
+acessibilidade em `MP-40`. `MP-12` nao foi iniciada.

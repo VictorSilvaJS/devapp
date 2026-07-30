@@ -648,9 +648,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.card,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
   blockedContainer: {
     flex: 1,
     alignItems: 'center',

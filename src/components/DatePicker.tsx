@@ -10,7 +10,7 @@ import {
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography, shadows } from '../theme';
+import { colors, semanticColors, spacing, typography, shadows } from '../theme';
 
 type DatePickerProps = {
   value?: Date | null;
@@ -108,7 +108,7 @@ export default function DatePicker({
         <Ionicons 
           name={getIcon()} 
           size={20} 
-          color={value ? colors.primary : colors.muted} 
+          color={disabled ? semanticColors.disabled.text : value ? colors.primary : colors.muted}
         />
         <Text style={[
           styles.inputText,
@@ -395,8 +395,8 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   inputDisabled: {
-    backgroundColor: colors.backgroundAlt,
-    opacity: 0.6,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
   },
   inputText: {
     flex: 1,
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   textDisabled: {
-    color: colors.mutedLight,
+    color: semanticColors.disabled.text,
   },
   errorContainer: {
     flexDirection: 'row',

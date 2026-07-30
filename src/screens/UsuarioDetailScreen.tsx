@@ -17,7 +17,7 @@ import SectionCard from '../components/SectionCard';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { LocalCredentialService } from '../auth/localCredentials';
-import { colors, shadows, spacing, typography } from '../theme';
+import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import { getFazendaId } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
@@ -43,13 +43,13 @@ const perfilIcon = (perfil?: string) => {
 
 const statusColors = (status: any) => {
   if (status.key === 'ativo') {
-    return { bg: colors.successBg, text: colors.success };
+    return { bg: semanticColors.success.surface, text: semanticColors.success.text };
   }
   if (status.key === 'pendente') {
-    return { bg: colors.amberLight, text: colors.warning };
+    return { bg: semanticColors.warning.surface, text: semanticColors.warning.text };
   }
 
-  return { bg: colors.errorBgLight, text: colors.error };
+  return { bg: semanticColors.error.surface, text: semanticColors.error.text };
 };
 
 const InfoRow = ({ icon, label, value }) => (

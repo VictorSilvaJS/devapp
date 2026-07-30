@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing, shadows } from '../theme';
+import { colors, semanticColors, typography, spacing, shadows } from '../theme';
 
 type InputFieldProps = {
   label?: string;
@@ -92,7 +92,7 @@ export default function InputField({
           <Ionicons
             name={icon}
             size={20}
-            color={isFocused ? colors.primary : colors.muted}
+            color={!editable ? semanticColors.disabled.text : isFocused ? colors.primary : colors.muted}
             style={styles.iconLeft}
           />
         )}
@@ -101,6 +101,7 @@ export default function InputField({
         <TextInput
           style={[
             styles.input,
+            !editable && styles.inputTextDisabled,
             multiline && styles.inputMultiline,
           ]}
           value={value}
@@ -200,14 +201,17 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   inputDisabled: {
-    backgroundColor: colors.background,
-    opacity: 0.6,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
   },
   input: {
     flex: 1,
     fontSize: typography.fontBody,
     color: colors.text,
     paddingVertical: spacing.sm,
+  },
+  inputTextDisabled: {
+    color: semanticColors.disabled.text,
   },
   inputMultiline: {
     minHeight: 80,

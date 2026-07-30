@@ -15,7 +15,7 @@ import Header from '../components/Header';
 import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
-import { colors, shadows, spacing, typography } from '../theme';
+import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
   podeEditarCadernoEmFazenda,
@@ -202,9 +202,9 @@ export default function CadernoDetailScreen() {
             </Text>
           </View>
           {registradoPeloProdutor && (
-            <View style={[styles.visibilityBadge, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="person-outline" size={16} color={colors.primary} />
-              <Text style={[styles.visibilityText, { color: colors.primary }]}>
+            <View style={[styles.visibilityBadge, { backgroundColor: semanticColors.primary.surface }]}>
+              <Ionicons name="person-outline" size={16} color={semanticColors.primary.text} />
+              <Text style={[styles.visibilityText, { color: semanticColors.primary.text }]}>
                 {getCadernoOrigemLabel(registro)}
               </Text>
             </View>

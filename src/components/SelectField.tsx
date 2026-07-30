@@ -10,7 +10,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, inputStyles, modalStyles, spacing, typography } from '../theme';
+import { colors, inputStyles, modalStyles, semanticColors, spacing, typography } from '../theme';
 
 export type SelectFieldOption = {
   value: string;
@@ -72,11 +72,11 @@ export default function SelectField({
         accessibilityHint={disabled ? 'Campo somente leitura' : 'Abre a lista de opções'}
       >
         <View style={styles.fieldText}>
-          <Text style={[styles.value, !selected ? styles.placeholder : null]} numberOfLines={1}>
+          <Text style={[styles.value, !selected ? styles.placeholder : null, disabled ? styles.valueDisabled : null]} numberOfLines={1}>
             {selected?.label || placeholder}
           </Text>
           {selected?.description ? (
-            <Text style={styles.valueDescription} numberOfLines={1}>
+            <Text style={[styles.valueDescription, disabled ? styles.valueDisabled : null]} numberOfLines={1}>
               {selected.description}
             </Text>
           ) : null}
@@ -84,7 +84,7 @@ export default function SelectField({
         <Ionicons
           name={disabled ? 'lock-closed-outline' : 'chevron-down-outline'}
           size={20}
-          color={colors.muted}
+          color={disabled ? semanticColors.disabled.text : colors.muted}
         />
       </TouchableOpacity>
 
@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   fieldDisabled: {
-    backgroundColor: colors.backgroundAlt,
-    opacity: 0.76,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
   },
   fieldText: {
     flex: 1,
@@ -182,6 +182,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.fontBody,
     fontWeight: typography.weightSemibold,
+  },
+  valueDisabled: {
+    color: semanticColors.disabled.text,
   },
   placeholder: {
     color: colors.muted,

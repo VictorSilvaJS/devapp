@@ -5,8 +5,8 @@
 > Criado em: 2026-07-30
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
-> IME que respeite o modo inline em paisagem; `MP-08`, `MP-09` e `MP-10`
-> foram concluídas; `MP-11` não foi iniciada
+> IME que respeite o modo inline em paisagem; `MP-08`, `MP-09`, `MP-10` e
+> `MP-11` foram concluídas; `MP-12` não foi iniciada
 
 ## 1. Objetivo
 
@@ -168,7 +168,7 @@ nova registrada neste documento.
 | 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `CONCLUIDO` |
 | 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `CONCLUIDO` |
 | 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `CONCLUIDO` |
-| 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `BACKLOG` |
+| 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `CONCLUIDO` |
 | 13 | `MP-12` Linguagem e formatação | `QA-P2-17`, `QA-P3-01` | Padronizar Coleta de Solo, áreas, rótulos e nomes técnicos | `MP-00` | `BACKLOG` |
 | 14 | `MP-13` Validação visual dos formulários | `QA-P2-16` | Sinalizar obrigatórios, focar primeiro erro e manter mensagens junto ao campo | `MP-00` | `BACKLOG` |
 | 15 | `MP-14` Espaçamento seguro e FAB | `QA-P2-18` | Preservar conteúdo final e remover oclusão transitória relevante | `MP-00` | `BACKLOG` |
@@ -372,6 +372,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-08` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em Propriedades e Visitas | `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/` | bottom sheet comum e gesto de arraste permanecem fora deste corte, em `MP-09` |
 | 2026-07-30 | `MP-09` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou nas cinco telas, teclado e paisagem | `dist/qa-session-2026-07-30/mp-09-filtros-padrao/` | reorganização funcional dos filtros de Materiais permanece em `MP-17`; `MP-10` não foi iniciada |
 | 2026-07-30 | `MP-10` | `CONCLUIDO` | `appQA` / árvore de trabalho | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato e paisagem | `dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/` | reorganização da Propriedade permanece em `MP-15`; contraste em `MP-11`; `MP-11` não foi iniciada |
+| 2026-07-30 | `MP-11` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `8680761` | teste focado WCAG, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato, paisagem e busca com teclado | `dist/qa-session-2026-07-30/mp-11-contraste-opacidade/` | sistema de cartões permanece em `MP-21`; matriz completa de acessibilidade em `MP-40`; `MP-12` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -424,4 +425,31 @@ O teste focado audita as 18 rotas internas do native stack, todos os estados
 de `Header`, as telas-raiz sem seta e o retorno próprio do mapa de limites.
 Typecheck, suíte `domain-compat`, `git diff --check`, build release e instalação
 passaram. No Android físico, seta e botão do sistema preservaram filtro, busca,
-aba da Propriedade e contexto em retrato e paisagem. `MP-11` não foi iniciada.
+aba da Propriedade e contexto em retrato e paisagem. `MP-11` foi executada na
+sequência.
+
+`MP-11` foi concluída em 2026-07-30. O tema passou a expor pares explícitos
+de superfície, texto e borda para estados primário, sucesso, aviso,
+informação, erro e desabilitado. Os tokens de primeiro plano foram escurecidos
+e `primaryLight` passou a representar uma superfície clara, eliminando os
+pares de verde próximos reportados em `Registrado pelo produtor` e
+`Ver mais 2 materiais`.
+
+Os componentes reutilizáveis de formulário, seleção, confirmação, data,
+chips, rádio e localização deixaram de reduzir a opacidade do controle
+inteiro. Estados desabilitados agora usam superfície, texto e borda próprios.
+Chips de status de Usuários e caixas informativas também passaram a usar os
+pares semânticos explícitos.
+
+`themeContrastCompat.test.js` calcula contraste WCAG diretamente dos tokens,
+exige 4,5:1 para texto normal e 3:1 para ícones/bordas essenciais, audita os
+dois exemplos reportados e impede a reintrodução de opacidade global nos
+controles cobertos. Teste focado, typecheck, suíte `domain-compat`,
+`git diff --check` e build release passaram.
+
+No Android físico, o smoke passou no Dashboard, status de Usuários, estado
+desabilitado da Propriedade, busca com teclado e materiais da Sela de Prata,
+em retrato e paisagem. O seed atual não contém registro de Caderno com
+`origem_registro = produtor`; por isso esse badge específico foi coberto pelo
+teste de contrato e pela auditoria do código, sem fabricar dado no smoke.
+`MP-12` não foi iniciada.

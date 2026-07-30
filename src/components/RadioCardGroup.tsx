@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, typography } from '../theme';
+import { colors, semanticColors, spacing, typography } from '../theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -44,7 +44,7 @@ export default function RadioCardGroup<T extends string = string>({
             disabled={option.disabled}
             activeOpacity={0.78}
           >
-            <View style={[styles.radio, active ? styles.radioActive : null]}>
+            <View style={[styles.radio, active ? styles.radioActive : null, option.disabled ? styles.radioDisabled : null]}>
               {active ? <View style={styles.radioInner} /> : null}
             </View>
 
@@ -52,14 +52,14 @@ export default function RadioCardGroup<T extends string = string>({
               <Ionicons
                 name={option.icon}
                 size={20}
-                color={active ? colors.primary : colors.muted}
+                color={option.disabled ? semanticColors.disabled.text : active ? colors.primary : colors.muted}
                 style={styles.icon}
               />
             ) : null}
 
             <View style={styles.textWrap}>
-              <Text style={[styles.label, active ? styles.labelActive : null]}>{option.label}</Text>
-              {option.description ? <Text style={styles.description}>{option.description}</Text> : null}
+              <Text style={[styles.label, active ? styles.labelActive : null, option.disabled ? styles.textDisabled : null]}>{option.label}</Text>
+              {option.description ? <Text style={[styles.description, option.disabled ? styles.textDisabled : null]}>{option.description}</Text> : null}
             </View>
           </TouchableOpacity>
         );
@@ -88,7 +88,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   cardDisabled: {
-    opacity: 0.6,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
   },
   radio: {
     width: 20,
@@ -102,6 +103,9 @@ const styles = StyleSheet.create({
   },
   radioActive: {
     borderColor: colors.primary,
+  },
+  radioDisabled: {
+    borderColor: semanticColors.disabled.border,
   },
   radioInner: {
     width: 10,
@@ -130,6 +134,9 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSmall,
     lineHeight: 16,
     marginTop: 2,
+  },
+  textDisabled: {
+    color: semanticColors.disabled.text,
   },
   errorText: {
     color: colors.error,

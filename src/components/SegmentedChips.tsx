@@ -11,7 +11,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { buttonStyles, colors, spacing, typography } from '../theme';
+import { buttonStyles, colors, semanticColors, spacing, typography } from '../theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -63,15 +63,15 @@ export default function SegmentedChips<T extends string = string>({
               <Ionicons
                 name={option.icon}
                 size={16}
-                color={active ? colors.white : colors.primary}
+                color={option.disabled ? semanticColors.disabled.text : active ? colors.white : colors.primary}
               />
             ) : null}
-            <Text style={[styles.chipText, active ? styles.chipTextActive : null]}>
+            <Text style={[styles.chipText, active ? styles.chipTextActive : null, option.disabled ? styles.disabledText : null]}>
               {option.label}
             </Text>
             {typeof option.count === 'number' ? (
               <View style={[styles.count, active ? styles.countActive : null]}>
-                <Text style={[styles.countText, active ? styles.countTextActive : null]}>
+                <Text style={[styles.countText, active ? styles.countTextActive : null, option.disabled ? styles.disabledText : null]}>
                   {option.count}
                 </Text>
               </View>
@@ -144,6 +144,10 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
   },
   disabled: {
-    opacity: 0.5,
+    backgroundColor: semanticColors.disabled.surface,
+    borderColor: semanticColors.disabled.border,
+  },
+  disabledText: {
+    color: semanticColors.disabled.text,
   },
 });

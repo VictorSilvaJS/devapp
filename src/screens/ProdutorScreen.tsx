@@ -21,7 +21,7 @@ import {
   buildPropriedadeContextRouteParams,
   buildPropriedadeDetailRouteParams,
 } from '../navigation/propriedadeRouteCompat';
-import { colors, typography, spacing, border, shadows } from '../theme';
+import { colors, semanticColors, typography, spacing, border, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import {
   filtrarCadernosPorFazendaIds,
@@ -1101,7 +1101,7 @@ export default function ProdutorScreen({ route, navigation }) {
                       <Text style={styles.verMaisText}>
                         Ver mais {mapas.length - 3} materiais
                       </Text>
-                      <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
+                      <Ionicons name="chevron-forward-outline" size={20} color={semanticColors.primary.text} />
                     </TouchableOpacity>
                   )}
                 </>
@@ -2119,13 +2119,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.md,
     marginTop: spacing.md,
-    backgroundColor: colors.primaryLight,
+    backgroundColor: semanticColors.primary.surface,
+    borderWidth: 1,
+    borderColor: semanticColors.primary.border,
     borderRadius: 8,
     gap: spacing.xs,
   },
   verMaisText: {
     fontSize: typography.sizes.md,
-    color: colors.primary,
+    color: semanticColors.primary.text,
     fontWeight: '600',
   },
   emptyTitle: {
