@@ -968,6 +968,25 @@ auditoria e migracao permanecem em `MP-35`.
 | MP02-06 | P0 | Produtor | Perfil do Produtor aberto | Tentar acessar autoedicao estrutural | Produtor continua sem editar vinculos de Propriedade/Titular | Reexecutar | Preservar orientacao de solicitacao de atualizacao |
 | MP02-07 | P0 | Todos | Fluxos principais acessiveis | Abrir Propriedades, Visitas e Caderno apos a mudanca | Motor de acesso e contexto de `fazenda_id` permanecem inalterados | Reexecutar | Regressao dos tres perfis |
 
+**Rodada MP-03 - Contrato De Notificacoes**
+
+Esta matriz prepara a validacao produtiva de `MP-34`. A MP-03 nao altera o
+mock atual; portanto, os casos abaixo permanecem `Bloqueado` ate existirem
+backend, persistencia e navegacao segura.
+
+| ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP03-01 | P0 | Produtor | Produtor vinculado somente a Propriedade A | Consultar notificacoes quando existe evento da Propriedade B | Nenhum texto, contador ou entrega da Propriedade B e retornado | Bloqueado | Exige consulta server-side por destinatario/escopo |
+| MP03-02 | P0 | Colaborador | Escopo limitado a uma Area/Regional | Consultar lista e contador | Lista e contador contem somente recursos do escopo atual | Bloqueado | Revalidar reducao de escopo |
+| MP03-03 | P0 | Admin | Duas organizacoes isoladas | Consultar notificacoes na organizacao atual | Nenhuma entrega da outra organizacao aparece | Bloqueado | Tenant vem da sessao |
+| MP03-04 | P0 | Todos | Notificacao autorizada nao lida | Marcar como lida e reiniciar | Estado lido e contador persistem para o mesmo destinatario | Bloqueado | Horario do servidor e operacao idempotente |
+| MP03-05 | P0 | Todos | Notificacao autorizada visivel | Descartar e reiniciar | Entrega nao reaparece; evento/historico nao e apagado | Bloqueado | Retencao final ainda sera configurada |
+| MP03-06 | P0 | Todos | Notificacao referencia recurso autorizado | Tocar na notificacao | Servidor reautoriza e allowlist abre exatamente o recurso indicado | Bloqueado | Tela de destino repete o guard |
+| MP03-07 | P0 | Todos | Entrega antiga perdeu autorizacao | Tocar por lista, deep link e rota direta | Acesso negado sem revelar o recurso; destino pendente e limpo | Bloqueado | Leitura nao concede acesso |
+| MP03-08 | P0 | Dois usuarios | Usuario A possui lista carregada | Fazer logout e entrar como Usuario B | Lista, contador, cursor, resposta tardia e rota do Usuario A nao aparecem | Bloqueado | Testar resposta de rede atrasada |
+| MP03-09 | P0 | Todos | Mesma chave de evento processada duas vezes | Reprocessar o evento | Existe somente uma entrega por destinatario/chave | Bloqueado | Deduplicacao server-side |
+| MP03-10 | P1 | Todos | Sessao offline ainda valida | Abrir cache de notificacoes | Apenas consulta segregada e autorizada; leitura, descarte e destino exigem rede | Bloqueado | Sem fila de mutacao offline no primeiro corte |
+
 **Rodada Admin - Sincronizacao Territorial E Vinculos Visuais Mockados**
 
 Login principal de teste: usuario admin mockado disponivel no app.

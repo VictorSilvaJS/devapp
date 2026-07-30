@@ -4,7 +4,7 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa: `MP-03 — Contrato de notificações` em conversa própria
+> Próxima tarefa: `MP-04 — Ciclo de vida do Caderno` em conversa própria
 
 ## 1. Objetivo
 
@@ -146,7 +146,7 @@ nova registrada neste documento.
 | 1 | `MP-00` Baseline técnico | todos | Registrar estado inicial, testes, build e riscos antes das correções | nenhuma | `CONCLUIDO` |
 | 2 | `MP-01` Política de sessão | `QA-P0-04` | Definir expiração, revalidação, logout, offline e retomada segura | `MP-00` | `CONCLUIDO` |
 | 3 | `MP-02` Modelo territorial e bloqueio de autoedição | `QA-P0-02`, `QA-P2-08` | Separar Município/UF de Regional/Área e impedir autoatribuição territorial | `MP-00` | `CONCLUIDO` |
-| 4 | `MP-03` Contrato de notificações | `QA-P0-01` | Definir destinatário, escopo, recurso, persistência e navegação segura | `MP-00` | `BACKLOG` |
+| 4 | `MP-03` Contrato de notificações | `QA-P0-01` | Definir destinatário, escopo, recurso, persistência e navegação segura | `MP-00` | `CONCLUIDO` |
 | 5 | `MP-04` Ciclo de vida do Caderno | `QA-P0-03` | Formalizar rascunho, registro imutável, complemento, correção, anulação e auditoria | `MP-00` | `BACKLOG` |
 | 6 | `MP-05` Estados de Visita | `QA-P1-04` | Formalizar transições, atraso, conclusão, cancelamento e correção auditada | `MP-00` | `BACKLOG` |
 | 7 | `MP-06` Contrato de versão do GeoJSON | `QA-P1-06` | Formalizar identidade lógica, versões, reconciliação e linhagem de Talhões | `MP-00` | `BACKLOG` |
@@ -362,29 +362,28 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-00` | `CONCLUIDO` | `appteste` / `fdf2934` | typecheck, domain-compat e assembleRelease passaram; smoke manual não reexecutado por `adb` ausente | `dist/qa-session-2026-07-30/mp-00-baseline-tecnico.md` | assinatura debug no release, avisos Gradle/`NODE_ENV`, divergência de Java, checagem Expo online e smoke Android pendentes |
 | 2026-07-30 | `MP-01` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check` e validação de links locais; sem suíte de código por ser mudança documental | `docs/project/politica-sessao.md`; `dist/qa-session-2026-07-30/mp-01-politica-sessao.md` | implementação produtiva permanece bloqueada até `MP-33` e definição offline por fluxo |
 | 2026-07-30 | `MP-02` | `CONCLUIDO` | `appteste` / árvore de trabalho | typecheck, domain-compat e 7 testes focados passaram; `git diff --check` passou; smoke Android não reexecutado por `adb` ausente | `docs/project/modelo-territorial.md`; `dist/qa-session-2026-07-30/mp-02-modelo-territorial-autoedicao.md` | backend, migração, auditoria e revalidação produtiva permanecem em `MP-35` |
+| 2026-07-30 | `MP-03` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/contrato-notificacoes.md`; `dist/qa-session-2026-07-30/mp-03-contrato-notificacoes.md` | implementação, isolamento, persistência e testes negativos permanecem em `MP-34` |
 
 ## 12. Próxima ação
 
-`MP-02` foi concluída em 2026-07-30 como contrato territorial e proteção local
-contra autoedição, sem alterar o motor legado de acesso.
+`MP-03` foi concluída em 2026-07-30 como contrato documental, sem alterar o
+contexto global e efêmero de notificações do mock.
 
 Resultado registrado:
 
-- Município/UF separados de Regional/Área no contrato canônico;
-- localização oficial definida sem concessão automática de acesso;
-- campos legados preservados como compatibilidade ambígua, sem migração
-  silenciosa;
-- edição de `regiao` removida do Perfil do Colaborador;
-- payloads territoriais recusados por `updateProfile`;
-- escopo apresentado como somente leitura, com orientação de correção
-  administrativa;
-- contrato registrado em `docs/project/modelo-territorial.md`;
-- implementação produtiva mantida em `MP-35`.
+- evento e entrega individual separados;
+- destinatário, organização, escopo e referência de recurso definidos;
+- leitura, descarte, prioridade e deduplicação formalizados;
+- troca de usuário e cache particionado delimitados;
+- navegação por allowlist e reautorização definida;
+- consulta offline limitada ao cache autorizado, sem mutação offline;
+- contrato registrado em `docs/project/contrato-notificacoes.md`;
+- fechamento produtivo mantido em `MP-34`.
 
-Iniciar `MP-03 — Contrato de notificações` somente em
+Iniciar `MP-04 — Ciclo de vida do Caderno` somente em
 conversa própria.
 
-Depois de especificar `MP-03` a `MP-06`, `MP-07 — Login responsivo` será o
+Depois de especificar `MP-04` a `MP-06`, `MP-07 — Login responsivo` será o
 primeiro ajuste de código recomendado por ser delimitado, reproduzível e
 independente do backend. Os contratos P0 avançam primeiro como documentação
 ativa, sem serem confundidos com segurança produtiva já implementada.

@@ -73,6 +73,13 @@ conceitual. Permanecem pendentes a tabela administrativa de migracao dos
 valores legados, os IDs reais da organizacao, a persistencia dos vinculos,
 auditoria e implementacao do backend.
 
+Status em 2026-07-30 (`MP-03`): `contrato-notificacoes.md` definiu evento,
+entrega individual, destinatario, organizacao, escopo, recurso, persistencia
+de leitura/descarte, deduplicacao e navegacao reautorizada. Nao permanece
+pendente o formato funcional minimo. Permanecem pendentes backend, banco,
+retencao final, cache cifrado, allowlist implementada, push e testes negativos
+em `MP-34`.
+
 ## Pendencias Funcionais
 
 ### 3. Escopo final do caderno de campo
@@ -689,6 +696,13 @@ autoedicao nao substitui backend. Permanecem pendentes a implementacao de
 `usuario_regional`, `usuario_area_operacional`, vinculo direto persistido,
 auditoria e testes negativos de API em `MP-35`.
 
+Status em 2026-07-30 (`MP-03`): notificacoes devem ser selecionadas no servidor
+por destinatario, organizacao e escopo vigente. Perfil em snapshot, titulo,
+mensagem, rota ou payload local nao concedem permissao. A abertura deve
+revalidar o recurso e a propria tela deve manter seu guard. Permanecem
+pendentes a implementacao do backend, isolamento real, persistencia e testes
+de troca de usuario/rota direta em `MP-34`.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
@@ -747,6 +761,12 @@ offline e, ate cada fluxo possuir contrato proprio, o corte produtivo e
 somente leitura. Continua pendente definir por fluxo o que pode ser consultado,
 rascunhado, sincronizado ou exigir conexao, alem de retencao, criptografia,
 conflitos e limpeza dos caches.
+
+Status em 2026-07-30 (`MP-03`): para notificacoes, o primeiro corte permite
+somente consultar cache segregado dentro da janela e do ultimo escopo
+autorizado. Marcar como lida, descartar e resolver o destino exigem conexao; nao
+ha fila de mutacao offline. Permanecem pendentes implementar cache cifrado,
+retencao, limpeza e testes de isolamento em `MP-34`.
 
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 

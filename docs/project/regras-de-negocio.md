@@ -117,6 +117,25 @@ O contrato canonico esta em `modelo-territorial.md`.
   `sub_regioes` ou fallback `vinculos_microregioes`.
 - A administracao geral deve conseguir enxergar o panorama consolidado da operacao.
 
+## Regra Sobre Notificacoes
+
+O contrato canonico esta em `contrato-notificacoes.md`.
+
+- Notificacao produtiva e uma entrega individual vinculada a destinatario e
+  organizacao; nao e uma lista global filtrada somente pelo cliente.
+- Evento e entrega sao registros distintos.
+- Recurso operacional deve possuir tipo, ID estavel e Propriedade; Talhao e
+  opcional.
+- Admin, Colaborador e Produtor recebem somente entregas compativeis com o
+  escopo e a visibilidade vigentes.
+- Leitura e descarte persistem por destinatario e nao concedem acesso.
+- Abertura usa allowlist de recursos e reautorizacao no servidor; rota, texto e
+  payload local nao sao autoridade.
+- Troca de usuario, organizacao ou logout limpa lista, contador, requisicoes e
+  destino pendente da identidade anterior.
+- O contexto local atual permanece mock global e efemero. Ele nao deve ser
+  descrito como isolamento ou persistencia produtiva.
+
 ## Contrato Futuro De Backend/RBAC
 
 Status em 2026-06-03 (Fase 14E): este contrato e direcao futura recomendada

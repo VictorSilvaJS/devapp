@@ -4135,3 +4135,23 @@ Colaborador e a acao de autoedicao passou a recusar campos territoriais. O
 Perfil apresenta esses vinculos como consulta legada e orienta solicitar
 correcao ao Admin. Backend, IDs mestres, auditoria e seguranca produtiva
 permanecem em `MP-35`.
+
+## MP-03 - Contrato De Notificacoes
+
+Status em 2026-07-30: o contrato canonico foi definido em
+`contrato-notificacoes.md`, sem alteracao de codigo.
+
+Evento e entrega ao destinatario passaram a ser conceitos distintos. A entrega
+futura deve pertencer a usuario e organizacao, referenciar recurso e escopo por
+IDs, persistir leitura/descarte e usar chave de deduplicacao. A abertura deve
+resolver o destino por allowlist e revalidar a autorizacao no servidor e na
+tela de destino.
+
+O estado efetivo continua inalterado: `NotificacaoContext` mantem duas
+notificacoes globais em memoria, sem destinatario, organizacao, Propriedade,
+Talhao ou recurso navegavel. Leitura e remocao nao persistem e os exemplos
+reaparecem. Esse comportamento e demonstrativo e permanece inadequado para
+isolamento produtivo.
+
+Backend, banco, cache segregado, persistencia, navegacao segura, push e testes
+negativos permanecem em `MP-34`.

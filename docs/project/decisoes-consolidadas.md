@@ -601,3 +601,33 @@ campos territoriais legados.
 - payload de autoedicao territorial deve ser recusado localmente;
 - o motor efetivo atual nao muda nesta tarefa;
 - backend, vinculos reais, auditoria e migracao permanecem em `MP-35`.
+
+---
+
+## 24. Notificacao e entrega individual, escopada e reautorizada
+
+### Decisao
+
+O contrato canonico fica em `contrato-notificacoes.md`.
+
+- evento de dominio e entrega ao destinatario sao registros distintos;
+- cada entrega pertence a um usuario e organizacao;
+- recurso operacional referencia tipo, ID e Propriedade;
+- leitura, descarte e deduplicacao persistem por destinatario;
+- o cliente deriva a rota por allowlist e nao confia em rota recebida;
+- o servidor revalida sessao, destinatario, organizacao, escopo e recurso antes
+  da abertura;
+- troca de usuario limpa imediatamente o estado da identidade anterior.
+
+### Alcance
+
+Afeta backend futuro, contexto de notificacoes, contador, cache, logout, troca
+de usuario, deep links, push, navegacao e guards dos recursos.
+
+### Impacto
+
+- a lista global de `NotificacaoContext` continua somente demonstrativa;
+- marcar como lida nao autoriza nem abre um recurso;
+- notificacao de outro destinatario ou fora do escopo nao pode ser consultada;
+- o contrato nao cria persistencia ou seguranca no front-end;
+- implementacao, isolamento real e testes negativos permanecem em `MP-34`.
