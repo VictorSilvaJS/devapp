@@ -46,6 +46,11 @@ export default function VisitasScreen() {
   const [ordenacao, setOrdenacao] = useState('data'); // data, fazenda, status
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const [mostrarBusca, setMostrarBusca] = useState(false);
+  const [filtrosRascunho, setFiltrosRascunho] = useState({
+    status: 'todos',
+    data: 'todos',
+    ordenacao: 'data',
+  });
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
@@ -259,6 +264,37 @@ export default function VisitasScreen() {
     { value: 'status', label: 'Status' },
   ];
 
+  const getFiltrosAplicados = () => ({
+    status: filtroStatus,
+    data: filtroData,
+    ordenacao,
+  });
+
+  const abrirFiltros = () => {
+    setFiltrosRascunho(getFiltrosAplicados());
+    setModalFiltrosVisivel(true);
+  };
+
+  const cancelarFiltros = () => {
+    setFiltrosRascunho(getFiltrosAplicados());
+    setModalFiltrosVisivel(false);
+  };
+
+  const limparFiltrosRascunho = () => {
+    setFiltrosRascunho({
+      status: 'todos',
+      data: 'todos',
+      ordenacao: 'data',
+    });
+  };
+
+  const aplicarFiltros = () => {
+    setFiltroStatus(filtrosRascunho.status);
+    setFiltroData(filtrosRascunho.data);
+    setOrdenacao(filtrosRascunho.ordenacao);
+    setModalFiltrosVisivel(false);
+  };
+
   return (
     <View style={styles.container}>
       <Header title={isProdutorView ? 'Histórico de visitas' : 'Visitas Técnicas'} />
@@ -307,7 +343,7 @@ export default function VisitasScreen() {
             
             <TouchableOpacity 
               style={styles.filterButton}
-              onPress={() => setModalFiltrosVisivel(true)}
+              onPress={abrirFiltros}
               activeOpacity={0.7}
             >
               <LinearGradient
@@ -559,11 +595,11 @@ export default function VisitasScreen() {
         animationType="slide"
         transparent={true}
         visible={modalFiltrosVisivel}
-        onRequestClose={() => setModalFiltrosVisivel(false)}
+        onRequestClose={cancelarFiltros}
       >
         <Pressable 
           style={styles.modalOverlay}
-          onPress={() => setModalFiltrosVisivel(false)}
+          onPress={cancelarFiltros}
         >
           <Pressable style={styles.bottomSheet} onPress={(e) => e.stopPropagation()}>
             {/* Indicador de arraste */}
@@ -584,8 +620,10 @@ export default function VisitasScreen() {
                 </View>
               </View>
               <TouchableOpacity 
-                onPress={() => setModalFiltrosVisivel(false)}
+                onPress={cancelarFiltros}
                 style={styles.closeSheetButton}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar sem aplicar alterações"
               >
                 <Ionicons name="close-circle" size={32} color={colors.muted} />
               </TouchableOpacity>
@@ -596,8 +634,8 @@ export default function VisitasScreen() {
               <Text style={styles.sectionTitle}>Status</Text>
               <SegmentedChips
                 options={statusOptions}
-                value={filtroStatus}
-                onChange={setFiltroStatus}
+                value={filtrosRascunho.status}
+                onChange={(status) => setFiltrosRascunho((atual) => ({ ...atual, status }))}
                 contentStyle={styles.chipsContainer}
               />
 
@@ -605,8 +643,8 @@ export default function VisitasScreen() {
               <Text style={styles.sectionTitle}>Período</Text>
               <SegmentedChips
                 options={periodoOptions}
-                value={filtroData}
-                onChange={setFiltroData}
+                value={filtrosRascunho.data}
+                onChange={(data) => setFiltrosRascunho((atual) => ({ ...atual, data }))}
                 contentStyle={styles.chipsContainer}
               />
 
@@ -614,19 +652,17 @@ export default function VisitasScreen() {
               <Text style={styles.sectionTitle}>Ordenar por</Text>
               <SegmentedChips
                 options={ordenacaoOptions}
-                value={ordenacao}
-                onChange={setOrdenacao}
+                value={filtrosRascunho.ordenacao}
+                onChange={(novaOrdenacao) => (
+                  setFiltrosRascunho((atual) => ({ ...atual, ordenacao: novaOrdenacao }))
+                )}
                 contentStyle={styles.chipsContainer}
               />
 
               {/* Botão Limpar Filtros */}
               <TouchableOpacity 
                 style={styles.clearFiltersButton}
-                onPress={() => {
-                  setFiltroStatus('todos');
-                  setFiltroData('todos');
-                  setOrdenacao('data');
-                }}
+                onPress={limparFiltrosRascunho}
               >
                 <Ionicons name="refresh-outline" size={20} color={colors.primary} />
                 <Text style={styles.clearFiltersText}>Limpar Filtros</Text>
@@ -636,7 +672,7 @@ export default function VisitasScreen() {
             {/* Botão Aplicar */}
             <TouchableOpacity 
               style={styles.applyButton}
-              onPress={() => setModalFiltrosVisivel(false)}
+              onPress={aplicarFiltros}
             >
               <LinearGradient
                 colors={[colors.primary, colors.primaryDark]}

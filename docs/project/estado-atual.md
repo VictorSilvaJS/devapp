@@ -4245,5 +4245,26 @@ retrato -> paisagem -> retrato.
 O Gboard testado ignorou `IME_FLAG_NO_FULLSCREEN`, enviado pelos dois campos,
 e abriu editor de extracao em tela cheia na paisagem. Falta repetir somente o
 aceite visual com um IME/aparelho que permita teclado inline. Evidencias:
-`dist/qa-session-2026-07-30/mp-07-login-responsivo/`. `MP-08` nao foi
-iniciada.
+`dist/qa-session-2026-07-30/mp-07-login-responsivo/`.
+
+## MP-08 - Semantica Do X Nos Filtros
+
+Status em 2026-07-30: `CONCLUIDO`.
+
+Os filtros de Propriedades e Visitas passaram a separar estado aplicado de
+rascunho. Ao abrir o modal, o rascunho recebe uma copia dos filtros aplicados.
+Alteracoes feitas no modal nao mudam badge, chips nem lista ate a acao
+`Aplicar Filtros`.
+
+X, toque no backdrop e botao Voltar do Android fecham o modal descartando o
+rascunho. `Limpar Filtros` limpa somente o rascunho; para remover os filtros
+da lista e necessario confirmar com `Aplicar Filtros`. Os chips externos
+continuam removendo filtros ja aplicados de forma direta.
+
+Typecheck, `test:domain-compat`, `git diff --check` e `assembleRelease`
+passaram. O APK release foi instalado no Android fisico e o smoke confirmou
+cancelamento, aplicacao e limpeza nos dois fluxos. Evidencias:
+`dist/qa-session-2026-07-30/mp-08-filtros-rascunho/`.
+
+Componente comum, bottom sheet e gesto real de arraste permanecem em `MP-09`,
+que nao foi iniciada.

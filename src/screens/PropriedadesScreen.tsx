@@ -27,6 +27,11 @@ export default function PropriedadesScreen() {
   const [ordenacao, setOrdenacao] = useState('nome'); // nome, area, recente
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
+  const [filtrosRascunho, setFiltrosRascunho] = useState({
+    status: 'todos',
+    regiao: 'todas',
+    ordenacao: 'nome',
+  });
   const navigation = useNavigation();
   const { user } = useAuth();
   const { filtrarProdutores: filtrarProdutoresPorRegiao, filtros } = useFiltros();
@@ -145,6 +150,37 @@ export default function PropriedadesScreen() {
     ...regioes.map((regiao) => ({ value: regiao, label: regiao })),
   ];
 
+  const getFiltrosAplicados = () => ({
+    status: filtroStatus,
+    regiao: regiaoSelecionada,
+    ordenacao,
+  });
+
+  const abrirFiltros = () => {
+    setFiltrosRascunho(getFiltrosAplicados());
+    setModalFiltrosVisivel(true);
+  };
+
+  const cancelarFiltros = () => {
+    setFiltrosRascunho(getFiltrosAplicados());
+    setModalFiltrosVisivel(false);
+  };
+
+  const limparFiltrosRascunho = () => {
+    setFiltrosRascunho({
+      status: 'todos',
+      regiao: 'todas',
+      ordenacao: 'nome',
+    });
+  };
+
+  const aplicarFiltros = () => {
+    setFiltroStatus(filtrosRascunho.status);
+    setRegiaoSelecionada(filtrosRascunho.regiao);
+    setOrdenacao(filtrosRascunho.ordenacao);
+    setModalFiltrosVisivel(false);
+  };
+
   return (
     <View style={styles.container}>
       <Header title={isProdutorView ? 'Minhas Propriedades' : 'Propriedades'} />
@@ -193,7 +229,7 @@ export default function PropriedadesScreen() {
             
             <TouchableOpacity 
               style={styles.filterButton}
-              onPress={() => setModalFiltrosVisivel(true)}
+              onPress={abrirFiltros}
               activeOpacity={0.7}
             >
               <LinearGradient
@@ -394,11 +430,11 @@ export default function PropriedadesScreen() {
         animationType="slide"
         transparent={true}
         visible={modalFiltrosVisivel}
-        onRequestClose={() => setModalFiltrosVisivel(false)}
+        onRequestClose={cancelarFiltros}
       >
         <Pressable 
           style={styles.modalOverlay}
-          onPress={() => setModalFiltrosVisivel(false)}
+          onPress={cancelarFiltros}
         >
           <Pressable style={styles.bottomSheet} onPress={(e) => e.stopPropagation()}>
             {/* Indicador de arraste */}
@@ -419,8 +455,10 @@ export default function PropriedadesScreen() {
                 </View>
               </View>
               <TouchableOpacity 
-                onPress={() => setModalFiltrosVisivel(false)}
+                onPress={cancelarFiltros}
                 style={styles.closeSheetButton}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar sem aplicar alterações"
               >
                 <Ionicons name="close-circle" size={32} color={colors.muted} />
               </TouchableOpacity>
@@ -431,8 +469,8 @@ export default function PropriedadesScreen() {
               <Text style={styles.sectionTitle}>Status</Text>
               <SegmentedChips
                 options={statusOptions}
-                value={filtroStatus}
-                onChange={setFiltroStatus}
+                value={filtrosRascunho.status}
+                onChange={(status) => setFiltrosRascunho((atual) => ({ ...atual, status }))}
                 contentStyle={styles.chipsContainer}
               />
 
@@ -440,8 +478,10 @@ export default function PropriedadesScreen() {
               <Text style={styles.sectionTitle}>Ordenar por</Text>
               <SegmentedChips
                 options={ordenacaoOptions}
-                value={ordenacao}
-                onChange={setOrdenacao}
+                value={filtrosRascunho.ordenacao}
+                onChange={(novaOrdenacao) => (
+                  setFiltrosRascunho((atual) => ({ ...atual, ordenacao: novaOrdenacao }))
+                )}
                 contentStyle={styles.chipsContainer}
               />
 
@@ -451,8 +491,8 @@ export default function PropriedadesScreen() {
                   <Text style={styles.sectionTitle}>Região</Text>
                   <SegmentedChips
                     options={regiaoOptions}
-                    value={regiaoSelecionada}
-                    onChange={setRegiaoSelecionada}
+                    value={filtrosRascunho.regiao}
+                    onChange={(regiao) => setFiltrosRascunho((atual) => ({ ...atual, regiao }))}
                     contentStyle={styles.chipsContainer}
                   />
                 </>
@@ -461,11 +501,7 @@ export default function PropriedadesScreen() {
               {/* Botão Limpar Filtros */}
               <TouchableOpacity 
                 style={styles.clearFiltersButton}
-                onPress={() => {
-                  setFiltroStatus('todos');
-                  setRegiaoSelecionada('todas');
-                  setOrdenacao('nome');
-                }}
+                onPress={limparFiltrosRascunho}
               >
                 <Ionicons name="refresh-outline" size={20} color={colors.primary} />
                 <Text style={styles.clearFiltersText}>Limpar Filtros</Text>
@@ -475,7 +511,7 @@ export default function PropriedadesScreen() {
             {/* Botão Aplicar */}
             <TouchableOpacity 
               style={styles.applyButton}
-              onPress={() => setModalFiltrosVisivel(false)}
+              onPress={aplicarFiltros}
             >
               <LinearGradient
                 colors={[colors.primary, colors.primaryDark]}

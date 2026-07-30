@@ -1200,3 +1200,22 @@ Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
 
 Evidências completas:
 `dist/qa-session-2026-07-30/mp-07-login-responsivo/`.
+
+## MP-08 - Semântica Do X Nos Filtros
+
+Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| MP08-01 | P1 | Propriedades | Selecionar Inativo e fechar pelo X | Rascunho descartado; lista permanece com 11 propriedades | Passou | Reabertura mostrou Todos selecionado |
+| MP08-02 | P1 | Propriedades | Selecionar Inativo e aplicar | Badge, chip e lista passam a refletir Inativo | Passou | Estado vazio coerente com os dados locais |
+| MP08-03 | P1 | Propriedades | Limpar e fechar pelo backdrop | Filtro Inativo aplicado permanece | Passou | Limpeza ficou somente no rascunho |
+| MP08-04 | P1 | Propriedades | Limpar e aplicar | Badge e chip somem; 11 propriedades retornam | Passou | Estado aplicado voltou ao padrão |
+| MP08-05 | P1 | Visitas | Selecionar Realizadas e usar Voltar do Android | Rascunho descartado; visitas Agendadas permanecem | Passou | Modal fechou sem alterar a lista |
+| MP08-06 | P1 | Visitas | Selecionar Realizadas e aplicar | Badge, chip e lista passam a refletir Realizadas | Passou | Cards realizados exibidos |
+| MP08-07 | P1 | Visitas | Limpar e usar Voltar do Android | Filtro Realizadas aplicado permanece | Passou | Limpeza ficou somente no rascunho |
+| MP08-08 | P1 | Visitas | Limpar e aplicar | Badge e chip somem; lista padrão retorna | Passou | Visitas Agendadas voltaram a aparecer |
+
+Evidências completas:
+`dist/qa-session-2026-07-30/mp-08-filtros-rascunho/`.

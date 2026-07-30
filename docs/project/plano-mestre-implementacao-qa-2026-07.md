@@ -5,7 +5,8 @@
 > Criado em: 2026-07-30
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
-> IME que respeite o modo inline em paisagem; `MP-08` não foi iniciada
+> IME que respeite o modo inline em paisagem; `MP-08` foi concluída e
+> `MP-09` não foi iniciada
 
 ## 1. Objetivo
 
@@ -164,7 +165,7 @@ nova registrada neste documento.
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
 | 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `PARCIAL` |
-| 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `BACKLOG` |
+| 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `CONCLUIDO` |
 | 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `BACKLOG` |
 | 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `BACKLOG` |
 | 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `BACKLOG` |
@@ -368,6 +369,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-05` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/estados-visita.md`; `dist/qa-session-2026-07-30/mp-05-estados-visita.md` | implementação permanece em `MP-27`; organização visual da lista em `MP-22`; validação produtiva depende do backend |
 | 2026-07-30 | `MP-06` | `CONCLUIDO` | `appQA` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/versionamento-geojson-talhoes.md`; `dist/qa-session-2026-07-30/mp-06-versionamento-geojson-talhoes.md` | IDs e vínculos ficam em `MP-24`; implementação produtiva em `MP-37`; regressão histórica em `MP-39` |
 | 2026-07-30 | `MP-07` | `PARCIAL` | `appQA` / árvore de trabalho | typecheck, domain-compat e assembleRelease passaram; smoke físico passou em retrato e paisagem com teclado fechado, e em retrato com teclado aberto | `dist/qa-session-2026-07-30/mp-07-login-responsivo/` | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração em paisagem; repetir com IME/aparelho que permita teclado inline antes de concluir |
+| 2026-07-30 | `MP-08` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em Propriedades e Visitas | `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/` | bottom sheet comum e gesto de arraste permanecem fora deste corte, em `MP-09` |
 
 ## 12. Próxima ação
 
@@ -383,5 +385,14 @@ fechado, na rolagem e nas mudanças retrato -> paisagem -> retrato.
 A tarefa permanece `PARCIAL`: o Gboard do aparelho físico ignorou
 `IME_FLAG_NO_FULLSCREEN`, embora os dois campos tenham enviado a flag, e abriu
 o editor de extração em tela cheia na paisagem. Repetir somente esse cenário
-com outro IME/aparelho que permita teclado inline. `MP-08` permanece
-`BACKLOG` e não foi iniciada.
+com outro IME/aparelho que permita teclado inline.
+
+`MP-08` foi concluída em 2026-07-30. Propriedades e Visitas agora mantêm
+separados os filtros aplicados e o rascunho do modal. Abrir copia o estado
+aplicado; X, toque fora e botão Voltar descartam o rascunho; Aplicar confirma
+as mudanças; Limpar só afeta a lista depois de Aplicar. Badge, chips e
+resultados refletem somente o estado aplicado.
+
+Typecheck, suíte `domain-compat`, `git diff --check`, build release, instalação
+e smoke no Android físico passaram. A criação de componente comum, bottom
+sheet e gesto real de arraste permanece em `MP-09`, que não foi iniciada.
