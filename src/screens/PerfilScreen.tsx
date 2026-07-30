@@ -316,20 +316,20 @@ export default function PerfilScreen({ navigation }) {
 
           {usuarioPerfil.perfil === 'colaborador' && (
             <SectionCard
-              title="Escopo territorial"
+              title="Escopo operacional"
               icon="location-outline"
-              subtitle="Dados demonstrativos do seu escopo local."
+              subtitle="Vínculos territoriais legados, disponíveis somente para consulta."
             >
               {usuarioPerfil.regiao ? (
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Região</Text>
+                  <Text style={styles.infoLabel}>Referência regional legada</Text>
                   <Text style={styles.infoValue}>{usuarioPerfil.regiao}</Text>
                 </View>
               ) : null}
 
-              <Text style={styles.subsectionTitle}>Microrregiões</Text>
+              <Text style={styles.subsectionTitle}>Vínculos de área/município legados</Text>
               {vinculosMicroregioes.length === 0 && subRegioes.length === 0 ? (
-                <Text style={styles.emptyText}>Nenhuma microrregião informada</Text>
+                <Text style={styles.emptyText}>Nenhum vínculo territorial informado</Text>
               ) : (
                 <View style={styles.chipWrap}>
                   {(vinculosMicroregioes.length > 0
@@ -362,6 +362,12 @@ export default function PerfilScreen({ navigation }) {
                   );
                 })
               )}
+
+              <InfoBox
+                variant="warning"
+                message="O cadastro local ainda mistura Regional/Área operacional e Município/UF. Estes vínculos são somente leitura. Solicite correção ao administrador responsável."
+                style={styles.infoBoxInline}
+              />
             </SectionCard>
           )}
 

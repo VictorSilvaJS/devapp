@@ -218,13 +218,18 @@ Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacio
 
 ---
 
-## 12. Regiao -> Microregiao -> Propriedade e a leitura territorial visual do mock
+## 12. Regiao -> Microregiao -> Propriedade e compatibilidade territorial legada do mock
 
 ### Decisao
 
-No MVP visual/mockado, a sincronizacao territorial deve favorecer a leitura Regiao -> Microregiao -> Propriedade.
+No MVP visual/mockado existente, a sincronizacao territorial continua
+preservando a leitura legada Regiao -> Microregiao -> Propriedade ate uma
+migracao controlada.
 
 Essa leitura e suportada pelo helper `territorioCompat`, que deriva regioes e microregioes a partir das propriedades mockadas e preserva compatibilidade com os campos textuais legados `regiao` e `microregiao`.
+
+Essa estrutura nao define mais o modelo territorial canonico. A decisao 23 e
+`modelo-territorial.md` separam Municipio/UF de Regional/Area operacional.
 
 ### Alcance
 
@@ -232,7 +237,8 @@ Afeta o cadastro administrativo de usuarios, o cadastro de propriedades e o deta
 
 ### Impacto
 
-- colaborador pode selecionar visualmente regioes e uma ou mais microregioes
+- Admin pode selecionar visualmente regioes e uma ou mais microregioes
+  legadas ao cadastrar/editar Colaborador no mock
 - a interface pode exibir previa das propriedades abrangidas pela microregiao
 - colaborador pode ter propriedades atribuidas diretamente no mock visual
 - produtor pode ter multiplas propriedades vinculadas e receber alerta quando a propriedade ja tiver outro produtor principal no mock
@@ -240,6 +246,7 @@ Afeta o cadastro administrativo de usuarios, o cadastro de propriedades e o deta
 - ao selecionar microregiao, a tela pode sugerir colaboradores compativeis
 - detalhe da propriedade pode mostrar usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio
 - vinculos visuais de colaborador nao alteram o motor efetivo de permissoes nesta fase
+- Colaborador nao pode autoeditar esses campos no proprio Perfil
 - `produtor_id`, `proprietario_id`, `sub_regioes`, `propriedades_atribuidas`, `regiao`, `microregiao`, `fazenda_id` e `acessoControle` permanecem preservados por compatibilidade
 
 Ficam fora desta decisao nesta fase: backend, banco, migrations, API real, autenticacao real, senha, convite, reset, RBAC completo, upload/storage, Drive, CRUD real de regioes/microregioes e migracao do `acessoControle`.
@@ -560,3 +567,37 @@ dos tres perfis.
   credencial, token ou revalidacao;
 - rota direta e notificacao continuam sujeitas a autorizacao no servidor;
 - a decisao nao implementa seguranca produtiva e depende de `MP-33`.
+
+---
+
+## 23. Localizacao oficial e escopo operacional sao dimensoes distintas
+
+### Decisao
+
+O contrato canonico fica em `modelo-territorial.md`.
+
+- UF e Municipio representam localizacao oficial, com codigos estaveis do
+  IBGE.
+- Regional e Area operacional representam o escopo de trabalho da
+  organizacao, com IDs proprios.
+- Municipio/UF nao concedem acesso.
+- Vinculos operacionais sao atribuidos administrativamente e nao podem ser
+  autoeditados pelo Colaborador.
+- Alteracao futura exige autorizacao, justificativa, auditoria e revalidacao
+  da sessao/escopo.
+
+### Alcance
+
+Afeta cadastro de Propriedade, administracao de usuarios, Perfil do
+Colaborador, motor futuro de acesso, filtros, sessao, auditoria e migracao dos
+campos territoriais legados.
+
+### Impacto
+
+- `regiao`, `microregiao`, `sub_regioes` e `vinculos_microregioes` continuam
+  legados temporarios e nao provam classificacao canonica;
+- `territorioCompat` continua apenas como compatibilidade visual do mock;
+- a edicao livre de `regiao` deve sair do Perfil do Colaborador;
+- payload de autoedicao territorial deve ser recusado localmente;
+- o motor efetivo atual nao muda nesta tarefa;
+- backend, vinculos reais, auditoria e migracao permanecem em `MP-35`.

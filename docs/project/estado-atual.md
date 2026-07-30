@@ -4114,3 +4114,24 @@ revalidacao, janela offline ou bloqueio por inatividade. Esse comportamento
 continua local/demonstrativo e nao deve ser descrito como seguranca produtiva.
 A implementacao real permanece bloqueada por backend, storage seguro,
 autorizacao no servidor e `MP-33`.
+
+## MP-02 - Modelo Territorial E Bloqueio De Autoedicao
+
+Status em 2026-07-30: o contrato territorial canonico foi definido em
+`modelo-territorial.md`.
+
+UF/Municipio passaram a representar localizacao oficial, enquanto
+Regional/Area operacional representam escopo de trabalho. Localizacao nao
+concede acesso. Vinculos operacionais devem ser atribuidos por Admin
+autorizado, com justificativa, auditoria e revalidacao futura do escopo.
+
+O motor atual continua inalterado: `sub_regioes` permanece a fonte prioritaria
+e `vinculos_microregioes` o fallback; `propriedades_atribuidas` continua
+visual/preparatorio. Campos textuais legados nao foram reclassificados nem
+migrados.
+
+No corte local, a edicao livre de `regiao` foi removida do Perfil do
+Colaborador e a acao de autoedicao passou a recusar campos territoriais. O
+Perfil apresenta esses vinculos como consulta legada e orienta solicitar
+correcao ao Admin. Backend, IDs mestres, auditoria e seguranca produtiva
+permanecem em `MP-35`.

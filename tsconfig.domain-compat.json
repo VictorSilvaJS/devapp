@@ -28,6 +28,7 @@
     "src/auth/authLocal.ts",
     "src/auth/authSession.ts",
     "src/auth/authStatus.ts",
+    "src/auth/selfProfileUpdate.ts",
     "src/auth/localCredentials.ts",
     "src/navigation/mapaRouteCompat.ts",
     "src/navigation/propriedadeRouteCompat.ts",

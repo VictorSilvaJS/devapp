@@ -17,7 +17,6 @@ export default function EditProfileScreen({ navigation }) {
   const perfil = user?.perfil;
   const [form, setForm] = useState({
     nome: normalizeNome(user || {}),
-    regiao: user?.regiao || '',
   });
 
   const handleSave = async () => {
@@ -57,11 +56,9 @@ export default function EditProfileScreen({ navigation }) {
           />
 
           {perfil === 'colaborador' && (
-            <FormField
-              label="Região"
-              value={form.regiao}
-              onChangeText={(t) => setForm((s) => ({ ...s, regiao: t }))}
-              leftIcon="location-outline"
+            <InfoBox
+              variant="warning"
+              message="Regional, Área operacional e Propriedades atribuídas são vínculos administrativos. Consulte seu escopo no Perfil e solicite correção ao administrador responsável."
             />
           )}
         </SectionCard>

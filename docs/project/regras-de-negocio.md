@@ -22,8 +22,27 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - O fluxo de cadastro rapido e preparacao para uma criacao combinada futura de `usuario` + `propriedade` + `usuario_propriedade`.
 - Enquanto a camada for apenas mockada, o fluxo nao e transacional; no backend futuro, a criacao combinada deve ser transacional para evitar propriedade criada sem usuario/vinculo.
 
+### Modelo territorial canonico
+
+O contrato canonico esta em `modelo-territorial.md`.
+
+- UF e Municipio representam a localizacao oficial da Propriedade e devem usar
+  codigos estaveis do IBGE.
+- Regional e Area operacional representam agrupamentos de trabalho da
+  organizacao, com IDs proprios.
+- Municipio/UF nao concedem acesso por si so.
+- Colaborador recebe escopo por vinculo administrativo ativo com Regional,
+  Area operacional ou Propriedade direta.
+- Colaborador consulta os proprios vinculos e nao pode altera-los pelo Perfil.
+- Somente Admin autorizado altera vinculos, com justificativa, auditoria e
+  revalidacao do escopo.
+- `regiao`, `microregiao`, `sub_regioes` e `vinculos_microregioes` permanecem
+  legados ambiguos ate migracao controlada; nomes nao devem ser
+  reclassificados automaticamente.
+
 ### Territorio e vinculos visuais no mock
 
+- Esta secao descreve somente compatibilidade do mock e nao o modelo canonico.
 - A leitura territorial do MVP visual/mockado deve favorecer a cadeia Regiao -> Microregiao -> Propriedade.
 - Enquanto nao houver backend/banco real para territorio, `territorioCompat` deriva regioes e microregioes a partir das propriedades mockadas.
 - Os campos textuais legados `regiao` e `microregiao` continuam validos e devem ser preservados para compatibilidade.
@@ -37,6 +56,9 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
   fallback.
 - `propriedades_atribuidas` representa vinculo direto visual/admin
   preparatorio e nao deve ser tratado como permissao efetiva no MVP mockado.
+- O Perfil do Colaborador nao deve editar `regiao`, `sub_regioes`,
+  `vinculos_microregioes` ou `propriedades_atribuidas`; a consulta local deve
+  orientar solicitacao de correcao ao Admin.
 
 ### Usuarios administrativos no mock
 

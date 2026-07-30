@@ -8,6 +8,7 @@ import {
   sanitizeAuthUserForSession,
 } from './authSession';
 import { assertUsuarioPodeEntrar } from './authStatus';
+import { sanitizeSelfProfileUpdate } from './selfProfileUpdate';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { normalizeUsuario, toUsuarioCompativelBorda } from '../domain';
 
@@ -113,7 +114,8 @@ export function AuthProvider({ children }) {
     // simula atualização remota
     setLoading(true);
     try {
-      const nextUser = normalizeAuthUser({ ...(user || {}), ...updates });
+      const safeUpdates = sanitizeSelfProfileUpdate(updates);
+      const nextUser = normalizeAuthUser({ ...(user || {}), ...safeUpdates });
       console.log('[AuthContext] updateProfile -> setUser', nextUser);
       // aqui você chamaria API real
       setUser(nextUser);

@@ -66,6 +66,13 @@ Ainda falta fechar a forma final de alguns contratos que hoje aparecem com varia
 
 Esse fechamento e base da Fase 2 e reduz ambiguidade entre schemas, mocks, telas e regras.
 
+Status em 2026-07-30 (`MP-02`): `modelo-territorial.md` separou o contrato
+canonico de UF/Municipio e Regional/Area operacional, definiu IDs e vinculos
+futuros e proibiu autoedicao territorial. Nao permanece pendente a diferenca
+conceitual. Permanecem pendentes a tabela administrativa de migracao dos
+valores legados, os IDs reais da organizacao, a persistencia dos vinculos,
+auditoria e implementacao do backend.
+
 ## Pendencias Funcionais
 
 ### 3. Escopo final do caderno de campo
@@ -673,6 +680,14 @@ Status em 2026-06-03 (Fase 14I): foi criado
 `docs/project/fechamento-fase-14-rbac.md` como indice consolidado da Fase 14.
 Ele facilita consulta, mas nao fecha as pendencias de backend, autenticacao,
 RBAC real, API, persistencia e testes automatizados.
+
+Status em 2026-07-30 (`MP-02`): a autoridade territorial foi fechada em nivel
+de contrato. Colaborador apenas consulta Regional, Area operacional e
+Propriedades atribuidas; somente Admin autorizado altera vinculos, com
+justificativa, auditoria e revalidacao do escopo. O bloqueio local da
+autoedicao nao substitui backend. Permanecem pendentes a implementacao de
+`usuario_regional`, `usuario_area_operacional`, vinculo direto persistido,
+auditoria e testes negativos de API em `MP-35`.
 
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 

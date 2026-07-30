@@ -952,6 +952,22 @@ Observacao geral: esta rodada valida apenas o MVP visual/mockado. Usuario criado
 | U-14 | P1 | Admin | Usuario existente aberto em detalhe | Conferir textos visiveis | Nao exibe ID tecnico cru como informacao principal; usa termos Documento, Propriedades, Micro-regioes e Nivel administrativo | Reexecutar | Preservar nomes internos apenas onde necessario |
 | U-15 | P1 | Admin | Usuario sem telefone/documento aberto em detalhe | Conferir Dados do usuário | Telefone/documento vazios não aparecem como linhas principais; tela informa que são opcionais | Reexecutar | Não altera payload nem validação |
 
+**Rodada MP-02 - Modelo Territorial E Bloqueio De Autoedicao**
+
+Esta rodada valida somente o contrato canonico e a defesa local. O motor atual
+continua usando `sub_regioes` e fallback `vinculos_microregioes`; backend,
+auditoria e migracao permanecem em `MP-35`.
+
+| ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP02-01 | P0 | Colaborador | Sessao do Colaborador ativa | Abrir Perfil e localizar o escopo | Secao usa `Escopo operacional`, identifica vinculos legados como somente leitura e orienta solicitar correcao ao Admin | Reexecutar | Nao reclassificar nomes legados por inferencia |
+| MP02-02 | P0 | Colaborador | Perfil aberto | Tocar `Editar dados` | Formulario permite editar nome, mas nao possui campo livre de Regiao, Regional, Area ou Propriedade atribuida | Reexecutar | Salvar nome nao altera o escopo |
+| MP02-03 | P0 | Colaborador | Rota `EditProfile` aberta diretamente | Inspecionar e salvar | Rota direta tambem nao oferece autoedicao territorial | Reexecutar | Payload territorial direto e coberto por teste automatizado |
+| MP02-04 | P0 | Colaborador | Escopo conhecido antes da edicao | Editar nome, voltar ao Perfil, forcar parada e reabrir | Nome pode mudar; `regiao`, `sub_regioes`, vinculos e Propriedades permanecem iguais | Reexecutar | Nao usar `pm clear` ou reinstalacao destrutiva |
+| MP02-05 | P0 | Admin | Admin -> Usuarios -> Colaborador | Abrir cadastro/edicao administrativa legada | Campos territoriais continuam disponiveis somente no fluxo administrativo e permanecem declarados como mock/legado | Reexecutar | Nao afirma auditoria ou RBAC produtivo |
+| MP02-06 | P0 | Produtor | Perfil do Produtor aberto | Tentar acessar autoedicao estrutural | Produtor continua sem editar vinculos de Propriedade/Titular | Reexecutar | Preservar orientacao de solicitacao de atualizacao |
+| MP02-07 | P0 | Todos | Fluxos principais acessiveis | Abrir Propriedades, Visitas e Caderno apos a mudanca | Motor de acesso e contexto de `fazenda_id` permanecem inalterados | Reexecutar | Regressao dos tres perfis |
+
 **Rodada Admin - Sincronizacao Territorial E Vinculos Visuais Mockados**
 
 Login principal de teste: usuario admin mockado disponivel no app.
