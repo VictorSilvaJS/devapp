@@ -1181,3 +1181,22 @@ Atualizacao visual em 2026-05-31: `MapasScreen` foi padronizada visualmente de f
 - `npm run typecheck`: passou.
 - `npm run test:domain-compat`: passou.
 - `git diff --check`: passou; no Windows, podem aparecer apenas avisos normais de LF/CRLF.
+
+## MP-07 - Login Responsivo
+
+Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Pre-condição | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| MP07-01 | P1 | Login em retrato, teclado fechado | Inspecionar conteúdo | Marca, nota, campos, botão e acesso rápido íntegros | Passou | `64-final-retrato-fechado.png` |
+| MP07-02 | P1 | Login em retrato | Focar e-mail | E-mail permanece visível acima do teclado | Passou | `62-final-retrato-teclado-email-pos-rotacao.png` |
+| MP07-03 | P1 | Login em retrato | Focar senha | Senha permanece visível acima do teclado | Passou | `63-final-retrato-teclado-senha.png` |
+| MP07-04 | P1 | Teclado aberto e atalhos expandidos | Rolar formulário | Rolagem estável sem fechar o teclado no Android | Passou | `mInputShown=true` |
+| MP07-05 | P1 | Atalhos expandidos em retrato | Girar para paisagem | Três atalhos permanecem íntegros e alcançáveis | Passou | `60-final-paisagem-fechado-pos-rotacao.png` |
+| MP07-06 | P1 | Login em paisagem, teclado fechado | Inspecionar e rolar | Conteúdo não conserva dimensões inválidas | Passou | Marca, campos, ação e atalhos íntegros |
+| MP07-07 | P1 | Login em paisagem | Focar e-mail e senha | Formulário permanece visível com teclado inline | Bloqueado no aparelho | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração; evidência `61-final-paisagem-teclado-email-gboard-extract.png` |
+| MP07-08 | P1 | Teclado aberto após paisagem | Girar para retrato | Formulário recompõe dimensões e foco | Passou | `62-final-retrato-teclado-email-pos-rotacao.png` |
+
+Evidências completas:
+`dist/qa-session-2026-07-30/mp-07-login-responsivo/`.

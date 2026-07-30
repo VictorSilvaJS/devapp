@@ -518,8 +518,10 @@ Pendencias P1 antes de declarar APK apto a campo:
 
 Pendencias P2/futuras:
 
-- revisar os acessos rapidos do login em paisagem; no aparelho testado eles
-  ficaram apertados e parcialmente cortados, sem bloquear o uso em retrato;
+- revalidar o login em paisagem com um IME/aparelho que respeite
+  `IME_FLAG_NO_FULLSCREEN`; os acessos rápidos já foram corrigidos e passaram
+  em três colunas, mas o Gboard do aparelho de MP-07 abriu editor de extração
+  em tela cheia e impediu o aceite visual do teclado inline;
 - definir fonte, metodo, unidade e confiabilidade do perimetro processado;
 - confirmar a relacao entre 6200 ha informados e 1888,6 ha mapeados na Sela de
   Prata I, sem alterar os valores por inferencia;

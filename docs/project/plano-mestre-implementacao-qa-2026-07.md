@@ -4,7 +4,8 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa: `MP-07 — Login responsivo` em conversa própria
+> Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
+> IME que respeite o modo inline em paisagem; `MP-08` não foi iniciada
 
 ## 1. Objetivo
 
@@ -162,7 +163,7 @@ nova registrada neste documento.
 
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
-| 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `BACKLOG` |
+| 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `PARCIAL` |
 | 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `BACKLOG` |
 | 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `BACKLOG` |
 | 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `BACKLOG` |
@@ -366,24 +367,21 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-04` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/ciclo-vida-caderno.md`; `dist/qa-session-2026-07-30/mp-04-ciclo-vida-caderno.md` | implementação no app permanece em `MP-25`; backend append-only e auditoria produtiva em `MP-36` |
 | 2026-07-30 | `MP-05` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/estados-visita.md`; `dist/qa-session-2026-07-30/mp-05-estados-visita.md` | implementação permanece em `MP-27`; organização visual da lista em `MP-22`; validação produtiva depende do backend |
 | 2026-07-30 | `MP-06` | `CONCLUIDO` | `appQA` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/versionamento-geojson-talhoes.md`; `dist/qa-session-2026-07-30/mp-06-versionamento-geojson-talhoes.md` | IDs e vínculos ficam em `MP-24`; implementação produtiva em `MP-37`; regressão histórica em `MP-39` |
+| 2026-07-30 | `MP-07` | `PARCIAL` | `appQA` / árvore de trabalho | typecheck, domain-compat e assembleRelease passaram; smoke físico passou em retrato e paisagem com teclado fechado, e em retrato com teclado aberto | `dist/qa-session-2026-07-30/mp-07-login-responsivo/` | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração em paisagem; repetir com IME/aparelho que permita teclado inline antes de concluir |
 
 ## 12. Próxima ação
 
-`MP-06` foi concluída em 2026-07-30 como contrato documental, sem alterar o
-fluxo local destrutivo ainda existente para GeoJSON.
+`MP-07` recebeu o corte local de login responsivo em 2026-07-30. O formulário
+passou a usar safe area, uma única rolagem, `adjustResize` nativo no Android,
+reposicionamento do campo focado, layout compacto e larguras explícitas por
+orientação para os acessos rápidos.
 
-Resultado registrado:
+Typecheck, suíte `domain-compat`, build release e instalação física passaram.
+O smoke passou em retrato com teclado aberto/fechado, em paisagem com teclado
+fechado, na rolagem e nas mudanças retrato -> paisagem -> retrato.
 
-- `talhao_id` logico separado de nome, codigo e geometria;
-- importacao e versao geometrica imutaveis e auditadas;
-- rascunho, revisao, publicacao e arquivamento formalizados;
-- reconciliacao de renome, contorno, area, ausencia, divisao e fusao;
-- vigencia e consulta da geometria historica definidas;
-- linhagem de predecessores e sucessores preservada;
-- migracao textual, perfis, concorrencia e offline delimitados;
-- contrato registrado em `docs/project/versionamento-geojson-talhoes.md`;
-- implementacao mantida em `MP-37` e regressao em `MP-39`.
-
-Iniciar `MP-07 — Login responsivo` somente em conversa propria. E o primeiro
-ajuste de codigo recomendado depois dos contratos da Fase 0, por ser
-delimitado, reproduzivel e independente do backend.
+A tarefa permanece `PARCIAL`: o Gboard do aparelho físico ignorou
+`IME_FLAG_NO_FULLSCREEN`, embora os dois campos tenham enviado a flag, e abriu
+o editor de extração em tela cheia na paisagem. Repetir somente esse cenário
+com outro IME/aparelho que permita teclado inline. `MP-08` permanece
+`BACKLOG` e não foi iniciada.

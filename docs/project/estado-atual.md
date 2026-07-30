@@ -4221,3 +4221,29 @@ continua sendo versao do schema local, nao da demarcacao.
 IDs estaveis e migracao dos vinculos textuais permanecem em `MP-24`;
 persistencia, storage, reconciliacao, publicacao, historico e cache em
 `MP-37`; regressao de renome, area, divisao, fusao e restauracao em `MP-39`.
+
+## MP-07 - Login Responsivo
+
+Status em 2026-07-30: `PARCIAL`.
+
+`LoginScreen` passou a usar safe area e uma unica `ScrollView`. No Android, o
+layout depende somente do `adjustResize` nativo, sem uma segunda reducao de
+altura pelo `KeyboardAvoidingView`. O campo focado e reposicionado sobre o
+teclado e as mudancas de largura/altura recalculam a rolagem.
+
+Retrato, paisagem e teclado usam espacamento e marca compactos quando a altura
+e reduzida. Os acessos rapidos mantem largura integral em retrato e tres
+colunas explicitas em paisagem, inclusive quando a orientacao muda com o bloco
+ja expandido. Autenticacao, sessao, credenciais, perfis e textos funcionais
+nao foram alterados.
+
+Typecheck, `test:domain-compat` e `assembleRelease` passaram. O APK release foi
+instalado via `adb` no Android fisico. O smoke passou em retrato com teclado
+aberto/fechado, em paisagem com teclado fechado, na rolagem e na sequencia
+retrato -> paisagem -> retrato.
+
+O Gboard testado ignorou `IME_FLAG_NO_FULLSCREEN`, enviado pelos dois campos,
+e abriu editor de extracao em tela cheia na paisagem. Falta repetir somente o
+aceite visual com um IME/aparelho que permita teclado inline. Evidencias:
+`dist/qa-session-2026-07-30/mp-07-login-responsivo/`. `MP-08` nao foi
+iniciada.
