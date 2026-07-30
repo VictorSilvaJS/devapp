@@ -1,0 +1,382 @@
+# Plano Mestre de Implementação da Revisão de QA — Julho de 2026
+
+> Status: `ATIVO`
+>
+> Criado em: 2026-07-30
+>
+> Próxima tarefa: `MP-00 — Baseline técnico antes das correções`
+
+## 1. Objetivo
+
+Este documento transforma a revisão manual de QA executada entre 23 e 30 de
+julho de 2026 em uma fila controlada de implementação, validação e aceite.
+
+Ele deve permitir que cada problema seja resolvido em uma conversa, branch e
+entrega delimitadas, sem perder as observações levantadas durante o teste do
+Android.
+
+A evidência de origem é:
+
+- [Revisão completa de QA Android — 23 a 30 de julho de 2026](../reviews/revisao-qa-android-2026-07-30.md)
+
+O relatório registra o que foi observado. Este plano controla como cada ponto
+será tratado. As regras efetivas continuam sendo definidas por
+`regras-de-negocio.md`, `decisoes-consolidadas.md` e
+`pendencias-de-definicao.md`.
+
+## 2. Relação com os demais documentos ativos
+
+Este plano:
+
+- não substitui `estado-atual.md`;
+- não altera sozinho uma regra de negócio;
+- não fecha uma pendência apenas por listar uma tarefa;
+- não substitui `plano-reorganizacao.md`, que define a ordem técnica mais
+  ampla do projeto;
+- não substitui `roadmap-futuro.md`, que reúne evoluções futuras;
+- usa o relatório de `docs/reviews/` somente como evidência;
+- exige que cada decisão necessária seja promovida ao documento ativo correto
+  antes da implementação correspondente.
+
+Se houver conflito, prevalece esta ordem:
+
+1. regras e decisões ativas;
+2. pendências de definição;
+3. plano técnico e roadmap;
+4. este plano operacional;
+5. relatório e evidências históricas.
+
+## 3. Princípios de execução
+
+1. Trabalhar em uma tarefa `MP-*` por conversa sempre que possível.
+2. Não alterar código enquanto a tarefa estiver com decisão funcional
+   pendente.
+3. Não tratar proteção visual do mock como segurança de produção.
+4. Preservar `Propriedade`, `Produtor`, `Titular`, `Talhão` e a compatibilidade
+   temporária de `fazenda_id`.
+5. Evitar duas tarefas simultâneas nos mesmos arquivos.
+6. Implementar o menor corte que satisfaça os critérios de aceite.
+7. Executar testes automáticos e smoke manual proporcional ao risco.
+8. Atualizar este plano no fechamento de cada tarefa.
+9. Não marcar item como concluído quando faltar backend, auditoria, teste de
+   rota direta ou validação em campo exigida pelo próprio item.
+10. Fazer regressão completa somente depois das tarefas predecessoras.
+
+## 4. Estados permitidos
+
+| Estado | Significado |
+|---|---|
+| `BACKLOG` | Registrado, mas ainda não é o próximo item executável |
+| `EM_ESPECIFICACAO` | Regra, contrato ou solução está sendo definida |
+| `PRONTO` | Dependências resolvidas e critérios mínimos definidos |
+| `EM_IMPLEMENTACAO` | Código ou documentação da tarefa está sendo alterado |
+| `EM_VALIDACAO` | Implementação pronta, aguardando testes ou smoke |
+| `PARCIAL` | Corte local concluído, mas fechamento produtivo ainda pendente |
+| `BLOQUEADO` | Depende de decisão, backend, dado, ambiente ou autoridade externa |
+| `CONCLUIDO` | Critérios, testes, documentação e evidências completos |
+
+Somente `CONCLUIDO` fecha uma tarefa. `PARCIAL` não deve ser contabilizado como
+conclusão total.
+
+## 5. Critério de entrada de uma tarefa
+
+Uma tarefa só passa para `PRONTO` quando possui:
+
+- objetivo delimitado;
+- itens `QA-P*` relacionados;
+- documentos ativos que sustentam a mudança;
+- comportamento esperado;
+- critérios de aceite;
+- arquivos ou áreas prováveis;
+- dependências conhecidas;
+- fora de escopo;
+- testes automáticos e manuais planejados.
+
+Quando a tarefa depender de decisão de produto, a primeira entrega deve ser a
+atualização da documentação ativa. A edição de código ocorre em uma tarefa
+posterior ou em um segundo estágio claramente separado.
+
+## 6. Critério global de conclusão
+
+Para marcar uma tarefa como `CONCLUIDO`, registrar:
+
+- arquivos alterados;
+- decisão ativa que sustenta a implementação;
+- resultado de `npm run typecheck`;
+- resultado de `npm run test:domain-compat`;
+- testes focados adicionais, quando existirem;
+- smoke aplicável de `docs/project/smoke.md`;
+- perfis testados;
+- retrato, paisagem e teclado quando relevantes;
+- evidências salvas em `dist/qa-session-AAAA-MM-DD/`;
+- revisão do diff;
+- commit ou referência da entrega;
+- pendências remanescentes.
+
+Mudanças exclusivamente documentais não exigem as suites de código, mas devem
+passar em `git diff --check`, validação de links e revisão de consistência.
+
+## 7. Separação entre MVP local e fechamento produtivo
+
+Os itens P0 possuem dois cortes:
+
+### Corte local
+
+Pode melhorar coerência, impedir ações indevidas na interface mockada, criar
+contratos de domínio e preparar repositories/services. Esse corte não comprova
+segurança.
+
+### Corte produtivo
+
+Exige backend, autorização no servidor, persistência real, auditoria,
+revogação, testes negativos e validação de rota direta.
+
+Um P0 só pode ser considerado integralmente resolvido depois do corte
+produtivo. Até lá, o estado máximo permitido para o item pai é `PARCIAL`.
+
+## 8. Fila mestre de execução
+
+As tarefas devem ser executadas na ordem abaixo, salvo dependência ou decisão
+nova registrada neste documento.
+
+### Fase 0 — Baseline e contratos críticos
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 1 | `MP-00` Baseline técnico | todos | Registrar estado inicial, testes, build e riscos antes das correções | nenhuma | `PRONTO` |
+| 2 | `MP-01` Política de sessão | `QA-P0-04` | Definir expiração, revalidação, logout, offline e retomada segura | `MP-00` | `BACKLOG` |
+| 3 | `MP-02` Modelo territorial e bloqueio de autoedição | `QA-P0-02`, `QA-P2-08` | Separar Município/UF de Regional/Área e impedir autoatribuição territorial | `MP-00` | `BACKLOG` |
+| 4 | `MP-03` Contrato de notificações | `QA-P0-01` | Definir destinatário, escopo, recurso, persistência e navegação segura | `MP-00` | `BACKLOG` |
+| 5 | `MP-04` Ciclo de vida do Caderno | `QA-P0-03` | Formalizar rascunho, registro imutável, complemento, correção, anulação e auditoria | `MP-00` | `BACKLOG` |
+| 6 | `MP-05` Estados de Visita | `QA-P1-04` | Formalizar transições, atraso, conclusão, cancelamento e correção auditada | `MP-00` | `BACKLOG` |
+| 7 | `MP-06` Contrato de versão do GeoJSON | `QA-P1-06` | Formalizar identidade lógica, versões, reconciliação e linhagem de Talhões | `MP-00` | `BACKLOG` |
+
+#### Entregas mínimas da Fase 0
+
+- regras aprovadas nos documentos ativos;
+- contratos compatíveis com mock atual e backend futuro;
+- riscos que não podem ser resolvidos localmente marcados como bloqueados;
+- nenhuma alegação de segurança baseada somente na interface.
+
+### Fase 1 — Correções comuns e de baixo acoplamento
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `BACKLOG` |
+| 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `BACKLOG` |
+| 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `BACKLOG` |
+| 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `BACKLOG` |
+| 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `BACKLOG` |
+| 13 | `MP-12` Linguagem e formatação | `QA-P2-17`, `QA-P3-01` | Padronizar Coleta de Solo, áreas, rótulos e nomes técnicos | `MP-00` | `BACKLOG` |
+| 14 | `MP-13` Validação visual dos formulários | `QA-P2-16` | Sinalizar obrigatórios, focar primeiro erro e manter mensagens junto ao campo | `MP-00` | `BACKLOG` |
+| 15 | `MP-14` Espaçamento seguro e FAB | `QA-P2-18` | Preservar conteúdo final e remover oclusão transitória relevante | `MP-00` | `BACKLOG` |
+
+#### Subtarefas obrigatórias de `MP-09`
+
+1. definir API e comportamento do componente;
+2. migrar Propriedades;
+3. migrar Usuários/Produtores;
+4. migrar Visitas;
+5. migrar Caderno;
+6. migrar Materiais;
+7. validar teclado, X, Aplicar, Limpar e chips ativos em cada tela.
+
+Cada migração pode virar uma conversa e branch própria se o diff crescer.
+
+### Fase 2 — Arquitetura de informação e responsividade
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 16 | `MP-15` Navegação da Propriedade | `QA-P2-01` | Adotar Resumo, Talhões, Safras e Safrinha, Materiais, Visitas e Caderno | `MP-10` | `BACKLOG` |
+| 17 | `MP-16` Entrada de Talhões | `QA-P2-02` | Criar `Lista \| Mapa`, com Lista inicial no celular | `MP-15` | `BACKLOG` |
+| 18 | `MP-17` Filtros de Materiais | `QA-P2-03` | Reduzir poluição, eliminar seleção inicial indevida e organizar chips | `MP-09`, `MP-15` | `BACKLOG` |
+| 19 | `MP-18` Dashboards e indicadores responsivos | `QA-P2-06` | Corrigir grids, paisagem, largura dos cartões e colisão com FAB | `MP-11`, `MP-14` | `BACKLOG` |
+| 20 | `MP-19` Resumo da Propriedade | `QA-P2-07` | Remover repetição e priorizar indicadores úteis ao perfil | `MP-15` | `BACKLOG` |
+| 21 | `MP-20` Perfil do Produtor | `QA-P2-12` | Corrigir falsa affordance e oferecer solicitação de atualização | `MP-10` | `BACKLOG` |
+| 22 | `MP-21` Sistema de cartões operacionais | `QA-P2-10` | Criar casca comum para Caderno e Visitas sem apagar diferenças de domínio | `MP-11` | `BACKLOG` |
+| 23 | `MP-22` Lista de Visitas | `QA-P2-11` | Humanizar enums, separar próximas/histórico e corrigir ordenação/status | `MP-05`, `MP-21` | `BACKLOG` |
+| 24 | `MP-23` Safras e Safrinha | `QA-P2-15` | Remover ação duplicada e validar Talhão, ano, cultura, datas e status | `MP-15`, `MP-13` | `BACKLOG` |
+
+#### Critério de aceite transversal da Fase 2
+
+- retrato e paisagem sem cortes ou sobreposições;
+- navegação com retorno previsível;
+- diferenças entre Admin, Colaborador e Produtor preservadas;
+- nenhum atalho duplicando uma aba principal;
+- termos de produto coerentes com os documentos ativos.
+
+### Fase 3 — Integridade operacional
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 25 | `MP-24` IDs estáveis de responsável e Talhão | `QA-P1-07` | Substituir texto livre por referências estáveis e preservar snapshots legíveis | `MP-02`, `MP-06` | `BACKLOG` |
+| 26 | `MP-25` Caderno auditável e validação por tipo | `QA-P0-03`, `QA-P1-08` | Implementar ciclo aprovado, autoria, complemento, correção e obrigatórios por tipo | `MP-04`, `MP-24`, `MP-13` | `BACKLOG` |
+| 27 | `MP-26` Apresentação da localização | `QA-P2-14` | Usar mini mapa, precisão, relação com Talhão e detalhe técnico recolhido | `MP-06`, `MP-25` | `BACKLOG` |
+| 28 | `MP-27` Implementação dos estados de Visita | `QA-P1-04` | Aplicar máquina de estados, atraso, motivo e histórico | `MP-05`, `MP-13` | `BACKLOG` |
+
+#### Subtarefas obrigatórias de `MP-25`
+
+1. persistir autoria por id;
+2. diferenciar rascunho e registro consolidado;
+3. preservar corpo e localização originais;
+4. criar complemento técnico;
+5. criar correção excepcional com motivo e antes/depois;
+6. criar arquivamento/anulação sem exclusão destrutiva;
+7. auditar visibilidade;
+8. aplicar requisitos por tipo;
+9. limitar informação administrativa mostrada ao Produtor;
+10. cobrir rotas diretas e tentativas de payload indevido.
+
+### Fase 4 — Materiais e mapas
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 29 | `MP-28` Fonte única de Materiais | `QA-P1-05` | Unificar resumo, listagem, imports e visibilidade | `MP-17` | `BACKLOG` |
+| 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `BACKLOG` |
+| 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `BACKLOG` |
+| 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `BACKLOG` |
+| 33 | `MP-32` WebView, rede e fallback offline | `QA-P3-02` | Corrigir ciclo de vida, diagnosticar SSL e tratar mapa indisponível | `MP-31` | `BACKLOG` |
+
+#### Subtarefas obrigatórias de `MP-29`
+
+1. estender contrato da rota com id e versão;
+2. resolver visualizador pelo tipo real;
+3. camada georreferenciada com legenda e metadados;
+4. imagem com zoom;
+5. PDF com visualização real, quando suportado;
+6. ZIP/arquivo sem falsa indicação de preview;
+7. ação de download condicionada à autorização;
+8. retorno preservando posição e filtros.
+
+#### Subtarefas obrigatórias de `MP-31`
+
+1. impedir recarga integral da WebView por seleção simples;
+2. separar atualização do marcador de centralização;
+3. implementar bottom sheet com snap points reais no retrato;
+4. implementar painel lateral no paisagem/tablet;
+5. manter mapa manipulável com detalhe aberto;
+6. criar lista completa pesquisável/rolável;
+7. transformar `Expandir mapa` em expansão real;
+8. recalcular dimensões na orientação;
+9. remover alças e controles sem função.
+
+### Fase 5 — Fechamento produtivo dos itens P0
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 34 | `MP-33` Autenticação e sessão reais | `QA-P0-04` | Implementar tokens, refresh, revogação, inatividade e offline controlado | `MP-01`, backend | `BLOQUEADO` |
+| 35 | `MP-34` Notificações reais e isoladas | `QA-P0-01` | Consultar por destinatário/escopo, persistir leitura e reautorizar a rota | `MP-03`, backend | `BLOQUEADO` |
+| 36 | `MP-35` Escopo territorial no backend | `QA-P0-02` | Administrar vínculos e impedir ampliação de acesso pelo cliente | `MP-02`, backend | `BLOQUEADO` |
+| 37 | `MP-36` Auditoria produtiva do Caderno | `QA-P0-03` | Persistir histórico imutável, concorrência e autorização no servidor | `MP-25`, backend | `BLOQUEADO` |
+| 38 | `MP-37` Versionamento produtivo do GeoJSON | `QA-P1-06` | Persistir importações, publicação, reconciliação, linhagem e consulta histórica | `MP-06`, `MP-24`, backend/storage | `BLOQUEADO` |
+
+Nenhuma dessas tarefas deve ser simulada como segurança completa apenas no
+front-end.
+
+### Fase 6 — Validações finais
+
+| Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
+|---:|---|---|---|---|---|
+| 39 | `MP-38` Teste real de localização em campo | `QA-P2-14` | Validar dentro/fora de Talhão, precisão, permissão, offline e cancelamento | `MP-26`, área mapeada | `BLOQUEADO` |
+| 40 | `MP-39` Regressão histórica de GeoJSON | `QA-P1-06` | Testar múltiplas versões, renome, área, split, merge e rollback | `MP-37` | `BACKLOG` |
+| 41 | `MP-40` Acessibilidade e matriz de dispositivos | `QA-P1-03`, `QA-P2-06`, `QA-P2-09` | Validar TalkBack, fonte, contraste, toque, aparelhos e orientação | Fases 1–4 | `BACKLOG` |
+| 42 | `MP-41` Regressão completa dos três perfis | todos | Repetir QA funcional, permissões, persistência e responsividade | `MP-33` a `MP-40` aplicáveis | `BACKLOG` |
+
+## 9. Matriz de cobertura dos achados
+
+Cada identificador do relatório deve aparecer nesta matriz. Um item só está
+integralmente concluído quando todas as tarefas associadas estiverem
+`CONCLUIDO`.
+
+| Achado | Tarefas do plano |
+|---|---|
+| `QA-P0-01` | `MP-03`, `MP-34` |
+| `QA-P0-02` | `MP-02`, `MP-35` |
+| `QA-P0-03` | `MP-04`, `MP-25`, `MP-36` |
+| `QA-P0-04` | `MP-01`, `MP-33` |
+| `QA-P1-01` | `MP-29` |
+| `QA-P1-02` | `MP-31` |
+| `QA-P1-03` | `MP-07`, `MP-40` |
+| `QA-P1-04` | `MP-05`, `MP-27` |
+| `QA-P1-05` | `MP-28` |
+| `QA-P1-06` | `MP-06`, `MP-37`, `MP-39` |
+| `QA-P1-07` | `MP-24` |
+| `QA-P1-08` | `MP-25` |
+| `QA-P1-09` | `MP-08` |
+| `QA-P2-01` | `MP-15` |
+| `QA-P2-02` | `MP-16` |
+| `QA-P2-03` | `MP-17` |
+| `QA-P2-04` | `MP-09` |
+| `QA-P2-05` | `MP-10` |
+| `QA-P2-06` | `MP-18`, `MP-40` |
+| `QA-P2-07` | `MP-19` |
+| `QA-P2-08` | `MP-02` |
+| `QA-P2-09` | `MP-11`, `MP-40` |
+| `QA-P2-10` | `MP-21` |
+| `QA-P2-11` | `MP-22` |
+| `QA-P2-12` | `MP-20` |
+| `QA-P2-13` | `MP-29`, `MP-30` |
+| `QA-P2-14` | `MP-26`, `MP-38` |
+| `QA-P2-15` | `MP-23` |
+| `QA-P2-16` | `MP-13` |
+| `QA-P2-17` | `MP-12` |
+| `QA-P2-18` | `MP-14` |
+| `QA-P3-01` | `MP-12` |
+| `QA-P3-02` | `MP-32` |
+
+## 10. Roteiro para iniciar cada conversa
+
+Usar este modelo:
+
+```text
+Trabalhe somente na tarefa MP-XX do plano
+docs/project/plano-mestre-implementacao-qa-2026-07.md.
+
+Leia o AGENTS.md e os documentos ativos obrigatórios.
+Leia apenas a seção relacionada do relatório
+docs/reviews/revisao-qa-android-2026-07-30.md.
+
+Primeiro:
+1. confirme objetivo, dependências e estado da tarefa;
+2. inspecione o código relacionado;
+3. apresente uma spec curta com comportamento esperado;
+4. liste critérios de aceite, arquivos prováveis, fora de escopo e testes;
+5. não altere código até o plano da tarefa estar coerente.
+```
+
+Depois da aprovação:
+
+```text
+Implemente somente a tarefa MP-XX conforme a spec aprovada.
+Preserve mudanças existentes e não amplie o escopo.
+Execute os testes aplicáveis, revise o diff e prepare o smoke Android.
+Atualize o plano mestre somente com resultados realmente verificados.
+```
+
+## 11. Registro de execução
+
+Adicionar uma linha por entrega concluída ou bloqueio material.
+
+| Data | Tarefa | Estado final da rodada | Branch/commit | Validações | Evidências | Pendência |
+|---|---|---|---|---|---|---|
+| — | — | — | — | — | — | — |
+
+## 12. Próxima ação
+
+Iniciar `MP-00` em uma conversa própria.
+
+Resultado esperado:
+
+- confirmar árvore de trabalho;
+- registrar versão/build usada como baseline;
+- executar `npm run typecheck`;
+- executar `npm run test:domain-compat`;
+- identificar testes focados disponíveis;
+- confirmar o roteiro de smoke;
+- criar a pasta de evidências da primeira implementação;
+- somente então liberar `MP-01` para planejamento.
+
+Depois de especificar `MP-01` a `MP-06`, `MP-07 — Login responsivo` será o
+primeiro ajuste de código recomendado por ser delimitado, reproduzível e
+independente do backend. Os contratos P0 avançam primeiro como documentação
+ativa, sem serem confundidos com segurança produtiva já implementada.
