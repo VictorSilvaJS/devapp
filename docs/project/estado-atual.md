@@ -4354,4 +4354,29 @@ materiais da Sela de Prata. Evidencias:
 `dist/qa-session-2026-07-30/mp-11-contraste-opacidade/`.
 
 O sistema de cartoes permanece em `MP-21` e a matriz completa de
-acessibilidade em `MP-40`. `MP-12` nao foi iniciada.
+acessibilidade em `MP-40`. `MP-12` foi executada na sequencia.
+
+## MP-12 - Linguagem E Formatacao
+
+Status em 2026-07-30: `CONCLUIDO`.
+
+O objetivo interno `coleta_solo` preserva seu valor de dominio e usa
+`Coleta de Solo` como rotulo publico centralizado em lista, detalhe, criacao e
+edicao de Visitas. Areas exibidas em Dashboard, Propriedades e Caderno usam o
+formatador brasileiro compartilhado, sem abreviacao em `k`.
+
+Materiais tecnicos passaram a separar a apresentacao publica do detalhe
+tecnico. Cartoes mostram titulo legivel, camada ou elemento, profundidade,
+data, safra, escopo, Propriedade e versao. Codigos de fixture e nomes de
+arquivo nao aparecem na listagem; o nome original fica restrito ao detalhe do
+anexo. Os cinco anexos Sela persistidos antes do campo `versao` recebem
+compatibilidade visual `v1`, sem alterar outros materiais sem versao.
+
+Testes focados, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release foi instalado via `adb`; o smoke
+fisico passou em retrato e paisagem para areas, Visitas e materiais da Fazenda
+Sela de Prata I. Evidencias:
+`dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/`.
+
+Filtros de Materiais permanecem em `MP-17` e o sistema de cartoes em `MP-21`.
+`MP-13` nao foi iniciada.

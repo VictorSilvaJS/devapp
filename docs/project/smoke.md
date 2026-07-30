@@ -1277,3 +1277,19 @@ do uso do mesmo par semantico, sem criacao de dado artificial no smoke.
 
 Evidencias completas:
 `dist/qa-session-2026-07-30/mp-11-contraste-opacidade/`.
+
+## MP-12 - Linguagem E Formatacao
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP12-01 | P3 | Propriedades | Inspecionar totais e cards | Areas usam formato brasileiro completo, sem `k` | Passou | `03-propriedades-area-formatada.png`: `15.470 ha`, `2.500 ha`, `500 ha`, `850 ha` |
+| MP12-02 | P2 | Visitas | Inspecionar objetivo de coleta | Rotulo publico e `Coleta de Solo` | Passou | `04-visitas-coleta-solo.png` |
+| MP12-03 | P3 | Materiais | Inspecionar cards Sela em retrato | Titulo e metadados legiveis; codigo/nome original ocultos | Passou | `05-materiais-card-publico-portrait.png` |
+| MP12-04 | P3 | Materiais | Girar os mesmos cards para paisagem | Metadados continuam legiveis, sem truncamento critico | Passou | `06-materiais-card-publico-landscape.png` |
+| MP12-05 | P3 | Detalhe tecnico | Abrir o anexo Argila | Nome original aparece somente no detalhe | Passou | `07-material-detalhe-tecnico.png` |
+
+Evidencias completas:
+`dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/`.

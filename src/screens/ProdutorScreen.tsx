@@ -37,7 +37,7 @@ import {
   temAcessoProdutor,
 } from '../utils/acessoControle';
 import { buildFazendaDetailContext, getFazendaUiInfo } from '../utils/fazendaUiCompat';
-import { formatAreaHa, resolveAreaTotalInformada } from '../utils/talhaoMedidasCompat';
+import { formatAreaHa, normalizeAreaValue, resolveAreaTotalInformada } from '../utils/talhaoMedidasCompat';
 import {
   getColaboradoresRelacionadosAPropriedade,
   getUsuariosProdutoresDaPropriedade,
@@ -55,6 +55,10 @@ import {
   getVinculoPropriedadeLabel,
   getVinculosPropriedadeUsuario,
 } from '../utils/usuarioAdminCompat';
+import {
+  getMaterialPublicDescription,
+  getMaterialPublicTitle,
+} from '../utils/materialPresentationCompat';
 
 export default function ProdutorScreen({ route, navigation }) {
   const toast = useToast();
@@ -382,9 +386,7 @@ export default function ProdutorScreen({ route, navigation }) {
   };
 
   const formatarAreaCaderno = (area) => {
-    const areaNumber = Number(area);
-    if (!Number.isFinite(areaNumber) || areaNumber <= 0) return null;
-    return `${areaNumber.toLocaleString('pt-BR')} ha`;
+    return normalizeAreaValue(area) == null ? null : formatAreaHa(area);
   };
 
   const getPeriodoStatusInfo = (status) => {
@@ -1062,7 +1064,7 @@ export default function ProdutorScreen({ route, navigation }) {
                           />
                         </View>
                         <View style={styles.mapaInfo}>
-                          <Text style={styles.mapaTitle}>{mapa.titulo}</Text>
+                          <Text style={styles.mapaTitle}>{getMaterialPublicTitle(mapa)}</Text>
                           <Text style={styles.mapaSubtitle}>
                             {mapa.talhao} • Safra {mapa.safra}
                           </Text>
@@ -1075,11 +1077,11 @@ export default function ProdutorScreen({ route, navigation }) {
                             {new Date(mapa.data_criacao).toLocaleDateString('pt-BR')}
                           </Text>
                         </View>
-                        {mapa.observacoes && (
+                        {getMaterialPublicDescription(mapa) ? (
                           <Text style={styles.mapaObservacoes} numberOfLines={2}>
-                            {mapa.observacoes}
+                            {getMaterialPublicDescription(mapa)}
                           </Text>
-                        )}
+                        ) : null}
                       </View>
                       {(mapa.disponivel_para_download || mapa.disponivel_download) && (
                         <TouchableOpacity

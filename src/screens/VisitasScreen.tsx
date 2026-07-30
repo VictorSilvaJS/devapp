@@ -36,6 +36,7 @@ import {
   podeCriarVisita,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
+import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
 
 export default function VisitasScreen() {
   const navigation = useNavigation();
@@ -156,7 +157,7 @@ export default function VisitasScreen() {
     const fazenda = getFazenda(getVisitaFazendaId(visita));
 
     const matchBusca = matchesFazendaUiBusca(fazenda, busca, [
-      visita.objetivo,
+      getVisitaObjetivoLabel(visita.objetivo),
       visita.tecnico_responsavel,
       visita.status,
     ]);
@@ -451,7 +452,7 @@ export default function VisitasScreen() {
                 {/* Tipo de Visita */}
                 <View style={[styles.objetivoBox, { backgroundColor: objetivoColor + '10' }]}>
                   <Text style={[styles.objetivoText, { color: objetivoColor }]}>
-                    {visita.objetivo.replace(/_/g, ' ').toUpperCase()}
+                    {getVisitaObjetivoLabel(visita.objetivo)}
                   </Text>
                 </View>
 

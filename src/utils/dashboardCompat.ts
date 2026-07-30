@@ -6,13 +6,11 @@ import {
   getFazendaIds,
 } from './acessoControle';
 import { getTitularId } from './propriedadeCompat';
+import { formatAreaHa } from './talhaoMedidasCompat';
 
 export const formatDashboardArea = (area: number) => {
   const normalizedArea = Number.isFinite(area) ? area : 0;
-  if (normalizedArea >= 1000) {
-    return `${(normalizedArea / 1000).toFixed(1)}k ha`;
-  }
-  return `${normalizedArea.toFixed(1)} ha`;
+  return formatAreaHa(normalizedArea);
 };
 
 export const getPropriedadeStatusKey = (propriedade: any) => {

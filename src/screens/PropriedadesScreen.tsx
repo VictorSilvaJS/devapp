@@ -22,6 +22,7 @@ import { filtrarProdutoresPorAcesso, podeCriarProdutor, getRegioesDisponiveis } 
 import { useFiltros } from '../contexts/FiltroContext';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { buildFazendaListMetrics, getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
+import { formatAreaHa } from '../utils/talhaoMedidasCompat';
 
 export default function PropriedadesScreen() {
   const [produtores, setProdutores] = useState([]);
@@ -100,14 +101,6 @@ export default function PropriedadesScreen() {
 
   // Calcular estatísticas da listagem Propriedade + Titular
   const metricasFazendas = buildFazendaListMetrics(produtores);
-
-  // Formata área para exibição compacta
-  const formatarArea = (area) => {
-    if (area >= 1000) {
-      return `${(area / 1000).toFixed(1)}k ha`;
-    }
-    return `${area.toFixed(1)} ha`;
-  };
 
   // Contar filtros ativos
   const contarFiltrosAtivos = () => {
@@ -296,7 +289,7 @@ export default function PropriedadesScreen() {
               <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
                 <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
               </View>
-              <Text style={styles.metricValue}>{formatarArea(metricasFazendas.areaTotal)}</Text>
+              <Text style={styles.metricValue}>{formatAreaHa(metricasFazendas.areaTotal)}</Text>
               <Text style={styles.metricLabel}>Área total informada</Text>
             </View>
             

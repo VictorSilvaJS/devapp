@@ -33,6 +33,7 @@ import {
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { normalizeCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
 import { getCadernoLocalizacaoPresentation } from '../utils/cadernoLocalizacaoUiCompat';
+import { formatAreaHa, normalizeAreaValue } from '../utils/talhaoMedidasCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -121,9 +122,7 @@ export default function CadernoDetailScreen() {
   };
 
   const formatArea = (area) => {
-    const areaNumber = Number(area);
-    if (!Number.isFinite(areaNumber) || areaNumber <= 0) return null;
-    return `${areaNumber.toLocaleString('pt-BR')} ha`;
+    return normalizeAreaValue(area) == null ? null : formatAreaHa(area);
   };
 
   const canEdit = () => podeEditarCadernoEmFazenda(user, registro, fazenda);

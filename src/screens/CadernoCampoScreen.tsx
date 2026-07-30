@@ -43,6 +43,7 @@ import {
   isCadernoVisivelParaProdutor,
   ordenarCadernosPorDataRecente,
 } from '../utils/cadernoFormCompat';
+import { formatAreaHa } from '../utils/talhaoMedidasCompat';
 
 export default function CadernoCampoScreen() {
   const navigation = useNavigation<any>();
@@ -320,7 +321,7 @@ export default function CadernoCampoScreen() {
                   {reg.area_aplicada && (
                     <View style={styles.infoRow}>
                       <Ionicons name="location-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                      <Text style={styles.infoText}>{reg.area_aplicada} ha</Text>
+                      <Text style={styles.infoText}>{formatAreaHa(reg.area_aplicada)}</Text>
                     </View>
                   )}
                   <CadernoLocalizacaoBadge registro={reg} />

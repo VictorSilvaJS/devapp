@@ -28,6 +28,7 @@ import {
 import {
   VISITA_FLUXOS_OPERACIONAIS,
   VISITA_FOTOS_MVP_INFO,
+  VISITA_OBJETIVO_OPTIONS,
   VISITA_STATUS_AGENDADA,
   VISITA_STATUS_REALIZADA,
   buildVisitaFazendaOptions,
@@ -210,14 +211,6 @@ export default function NovaVisitaScreen() {
     }
   };
 
-  const objetivos = [
-    { value: 'consultoria', label: 'Consultoria Técnica' },
-    { value: 'coleta_solo', label: 'Coleta de Solo' },
-    { value: 'avaliacao_cultivo', label: 'Avaliação de Cultivo' },
-    { value: 'entrega_material', label: 'Entrega de Material' },
-    { value: 'outro', label: 'Outro' },
-  ];
-
   if (!canCreateVisit) {
     return (
       <View style={styles.container}>
@@ -369,7 +362,7 @@ export default function NovaVisitaScreen() {
               Objetivo <Text style={styles.required}>*</Text>
             </Text>
             <RadioCardGroup
-              options={objetivos.map((obj) => ({
+              options={VISITA_OBJETIVO_OPTIONS.map((obj) => ({
                 value: obj.value,
                 label: obj.label,
               }))}

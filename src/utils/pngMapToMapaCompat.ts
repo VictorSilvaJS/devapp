@@ -58,6 +58,7 @@ export interface PngMapaCompatItem {
   data_atualizacao: string;
   importado_em: string;
   atualizado_em: string;
+  versao: number;
   png_map_import_id: string;
   is_png_local: true;
   observacoes?: string;
@@ -374,6 +375,7 @@ export const pngMapImportToMapaCompat = (
     data_atualizacao: metadata.atualizado_em,
     importado_em: metadata.importado_em,
     atualizado_em: metadata.atualizado_em,
+    versao: metadata.versao,
     png_map_import_id: metadata.id,
     is_png_local: true,
     observacoes: descricao,

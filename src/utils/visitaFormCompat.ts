@@ -16,6 +16,27 @@ export const VISITA_STATUS_AGENDADA = 'agendada';
 export const VISITA_STATUS_REALIZADA = 'realizada';
 export const VISITA_STATUS_CANCELADA = 'cancelada';
 
+export const VISITA_OBJETIVO_OPTIONS = [
+  { value: 'consultoria', label: 'Consultoria Técnica' },
+  { value: 'coleta_solo', label: 'Coleta de Solo' },
+  { value: 'avaliacao_cultivo', label: 'Avaliação de Cultivo' },
+  { value: 'entrega_material', label: 'Entrega de Material' },
+  { value: 'outro', label: 'Outro' },
+] as const;
+
+export const getVisitaObjetivoLabel = (objetivo?: string | null): string => {
+  const option = VISITA_OBJETIVO_OPTIONS.find((item) => item.value === objetivo);
+  if (option) return option.label;
+
+  const normalized = typeof objetivo === 'string'
+    ? objetivo.trim().replace(/_/g, ' ')
+    : '';
+
+  return normalized
+    ? normalized.charAt(0).toLocaleUpperCase('pt-BR') + normalized.slice(1)
+    : 'Não informado';
+};
+
 export const VISITA_FOTOS_MVP_INFO = {
   title: 'Fotos no MVP local',
   message:

@@ -75,6 +75,12 @@ import {
   mergeMapasWithMaterialTecnicoImports,
   resolveMaterialTecnicoImageSource,
 } from '../utils/materialTecnicoToMapaCompat';
+import {
+  getMaterialPublicDescription,
+  getMaterialPublicTitle,
+  getMaterialScopeLabel,
+  getMaterialVersionLabel,
+} from '../utils/materialPresentationCompat';
 import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
   confirmGeoJsonPropertyImport,
@@ -2098,19 +2104,21 @@ export default function MapasScreen({ route, navigation }) {
     const isMaterialLocal = isMaterialTecnicoLocalMapa(mapa);
     const elementoLabel = getMapaElementoLabel(mapa)
       || (!isMaterialLocal ? mapa?.categoria_label || mapa?.subcategoria : '');
-    const anoMapa = getMapaAno(mapa);
     const safraMapa = getMapaSafra(mapa);
     const talhaoMapa = getMapaTalhao(mapa);
     const profundidadeMapa = getMapaProfundidade(mapa);
     const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
+    const versaoMapa = getMaterialVersionLabel(mapa);
+    const dataMapa = mapa?.data_criacao || mapa?.importado_em;
 
     return [
       { icon: 'image-outline', label: 'Tipo', value: getImagePreviewTipoLabel(mapa) },
       { icon: 'layers-outline', label: isMaterialLocal ? 'Indicação do nome' : 'Camada', value: elementoLabel },
-      { icon: 'calendar-outline', label: 'Ano', value: anoMapa },
+      { icon: 'calendar-outline', label: 'Data', value: dataMapa ? formatarData(dataMapa) : '' },
       { icon: 'leaf-outline', label: 'Safra/Safrinha', value: safraMapa },
       { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
       { icon: 'resize-outline', label: 'Profundidade', value: profundidadeMapa },
+      { icon: 'git-branch-outline', label: 'Versão', value: versaoMapa },
       { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
     ].filter((item) => item.value);
   };
@@ -2121,10 +2129,11 @@ export default function MapasScreen({ route, navigation }) {
     const isMaterialLocal = isMaterialTecnicoLocalMapa(mapa);
     const camadaLabel = getMapaElementoLabel(mapa)
       || (!isMaterialLocal ? mapa?.camada_label || mapa?.subcategoria : '');
-    const anoMapa = getMapaAno(mapa);
     const safraMapa = getMapaSafra(mapa);
     const talhaoMapa = getMapaTalhao(mapa);
     const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
+    const versaoMapa = getMaterialVersionLabel(mapa);
+    const dataMapa = mapa?.data_criacao || mapa?.importado_em;
     const tamanhoArquivo = mapa?.tamanho_arquivo
       ? formatarTamanhoArquivo(mapa.tamanho_arquivo)
       : '';
@@ -2137,9 +2146,10 @@ export default function MapasScreen({ route, navigation }) {
     return [
       { icon: formatoArquivo === 'PDF' ? 'document-text-outline' : 'archive-outline', label: 'Tipo', value: tipoLabel },
       { icon: 'layers-outline', label: isMaterialLocal ? 'Indicação do nome' : 'Camada', value: camadaLabel },
-      { icon: 'calendar-outline', label: 'Ano', value: anoMapa },
+      { icon: 'calendar-outline', label: 'Data', value: dataMapa ? formatarData(dataMapa) : '' },
       { icon: 'leaf-outline', label: 'Safra/Safrinha', value: safraMapa },
       { icon: 'location-outline', label: 'Talhão', value: talhaoMapa },
+      { icon: 'git-branch-outline', label: 'Versão', value: versaoMapa },
       { icon: 'document-attach-outline', label: 'Nome original', value: arquivoNomeOriginal },
       { icon: 'server-outline', label: 'Tamanho', value: tamanhoArquivo },
       { icon: 'file-tray-full-outline', label: 'Formato', value: formatoArquivo || 'ZIP' },
@@ -2160,12 +2170,15 @@ export default function MapasScreen({ route, navigation }) {
   // RENDER: Card de Mapa
   // ──────────────────────────────────────────────
   const renderMapaCard = (mapa) => {
-    const anoMapa = getMapaAno(mapa);
     const safraMapa = getMapaSafra(mapa);
     const elementoLabel = getMapaElementoLabel(mapa);
     const profundidadeMapa = getMapaProfundidade(mapa);
     const talhaoMapa = getMapaTalhao(mapa);
-    const arquivoNomeOriginal = getMapaArquivoNomeOriginal(mapa);
+    const tituloPublico = getMaterialPublicTitle(mapa);
+    const descricaoPublica = getMaterialPublicDescription(mapa);
+    const escopoMapa = getMaterialScopeLabel(mapa);
+    const versaoMapa = getMaterialVersionLabel(mapa);
+    const dataMapa = mapa?.data_criacao || mapa?.importado_em;
     const statusDownload = avaliarDownloadMapa(mapa);
     const formatoArquivo = getFormatoArquivo(mapa);
     const isImagemAnexo = isFormatoImagem(formatoArquivo);
@@ -2206,11 +2219,11 @@ export default function MapasScreen({ route, navigation }) {
           : elementoLabel
       ),
       renderMapaMetaChip('resize-outline', 'Profundidade', profundidadeMapa),
-      renderMapaMetaChip('calendar-outline', 'Ano', anoMapa),
+      renderMapaMetaChip('calendar-outline', 'Data', dataMapa ? formatarData(dataMapa) : ''),
       renderMapaMetaChip('leaf-outline', 'Safra/Safrinha', safraMapa),
-      renderMapaMetaChip('location-outline', 'Talhão', talhaoMapa),
+      renderMapaMetaChip('location-outline', 'Escopo', escopoMapa || talhaoMapa),
       renderMapaMetaChip('home-outline', 'Propriedade', fazendaMapaInfo?.fazendaNome),
-      renderMapaMetaChip('document-attach-outline', 'Nome original', arquivoNomeOriginal),
+      renderMapaMetaChip('git-branch-outline', 'Versão', versaoMapa),
     ].filter(Boolean);
 
     return (
@@ -2229,7 +2242,7 @@ export default function MapasScreen({ route, navigation }) {
           />
         </View>
         <View style={styles.mapaInfo}>
-          <Text style={styles.mapaTitulo} numberOfLines={2}>{mapa.titulo}</Text>
+          <Text style={styles.mapaTitulo} numberOfLines={2}>{tituloPublico}</Text>
           <View style={styles.mapaTipoLinha}>
             <View style={[styles.mapaTipoTag, isImagemAnexo && styles.mapaTipoTagImagem]}>
               <Ionicons
@@ -2245,9 +2258,9 @@ export default function MapasScreen({ route, navigation }) {
               <Text style={styles.mapaSubcategoria}>{tipoMaterialLabel}</Text>
             ) : null}
           </View>
-          {mapa.observacoes && (
-            <Text style={styles.mapaObservacao} numberOfLines={2}>{mapa.observacoes}</Text>
-          )}
+          {descricaoPublica ? (
+            <Text style={styles.mapaObservacao} numberOfLines={2}>{descricaoPublica}</Text>
+          ) : null}
           {fazendaMapaInfo && (
             <Text style={styles.mapaContexto} numberOfLines={1}>
               Propriedade: {fazendaMapaInfo.fazendaNome} • Titular: {fazendaMapaInfo.titularNome || 'Não informado'}
@@ -3607,7 +3620,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.imagePreviewHeader}>
               <View style={styles.imagePreviewTitleWrap}>
                 <Text style={styles.imagePreviewTitle} numberOfLines={1}>
-                  {imagePreview.mapa?.titulo || 'Material técnico'}
+                  {getMaterialPublicTitle(imagePreview.mapa)}
                 </Text>
                 {imagePreview.mapa && (getMapaElementoLabel(imagePreview.mapa) || imagePreview.mapa?.profundidade) ? (
                   <Text style={styles.imagePreviewSubtitle}>
@@ -3714,7 +3727,7 @@ export default function MapasScreen({ route, navigation }) {
             <View style={styles.imagePreviewHeader}>
               <View style={styles.imagePreviewTitleWrap}>
                 <Text style={styles.imagePreviewTitle} numberOfLines={1}>
-                  {prescriptionZipDetail.mapa?.titulo || 'Prescrição'}
+                  {getMaterialPublicTitle(prescriptionZipDetail.mapa)}
                 </Text>
                 <Text style={styles.imagePreviewSubtitle}>
                   {isUnifiedMaterialDetail

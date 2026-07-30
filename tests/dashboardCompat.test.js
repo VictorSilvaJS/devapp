@@ -129,11 +129,11 @@ const run = async () => {
     assert.equal(resumo.produtores, 2);
     assert.equal(resumo.colaboradores, 1);
     assert.equal(resumo.titularesNoEscopo, 2);
-    assert.equal(resumo.areaTotalLabel, '2.5k ha');
+    assert.equal(resumo.areaTotalLabel, '2.500 ha');
     assert.deepEqual(resumo.status, { ativo: 1, pendente: 1, inativo: 1 });
     assert.deepEqual(getPropriedadesPorStatus(propriedades), resumo.status);
     assert.equal(getPropriedadeStatusLabel(propriedades[1]), 'Pendente');
-    assert.equal(formatDashboardArea(750), '750.0 ha');
+    assert.equal(formatDashboardArea(750), '750 ha');
   });
 
   if (failed > 0) {

@@ -3,12 +3,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   VISITA_FOTOS_MVP_INFO,
+  VISITA_OBJETIVO_OPTIONS,
   buildVisitaFazendaOptions,
   buildVisitaPayload,
   combineVisitaDateTime,
   findVisitaFazendaOption,
   getVisitaFotoUri,
   getVisitaFluxoUi,
+  getVisitaObjetivoLabel,
   getVisitaFormFazendaId,
   getVisitaFormFazendaLabel,
   removeVisitaFotoAtIndex,
@@ -29,6 +31,26 @@ const test = async (name, fn) => {
 };
 
 const run = async () => {
+  await test('objetivo Coleta de Solo usa um único rótulo em todas as apresentações', () => {
+    assert.equal(getVisitaObjetivoLabel('coleta_solo'), 'Coleta de Solo');
+    assert.equal(
+      VISITA_OBJETIVO_OPTIONS.find((option) => option.value === 'coleta_solo')?.label,
+      'Coleta de Solo'
+    );
+
+    const presentationSources = [
+      'src/screens/NovaVisitaScreen.tsx',
+      'src/screens/EditarVisitaScreen.tsx',
+      'src/screens/VisitasScreen.tsx',
+      'src/screens/VisitaDetailScreen.tsx',
+    ].map((relativePath) => fs.readFileSync(path.join(__dirname, '..', relativePath), 'utf8'));
+
+    presentationSources.forEach((source) => {
+      assert.match(source, /VISITA_OBJETIVO_OPTIONS|getVisitaObjetivoLabel/);
+      assert.doesNotMatch(source, /coleta solo|COLETA SOLO/);
+    });
+  });
+
   await test('buildVisitaFazendaOptions explicita id operacional de fazenda para a UI', () => {
     const options = buildVisitaFazendaOptions([
       {

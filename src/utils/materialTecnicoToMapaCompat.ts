@@ -55,6 +55,7 @@ export interface MaterialTecnicoMapaCompatItem {
   data_atualizacao: string;
   importado_em: string;
   atualizado_em: string;
+  versao: number;
   material_tecnico_import_id: string;
   is_material_tecnico_local: true;
 }
@@ -181,6 +182,7 @@ export const materialTecnicoImportToMapaCompat = (
     data_atualizacao: metadata.atualizado_em,
     importado_em: metadata.importado_em,
     atualizado_em: metadata.atualizado_em,
+    versao: metadata.versao,
     material_tecnico_import_id: metadata.id,
     is_material_tecnico_local: true,
   };

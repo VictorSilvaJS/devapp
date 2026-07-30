@@ -30,6 +30,7 @@ import {
 } from '../utils/acessoControle';
 import {
   VISITA_FOTOS_MVP_INFO,
+  VISITA_OBJETIVO_OPTIONS,
   buildVisitaFazendaOptions,
   buildVisitaPayload,
   getVisitaFotoUri,
@@ -225,14 +226,6 @@ export default function EditarVisitaScreen() {
     }
   };
 
-  const objetivos = [
-    { value: 'consultoria', label: 'Consultoria Técnica' },
-    { value: 'coleta_solo', label: 'Coleta de Solo' },
-    { value: 'avaliacao_cultivo', label: 'Avaliação de Cultivo' },
-    { value: 'entrega_material', label: 'Entrega de Material' },
-    { value: 'outro', label: 'Outro' },
-  ];
-
   const statusOptions = [
     { value: 'agendada', label: 'Agendada' },
     { value: 'realizada', label: 'Realizada' },
@@ -352,7 +345,7 @@ export default function EditarVisitaScreen() {
               Objetivo <Text style={styles.required}>*</Text>
             </Text>
             <RadioCardGroup
-              options={objetivos.map((obj) => ({
+              options={VISITA_OBJETIVO_OPTIONS.map((obj) => ({
                 value: obj.value,
                 label: obj.label,
               }))}

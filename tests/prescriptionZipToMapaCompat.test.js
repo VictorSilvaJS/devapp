@@ -66,6 +66,7 @@ const run = async () => {
     assert.equal(item.disponivel_download, false);
     assert.equal(item.disponivel_para_download, false);
     assert.equal(item.is_prescription_zip_local, true);
+    assert.equal(item.versao, 1);
     assert.equal(item.arquivo_uri_local.endsWith('.zip'), true);
     assert.equal(PRESCRIPTION_ZIP_DETAILS_MESSAGE.includes('processamento do ZIP não faz parte do MVP atual'), true);
   });

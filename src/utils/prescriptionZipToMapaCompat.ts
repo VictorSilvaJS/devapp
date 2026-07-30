@@ -52,6 +52,7 @@ export interface PrescriptionZipMapaCompatItem {
   data_atualizacao: string;
   importado_em: string;
   atualizado_em: string;
+  versao: number;
   prescription_zip_import_id: string;
   is_prescription_zip_local: true;
   observacoes?: string;
@@ -183,6 +184,7 @@ export const prescriptionZipImportToMapaCompat = (
     data_atualizacao: metadata.atualizado_em,
     importado_em: metadata.importado_em,
     atualizado_em: metadata.atualizado_em,
+    versao: metadata.versao,
     prescription_zip_import_id: metadata.id,
     is_prescription_zip_local: true,
     observacoes: descricao,

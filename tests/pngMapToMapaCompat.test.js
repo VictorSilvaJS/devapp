@@ -78,6 +78,7 @@ const run = async () => {
     assert.equal(item.disponivel_download, true);
     assert.equal(item.data_criacao, '2026-06-05T15:00:00.000Z');
     assert.equal(item.data_atualizacao, '2026-06-05T15:00:01.000Z');
+    assert.equal(item.versao, 1);
   });
 
   await test('preserva arquivo_uri_local sem expor URI como titulo', () => {

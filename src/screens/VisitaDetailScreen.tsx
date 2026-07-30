@@ -23,7 +23,7 @@ import {
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
-import { getVisitaFotoUri } from '../utils/visitaFormCompat';
+import { getVisitaFotoUri, getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -172,17 +172,6 @@ export default function VisitaDetailScreen() {
     }
   };
 
-  const getObjetivoLabel = (objetivo) => {
-    const map = {
-      consultoria: 'Consultoria Técnica',
-      coleta_solo: 'Coleta de Solo',
-      avaliacao_cultivo: 'Avaliação de Cultivo',
-      entrega_material: 'Entrega de Material',
-      outro: 'Outro',
-    };
-    return map[objetivo] || objetivo;
-  };
-
   const formatDate = (dateStr) => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
@@ -316,7 +305,7 @@ export default function VisitaDetailScreen() {
             <Ionicons name="flag" size={20} color={colors.muted} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Objetivo</Text>
-              <Text style={styles.infoValue}>{getObjetivoLabel(visita.objetivo)}</Text>
+              <Text style={styles.infoValue}>{getVisitaObjetivoLabel(visita.objetivo)}</Text>
             </View>
           </View>
 
