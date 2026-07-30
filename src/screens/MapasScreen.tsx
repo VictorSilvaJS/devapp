@@ -20,6 +20,10 @@ import TalhaoDetailModal from '../components/TalhaoDetailModal';
 import { useToast } from '../components/Toast';
 import {
   EmptyState,
+  ActiveFilterBar,
+  FilterBottomSheet,
+  FilterSection,
+  FilterTrigger,
   FormField,
   InfoBox,
   SearchBar,
@@ -314,6 +318,11 @@ export default function MapasScreen({ route, navigation }) {
   const [categoriaAtiva, setCategoriaAtiva] = useState('todos');
   const [busca, setBusca] = useState('');
   const [ordenacao, setOrdenacao] = useState('recente');
+  const [filtrosMateriaisVisiveis, setFiltrosMateriaisVisiveis] = useState(false);
+  const [filtrosMateriaisRascunho, setFiltrosMateriaisRascunho] = useState({
+    categoria: FILTRO_TODOS,
+    ordenacao: 'recente',
+  });
   const [fazendaFiltroOperacional, setFazendaFiltroOperacional] = useState(FILTRO_TODOS);
   const [anoFiltroMateriais, setAnoFiltroMateriais] = useState(FILTRO_TODOS);
   const [safraFiltroMapas, setSafraFiltroMapas] = useState(FILTRO_TODOS);
@@ -1954,6 +1963,38 @@ export default function MapasScreen({ route, navigation }) {
     ],
     [anosMateriais]
   );
+  const filtrosMateriaisAtivos = [
+    ...(categoriaAtiva !== FILTRO_TODOS ? [{
+      key: 'categoria',
+      label: getCategoriaMapaLabel(categoriaAtiva),
+      icon: 'grid-outline' as const,
+      color: colors.primary,
+      onRemove: () => setCategoriaAtiva(FILTRO_TODOS),
+    }] : []),
+    ...(ordenacao !== 'recente' ? [{
+      key: 'ordenacao',
+      label: ORDENACOES_MATERIAIS.find((item) => item.key === ordenacao)?.label || 'Ordenação',
+      icon: 'swap-vertical-outline' as const,
+      color: colors.teal,
+      onRemove: () => setOrdenacao('recente'),
+    }] : []),
+  ];
+
+  const abrirFiltrosMateriais = () => {
+    setFiltrosMateriaisRascunho({
+      categoria: categoriaAtiva,
+      ordenacao,
+    });
+    setFiltrosMateriaisVisiveis(true);
+  };
+
+  const cancelarFiltrosMateriais = () => {
+    setFiltrosMateriaisRascunho({
+      categoria: categoriaAtiva,
+      ordenacao,
+    });
+    setFiltrosMateriaisVisiveis(false);
+  };
 
   const mensagemBloqueio = estadoBloqueio === 'acesso_negado'
     ? {
@@ -2853,26 +2894,20 @@ export default function MapasScreen({ route, navigation }) {
         {renderPngImportPanel()}
       </SectionCard>
 
-      {/* Filtros de Categoria */}
-      <SegmentedChips
-        options={categoriaOptions}
-        value={categoriaAtiva}
-        onChange={setCategoriaAtiva}
-        horizontal
-        style={styles.categoriasContainer}
-        contentStyle={styles.categoriasContent}
-      />
-
-      {/* Ordenação */}
-      <View style={styles.ordenacaoContainer}>
-        <Text style={styles.ordenacaoLabel}>
-          <Ionicons name="swap-vertical-outline" size={14} color={colors.text} /> Ordenar materiais:
-        </Text>
-        <SegmentedChips
-          options={ordenacaoOptions}
-          value={ordenacao}
-          onChange={setOrdenacao}
-          contentStyle={styles.ordenacaoButtons}
+      <View style={styles.materialFilterControls}>
+        <FilterTrigger
+          activeCount={filtrosMateriaisAtivos.length}
+          onPress={abrirFiltrosMateriais}
+          label="Filtros dos materiais"
+          style={styles.materialFilterTrigger}
+        />
+        <ActiveFilterBar
+          items={filtrosMateriaisAtivos}
+          onClear={() => {
+            setCategoriaAtiva(FILTRO_TODOS);
+            setOrdenacao('recente');
+          }}
+          style={styles.materialActiveFilters}
         />
       </View>
 
@@ -3016,6 +3051,42 @@ export default function MapasScreen({ route, navigation }) {
       </View>
 
       {renderPanorama()}
+
+      <FilterBottomSheet
+        visible={filtrosMateriaisVisiveis}
+        onRequestClose={cancelarFiltrosMateriais}
+        onClear={() => setFiltrosMateriaisRascunho({
+          categoria: FILTRO_TODOS,
+          ordenacao: 'recente',
+        })}
+        onApply={() => {
+          setCategoriaAtiva(filtrosMateriaisRascunho.categoria);
+          setOrdenacao(filtrosMateriaisRascunho.ordenacao);
+          setFiltrosMateriaisVisiveis(false);
+        }}
+        subtitle="Filtre e ordene os materiais técnicos deste panorama"
+      >
+        <FilterSection title="Categoria">
+          <SegmentedChips
+            options={categoriaOptions}
+            value={filtrosMateriaisRascunho.categoria}
+            onChange={(categoria) => setFiltrosMateriaisRascunho((atual) => ({
+              ...atual,
+              categoria,
+            }))}
+          />
+        </FilterSection>
+        <FilterSection title="Ordenar por">
+          <SegmentedChips
+            options={ordenacaoOptions}
+            value={filtrosMateriaisRascunho.ordenacao}
+            onChange={(novaOrdenacao) => setFiltrosMateriaisRascunho((atual) => ({
+              ...atual,
+              ordenacao: novaOrdenacao,
+            }))}
+          />
+        </FilterSection>
+      </FilterBottomSheet>
 
       {/* Dialog de visualização de material */}
       <ConfirmDialog
@@ -3945,6 +4016,20 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     color: colors.primary,
     fontWeight: typography.weightSemibold,
+  },
+  materialFilterControls: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  materialFilterTrigger: {
+    width: '100%',
+  },
+  materialActiveFilters: {
+    marginTop: spacing.md,
+    marginBottom: 0,
   },
 
   // ── ORDENAÇÃO ──

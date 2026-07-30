@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Keyboard,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -51,7 +52,10 @@ export default function SegmentedChips<T extends string = string>({
               active ? styles.chipActive : null,
               option.disabled ? styles.disabled : null,
             ]}
-            onPress={() => onChange(option.value)}
+            onPress={() => {
+              Keyboard.dismiss();
+              onChange(option.value);
+            }}
             disabled={option.disabled}
             activeOpacity={0.75}
           >
@@ -83,6 +87,7 @@ export default function SegmentedChips<T extends string = string>({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         style={style}
         contentContainerStyle={styles.scrollContent}
       >

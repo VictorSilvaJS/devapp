@@ -1219,3 +1219,22 @@ Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
 
 Evidências completas:
 `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/`.
+
+## MP-09 - Componente Padrão De Filtros
+
+Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| MP09-01 | P1 | Componente comum | Abrir e arrastar o handle para baixo | Folha acompanha o gesto e fecha descartando o rascunho | Passou | Responder do handle corrigido e revalidado |
+| MP09-02 | P1 | Propriedades | Abrir, cancelar, aplicar e limpar Inativo | Mesma semântica da MP-08 com casca e chips comuns | Passou | Badge, chip e lista coerentes |
+| MP09-03 | P1 | Usuários | Focar busca e tocar Filtros uma vez | Teclado fecha e folha abre no mesmo toque | Passou | `mInputShown=false` |
+| MP09-04 | P1 | Usuários | Cancelar/aplicar/limpar Produtores | X descarta; Aplicar cria chip; Limpar confirmado remove | Passou | Estado vazio coerente com busca ativa |
+| MP09-05 | P1 | Visitas | Aplicar Realizadas; limpar e usar Voltar | Chip aplicado permanece após cancelar; Limpar+Aplicar remove | Passou | Voltar do Android coberto |
+| MP09-06 | P1 | Caderno | Abrir com teclado e aplicar tipo Aplicação | Teclado fecha; folha rola; chip e lista refletem o aplicado | Passou | Tipos derivados dos registros |
+| MP09-07 | P1 | Materiais | Aplicar Fertilidade + Título e limpar | Badge 2, dois chips e ordenação aplicados; limpeza confirmada | Passou | Contexto do panorama preservado |
+| MP09-08 | P1 | Paisagem | Abrir a folha de Materiais | Cabeçalho, opções, Limpar e Aplicar íntegros e alcançáveis | Passou | `23-materiais-sheet-paisagem.png` |
+
+Evidências completas:
+`dist/qa-session-2026-07-30/mp-09-filtros-padrao/`.

@@ -4266,5 +4266,32 @@ passaram. O APK release foi instalado no Android fisico e o smoke confirmou
 cancelamento, aplicacao e limpeza nos dois fluxos. Evidencias:
 `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/`.
 
-Componente comum, bottom sheet e gesto real de arraste permanecem em `MP-09`,
-que nao foi iniciada.
+Componente comum, bottom sheet e gesto real de arraste foram entregues em
+`MP-09`.
+
+## MP-09 - Componente Padrao De Filtros
+
+Status em 2026-07-30: `CONCLUIDO`.
+
+`FilterBottomSheet` passou a concentrar backdrop, animacao, safe area,
+cabecalho, conteudo rolavel, X, Limpar, Aplicar, botao Voltar do Android e
+arraste real para baixo. O mesmo modulo oferece o acionador com badge, secoes
+de conteudo e a faixa rolavel de chips ativos.
+
+Propriedades e Visitas preservam os filtros e a separacao entre aplicado e
+rascunho criada na `MP-08`. Usuarios moveu o filtro de perfil para a folha
+padrao. Caderno passou a filtrar pelos tipos de atividade ja presentes nos
+registros. Materiais moveu categoria e ordenacao para a folha padrao.
+
+O filtro abre dispensando o teclado e `SegmentedChips` executa a selecao no
+mesmo toque que fecha o teclado. X, backdrop, Voltar e arraste descartam o
+rascunho; Limpar somente altera o resultado depois de Aplicar. Badge e chips
+externos refletem apenas o estado aplicado.
+
+Typecheck, `test:domain-compat`, `git diff --check` e `assembleRelease`
+passaram. O smoke no Android fisico cobriu as cinco telas, teclado, retrato,
+paisagem e os caminhos de cancelamento/aplicacao. Evidencias:
+`dist/qa-session-2026-07-30/mp-09-filtros-padrao/`.
+
+A reorganizacao funcional dos filtros de contexto de Materiais permanece em
+`MP-17`. `MP-10` e `MP-17` nao foram iniciadas.

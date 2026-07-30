@@ -6,7 +6,7 @@
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` foi concluída e
-> `MP-09` não foi iniciada
+> `MP-09` foi concluída; `MP-10` não foi iniciada
 
 ## 1. Objetivo
 
@@ -166,7 +166,7 @@ nova registrada neste documento.
 |---:|---|---|---|---|---|
 | 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `PARCIAL` |
 | 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `CONCLUIDO` |
-| 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `BACKLOG` |
+| 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `CONCLUIDO` |
 | 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `BACKLOG` |
 | 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `BACKLOG` |
 | 13 | `MP-12` Linguagem e formatação | `QA-P2-17`, `QA-P3-01` | Padronizar Coleta de Solo, áreas, rótulos e nomes técnicos | `MP-00` | `BACKLOG` |
@@ -370,6 +370,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-06` | `CONCLUIDO` | `appQA` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/versionamento-geojson-talhoes.md`; `dist/qa-session-2026-07-30/mp-06-versionamento-geojson-talhoes.md` | IDs e vínculos ficam em `MP-24`; implementação produtiva em `MP-37`; regressão histórica em `MP-39` |
 | 2026-07-30 | `MP-07` | `PARCIAL` | `appQA` / árvore de trabalho | typecheck, domain-compat e assembleRelease passaram; smoke físico passou em retrato e paisagem com teclado fechado, e em retrato com teclado aberto | `dist/qa-session-2026-07-30/mp-07-login-responsivo/` | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração em paisagem; repetir com IME/aparelho que permita teclado inline antes de concluir |
 | 2026-07-30 | `MP-08` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em Propriedades e Visitas | `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/` | bottom sheet comum e gesto de arraste permanecem fora deste corte, em `MP-09` |
+| 2026-07-30 | `MP-09` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou nas cinco telas, teclado e paisagem | `dist/qa-session-2026-07-30/mp-09-filtros-padrao/` | reorganização funcional dos filtros de Materiais permanece em `MP-17`; `MP-10` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -395,4 +396,19 @@ resultados refletem somente o estado aplicado.
 
 Typecheck, suíte `domain-compat`, `git diff --check`, build release, instalação
 e smoke no Android físico passaram. A criação de componente comum, bottom
-sheet e gesto real de arraste permanece em `MP-09`, que não foi iniciada.
+sheet e gesto real de arraste foi entregue em `MP-09`.
+
+`MP-09` foi concluída em 2026-07-30. A casca padrão concentra backdrop,
+cabeçalho, conteúdo rolável, X, Limpar, Aplicar, botão Voltar, safe area e
+arraste real para baixo. O acionador com badge e a faixa rolável de chips
+ativos também passaram a ser comuns.
+
+Propriedades, Usuários/Produtores, Visitas, Caderno e Materiais foram migrados.
+Usuários preserva o filtro de perfil; Caderno usa os tipos já presentes nos
+registros; Materiais moveu categoria e ordenação para a folha, sem reorganizar
+os filtros de contexto do panorama reservados para `MP-17`.
+
+Typecheck, suíte `domain-compat`, `git diff --check` e build release passaram.
+O smoke Android confirmou teclado no primeiro toque, X, backdrop, Voltar,
+arraste, Aplicar, Limpar, badge/chips e conteúdo rolável, inclusive em
+paisagem. `MP-10` e `MP-17` não foram iniciadas.

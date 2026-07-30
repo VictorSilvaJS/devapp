@@ -14,6 +14,12 @@ import EmptyState from '../components/EmptyState';
 import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
+import SegmentedChips from '../components/SegmentedChips';
+import FilterBottomSheet, {
+  ActiveFilterBar,
+  FilterSection,
+  FilterTrigger,
+} from '../components/FilterBottomSheet';
 import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { CadernoCampo, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -45,6 +51,9 @@ export default function CadernoCampoScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
+  const [tipoFiltro, setTipoFiltro] = useState('todos');
+  const [tipoFiltroRascunho, setTipoFiltroRascunho] = useState('todos');
+  const [filtrosVisiveis, setFiltrosVisiveis] = useState(false);
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
@@ -116,6 +125,7 @@ export default function CadernoCampoScreen() {
 
   // Filtro de busca
   const registrosFiltrados = ordenarCadernosPorDataRecente(registros.filter(registro => {
+    if (tipoFiltro !== 'todos' && registro.tipo_atividade !== tipoFiltro) return false;
     const fazenda = getFazenda(getCadernoFazendaId(registro));
     return matchesFazendaUiBusca(fazenda, busca, [
       registro.tipo_atividade,
@@ -127,6 +137,26 @@ export default function CadernoCampoScreen() {
       registro.observacoes,
     ]);
   }));
+  const tiposDisponiveis = Array.from(new Set(
+    registros
+      .map((registro) => registro.tipo_atividade)
+      .filter(Boolean)
+  )).sort((a, b) => getCadernoTipoLabel(a).localeCompare(getCadernoTipoLabel(b)));
+  const tipoOptions = [
+    { value: 'todos', label: 'Todos' },
+    ...tiposDisponiveis.map((tipo) => ({ value: tipo, label: getCadernoTipoLabel(tipo) })),
+  ];
+  const tipoFiltroLabel = tipoFiltro === 'todos' ? '' : getCadernoTipoLabel(tipoFiltro);
+
+  const abrirFiltros = () => {
+    setTipoFiltroRascunho(tipoFiltro);
+    setFiltrosVisiveis(true);
+  };
+
+  const cancelarFiltros = () => {
+    setTipoFiltroRascunho(tipoFiltro);
+    setFiltrosVisiveis(false);
+  };
 
   // Cores para tipos de atividade
   const getTipoColor = (tipo) => {
@@ -166,6 +196,11 @@ export default function CadernoCampoScreen() {
           onChangeText={setBusca}
           placeholder="Buscar por propriedade, atividade ou talhão..."
         />
+        <FilterTrigger
+          activeCount={tipoFiltro === 'todos' ? 0 : 1}
+          onPress={abrirFiltros}
+          style={styles.filterTrigger}
+        />
       </View>
 
       <ScrollView 
@@ -179,6 +214,17 @@ export default function CadernoCampoScreen() {
           />
         }
       >
+        <ActiveFilterBar
+          items={tipoFiltro === 'todos' ? [] : [{
+            key: 'tipo',
+            label: tipoFiltroLabel,
+            icon: 'book',
+            color: getTipoColor(tipoFiltro),
+            onRemove: () => setTipoFiltro('todos'),
+          }]}
+          onClear={() => setTipoFiltro('todos')}
+        />
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -333,6 +379,25 @@ export default function CadernoCampoScreen() {
           accessibilityLabel={isProdutorView ? 'Registrar no caderno de campo' : 'Cadastrar novo registro do caderno'}
         />
       )}
+
+      <FilterBottomSheet
+        visible={filtrosVisiveis}
+        onRequestClose={cancelarFiltros}
+        onClear={() => setTipoFiltroRascunho('todos')}
+        onApply={() => {
+          setTipoFiltro(tipoFiltroRascunho);
+          setFiltrosVisiveis(false);
+        }}
+        subtitle="Filtre os registros pelo tipo de atividade"
+      >
+        <FilterSection title="Tipo de atividade">
+          <SegmentedChips
+            options={tipoOptions}
+            value={tipoFiltroRascunho}
+            onChange={setTipoFiltroRascunho}
+          />
+        </FilterSection>
+      </FilterBottomSheet>
     </View>
   );
 }
@@ -349,6 +414,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
     ...shadows.sm
+  },
+  filterTrigger: {
+    width: '100%',
+    marginTop: spacing.sm,
   },
   content: { 
     padding: spacing.screen,

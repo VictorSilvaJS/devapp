@@ -16,6 +16,11 @@ import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import SearchBar from '../components/SearchBar';
 import SegmentedChips from '../components/SegmentedChips';
+import FilterBottomSheet, {
+  ActiveFilterBar,
+  FilterSection,
+  FilterTrigger,
+} from '../components/FilterBottomSheet';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { colors, shadows, spacing, typography } from '../theme';
@@ -50,6 +55,8 @@ export default function UsuariosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');
   const [perfilFiltro, setPerfilFiltro] = useState('todos');
+  const [perfilFiltroRascunho, setPerfilFiltroRascunho] = useState('todos');
+  const [filtrosVisiveis, setFiltrosVisiveis] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -99,6 +106,17 @@ export default function UsuariosScreen() {
     label: perfil.label,
     count: totalPorPerfil[perfil.key as keyof typeof totalPorPerfil] || 0,
   }));
+  const perfilFiltroLabel = perfilOptions.find((perfil) => perfil.value === perfilFiltro)?.label;
+
+  const abrirFiltros = () => {
+    setPerfilFiltroRascunho(perfilFiltro);
+    setFiltrosVisiveis(true);
+  };
+
+  const cancelarFiltros = () => {
+    setPerfilFiltroRascunho(perfilFiltro);
+    setFiltrosVisiveis(false);
+  };
 
   if (user?.perfil !== 'admin') {
     return (
@@ -126,12 +144,10 @@ export default function UsuariosScreen() {
       </View>
 
       <View style={styles.filterSection}>
-        <SegmentedChips
-          options={perfilOptions}
-          value={perfilFiltro}
-          onChange={setPerfilFiltro}
-          horizontal
-          contentStyle={styles.filterContent}
+        <FilterTrigger
+          activeCount={perfilFiltro === 'todos' ? 0 : 1}
+          onPress={abrirFiltros}
+          style={styles.filterTrigger}
         />
       </View>
 
@@ -142,6 +158,17 @@ export default function UsuariosScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
+        <ActiveFilterBar
+          items={perfilFiltro === 'todos' ? [] : [{
+            key: 'perfil',
+            label: perfilFiltroLabel || 'Perfil',
+            icon: 'people',
+            color: colors.info,
+            onRemove: () => setPerfilFiltro('todos'),
+          }]}
+          onClear={() => setPerfilFiltro('todos')}
+        />
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
@@ -209,6 +236,25 @@ export default function UsuariosScreen() {
         onPress={() => navigation.navigate('NovoUsuario')}
         accessibilityLabel="Cadastrar novo usuário"
       />
+
+      <FilterBottomSheet
+        visible={filtrosVisiveis}
+        onRequestClose={cancelarFiltros}
+        onClear={() => setPerfilFiltroRascunho('todos')}
+        onApply={() => {
+          setPerfilFiltro(perfilFiltroRascunho);
+          setFiltrosVisiveis(false);
+        }}
+        subtitle="Filtre a lista pelo perfil de acesso"
+      >
+        <FilterSection title="Perfil">
+          <SegmentedChips
+            options={perfilOptions}
+            value={perfilFiltroRascunho}
+            onChange={setPerfilFiltroRascunho}
+          />
+        </FilterSection>
+      </FilterBottomSheet>
     </View>
   );
 }
@@ -227,7 +273,11 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     backgroundColor: colors.card,
+    paddingHorizontal: spacing.screen,
     paddingBottom: spacing.md,
+  },
+  filterTrigger: {
+    width: '100%',
   },
   filterContent: {
     paddingHorizontal: spacing.screen,

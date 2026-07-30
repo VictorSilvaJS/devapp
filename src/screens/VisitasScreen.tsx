@@ -6,9 +6,7 @@ import {
   StyleSheet, 
   RefreshControl,
   TouchableOpacity,
-  ActivityIndicator,
-  Modal,
-  Pressable
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +16,11 @@ import Header from '../components/Header';
 import InfoBox from '../components/InfoBox';
 import SearchBar from '../components/SearchBar';
 import SegmentedChips from '../components/SegmentedChips';
+import FilterBottomSheet, {
+  ActiveFilterBar,
+  FilterSection,
+  FilterTrigger,
+} from '../components/FilterBottomSheet';
 import { Visita, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -231,15 +234,15 @@ export default function VisitasScreen() {
     const filtros = [];
     if (filtroStatus !== 'todos') {
       const statusLabels = { agendada: 'Agendadas', realizada: 'Realizadas', cancelada: 'Canceladas' };
-      filtros.push({ tipo: 'status', label: statusLabels[filtroStatus], remover: () => setFiltroStatus('todos') });
+      filtros.push({ tipo: 'status', label: statusLabels[filtroStatus], icon: 'checkmark-circle', color: colors.success, remover: () => setFiltroStatus('todos') });
     }
     if (filtroData !== 'todos') {
       const dataLabels = { hoje: 'Hoje', semana: 'Esta Semana', mes: 'Este Mês' };
-      filtros.push({ tipo: 'data', label: dataLabels[filtroData], remover: () => setFiltroData('todos') });
+      filtros.push({ tipo: 'data', label: dataLabels[filtroData], icon: 'calendar', color: colors.coral, remover: () => setFiltroData('todos') });
     }
     if (ordenacao !== 'data') {
       const ordenacaoLabels = { fazenda: 'Por Propriedade', produtor: 'Por Propriedade', status: 'Por Status' };
-      filtros.push({ tipo: 'ordenacao', label: ordenacaoLabels[ordenacao], remover: () => setOrdenacao('data') });
+      filtros.push({ tipo: 'ordenacao', label: ordenacaoLabels[ordenacao], icon: 'swap-vertical', color: colors.teal, remover: () => setOrdenacao('data') });
     }
     return filtros;
   };
@@ -341,31 +344,11 @@ export default function VisitasScreen() {
               </LinearGradient>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={styles.filterButton}
+            <FilterTrigger
+              activeCount={numFiltrosAtivos}
               onPress={abrirFiltros}
-              activeOpacity={0.7}
-            >
-              <LinearGradient
-                colors={numFiltrosAtivos > 0 ? [colors.primary, colors.primaryDark] : [colors.white, colors.backgroundSoft]}
-                style={styles.filterButtonGradient}
-              >
-                <Ionicons 
-                  name="options" 
-                  size={20} 
-                  color={numFiltrosAtivos > 0 ? colors.white : colors.primary} 
-                />
-                <Text style={[
-                  styles.filterButtonText,
-                  numFiltrosAtivos > 0 && { color: colors.white }
-                ]}>Filtros</Text>
-                {numFiltrosAtivos > 0 && (
-                  <View style={styles.filterBadgeContainer}>
-                    <Text style={styles.filterBadgeText}>{numFiltrosAtivos}</Text>
-                  </View>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+              style={styles.filterButton}
+            />
           </>
         )}
       </LinearGradient>
@@ -382,66 +365,20 @@ export default function VisitasScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Chips de Filtros Ativos */}
-        {filtrosAtivos.length > 0 && (
-          <View style={styles.activeFiltrosContainer}>
-            <View style={styles.activeFiltrosHeader}>
-              <Ionicons name="funnel" size={14} color={colors.textLight} />
-              <Text style={styles.activeFiltrosTitle}>Filtros Ativos:</Text>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.activeFiltrosContent}
-            >
-              {filtrosAtivos.map((filtro, index) => {
-                const iconeConfig = {
-                  status: { name: 'checkmark-circle', color: colors.success },
-                  data: { name: 'calendar', color: colors.coral },
-                  ordenacao: { name: 'swap-vertical', color: colors.teal }
-                };
-                const config = iconeConfig[filtro.tipo];
-                
-                return (
-                  <LinearGradient
-                    key={index}
-                    colors={[colors.white, colors.backgroundSoft]}
-                    style={styles.activeFilterChip}
-                  >
-                    <View style={[styles.chipIconContainer, { backgroundColor: config.color + '20' }]}>
-                      <Ionicons name={config.name} size={16} color={config.color} />
-                    </View>
-                    <Text style={styles.activeFilterText}>{filtro.label}</Text>
-                    <TouchableOpacity 
-                      onPress={filtro.remover} 
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                      style={styles.removeFilterButton}
-                    >
-                      <Ionicons name="close" size={16} color={colors.textLight} />
-                    </TouchableOpacity>
-                  </LinearGradient>
-                );
-              })}
-              <TouchableOpacity 
-                style={styles.clearAllFiltersChip}
-                onPress={() => {
-                  setFiltroStatus('todos');
-                  setFiltroData('todos');
-                  setOrdenacao('data');
-                }}
-                activeOpacity={0.7}
-              >
-                <LinearGradient
-                  colors={[colors.errorBgLight, colors.errorBgMedium]}
-                  style={styles.clearAllFiltersGradient}
-                >
-                  <Ionicons name="refresh" size={16} color={colors.error} />
-                  <Text style={styles.clearAllFiltersText}>Limpar</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        )}
+        <ActiveFilterBar
+          items={filtrosAtivos.map((filtro) => ({
+            key: filtro.tipo,
+            label: filtro.label,
+            icon: filtro.icon,
+            color: filtro.color,
+            onRemove: filtro.remover,
+          }))}
+          onClear={() => {
+            setFiltroStatus('todos');
+            setFiltroData('todos');
+            setOrdenacao('data');
+          }}
+        />
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -590,102 +527,40 @@ export default function VisitasScreen() {
         />
       )}
 
-      {/* Modal de Filtros */}
-      <Modal
-        animationType="slide"
-        transparent={true}
+      <FilterBottomSheet
         visible={modalFiltrosVisivel}
         onRequestClose={cancelarFiltros}
+        onClear={limparFiltrosRascunho}
+        onApply={aplicarFiltros}
+        subtitle="Filtre por status, período e ordenação"
       >
-        <Pressable 
-          style={styles.modalOverlay}
-          onPress={cancelarFiltros}
-        >
-          <Pressable style={styles.bottomSheet} onPress={(e) => e.stopPropagation()}>
-            {/* Indicador de arraste */}
-            <View style={styles.sheetHandle} />
-            
-            {/* Header do Bottom Sheet */}
-            <LinearGradient
-              colors={[colors.white, colors.backgroundSoft]}
-              style={styles.sheetHeader}
-            >
-              <View style={styles.sheetTitleContainer}>
-                <View style={styles.sheetIconContainer}>
-                  <Ionicons name="options" size={24} color={colors.primary} />
-                </View>
-                <View>
-                  <Text style={styles.sheetTitle}>Filtros e Ordenação</Text>
-                  <Text style={styles.sheetSubtitle}>Personalize sua visualização</Text>
-                </View>
-              </View>
-              <TouchableOpacity 
-                onPress={cancelarFiltros}
-                style={styles.closeSheetButton}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar sem aplicar alterações"
-              >
-                <Ionicons name="close-circle" size={32} color={colors.muted} />
-              </TouchableOpacity>
-            </LinearGradient>
-
-            <ScrollView style={styles.sheetContent} showsVerticalScrollIndicator={false}>
-              {/* Status */}
-              <Text style={styles.sectionTitle}>Status</Text>
-              <SegmentedChips
-                options={statusOptions}
-                value={filtrosRascunho.status}
-                onChange={(status) => setFiltrosRascunho((atual) => ({ ...atual, status }))}
-                contentStyle={styles.chipsContainer}
-              />
-
-              {/* Período */}
-              <Text style={styles.sectionTitle}>Período</Text>
-              <SegmentedChips
-                options={periodoOptions}
-                value={filtrosRascunho.data}
-                onChange={(data) => setFiltrosRascunho((atual) => ({ ...atual, data }))}
-                contentStyle={styles.chipsContainer}
-              />
-
-              {/* Ordenação */}
-              <Text style={styles.sectionTitle}>Ordenar por</Text>
-              <SegmentedChips
-                options={ordenacaoOptions}
-                value={filtrosRascunho.ordenacao}
-                onChange={(novaOrdenacao) => (
-                  setFiltrosRascunho((atual) => ({ ...atual, ordenacao: novaOrdenacao }))
-                )}
-                contentStyle={styles.chipsContainer}
-              />
-
-              {/* Botão Limpar Filtros */}
-              <TouchableOpacity 
-                style={styles.clearFiltersButton}
-                onPress={limparFiltrosRascunho}
-              >
-                <Ionicons name="refresh-outline" size={20} color={colors.primary} />
-                <Text style={styles.clearFiltersText}>Limpar Filtros</Text>
-              </TouchableOpacity>
-            </ScrollView>
-
-            {/* Botão Aplicar */}
-            <TouchableOpacity 
-              style={styles.applyButton}
-              onPress={aplicarFiltros}
-            >
-              <LinearGradient
-                colors={[colors.primary, colors.primaryDark]}
-                style={styles.applyButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        <FilterSection title="Status">
+          <SegmentedChips
+            options={statusOptions}
+            value={filtrosRascunho.status}
+            onChange={(status) => setFiltrosRascunho((atual) => ({ ...atual, status }))}
+            contentStyle={styles.chipsContainer}
+          />
+        </FilterSection>
+        <FilterSection title="Período">
+          <SegmentedChips
+            options={periodoOptions}
+            value={filtrosRascunho.data}
+            onChange={(data) => setFiltrosRascunho((atual) => ({ ...atual, data }))}
+            contentStyle={styles.chipsContainer}
+          />
+        </FilterSection>
+        <FilterSection title="Ordenar por">
+          <SegmentedChips
+            options={ordenacaoOptions}
+            value={filtrosRascunho.ordenacao}
+            onChange={(novaOrdenacao) => (
+              setFiltrosRascunho((atual) => ({ ...atual, ordenacao: novaOrdenacao }))
+            )}
+            contentStyle={styles.chipsContainer}
+          />
+        </FilterSection>
+      </FilterBottomSheet>
     </View>
   );
 }
