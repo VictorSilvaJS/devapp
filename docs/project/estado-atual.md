@@ -4155,3 +4155,23 @@ isolamento produtivo.
 
 Backend, banco, cache segregado, persistencia, navegacao segura, push e testes
 negativos permanecem em `MP-34`.
+
+## MP-04 - Ciclo De Vida Do Caderno
+
+Status em 2026-07-30: o ciclo canonico foi definido em
+`ciclo-vida-caderno.md`, sem alteracao de codigo.
+
+Rascunho e editavel somente pelo criador. O envio consolida um snapshot
+original imutavel. Complemento, correcao, visibilidade, arquivamento,
+reativacao e anulacao passam a ser eventos auditados, com controle de versao e
+sem exclusao destrutiva. Propriedade, autoria e origem nunca sao reatribuidas.
+
+O estado efetivo continua inalterado: o mock nao possui estado explicito e
+`CadernoCampo.update` ainda substitui o registro. Admin/Colaborador continuam
+vendo a tela de edicao completa e nao existe trilha, evento append-only ou
+controle de concorrencia. Registros atuais devem ser tratados como
+consolidados na migracao, sem inventar historico.
+
+Implementacao do ciclo, obrigatorios por tipo e protecoes locais permanecem em
+`MP-25`. Banco imutavel, autorizacao e concorrencia produtiva permanecem em
+`MP-36`.

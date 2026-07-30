@@ -274,15 +274,28 @@ campo.
 
 ## Regra sobre Caderno de Campo
 
+O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
+
 - O caderno de campo deve registrar apenas o que for relevante para a operacao.
 - Nao deve nascer como modulo excessivamente generico ou pesado.
 - Seu nivel de visibilidade deve ser controlado por regra de perfil e contexto.
+- Rascunho pode ser alterado apenas pelo criador.
+- Depois do envio, o corpo, a autoria, a origem, a Propriedade e a localizacao
+  original ficam imutaveis.
+- Complemento tecnico acrescenta informacao sem reescrever o original.
+- Correcao excepcional exige permissao, motivo, antes/depois e controle de
+  versao.
+- Mudanca de visibilidade e evento auditado.
+- Arquivamento, reativacao e anulacao preservam registro e historico.
+- Produtor nao altera registro consolidado; Admin e Colaborador tambem nao
+  recebem edicao destrutiva, apenas comandos autorizados e auditados.
 - Safra/Safrinha, quando existir no MVP local, e contexto opcional do Caderno
   por Propriedade. Admin e Colaborador autorizado podem gerenciar periodos
   locais; Produtor pode consultar e vincular ao registrar Caderno, mas nao
   gerencia periodos nesta fase.
 
-Este documento nao fecha ainda todos os campos, obrigatoriedades ou fluxos do caderno. Esses detalhes pertencem a consolidacao futura das pendencias.
+O ciclo de vida esta fechado em nivel de contrato. Campos obrigatorios por
+tipo, UI, persistencia append-only e backend pertencem a `MP-25` e `MP-36`.
 
 ## Regra sobre Validacoes Do Mock Administrativo
 

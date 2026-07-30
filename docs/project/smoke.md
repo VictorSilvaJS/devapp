@@ -987,6 +987,29 @@ backend, persistencia e navegacao segura.
 | MP03-09 | P0 | Todos | Mesma chave de evento processada duas vezes | Reprocessar o evento | Existe somente uma entrega por destinatario/chave | Bloqueado | Deduplicacao server-side |
 | MP03-10 | P1 | Todos | Sessao offline ainda valida | Abrir cache de notificacoes | Apenas consulta segregada e autorizada; leitura, descarte e destino exigem rede | Bloqueado | Sem fila de mutacao offline no primeiro corte |
 
+**Rodada MP-04 - Ciclo De Vida Do Caderno**
+
+Esta matriz prepara `MP-25` e `MP-36`. A MP-04 nao altera o mock; portanto, os
+casos abaixo permanecem `Bloqueado` ate existirem estados, eventos e
+persistencia auditavel.
+
+| ID | Criticidade | Perfil | Pre-condicao | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP04-01 | P0 | Produtor | Rascunho proprio na propria Propriedade | Editar e descartar antes do envio | Somente o criador altera o rascunho; nenhum registro consolidado e criado | Bloqueado | Rascunho nao aparece como registrado |
+| MP04-02 | P0 | Produtor | Rascunho valido | Revisar, confirmar e enviar | Transicao atomica para `registrado`, com autoria/origem e snapshot original | Bloqueado | Validacao por tipo entra em `MP-25` |
+| MP04-03 | P0 | Produtor | Registro proprio ja enviado | Tentar editar pela UI, rota direta e payload | Corpo e localizacao original permanecem inalterados | Bloqueado | Produtor nao altera consolidado |
+| MP04-04 | P0 | Colaborador | Registro do Produtor dentro do escopo | Tentar usar edicao completa atual | Edicao destrutiva e recusada; origem e original permanecem | Bloqueado | Acesso ao detalhe nao concede correcao |
+| MP04-05 | P0 | Colaborador | Registro autorizado e permissao de complemento | Adicionar complemento | Complemento aparece separado, com autor/data, sem mudar original | Bloqueado | Produtor ve somente se liberado |
+| MP04-06 | P0 | Admin/Colaborador | Permissao explicita de correcao | Corrigir campo com motivo e versao atual | Evento preserva antes/depois, autor, motivo e incrementa versao | Bloqueado | Propriedade/autoria fora da allowlist |
+| MP04-07 | P0 | Admin/Colaborador | Registro com ponto original | Corrigir localizacao | Novo grupo integral vira valor vigente e grupo original continua consultavel | Bloqueado | Grupo parcial e recusado |
+| MP04-08 | P0 | Admin/Colaborador | Registro autorizado | Alterar visibilidade | Evento registra antes/depois e Produtor recebe apenas o permitido | Bloqueado | Visibilidade nao amplia escopo |
+| MP04-09 | P0 | Admin/Colaborador | Registro consolidado | Arquivar e reativar com justificativa | Sai/volta da lista comum sem perder original ou historico | Bloqueado | Duas transicoes auditadas |
+| MP04-10 | P0 | Admin/Colaborador | Registro consolidado ou arquivado | Anular com justificativa | Registro fica `anulado`, preservado e sem efeito operacional | Bloqueado | Estado terminal; sem delete |
+| MP04-11 | P0 | Dois operadores | Ambos carregaram a mesma versao | Primeiro corrige; segundo envia comando antigo | Segundo recebe conflito e nenhuma alteracao e perdida | Bloqueado | Sem `last write wins` |
+| MP04-12 | P0 | Todos | Registro legado sem estado | Migrar/abrir depois da implementacao | Tratado como consolidado, bloqueado para edicao e sem historico inventado | Bloqueado | Snapshot de migracao identificado |
+| MP04-13 | P0 | Produtor | Sessao offline valida | Criar rascunho e tentar enviar offline | Rascunho local permanece; envio exige reconexao, revisao e confirmacao | Bloqueado | Sem envio automatico |
+| MP04-14 | P0 | Admin/Colaborador | Registro fora do escopo | Tentar complemento/correcao por rota direta | Operacao recusada sem criar evento ou revelar dados adicionais | Bloqueado | Exige autorizacao server-side |
+
 **Rodada Admin - Sincronizacao Territorial E Vinculos Visuais Mockados**
 
 Login principal de teste: usuario admin mockado disponivel no app.

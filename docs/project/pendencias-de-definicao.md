@@ -170,6 +170,13 @@ aberta para criacao de Caderno pelo Talhao como Colaborador, validacao manual
 de Admin, reabertura individual de PNG/ZIP apos recriar imports locais e
 validacao em Android fisico autorizado.
 
+Status em 2026-07-30 (`MP-04`): `ciclo-vida-caderno.md` fechou o contrato de
+rascunho, envio imutavel, complemento, correcao, visibilidade, arquivamento,
+anulacao, autoria e concorrencia. Nao permanece pendente a regra de evolucao do
+registro. Permanecem pendentes obrigatorios por tipo, IDs estaveis de
+responsavel/Talhao, implementacao no app em `MP-25` e auditoria produtiva no
+backend em `MP-36`.
+
 ### 4. Taxonomia final de mapas
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
@@ -703,6 +710,13 @@ revalidar o recurso e a propria tela deve manter seu guard. Permanecem
 pendentes a implementacao do backend, isolamento real, persistencia e testes
 de troca de usuario/rota direta em `MP-34`.
 
+Status em 2026-07-30 (`MP-04`): permissao para abrir Caderno nao implica poder
+de reescrever registro consolidado. Produtor altera somente o proprio
+rascunho. Colaborador/Admin dependem de acao explicita para complemento,
+correcao, visibilidade, arquivamento, reativacao ou anulacao, sempre dentro do
+escopo. Permanecem pendentes implementar e testar essa matriz em `MP-25` e
+`MP-36`.
+
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
@@ -767,6 +781,13 @@ somente consultar cache segregado dentro da janela e do ultimo escopo
 autorizado. Marcar como lida, descartar e resolver o destino exigem conexao; nao
 ha fila de mutacao offline. Permanecem pendentes implementar cache cifrado,
 retencao, limpeza e testes de isolamento em `MP-34`.
+
+Status em 2026-07-30 (`MP-04`): no Caderno, rascunho pode ser criado/editado
+offline e permanece identificado como local, segregado por usuario,
+organizacao e Propriedade. Envio, complemento, correcao, visibilidade,
+arquivamento, reativacao e anulacao exigem conexao, revalidacao e confirmacao.
+Permanecem pendentes implementar conflito, idempotencia, armazenamento seguro
+e sincronizacao em `MP-25`/`MP-36`.
 
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
 

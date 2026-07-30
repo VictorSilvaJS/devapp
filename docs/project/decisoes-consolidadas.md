@@ -631,3 +631,34 @@ de usuario, deep links, push, navegacao e guards dos recursos.
 - notificacao de outro destinatario ou fora do escopo nao pode ser consultada;
 - o contrato nao cria persistencia ou seguranca no front-end;
 - implementacao, isolamento real e testes negativos permanecem em `MP-34`.
+
+---
+
+## 25. Caderno enviado e registro imutavel com evolucao por eventos
+
+### Decisao
+
+O contrato canonico fica em `ciclo-vida-caderno.md`.
+
+- rascunho e editavel somente pelo criador;
+- envio consolida o snapshot original e nao permite retorno ao rascunho;
+- complemento, correcao e visibilidade sao eventos append-only;
+- correcao exige permissao, motivo, antes/depois e versao base;
+- Propriedade, autoria, origem e datas do envio nunca sao reatribuidas;
+- arquivamento e anulacao preservam registro e historico;
+- concorrencia nao usa `last write wins`.
+
+### Alcance
+
+Afeta Novo Caderno, edicao, detalhe, listagens, autoria, localizacao,
+visibilidade, offline, sincronizacao, backend e auditoria dos tres perfis.
+
+### Impacto
+
+- `CadernoCampo.update` continua incompatibilidade conhecida do mock;
+- registro legado deve ser migrado como consolidado, sem inventar historico;
+- Produtor nao altera registro enviado;
+- Admin/Colaborador usam comandos excepcionais, nao edicao destrutiva;
+- campos obrigatorios por tipo ficam em `MP-25`;
+- implementacao no app e fechamento produtivo permanecem em `MP-25` e
+  `MP-36`.
