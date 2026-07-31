@@ -1325,3 +1325,22 @@ Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
 
 Evidencias completas:
 `dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/`.
+
+## MP-15 - Navegacao Da Propriedade
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, Android
+15/API 35, display `800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP15-01 | P2 | Navegacao | Abrir o detalhe em retrato | Barra apresenta os seis destinos na ordem aprovada e permite rolagem horizontal | Passou | `retrato-resumo.png`; `retrato-tabs-direita.png` |
+| MP15-02 | P2 | Conteudos | Abrir Talhoes, Safras, Materiais, Visitas e Caderno | Cada destino apresenta somente o conteudo correspondente | Passou | `retrato-talhoes.png`; `retrato-safras.png`; `retrato-materiais.png`; `retrato-visitas.png`; `retrato-caderno.png` |
+| MP15-03 | P2 | Resumo | Conferir a primeira entrada | Nao existe bloco duplicado de atalhos | Passou | `retrato-resumo.png` |
+| MP15-04 | P2 | Safras/Safrinha | Abrir como Admin com lista vazia | Existe somente uma acao `Novo` | Passou | `paisagem-safras-conteudo.xml` |
+| MP15-05 | P2 | Paisagem | Girar e repetir a navegacao | Seis destinos e conteudos ficam utilizaveis sem corte ou sobreposicao | Passou | `paisagem-talhoes.png`; `paisagem-talhoes-conteudo.png`; `paisagem-caderno-conteudo.png` |
+| MP15-06 | P2 | Retorno | Usar o botao Voltar do Android | Lista de Propriedades reaparece com o contexto de origem presente | Passou | `retorno-propriedades.png` |
+
+Evidencias completas:
+`dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/`.
+
+`MP-16` nao foi iniciada nesta rodada.

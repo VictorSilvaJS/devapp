@@ -60,6 +60,17 @@ import {
   getMaterialPublicTitle,
 } from '../utils/materialPresentationCompat';
 
+const PROPRIEDADE_NAVIGATION_ITEMS = [
+  { id: 'resumo', label: 'Resumo', icon: 'stats-chart-outline' },
+  { id: 'talhoes', label: 'Talhões', icon: 'git-network-outline' },
+  { id: 'safras', label: 'Safras e Safrinha', icon: 'calendar-outline' },
+  { id: 'materiais', label: 'Materiais', icon: 'images-outline' },
+  { id: 'visitas', label: 'Visitas', icon: 'calendar-outline' },
+  { id: 'caderno', label: 'Caderno', icon: 'book-outline' },
+] as const;
+
+type PropriedadeNavigationId = typeof PROPRIEDADE_NAVIGATION_ITEMS[number]['id'];
+
 export default function ProdutorScreen({ route, navigation }) {
   const toast = useToast();
   const { user } = useAuth();
@@ -75,7 +86,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const [usuariosMock, setUsuariosMock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
-  const [activeTab, setActiveTab] = useState('resumo');
+  const [activeTab, setActiveTab] = useState<PropriedadeNavigationId>('resumo');
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -559,64 +570,37 @@ export default function ProdutorScreen({ route, navigation }) {
         </ScrollView>
 
         {/* Tabs de Navegação */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'resumo' && styles.tabActive]}
-            onPress={() => setActiveTab('resumo')}
-          >
-            <Ionicons 
-              name="stats-chart-outline" 
-              size={20} 
-              color={activeTab === 'resumo' ? colors.primary : colors.muted} 
-              style={styles.tabIcon}
-            />
-            <Text style={[styles.tabText, activeTab === 'resumo' && styles.tabTextActive]}>
-              Resumo
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'lavoura' && styles.tabActive]}
-            onPress={() => setActiveTab('lavoura')}
-          >
-            <Ionicons 
-              name="map-outline" 
-              size={20} 
-              color={activeTab === 'lavoura' ? colors.primary : colors.muted} 
-              style={styles.tabIcon}
-            />
-            <Text style={[styles.tabText, activeTab === 'lavoura' && styles.tabTextActive]}>
-              Talhões
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'visitas' && styles.tabActive]}
-            onPress={() => setActiveTab('visitas')}
-          >
-            <Ionicons 
-              name="calendar-outline" 
-              size={20} 
-              color={activeTab === 'visitas' ? colors.primary : colors.muted} 
-              style={styles.tabIcon}
-            />
-            <Text style={[styles.tabText, activeTab === 'visitas' && styles.tabTextActive]}>
-              Visitas
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'caderno' && styles.tabActive]}
-            onPress={() => setActiveTab('caderno')}
-          >
-            <Ionicons
-              name="book-outline"
-              size={20}
-              color={activeTab === 'caderno' ? colors.primary : colors.muted}
-              style={styles.tabIcon}
-            />
-            <Text style={[styles.tabText, activeTab === 'caderno' && styles.tabTextActive]}>
-              Caderno
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabsContainer}
+          contentContainerStyle={styles.tabsContent}
+        >
+          {PROPRIEDADE_NAVIGATION_ITEMS.map((item) => {
+            const isActive = activeTab === item.id;
+
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.tab, isActive && styles.tabActive]}
+                onPress={() => setActiveTab(item.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={item.label}
+              >
+                <Ionicons
+                  name={item.icon}
+                  size={18}
+                  color={isActive ? colors.primary : colors.muted}
+                  style={styles.tabIcon}
+                />
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
 
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
@@ -628,49 +612,6 @@ export default function ProdutorScreen({ route, navigation }) {
                 style={styles.infoBox}
               />
             )}
-
-            <SectionCard title="Atalhos da Propriedade" icon="compass-outline">
-              <View style={styles.quickActionGrid}>
-                <TouchableOpacity
-                  style={styles.quickActionCard}
-                  onPress={() => navigation.navigate('FazendaMapa', buildFazendaMapaRouteParamsFromPropriedade(produtor))}
-                  activeOpacity={0.78}
-                >
-                  <Ionicons name="git-network-outline" size={20} color={colors.primary} />
-                  <Text style={styles.quickActionTitle}>Panorama e Talhões</Text>
-                  <Text style={styles.quickActionText}>Consultar divisão interna</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.quickActionCard}
-                  onPress={() => navigation.navigate('Mapas', mapasRouteParams)}
-                  activeOpacity={0.78}
-                >
-                  <Ionicons name="images-outline" size={20} color={colors.primary} />
-                  <Text style={styles.quickActionTitle}>Materiais técnicos</Text>
-                  <Text style={styles.quickActionText}>Abrir mapas e anexos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.quickActionCard}
-                  onPress={() => setActiveTab('visitas')}
-                  activeOpacity={0.78}
-                >
-                  <Ionicons name="calendar-outline" size={20} color={colors.primary} />
-                  <Text style={styles.quickActionTitle}>Histórico de visitas</Text>
-                  <Text style={styles.quickActionText}>Acompanhar atendimentos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.quickActionCard}
-                  onPress={() => setActiveTab('caderno')}
-                  activeOpacity={0.78}
-                >
-                  <Ionicons name="book-outline" size={20} color={colors.primary} />
-                  <Text style={styles.quickActionTitle}>Caderno de campo</Text>
-                  <Text style={styles.quickActionText}>
-                    {isProdutorView ? 'Ver e registrar ocorrências' : 'Ver registros liberados'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </SectionCard>
 
             <SectionCard title="Contexto da Propriedade" icon="home-outline">
               <View style={styles.infoRow}>
@@ -922,7 +863,7 @@ export default function ProdutorScreen({ route, navigation }) {
           </View>
         )}
 
-        {activeTab === 'lavoura' && (
+        {activeTab === 'talhoes' && (
           <View style={styles.tabContent}>
             <SectionCard
               title="Talhões da Propriedade"
@@ -937,7 +878,11 @@ export default function ProdutorScreen({ route, navigation }) {
                 style={styles.infoBox}
               />
             </SectionCard>
+          </View>
+        )}
 
+        {activeTab === 'safras' && (
+          <View style={styles.tabContent}>
             <SectionCard
               title="Safras e Safrinha"
               subtitle="Organização local e opcional dos ciclos produtivos da Propriedade."
@@ -955,9 +900,6 @@ export default function ProdutorScreen({ route, navigation }) {
                       ? 'Cadastre períodos locais para organizar registros do Caderno.'
                       : 'Nenhuma Safra/Safrinha vinculada a esta Propriedade.'
                   }
-                  actionLabel={podeGerenciarPeriodosNaFazenda ? 'Nova Safra/Safrinha' : undefined}
-                  actionIcon={podeGerenciarPeriodosNaFazenda ? 'add-outline' : undefined}
-                  onActionPress={podeGerenciarPeriodosNaFazenda ? handleNovoPeriodoProdutivo : undefined}
                   style={styles.emptyStateCompact}
                 />
               ) : (
@@ -1032,7 +974,11 @@ export default function ProdutorScreen({ route, navigation }) {
                 })
               )}
             </SectionCard>
+          </View>
+        )}
 
+        {activeTab === 'materiais' && (
+          <View style={styles.tabContent}>
             <SectionCard
               title={tituloMateriaisPropriedade}
               icon="map-outline"
@@ -1490,20 +1436,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tabsContainer: {
-    flexDirection: 'row',
     backgroundColor: colors.accentDark,
     borderRadius: spacing.radius,
-    padding: 4,
-    marginBottom: 16
+    marginBottom: spacing.lg,
+  },
+  tabsContent: {
+    padding: spacing.xs,
+    gap: spacing.xs,
   },
   tab: {
-    flex: 1,
     flexDirection: 'row',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    minHeight: 44,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     borderRadius: spacing.radiusSm,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   tabActive: {
     backgroundColor: colors.card
@@ -1558,32 +1506,6 @@ const styles = StyleSheet.create({
   emptyStateCompact: {
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.md,
-  },
-  quickActionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  quickActionCard: {
-    width: '48%',
-    minHeight: 104,
-    padding: spacing.md,
-    borderRadius: spacing.radiusSm,
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  quickActionTitle: {
-    marginTop: spacing.sm,
-    fontSize: typography.fontBody - 1,
-    fontWeight: typography.weightBold,
-    color: colors.text,
-  },
-  quickActionText: {
-    marginTop: 4,
-    fontSize: typography.fontCaption + 1,
-    color: colors.textLight,
-    lineHeight: 18,
   },
   sectionHeader: {
     flexDirection: 'row',

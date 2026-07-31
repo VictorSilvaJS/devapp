@@ -4424,4 +4424,30 @@ abertura de Novo Registro, sem salvar dados. Evidencias:
 `dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/`.
 
 Grids e colisoes de Dashboard permanecem em `MP-18`; o sistema de cartoes
-permanece em `MP-21`. `MP-15` nao foi iniciada.
+permanece em `MP-21`. `MP-15` foi executada na sequencia.
+
+## MP-15 - Navegacao Da Propriedade
+
+Status em 2026-07-31: `CONCLUIDO`.
+
+O detalhe da Propriedade passou a usar uma unica navegacao, nesta ordem:
+`Resumo`, `Talhoes`, `Safras e Safrinha`, `Materiais`, `Visitas` e `Caderno`.
+A barra rola horizontalmente no retrato e mantem os seis destinos visiveis no
+paisagem do aparelho validado. Cada destino apresenta somente o conteudo
+correspondente.
+
+O bloco duplicado `Atalhos da Propriedade` saiu do Resumo. Talhoes,
+Safras/Safrinha e Materiais deixaram de compartilhar a mesma aba, e o estado
+vazio de Safras/Safrinha deixou de repetir a acao de criacao ja existente no
+cabecalho da secao. Rotas, contexto de `fazenda_id`, permissoes, payloads e
+persistencia permaneceram inalterados.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release foi instalado por `adb`; o smoke em
+Android fisico passou em retrato e paisagem, nos seis destinos e no retorno a
+lista de Propriedades. Evidencias:
+`dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/`.
+
+A entrada `Lista | Mapa` de Talhoes permanece em `MP-16`; filtros de Materiais
+em `MP-17`; reorganizacao do Resumo em `MP-19`; regras especificas de
+Safra/Safrinha em `MP-23`. `MP-16` nao foi iniciada.

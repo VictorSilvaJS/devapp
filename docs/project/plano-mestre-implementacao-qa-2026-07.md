@@ -6,7 +6,8 @@
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
-> concluídas; `MP-14` também foi concluída e `MP-15` não foi iniciada
+> concluídas; `MP-14` e `MP-15` também foram concluídas; `MP-16` não foi
+> iniciada
 
 ## 1. Objetivo
 
@@ -189,7 +190,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
-| 16 | `MP-15` Navegação da Propriedade | `QA-P2-01` | Adotar Resumo, Talhões, Safras e Safrinha, Materiais, Visitas e Caderno | `MP-10` | `BACKLOG` |
+| 16 | `MP-15` Navegação da Propriedade | `QA-P2-01` | Adotar Resumo, Talhões, Safras e Safrinha, Materiais, Visitas e Caderno | `MP-10` | `CONCLUIDO` |
 | 17 | `MP-16` Entrada de Talhões | `QA-P2-02` | Criar `Lista \| Mapa`, com Lista inicial no celular | `MP-15` | `BACKLOG` |
 | 18 | `MP-17` Filtros de Materiais | `QA-P2-03` | Reduzir poluição, eliminar seleção inicial indevida e organizar chips | `MP-09`, `MP-15` | `BACKLOG` |
 | 19 | `MP-18` Dashboards e indicadores responsivos | `QA-P2-06` | Corrigir grids, paisagem, largura dos cartões e colisão com FAB | `MP-11`, `MP-14` | `BACKLOG` |
@@ -376,6 +377,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-12` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `4efa1d2` | testes focados, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato e paisagem | `dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/` | reorganização de filtros permanece em `MP-17`; cartões em `MP-21`; `MP-13` não foi iniciada |
 | 2026-07-31 | `MP-13` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `c37cc2a` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou obrigatórios, mensagens adjacentes, correção progressiva, rolagem, foco e teclado | `dist/qa-session-2026-07-31/mp-13-validacao-formularios/` | regras específicas permanecem em `MP-23`, `MP-25` e `MP-27`; `MP-14` não foi iniciada |
 | 2026-07-31 | `MP-14` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `3034d70` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou faixa de ação sem oclusão, conteúdo final, retrato, paisagem e navegação | `dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/` | grids e colisões de Dashboard permanecem em `MP-18`; cartões em `MP-21`; `MP-15` não foi iniciada |
+| 2026-07-31 | `MP-15` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `9383518` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou os seis destinos, retrato, paisagem e retorno | `dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/` | `MP-16`, `MP-17`, `MP-19` e `MP-23` permanecem separadas; `MP-16` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -506,4 +508,20 @@ durante a rolagem, último cartão totalmente alcançável, retrato, paisagem e
 abertura de Novo Registro sem persistir dados.
 
 Grids e colisões de Dashboard permanecem em `MP-18`; o sistema de cartões
-permanece em `MP-21`. `MP-15` não foi iniciada.
+permanece em `MP-21`. `MP-15` foi executada na sequência.
+
+`MP-15` foi concluída em 2026-07-31. O detalhe da Propriedade agora oferece
+uma única navegação com `Resumo`, `Talhões`, `Safras e Safrinha`, `Materiais`,
+`Visitas` e `Caderno`, nessa ordem. A barra é rolável no retrato e mostra os
+seis destinos simultaneamente no paisagem validado. Os atalhos duplicados do
+Resumo foram removidos; Talhões, períodos produtivos e Materiais ganharam
+destinos separados; Safras/Safrinha mantém uma única ação de criação.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. No Android físico, o smoke confirmou os seis destinos e
+seus conteúdos em retrato e paisagem, além do retorno à lista de Propriedades.
+Rotas, permissões, payloads, persistência e `fazenda_id` não foram alterados.
+
+A entrada `Lista | Mapa` permanece em `MP-16`; filtros de Materiais em
+`MP-17`; reorganização do Resumo em `MP-19`; regras de Safra/Safrinha em
+`MP-23`. `MP-16` não foi iniciada.
