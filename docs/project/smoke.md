@@ -1309,3 +1309,19 @@ Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
 
 Evidencias completas:
 `dist/qa-session-2026-07-31/mp-13-validacao-formularios/`.
+
+## MP-14 - Espacamento Seguro E FAB
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP14-01 | P2 | Caderno global | Abrir a lista em retrato | Acao fica em faixa propria, fora da area rolavel e acima das abas | Passou | `01-caderno-retrato-inicial.png` |
+| MP14-02 | P2 | Caderno global | Rolar entre os cartoes | Cartoes terminam na borda da rolagem e nao passam sob o botao | Passou | `02-caderno-retrato-rolagem.png` |
+| MP14-03 | P2 | Caderno global | Rolar ate o fim | Ultimo cartao fica totalmente visivel e o padding seguro permanece | Passou | `03-caderno-retrato-final.png` |
+| MP14-04 | P2 | Caderno global | Girar para paisagem e alcancar o fim | Faixa e conteudo permanecem separados e utilizaveis | Passou | `04-caderno-paisagem-final.png` |
+| MP14-05 | P2 | Acao de criacao | Acionar Novo Registro e voltar | Navegacao abre o formulario e nenhum dado e salvo | Passou | `05-acao-novo-registro-preservada.png` |
+
+Evidencias completas:
+`dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/`.

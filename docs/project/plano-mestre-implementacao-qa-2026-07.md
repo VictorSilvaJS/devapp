@@ -6,7 +6,7 @@
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
-> concluídas; `MP-14` não foi iniciada
+> concluídas; `MP-14` também foi concluída e `MP-15` não foi iniciada
 
 ## 1. Objetivo
 
@@ -171,7 +171,7 @@ nova registrada neste documento.
 | 12 | `MP-11` Contraste e opacidade | `QA-P2-09` | Corrigir tokens e pares semânticos de superfície/texto | `MP-00` | `CONCLUIDO` |
 | 13 | `MP-12` Linguagem e formatação | `QA-P2-17`, `QA-P3-01` | Padronizar Coleta de Solo, áreas, rótulos e nomes técnicos | `MP-00` | `CONCLUIDO` |
 | 14 | `MP-13` Validação visual dos formulários | `QA-P2-16` | Sinalizar obrigatórios, focar primeiro erro e manter mensagens junto ao campo | `MP-00` | `CONCLUIDO` |
-| 15 | `MP-14` Espaçamento seguro e FAB | `QA-P2-18` | Preservar conteúdo final e remover oclusão transitória relevante | `MP-00` | `BACKLOG` |
+| 15 | `MP-14` Espaçamento seguro e FAB | `QA-P2-18` | Preservar conteúdo final e remover oclusão transitória relevante | `MP-00` | `CONCLUIDO` |
 
 #### Subtarefas obrigatórias de `MP-09`
 
@@ -375,6 +375,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-11` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `8680761` | teste focado WCAG, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato, paisagem e busca com teclado | `dist/qa-session-2026-07-30/mp-11-contraste-opacidade/` | sistema de cartões permanece em `MP-21`; matriz completa de acessibilidade em `MP-40`; `MP-12` não foi iniciada |
 | 2026-07-30 | `MP-12` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `4efa1d2` | testes focados, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato e paisagem | `dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/` | reorganização de filtros permanece em `MP-17`; cartões em `MP-21`; `MP-13` não foi iniciada |
 | 2026-07-31 | `MP-13` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `c37cc2a` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou obrigatórios, mensagens adjacentes, correção progressiva, rolagem, foco e teclado | `dist/qa-session-2026-07-31/mp-13-validacao-formularios/` | regras específicas permanecem em `MP-23`, `MP-25` e `MP-27`; `MP-14` não foi iniciada |
+| 2026-07-31 | `MP-14` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `3034d70` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou faixa de ação sem oclusão, conteúdo final, retrato, paisagem e navegação | `dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/` | grids e colisões de Dashboard permanecem em `MP-18`; cartões em `MP-21`; `MP-15` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -490,5 +491,19 @@ progressiva; a edição de Propriedade confirmou rolagem, mensagem adjacente,
 foco real e reabertura do teclado. Nenhum dado de teste foi salvo.
 
 Regras obrigatórias específicas por domínio continuam reservadas para
-`MP-23`, `MP-25` e `MP-27`. Espaçamento seguro e FAB permanecem em `MP-14`,
-que não foi iniciada.
+`MP-23`, `MP-25` e `MP-27`. `MP-14` foi executada na sequência.
+
+`MP-14` foi concluída em 2026-07-31. No Caderno global, a ação de criação
+deixou de ficar posicionada sobre a lista e passou a ocupar uma faixa inferior
+própria, fora da área rolável e acima da navegação por abas. O padding seguro
+existente foi preservado, assim como rótulo, ícone, acessibilidade, regra de
+permissão e navegação para Novo Registro. O modo flutuante padrão das outras
+listas não foi alterado.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. No Android físico, o smoke confirmou ausência de oclusão
+durante a rolagem, último cartão totalmente alcançável, retrato, paisagem e
+abertura de Novo Registro sem persistir dados.
+
+Grids e colisões de Dashboard permanecem em `MP-18`; o sistema de cartões
+permanece em `MP-21`. `MP-15` não foi iniciada.

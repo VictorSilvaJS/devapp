@@ -4401,4 +4401,27 @@ na edicao de Propriedade. Nenhuma alteracao do smoke foi salva. Evidencias:
 `dist/qa-session-2026-07-31/mp-13-validacao-formularios/`.
 
 Regras especificas de Safra, Caderno e estados de Visita permanecem em
-`MP-23`, `MP-25` e `MP-27`. `MP-14` nao foi iniciada.
+`MP-23`, `MP-25` e `MP-27`. `MP-14` foi executada na sequencia.
+
+## MP-14 - Espacamento Seguro E FAB
+
+Status em 2026-07-31: `CONCLUIDO`.
+
+No Caderno global, a acao de criacao passou a ocupar uma faixa inferior
+propria, fora da area rolavel e acima da navegacao por abas. Cartoes nao
+passam mais sob o botao durante a rolagem. O padding inferior seguro foi
+preservado e o ultimo cartao permanece totalmente alcancavel.
+
+`CreateActionButton` oferece um modo ancorado opcional. Somente o Caderno usa
+esse modo neste corte; Propriedades, Usuarios e Visitas preservam o
+posicionamento flutuante existente. Rotulo, icone, acessibilidade, permissao
+e navegacao para Novo Registro permaneceram inalterados.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release foi instalado via `adb`; o smoke
+fisico passou em retrato, paisagem, rolagem intermediaria, fim da lista e
+abertura de Novo Registro, sem salvar dados. Evidencias:
+`dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/`.
+
+Grids e colisoes de Dashboard permanecem em `MP-18`; o sistema de cartoes
+permanece em `MP-21`. `MP-15` nao foi iniciada.

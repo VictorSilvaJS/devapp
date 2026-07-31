@@ -11,6 +11,7 @@ type CreateActionButtonProps = {
   icon?: IconName;
   onPress: () => void;
   accessibilityLabel?: string;
+  placement?: 'floating' | 'docked';
 };
 
 export default function CreateActionButton({
@@ -18,10 +19,14 @@ export default function CreateActionButton({
   icon = 'add-outline',
   onPress,
   accessibilityLabel = label,
+  placement = 'floating',
 }: CreateActionButtonProps) {
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[
+        styles.container,
+        placement === 'docked' ? styles.dockedContainer : styles.floatingContainer,
+      ]}
       onPress={onPress}
       activeOpacity={0.85}
       accessibilityRole="button"
@@ -37,12 +42,17 @@ export default function CreateActionButton({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    right: spacing.screen,
-    bottom: spacing.screen + 20,
     borderRadius: 28,
     overflow: 'hidden',
     ...shadows.lg,
+  },
+  floatingContainer: {
+    position: 'absolute',
+    right: spacing.screen,
+    bottom: spacing.screen + 20,
+  },
+  dockedContainer: {
+    alignSelf: 'flex-end',
   },
   gradient: {
     flexDirection: 'row',
