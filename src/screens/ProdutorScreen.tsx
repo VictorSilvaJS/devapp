@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
+import PropriedadeTalhoesEntry from '../components/PropriedadeTalhoesEntry';
 import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { useToast } from '../components/Toast';
 import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
@@ -294,6 +295,20 @@ export default function ProdutorScreen({ route, navigation }) {
   const getMapaAtualRouteParams = (mapa) => buildFazendaMapaRouteParamsFromPropriedade(produtor, {
     ...buildMapaTalhaoRouteSelection(mapa, limites),
   });
+  const handleAbrirTalhaoNoMapa = (talhao?) => navigation.navigate(
+    'FazendaMapa',
+    buildFazendaMapaRouteParamsFromPropriedade(
+      produtor,
+      talhao
+        ? {
+            talhaoId: talhao.id,
+            talhaoNome: talhao.talhao || talhao.nome,
+            talhao: talhao.talhao || talhao.nome,
+            talhaoAno: talhao.ano ? String(talhao.ano) : undefined,
+          }
+        : undefined
+    )
+  );
   const podeCriarCadernoNaFazenda = podeIncluirCadernoEmFazenda(user, produtor);
   const podeCriarVisitaNaFazenda = podeCriarVisitaEmFazenda(user, produtor);
   const podeGerenciarPeriodosNaFazenda = podeGerenciarPeriodoProdutivoEmFazenda(user, produtor);
@@ -867,15 +882,12 @@ export default function ProdutorScreen({ route, navigation }) {
           <View style={styles.tabContent}>
             <SectionCard
               title="Talhões da Propriedade"
-              subtitle="Abra um Talhão para consultar Safra/Safrinha, Caderno e materiais relacionados."
+              subtitle="Consulte a lista ou visualize a demarcação dos Talhões desta Propriedade."
               icon="git-network-outline"
-              actionLabel="Abrir detalhes"
-              actionIcon="chevron-forward-outline"
-              onActionPress={() => navigation.navigate('Mapas', mapasRouteParams)}
             >
-              <InfoBox
-                message={`${limites.length} ${limites.length === 1 ? 'talhão disponível' : 'talhões disponíveis'} para consulta no panorama da Propriedade.`}
-                style={styles.infoBox}
+              <PropriedadeTalhoesEntry
+                talhoes={limites}
+                onOpenMapa={handleAbrirTalhaoNoMapa}
               />
             </SectionCard>
           </View>

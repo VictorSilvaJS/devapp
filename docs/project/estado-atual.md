@@ -4448,6 +4448,32 @@ Android fisico passou em retrato e paisagem, nos seis destinos e no retorno a
 lista de Propriedades. Evidencias:
 `dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/`.
 
-A entrada `Lista | Mapa` de Talhoes permanece em `MP-16`; filtros de Materiais
-em `MP-17`; reorganizacao do Resumo em `MP-19`; regras especificas de
-Safra/Safrinha em `MP-23`. `MP-16` nao foi iniciada.
+A entrada `Lista | Mapa` de Talhoes foi executada em `MP-16`; filtros de
+Materiais em `MP-17`, reorganizacao do Resumo em `MP-19` e regras especificas
+de Safra/Safrinha em `MP-23` permanecem separados.
+
+## MP-16 - Entrada De Talhoes
+
+Status em 2026-07-31: `CONCLUIDO`.
+
+A aba Talhoes da Propriedade passou a oferecer o seletor acessivel
+`Lista | Mapa`, iniciando em Lista. Cada item apresenta nome, referencia, area
+e metadados ja disponiveis. O estado vazio e controlado. Abrir um item usa a
+rota existente de `FazendaMapa`, preserva o contexto da Propriedade e envia o
+Talhao selecionado.
+
+O modo Mapa reutiliza a demarcacao existente como previa acionavel e oferece
+`Abrir mapa interativo`. Na ausencia de geometria, a entrada mantem a lista e
+exibe mensagem controlada. O redesign do mapa, painel lateral, legenda e
+recalculo especifico de orientacao permanecem em `MP-31`.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release de 92.019.832 bytes, SHA-256
+`AA0C218D6F627DDC707D9E59C9A43D2605A403E3CF1D36EE20CFC097A566D7EC`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke passou em
+retrato e paisagem para Lista, Mapa, rolagem e abertura de `T01 - 230` no mapa
+com contexto da Fazenda Sela de Prata I. A rotacao automatica foi restaurada e
+nao houve excecao fatal no logcat recente. Evidencias:
+`dist/qa-session-2026-07-31/mp-16-entrada-talhoes/`.
+
+`MP-17` nao foi iniciada.

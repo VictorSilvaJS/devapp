@@ -67,10 +67,6 @@ test('Resumo nao repete atalhos e Safras oferece uma unica acao de criacao', () 
   assert.doesNotMatch(source, /actionLabel=\{podeGerenciarPeriodosNaFazenda \? 'Nova Safra\/Safrinha'/);
 });
 
-test('MP-15 nao antecipa a entrada Lista e Mapa reservada para MP-16', () => {
-  assert.doesNotMatch(source, /Lista\s*\|\s*Mapa/);
-});
-
 if (failed > 0) {
   process.exitCode = 1;
   console.error(`\n${failed} teste(s) falharam.`);
