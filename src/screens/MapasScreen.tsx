@@ -326,6 +326,11 @@ export default function MapasScreen({ route, navigation }) {
   const [ordenacao, setOrdenacao] = useState('recente');
   const [filtrosMateriaisVisiveis, setFiltrosMateriaisVisiveis] = useState(false);
   const [filtrosMateriaisRascunho, setFiltrosMateriaisRascunho] = useState({
+    fazenda: FILTRO_TODOS,
+    demarcacao: FILTRO_TODOS,
+    talhao: FILTRO_TODOS,
+    anoMaterial: FILTRO_TODOS,
+    safra: FILTRO_TODOS,
     categoria: FILTRO_TODOS,
     ordenacao: 'recente',
   });
@@ -537,7 +542,7 @@ export default function MapasScreen({ route, navigation }) {
       setAnosDisponiveis(anos);
       setAnoFiltroLimite((anoAtual) => {
         if (anos.length === 0) return null;
-        return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
+        return anoAtual && anos.includes(anoAtual) ? anoAtual : null;
       });
     } catch (error) {
       setCadernos([]);
@@ -929,7 +934,7 @@ export default function MapasScreen({ route, navigation }) {
     setAnosDisponiveis(anos);
     setAnoFiltroLimite((anoAtual) => {
       if (anos.length === 0) return null;
-      return anoAtual && anos.includes(anoAtual) ? anoAtual : anos[0];
+      return anoAtual && anos.includes(anoAtual) ? anoAtual : null;
     });
 
     return {
@@ -1230,6 +1235,7 @@ export default function MapasScreen({ route, navigation }) {
 
   const limparFiltrosPanorama = () => {
     setCategoriaAtiva(FILTRO_TODOS);
+    setOrdenacao('recente');
     setAnoFiltroMateriais(FILTRO_TODOS);
     setSafraFiltroMapas(FILTRO_TODOS);
     setTalhaoFiltroMapas(FILTRO_TODOS);
@@ -1863,7 +1869,7 @@ export default function MapasScreen({ route, navigation }) {
     }
   };
 
-  const tituloTela = 'Material técnico';
+  const tituloTela = 'Materiais técnicos';
   const contextoLabel = consultaPorFazenda
     ? isProdutorView ? 'Consulta da Propriedade' : 'Consulta por propriedade'
     : fazendaFiltroInfo
@@ -1909,7 +1915,7 @@ export default function MapasScreen({ route, navigation }) {
     ? categoriaAtiva
     : categoriaUnicaNoContexto;
   const categoriaSecaoLabel = categoriaSecao ? getCategoriaMapaLabel(categoriaSecao) : '';
-  const tituloSecaoMateriais = 'Material técnico';
+  const tituloSecaoMateriais = 'Materiais técnicos';
   const subtituloSecaoMateriais = categoriaSecaoLabel
     ? `${categoriaSecaoLabel} disponível no contexto da Propriedade.`
     : 'Fertilidade, correção de solo e prescrição disponíveis para consulta.';
@@ -1969,7 +1975,52 @@ export default function MapasScreen({ route, navigation }) {
     ],
     [anosMateriais]
   );
+  const anoDemarcacaoFiltroOptions = useMemo(
+    () => [
+      { value: FILTRO_TODOS, label: 'Todas' },
+      ...anosDisponiveis.map((ano) => ({
+        value: String(ano),
+        label: `LT ${ano}`,
+      })),
+    ],
+    [anosDisponiveis]
+  );
   const filtrosMateriaisAtivos = [
+    ...(fazendaFiltroInfo ? [{
+      key: 'fazenda',
+      label: fazendaFiltroInfo.fazendaNome || 'Propriedade',
+      icon: 'business-outline' as const,
+      color: colors.primary,
+      onRemove: () => setFazendaFiltroOperacional(FILTRO_TODOS),
+    }] : []),
+    ...(anoFiltroLimite ? [{
+      key: 'demarcacao',
+      label: `LT ${anoFiltroLimite}`,
+      icon: 'calendar-outline' as const,
+      color: colors.info,
+      onRemove: () => setAnoFiltroLimite(null),
+    }] : []),
+    ...(talhaoFiltroAtual !== FILTRO_TODOS ? [{
+      key: 'talhao',
+      label: talhaoFiltroAtual,
+      icon: 'location-outline' as const,
+      color: colors.secondary,
+      onRemove: () => handleTalhaoFiltroChange(FILTRO_TODOS),
+    }] : []),
+    ...(anoFiltroMateriais !== FILTRO_TODOS ? [{
+      key: 'ano-material',
+      label: anoFiltroMateriais,
+      icon: 'calendar-outline' as const,
+      color: colors.info,
+      onRemove: () => setAnoFiltroMateriais(FILTRO_TODOS),
+    }] : []),
+    ...(safraFiltroMapas !== FILTRO_TODOS ? [{
+      key: 'safra',
+      label: safraFiltroMapas,
+      icon: 'leaf-outline' as const,
+      color: colors.success,
+      onRemove: () => setSafraFiltroMapas(FILTRO_TODOS),
+    }] : []),
     ...(categoriaAtiva !== FILTRO_TODOS ? [{
       key: 'categoria',
       label: getCategoriaMapaLabel(categoriaAtiva),
@@ -1988,6 +2039,11 @@ export default function MapasScreen({ route, navigation }) {
 
   const abrirFiltrosMateriais = () => {
     setFiltrosMateriaisRascunho({
+      fazenda: fazendaFiltroOperacional,
+      demarcacao: anoFiltroLimite ? String(anoFiltroLimite) : FILTRO_TODOS,
+      talhao: talhaoFiltroAtual,
+      anoMaterial: anoFiltroMateriais,
+      safra: safraFiltroMapas,
       categoria: categoriaAtiva,
       ordenacao,
     });
@@ -1996,6 +2052,11 @@ export default function MapasScreen({ route, navigation }) {
 
   const cancelarFiltrosMateriais = () => {
     setFiltrosMateriaisRascunho({
+      fazenda: fazendaFiltroOperacional,
+      demarcacao: anoFiltroLimite ? String(anoFiltroLimite) : FILTRO_TODOS,
+      talhao: talhaoFiltroAtual,
+      anoMaterial: anoFiltroMateriais,
+      safra: safraFiltroMapas,
       categoria: categoriaAtiva,
       ordenacao,
     });
@@ -2666,99 +2727,19 @@ export default function MapasScreen({ route, navigation }) {
         />
       </View>
 
-      {!consultaPorFazenda && fazendaOptions.length > 1 && (
-        <View style={styles.anoFilterContainer}>
-          <Text style={styles.anoFilterLabel}>
-            <Ionicons name="business-outline" size={14} color={colors.text} /> Contexto da consulta:
-          </Text>
-          <SegmentedChips
-            options={fazendaFiltroOptions}
-            value={fazendaFiltroOperacional}
-            onChange={setFazendaFiltroOperacional}
-            horizontal
-            contentStyle={styles.anoFilterContent}
-          />
-        </View>
-      )}
-
-      {anosDisponiveis.length > 0 && (
-        <View style={styles.anoFilterContainer}>
-          <Text style={styles.anoFilterLabel}>
-            <Ionicons name="calendar-outline" size={14} color={colors.text} /> Demarcação:
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.anoFilterContent}>
-            <TouchableOpacity
-              style={[styles.anoChip, !anoFiltroLimite && styles.anoChipActive]}
-              onPress={() => setAnoFiltroLimite(null)}
-            >
-              <Text style={[styles.anoChipText, !anoFiltroLimite && styles.anoChipTextActive]}>Todas</Text>
-            </TouchableOpacity>
-            {anosDisponiveis.map(ano => (
-              <TouchableOpacity
-                key={ano}
-                style={[styles.anoChip, anoFiltroLimite === ano && styles.anoChipActive]}
-                onPress={() => setAnoFiltroLimite(ano)}
-              >
-                <Text style={[styles.anoChipText, anoFiltroLimite === ano && styles.anoChipTextActive]}>
-                  LT {ano}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {talhoesPanorama.length > 0 && (
-        <View style={styles.anoFilterContainer}>
-          <Text style={styles.anoFilterLabel}>
-            <Ionicons name="location-outline" size={14} color={colors.text} /> Talhão:
-          </Text>
-          <SegmentedChips
-            options={talhaoFiltroOptions}
-            value={talhaoFiltroAtual}
-            onChange={handleTalhaoFiltroChange}
-            horizontal
-            contentStyle={styles.anoFilterContent}
-          />
-        </View>
-      )}
-
-      {anosMateriais.length > 0 && (
-        <View style={styles.anoFilterContainer}>
-          <Text style={styles.anoFilterLabel}>
-            <Ionicons name="calendar-outline" size={14} color={colors.text} /> Ano dos materiais:
-          </Text>
-          <SegmentedChips
-            options={anoMaterialFiltroOptions}
-            value={anoFiltroMateriais}
-            onChange={setAnoFiltroMateriais}
-            horizontal
-            contentStyle={styles.anoFilterContent}
-          />
-        </View>
-      )}
-
-      {safrasMapas.length > 0 && (
-        <View style={styles.anoFilterContainer}>
-          <Text style={styles.anoFilterLabel}>
-            <Ionicons name="leaf-outline" size={14} color={colors.text} /> Safra/Safrinha:
-          </Text>
-          <SegmentedChips
-            options={safraFiltroOptions}
-            value={safraFiltroMapas}
-            onChange={setSafraFiltroMapas}
-            horizontal
-            contentStyle={styles.anoFilterContent}
-          />
-        </View>
-      )}
-
-      {temFiltroPanoramaAtivo && (
-        <TouchableOpacity style={styles.limparFiltrosButton} onPress={limparFiltrosPanorama} activeOpacity={0.75}>
-          <Ionicons name="close-circle-outline" size={16} color={colors.primary} />
-          <Text style={styles.limparFiltrosText}>Limpar filtros do panorama</Text>
-        </TouchableOpacity>
-      )}
+      <View style={styles.materialFilterControls}>
+        <FilterTrigger
+          activeCount={filtrosMateriaisAtivos.length}
+          onPress={abrirFiltrosMateriais}
+          label="Filtros do panorama"
+          style={styles.materialFilterTrigger}
+        />
+        <ActiveFilterBar
+          items={filtrosMateriaisAtivos}
+          onClear={limparFiltrosPanorama}
+          style={styles.materialActiveFilters}
+        />
+      </View>
 
       {renderGeoJsonImportPanel()}
 
@@ -2907,23 +2888,6 @@ export default function MapasScreen({ route, navigation }) {
         {renderPngImportPanel()}
       </SectionCard>
 
-      <View style={styles.materialFilterControls}>
-        <FilterTrigger
-          activeCount={filtrosMateriaisAtivos.length}
-          onPress={abrirFiltrosMateriais}
-          label="Filtros dos materiais"
-          style={styles.materialFilterTrigger}
-        />
-        <ActiveFilterBar
-          items={filtrosMateriaisAtivos}
-          onClear={() => {
-            setCategoriaAtiva(FILTRO_TODOS);
-            setOrdenacao('recente');
-          }}
-          style={styles.materialActiveFilters}
-        />
-      </View>
-
       {mapasFiltrados.length === 0 ? (
         <EmptyState
           icon={temFiltroMaterialAtivo ? 'search-outline' : 'folder-open-outline'}
@@ -3069,16 +3033,99 @@ export default function MapasScreen({ route, navigation }) {
         visible={filtrosMateriaisVisiveis}
         onRequestClose={cancelarFiltrosMateriais}
         onClear={() => setFiltrosMateriaisRascunho({
+          fazenda: FILTRO_TODOS,
+          demarcacao: FILTRO_TODOS,
+          talhao: FILTRO_TODOS,
+          anoMaterial: FILTRO_TODOS,
+          safra: FILTRO_TODOS,
           categoria: FILTRO_TODOS,
           ordenacao: 'recente',
         })}
         onApply={() => {
+          if (!consultaPorFazenda) {
+            setFazendaFiltroOperacional(filtrosMateriaisRascunho.fazenda);
+          }
+          setAnoFiltroLimite(
+            filtrosMateriaisRascunho.demarcacao === FILTRO_TODOS
+              ? null
+              : anosDisponiveis.find(
+                  (ano) => String(ano) === filtrosMateriaisRascunho.demarcacao
+                ) ?? null
+          );
+          handleTalhaoFiltroChange(filtrosMateriaisRascunho.talhao);
+          setAnoFiltroMateriais(filtrosMateriaisRascunho.anoMaterial);
+          setSafraFiltroMapas(filtrosMateriaisRascunho.safra);
           setCategoriaAtiva(filtrosMateriaisRascunho.categoria);
           setOrdenacao(filtrosMateriaisRascunho.ordenacao);
           setFiltrosMateriaisVisiveis(false);
         }}
-        subtitle="Filtre e ordene os materiais técnicos deste panorama"
+        subtitle="Ajuste o contexto, os materiais técnicos e a ordenação"
       >
+        {!consultaPorFazenda && fazendaOptions.length > 1 ? (
+          <FilterSection title="Propriedade">
+            <SegmentedChips
+              options={fazendaFiltroOptions}
+              value={filtrosMateriaisRascunho.fazenda}
+              onChange={(fazenda) => setFiltrosMateriaisRascunho((atual) => ({
+                ...atual,
+                fazenda,
+              }))}
+              horizontal
+            />
+          </FilterSection>
+        ) : null}
+        {anosDisponiveis.length > 0 ? (
+          <FilterSection title="Demarcação">
+            <SegmentedChips
+              options={anoDemarcacaoFiltroOptions}
+              value={filtrosMateriaisRascunho.demarcacao}
+              onChange={(demarcacao) => setFiltrosMateriaisRascunho((atual) => ({
+                ...atual,
+                demarcacao,
+              }))}
+              horizontal
+            />
+          </FilterSection>
+        ) : null}
+        {talhoesPanorama.length > 0 ? (
+          <FilterSection title="Talhão">
+            <SegmentedChips
+              options={talhaoFiltroOptions}
+              value={filtrosMateriaisRascunho.talhao}
+              onChange={(talhao) => setFiltrosMateriaisRascunho((atual) => ({
+                ...atual,
+                talhao,
+              }))}
+              horizontal
+            />
+          </FilterSection>
+        ) : null}
+        {anosMateriais.length > 0 ? (
+          <FilterSection title="Ano dos materiais">
+            <SegmentedChips
+              options={anoMaterialFiltroOptions}
+              value={filtrosMateriaisRascunho.anoMaterial}
+              onChange={(anoMaterial) => setFiltrosMateriaisRascunho((atual) => ({
+                ...atual,
+                anoMaterial,
+              }))}
+              horizontal
+            />
+          </FilterSection>
+        ) : null}
+        {safrasMapas.length > 0 ? (
+          <FilterSection title="Safra/Safrinha">
+            <SegmentedChips
+              options={safraFiltroOptions}
+              value={filtrosMateriaisRascunho.safra}
+              onChange={(safra) => setFiltrosMateriaisRascunho((atual) => ({
+                ...atual,
+                safra,
+              }))}
+              horizontal
+            />
+          </FilterSection>
+        ) : null}
         <FilterSection title="Categoria">
           <SegmentedChips
             options={categoriaOptions}
@@ -3969,67 +4016,6 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
 
-  // ── FILTRO ANO ──
-  anoFilterContainer: {
-    backgroundColor: colors.card,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  anoFilterLabel: {
-    fontSize: typography.fontCaption,
-    color: colors.text,
-    fontWeight: typography.weightSemibold,
-    marginBottom: spacing.xs,
-  },
-  anoFilterContent: {
-    gap: spacing.xs,
-    paddingRight: spacing.md,
-  },
-  anoChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: 16,
-    backgroundColor: colors.background,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    marginRight: spacing.xs,
-    maxWidth: 190,
-  },
-  anoChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  anoChipText: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightBold,
-    color: colors.primary,
-  },
-  anoChipTextActive: {
-    color: colors.white,
-  },
-  limparFiltrosButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: spacing.xs,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: spacing.radiusSm,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  limparFiltrosText: {
-    fontSize: typography.fontCaption,
-    color: colors.primary,
-    fontWeight: typography.weightSemibold,
-  },
   materialFilterControls: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,

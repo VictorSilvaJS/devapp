@@ -4476,4 +4476,30 @@ com contexto da Fazenda Sela de Prata I. A rotacao automatica foi restaurada e
 nao houve excecao fatal no logcat recente. Evidencias:
 `dist/qa-session-2026-07-31/mp-16-entrada-talhoes/`.
 
-`MP-17` nao foi iniciada.
+`MP-17` foi executada na sequencia.
+
+## MP-17 - Filtros De Materiais
+
+Status em 2026-07-31: `CONCLUIDO`.
+
+A consulta de Materiais inicia em estado neutro, sem selecionar `LT 2025` ou
+outra demarcacao implicitamente. A area principal mantem visiveis a busca, um
+unico acionador com badge e a faixa rolavel que resume somente filtros
+aplicados. Demarcacao, Talhao, ano dos materiais, Safra/Safrinha, categoria e
+ordenacao ficam no bottom sheet padrao. Alteracoes permanecem em rascunho ate
+`Aplicar Filtros`; fechar ou voltar descarta o rascunho, e a limpeza nao cria
+acao redundante fora da faixa ativa. O cabecalho e a secao usam o titulo
+plural `Materiais tecnicos`.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release de 92.019.812 bytes, SHA-256
+`EC95C7EA3BB52591806BA414B33CA5A0DF8F431CF8FF1D64569AB15191E4D65E`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke confirmou
+estado neutro, cancelamento de `LT 2025` em rascunho, aplicacao combinada de
+`LT 2025` e `Fertilidade`, badge `2 ativos`, chips removiveis e rolagens
+vertical e horizontal em retrato e paisagem. A rotacao automatica foi
+restaurada e nao houve excecao fatal no logcat recente. Evidencias:
+`dist/qa-session-2026-07-31/mp-17-filtros-materiais/`.
+
+A unificacao da fonte dos Materiais permanece em `MP-28`; o redesign
+responsivo do mapa permanece em `MP-31`. `MP-18` nao foi iniciada.
