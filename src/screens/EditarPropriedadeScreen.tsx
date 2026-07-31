@@ -18,6 +18,7 @@ import { useToast } from '../components/Toast';
 import { Produtor, User } from '../api/mock';
 import { buildFazendaUpdatePayload } from '../api/produtorCompat';
 import { useAuth } from '../auth/AuthContext';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import theme from '../theme';
 import { 
   validarArea, 
@@ -28,6 +29,8 @@ import { getTitularIdFazenda, podeEditarProdutor } from '../utils/acessoControle
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { getUsuarioNome, getUsuarioProdutorId, getUsuarioStatusInfo } from '../utils/usuarioAdminCompat';
 
+const PROPRIEDADE_FORM_ERROR_ORDER = ['fazenda_nome', 'area_total', 'estado'] as const;
+
 const STATUS_PROPRIEDADE = [
   { value: 'ativo', label: 'Ativo', icon: 'checkmark-circle-outline' as const },
   { value: 'pendente', label: 'Pendente', icon: 'time-outline' as const },
@@ -37,6 +40,7 @@ const STATUS_PROPRIEDADE = [
 export default function EditarPropriedadeScreen({ route, navigation }) {
   const toast = useToast();
   const { user } = useAuth();
+  const formValidation = useFormValidationFocus(PROPRIEDADE_FORM_ERROR_ORDER);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [produtorAtual, setProdutorAtual] = useState(null);
@@ -94,6 +98,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
     }
 
     setErrors(newErrors);
+    formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -247,9 +252,12 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       <Header title="Editar Propriedade" showBack />
       
       <ScrollView
+        ref={formValidation.scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
       >
         <InfoBox
           title="Edição local demonstrativa"
@@ -286,25 +294,31 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
         </SectionCard>
 
         <SectionCard title="Dados da Propriedade" subtitle="Atualize a identificação e a Área total informada no cadastro local.">
-          <FormField
-            label="Nome da Propriedade"
-            required
-            value={form.fazenda_nome}
-            onChangeText={(text) => handleChange('fazenda_nome', text)}
-            placeholder="Nome da propriedade"
-            error={errors.fazenda_nome}
-          />
+          <View ref={formValidation.registerField('fazenda_nome')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('fazenda_nome')}
+              label="Nome da Propriedade"
+              required
+              value={form.fazenda_nome}
+              onChangeText={(text) => handleChange('fazenda_nome', text)}
+              placeholder="Nome da propriedade"
+              error={errors.fazenda_nome}
+            />
+          </View>
 
-          <FormField
-            label="Área em hectares"
-            required
-            value={form.area_total}
-            onChangeText={(text) => handleChange('area_total', text)}
-            placeholder="Ex: 500"
-            keyboardType="numeric"
-            error={errors.area_total}
-            helperText="Valor cadastral informado; não representa necessariamente a área coberta pelos talhões."
-          />
+          <View ref={formValidation.registerField('area_total')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('area_total')}
+              label="Área em hectares"
+              required
+              value={form.area_total}
+              onChangeText={(text) => handleChange('area_total', text)}
+              placeholder="Ex: 500"
+              keyboardType="numeric"
+              error={errors.area_total}
+              helperText="Valor cadastral informado; não representa necessariamente a área coberta pelos talhões."
+            />
+          </View>
 
           <FormField
             label="CNPJ ou inscrição"
@@ -331,15 +345,18 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
             placeholder="Nome da cidade"
           />
 
-          <FormField
-            label="UF (opcional)"
-            value={form.estado}
-            onChangeText={(text) => handleChange('estado', text.toUpperCase())}
-            placeholder="Ex: RS, SP, GO"
-            maxLength={2}
-            autoCapitalize="characters"
-            error={errors.estado}
-          />
+          <View ref={formValidation.registerField('estado')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('estado')}
+              label="UF (opcional)"
+              value={form.estado}
+              onChangeText={(text) => handleChange('estado', text.toUpperCase())}
+              placeholder="Ex: RS, SP, GO"
+              maxLength={2}
+              autoCapitalize="characters"
+              error={errors.estado}
+            />
+          </View>
 
           <FormField label="Região" value={form.regiao} disabled />
           <FormField label="Microrregião" value={form.microregiao} disabled />

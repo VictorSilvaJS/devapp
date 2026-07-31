@@ -19,6 +19,7 @@ import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
 import { Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import {
   findFazendaById,
   getFazendaId,
@@ -28,6 +29,8 @@ import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import type { PeriodoProdutivoStatus, PeriodoProdutivoTipo } from '../types/periodoProdutivo';
 import { colors, shadows, spacing, typography } from '../theme';
+
+const PERIODO_FORM_ERROR_ORDER = ['fazenda', 'tipoPeriodo', 'cultura', 'anoAgricola', 'dataFim'] as const;
 
 const TIPO_OPTIONS = [
   {
@@ -79,6 +82,7 @@ export default function PeriodoProdutivoFormScreen() {
   const route = useRoute<any>();
   const toast = useToast();
   const { user } = useAuth();
+  const formValidation = useFormValidationFocus(PERIODO_FORM_ERROR_ORDER);
 
   const periodoId = route.params?.periodoId || route.params?.id;
   const routeFazendaId =
@@ -194,6 +198,7 @@ export default function PeriodoProdutivoFormScreen() {
     }
 
     setErrors(newErrors);
+    formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -284,10 +289,14 @@ export default function PeriodoProdutivoFormScreen() {
       <Header title={isEditing ? 'Editar Safra/Safrinha' : 'Nova Safra/Safrinha'} showBack />
 
       <ScrollView
+        ref={formValidation.scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
       >
+        <View ref={formValidation.registerField('fazenda')} collapsable={false}>
         <SectionCard title="Contexto" subtitle="O período será salvo localmente para esta Propriedade." icon="home-outline">
           <View style={styles.lockedBox}>
             <View style={styles.lockedIcon}>
@@ -302,8 +311,10 @@ export default function PeriodoProdutivoFormScreen() {
           </View>
           {errors.fazenda ? <Text style={styles.errorText}>{errors.fazenda}</Text> : null}
         </SectionCard>
+        </View>
 
         <SectionCard title="Período produtivo" subtitle="Organize a Safra/Safrinha de forma opcional para Caderno e consulta." icon="calendar-outline">
+          <View ref={formValidation.registerField('tipoPeriodo')} collapsable={false}>
           <Text style={styles.label}>
             Tipo <Text style={styles.required}>*</Text>
           </Text>
@@ -316,30 +327,37 @@ export default function PeriodoProdutivoFormScreen() {
             }}
             error={errors.tipoPeriodo}
           />
+          </View>
 
-          <FormField
-            label="Cultura"
-            required
-            value={cultura}
-            onChangeText={(value) => {
-              setCultura(value);
-              setErrors((prev) => ({ ...prev, cultura: null }));
-            }}
-            placeholder="Ex: Soja, Milho, Pousio"
-            error={errors.cultura}
-          />
+          <View ref={formValidation.registerField('cultura')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('cultura')}
+              label="Cultura"
+              required
+              value={cultura}
+              onChangeText={(value) => {
+                setCultura(value);
+                setErrors((prev) => ({ ...prev, cultura: null }));
+              }}
+              placeholder="Ex: Soja, Milho, Pousio"
+              error={errors.cultura}
+            />
+          </View>
 
-          <FormField
-            label="Ano agrícola"
-            required
-            value={anoAgricola}
-            onChangeText={(value) => {
-              setAnoAgricola(value);
-              setErrors((prev) => ({ ...prev, anoAgricola: null }));
-            }}
-            placeholder="Ex: 2025/2026"
-            error={errors.anoAgricola}
-          />
+          <View ref={formValidation.registerField('anoAgricola')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('anoAgricola')}
+              label="Ano agrícola"
+              required
+              value={anoAgricola}
+              onChangeText={(value) => {
+                setAnoAgricola(value);
+                setErrors((prev) => ({ ...prev, anoAgricola: null }));
+              }}
+              placeholder="Ex: 2025/2026"
+              error={errors.anoAgricola}
+            />
+          </View>
 
           <FormField
             label="Talhão"
@@ -366,18 +384,20 @@ export default function PeriodoProdutivoFormScreen() {
             </TouchableOpacity>
           ) : null}
 
-          <DatePicker
-            label="Data final"
-            value={dataFim}
-            onChange={(date) => {
-              setDataFim(date);
-              setErrors((prev) => ({ ...prev, dataFim: null }));
-            }}
-            placeholder="Opcional"
-            minimumDate={dataInicio || undefined}
-            mode="date"
-            error={errors.dataFim}
-          />
+          <View ref={formValidation.registerField('dataFim')} collapsable={false}>
+            <DatePicker
+              label="Data final"
+              value={dataFim}
+              onChange={(date) => {
+                setDataFim(date);
+                setErrors((prev) => ({ ...prev, dataFim: null }));
+              }}
+              placeholder="Opcional"
+              minimumDate={dataInicio || undefined}
+              mode="date"
+              error={errors.dataFim}
+            />
+          </View>
           {dataFim ? (
             <TouchableOpacity style={styles.clearDateButton} onPress={() => setDataFim(null)} activeOpacity={0.75}>
               <Ionicons name="close-circle-outline" size={16} color={colors.muted} />

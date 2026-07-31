@@ -19,6 +19,7 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import {
   filtrarProdutoresPorAcesso,
   findFazendaById,
@@ -38,6 +39,8 @@ import {
   getVisitaFluxoUi,
   getVisitaFormFazendaLabel,
 } from '../utils/visitaFormCompat';
+
+const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo'] as const;
 
 export default function NovaVisitaScreen() {
   const navigation = useNavigation();
@@ -62,6 +65,7 @@ export default function NovaVisitaScreen() {
   const [loadingFazendas, setLoadingFazendas] = useState(true);
   const [errors, setErrors] = useState<any>({});
   const [contextAccessDenied, setContextAccessDenied] = useState(false);
+  const formValidation = useFormValidationFocus(VISITA_FORM_ERROR_ORDER);
 
   // Dropdown de fazendas
   const [showFazendaPicker, setShowFazendaPicker] = useState(false);
@@ -154,6 +158,7 @@ export default function NovaVisitaScreen() {
     }
 
     setErrors(newErrors);
+    formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -244,12 +249,15 @@ export default function NovaVisitaScreen() {
       <Header title="Nova Visita" showBack />
 
       <ScrollView 
+        ref={formValidation.scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
       >
         <SectionCard title="Contexto" subtitle="Defina a propriedade vinculada à visita técnica.">
-          <View style={styles.field}>
+          <View ref={formValidation.registerField('fazendaId')} collapsable={false} style={styles.field}>
             <Text style={styles.label}>
               Propriedade <Text style={styles.required}>*</Text>
             </Text>
@@ -329,35 +337,41 @@ export default function NovaVisitaScreen() {
             />
           </View>
 
-          <DatePicker
-            label={fluxoInfo.dataLabel}
-            value={dataVisita}
-            onChange={(date) => {
-              setDataVisita(date);
-              setErrors(prev => ({ ...prev, dataVisita: null }));
-            }}
-            placeholder={fluxoInfo.dataPlaceholder}
-            error={errors.dataVisita}
-            minimumDate={status === VISITA_STATUS_AGENDADA ? new Date() : undefined}
-            maximumDate={status === VISITA_STATUS_REALIZADA ? new Date() : undefined}
-            mode="date"
-          />
+          <View ref={formValidation.registerField('dataVisita')} collapsable={false}>
+            <DatePicker
+              label={fluxoInfo.dataLabel}
+              required
+              value={dataVisita}
+              onChange={(date) => {
+                setDataVisita(date);
+                setErrors(prev => ({ ...prev, dataVisita: null }));
+              }}
+              placeholder={fluxoInfo.dataPlaceholder}
+              error={errors.dataVisita}
+              minimumDate={status === VISITA_STATUS_AGENDADA ? new Date() : undefined}
+              maximumDate={status === VISITA_STATUS_REALIZADA ? new Date() : undefined}
+              mode="date"
+            />
+          </View>
 
-          <DatePicker
-            label="Horário da Visita"
-            value={horaVisita}
-            onChange={(time) => {
-              setHoraVisita(time);
-              setErrors(prev => ({ ...prev, horaVisita: null }));
-            }}
-            placeholder="Selecione o horário"
-            error={errors.horaVisita}
-            mode="time"
-          />
+          <View ref={formValidation.registerField('horaVisita')} collapsable={false}>
+            <DatePicker
+              label="Horário da Visita"
+              required
+              value={horaVisita}
+              onChange={(time) => {
+                setHoraVisita(time);
+                setErrors(prev => ({ ...prev, horaVisita: null }));
+              }}
+              placeholder="Selecione o horário"
+              error={errors.horaVisita}
+              mode="time"
+            />
+          </View>
         </SectionCard>
 
         <SectionCard title="Registro técnico" subtitle="Descreva objetivo, diagnóstico e recomendações da visita.">
-          <View style={styles.field}>
+          <View ref={formValidation.registerField('objetivo')} collapsable={false} style={styles.field}>
             <Text style={styles.label}>
               Objetivo <Text style={styles.required}>*</Text>
             </Text>

@@ -18,6 +18,7 @@ type DatePickerProps = {
   label?: string;
   placeholder?: string;
   error?: string;
+  required?: boolean;
   minimumDate?: Date;
   maximumDate?: Date;
   mode?: 'date' | 'time' | 'datetime';
@@ -46,6 +47,7 @@ export default function DatePicker({
   label,
   placeholder = 'Selecione uma data',
   error,
+  required = false,
   minimumDate,
   maximumDate,
   mode = 'date',
@@ -94,7 +96,12 @@ export default function DatePicker({
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={styles.label}>
+          {label}
+          {required ? <Text style={styles.required}> *</Text> : null}
+        </Text>
+      )}
       
       <TouchableOpacity
         style={[
@@ -122,7 +129,7 @@ export default function DatePicker({
       {error && (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={14} color={colors.error} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText} accessibilityLiveRegion="polite">{error}</Text>
         </View>
       )}
 
@@ -378,6 +385,9 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
     color: colors.text,
     marginBottom: spacing.sm,
+  },
+  required: {
+    color: colors.error,
   },
   input: {
     flexDirection: 'row',

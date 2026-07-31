@@ -45,6 +45,7 @@
     "src/utils/propriedadeCompat.ts",
     "src/utils/fazendaCadastroCompat.ts",
     "src/utils/fazendaUiCompat.ts",
+    "src/utils/formValidationCompat.ts",
     "src/contexts/filtroCompat.ts",
     "src/utils/cadernoFormCompat.ts",
     "src/utils/cadernoLocalizacaoCompat.ts",

@@ -4379,4 +4379,26 @@ Sela de Prata I. Evidencias:
 `dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/`.
 
 Filtros de Materiais permanecem em `MP-17` e o sistema de cartoes em `MP-21`.
-`MP-13` nao foi iniciada.
+`MP-13` foi executada na sequencia.
+
+## MP-13 - Validacao Visual Dos Formularios
+
+Status em 2026-07-31: `CONCLUIDO`.
+
+Os formularios de criacao e edicao de Propriedade, Usuario, Visita, Caderno
+e Safra/Safrinha sinalizam os campos obrigatorios ja cobertos pelas regras
+atuais. No primeiro envio invalido, todas as mensagens aparecem junto aos
+respectivos campos e a tela rola para o primeiro erro na ordem visual.
+Campos textuais recebem foco real; seletores e datas recebem foco de
+acessibilidade com anuncio da mensagem.
+
+O comportamento compartilhado fica em `useFormValidationFocus`, com funcoes
+puras para ordenar erros e calcular a rolagem. Teste focado, typecheck,
+`test:domain-compat`, `git diff --check` e `assembleRelease` passaram. O APK
+release foi instalado via `adb`; o smoke fisico confirmou erros simultaneos
+e correcao progressiva em Nova Visita, alem de rolagem, foco real e teclado
+na edicao de Propriedade. Nenhuma alteracao do smoke foi salva. Evidencias:
+`dist/qa-session-2026-07-31/mp-13-validacao-formularios/`.
+
+Regras especificas de Safra, Caderno e estados de Visita permanecem em
+`MP-23`, `MP-25` e `MP-27`. `MP-14` nao foi iniciada.

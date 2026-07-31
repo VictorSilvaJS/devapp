@@ -17,6 +17,7 @@ import SegmentedChips from '../components/SegmentedChips';
 import { useToast } from '../components/Toast';
 import { Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import theme from '../theme';
 import {
   validarArea,
@@ -35,6 +36,8 @@ import {
   sugerirColaboradoresParaMicroregiao,
 } from '../utils/territorioCompat';
 import { getUsuarioNome } from '../utils/usuarioAdminCompat';
+
+const PROPRIEDADE_FORM_ERROR_ORDER = ['escopo', 'fazenda', 'area_total', 'titular', 'estado', 'regiao', 'microregiao'] as const;
 
 const STATUS_PROPRIEDADE = [
   { value: 'ativo', label: 'Ativo', icon: 'checkmark-circle-outline' as const },
@@ -58,6 +61,7 @@ const getScopeErrorMessage = (reason?: string) => {
 export default function NovaPropriedadeScreen({ navigation }) {
   const toast = useToast();
   const { user } = useAuth();
+  const formValidation = useFormValidationFocus(PROPRIEDADE_FORM_ERROR_ORDER);
   const [saving, setSaving] = useState(false);
   const [loadingTitulares, setLoadingTitulares] = useState(true);
   const [titulares, setTitulares] = useState<any[]>([]);
@@ -246,6 +250,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
     }
 
     setErrors(newErrors);
+    formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -275,39 +280,48 @@ export default function NovaPropriedadeScreen({ navigation }) {
       <Header title="Nova Propriedade" showBack />
 
       <ScrollView
+        ref={formValidation.scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
       >
         <InfoBox
           title="Cadastro local demonstrativo"
           message="A Propriedade será salva somente neste aparelho. Não há backend ou sincronização nesta fase; prefira vincular um Titular existente."
         />
 
-        {errors.escopo && (
-          <InfoBox variant="error" message={errors.escopo} />
-        )}
+        <View ref={formValidation.registerField('escopo')} collapsable={false}>
+          {errors.escopo && <InfoBox variant="error" message={errors.escopo} />}
+        </View>
 
         <SectionCard title="Dados da Propriedade" subtitle="Nome e Área total informada são obrigatórios para o cadastro local.">
-          <FormField
-            label="Nome da Propriedade"
-            required
-            value={form.fazenda}
-            onChangeText={(text) => handleChange('fazenda', text)}
-            placeholder="Nome da propriedade"
-            error={errors.fazenda}
-          />
+          <View ref={formValidation.registerField('fazenda')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('fazenda')}
+              label="Nome da Propriedade"
+              required
+              value={form.fazenda}
+              onChangeText={(text) => handleChange('fazenda', text)}
+              placeholder="Nome da propriedade"
+              error={errors.fazenda}
+            />
+          </View>
 
-          <FormField
-            label="Área em hectares"
-            required
-            value={form.area_total}
-            onChangeText={(text) => handleChange('area_total', text)}
-            placeholder="Ex: 500"
-            keyboardType="numeric"
-            error={errors.area_total}
-            helperText="Valor cadastral informado para a demonstração; não representa necessariamente a área mapeada."
-          />
+          <View ref={formValidation.registerField('area_total')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('area_total')}
+              label="Área em hectares"
+              required
+              value={form.area_total}
+              onChangeText={(text) => handleChange('area_total', text)}
+              placeholder="Ex: 500"
+              keyboardType="numeric"
+              error={errors.area_total}
+              helperText="Valor cadastral informado para a demonstração; não representa necessariamente a área mapeada."
+            />
+          </View>
 
           <FormField
             label="CNPJ ou inscrição"
@@ -319,6 +333,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
         </SectionCard>
 
         <SectionCard title="Responsáveis" subtitle="Selecione usuários já cadastrados. Este formulário não cria Produtor ou Colaborador.">
+          <View ref={formValidation.registerField('titular')} collapsable={false}>
           {loadingTitulares ? (
             <View style={styles.loadingTitulares}>
               <ActivityIndicator color={theme.colors.primary} />
@@ -347,6 +362,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
               }
             />
           )}
+          </View>
 
           <SelectField
             label="Colaborador responsável"
@@ -393,16 +409,20 @@ export default function NovaPropriedadeScreen({ navigation }) {
             placeholder="Nome da cidade"
           />
 
-          <FormField
-            label="UF (opcional)"
-            value={form.estado}
-            onChangeText={(text) => handleChange('estado', text.toUpperCase())}
-            placeholder="Ex: RS, SP, GO"
-            maxLength={2}
-            autoCapitalize="characters"
-            error={errors.estado}
-          />
+          <View ref={formValidation.registerField('estado')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('estado')}
+              label="UF (opcional)"
+              value={form.estado}
+              onChangeText={(text) => handleChange('estado', text.toUpperCase())}
+              placeholder="Ex: RS, SP, GO"
+              maxLength={2}
+              autoCapitalize="characters"
+              error={errors.estado}
+            />
+          </View>
 
+          <View ref={formValidation.registerField('regiao')} collapsable={false}>
           {user?.perfil === 'colaborador' ? (
             <FormField
               label="Região"
@@ -436,8 +456,9 @@ export default function NovaPropriedadeScreen({ navigation }) {
               error={errors.regiao}
             />
           )}
+          </View>
 
-          <View style={styles.field}>
+          <View ref={formValidation.registerField('microregiao')} collapsable={false} style={styles.field}>
             <Text style={styles.label}>Microregião <Text style={styles.required}>*</Text></Text>
             {microregioesDisponiveis.length > 0 ? (
               <SegmentedChips

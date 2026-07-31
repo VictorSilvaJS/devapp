@@ -1293,3 +1293,19 @@ Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
 
 Evidencias completas:
 `dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/`.
+
+## MP-13 - Validacao Visual Dos Formularios
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, display
+`800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP13-01 | P2 | Nova Visita | Abrir o formulario sem preencher e enviar | Obrigatorios estao sinalizados e todos os erros aparecem junto aos campos no primeiro envio | Passou | `01-nova-visita-inicial.png`; `02-nova-visita-erros-primeiro-envio.png` |
+| MP13-02 | P2 | Nova Visita | Corrigir somente a Propriedade | A mensagem corrigida desaparece e os demais erros permanecem | Passou | `03-nova-visita-correcao-limpa-primeiro-erro.png` |
+| MP13-03 | P2 | Editar Propriedade | Esvaziar o nome, manter outro campo focado e salvar sem persistir | A tela rola ao nome, mostra a mensagem adjacente e transfere o foco real | Passou | `04-editar-propriedade-primeiro-erro-foco-teclado.png`; hierarquia confirmou `EditText focused=true` |
+| MP13-04 | P2 | Editar Propriedade | Repetir o envio com outro campo previamente focado | O primeiro erro recebe foco e o teclado abre novamente | Passou | `05-editar-propriedade-foco-abre-teclado.png`; `dumpsys input_method` confirmou `mInputShown=true` |
+| MP13-05 | P2 | Persistencia | Cancelar o formulario apos o smoke | Nenhum dado de teste e salvo | Passou | Retorno por Cancelar para o detalhe original |
+
+Evidencias completas:
+`dist/qa-session-2026-07-31/mp-13-validacao-formularios/`.

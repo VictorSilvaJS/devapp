@@ -64,7 +64,7 @@ export default function RadioCardGroup<T extends string = string>({
           </TouchableOpacity>
         );
       })}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={styles.errorText} accessibilityLiveRegion="polite">{error}</Text> : null}
     </View>
   );
 }

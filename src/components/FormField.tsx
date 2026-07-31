@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import {
   StyleProp,
   StyleSheet,
@@ -30,7 +30,7 @@ type FormFieldProps = Omit<TextInputProps, 'style'> & {
   inputStyle?: StyleProp<TextStyle>;
 };
 
-export default function FormField({
+const FormField = forwardRef<TextInput, FormFieldProps>(function FormField({
   label,
   error,
   helperText,
@@ -46,7 +46,7 @@ export default function FormField({
   editable = true,
   multiline,
   ...inputProps
-}: FormFieldProps) {
+}: FormFieldProps, ref) {
   const isMultiline = textarea || multiline;
   const isEditable = !disabled && editable !== false;
 
@@ -72,6 +72,7 @@ export default function FormField({
         ) : null}
 
         <TextInput
+          ref={ref}
           {...inputProps}
           editable={isEditable}
           multiline={isMultiline}
@@ -92,11 +93,13 @@ export default function FormField({
         ) : null}
       </View>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <Text style={styles.errorText} accessibilityLiveRegion="polite">{error}</Text> : null}
       {!error && helperText ? <Text style={styles.helperText}>{helperText}</Text> : null}
     </View>
   );
-}
+});
+
+export default FormField;
 
 const styles = StyleSheet.create({
   container: {

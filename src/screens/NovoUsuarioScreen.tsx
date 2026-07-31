@@ -17,6 +17,7 @@ import SectionCard from '../components/SectionCard';
 import SegmentedChips from '../components/SegmentedChips';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import { LocalCredentialService } from '../auth/localCredentials';
 import { useToast } from '../components/Toast';
 import { colors, spacing, typography } from '../theme';
@@ -45,6 +46,20 @@ import {
   listarPropriedadesPorMicroregioes,
   listarRegioes,
 } from '../utils/territorioCompat';
+
+const USUARIO_FORM_ERROR_ORDER = [
+  'nome',
+  'email',
+  'senhaInicial',
+  'novaSenha',
+  'confirmarSenhaInicial',
+  'confirmarNovaSenha',
+  'perfil',
+  'status',
+  'vinculosPropriedades',
+  'regiao',
+  'escopoColaborador',
+] as const;
 
 const PERFIS_FORM = [
   { key: 'produtor', label: getUsuarioPerfilLabel('produtor'), icon: 'leaf-outline' },
@@ -86,6 +101,7 @@ export default function NovoUsuarioScreen() {
   const route = useRoute<any>();
   const toast = useToast();
   const { user } = useAuthState();
+  const formValidation = useFormValidationFocus(USUARIO_FORM_ERROR_ORDER);
   const userId = route.params?.userId || route.params?.id;
   const isEdit = Boolean(userId);
 
@@ -436,6 +452,7 @@ export default function NovoUsuarioScreen() {
     }
 
     setErrors(nextErrors);
+    formValidation.focusFirstError(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
@@ -512,7 +529,13 @@ export default function NovoUsuarioScreen() {
     <View style={styles.container}>
       <Header title={isEdit ? 'Editar Usuário' : 'Novo Usuário'} showBack />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={formValidation.scrollViewRef}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
+      >
         <InfoBox
           title="Cadastro administrativo demonstrativo"
           message="Este registro fica salvo somente neste aparelho. A senha local prepara acesso demonstrativo futuro, mas ainda não cria sessão, backend, convite ou sincronização."
@@ -522,26 +545,32 @@ export default function NovoUsuarioScreen() {
           title="Dados do usuário demonstrativo"
           subtitle="Nome e e-mail identificam o registro local. Use somente dados fictícios ou autorizados."
         >
-          <FormField
-            label="Nome"
-            required
-            value={form.nome}
-            onChangeText={(value) => updateField('nome', value)}
-            placeholder="Nome completo"
-            error={errors.nome}
-          />
+          <View ref={formValidation.registerField('nome')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('nome')}
+              label="Nome"
+              required
+              value={form.nome}
+              onChangeText={(value) => updateField('nome', value)}
+              placeholder="Nome completo"
+              error={errors.nome}
+            />
+          </View>
 
-          <FormField
-            label="E-mail"
-            required
-            value={form.email}
-            onChangeText={(value) => updateField('email', value)}
-            placeholder="nome.demonstracao@example.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            error={errors.email}
-            helperText="Obrigatório para identificar o cadastro mockado; não funciona como credencial de login."
-          />
+          <View ref={formValidation.registerField('email')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('email')}
+              label="E-mail"
+              required
+              value={form.email}
+              onChangeText={(value) => updateField('email', value)}
+              placeholder="nome.demonstracao@example.com"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              error={errors.email}
+              helperText="Obrigatório para identificar o cadastro mockado; não funciona como credencial de login."
+            />
+          </View>
 
           <FormField
             label="Telefone (opcional)"
@@ -569,7 +598,9 @@ export default function NovoUsuarioScreen() {
               : 'Defina a senha inicial para o acesso local demonstrativo deste usuário.'
           }
         >
+          <View ref={formValidation.registerField(isEdit ? 'novaSenha' : 'senhaInicial')} collapsable={false}>
           <FormField
+            ref={formValidation.registerFocusable(isEdit ? 'novaSenha' : 'senhaInicial')}
             label={isEdit ? 'Nova senha' : 'Senha inicial'}
             required={!isEdit}
             value={isEdit ? passwordForm.novaSenha : passwordForm.senhaInicial}
@@ -583,8 +614,11 @@ export default function NovoUsuarioScreen() {
             error={isEdit ? errors.novaSenha : errors.senhaInicial}
             helperText="Esta senha será usada para acesso local neste aparelho. O usuário poderá alterá-la futuramente quando houver backend."
           />
+          </View>
 
+          <View ref={formValidation.registerField(isEdit ? 'confirmarNovaSenha' : 'confirmarSenhaInicial')} collapsable={false}>
           <FormField
+            ref={formValidation.registerFocusable(isEdit ? 'confirmarNovaSenha' : 'confirmarSenhaInicial')}
             label={isEdit ? 'Confirmar nova senha' : 'Confirmar senha inicial'}
             required={!isEdit}
             value={isEdit ? passwordForm.confirmarNovaSenha : passwordForm.confirmarSenhaInicial}
@@ -600,12 +634,14 @@ export default function NovoUsuarioScreen() {
             error={isEdit ? errors.confirmarNovaSenha : errors.confirmarSenhaInicial}
             helperText={isEdit ? 'Status ativo, pendente ou inativo não bloqueia a configuração nesta etapa.' : undefined}
           />
+          </View>
         </SectionCard>
 
         <SectionCard
           title="Perfil demonstrativo"
           subtitle="Produtor, Colaborador e Administrador organizam a demonstração local. Este cadastro não concede acesso ou RBAC real."
         >
+          <View ref={formValidation.registerField('perfil')} collapsable={false}>
           <Text style={styles.label}>
             Perfil <Text style={styles.required}>*</Text>
           </Text>
@@ -620,7 +656,9 @@ export default function NovoUsuarioScreen() {
             style={styles.segmentedField}
           />
           {errors.perfil && <Text style={styles.errorText}>{errors.perfil}</Text>}
+          </View>
 
+          <View ref={formValidation.registerField('status')} collapsable={false}>
           <Text style={[styles.label, styles.labelSpacing]}>
             Status <Text style={styles.required}>*</Text>
           </Text>
@@ -634,6 +672,7 @@ export default function NovoUsuarioScreen() {
             style={styles.segmentedField}
           />
           {errors.status && <Text style={styles.errorText}>{errors.status}</Text>}
+          </View>
         </SectionCard>
 
         <SectionCard title="Observações opcionais" subtitle="Evite registrar dados pessoais ou sensíveis.">
@@ -648,6 +687,7 @@ export default function NovoUsuarioScreen() {
           />
         </SectionCard>
 
+        <View ref={formValidation.registerField('vinculosPropriedades')} collapsable={false}>
         {form.perfil === 'produtor' && (
           <SectionCard
             title="Vínculos do Produtor"
@@ -681,6 +721,7 @@ export default function NovoUsuarioScreen() {
             )}
           </SectionCard>
         )}
+        </View>
 
         {form.perfil === 'colaborador' && (
           <SectionCard
@@ -694,9 +735,10 @@ export default function NovoUsuarioScreen() {
               placeholder="Ex: Consultor regional"
             />
 
+            <View ref={formValidation.registerField('regiao')} collapsable={false}>
             {regioesTerritorio.length > 0 ? (
               <>
-                <Text style={styles.label}>Região</Text>
+                <Text style={styles.label}>Região {form.status === 'ativo' ? <Text style={styles.required}>*</Text> : null}</Text>
                 <View style={styles.miniChipWrap}>
                   {regioesTerritorio.map((regiao) => {
                     const selected = form.regiao === regiao.nome;
@@ -719,16 +761,18 @@ export default function NovoUsuarioScreen() {
             ) : (
               <FormField
                 label="Região"
+                required={form.status === 'ativo'}
                 value={form.regiao}
                 onChangeText={(value) => updateField('regiao', value)}
                 placeholder="Ex: Goiás"
                 error={errors.regiao}
               />
             )}
+            </View>
 
             {microregioesTerritorio.length > 0 ? (
               <View style={styles.territoryBlock}>
-                <Text style={styles.label}>Microrregião</Text>
+                <Text style={styles.label}>Microrregião {form.status === 'ativo' ? <Text style={styles.required}>*</Text> : null}</Text>
                 <View style={styles.miniChipWrap}>
                   {microregioesTerritorio.map((microregiao) => {
                     const selected = microRegioesInformadas.includes(microregiao.nome);
@@ -750,6 +794,7 @@ export default function NovoUsuarioScreen() {
             ) : (
               <FormField
                 label="Microrregião"
+                required={form.status === 'ativo'}
                 value={form.subRegioesText}
                 onChangeText={(value) => updateField('subRegioesText', value)}
                 placeholder="Ex: Rio Verde, Jataí"
@@ -773,7 +818,9 @@ export default function NovoUsuarioScreen() {
               </View>
             )}
 
-            {errors.escopoColaborador && <Text style={styles.errorText}>{errors.escopoColaborador}</Text>}
+            <View ref={formValidation.registerField('escopoColaborador')} collapsable={false}>
+              {errors.escopoColaborador && <Text style={styles.errorText}>{errors.escopoColaborador}</Text>}
+            </View>
           </SectionCard>
         )}
 

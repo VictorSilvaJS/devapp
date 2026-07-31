@@ -22,6 +22,7 @@ import { CadernoCampo, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import { useCadernoLocalizacaoCapture } from '../hooks/useCadernoLocalizacaoCapture';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
@@ -49,10 +50,13 @@ import {
   undoCadernoLocalizacaoEditRemoval,
 } from '../utils/cadernoLocalizacaoUiCompat';
 
+const CADERNO_FORM_ERROR_ORDER = ['fazendaId', 'dataAtividade', 'tipoAtividade', 'responsavel', 'areaAplicada'] as const;
+
 export default function EditarCadernoScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const toast = useToast();
+  const formValidation = useFormValidationFocus(CADERNO_FORM_ERROR_ORDER);
   const { user } = useAuth();
 
   const { cadernoId, registroId, id } = route.params || {};
@@ -292,6 +296,7 @@ export default function EditarCadernoScreen() {
     }
 
     setErrors(newErrors);
+    formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -413,13 +418,16 @@ export default function EditarCadernoScreen() {
       <Header title="Editar Registro" showBack onBack={handleCancel} />
 
       <ScrollView
+        ref={formValidation.scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
       >
         <SectionCard title="Contexto" subtitle="A propriedade vinculada é preservada nesta edição.">
-          <View style={styles.field}>
-            <Text style={styles.label}>Propriedade vinculada</Text>
+          <View ref={formValidation.registerField('fazendaId')} collapsable={false} style={styles.field}>
+            <Text style={styles.label}>Propriedade vinculada <Text style={styles.required}>*</Text></Text>
             <View style={[styles.picker, styles.lockedPicker, errors.fazendaId && styles.inputError]}>
               <Text style={styles.pickerText}>{fazendaLabel}</Text>
               <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
@@ -512,20 +520,23 @@ export default function EditarCadernoScreen() {
         </SectionCard>
 
         <SectionCard title="Registro de campo" subtitle="Atualize data, tipo, responsável e informações operacionais.">
-          <DatePicker
-            label="Data do registro"
-            value={dataAtividade}
-            onChange={(date) => {
-              setDataAtividade(date);
-              setErrors(prev => ({ ...prev, dataAtividade: null }));
-            }}
-            placeholder="Selecione a data"
-            error={errors.dataAtividade}
-            maximumDate={new Date()}
-            mode="date"
-          />
+          <View ref={formValidation.registerField('dataAtividade')} collapsable={false}>
+            <DatePicker
+              label="Data do registro"
+              required
+              value={dataAtividade}
+              onChange={(date) => {
+                setDataAtividade(date);
+                setErrors(prev => ({ ...prev, dataAtividade: null }));
+              }}
+              placeholder="Selecione a data"
+              error={errors.dataAtividade}
+              maximumDate={new Date()}
+              mode="date"
+            />
+          </View>
 
-          <View style={styles.field}>
+          <View ref={formValidation.registerField('tipoAtividade')} collapsable={false} style={styles.field}>
             <Text style={styles.label}>
               Tipo de registro <Text style={styles.required}>*</Text>
             </Text>
@@ -543,16 +554,20 @@ export default function EditarCadernoScreen() {
             />
           </View>
 
-          <FormField
-            label="Responsável"
-            value={responsavel}
-            onChangeText={(value) => {
-              setResponsavel(value);
-              setErrors(prev => ({ ...prev, responsavel: null }));
-            }}
-            placeholder="Nome do responsável"
-            error={errors.responsavel}
-          />
+          <View ref={formValidation.registerField('responsavel')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('responsavel')}
+              label="Responsável"
+              required
+              value={responsavel}
+              onChangeText={(value) => {
+                setResponsavel(value);
+                setErrors(prev => ({ ...prev, responsavel: null }));
+              }}
+              placeholder="Nome do responsável"
+              error={errors.responsavel}
+            />
+          </View>
 
           <FormField
             label="Talhão"
@@ -561,17 +576,21 @@ export default function EditarCadernoScreen() {
             placeholder="Ex: Talhão A"
           />
 
-          <FormField
-            label="Área Aplicada (ha)"
-            value={areaAplicada}
-            onChangeText={(value) => {
-              setAreaAplicada(value);
-              setErrors(prev => ({ ...prev, areaAplicada: null }));
-            }}
-            placeholder="Ex: 25,5"
-            keyboardType="decimal-pad"
-            error={errors.areaAplicada}
-          />
+          <View ref={formValidation.registerField('areaAplicada')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('areaAplicada')}
+              label="Área Aplicada (ha)"
+              required
+              value={areaAplicada}
+              onChangeText={(value) => {
+                setAreaAplicada(value);
+                setErrors(prev => ({ ...prev, areaAplicada: null }));
+              }}
+              placeholder="Ex: 25,5"
+              keyboardType="decimal-pad"
+              error={errors.areaAplicada}
+            />
+          </View>
 
           <FormField
             label="Produtos Utilizados"

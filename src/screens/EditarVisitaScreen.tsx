@@ -22,6 +22,7 @@ import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import {
   avaliarAcessoVisita,
   filtrarProdutoresPorAcesso,
@@ -41,9 +42,12 @@ import {
   resolveVisitaEdicaoFazendaId,
 } from '../utils/visitaFormCompat';
 
+const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo'] as const;
+
 export default function EditarVisitaScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation();
+  const formValidation = useFormValidationFocus(VISITA_FORM_ERROR_ORDER);
   const toast = useToast();
   const { user } = useAuth();
 
@@ -164,6 +168,7 @@ export default function EditarVisitaScreen() {
     }
 
     setErrors(newErrors);
+    formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -282,20 +287,24 @@ export default function EditarVisitaScreen() {
       <Header title="Editar Visita" showBack />
 
       <ScrollView 
+        ref={formValidation.scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
       >
         <SectionCard title="Contexto" subtitle="A propriedade vinculada é preservada nesta edição.">
-          <View style={styles.field}>
+          <View ref={formValidation.registerField('fazendaId')} collapsable={false} style={styles.field}>
             <Text style={styles.label}>Propriedade vinculada</Text>
-            <View style={[styles.picker, styles.lockedPicker]}>
+            <View style={[styles.picker, styles.lockedPicker, errors.fazendaId && styles.inputError]}>
               <Text style={styles.pickerText}>
                 {fazendaContextoLabel}
               </Text>
               <Ionicons name="lock-closed-outline" size={20} color={colors.muted} />
             </View>
             <Text style={styles.contextHint}>A propriedade da visita não é alterada nesta edição.</Text>
+            {errors.fazendaId ? <Text style={styles.errorText}>{errors.fazendaId}</Text> : null}
           </View>
         </SectionCard>
 
@@ -314,33 +323,39 @@ export default function EditarVisitaScreen() {
             />
           </View>
 
-          <DatePicker
-            label={fluxoInfo.dataLabel}
-            value={dataVisita}
-            onChange={(date) => {
-              setDataVisita(date);
-              setErrors(prev => ({ ...prev, dataVisita: null }));
-            }}
-            placeholder="Selecione a data"
-            error={errors.dataVisita}
-            mode="date"
-          />
+          <View ref={formValidation.registerField('dataVisita')} collapsable={false}>
+            <DatePicker
+              label={fluxoInfo.dataLabel}
+              required
+              value={dataVisita}
+              onChange={(date) => {
+                setDataVisita(date);
+                setErrors(prev => ({ ...prev, dataVisita: null }));
+              }}
+              placeholder="Selecione a data"
+              error={errors.dataVisita}
+              mode="date"
+            />
+          </View>
 
-          <DatePicker
-            label="Horário da Visita"
-            value={horaVisita}
-            onChange={(time) => {
-              setHoraVisita(time);
-              setErrors(prev => ({ ...prev, horaVisita: null }));
-            }}
-            placeholder="Selecione o horário"
-            error={errors.horaVisita}
-            mode="time"
-          />
+          <View ref={formValidation.registerField('horaVisita')} collapsable={false}>
+            <DatePicker
+              label="Horário da Visita"
+              required
+              value={horaVisita}
+              onChange={(time) => {
+                setHoraVisita(time);
+                setErrors(prev => ({ ...prev, horaVisita: null }));
+              }}
+              placeholder="Selecione o horário"
+              error={errors.horaVisita}
+              mode="time"
+            />
+          </View>
         </SectionCard>
 
         <SectionCard title="Registro técnico" subtitle="Atualize objetivo, diagnóstico e recomendações da visita.">
-          <View style={styles.field}>
+          <View ref={formValidation.registerField('objetivo')} collapsable={false} style={styles.field}>
             <Text style={styles.label}>
               Objetivo <Text style={styles.required}>*</Text>
             </Text>
