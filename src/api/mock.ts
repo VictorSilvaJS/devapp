@@ -27,6 +27,16 @@ import {
   readMockVisita,
 } from './mockCompat';
 import {
+  applyCadernoCommand,
+  createCadernoDraft,
+  isCadernoDraft,
+  isCadernoDraftOwner,
+  submitCadernoRecord,
+  updateCadernoDraft,
+  type CadernoActor,
+  type CadernoCommand,
+} from '../utils/cadernoLifecycleCompat';
+import {
   buildFazendaDeleteIntegrity,
   filterMockProdutores,
   listMockProdutores,
@@ -2417,6 +2427,31 @@ export const Visita: any = {
 };
 
 // API para CadernoCampo
+const inferCadernoActor = (data: any = {}, fallbackRecord: any = null): CadernoActor => ({
+  usuarioId: String(
+    data?.criado_por_user_id
+    || data?.criado_por
+    || fallbackRecord?.criado_por_user_id
+    || fallbackRecord?.criado_por
+    || '__mock_local_compat__'
+  ).trim(),
+  nome: String(data?.criado_por_nome || fallbackRecord?.criado_por_nome || '').trim() || undefined,
+  perfil: data?.origem_registro === 'produtor' || fallbackRecord?.origem_registro === 'produtor'
+    ? 'produtor'
+    : 'colaborador',
+  propriedadeIds: [
+    String(
+      data?.fazenda_id
+      || data?.fazendaId
+      || data?.produtor_id
+      || fallbackRecord?.fazenda_id
+      || fallbackRecord?.fazendaId
+      || fallbackRecord?.produtor_id
+      || ''
+    ).trim(),
+  ].filter(Boolean),
+});
+
 export const CadernoCampo: any = {
   list: async () =>
     readHydratedMock(200, () => listMockCadernosCampo(cadernos)),
@@ -2432,24 +2467,106 @@ export const CadernoCampo: any = {
     mutateHydratedMock(200, () => {
       validateCadernoCampo(data);
       const id = `c${Date.now()}`;
-      const novo = persistMockCadernoCampo({ id, data });
+      const base = persistMockCadernoCampo({ id, data });
+      const novo = createCadernoDraft({ id, data: base, actor: inferCadernoActor(data) });
       cadernos.unshift(novo);
       return readMockCadernoCampo(novo);
+    }),
+  createDraft: async (data, actor: CadernoActor) =>
+    mutateHydratedMock(200, () => {
+      const id = `c${Date.now()}`;
+      const base = persistMockCadernoCampo({ id, data });
+      const novo = createCadernoDraft({ id, data: base, actor });
+      validateCadernoCampo(novo);
+      cadernos.unshift(novo);
+      return readMockCadernoCampo(novo);
+    }),
+  submit: async (data, actor: CadernoActor) =>
+    mutateHydratedMock(250, () => {
+      validateCadernoCampo(data);
+      const id = `c${Date.now()}`;
+      const base = persistMockCadernoCampo({ id, data });
+      const draft = createCadernoDraft({ id, data: base, actor });
+      const registered = submitCadernoRecord({ record: draft, actor });
+      validateCadernoCampo(registered);
+      cadernos.unshift(registered);
+      return readMockCadernoCampo(registered);
     }),
   update: async (id, data) =>
     mutateHydratedMock(300, () => {
       const index = cadernos.findIndex(c => c.id === id);
       if (index === -1) throw new Error('Registro não encontrado');
 
-      const atualizado = persistMockCadernoCampo({ id, data, existing: cadernos[index] });
+      const current = readMockCadernoCampo(cadernos[index]);
+      if (!isCadernoDraft(current)) {
+        throw new Error('CadernoCampo.update: Registro consolidado não aceita edição destrutiva.');
+      }
+      const candidate = persistMockCadernoCampo({ id, data, existing: current });
+      const atualizado = updateCadernoDraft({
+        record: current,
+        data: candidate,
+        actor: inferCadernoActor(data, current),
+        replaceLocationGroup: true,
+      });
       validateCadernoCampo(atualizado);
       cadernos[index] = atualizado;
       return readMockCadernoCampo(cadernos[index]);
     }),
-  delete: async (id) =>
+  updateDraft: async (id, data, actor: CadernoActor) =>
+    mutateHydratedMock(300, () => {
+      const index = cadernos.findIndex(c => c.id === id);
+      if (index === -1) throw new Error('Registro não encontrado');
+      const current = readMockCadernoCampo(cadernos[index]);
+      const candidate = persistMockCadernoCampo({ id, data, existing: current });
+      const atualizado = updateCadernoDraft({ record: current, data: candidate, actor, replaceLocationGroup: true });
+      validateCadernoCampo(atualizado);
+      cadernos[index] = atualizado;
+      return readMockCadernoCampo(atualizado);
+    }),
+  saveAndSubmitDraft: async (id, data, actor: CadernoActor) =>
+    mutateHydratedMock(300, () => {
+      const index = cadernos.findIndex(c => c.id === id);
+      if (index === -1) throw new Error('Registro não encontrado');
+      const current = readMockCadernoCampo(cadernos[index]);
+      const candidate = persistMockCadernoCampo({ id, data, existing: current });
+      const draft = updateCadernoDraft({ record: current, data: candidate, actor, replaceLocationGroup: true });
+      const registered = submitCadernoRecord({ record: draft, actor });
+      validateCadernoCampo(registered);
+      cadernos[index] = registered;
+      return readMockCadernoCampo(registered);
+    }),
+  submitDraft: async (id, actor: CadernoActor) =>
+    mutateHydratedMock(250, () => {
+      const index = cadernos.findIndex(c => c.id === id);
+      if (index === -1) throw new Error('Registro não encontrado');
+      const registered = submitCadernoRecord({ record: readMockCadernoCampo(cadernos[index]), actor });
+      validateCadernoCampo(registered);
+      cadernos[index] = registered;
+      return readMockCadernoCampo(registered);
+    }),
+  command: async (id, command: CadernoCommand, actor: CadernoActor) =>
+    mutateHydratedMock(250, () => {
+      const index = cadernos.findIndex(c => c.id === id);
+      if (index === -1) throw new Error('Registro não encontrado');
+      const updated = applyCadernoCommand({
+        record: readMockCadernoCampo(cadernos[index]),
+        command,
+        actor,
+      });
+      validateCadernoCampo(updated);
+      cadernos[index] = updated;
+      return readMockCadernoCampo(updated);
+    }),
+  delete: async (id, actor?: CadernoActor) =>
     mutateHydratedMock(200, () => {
       const index = cadernos.findIndex(c => c.id === id);
       if (index === -1) throw new Error('Registro não encontrado');
+
+      const current = readMockCadernoCampo(cadernos[index]);
+      const effectiveActor = actor || inferCadernoActor({}, current);
+      if (!isCadernoDraft(current) || !isCadernoDraftOwner(current, effectiveActor.usuarioId)) {
+        throw new Error('CadernoCampo.delete: Somente o criador pode descartar o próprio rascunho.');
+      }
 
       cadernos.splice(index, 1);
       return { success: true };

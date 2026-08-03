@@ -113,10 +113,6 @@ export const CADERNO_TIPOS_ATIVIDADE = [
   { value: 'aplicacao', label: 'Aplicação' },
   { value: 'colheita', label: 'Colheita' },
   { value: 'ocorrencia', label: 'Ocorrência' },
-  { value: 'visita_tecnica', label: 'Visita técnica' },
-  { value: 'fertilidade', label: 'Fertilidade' },
-  { value: 'correcao_solo', label: 'Correção de solo' },
-  { value: 'prescricao', label: 'Prescrição' },
   { value: 'outro', label: 'Outro' },
 ];
 
@@ -139,6 +135,10 @@ export const CADERNO_TIPO_LABELS: Record<string, string> = {
 
 export const CADERNO_TIPO_VALUES = Array.from(new Set([
   ...CADERNO_TIPOS_ATIVIDADE.map((tipo) => tipo.value),
+  'visita_tecnica',
+  'fertilidade',
+  'correcao_solo',
+  'prescricao',
   'vistoria',
   'adubacao',
   'aplicacao',
@@ -163,6 +163,35 @@ type BuildCadernoPayloadInput = {
   criadoPorNome?: string;
   origemRegistro?: string;
   periodoProdutivo?: CadernoPeriodoProdutivoOption | null;
+  operacao?: string;
+  produtividadeText?: string;
+};
+
+export type CadernoFormFieldVisibility = {
+  periodo: boolean;
+  talhao: boolean;
+  operacao: boolean;
+  produtos: boolean;
+  dosagem: boolean;
+  area: boolean;
+  produtividade: boolean;
+  clima: boolean;
+  observacoes: boolean;
+};
+
+export const getCadernoFormFieldVisibility = (tipoAtividade?: string): CadernoFormFieldVisibility => {
+  const tipo = String(tipoAtividade || '').trim();
+  return {
+    periodo: tipo === 'plantio' || tipo === 'colheita',
+    talhao: tipo === 'plantio' || tipo === 'aplicacao' || tipo === 'colheita',
+    operacao: tipo === 'plantio',
+    produtos: tipo === 'aplicacao',
+    dosagem: tipo === 'aplicacao',
+    area: tipo === 'aplicacao' || tipo === 'colheita',
+    produtividade: tipo === 'colheita',
+    clima: tipo === 'plantio' || tipo === 'aplicacao' || tipo === 'colheita',
+    observacoes: Boolean(tipo),
+  };
 };
 
 export const buildCadernoFazendaOptions = (fazendas: any[] = []): CadernoFazendaOption[] =>
@@ -320,6 +349,13 @@ export const parseCadernoAreaAplicada = (areaText = ''): number | undefined | nu
   return value;
 };
 
+export const parseCadernoProdutividade = (produtividadeText = ''): number | undefined | null => {
+  const normalized = String(produtividadeText).trim().replace(',', '.');
+  if (!normalized) return undefined;
+  const value = Number(normalized);
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
 const trimOrUndefined = (value?: string) => {
   const normalized = String(value || '').trim();
   return normalized || undefined;
@@ -360,6 +396,8 @@ export const buildCadernoPayload = ({
   criadoPorNome,
   origemRegistro,
   periodoProdutivo,
+  operacao = '',
+  produtividadeText = '',
 }: BuildCadernoPayloadInput) => {
   if (!(dataAtividade instanceof Date) || Number.isNaN(dataAtividade.getTime())) {
     return null;
@@ -369,6 +407,8 @@ export const buildCadernoPayload = ({
   if (areaAplicada === null) {
     return null;
   }
+  const produtividade = parseCadernoProdutividade(produtividadeText);
+  if (produtividade === null) return null;
 
   const talhaoNome = trimOrUndefined(talhao);
   const talhaoIdNormalizado = trimOrUndefined(talhaoId);
@@ -385,8 +425,10 @@ export const buildCadernoPayload = ({
     talhao_id: talhaoNome ? talhaoIdNormalizado : undefined,
     talhaoId: talhaoNome ? talhaoIdNormalizado : undefined,
     produtos_utilizados: parseCadernoProdutos(produtosText),
+    operacao: trimOrUndefined(operacao),
     dosagem: trimOrUndefined(dosagem),
     area_aplicada: areaAplicada,
+    produtividade,
     condicoes_clima: trimOrUndefined(condicoesClima),
     observacoes: trimOrUndefined(observacoes),
     visivel_para_produtor: visivelParaProdutor === true,

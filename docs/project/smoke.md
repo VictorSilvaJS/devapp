@@ -23,6 +23,31 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada MP-25 - Caderno Auditavel E Validacao Por Tipo**
+
+Status geral em 2026-08-03: `PASSOU_NO_CORTE_LOCAL`. APK release instalado por
+cima no Android fisico `8483A`, preservando o estado local. O perfil Admin foi
+usado no fluxo manual; autoria, escopo, Produtor, versao obsoleta, legado e
+payload destrutivo tambem foram cobertos pela suite focada.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP25-01 | P0 | Admin | Lista | Abrir Caderno | Consolidados aparecem e legado fica explicito, sem rascunho alheio | Passou | Registros anteriores exibiram `Registro legado` |
+| MP25-02 | P0 | Admin | Novo | Selecionar Aplicacao | Mostrar somente Talhao, produto, dose, area e campos opcionais pertinentes | Passou | Campos de Plantio/Colheita permaneceram ausentes |
+| MP25-03 | P0 | Admin | Validacao | Revisar Aplicacao incompleta | Erros ficam junto a Talhao, produto, dose e area | Passou | Quatro mensagens especificas exibidas |
+| MP25-04 | P0 | Admin | Envio | Preencher, revisar e confirmar | Dialogo alerta imutabilidade e registro muda atomicamente para `Registrado` | Passou | Detalhe abriu apos a confirmacao |
+| MP25-05 | P0 | Admin | Auditoria | Conferir detalhe enviado | Original preservado, autoria e evento de envio visiveis para equipe | Passou | Historico mostrou `registro enviado` |
+| MP25-06 | P0 | Admin | Complemento | Adicionar complemento liberado | Corpo original nao muda e versao/historico avancam | Passou | Complemento apareceu na versao 2 |
+| MP25-07 | P0 | Todos | Regressao | Executar testes e verificar logcat | Dominio/localizacao permanecem verdes e app nao apresenta crash | Passou | `test:mp25`, typecheck e domain-compat passaram; sem fatal recente |
+
+APK: 92.088.816 bytes; SHA-256
+`D21E1640844AED1CDA5789D3D6830E5D538F1F7670EBD658170D8F5D53BCF36B`.
+Evidencias completas:
+`dist/qa-session-2026-08-03/mp-25-caderno-auditavel/`.
+
+Backend append-only, RBAC, idempotencia, sincronizacao e conflito distribuido
+continuam fora desta rodada e permanecem em `MP-36`.
+
 **Rodada Material Tecnico Unificado - Novos Anexos Locais**
 
 Checklist para validar a evolucao posterior a Fase 17C. A evidencia historica

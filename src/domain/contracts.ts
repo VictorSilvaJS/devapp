@@ -213,6 +213,17 @@ export interface CadernoCampoCanonico {
   criado_por_user_id?: string;
   criado_por_nome?: string;
   origem_registro?: 'produtor' | 'equipe' | string;
+  estado_caderno?: 'rascunho' | 'registrado' | 'registrado_legado' | 'arquivado' | 'anulado';
+  versao_atual?: number;
+  registrado_em?: string;
+  registrado_por_usuario_id?: string;
+  registrado_por_nome?: string;
+  operacao?: string;
+  produtividade?: number | null;
+  conteudo_original?: Record<string, unknown>;
+  eventos_caderno?: Array<Record<string, unknown>>;
+  complementos_caderno?: Array<Record<string, unknown>>;
+  registro_legado?: boolean;
 }
 
 export interface LimiteAreaCanonico {
@@ -360,6 +371,17 @@ export interface CadernoCampoLegado {
   criado_por_user_id?: string;
   criado_por_nome?: string;
   origem_registro?: 'produtor' | 'equipe' | string;
+  estado_caderno?: 'rascunho' | 'registrado' | 'registrado_legado' | 'arquivado' | 'anulado';
+  versao_atual?: number;
+  registrado_em?: string;
+  registrado_por_usuario_id?: string;
+  registrado_por_nome?: string;
+  operacao?: string;
+  produtividade?: number | null;
+  conteudo_original?: Record<string, unknown>;
+  eventos_caderno?: Array<Record<string, unknown>>;
+  complementos_caderno?: Array<Record<string, unknown>>;
+  registro_legado?: boolean;
   [key: string]: unknown;
 }
 

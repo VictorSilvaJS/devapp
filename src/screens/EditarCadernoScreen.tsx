@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import CadernoLocalizacaoSection from '../components/CadernoLocalizacaoSection';
+import ConfirmDialog from '../components/ConfirmDialog';
 import DatePicker from '../components/DatePicker';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
@@ -41,9 +42,11 @@ import {
   findCadernoPeriodoProdutivoOption,
   getCadernoFormFazendaLabel,
   getCadernoFormPeriodoProdutivoLabel,
+  getCadernoFormFieldVisibility,
   isCadernoTalhaoLegado,
   isCadernoVisivelParaProdutor,
   parseCadernoAreaAplicada,
+  parseCadernoProdutividade,
   resolveCadernoEdicaoFazendaId,
 } from '../utils/cadernoFormCompat';
 import type { CadernoLocalizacaoExplicita } from '../utils/cadernoLocalizacaoCompat';
@@ -54,8 +57,15 @@ import {
   setCadernoLocalizacaoEditReplacement,
   undoCadernoLocalizacaoEditRemoval,
 } from '../utils/cadernoLocalizacaoUiCompat';
+import {
+  getCadernoTypeValidationErrors,
+  type CadernoActor,
+} from '../utils/cadernoLifecycleCompat';
 
-const CADERNO_FORM_ERROR_ORDER = ['fazendaId', 'dataAtividade', 'tipoAtividade', 'responsavel', 'areaAplicada'] as const;
+const CADERNO_FORM_ERROR_ORDER = [
+  'fazendaId', 'dataAtividade', 'tipoAtividade', 'responsavel', 'periodoProdutivoId',
+  'talhaoId', 'operacao', 'produtos', 'dosagem', 'areaAplicada', 'produtividade', 'observacoes',
+] as const;
 
 export default function EditarCadernoScreen() {
   const navigation = useNavigation<any>();
@@ -87,11 +97,14 @@ export default function EditarCadernoScreen() {
   const [areaAplicada, setAreaAplicada] = useState('');
   const [condicoesClima, setCondicoesClima] = useState('');
   const [observacoes, setObservacoes] = useState('');
+  const [operacao, setOperacao] = useState('');
+  const [produtividade, setProdutividade] = useState('');
   const [visivelParaProdutor, setVisivelParaProdutor] = useState(true);
   const [periodoProdutivoId, setPeriodoProdutivoId] = useState('');
   const [periodosProdutivos, setPeriodosProdutivos] = useState<any[]>([]);
   const [loadingPeriodos, setLoadingPeriodos] = useState(false);
   const [showPeriodoPicker, setShowPeriodoPicker] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [localizacaoState, setLocalizacaoState] = useState(() =>
     getInitialCadernoLocalizacaoEditState(null)
   );
@@ -157,11 +170,32 @@ export default function EditarCadernoScreen() {
     () => buildCadernoTalhaoOptions(talhoesDisponiveis, { id: talhaoId, nome: talhao }),
     [talhao, talhaoId, talhoesDisponiveis]
   );
+  const fieldVisibility = useMemo(
+    () => getCadernoFormFieldVisibility(tipoAtividade),
+    [tipoAtividade]
+  );
   const responsavelLegado = Boolean(
     registroOriginal
     && !registroOriginal.responsavel_usuario_id
     && !registroOriginal.colaborador_responsavel_id
   );
+
+  const handleTipoAtividadeChange = (value: string) => {
+    const nextVisibility = getCadernoFormFieldVisibility(value);
+    setTipoAtividade(value);
+    if (!nextVisibility.periodo) setPeriodoProdutivoId('');
+    if (!nextVisibility.talhao) {
+      setTalhaoId('');
+      setTalhao('');
+    }
+    if (!nextVisibility.operacao) setOperacao('');
+    if (!nextVisibility.produtos) setProdutosText('');
+    if (!nextVisibility.dosagem) setDosagem('');
+    if (!nextVisibility.area) setAreaAplicada('');
+    if (!nextVisibility.produtividade) setProdutividade('');
+    if (!nextVisibility.clima) setCondicoesClima('');
+    setErrors({});
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -259,18 +293,24 @@ export default function EditarCadernoScreen() {
       setTalhoesDisponiveis(filtrarLimitesPorFazendaIds(limitesData, [contextoFazendaId]));
       setFazendaId(contextoFazendaId);
       setDataAtividade(registroData.data_atividade ? new Date(registroData.data_atividade) : null);
-      setTipoAtividade(registroData.tipo_atividade || 'observacao');
+      setTipoAtividade(registroData.tipo_atividade || '');
       setResponsavel(registroData.colaborador_responsavel || 'Responsável legado não identificado');
       setTalhaoId(registroData.talhao_id || registroData.talhaoId || '');
       setTalhao(registroData.talhao_nome || registroData.talhao || '');
       setProdutosText(Array.isArray(registroData.produtos_utilizados) ? registroData.produtos_utilizados.join(', ') : '');
       setDosagem(registroData.dosagem || '');
+      setOperacao(registroData.operacao || '');
       setAreaAplicada(
         registroData.area_aplicada !== undefined && registroData.area_aplicada !== null
           ? String(registroData.area_aplicada).replace('.', ',')
           : ''
       );
       setCondicoesClima(registroData.condicoes_clima || '');
+      setProdutividade(
+        registroData.produtividade !== undefined && registroData.produtividade !== null
+          ? String(registroData.produtividade).replace('.', ',')
+          : ''
+      );
       setObservacoes(registroData.observacoes || '');
       setVisivelParaProdutor(isCadernoVisivelParaProdutor(registroData));
       const periodoAtualId = String(registroData.periodo_produtivo_id || registroData.periodoProdutivoId || '').trim();
@@ -289,7 +329,31 @@ export default function EditarCadernoScreen() {
     }
   };
 
-  const validateForm = () => {
+  const contextoFazendaIdAtual = () => resolveCadernoEdicaoFazendaId(registroOriginal, fazendaId);
+
+  const buildFormPayload = () => buildCadernoPayload({
+    fazendaId: contextoFazendaIdAtual(),
+    dataAtividade,
+    tipoAtividade,
+    talhaoId,
+    talhao,
+    produtosText,
+    dosagem,
+    areaAplicadaText: areaAplicada,
+    condicoesClima,
+    observacoes,
+    visivelParaProdutor: user?.perfil === 'produtor' ? true : visivelParaProdutor,
+    responsavelUsuarioId: registroOriginal?.responsavel_usuario_id || registroOriginal?.colaborador_responsavel_id,
+    colaboradorResponsavel: responsavel,
+    criadoPorUserId: registroOriginal?.criado_por_user_id || registroOriginal?.criado_por,
+    criadoPorNome: registroOriginal?.criado_por_nome,
+    origemRegistro: registroOriginal?.origem_registro || (user?.perfil === 'produtor' ? 'produtor' : 'equipe'),
+    periodoProdutivo: periodoSelecionado,
+    operacao,
+    produtividadeText: produtividade,
+  });
+
+  const validateForm = (forSubmit: boolean) => {
     const newErrors: any = {};
 
     if (!resolveCadernoEdicaoFazendaId(registroOriginal, fazendaId)) {
@@ -300,16 +364,22 @@ export default function EditarCadernoScreen() {
       newErrors.dataAtividade = 'Selecione a data da atividade';
     }
 
-    if (!tipoAtividade) {
+    if (forSubmit && !tipoAtividade) {
       newErrors.tipoAtividade = 'Selecione o tipo de atividade';
     }
 
-    if (!responsavel.trim()) {
-      newErrors.responsavel = 'Informe o responsável pelo registro';
+    if (!responsavel.trim() || !String(user?.id || '').trim()) {
+      newErrors.responsavel = 'Sessão sem referência estável de usuário';
     }
 
     if (parseCadernoAreaAplicada(areaAplicada) === null) {
       newErrors.areaAplicada = 'Informe uma área maior que zero';
+    }
+    if (parseCadernoProdutividade(produtividade) === null) {
+      newErrors.produtividade = 'Informe uma produtividade maior que zero';
+    }
+    if (forSubmit) {
+      Object.assign(newErrors, getCadernoTypeValidationErrors(buildFormPayload() || {}));
     }
 
     setErrors(newErrors);
@@ -317,7 +387,7 @@ export default function EditarCadernoScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
+  const handlePersist = async (submit: boolean) => {
     if (savingRef.current || loadingLocalizacao || isCapturePending()) return;
 
     if (!registroOriginal) {
@@ -325,7 +395,7 @@ export default function EditarCadernoScreen() {
       return;
     }
 
-    if (!validateForm()) {
+    if (!validateForm(submit)) {
       toast.showError('Preencha os campos obrigatórios');
       return;
     }
@@ -342,26 +412,7 @@ export default function EditarCadernoScreen() {
     savingRef.current = true;
     setSaving(true);
     try {
-      const payload = buildCadernoPayload({
-        fazendaId: contextoFazendaId,
-        dataAtividade,
-        tipoAtividade,
-        talhaoId,
-        talhao,
-        produtosText,
-        dosagem,
-        areaAplicadaText: areaAplicada,
-        condicoesClima,
-        observacoes,
-        visivelParaProdutor,
-        responsavelUsuarioId:
-          registroOriginal.responsavel_usuario_id || registroOriginal.colaborador_responsavel_id,
-        colaboradorResponsavel: responsavel,
-        criadoPorUserId: registroOriginal.criado_por_user_id || registroOriginal.criado_por,
-        criadoPorNome: registroOriginal.criado_por_nome,
-        origemRegistro: registroOriginal.origem_registro || 'equipe',
-        periodoProdutivo: periodoSelecionado,
-      });
+      const payload = buildFormPayload();
 
       if (!payload) {
         throw new Error('Não foi possível montar o payload do caderno');
@@ -381,11 +432,19 @@ export default function EditarCadernoScreen() {
         localizacaoState.draftLocation
       );
 
-      await CadernoCampo.update(cadernoRouteId, {
+      const actor: CadernoActor = {
+        usuarioId: String(user?.id || '').trim(),
+        nome: user?.nome || user?.full_name || responsavel,
+        perfil: user?.perfil || '',
+        propriedadeIds: [contextoFazendaId],
+      };
+      const data = {
         ...payload,
         ...localizacaoPatch,
-      });
-      toast.showSuccess('Registro de caderno atualizado!');
+      };
+      if (submit) await CadernoCampo.saveAndSubmitDraft(cadernoRouteId, data, actor);
+      else await CadernoCampo.updateDraft(cadernoRouteId, data, actor);
+      toast.showSuccess(submit ? 'Registro confirmado e enviado ao Caderno!' : 'Rascunho atualizado.');
 
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -394,11 +453,19 @@ export default function EditarCadernoScreen() {
       }
     } catch (error) {
       console.error('Erro ao atualizar registro de caderno:', error);
-      toast.showError('Erro ao atualizar registro de caderno');
+      toast.showError(submit ? 'Erro ao enviar registro de caderno' : 'Erro ao atualizar rascunho');
     } finally {
       savingRef.current = false;
       setSaving(false);
     }
+  };
+
+  const handleReviewSubmit = () => {
+    if (!validateForm(true)) {
+      toast.showError('Revise os campos obrigatórios do tipo selecionado');
+      return;
+    }
+    setShowSubmitConfirm(true);
   };
 
   if (loading) {
@@ -456,8 +523,9 @@ export default function EditarCadernoScreen() {
             {errors.fazendaId && <Text style={styles.errorText}>{errors.fazendaId}</Text>}
           </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Safra/Safrinha</Text>
+          {fieldVisibility.periodo && (
+          <View ref={formValidation.registerField('periodoProdutivoId')} collapsable={false} style={styles.field}>
+            <Text style={styles.label}>Safra/Safrinha <Text style={styles.required}>*</Text></Text>
             <TouchableOpacity
               style={styles.picker}
               onPress={() => setShowPeriodoPicker(!showPeriodoPicker)}
@@ -474,7 +542,8 @@ export default function EditarCadernoScreen() {
                 color={colors.muted}
               />
             </TouchableOpacity>
-            <Text style={styles.contextHint}>Opcional. Você pode remover o vínculo sem alterar a Propriedade.</Text>
+            <Text style={styles.contextHint}>Obrigatória para Plantio e Colheita.</Text>
+            {errors.periodoProdutivoId && <Text style={styles.errorText}>{errors.periodoProdutivoId}</Text>}
 
             {showPeriodoPicker && (
               <View style={styles.dropdownContainer}>
@@ -537,6 +606,7 @@ export default function EditarCadernoScreen() {
               </View>
             )}
           </View>
+          )}
         </SectionCard>
 
         <SectionCard title="Registro de campo" subtitle="Atualize data, tipo, responsável e informações operacionais.">
@@ -566,10 +636,7 @@ export default function EditarCadernoScreen() {
                 label: tipo.label,
               }))}
               value={tipoAtividade}
-              onChange={(value) => {
-                setTipoAtividade(value);
-                setErrors(prev => ({ ...prev, tipoAtividade: null }));
-              }}
+              onChange={handleTipoAtividadeChange}
               error={errors.tipoAtividade}
             />
           </View>
@@ -588,8 +655,11 @@ export default function EditarCadernoScreen() {
             />
           </View>
 
+          {fieldVisibility.talhao && (
+          <View ref={formValidation.registerField('talhaoId')} collapsable={false}>
           <SelectField
             label="Talhão"
+            required
             value={talhaoSelection.selectedValue}
             options={talhaoSelection.options}
             onChange={(value) => {
@@ -600,6 +670,7 @@ export default function EditarCadernoScreen() {
               const selected = talhaoSelection.options.find((option) => option.value === value);
               setTalhaoId(value);
               setTalhao(value ? selected?.label || '' : '');
+              setErrors(prev => ({ ...prev, talhaoId: null }));
             }}
             helperText={isCadernoTalhaoLegado({ talhao_id: talhaoId, talhao })
               ? 'Referência legada em texto. Selecione um Talhão para reconciliar por ID ou mantenha como está.'
@@ -607,8 +678,29 @@ export default function EditarCadernoScreen() {
                 ? 'Opcional. A seleção grava o ID e preserva o nome exibido.'
                 : 'Nenhum Talhão com ID estável; o registro abrangerá toda a Propriedade.'}
             placeholder="Toda a Propriedade"
+            error={errors.talhaoId}
           />
+          </View>
+          )}
 
+          {fieldVisibility.operacao && (
+          <View ref={formValidation.registerField('operacao')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('operacao')}
+              label="Operação de plantio"
+              required
+              value={operacao}
+              onChangeText={(value) => {
+                setOperacao(value);
+                setErrors(prev => ({ ...prev, operacao: null }));
+              }}
+              placeholder="Ex: Semeadura direta"
+              error={errors.operacao}
+            />
+          </View>
+          )}
+
+          {fieldVisibility.area && (
           <View ref={formValidation.registerField('areaAplicada')} collapsable={false}>
             <FormField
               ref={formValidation.registerFocusable('areaAplicada')}
@@ -624,36 +716,84 @@ export default function EditarCadernoScreen() {
               error={errors.areaAplicada}
             />
           </View>
+          )}
 
+          {fieldVisibility.produtos && (
+          <View ref={formValidation.registerField('produtos')} collapsable={false}>
           <FormField
             label="Produtos Utilizados"
+            required
             value={produtosText}
-            onChangeText={setProdutosText}
+            onChangeText={(value) => {
+              setProdutosText(value);
+              setErrors(prev => ({ ...prev, produtos: null }));
+            }}
             placeholder="Separe produtos por vírgula"
+            error={errors.produtos}
           />
+          </View>
+          )}
 
+          {fieldVisibility.dosagem && (
+          <View ref={formValidation.registerField('dosagem')} collapsable={false}>
           <FormField
             label="Dosagem"
+            required
             value={dosagem}
-            onChangeText={setDosagem}
+            onChangeText={(value) => {
+              setDosagem(value);
+              setErrors(prev => ({ ...prev, dosagem: null }));
+            }}
             placeholder="Ex: 300 kg/ha"
+            error={errors.dosagem}
           />
+          </View>
+          )}
 
+          {fieldVisibility.produtividade && (
+          <View ref={formValidation.registerField('produtividade')} collapsable={false}>
+            <FormField
+              ref={formValidation.registerFocusable('produtividade')}
+              label="Produtividade"
+              required
+              value={produtividade}
+              onChangeText={(value) => {
+                setProdutividade(value);
+                setErrors(prev => ({ ...prev, produtividade: null }));
+              }}
+              placeholder="Ex: 62,5"
+              keyboardType="decimal-pad"
+              error={errors.produtividade}
+            />
+          </View>
+          )}
+
+          {fieldVisibility.clima && (
           <FormField
             label="Condições Climáticas"
             value={condicoesClima}
             onChangeText={setCondicoesClima}
             placeholder="Ex: Ensolarado, sem vento"
           />
+          )}
 
+          {fieldVisibility.observacoes && (
+          <View ref={formValidation.registerField('observacoes')} collapsable={false}>
           <FormField
             label="Observações"
+            required={['observacao', 'ocorrencia', 'outro'].includes(tipoAtividade)}
             value={observacoes}
-            onChangeText={setObservacoes}
+            onChangeText={(value) => {
+              setObservacoes(value);
+              setErrors(prev => ({ ...prev, observacoes: null }));
+            }}
             placeholder="Descreva o registro de campo..."
             textarea
             numberOfLines={4}
+            error={errors.observacoes}
           />
+          </View>
+          )}
         </SectionCard>
 
         <CadernoLocalizacaoSection
@@ -681,6 +821,9 @@ export default function EditarCadernoScreen() {
           }}
         />
 
+        {user?.perfil === 'produtor' ? (
+          <InfoBox message="O registro ficará visível para você e para a equipe autorizada da Propriedade." />
+        ) : (
         <SectionCard title="Visibilidade" subtitle="Controle se o registro aparece para o produtor.">
           <Text style={styles.label}>
             Visibilidade para Produtor <Text style={styles.required}>*</Text>
@@ -702,16 +845,34 @@ export default function EditarCadernoScreen() {
             onChange={(value) => setVisivelParaProdutor(value === 'visivel')}
           />
         </SectionCard>
+        )}
 
-        <InfoBox message="As alterações serão salvas no registro desta propriedade." />
+        <InfoBox message="Este rascunho ainda aceita edição. Após revisar e confirmar, o conteúdo original será preservado e mudanças posteriores ficarão auditadas." />
       </ScrollView>
 
       <FormFooter
-        onCancel={handleCancel}
-        onSubmit={handleSave}
-        submitLabel="Salvar Alterações"
+        onCancel={() => void handlePersist(false)}
+        cancelLabel="Salvar rascunho"
+        cancelIcon="save-outline"
+        onSubmit={handleReviewSubmit}
+        submitLabel="Revisar e enviar"
+        submitIcon="send-outline"
         loading={saving}
         disabled={loadingLocalizacao}
+      />
+
+      <ConfirmDialog
+        visible={showSubmitConfirm}
+        title="Confirmar envio ao Caderno"
+        message="Revise os dados. Depois da confirmação, o registro deixa de aceitar edição direta; correções e complementos ficam no histórico de auditoria."
+        type="warning"
+        confirmText="Confirmar e enviar"
+        onCancel={() => setShowSubmitConfirm(false)}
+        onConfirm={() => {
+          setShowSubmitConfirm(false);
+          void handlePersist(true);
+        }}
+        loading={saving}
       />
     </View>
   );

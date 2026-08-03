@@ -259,7 +259,7 @@ const run = async () => {
     assert.equal(podeGerenciarPeriodoProdutivoEmFazenda(adminUser, fazendaForaEscopo), true);
   });
 
-  await test('podeEditarCadernoEmFazenda bloqueia produtor e preserva escopo da equipe', () => {
+  await test('podeEditarCadernoEmFazenda limita edição destrutiva ao próprio rascunho e ao escopo', () => {
     const fazendaNoEscopo = fazendasBase[0];
     const fazendaForaEscopo = fazendasBase[1];
     const registroDoProdutor = {
@@ -270,6 +270,7 @@ const run = async () => {
       tipo_atividade: 'vistoria',
       visivel_para_produtor: true,
       criado_por_user_id: 'u1',
+      estado_caderno: 'rascunho',
     };
     const registroDeOutro = {
       ...registroDoProdutor,
@@ -277,13 +278,19 @@ const run = async () => {
       criado_por_user_id: 'u99',
     };
 
-    assert.equal(podeEditarCaderno(produtorUser, registroDoProdutor), false);
+    const registroDoColaborador = { ...registroDoProdutor, id: 'c3', criado_por_user_id: 'u2' };
+    const registroDoAdmin = { ...registroDoProdutor, id: 'c4', fazenda_id: 'fz2', criado_por_user_id: 'u3' };
+    const registroConsolidado = { ...registroDoColaborador, estado_caderno: 'registrado' };
+
+    assert.equal(podeEditarCaderno(produtorUser, registroDoProdutor), true);
     assert.equal(podeEditarCaderno(produtorUser, registroDeOutro), false);
-    assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaNoEscopo), false);
+    assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaNoEscopo), true);
     assert.equal(podeEditarCadernoEmFazenda(produtorUser, registroDoProdutor, fazendaForaEscopo), false);
-    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoProdutor, fazendaNoEscopo), true);
-    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoProdutor, fazendaForaEscopo), false);
-    assert.equal(podeEditarCadernoEmFazenda(adminUser, registroDeOutro, fazendaForaEscopo), true);
+    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoColaborador, fazendaNoEscopo), true);
+    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroConsolidado, fazendaNoEscopo), false);
+    assert.equal(podeEditarCadernoEmFazenda(colaboradorUser, registroDoColaborador, fazendaForaEscopo), false);
+    assert.equal(podeEditarCadernoEmFazenda(adminUser, registroDoAdmin, fazendaForaEscopo), true);
+    assert.equal(podeEditarCadernoEmFazenda(adminUser, registroDeOutro, fazendaForaEscopo), false);
   });
 
   await test('podeBaixarMapa usa a fazenda do mapa quando a lista de fazendas está disponível', () => {

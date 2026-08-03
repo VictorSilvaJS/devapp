@@ -189,9 +189,9 @@ validacao em Android fisico autorizado.
 Status em 2026-07-30 (`MP-04`): `ciclo-vida-caderno.md` fechou o contrato de
 rascunho, envio imutavel, complemento, correcao, visibilidade, arquivamento,
 anulacao, autoria e concorrencia. Nao permanece pendente a regra de evolucao do
-registro. Permanecem pendentes obrigatorios por tipo, IDs estaveis de
-responsavel/Talhao, implementacao no app em `MP-25` e auditoria produtiva no
-backend em `MP-36`.
+registro. IDs estaveis foram concluidos em `MP-24`; obrigatorios por tipo e a
+implementacao local do app foram concluidos em `MP-25`. Auditoria produtiva no
+backend permanece pendente em `MP-36`.
 
 ### 4. Taxonomia final de mapas
 
@@ -740,7 +740,8 @@ Status em 2026-07-30 (`MP-04`): permissao para abrir Caderno nao implica poder
 de reescrever registro consolidado. Produtor altera somente o proprio
 rascunho. Colaborador/Admin dependem de acao explicita para complemento,
 correcao, visibilidade, arquivamento, reativacao ou anulacao, sempre dentro do
-escopo. Permanecem pendentes implementar e testar essa matriz em `MP-25` e
+escopo. `MP-25` implementou e testou essa matriz na projecao local do app.
+Autorizacao, persistencia append-only e auditoria produtiva permanecem em
 `MP-36`.
 
 Status em 2026-07-30 (`MP-05`): permissao para abrir Visita nao implica poder
@@ -818,8 +819,9 @@ Status em 2026-07-30 (`MP-04`): no Caderno, rascunho pode ser criado/editado
 offline e permanece identificado como local, segregado por usuario,
 organizacao e Propriedade. Envio, complemento, correcao, visibilidade,
 arquivamento, reativacao e anulacao exigem conexao, revalidacao e confirmacao.
-Permanecem pendentes implementar conflito, idempotencia, armazenamento seguro
-e sincronizacao em `MP-25`/`MP-36`.
+`MP-25` passou a recusar versao base obsoleta e a separar rascunho de registro
+consolidado na persistencia local demonstrativa. Permanecem pendentes conflito
+distribuido, idempotencia, armazenamento seguro e sincronizacao em `MP-36`.
 
 Status em 2026-07-30 (`MP-05`): Visitas em cache podem ser consultadas dentro
 da sessao e do ultimo escopo autorizados. Agendar, registrar realizada,

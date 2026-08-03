@@ -8,7 +8,7 @@
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
 > concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17`, `MP-18` e `MP-19` também
 > foram concluídas; `MP-20`, `MP-21`, `MP-22` e `MP-23` foram concluídas;
-> `MP-24` foi concluída; `MP-25` não foi iniciada
+> `MP-24` e `MP-25` foram concluídas; `MP-26` não foi iniciada
 
 ## 1. Objetivo
 
@@ -214,7 +214,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
 | 25 | `MP-24` IDs estáveis de responsável e Talhão | `QA-P1-07` | Substituir texto livre por referências estáveis e preservar snapshots legíveis | `MP-02`, `MP-06` | `CONCLUIDO` |
-| 26 | `MP-25` Caderno auditável e validação por tipo | `QA-P0-03`, `QA-P1-08` | Implementar ciclo aprovado, autoria, complemento, correção e obrigatórios por tipo | `MP-04`, `MP-24`, `MP-13` | `BACKLOG` |
+| 26 | `MP-25` Caderno auditável e validação por tipo | `QA-P0-03`, `QA-P1-08` | Implementar ciclo aprovado, autoria, complemento, correção e obrigatórios por tipo | `MP-04`, `MP-24`, `MP-13` | `CONCLUIDO` |
 | 27 | `MP-26` Apresentação da localização | `QA-P2-14` | Usar mini mapa, precisão, relação com Talhão e detalhe técnico recolhido | `MP-06`, `MP-25` | `BACKLOG` |
 | 28 | `MP-27` Implementação dos estados de Visita | `QA-P1-04` | Aplicar máquina de estados, atraso, motivo e histórico | `MP-05`, `MP-13` | `BACKLOG` |
 
@@ -388,7 +388,8 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-21` | `CONCLUIDO` | `appQA` / árvore limpa sobre `5cf9513` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou a casca comum, diferenças de domínio, detalhe, retorno, rolagem e ambas as orientações | `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/` | agrupamento, ordenação e humanização geral dos estados de Visita permanecem em `MP-22`; `MP-22` não foi iniciada |
 | 2026-08-03 | `MP-22` | `CONCLUIDO` | `appQA` / árvore limpa sobre `f2aec81` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou seções, ordem, rótulos, atraso derivado, detalhe e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-22-lista-visitas/` | máquina de estados e comandos permanecem em `MP-27`; `MP-23` não foi iniciada |
 | 2026-08-03 | `MP-23` | `CONCLUIDO` | `appQA` / árvore limpa sobre `c59e777` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou ação única, campos controlados, validações, persistência, edição e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-23-safras-safrinha/` | referências locais estáveis foram concluídas posteriormente em `MP-24`; backend, sincronização e auditoria seguem fora deste corte |
-| 2026-08-03 | `MP-24` | `CONCLUIDO` | `appQA` / árvore limpa sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou responsável bloqueado, Talhão por ID lógico, snapshots, legado explícito e ambas as orientações | `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/` | ciclo auditável permanece em `MP-25`; versionamento e migração produtivos permanecem em `MP-37`; `MP-25` não foi iniciada |
+| 2026-08-03 | `MP-24` | `CONCLUIDO` | `appQA` / árvore limpa sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou responsável bloqueado, Talhão por ID lógico, snapshots, legado explícito e ambas as orientações | `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/` | ciclo auditável foi concluído depois em `MP-25`; versionamento e migração produtivos permanecem em `MP-37` |
+| 2026-08-03 | `MP-25` | `CONCLUIDO` | árvore de trabalho sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou validação de Aplicação, confirmação, registro consolidado, auditoria e complemento versionado | `dist/qa-session-2026-08-03/mp-25-caderno-auditavel/` | backend append-only, RBAC, idempotência, sincronização e conflito distribuído permanecem em `MP-36`; migração produtiva permanece em `MP-37`; `MP-26` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -658,7 +659,7 @@ não houve exceção fatal no logcat recente. A rotação automática foi restau
 Evidências: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
 
 Transições, comandos auditados e validação produtiva permanecem em `MP-27`.
-`MP-23` e `MP-24` foram executadas na sequência; `MP-25` não foi iniciada.
+`MP-23`, `MP-24` e `MP-25` foram executadas na sequência.
 
 `MP-23` foi concluída em 2026-08-03. A aba `Safras e Safrinha` da
 Propriedade passou a concentrar a única ação de criação; a ação contextual
@@ -682,7 +683,8 @@ recente. A rotação automática foi restaurada. Evidências:
 
 As referências locais estáveis de responsável e Talhão foram concluídas em
 `MP-24`. Backend, sincronização, auditoria e regras completas de encerramento
-ou remoção continuam fora deste corte. `MP-25` não foi iniciada.
+ou remoção continuam fora deste corte. O ciclo local foi concluído depois em
+`MP-25`; o fechamento produtivo continua em `MP-36`.
 
 `MP-24` foi concluída em 2026-08-03. Novos registros do Caderno vinculam o
 responsável autenticado por `responsavel_usuario_id`, bloqueiam a edição do
@@ -708,5 +710,21 @@ versões anuais, seleção por ID lógico, rolagem e rotação; não houve exce�
 fatal no logcat recente. A rotação automática foi restaurada. Evidências:
 `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/`.
 
-O ciclo auditável, obrigatórios por tipo, comandos e controles de `MP-25`
-continuam fora deste corte. `MP-25` não foi iniciada.
+`MP-25` concluiu no corte local demonstrativo o ciclo rascunho -> confirmação
+-> registro consolidado, os obrigatórios por tipo e os comandos versionados de
+complemento, correção, visibilidade, arquivamento, reativação e anulação. A
+projeção do Produtor remove a trilha administrativa interna e rascunhos ficam
+restritos ao criador.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. O APK final de 92.088.816 bytes, SHA-256
+`D21E1640844AED1CDA5789D3D6830E5D538F1F7670EBD658170D8F5D53BCF36B`, foi
+instalado por cima no Android físico `8483A`. O smoke confirmou Aplicação com
+campos condicionais, erros específicos, diálogo de confirmação, estado
+`Registrado`, snapshot/histórico e complemento avançando para a versão 2; não
+houve exceção fatal recente no logcat. Evidências:
+`dist/qa-session-2026-08-03/mp-25-caderno-auditavel/`.
+
+Persistência append-only, RBAC, idempotência, sincronização e conflito
+distribuído permanecem em `MP-36`; migração produtiva continua em `MP-37`.
+`MP-26` não foi iniciada.

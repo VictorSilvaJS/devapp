@@ -655,13 +655,15 @@ visibilidade, offline, sincronizacao, backend e auditoria dos tres perfis.
 
 ### Impacto
 
-- `CadernoCampo.update` continua incompatibilidade conhecida do mock;
-- registro legado deve ser migrado como consolidado, sem inventar historico;
+- `CadernoCampo.update` aceita apenas rascunho proprio na borda compativel e
+  recusa sobrescrita de registro consolidado;
+- registro legado e lido como consolidado protegido, sem inventar historico;
 - Produtor nao altera registro enviado;
 - Admin/Colaborador usam comandos excepcionais, nao edicao destrutiva;
-- campos obrigatorios por tipo ficam em `MP-25`;
-- implementacao no app e fechamento produtivo permanecem em `MP-25` e
-  `MP-36`.
+- campos obrigatorios por tipo e comandos locais foram implementados em
+  `MP-25`;
+- persistencia append-only, concorrencia, autorizacao e auditoria produtivas
+  permanecem em `MP-36`.
 
 ---
 

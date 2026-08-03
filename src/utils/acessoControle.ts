@@ -20,6 +20,12 @@ import {
   normalizeMapa,
   normalizeVisita,
 } from '../domain';
+import {
+  getCadernoEstado,
+  isCadernoDraft,
+  isCadernoDraftOwner,
+  isCadernoOperational,
+} from './cadernoLifecycleCompat';
 
 // ────────────────────────────────────────────────────────────────
 // HELPERS DE PERFIL
@@ -91,6 +97,24 @@ const filterByFazendaIds = (items, getId, fazendaIds) => {
 };
 
 const cadernoVisivelParaProdutor = (registro) => registro?.visivel_para_produtor !== false;
+
+const cadernoVisivelNaLista = (
+  registro,
+  options: {
+    somenteVisivelParaProdutor?: boolean;
+    incluirRascunhosDoUsuario?: boolean;
+    usuarioId?: string;
+  } = {}
+) => {
+  if (isCadernoDraft(registro)) {
+    return options.incluirRascunhosDoUsuario === true
+      && isCadernoDraftOwner(registro, options.usuarioId);
+  }
+
+  if (!isCadernoOperational(registro)) return false;
+  if (options.somenteVisivelParaProdutor && !cadernoVisivelParaProdutor(registro)) return false;
+  return true;
+};
 
 export const getTitularIdUsuario = (user) => firstNonEmptyString(user?.produtor_id);
 
@@ -222,15 +246,14 @@ export const filtrarVisitasPorFazendaIds = (visitas, fazendaIds) =>
 export const filtrarCadernosPorFazendaIds = (
   registros,
   fazendaIds,
-  options: { somenteVisivelParaProdutor?: boolean } = {}
+  options: {
+    somenteVisivelParaProdutor?: boolean;
+    incluirRascunhosDoUsuario?: boolean;
+    usuarioId?: string;
+  } = {}
 ) => {
   const registrosFiltrados = filterByFazendaIds(registros, getCadernoFazendaId, fazendaIds);
-
-  if (options.somenteVisivelParaProdutor) {
-    return registrosFiltrados.filter(cadernoVisivelParaProdutor);
-  }
-
-  return registrosFiltrados;
+  return registrosFiltrados.filter((registro) => cadernoVisivelNaLista(registro, options));
 };
 
 export const filtrarLimitesPorFazendaIds = (limites, fazendaIds) =>
@@ -351,11 +374,17 @@ export const filtrarMapasPorAcesso = (mapas, user, produtores = []) => {
 export const temAcessoCaderno = (user, registro, produtor) => {
   if (!user || !registro) return false;
 
+  if (isCadernoDraft(registro)) {
+    return isCadernoDraftOwner(registro, user?.id);
+  }
+
   if (isAdmin(user)) return true;
 
   // Produtor: vê registros visíveis das suas fazendas
   if (isProdutor(user)) {
-    return fazendaPertenceAoTitular(produtor, user) && cadernoVisivelParaProdutor(registro);
+    return isCadernoOperational(registro)
+      && fazendaPertenceAoTitular(produtor, user)
+      && cadernoVisivelParaProdutor(registro);
   }
 
   if (isColaborador(user)) {
@@ -398,12 +427,12 @@ export const avaliarAcessoCaderno = (user, registro, fazendas = []) => {
 export const filtrarCadernosPorAcesso = (registros, user, produtores = []) => {
   if (!user || !registros) return [];
 
-  if (isAdmin(user)) return registros;
-
   const fazendaIdsPermitidos = getFazendaIdsPorAcesso(user, produtores);
 
   return filtrarCadernosPorFazendaIds(registros, fazendaIdsPermitidos, {
     somenteVisivelParaProdutor: isProdutor(user),
+    incluirRascunhosDoUsuario: true,
+    usuarioId: user?.id,
   });
 };
 
@@ -609,23 +638,31 @@ export const podeGerenciarPeriodoProdutivoEmFazenda = (user, fazenda) => {
 };
 
 /**
- * Verifica se usuário pode editar registros do caderno (edição completa)
+ * Edição destrutiva existe somente enquanto o registro é rascunho e pertence ao criador.
  */
 export const podeEditarCaderno = (user, registro, fazenda = null) => {
   if (!user || !registro) return false;
-
-  if (isAdmin(user)) return true;
-  if (isColaborador(user)) {
-    return fazenda ? produtorNaRegiao(user, fazenda) : true;
-  }
-
-  return false;
+  if (!isCadernoDraftOwner(registro, user?.id)) return false;
+  if (isAdmin(user) || isProdutor(user)) return true;
+  return isColaborador(user) && (fazenda ? produtorNaRegiao(user, fazenda) : true);
 };
 
 export const podeEditarCadernoEmFazenda = (user, registro, fazenda) => {
   if (!registro || !fazenda) return false;
   if (!temAcessoProdutor(user, fazenda)) return false;
   return podeEditarCaderno(user, registro, fazenda);
+};
+
+/**
+ * Complemento, correção, visibilidade, arquivamento e anulação são comandos da equipe.
+ * A versão e o estado ainda são revalidados atomicamente pelo contrato do Caderno.
+ */
+export const podeExecutarComandoCaderno = (user, registro, fazenda = null) => {
+  if (!user || !registro || !['registrado', 'arquivado'].includes(getCadernoEstado(registro))) {
+    return false;
+  }
+  if (isAdmin(user)) return true;
+  return isColaborador(user) && (fazenda ? produtorNaRegiao(user, fazenda) : true);
 };
 
 /**

@@ -14,6 +14,7 @@ import {
   hasCadernoLocalizacaoFieldIntent,
   isCadernoLocalizacaoRemovalPatch,
 } from '../utils/cadernoLocalizacaoCompat';
+import { withCadernoLifecycleReadCompat } from '../utils/cadernoLifecycleCompat';
 
 const cloneRecord = <T extends Record<string, any>>(record: T): T => ({ ...record });
 
@@ -44,7 +45,8 @@ export const persistMockVisita = ({ id, data, existing }: { id?: any; data: any;
   return toVisitaCompativelBorda(normalized);
 };
 
-export const readMockCadernoCampo = (record: any) => cloneRecord(toCadernoCampoCompativelBorda(record));
+export const readMockCadernoCampo = (record: any) =>
+  cloneRecord(withCadernoLifecycleReadCompat(toCadernoCampoCompativelBorda(record)));
 
 export const listMockCadernosCampo = (records: any[]) => records.map(readMockCadernoCampo);
 

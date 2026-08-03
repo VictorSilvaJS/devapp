@@ -341,8 +341,10 @@ O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
   locais; Produtor pode consultar e vincular ao registrar Caderno, mas nao
   gerencia periodos nesta fase.
 
-O ciclo de vida esta fechado em nivel de contrato. Campos obrigatorios por
-tipo, UI, persistencia append-only e backend pertencem a `MP-25` e `MP-36`.
+O ciclo de vida esta fechado em nivel de contrato. `MP-25` implementou no app
+e na persistencia local demonstrativa os campos obrigatorios por tipo, a UI e
+os comandos versionados. Persistencia append-only, autorizacao e auditoria no
+backend produtivo permanecem em `MP-36`.
 
 ## Regra sobre Validacoes Do Mock Administrativo
 

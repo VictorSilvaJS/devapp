@@ -4649,7 +4649,7 @@ rotacao automatica foi restaurada e nao houve excecao fatal no logcat recente.
 Evidencias: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
 
 Transicoes, comandos auditados e validacao produtiva permanecem em `MP-27`.
-`MP-23` e `MP-24` foram executadas na sequencia; `MP-25` nao foi iniciada.
+`MP-23`, `MP-24` e `MP-25` foram executadas na sequencia.
 
 ## MP-23 - Safras E Safrinha
 
@@ -4680,7 +4680,8 @@ recente. Evidencias:
 
 As referencias locais estaveis de responsavel e Talhao foram concluidas em
 `MP-24`. Backend, sincronizacao, auditoria e regras completas de encerramento
-ou remocao permanecem fora deste corte. `MP-25` nao foi iniciada.
+ou remocao permanecem fora deste corte. O ciclo local foi concluido depois em
+`MP-25`; o fechamento produtivo continua em `MP-36`.
 
 ## MP-24 - IDs Estaveis De Responsavel E Talhao
 
@@ -4711,5 +4712,49 @@ Evidencias:
 `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/`.
 
 Persistencia, reconciliacao, versionamento e migracao produtivos permanecem em
-`MP-37`. Ciclo auditavel, obrigatorios por tipo e comandos permanecem em
-`MP-25`. `MP-25` nao foi iniciada.
+`MP-37`. O ciclo auditavel local, os obrigatorios por tipo e os comandos foram
+concluidos depois em `MP-25`.
+
+## MP-25 - Caderno Auditavel E Validacao Por Tipo
+
+Status em 2026-08-03: `CONCLUIDO` no corte local demonstrativo.
+
+Novos registros do Caderno nascem como rascunho do usuario autenticado. Apenas
+o criador pode editar ou descartar esse rascunho. O envio exige revisao e
+confirmacao, valida os requisitos do tipo e consolida autoria, origem, corpo e
+localizacao originais. Depois disso, `CadernoCampo.update` recusa sobrescrita
+destrutiva.
+
+Observacao, Ocorrencia e Outro exigem descricao. Plantio exige Talhao,
+Safra/Safrinha e operacao. Aplicacao exige Talhao, produto, dose e area.
+Colheita exige Talhao, Safra/Safrinha, area e produtividade. Os formularios
+mostram somente os grupos relevantes ao tipo selecionado e usam o foco de erro
+de `MP-13`.
+
+A equipe autorizada usa comandos versionados para complemento tecnico,
+correcao excepcional com motivo e antes/depois, mudanca de visibilidade,
+arquivamento, reativacao e anulacao. O registro e o historico sao preservados;
+exclusao fisica permanece restrita ao proprio rascunho. Listas ocultam
+rascunhos de terceiros e itens arquivados. Registros antigos sao classificados
+como `Registro legado`, protegidos e apresentados sem inventar eventos.
+
+O Produtor pode criar, revisar e confirmar registro na propria Propriedade,
+mas nao altera registro consolidado. Sua projecao remove eventos, snapshot
+original, versao e IDs administrativos, e inclui apenas complementos liberados.
+Rotas e comandos revalidam autoria, perfil, Propriedade, estado e versao.
+
+`test:mp25`, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release final de 92.088.816 bytes, SHA-256
+`D21E1640844AED1CDA5789D3D6830E5D538F1F7670EBD658170D8F5D53BCF36B`, foi
+instalado por cima no Android fisico `8483A`.
+
+O smoke fisico como Admin confirmou campos condicionais de Aplicacao, erros
+especificos, dialogo de confirmacao, estado `Registrado`, snapshot/historico e
+complemento avancando para a versao 2. Nao houve excecao fatal recente no
+logcat. Evidencias:
+`dist/qa-session-2026-08-03/mp-25-caderno-auditavel/`.
+
+Persistencia append-only, idempotencia, concorrencia distribuida, autenticacao,
+RBAC, sincronizacao e auditoria produtiva permanecem em `MP-36`. Migracao e
+versionamento produtivos permanecem em `MP-37`; o corte local nao os apresenta
+como backend concluido.

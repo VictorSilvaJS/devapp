@@ -54,6 +54,7 @@
     "src/utils/formValidationCompat.ts",
     "src/contexts/filtroCompat.ts",
     "src/utils/cadernoFormCompat.ts",
+    "src/utils/cadernoLifecycleCompat.ts",
     "src/utils/cadernoLocalizacaoCompat.ts",
     "src/utils/cadernoLocalizacaoUiCompat.ts",
     "src/utils/talhaoConsultaCompat.ts",

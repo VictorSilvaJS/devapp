@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
+import CadernoAuditActions from '../components/CadernoAuditActions';
 import { useToast } from '../components/Toast';
 import { CadernoCampo, Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
@@ -19,6 +20,7 @@ import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
   podeEditarCadernoEmFazenda,
+  podeExecutarComandoCaderno,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import {
@@ -36,6 +38,11 @@ import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRout
 import { normalizeCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
 import { getCadernoLocalizacaoPresentation } from '../utils/cadernoLocalizacaoUiCompat';
 import { formatAreaHa, normalizeAreaValue } from '../utils/talhaoMedidasCompat';
+import {
+  getCadernoEstado,
+  getCadernoEstadoLabel,
+  toCadernoProducerProjection,
+} from '../utils/cadernoLifecycleCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -48,8 +55,8 @@ export default function CadernoDetailScreen() {
   const { cadernoId, registroId, id } = route.params || {};
   const cadernoRouteId = cadernoId || registroId || id;
 
-  const [registro, setRegistro] = useState(null);
-  const [fazenda, setFazenda] = useState(null);
+  const [registro, setRegistro] = useState<any>(null);
+  const [fazenda, setFazenda] = useState<any>(null);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,7 +76,7 @@ export default function CadernoDetailScreen() {
       const [registroData, fazendas, usuariosData] = await Promise.all([
         CadernoCampo.get(cadernoRouteId),
         Produtor.list(),
-        User.list().catch(() => []),
+        user?.perfil === 'produtor' ? Promise.resolve([]) : User.list().catch(() => []),
       ]);
 
       const acesso = avaliarAcessoCaderno(user, registroData, fazendas);
@@ -83,7 +90,7 @@ export default function CadernoDetailScreen() {
         return;
       }
 
-      setRegistro(registroData);
+      setRegistro(user?.perfil === 'produtor' ? toCadernoProducerProjection(registroData) : registroData);
       setFazenda(acesso.fazenda);
       setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
     } catch (error) {
@@ -128,6 +135,7 @@ export default function CadernoDetailScreen() {
   };
 
   const canEdit = () => podeEditarCadernoEmFazenda(user, registro, fazenda);
+  const canCommand = () => podeExecutarComandoCaderno(user, registro, fazenda);
 
   const handleEditar = () => {
     if (!canEdit()) {
@@ -165,6 +173,7 @@ export default function CadernoDetailScreen() {
   const fazendaInfo = fazenda ? getFazendaUiInfo(fazenda) : null;
   const tipoColor = getTipoColor(registro.tipo_atividade);
   const areaFormatada = formatArea(registro.area_aplicada);
+  const produtividadeFormatada = normalizeAreaValue(registro.produtividade);
   const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
   const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
   const tipoLabel = getCadernoTipoLabel(registro.tipo_atividade);
@@ -180,6 +189,10 @@ export default function CadernoDetailScreen() {
     ? usuarios.find((usuario) => String(usuario?.id || '').trim() === localizacao.localizacao_captured_by)
     : null;
   const nomeUsuarioCaptura = String(usuarioCaptura?.nome || usuarioCaptura?.full_name || '').trim();
+  const estado = getCadernoEstado(registro);
+  const complementos = Array.isArray(registro.complementos_caderno) ? registro.complementos_caderno : [];
+  const eventos = Array.isArray(registro.eventos_caderno) ? registro.eventos_caderno : [];
+  const isProdutorView = user?.perfil === 'produtor';
 
   return (
     <View style={styles.container}>
@@ -191,10 +204,16 @@ export default function CadernoDetailScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.statusContainer}>
+          <View style={[styles.visibilityBadge, { backgroundColor: semanticColors.primary.surface }]}>
+            <Ionicons name={estado === 'rascunho' ? 'document-outline' : 'shield-checkmark-outline'} size={16} color={semanticColors.primary.text} />
+            <Text style={[styles.visibilityText, { color: semanticColors.primary.text }]}>
+              {getCadernoEstadoLabel(registro)}
+            </Text>
+          </View>
           <View style={[styles.statusBadge, { backgroundColor: tipoColor }]}>
             <Text style={styles.statusText}>{tipoLabel}</Text>
           </View>
-          <View style={[styles.visibilityBadge, { backgroundColor: visibilidadeColor + '20' }]}>
+          {!isProdutorView && <View style={[styles.visibilityBadge, { backgroundColor: visibilidadeColor + '20' }]}>
             <Ionicons
               name={visivelParaProdutor ? 'eye-outline' : 'lock-closed-outline'}
               size={16}
@@ -203,7 +222,7 @@ export default function CadernoDetailScreen() {
             <Text style={[styles.visibilityText, { color: visibilidadeColor }]}>
               {getCadernoVisibilidadeLabel(registro)}
             </Text>
-          </View>
+          </View>}
           {registradoPeloProdutor && (
             <View style={[styles.visibilityBadge, { backgroundColor: semanticColors.primary.surface }]}>
               <Ionicons name="person-outline" size={16} color={semanticColors.primary.text} />
@@ -243,13 +262,13 @@ export default function CadernoDetailScreen() {
             <Text style={styles.cardTitle}>Registro de Campo</Text>
           </View>
 
-          <View style={styles.infoRow}>
+          {!isProdutorView && <View style={styles.infoRow}>
             <Ionicons name="pricetag" size={20} color={colors.muted} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Tipo de registro</Text>
               <Text style={styles.infoValue}>{tipoLabel}</Text>
             </View>
-          </View>
+          </View>}
 
           <View style={styles.infoRow}>
             <Ionicons name="calendar" size={20} color={colors.muted} />
@@ -305,6 +324,26 @@ export default function CadernoDetailScreen() {
               </View>
             </View>
           )}
+
+          {registro.operacao ? (
+            <View style={styles.infoRow}>
+              <Ionicons name="construct-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Operação</Text>
+                <Text style={styles.infoValue}>{registro.operacao}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {produtividadeFormatada != null ? (
+            <View style={styles.infoRow}>
+              <Ionicons name="trending-up-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Produtividade</Text>
+                <Text style={styles.infoValue}>{String(registro.produtividade).replace('.', ',')}</Text>
+              </View>
+            </View>
+          ) : null}
 
           {registro.data_criacao && (
             <View style={styles.infoRow}>
@@ -422,6 +461,63 @@ export default function CadernoDetailScreen() {
             <Text style={styles.textContent}>{registro.observacoes}</Text>
           </View>
         )}
+
+        {complementos.length > 0 ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Complementos técnicos</Text>
+            </View>
+            {complementos.map((complemento, index) => (
+              <View key={complemento.complemento_id || index} style={styles.auditItem}>
+                <Text style={styles.textContent}>{complemento.texto}</Text>
+                <Text style={styles.auditMeta}>
+                  {[complemento.autor_nome, formatDate(complemento.criado_em)].filter(Boolean).join(' • ')}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {!isProdutorView && eventos.length > 0 ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="shield-checkmark-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Histórico de auditoria</Text>
+            </View>
+            {estado !== 'rascunho' && registro.conteudo_original ? (
+              <Text style={styles.originalHint}>Conteúdo original e localização preservados desde o envio.</Text>
+            ) : null}
+            {eventos.slice().reverse().map((evento, index) => (
+              <View key={evento.evento_id || index} style={styles.auditItem}>
+                <Text style={styles.infoValue}>{String(evento.tipo || 'evento').replace(/_/g, ' ')}</Text>
+                <Text style={styles.auditMeta}>
+                  {[evento.autor_nome || evento.autor_perfil, formatDate(evento.ocorrido_em)].filter(Boolean).join(' • ')}
+                  {evento.versao_resultante ? ` • versão ${evento.versao_resultante}` : ''}
+                </Text>
+                {evento.motivo ? <Text style={styles.textContent}>Motivo: {evento.motivo}</Text> : null}
+                {evento.antes && evento.depois ? (
+                  <Text style={styles.auditDiff}>Antes/depois registrado para {Object.keys(evento.depois).join(', ')}.</Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {canCommand() ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="settings-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Ações auditáveis</Text>
+            </View>
+            <CadernoAuditActions
+              registro={registro}
+              user={user}
+              fazendaId={String(fazendaInfo?.id || '')}
+              onUpdated={setRegistro}
+            />
+          </View>
+        ) : null}
 
         {fotos.length > 0 && (
           <View style={styles.card}>
@@ -616,6 +712,25 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.textLight,
     lineHeight: 22,
+  },
+  originalHint: {
+    fontSize: typography.fontSmall,
+    color: colors.success,
+    marginBottom: spacing.md,
+  },
+  auditItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  auditMeta: {
+    fontSize: typography.fontSmall,
+    color: colors.muted,
+  },
+  auditDiff: {
+    fontSize: typography.fontSmall,
+    color: colors.info,
   },
   photosContainer: {
     marginTop: spacing.sm,

@@ -14,6 +14,10 @@ import {
 import { normalizeMockFazendaInput } from './produtorCompat';
 import { CADERNO_TIPO_VALUES } from '../utils/cadernoFormCompat';
 import { validateCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
+import {
+  assertCadernoReadyToSubmit,
+  getCadernoEstado,
+} from '../utils/cadernoLifecycleCompat';
 
 const isMissingValue = (value) =>
   value === undefined ||
@@ -120,8 +124,15 @@ export const validateCadernoCampo = (data) => {
   }
 
   const normalized = normalizeCadernoCampo(data);
+  const estado = getCadernoEstado(normalized);
 
-  validateRequired(normalized, ['fazenda_id', 'colaborador_responsavel', 'data_atividade', 'tipo_atividade'], 'CadernoCampo');
+  validateRequired(
+    normalized,
+    estado === 'rascunho'
+      ? ['fazenda_id', 'colaborador_responsavel', 'data_atividade']
+      : ['fazenda_id', 'colaborador_responsavel', 'data_atividade', 'tipo_atividade'],
+    'CadernoCampo'
+  );
   
   validateEnum(
     normalized.tipo_atividade, 
@@ -141,6 +152,15 @@ export const validateCadernoCampo = (data) => {
   
   if (normalized.fotos && !Array.isArray(normalized.fotos)) {
     throw new Error('CadernoCampo.fotos: Deve ser um array');
+  }
+
+  if (normalized.produtividade !== undefined && normalized.produtividade !== null &&
+      (typeof normalized.produtividade !== 'number' || normalized.produtividade <= 0)) {
+    throw new Error('CadernoCampo.produtividade: Deve ser um número maior que zero');
+  }
+
+  if (estado === 'registrado') {
+    assertCadernoReadyToSubmit(normalized);
   }
   
   return true;

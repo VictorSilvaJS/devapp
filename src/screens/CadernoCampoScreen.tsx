@@ -43,6 +43,11 @@ import {
 } from '../utils/cadernoFormCompat';
 import { hasCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
 import { resolveOperationalSummary } from '../utils/operationalCardCompat';
+import {
+  getCadernoEstado,
+  getCadernoEstadoLabel,
+  toCadernoProducerProjection,
+} from '../utils/cadernoLifecycleCompat';
 
 export default function CadernoCampoScreen() {
   const navigation = useNavigation<any>();
@@ -75,7 +80,10 @@ export default function CadernoCampoScreen() {
         
         // Aplicar filtros regionais
         const fazendaIdsFiltrados = getFazendaIdsFiltrados(fazendasBrutas);
-        registrosData = filtrarCadernosPorFazendaIds(todosRegistros, fazendaIdsFiltrados);
+        registrosData = filtrarCadernosPorFazendaIds(todosRegistros, fazendaIdsFiltrados, {
+          incluirRascunhosDoUsuario: true,
+          usuarioId: user?.id,
+        });
         fazendasData = fazendasBrutas.filter(p => fazendaIdsFiltrados.includes(getFazendaId(p)));
       } else if (user?.perfil === 'colaborador' || user?.perfil === 'produtor') {
         const [todosRegistros, fazendasBrutas] = await Promise.all([
@@ -88,13 +96,15 @@ export default function CadernoCampoScreen() {
         const idsFiltrados = getFazendaIds(fazendasData);
         registrosData = filtrarCadernosPorFazendaIds(todosRegistros, idsFiltrados, {
           somenteVisivelParaProdutor: user?.perfil === 'produtor',
+          incluirRascunhosDoUsuario: true,
+          usuarioId: user?.id,
         });
+        if (user?.perfil === 'produtor') {
+          registrosData = registrosData.map(toCadernoProducerProjection);
+        }
       } else {
-        // Sem usuário, carrega tudo (fallback)
-        [registrosData, fazendasData] = await Promise.all([
-          CadernoCampo.list(),
-          Produtor.list()
-        ]);
+        registrosData = [];
+        fazendasData = [];
       }
 
       setRegistros(registrosData);
@@ -245,6 +255,7 @@ export default function CadernoCampoScreen() {
             const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(reg);
             const visivelParaProdutor = isCadernoVisivelParaProdutor(reg);
             const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
+            const estado = getCadernoEstado(reg);
             const summary = resolveOperationalSummary([
               reg.observacoes,
               reg.produtos_utilizados?.length > 0
@@ -253,6 +264,11 @@ export default function CadernoCampoScreen() {
               reg.condicoes_clima ? `Condições: ${reg.condicoes_clima}` : '',
             ]);
             const chips = [
+              {
+                label: getCadernoEstadoLabel(reg),
+                icon: estado === 'rascunho' ? 'document-outline' as const : 'shield-checkmark-outline' as const,
+                color: estado === 'anulado' ? colors.error : estado === 'rascunho' ? colors.warning : colors.success,
+              },
               ...(hasCadernoLocalizacao(reg) ? [{
                 label: 'Com ponto geográfico',
                 icon: 'location-outline' as const,
