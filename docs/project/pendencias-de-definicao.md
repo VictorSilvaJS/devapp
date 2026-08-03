@@ -372,6 +372,17 @@ teve enquadramento coberto por teste automatizado. Continuam ausentes watch,
 background, trilha e historico. Permanecem pendentes criterio de iOS e a
 revalidacao de permissao, servico desligado, offline e consumo em `MP-38`.
 
+Status em 2026-08-03 (regressao de recaptura de `MP-26`): o retorno ao mapa
+expos duas corridas. Uma segunda tentativa sem provider apagava o ultimo
+marcador valido, e sair durante a leitura podia deixar a nova instancia do
+WebView sem o ponto desenhado. A tela passou a serializar pedidos, invalidar
+respostas apos perda de foco, preservar o ultimo ponto em falha e sincronizar
+o marcador no `ready` e depois da estabilizacao do mapa. No Android fisico, a
+sequencia leitura valida -> falha controlada -> recuperacao passou com
+aproximadamente 13 m, assim como sair durante a leitura e reabrir o mapa. O
+servico de localizacao foi restaurado ao final. Isso nao altera os casos de
+permissao/offline ainda reservados a `MP-38`.
+
 ### 4B. Marcacoes de campo vinculadas ao Caderno
 
 O contrato tecnico, a UI e a captura foreground explicita do primeiro ponto

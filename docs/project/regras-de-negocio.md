@@ -352,6 +352,9 @@ O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
   como se fosse a captura corrente.
 - Quando houver leitura valida, mapa interativo e fallback vetorial devem
   manter marcador e circulo de precisao visiveis.
+- Nova tentativa que falhar nao apaga o ultimo ponto valido. Ao sair durante
+  uma leitura, sua resposta nao pode alterar outra instancia da tela; ao
+  reabrir o mapa, o ponto salvo deve ser sincronizado depois da inicializacao.
 - No formulario do Caderno, a leitura permanece transitoria ate o salvamento;
   sair sem salvar nao cria registro nem persiste o ponto. Nao ha watch
   continuo, background, trilha ou historico de deslocamento.

@@ -390,7 +390,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-23` | `CONCLUIDO` | `appQA` / árvore limpa sobre `c59e777` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou ação única, campos controlados, validações, persistência, edição e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-23-safras-safrinha/` | referências locais estáveis foram concluídas posteriormente em `MP-24`; backend, sincronização e auditoria seguem fora deste corte |
 | 2026-08-03 | `MP-24` | `CONCLUIDO` | `appQA` / árvore limpa sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou responsável bloqueado, Talhão por ID lógico, snapshots, legado explícito e ambas as orientações | `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/` | ciclo auditável foi concluído depois em `MP-25`; versionamento e migração produtivos permanecem em `MP-37` |
 | 2026-08-03 | `MP-25` | `CONCLUIDO` | árvore de trabalho sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou validação de Aplicação, confirmação, registro consolidado, auditoria e complemento versionado | `dist/qa-session-2026-08-03/mp-25-caderno-auditavel/` | backend append-only, RBAC, idempotência, sincronização e conflito distribuído permanecem em `MP-36`; migração produtiva permanece em `MP-37`; `MP-26` não foi iniciada |
-| 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `f5b4179` | 115 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou mini mapa, leitura atual de ~13 m sempre marcada, fallback coberto e cancelamento sem salvar | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` não foi iniciada |
+| 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `77c62f4` | 117 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou captura de ~13 m, recaptura, falha preservando ponto e retorno durante leitura | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -745,14 +745,22 @@ maior precisão disponível, sem reutilizar último ponto conhecido. O marcador 
 o círculo ficam enquadrados no mapa interativo e no fallback vetorial. Não há
 watch, background, trilha ou histórico.
 
+A regressão de recaptura passou a preservar o último ponto quando uma nova
+leitura falha, bloquear pedidos concorrentes e ignorar respostas de uma tela
+que perdeu foco. Na reentrada, o ponto é sincronizado quando o WebView informa
+que está pronto e novamente após sua estabilização; a centralização não disputa
+mais com a animação anterior do mapa.
+
 Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
-release passaram. O APK final de 92.111.640 bytes, SHA-256
-`72677AEF6B829CFD124F8094E9E66D0BA341A7793DBEB605A1DB357AB03B02F8`, foi
+release passaram. O APK final de 92.113.264 bytes, SHA-256
+`DF238059EE2B56841599047305C1D276A6F6C3C440A28FFA167C566E9623E2D9`, foi
 instalado por cima no Android físico `8483A`. O smoke confirmou o fluxo em
 retrato e paisagem, detalhe técnico recolhido, aviso persistente e abertura no
 mapa completo. Uma leitura atual de aproximadamente 13 m permaneceu marcada no
 mapa; no Novo Caderno, sair depois da captura e antes do salvamento não criou
-registro. Não houve exceção fatal após a correção. Evidências:
+registro. O retorno durante uma leitura, a falha controlada preservando o
+último ponto e a recuperação com nova leitura de 13 m também passaram. Não
+houve exceção fatal após a correção. Evidências:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
 O teste real de dentro/fora, permissão e offline permanece em `MP-38`;

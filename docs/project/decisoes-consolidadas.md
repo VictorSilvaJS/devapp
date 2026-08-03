@@ -762,6 +762,9 @@ registro consolidado.
   solicitavel ao provider e nao substitui falha por uma posicao antiga;
 - a posicao capturada e seu circulo de precisao permanecem marcados tanto no
   mapa interativo quanto no fallback vetorial;
+- falha em uma recaptura nao apaga o ultimo ponto valido; resposta de uma tela
+  que perdeu foco e ignorada e a reentrada sincroniza novamente o marcador
+  depois que o mapa fica pronto;
 - a captura do formulario so integra o Caderno quando o usuario salva o
   registro; sair sem salvar descarta o ponto;
 - baixa precisao continua visivel no detalhe depois do salvamento;

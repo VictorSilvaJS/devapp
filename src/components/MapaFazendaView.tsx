@@ -397,7 +397,11 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
         }
 
         trazerLocalizacaoUsuarioParaFrente();
-        map.panTo(latLng, { animate: true, duration: 0.45 });
+        map.invalidateSize(false);
+        if (map.stop) {
+          map.stop();
+        }
+        map.setView(latLng, map.getZoom(), { animate: false });
         return true;
       }
 
@@ -604,8 +608,11 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
   ({ talhoes, talhaoSelecionadoId, userLocation, onTalhaoPress, onMapaReady }, ref) => {
     const webViewRef = useRef<WebView>(null);
     const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const locationSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const userLocationRef = useRef<ForegroundUserLocation | null | undefined>(userLocation);
     const [mapaPronto, setMapaPronto] = useState(false);
     const [fallbackAtivo, setFallbackAtivo] = useState(false);
+    userLocationRef.current = userLocation;
 
     const html = useMemo(
       () => gerarHTMLLeaflet(talhoes || [], talhaoSelecionadoId),
@@ -619,6 +626,10 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       if (readyTimeoutRef.current) {
         clearTimeout(readyTimeoutRef.current);
       }
+      if (locationSyncTimeoutRef.current) {
+        clearTimeout(locationSyncTimeoutRef.current);
+        locationSyncTimeoutRef.current = null;
+      }
 
       readyTimeoutRef.current = setTimeout(() => {
         setFallbackAtivo(true);
@@ -629,6 +640,10 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           clearTimeout(readyTimeoutRef.current);
           readyTimeoutRef.current = null;
         }
+        if (locationSyncTimeoutRef.current) {
+          clearTimeout(locationSyncTimeoutRef.current);
+          locationSyncTimeoutRef.current = null;
+        }
       };
     }, [html]);
 
@@ -638,24 +653,43 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       }
     }, [fallbackAtivo, onMapaReady]);
 
-    useEffect(() => {
-      if (!mapaPronto || fallbackAtivo) {
-        return;
-      }
-
-      const payload = userLocation
+    const syncUserLocationToWebView = useCallback(() => {
+      const currentLocation = userLocationRef.current;
+      const payload = currentLocation
         ? {
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-            accuracy: userLocation.accuracy,
-            capturedAt: userLocation.capturedAt,
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+            accuracy: currentLocation.accuracy,
+            capturedAt: currentLocation.capturedAt,
           }
         : null;
 
       webViewRef.current?.injectJavaScript(
         `window.atualizarLocalizacaoUsuario && window.atualizarLocalizacaoUsuario(${JSON.stringify(payload)}); true;`
       );
-    }, [fallbackAtivo, mapaPronto, userLocation]);
+    }, []);
+
+    useEffect(() => {
+      if (!mapaPronto || fallbackAtivo) {
+        return;
+      }
+
+      syncUserLocationToWebView();
+      if (locationSyncTimeoutRef.current) {
+        clearTimeout(locationSyncTimeoutRef.current);
+      }
+      locationSyncTimeoutRef.current = setTimeout(() => {
+        syncUserLocationToWebView();
+        locationSyncTimeoutRef.current = null;
+      }, 420);
+
+      return () => {
+        if (locationSyncTimeoutRef.current) {
+          clearTimeout(locationSyncTimeoutRef.current);
+          locationSyncTimeoutRef.current = null;
+        }
+      };
+    }, [fallbackAtivo, mapaPronto, syncUserLocationToWebView, userLocation]);
 
     useImperativeHandle(ref, () => ({
       selecionarTalhao(id: string | null) {
@@ -682,6 +716,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
             setMapaPronto(true);
             setFallbackAtivo(false);
             onMapaReady?.();
+            syncUserLocationToWebView();
             return;
           }
           if (data.tipo === 'erro_mapa') {
@@ -693,7 +728,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           }
         } catch (_) {}
       },
-      [onMapaReady, onTalhaoPress]
+      [onMapaReady, onTalhaoPress, syncUserLocationToWebView]
     );
 
     if ((!talhoes || talhoes.length === 0) && !userLocation) {

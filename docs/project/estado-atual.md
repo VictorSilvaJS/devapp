@@ -4790,10 +4790,17 @@ ultima posicao conhecida. O mapa interativo e o fallback vetorial mantem o
 marcador e o circulo de precisao enquadrados. Nao foi introduzido watch,
 background, trilha ou historico.
 
-`test:mp26` (115 casos), `test:mp25`, typecheck, `test:domain-compat`,
+A revalidacao de retorno encontrou e corrigiu duas corridas de recaptura. Uma
+falha posterior nao remove mais o ultimo marcador valido; pedidos concorrentes
+sao bloqueados, respostas de tela sem foco sao ignoradas e o ponto e
+ressincronizado quando o WebView fica pronto e depois de estabilizar. A
+centralizacao do ponto interrompe a animacao anterior do mapa para evitar tela
+intermediaria sem marcador.
+
+`test:mp26` (117 casos), `test:mp25`, typecheck, `test:domain-compat`,
 `git diff --check` e `:app:packageRelease` passaram. O APK release final de
-92.111.640 bytes, SHA-256
-`72677AEF6B829CFD124F8094E9E66D0BA341A7793DBEB605A1DB357AB03B02F8`, foi
+92.113.264 bytes, SHA-256
+`DF238059EE2B56841599047305C1D276A6F6C3C440A28FFA167C566E9623E2D9`, foi
 instalado por cima no Android fisico `8483A`.
 
 O smoke fisico como Admin confirmou mini mapa, precisao de 100 m, aviso
@@ -4801,7 +4808,9 @@ persistente, coordenadas recolhidas, expansao tecnica, `Ver no mapa`, ponto e
 circulo no mapa completo, retrato e paisagem. A reexecucao confirmou uma
 leitura atual de aproximadamente 13 m marcada no mapa e a mesma captura no
 Novo Caderno; sair sem salvar preservou a lista sem novo registro. A rotacao
-automatica foi restaurada e nao houve excecao fatal depois da correcao. Evidencias:
+automatica foi restaurada. A rodada adicional confirmou retorno durante uma
+leitura, falha controlada preservando o ponto e recaptura posterior de 13 m;
+nao houve excecao fatal depois da correcao. Evidencias:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
 Teste real de dentro/fora, permissao e offline permanece em `MP-38`.

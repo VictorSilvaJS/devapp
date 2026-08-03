@@ -137,6 +137,37 @@ test('fallback SVG desenha marcador e precisão mesmo sem Talhões', () => {
   assert.doesNotMatch(source, /disponível apenas no mapa interativo/);
 });
 
+test('recaptura preserva o último marcador e ignora resposta de tela antiga', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'src/screens/FazendaMapaScreen.tsx'),
+    'utf8'
+  );
+
+  assert.match(source, /locationRequestInFlightRef/);
+  assert.match(source, /locationRequestIdRef/);
+  assert.match(source, /locationScreenFocusedRef/);
+  assert.match(source, /O último ponto válido continua marcado/);
+
+  const failedResultBranch = source.match(
+    /\} else \{\s+const previousLocation = userLocationRef\.current;([\s\S]*?)\n\s+\}\s+\} finally/
+  );
+  assert.ok(failedResultBranch);
+  assert.doesNotMatch(failedResultBranch[1], /setUserLocation\(null\)/);
+});
+
+test('retorno ao mapa sincroniza novamente o ponto depois do WebView pronto', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', 'src/components/MapaFazendaView.tsx'),
+    'utf8'
+  );
+
+  assert.match(source, /syncUserLocationToWebView/);
+  assert.match(source, /locationSyncTimeoutRef/);
+  assert.match(source, /setTimeout\(\(\) => \{\s+syncUserLocationToWebView\(\)/);
+  assert.match(source, /map\.stop\(\)/);
+  assert.match(source, /map\.setView\(latLng, map\.getZoom\(\), \{ animate: false \}\)/);
+});
+
 if (failed > 0) {
   process.exitCode = 1;
   console.error(`\n${failed} teste(s) falharam; ${passed} passaram.`);

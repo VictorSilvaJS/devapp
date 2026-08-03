@@ -19,6 +19,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import MapaFazendaView, {
   MapaFazendaViewRef,
@@ -241,6 +242,25 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   // Refs
   const mapaRef = useRef<MapaFazendaViewRef>(null);
   const drawerAnim = useRef(new Animated.Value(DRAWER_HEIGHT)).current;
+  const locationRequestIdRef = useRef(0);
+  const locationRequestInFlightRef = useRef(false);
+  const locationScreenFocusedRef = useRef(true);
+  const userLocationRef = useRef<ForegroundUserLocation | null>(userLocation);
+  userLocationRef.current = userLocation;
+
+  useFocusEffect(
+    useCallback(() => {
+      locationScreenFocusedRef.current = true;
+      locationRequestInFlightRef.current = false;
+      setRequestingLocation(false);
+
+      return () => {
+        locationScreenFocusedRef.current = false;
+        locationRequestInFlightRef.current = false;
+        locationRequestIdRef.current += 1;
+      };
+    }, [])
+  );
 
   // ── Carregamento de dados ────────────────────────────────────
   useEffect(() => {
@@ -482,29 +502,53 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       return;
     }
 
+    if (locationRequestInFlightRef.current) {
+      return;
+    }
+
+    locationRequestInFlightRef.current = true;
+    const requestId = locationRequestIdRef.current + 1;
+    locationRequestIdRef.current = requestId;
     setRequestingLocation(true);
     setLocationMessage({
       type: 'info',
       text: 'Obtendo a posição aproximada do aparelho...',
     });
 
-    const result = await requestCurrentForegroundLocation();
+    try {
+      const result = await requestCurrentForegroundLocation();
+      const isCurrentRequest = locationScreenFocusedRef.current
+        && locationRequestIdRef.current === requestId;
 
-    if (result.status === 'ok') {
-      setUserLocation(result.location);
-      setLocationMessage({
-        type: 'info',
-        text: `${buildLocationSuccessMessage(result.location)} A posição será mostrada apenas no mapa de Talhões, não em PNGs ou prescrições.`,
-      });
-    } else {
-      setUserLocation(null);
-      setLocationMessage({
-        type: 'error',
-        text: result.message,
-      });
+      if (!isCurrentRequest) {
+        return;
+      }
+
+      if (result.status === 'ok') {
+        userLocationRef.current = result.location;
+        setUserLocation(result.location);
+        setLocationMessage({
+          type: 'info',
+          text: `${buildLocationSuccessMessage(result.location)} A posição será mostrada apenas no mapa de Talhões, não em PNGs ou prescrições.`,
+        });
+      } else {
+        const previousLocation = userLocationRef.current;
+        setLocationMessage({
+          type: 'error',
+          text: previousLocation
+            ? `${result.message} O último ponto válido continua marcado.`
+            : result.message,
+        });
+      }
+    } finally {
+      if (
+        locationScreenFocusedRef.current
+        && locationRequestIdRef.current === requestId
+      ) {
+        locationRequestInFlightRef.current = false;
+        setRequestingLocation(false);
+      }
     }
-
-    setRequestingLocation(false);
   }, [canUseForegroundLocation]);
 
   // ── Estado de Loading ─────────────────────────────────────────

@@ -39,12 +39,14 @@ permissao e offline continuam reservadas a `MP-38`.
 | MP26-04 | P0 | Admin | Mapa | Acionar `Ver no mapa` | Abrir a Propriedade com o ponto salvo e sua precisao, sem nova captura | Passou | Mensagem `Ponto salvo no Caderno` e marcador/circulo apareceram |
 | MP26-05 | P0 | Todos | Relacao com Talhao | Executar testes espaciais | Classificar `dentro`, `proximo` e `fora` com precisao+tolerancia e versao da geometria | Passou | Suite focada cobriu limite, 15 m de tolerancia, versao e ausencia de inferencia |
 | MP26-06 | P1 | Admin | Responsividade | Revisar detalhe em retrato e paisagem | Mini mapa, aviso, acao e detalhe tecnico permanecem legiveis e alcancaveis | Passou | Ambas as orientacoes passaram; rotacao automatica foi restaurada |
-| MP26-07 | P0 | Todos | Regressao | Executar testes, build e verificar logcat | Dominio/localizacao permanecem verdes e app nao apresenta fatal | Passou | `test:mp26` com 115 casos, `test:mp25`, typecheck, domain-compat e `packageRelease` passaram; sem fatal apos a correcao |
+| MP26-07 | P0 | Todos | Regressao | Executar testes, build e verificar logcat | Dominio/localizacao permanecem verdes e app nao apresenta fatal | Passou | `test:mp26` com 117 casos, `test:mp25`, typecheck, domain-compat e `packageRelease` passaram; sem fatal apos a correcao |
 | MP26-08 | P0 | Admin | Captura atual | Tocar `Mostrar minha posicao` | Executar uma unica leitura atual, sem ultimo ponto conhecido, e manter marcador/circulo visiveis | Passou | Android fisico retornou aproximadamente 13 m; marcador e circulo permaneceram no mapa |
 | MP26-09 | P0 | Admin | Novo Caderno | Capturar a posicao e sair sem salvar | Manter o ponto apenas no formulario e nao criar registro | Passou | Formulario mostrou aproximadamente 13 m; retorno preservou os mesmos dois registros na lista |
+| MP26-10 | P0 | Admin | Recaptura | Apos ponto valido, repetir com servico indisponivel e depois reativar | Falha preserva o ponto anterior e nova tentativa recupera sem travar | Passou | Aviso confirmou `O ultimo ponto valido continua marcado`; recaptura posterior retornou 13 m |
+| MP26-11 | P0 | Admin | Ciclo de tela | Iniciar leitura, voltar antes da resposta e reabrir o mapa | Resposta antiga e ignorada; mapa novo reapresenta o ponto salvo quando fica pronto | Passou | Reentrada mostrou imediatamente marcador e circulo, sem loading preso ou mapa intermediario vazio |
 
-APK: 92.111.640 bytes; SHA-256
-`72677AEF6B829CFD124F8094E9E66D0BA341A7793DBEB605A1DB357AB03B02F8`.
+APK: 92.113.264 bytes; SHA-256
+`DF238059EE2B56841599047305C1D276A6F6C3C440A28FFA167C566E9623E2D9`.
 Evidencias completas:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
