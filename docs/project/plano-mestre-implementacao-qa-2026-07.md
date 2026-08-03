@@ -7,7 +7,8 @@
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
 > concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17`, `MP-18` e `MP-19` também
-> foram concluídas; `MP-20` foi concluída; `MP-21` não foi iniciada
+> foram concluídas; `MP-20` e `MP-21` foram concluídas; `MP-22` não foi
+> iniciada
 
 ## 1. Objetivo
 
@@ -196,7 +197,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 19 | `MP-18` Dashboards e indicadores responsivos | `QA-P2-06` | Corrigir grids, paisagem, largura dos cartões e colisão com FAB | `MP-11`, `MP-14` | `CONCLUIDO` |
 | 20 | `MP-19` Resumo da Propriedade | `QA-P2-07` | Remover repetição e priorizar indicadores úteis ao perfil | `MP-15` | `CONCLUIDO` |
 | 21 | `MP-20` Perfil do Produtor | `QA-P2-12` | Corrigir falsa affordance e oferecer solicitação de atualização | `MP-10` | `CONCLUIDO` |
-| 22 | `MP-21` Sistema de cartões operacionais | `QA-P2-10` | Criar casca comum para Caderno e Visitas sem apagar diferenças de domínio | `MP-11` | `BACKLOG` |
+| 22 | `MP-21` Sistema de cartões operacionais | `QA-P2-10` | Criar casca comum para Caderno e Visitas sem apagar diferenças de domínio | `MP-11` | `CONCLUIDO` |
 | 23 | `MP-22` Lista de Visitas | `QA-P2-11` | Humanizar enums, separar próximas/histórico e corrigir ordenação/status | `MP-05`, `MP-21` | `BACKLOG` |
 | 24 | `MP-23` Safras e Safrinha | `QA-P2-15` | Remover ação duplicada e validar Talhão, ano, cultura, datas e status | `MP-15`, `MP-13` | `BACKLOG` |
 
@@ -384,6 +385,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-18` | `CONCLUIDO` | `appQA` / árvore limpa sobre `3eca4ed` | revisão solicitada: carrossel compacto em Propriedades e FAB flutuante único em Propriedades, Caderno, Usuários e Visitas; testes, assembleRelease e smoke Android passaram | `dist/qa-session-2026-08-03/mp-18-revisao-carrossel-fab/` | conteúdo dos indicadores permanece em `MP-19`; `MP-19` não foi iniciada |
 | 2026-08-03 | `MP-19` | `CONCLUIDO` | `appQA` / árvore limpa sobre `1ba3457` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou indicadores úteis, Resumo sem repetição, três perfis e duas orientações | `dist/qa-session-2026-08-03/mp-19-resumo-propriedade/` | cartões permanecem em `MP-21`; estados de Visita em `MP-22`; `MP-20` não foi iniciada |
 | 2026-08-03 | `MP-20` | `CONCLUIDO` | `appQA` / árvore limpa sobre `27bf5a4` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou affordance, detalhe, retorno e solicitação sem sucesso falso em retrato e paisagem | `dist/qa-session-2026-08-03/mp-20-perfil-produtor/` | backend, protocolo e edição cadastral direta permanecem fora do corte; `MP-21` não foi iniciada |
+| 2026-08-03 | `MP-21` | `CONCLUIDO` | `appQA` / árvore limpa sobre `5cf9513` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou a casca comum, diferenças de domínio, detalhe, retorno, rolagem e ambas as orientações | `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/` | agrupamento, ordenação e humanização geral dos estados de Visita permanecem em `MP-22`; `MP-22` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -617,4 +619,24 @@ instalado por cima no Android físico `8483A`. O smoke passou em retrato e
 paisagem, incluindo detalhe, retorno, abertura e cancelamento do
 compartilhador sem sucesso falso; não houve exceção fatal no logcat recente.
 A rotação automática foi restaurada. Evidências:
-`dist/qa-session-2026-08-03/mp-20-perfil-produtor/`. `MP-21` não foi iniciada.
+`dist/qa-session-2026-08-03/mp-20-perfil-produtor/`.
+
+`MP-21` foi concluída em 2026-08-03. Caderno e Visitas passaram a usar uma
+casca comum de cartão com hierarquia, data e hora, metadados, resumo curto,
+chips pertinentes e chevron, sem tornar as listas idênticas nem alterar suas
+regras de domínio. O Caderno preserva tipo, Talhão, responsável,
+Safra/Safrinha, localização e visibilidade; Visitas preserva objetivo, status,
+técnico e resumo próprios. No Caderno global do Produtor, o chip administrativo
+`Liberado ao produtor` não é exibido.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. O APK final de 92.026.280 bytes, SHA-256
+`2C0E4339C2222925A84715F0B163C906D863D2939D0B7C097A5E2E172FC907FC`, foi
+instalado por cima no Android físico `8483A`. O smoke passou como Admin e
+Produtor em retrato e paisagem, incluindo detalhe, retorno, rolagem, FAB e
+histórico contextual; não houve exceção fatal no logcat recente. A rotação
+automática foi restaurada. Evidências:
+`dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/`.
+
+Agrupamento, ordenação e humanização geral dos estados de Visita permanecem
+fora deste corte. `MP-22` não foi iniciada.

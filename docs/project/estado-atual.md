@@ -4596,4 +4596,31 @@ Evidencias:
 `dist/qa-session-2026-08-03/mp-20-perfil-produtor/`.
 
 Backend, protocolo persistente e edicao cadastral direta permanecem fora do
-corte. `MP-21` nao foi iniciada.
+corte.
+
+## MP-21 - Sistema De Cartoes Operacionais
+
+Status em 2026-08-03: `CONCLUIDO`.
+
+Caderno e Visitas agora compartilham uma casca operacional com icone, titulo,
+chevron, tags, data e hora, metadados, resumo de ate duas linhas e chips
+pertinentes. As diferencas de dominio foram preservadas: Caderno apresenta
+tipo, Talhao, responsavel, Safra/Safrinha, localizacao e visibilidade quando
+aplicaveis; Visitas apresenta objetivo, status, tecnico e resumo proprios. No
+Caderno global do Produtor, o chip administrativo `Liberado ao produtor` nao
+e exibido.
+
+Rotas, filtros, escopos, permissoes, payloads, persistencia, ordenacao e
+agrupamento permaneceram inalterados. Teste focado, typecheck,
+`test:domain-compat`, `git diff --check` e `assembleRelease` passaram. O APK
+release final de 92.026.280 bytes, SHA-256
+`2C0E4339C2222925A84715F0B163C906D863D2939D0B7C097A5E2E172FC907FC`, foi
+instalado por cima via `adb` no Android fisico `8483A`.
+
+O smoke passou como Admin e Produtor em retrato e paisagem, incluindo detalhe,
+retorno, rolagem, FAB e historico contextual. A rotacao automatica foi
+restaurada e nao houve excecao fatal no logcat recente. Evidencias:
+`dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/`.
+
+Agrupamento, ordenacao e humanizacao geral dos estados de Visita permanecem
+fora deste corte. `MP-22` nao foi iniciada.

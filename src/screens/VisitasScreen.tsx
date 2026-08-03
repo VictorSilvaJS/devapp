@@ -21,6 +21,7 @@ import FilterBottomSheet, {
   FilterSection,
   FilterTrigger,
 } from '../components/FilterBottomSheet';
+import OperationalCard from '../components/OperationalCard';
 import { Visita, Produtor } from '../api/mock';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -37,6 +38,7 @@ import {
 } from '../utils/acessoControle';
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
+import { resolveOperationalSummary } from '../utils/operationalCardCompat';
 
 export default function VisitasScreen() {
   const navigation = useNavigation();
@@ -213,12 +215,6 @@ export default function VisitasScreen() {
       outro: 'ellipsis-horizontal-outline'
     };
     return icones[objetivo] || 'calendar-outline';
-  };
-
-  // Formata data
-  const formatarData = (data) => {
-    const d = new Date(data);
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   // Contar filtros ativos
@@ -419,101 +415,31 @@ export default function VisitasScreen() {
             const objetivoColor = getObjetivoColor(visita.objetivo);
             const statusColor = getStatusColor(visita.status);
             const objetivoIcon = getObjetivoIcon(visita.objetivo);
+            const objetivoLabel = getVisitaObjetivoLabel(visita.objetivo);
+            const summary = resolveOperationalSummary([
+              visita.observacoes,
+              visita.recomendacoes,
+            ]);
             
             return (
-              <TouchableOpacity 
+              <OperationalCard
                 key={visita.id} 
-                style={styles.card}
+                title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
+                subtitle={fazendaInfo.titularNome || fazendaInfo.localizacao}
+                icon={objetivoIcon}
+                accentColor={objetivoColor}
+                date={visita.data_visita}
+                tags={[
+                  { label: objetivoLabel, color: objetivoColor },
+                  { label: visita.status || 'Sem status', color: statusColor, capitalize: true },
+                ]}
+                metadata={[
+                  { icon: 'person-outline', label: `Responsável: ${visita.tecnico_responsavel || 'Não informado'}` },
+                ]}
+                summary={summary}
+                accessibilityLabel={`Abrir Visita, ${objetivoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, status ${visita.status || 'não informado'}`}
                 onPress={() => navigation.navigate('VisitaDetail', { visitaId: visita.id })}
-                activeOpacity={0.7}
-              >
-                {/* Cabeçalho do Card */}
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardHeaderLeft}>
-                    <View style={[styles.cardIcon, { backgroundColor: objetivoColor + '20' }]}>
-                      <Ionicons name={objetivoIcon} size={24} color={objetivoColor} />
-                    </View>
-                    <View style={styles.cardHeaderInfo}>
-                      <Text style={styles.cardTitle} numberOfLines={1}>
-                        {fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
-                      </Text>
-                      <Text style={styles.cardSubtitle} numberOfLines={1}>
-                        {fazendaInfo.titularNome || fazendaInfo.localizacao}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: statusColor + '20' }]}>
-                    <Text style={[styles.badgeText, { color: statusColor }]}>
-                      {visita.status}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Tipo de Visita */}
-                <View style={[styles.objetivoBox, { backgroundColor: objetivoColor + '10' }]}>
-                  <Text style={[styles.objetivoText, { color: objetivoColor }]}>
-                    {getVisitaObjetivoLabel(visita.objetivo)}
-                  </Text>
-                </View>
-
-                {/* Informações */}
-                <View style={styles.cardInfo}>
-                  <View style={styles.infoRow}>
-                    <Ionicons name="calendar-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                    <Text style={styles.infoText}>{formatarData(visita.data_visita)}</Text>
-                  </View>
-                  <View style={styles.infoRow}>
-                    <Ionicons name="person-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                    <Text style={styles.infoText} numberOfLines={1}>
-                      {visita.tecnico_responsavel}
-                    </Text>
-                  </View>
-                  {visita.clima && (
-                    <View style={styles.infoRow}>
-                      <Ionicons name="cloudy-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                      <Text style={styles.infoText}>{visita.clima}</Text>
-                    </View>
-                  )}
-                  {visita.proximaVisita && (
-                    <View style={styles.infoRow}>
-                      <Ionicons name="time-outline" size={16} color={colors.textLight} style={styles.infoIcon} />
-                      <Text style={styles.infoText}>
-                        Próxima: {formatarData(visita.proximaVisita)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Observações */}
-                {visita.observacoes && (
-                  <View style={styles.observacoesBox}>
-                    <Text style={styles.observacoesLabel}>Observações:</Text>
-                    <Text style={styles.observacoesText} numberOfLines={2}>
-                      {visita.observacoes}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Recomendações */}
-                {visita.recomendacoes && (
-                  <View style={styles.recomendacoesBox}>
-                    <Text style={styles.recomendacoesLabel}>Recomendações:</Text>
-                    <Text style={styles.recomendacoesText} numberOfLines={2}>
-                      {visita.recomendacoes}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Fotos */}
-                {visita.fotos && visita.fotos.length > 0 && (
-                  <View style={styles.fotosBox}>
-                    <Ionicons name="images-outline" size={16} color={colors.muted} style={{ marginRight: 6 }} />
-                    <Text style={styles.fotosText}>
-                      {visita.fotos.length} {visita.fotos.length === 1 ? 'imagem demonstrativa' : 'imagens demonstrativas'}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              />
             );
           })
         )}
@@ -696,137 +622,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: spacing.gap,
     fontSize: typography.fontBody,
-    color: colors.muted
-  },
-  card: { 
-    backgroundColor: colors.card, 
-    padding: spacing.card + 4, 
-    borderRadius: spacing.radius, 
-    marginBottom: spacing.gap,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
-    ...shadows.sm
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.gap
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: spacing.gap
-  },
-  cardIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: spacing.radiusSm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.gap
-  },
-  cardHeaderInfo: {
-    flex: 1
-  },
-  cardTitle: { 
-    fontSize: typography.fontBody + 2, 
-    fontWeight: typography.weightBold, 
-    color: colors.text 
-  },
-  cardSubtitle: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.textLight,
-    marginTop: 2
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: spacing.radiusSm,
-    borderWidth: 1,
-    borderColor: 'transparent'
-  },
-  badgeText: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightSemibold,
-    textTransform: 'capitalize'
-  },
-  objetivoBox: {
-    paddingHorizontal: spacing.gap,
-    paddingVertical: 6,
-    borderRadius: spacing.radiusSm,
-    marginBottom: spacing.gap,
-    alignSelf: 'flex-start'
-  },
-  objetivoText: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightSemibold,
-    letterSpacing: 0.5
-  },
-  cardInfo: {
-    marginTop: spacing.gap - 2
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6
-  },
-  infoIcon: {
-    marginRight: 8,
-    width: 18
-  },
-  infoText: {
-    fontSize: typography.fontBody - 1,
-    color: colors.textLight,
-    flex: 1
-  },
-  observacoesBox: {
-    backgroundColor: colors.background,
-    padding: spacing.gap,
-    borderRadius: spacing.radiusSm,
-    marginTop: spacing.gap
-  },
-  observacoesLabel: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightSemibold,
-    color: colors.textLight,
-    marginBottom: 4
-  },
-  observacoesText: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.text,
-    lineHeight: 18
-  },
-  recomendacoesBox: {
-    backgroundColor: colors.accent,
-    padding: spacing.gap,
-    borderRadius: spacing.radiusSm,
-    marginTop: spacing.gap,
-    borderWidth: 1,
-    borderColor: colors.accentDark
-  },
-  recomendacoesLabel: {
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightSemibold,
-    color: colors.primaryDark,
-    marginBottom: 4
-  },
-  recomendacoesText: {
-    fontSize: typography.fontCaption + 1,
-    color: colors.text,
-    lineHeight: 18
-  },
-  fotosBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.gap,
-    paddingTop: spacing.gap,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight
-  },
-  fotosText: {
-    fontSize: typography.fontCaption + 1,
     color: colors.muted
   },
   emptyStateWrapper: {
