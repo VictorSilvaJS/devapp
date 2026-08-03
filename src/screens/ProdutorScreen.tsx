@@ -51,6 +51,8 @@ import {
   isCadernoVisivelParaProdutor,
   ordenarCadernosPorDataRecente,
 } from '../utils/cadernoFormCompat';
+import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
+import { buildPropriedadeResumo } from '../utils/propriedadeResumoCompat';
 import {
   getUsuarioNome,
   getVinculoPropriedadeLabel,
@@ -280,11 +282,7 @@ export default function ProdutorScreen({ route, navigation }) {
 
   const fazendaInfo = getFazendaUiInfo(produtor);
   const fazendaAtualId = getFazendaId(produtor);
-  const localizacaoFazenda = [
-    fazendaInfo.localizacao,
-    produtor.regiao,
-    produtor.microregiao,
-  ].filter(Boolean).join(' • ');
+  const localizacaoFazenda = fazendaInfo.localizacao;
   const mapasRouteParams = buildMapasRouteParams({
     fazendaId: fazendaAtualId,
   });
@@ -319,6 +317,35 @@ export default function ProdutorScreen({ route, navigation }) {
     ? getColaboradoresRelacionadosAPropriedade(usuariosMock, produtor, todasFazendasMock)
     : [];
   const isProdutorView = user?.perfil === 'produtor';
+  const resumoPropriedade = buildPropriedadeResumo({
+    propriedade: produtor,
+    visitas,
+    cadernos,
+    mapas,
+    limites,
+    isProdutor: isProdutorView,
+  });
+  const formatarDataIndicador = (value) => {
+    if (!value) return 'Não informado';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Não informado';
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+  const materialMaisRecenteData = resumoPropriedade.materialMaisRecente?.data_atualizacao
+    || resumoPropriedade.materialMaisRecente?.updated_at
+    || resumoPropriedade.materialMaisRecente?.data_criacao
+    || resumoPropriedade.materialMaisRecente?.data_upload
+    || resumoPropriedade.materialMaisRecente?.created_at;
+  const ultimaAtividadeMeta = resumoPropriedade.ultimaAtividade?.kind === 'caderno'
+    ? `Caderno • ${getCadernoTipoLabel(resumoPropriedade.ultimaAtividade.item?.tipo_atividade)}`
+    : resumoPropriedade.ultimaAtividade?.kind === 'visita'
+      ? `Visita • ${getVisitaObjetivoLabel(resumoPropriedade.ultimaAtividade.item?.objetivo)}`
+      : 'Nenhuma atividade registrada';
+  const materialIndicatorLabel = isProdutorView ? 'Material liberado' : 'Material atualizado';
   const statusInfo = produtor.status === 'ativo'
     ? { label: 'Ativo', color: colors.success, icon: 'checkmark-circle' as const }
     : produtor.status === 'inativo'
@@ -520,7 +547,7 @@ export default function ProdutorScreen({ route, navigation }) {
           </View>
         )}
 
-        {/* Cards de Estatísticas Compactos */}
+        {/* Indicadores de acompanhamento da Propriedade */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -528,59 +555,74 @@ export default function ProdutorScreen({ route, navigation }) {
           contentContainerStyle={styles.statsContent}
         >
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: colors.borderLight }]}>
-              <Ionicons name="resize-outline" size={20} color={colors.primary} />
-            </View>
-            <Text style={styles.statValueCompact}>{formatAreaHa(resolveAreaTotalInformada(produtor))}</Text>
-            <Text style={styles.statLabelCompact}>Área total informada</Text>
-          </View>
-          
-          <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: colors.amberLight }]}>
-              <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
-            </View>
-            <Text style={styles.statValueCompact}>{produtor.cultura_atual || 'N/A'}</Text>
-            <Text style={styles.statLabelCompact}>Cultura</Text>
-          </View>
-          
-          <View style={styles.statCardCompact}>
             <View style={[styles.statIconCompact, { backgroundColor: colors.infoLight }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.info} />
             </View>
-            <Text style={styles.statValueCompact}>{visitas.length}</Text>
-            <Text style={styles.statLabelCompact}>Visitas</Text>
-          </View>
-          
-          <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: colors.amberLight }]}>
-              <Ionicons name="map-outline" size={20} color={colors.amber} />
-            </View>
-            <Text style={styles.statValueCompact}>{mapas.length}</Text>
-            <Text style={styles.statLabelCompact}>Materiais</Text>
+            <Text style={styles.statValueCompact} numberOfLines={1}>
+              {resumoPropriedade.proximaVisita
+                ? formatarDataIndicador(resumoPropriedade.proximaVisita.data_visita)
+                : 'Sem agenda'}
+            </Text>
+            <Text style={styles.statLabelCompact}>Próxima Visita</Text>
+            <Text style={styles.statMetaCompact} numberOfLines={2}>
+              {resumoPropriedade.proximaVisita
+                ? getVisitaObjetivoLabel(resumoPropriedade.proximaVisita.objetivo)
+                : 'Nenhuma Visita agendada'}
+            </Text>
           </View>
 
           <View style={styles.statCardCompact}>
             <View style={[styles.statIconCompact, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="book-outline" size={20} color={colors.primary} />
+              <Ionicons name="pulse-outline" size={20} color={colors.primary} />
             </View>
-            <Text style={styles.statValueCompact}>{cadernos.length}</Text>
-            <Text style={styles.statLabelCompact}>Caderno</Text>
+            <Text style={styles.statValueCompact} numberOfLines={1}>
+              {resumoPropriedade.ultimaAtividade
+                ? formatarDataIndicador(resumoPropriedade.ultimaAtividade.date)
+                : 'Sem registro'}
+            </Text>
+            <Text style={styles.statLabelCompact}>Última atividade</Text>
+            <Text style={styles.statMetaCompact} numberOfLines={2}>
+              {ultimaAtividadeMeta}
+            </Text>
           </View>
 
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: colors.infoLight }]}>
-              <Ionicons name="calendar-outline" size={20} color={colors.info} />
+            <View style={[styles.statIconCompact, { backgroundColor: colors.amberLight }]}>
+              <Ionicons name="map-outline" size={20} color={colors.amber} />
             </View>
-            <Text style={styles.statValueCompact}>{periodosProdutivos.length}</Text>
-            <Text style={styles.statLabelCompact}>Safras</Text>
+            <Text style={styles.statValueCompact} numberOfLines={1}>
+              {resumoPropriedade.materialMaisRecente
+                ? formatarDataIndicador(materialMaisRecenteData)
+                : 'Nenhum'}
+            </Text>
+            <Text style={styles.statLabelCompact}>{materialIndicatorLabel}</Text>
+            <Text style={styles.statMetaCompact} numberOfLines={2}>
+              {resumoPropriedade.materialMaisRecente?.titulo || 'Nenhum material disponível'}
+            </Text>
           </View>
 
           <View style={styles.statCardCompact}>
-            <View style={[styles.statIconCompact, { backgroundColor: colors.accent }]}>
-              <Ionicons name="git-network-outline" size={20} color={colors.primary} />
+            <View style={[
+              styles.statIconCompact,
+              {
+                backgroundColor: resumoPropriedade.pontosAtencao.length > 0
+                  ? colors.amberLight
+                  : semanticColors.success.surface,
+              },
+            ]}>
+              <Ionicons
+                name={resumoPropriedade.pontosAtencao.length > 0 ? 'alert-circle-outline' : 'checkmark-circle-outline'}
+                size={20}
+                color={resumoPropriedade.pontosAtencao.length > 0 ? colors.warning : semanticColors.success.text}
+              />
             </View>
-            <Text style={styles.statValueCompact}>{limites.length}</Text>
-            <Text style={styles.statLabelCompact}>Talhões</Text>
+            <Text style={styles.statValueCompact}>{resumoPropriedade.pontosAtencao.length}</Text>
+            <Text style={styles.statLabelCompact}>Pontos de atenção</Text>
+            <Text style={styles.statMetaCompact} numberOfLines={2}>
+              {resumoPropriedade.pontosAtencao.length > 0
+                ? 'Confira os itens no Resumo'
+                : 'Acompanhamento em dia'}
+            </Text>
           </View>
         </ScrollView>
 
@@ -628,21 +670,20 @@ export default function ProdutorScreen({ route, navigation }) {
               />
             )}
 
-            <SectionCard title="Contexto da Propriedade" icon="home-outline">
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="home" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Propriedade Atual</Text>
+            {resumoPropriedade.pontosAtencao.length > 0 && (
+              <SectionCard title="Pontos de atenção" icon="alert-circle-outline">
+                <View style={styles.attentionList}>
+                  {resumoPropriedade.pontosAtencao.map((ponto) => (
+                    <View key={ponto.id} style={styles.attentionRow}>
+                      <Ionicons name="alert-circle-outline" size={18} color={semanticColors.warning.text} />
+                      <Text style={styles.attentionText}>{ponto.message}</Text>
+                    </View>
+                  ))}
                 </View>
-                <Text style={styles.infoValue}>{fazendaInfo.fazendaNome || 'Não informado'}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="person" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Titular</Text>
-                </View>
-                <Text style={styles.infoValue}>{fazendaInfo.titularNome || 'Não informado'}</Text>
-              </View>
+              </SectionCard>
+            )}
+
+            <SectionCard title="Dados complementares" icon="information-circle-outline">
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="resize-outline" size={16} color={colors.primary} />
@@ -657,6 +698,35 @@ export default function ProdutorScreen({ route, navigation }) {
                 </View>
                 <Text style={styles.infoValue}>{produtor.cultura_atual || 'Não informado'}</Text>
               </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoLabelContainer}>
+                  <Ionicons name={statusInfo.icon} size={16} color={statusInfo.color} />
+                  <Text style={styles.infoLabel}>Status</Text>
+                </View>
+                <View style={[styles.statusBadgeInline, { backgroundColor: statusInfo.color + '20' }]}>
+                  <Text style={[styles.statusTextInline, { color: statusInfo.color }]}>
+                    {statusInfo.label}
+                  </Text>
+                </View>
+              </View>
+              {produtor.regiao ? (
+                <View style={styles.infoRow}>
+                  <View style={styles.infoLabelContainer}>
+                    <Ionicons name="compass-outline" size={16} color={colors.primary} />
+                    <Text style={styles.infoLabel}>Região informada</Text>
+                  </View>
+                  <Text style={styles.infoValue}>{produtor.regiao}</Text>
+                </View>
+              ) : null}
+              {produtor.microregiao ? (
+                <View style={styles.infoRow}>
+                  <View style={styles.infoLabelContainer}>
+                    <Ionicons name="navigate-outline" size={16} color={colors.primary} />
+                    <Text style={styles.infoLabel}>Microrregião informada</Text>
+                  </View>
+                  <Text style={styles.infoValue}>{produtor.microregiao}</Text>
+                </View>
+              ) : null}
               {produtor.documento ? (
                 <View style={styles.infoRow}>
                   <View style={styles.infoLabelContainer}>
@@ -675,13 +745,6 @@ export default function ProdutorScreen({ route, navigation }) {
                   <Text style={styles.infoValue}>{produtor.colaborador_responsavel}</Text>
                 </View>
               ) : null}
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="location" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Localização</Text>
-                </View>
-                <Text style={styles.infoValue}>{localizacaoFazenda || 'Não informado'}</Text>
-              </View>
               {produtor.contato && (
                 <View style={styles.infoRow}>
                   <View style={styles.infoLabelContainer}>
@@ -803,57 +866,6 @@ export default function ProdutorScreen({ route, navigation }) {
                 </View>
               </SectionCard>
             )}
-
-            <SectionCard title="Panorama da Propriedade" icon="stats-chart-outline">
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="calendar" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Histórico de visitas</Text>
-                </View>
-                <Text style={styles.infoValue}>{visitas.length} visita{visitas.length !== 1 ? 's' : ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="map" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Mapas e arquivos técnicos</Text>
-                </View>
-                <Text style={styles.infoValue}>{mapas.length} material{mapas.length !== 1 ? 'is' : ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="book" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Caderno de campo</Text>
-                </View>
-                <Text style={styles.infoValue}>{cadernos.length} registro{cadernos.length !== 1 ? 's' : ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="calendar" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Safras e Safrinha</Text>
-                </View>
-                <Text style={styles.infoValue}>{periodosProdutivos.length} período{periodosProdutivos.length !== 1 ? 's' : ''}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name="git-network" size={16} color={colors.primary} />
-                  <Text style={styles.infoLabel}>Talhões</Text>
-                </View>
-                <Text style={styles.infoValue}>
-                  {limites.length} {limites.length === 1 ? 'talhão' : 'talhões'}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoLabelContainer}>
-                  <Ionicons name={statusInfo.icon} size={16} color={statusInfo.color} />
-                  <Text style={styles.infoLabel}>Status</Text>
-                </View>
-                <View style={[styles.statusBadgeInline, { backgroundColor: statusInfo.color + '20' }]}>
-                  <Text style={[styles.statusTextInline, { color: statusInfo.color }]}>
-                    {statusInfo.label}
-                  </Text>
-                </View>
-              </View>
-            </SectionCard>
 
             {podeExcluir && (
               <SectionCard title="Integridade da Exclusão" icon="shield-checkmark-outline">
@@ -1422,7 +1434,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    minWidth: 110,
+    width: 148,
+    minHeight: 178,
     borderWidth: 2,
     borderColor: colors.border,
     ...shadows.sm,
@@ -1445,6 +1458,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textLight,
     fontWeight: typography.weightSemibold,
+    textAlign: 'center',
+  },
+  statMetaCompact: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontCaption,
+    lineHeight: 17,
+    color: colors.muted,
     textAlign: 'center',
   },
   tabsContainer: {
@@ -1662,6 +1682,26 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: typography.weightSemibold,
     lineHeight: 22,
+  },
+  attentionList: {
+    gap: spacing.sm,
+  },
+  attentionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: semanticColors.warning.surface,
+    borderWidth: 1,
+    borderColor: semanticColors.warning.border,
+  },
+  attentionText: {
+    flex: 1,
+    color: semanticColors.warning.text,
+    fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightSemibold,
+    lineHeight: 20,
   },
   mockLinkNote: {
     color: colors.textLight,

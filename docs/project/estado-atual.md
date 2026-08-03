@@ -4535,6 +4535,38 @@ retrato e paisagem. A rotacao automatica foi restaurada e nao houve excecao
 fatal no logcat recente. Evidencias:
 `dist/qa-session-2026-08-03/mp-18-revisao-carrossel-fab/`.
 
-O conteudo e a priorizacao dos indicadores permanecem em `MP-19`; o sistema
-geral de cartoes em `MP-21`; a matriz completa de acessibilidade e aparelhos
-em `MP-40`. `MP-19` nao foi iniciada.
+O sistema geral de cartoes permanece em `MP-21`; a matriz completa de
+acessibilidade e aparelhos em `MP-40`.
+
+## MP-19 - Resumo Da Propriedade
+
+Status em 2026-08-03: `CONCLUIDO`.
+
+O detalhe da Propriedade passou a priorizar quatro sinais de acompanhamento:
+proxima Visita agendada, ultima atividade acessivel ao perfil, material
+tecnico mais recente e pontos de atencao visiveis. Visita futura nao e
+tratada como atividade concluida. Para Produtor, Cadernos e materiais usam a
+visibilidade ja filtrada pelo controle de acesso, e o indicador explicita
+`Material liberado`; Admin e Colaborador recebem `Material atualizado` dentro
+do escopo existente.
+
+O Resumo deixou de repetir nome, Titular e as contagens ja representadas pela
+navegacao. O bloco `Panorama da Propriedade` foi removido. Area, cultura,
+status e demais campos pertinentes ficaram em `Dados complementares`; o
+cabecalho mostra somente Municipio/UF, sem juntar Regiao e Microregiao na
+mesma linha. Abas, rotas, permissoes, payloads, persistencia e `fazenda_id`
+permaneceram inalterados.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release de 92.025.396 bytes, SHA-256
+`09BF857733D5CFEB099086F4A53C55B4BA5A7B01F76760E8131F55ECB165AAF5`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke passou como
+Admin, Colaborador e Produtor em retrato e paisagem; o escopo regional do
+Colaborador e a visibilidade do Produtor foram preservados. A rotacao
+automatica foi restaurada e nao houve excecao fatal no logcat recente.
+Evidencias:
+`dist/qa-session-2026-08-03/mp-19-resumo-propriedade/`.
+
+O sistema geral de cartoes permanece em `MP-21`; regras de estado de Visitas
+em `MP-22`; a matriz completa de acessibilidade e aparelhos em `MP-40`.
+`MP-20` nao foi iniciada.

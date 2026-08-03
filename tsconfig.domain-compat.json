@@ -43,6 +43,7 @@
     "src/utils/usuarioLocalAccessAdmin.ts",
     "src/utils/dashboardCompat.ts",
     "src/utils/dashboardResponsive.ts",
+    "src/utils/propriedadeResumoCompat.ts",
     "src/utils/propriedadeCompat.ts",
     "src/utils/fazendaCadastroCompat.ts",
     "src/utils/fazendaUiCompat.ts",
