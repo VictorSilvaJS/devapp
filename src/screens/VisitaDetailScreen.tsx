@@ -24,6 +24,10 @@ import {
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { getVisitaFotoUri, getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
+import {
+  getVisitaStatusPresentation,
+  VisitaStatusTone,
+} from '../utils/visitaListCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -154,21 +158,13 @@ export default function VisitaDetailScreen() {
     navigation.navigate('EditarVisita', { visitaId: visitaRouteId });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'realizada': return colors.success;
-      case 'cancelada': return colors.error;
-      case 'agendada': return colors.warning;
+  const getStatusColor = (tone: VisitaStatusTone) => {
+    switch (tone) {
+      case 'success': return colors.success;
+      case 'danger': return colors.error;
+      case 'warning': return colors.warning;
+      case 'info': return colors.info;
       default: return colors.muted;
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'realizada': return 'Realizada';
-      case 'cancelada': return 'Cancelada';
-      case 'agendada': return 'Agendada';
-      default: return status;
     }
   };
 
@@ -235,6 +231,7 @@ export default function VisitaDetailScreen() {
   }
 
   const fazendaInfo = fazenda ? getFazendaUiInfo(fazenda) : null;
+  const statusPresentation = getVisitaStatusPresentation(visita);
 
   return (
     <View style={styles.container}>
@@ -247,8 +244,8 @@ export default function VisitaDetailScreen() {
       >
         {/* Status Badge */}
         <View style={styles.statusContainer}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(visita.status) }]}>
-            <Text style={styles.statusText}>{getStatusLabel(visita.status)}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(statusPresentation.tone) }]}>
+            <Text style={styles.statusText}>{statusPresentation.label}</Text>
           </View>
         </View>
 

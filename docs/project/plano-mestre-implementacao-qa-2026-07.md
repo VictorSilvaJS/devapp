@@ -7,8 +7,8 @@
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
 > concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17`, `MP-18` e `MP-19` também
-> foram concluídas; `MP-20` e `MP-21` foram concluídas; `MP-22` não foi
-> iniciada
+> foram concluídas; `MP-20`, `MP-21` e `MP-22` foram concluídas; `MP-23` não
+> foi iniciada
 
 ## 1. Objetivo
 
@@ -198,7 +198,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 20 | `MP-19` Resumo da Propriedade | `QA-P2-07` | Remover repetição e priorizar indicadores úteis ao perfil | `MP-15` | `CONCLUIDO` |
 | 21 | `MP-20` Perfil do Produtor | `QA-P2-12` | Corrigir falsa affordance e oferecer solicitação de atualização | `MP-10` | `CONCLUIDO` |
 | 22 | `MP-21` Sistema de cartões operacionais | `QA-P2-10` | Criar casca comum para Caderno e Visitas sem apagar diferenças de domínio | `MP-11` | `CONCLUIDO` |
-| 23 | `MP-22` Lista de Visitas | `QA-P2-11` | Humanizar enums, separar próximas/histórico e corrigir ordenação/status | `MP-05`, `MP-21` | `BACKLOG` |
+| 23 | `MP-22` Lista de Visitas | `QA-P2-11` | Humanizar enums, separar próximas/histórico e corrigir ordenação/status | `MP-05`, `MP-21` | `CONCLUIDO` |
 | 24 | `MP-23` Safras e Safrinha | `QA-P2-15` | Remover ação duplicada e validar Talhão, ano, cultura, datas e status | `MP-15`, `MP-13` | `BACKLOG` |
 
 #### Critério de aceite transversal da Fase 2
@@ -386,6 +386,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-19` | `CONCLUIDO` | `appQA` / árvore limpa sobre `1ba3457` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou indicadores úteis, Resumo sem repetição, três perfis e duas orientações | `dist/qa-session-2026-08-03/mp-19-resumo-propriedade/` | cartões permanecem em `MP-21`; estados de Visita em `MP-22`; `MP-20` não foi iniciada |
 | 2026-08-03 | `MP-20` | `CONCLUIDO` | `appQA` / árvore limpa sobre `27bf5a4` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou affordance, detalhe, retorno e solicitação sem sucesso falso em retrato e paisagem | `dist/qa-session-2026-08-03/mp-20-perfil-produtor/` | backend, protocolo e edição cadastral direta permanecem fora do corte; `MP-21` não foi iniciada |
 | 2026-08-03 | `MP-21` | `CONCLUIDO` | `appQA` / árvore limpa sobre `5cf9513` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou a casca comum, diferenças de domínio, detalhe, retorno, rolagem e ambas as orientações | `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/` | agrupamento, ordenação e humanização geral dos estados de Visita permanecem em `MP-22`; `MP-22` não foi iniciada |
+| 2026-08-03 | `MP-22` | `CONCLUIDO` | `appQA` / árvore limpa sobre `f2aec81` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou seções, ordem, rótulos, atraso derivado, detalhe e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-22-lista-visitas/` | máquina de estados e comandos permanecem em `MP-27`; `MP-23` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -638,5 +639,21 @@ histórico contextual; não houve exceção fatal no logcat recente. A rotação
 automática foi restaurada. Evidências:
 `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/`.
 
-Agrupamento, ordenação e humanização geral dos estados de Visita permanecem
-fora deste corte. `MP-22` não foi iniciada.
+`MP-22` foi concluída em 2026-08-03. A lista global e o histórico contextual
+da Propriedade agora separam Visitas em `Próximas`, `Pendentes` e `Histórico`.
+Futuras usam a data mais próxima primeiro; agendadas vencidas e histórico usam
+a data mais recente primeiro. Atraso aparece como `Agendada · Atrasada`, sem
+alterar o estado persistido. Objetivos e estados usam rótulos públicos no
+cartão e no detalhe, e o marcador vertical `#` foi removido.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. O APK final de 92.029.764 bytes, SHA-256
+`471C852D93DAF9EFE5EB3CA365736E1532E1B583D116B8EB33C4EC18BD61FD0C`, foi
+instalado por cima no Android físico `8483A`. O smoke passou como Admin e
+Produtor em retrato e paisagem, incluindo lista global, histórico contextual,
+detalhe, retorno, rolagem, FAB e ausência de ação de criação para o Produtor;
+não houve exceção fatal no logcat recente. A rotação automática foi restaurada.
+Evidências: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
+
+Transições, comandos auditados e validação produtiva permanecem em `MP-27`.
+`MP-23` não foi iniciada.

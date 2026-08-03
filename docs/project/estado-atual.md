@@ -4622,5 +4622,30 @@ retorno, rolagem, FAB e historico contextual. A rotacao automatica foi
 restaurada e nao houve excecao fatal no logcat recente. Evidencias:
 `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/`.
 
-Agrupamento, ordenacao e humanizacao geral dos estados de Visita permanecem
-fora deste corte. `MP-22` nao foi iniciada.
+## MP-22 - Lista De Visitas
+
+Status em 2026-08-03: `CONCLUIDO`.
+
+A lista global e o historico contextual da Propriedade agora separam Visitas
+em `Proximas`, `Pendentes` e `Historico`. Visitas futuras usam a data mais
+proxima primeiro; agendadas vencidas e historico usam a data mais recente
+primeiro. O atraso e derivado e apresentado como `Agendada · Atrasada`, sem
+alterar o estado `agendada` persistido.
+
+Objetivos e estados usam rotulos publicos nos cartoes e no detalhe. O marcador
+vertical `#` foi removido do historico da Propriedade. Filtros e regras de
+escopo continuam sendo aplicados antes do agrupamento, e o Produtor permanece
+sem acao para criar Visita.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release final de 92.029.764 bytes, SHA-256
+`471C852D93DAF9EFE5EB3CA365736E1532E1B583D116B8EB33C4EC18BD61FD0C`, foi
+instalado por cima via `adb` no Android fisico `8483A`.
+
+O smoke passou como Admin e Produtor em retrato e paisagem, incluindo lista
+global, historico contextual, detalhe, retorno, rolagem, FAB e permissoes. A
+rotacao automatica foi restaurada e nao houve excecao fatal no logcat recente.
+Evidencias: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
+
+Transicoes, comandos auditados e validacao produtiva permanecem em `MP-27`.
+`MP-23` nao foi iniciada.

@@ -46,6 +46,7 @@
     "src/utils/propriedadeResumoCompat.ts",
     "src/utils/perfilProdutorCompat.ts",
     "src/utils/operationalCardCompat.ts",
+    "src/utils/visitaListCompat.ts",
     "src/utils/propriedadeCompat.ts",
     "src/utils/fazendaCadastroCompat.ts",
     "src/utils/fazendaUiCompat.ts",

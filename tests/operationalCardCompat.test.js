@@ -63,7 +63,7 @@ test('diferenças de domínio e visibilidade do Produtor são preservadas', () =
   assert.match(caderno, /Com ponto geográfico/);
   assert.match(visitas, /objetivoLabel/);
   assert.match(visitas, /visita\.status/);
-  assert.doesNotMatch(visitas, /visitasProximas|visitasHistorico|agruparVisitas/i);
+  assert.match(visitas, /getVisitaStatusPresentation/);
 });
 
 if (failed > 0) {

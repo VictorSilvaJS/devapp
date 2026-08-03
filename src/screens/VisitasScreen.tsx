@@ -39,6 +39,11 @@ import {
 import { getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
 import { resolveOperationalSummary } from '../utils/operationalCardCompat';
+import {
+  getVisitaStatusPresentation,
+  groupVisitasForList,
+  VisitaStatusTone,
+} from '../utils/visitaListCompat';
 
 export default function VisitasScreen() {
   const navigation = useNavigation();
@@ -60,6 +65,7 @@ export default function VisitasScreen() {
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
+  const referenceDate = new Date();
 
   const load = useCallback(async () => {
     try {
@@ -161,26 +167,36 @@ export default function VisitasScreen() {
     const matchBusca = matchesFazendaUiBusca(fazenda, busca, [
       getVisitaObjetivoLabel(visita.objetivo),
       visita.tecnico_responsavel,
-      visita.status,
+      getVisitaStatusPresentation(visita, referenceDate).label,
     ]);
     
     const matchStatus = filtroStatus === 'todos' || visita.status === filtroStatus;
     const matchData = filtrarPorData(visita);
     
     return matchBusca && matchStatus && matchData;
-  }).sort((a, b) => {
-    // Aplicar ordenação
-    if (ordenacao === 'data') {
+  });
+
+  const visitasAgrupadas = groupVisitasForList(visitasFiltradas, referenceDate).map((section) => {
+    if (ordenacao === 'data') return section;
+
+    const items = [...section.items].sort((a, b) => {
+      if (ordenacao === 'fazenda' || ordenacao === 'produtor') {
+        const fazendaA = getFazendaUiInfo(getFazenda(getVisitaFazendaId(a)));
+        const fazendaB = getFazendaUiInfo(getFazenda(getVisitaFazendaId(b)));
+        const byProperty = (fazendaA.fazendaNome || '').localeCompare(fazendaB.fazendaNome || '');
+        if (byProperty !== 0) return byProperty;
+      }
+
+      if (ordenacao === 'status') {
+        const statusOrder = { agendada: 0, realizada: 1, cancelada: 2, anulada: 3 };
+        const byStatus = (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
+        if (byStatus !== 0) return byStatus;
+      }
+
       return new Date(b.data_visita).getTime() - new Date(a.data_visita).getTime();
-    } else if (ordenacao === 'fazenda' || ordenacao === 'produtor') {
-      const fazendaA = getFazendaUiInfo(getFazenda(getVisitaFazendaId(a)));
-      const fazendaB = getFazendaUiInfo(getFazenda(getVisitaFazendaId(b)));
-      return (fazendaA.fazendaNome || '').localeCompare(fazendaB.fazendaNome || '');
-    } else if (ordenacao === 'status') {
-      const statusOrder = { agendada: 0, realizada: 1, cancelada: 2 };
-      return (statusOrder[a.status] || 3) - (statusOrder[b.status] || 3);
-    }
-    return 0;
+    });
+
+    return { ...section, items };
   });
 
   // Cores para objetivos
@@ -196,13 +212,15 @@ export default function VisitasScreen() {
   };
 
   // Cores para status
-  const getStatusColor = (status) => {
+  const getStatusColor = (tone: VisitaStatusTone) => {
     const cores = {
-      agendada: colors.info,
-      realizada: colors.success,
-      cancelada: colors.danger
+      info: colors.info,
+      warning: colors.warning,
+      success: colors.success,
+      danger: colors.danger,
+      muted: colors.muted,
     };
-    return cores[status] || colors.muted;
+    return cores[tone] || colors.muted;
   };
 
   // Ícones para objetivos
@@ -230,7 +248,7 @@ export default function VisitasScreen() {
   const getFiltrosAtivos = () => {
     const filtros = [];
     if (filtroStatus !== 'todos') {
-      const statusLabels = { agendada: 'Agendadas', realizada: 'Realizadas', cancelada: 'Canceladas' };
+      const statusLabels = { agendada: 'Agendadas', realizada: 'Realizadas', cancelada: 'Canceladas', anulada: 'Anuladas' };
       filtros.push({ tipo: 'status', label: statusLabels[filtroStatus], icon: 'checkmark-circle', color: colors.success, remover: () => setFiltroStatus('todos') });
     }
     if (filtroData !== 'todos') {
@@ -251,6 +269,7 @@ export default function VisitasScreen() {
     { value: 'agendada', label: 'Agendadas' },
     { value: 'realizada', label: 'Realizadas' },
     { value: 'cancelada', label: 'Canceladas' },
+    { value: 'anulada', label: 'Anuladas' },
   ];
   const periodoOptions = [
     { value: 'todos', label: 'Todas' },
@@ -409,39 +428,54 @@ export default function VisitasScreen() {
             )}
           </View>
         ) : (
-          visitasFiltradas.map(visita => {
-            const fazenda = getFazenda(getVisitaFazendaId(visita));
-            const fazendaInfo = getFazendaUiInfo(fazenda);
-            const objetivoColor = getObjetivoColor(visita.objetivo);
-            const statusColor = getStatusColor(visita.status);
-            const objetivoIcon = getObjetivoIcon(visita.objetivo);
-            const objetivoLabel = getVisitaObjetivoLabel(visita.objetivo);
-            const summary = resolveOperationalSummary([
-              visita.observacoes,
-              visita.recomendacoes,
-            ]);
-            
-            return (
-              <OperationalCard
-                key={visita.id} 
-                title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
-                subtitle={fazendaInfo.titularNome || fazendaInfo.localizacao}
-                icon={objetivoIcon}
-                accentColor={objetivoColor}
-                date={visita.data_visita}
-                tags={[
-                  { label: objetivoLabel, color: objetivoColor },
-                  { label: visita.status || 'Sem status', color: statusColor, capitalize: true },
-                ]}
-                metadata={[
-                  { icon: 'person-outline', label: `Responsável: ${visita.tecnico_responsavel || 'Não informado'}` },
-                ]}
-                summary={summary}
-                accessibilityLabel={`Abrir Visita, ${objetivoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, status ${visita.status || 'não informado'}`}
-                onPress={() => navigation.navigate('VisitaDetail', { visitaId: visita.id })}
-              />
-            );
-          })
+          visitasAgrupadas.map((section) => (
+            <View key={section.id} style={styles.visitSection}>
+              <View style={styles.visitSectionHeader}>
+                <View style={styles.visitSectionHeading}>
+                  <Text style={styles.visitSectionTitle}>{section.title}</Text>
+                  <Text style={styles.visitSectionDescription}>{section.description}</Text>
+                </View>
+                <View style={styles.visitSectionCount}>
+                  <Text style={styles.visitSectionCountText}>{section.items.length}</Text>
+                </View>
+              </View>
+
+              {section.items.map((visita) => {
+                const fazenda = getFazenda(getVisitaFazendaId(visita));
+                const fazendaInfo = getFazendaUiInfo(fazenda);
+                const objetivoColor = getObjetivoColor(visita.objetivo);
+                const statusPresentation = getVisitaStatusPresentation(visita, referenceDate);
+                const statusColor = getStatusColor(statusPresentation.tone);
+                const objetivoIcon = getObjetivoIcon(visita.objetivo);
+                const objetivoLabel = getVisitaObjetivoLabel(visita.objetivo);
+                const summary = resolveOperationalSummary([
+                  visita.observacoes,
+                  visita.recomendacoes,
+                ]);
+
+                return (
+                  <OperationalCard
+                    key={visita.id}
+                    title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
+                    subtitle={fazendaInfo.titularNome || fazendaInfo.localizacao}
+                    icon={objetivoIcon}
+                    accentColor={objetivoColor}
+                    date={visita.data_visita}
+                    tags={[
+                      { label: objetivoLabel, color: objetivoColor },
+                      { label: statusPresentation.label, color: statusColor },
+                    ]}
+                    metadata={[
+                      { icon: 'person-outline', label: `Responsável: ${visita.tecnico_responsavel || 'Não informado'}` },
+                    ]}
+                    summary={summary}
+                    accessibilityLabel={`Abrir Visita, ${objetivoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, status ${statusPresentation.label}`}
+                    onPress={() => navigation.navigate('VisitaDetail', { visitaId: visita.id })}
+                  />
+                );
+              })}
+            </View>
+          ))
         )}
       </ScrollView>
 
@@ -630,6 +664,45 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.screen * 3,
     paddingHorizontal: spacing.screen * 2,
     minHeight: 400,
+  },
+  visitSection: {
+    marginBottom: spacing.lg,
+  },
+  visitSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  visitSectionHeading: {
+    flex: 1,
+  },
+  visitSectionTitle: {
+    color: colors.text,
+    fontSize: typography.fontBody + 1,
+    fontWeight: typography.weightBold,
+  },
+  visitSectionDescription: {
+    color: colors.textLight,
+    fontSize: typography.fontCaption,
+    marginTop: 2,
+  },
+  visitSectionCount: {
+    minWidth: 32,
+    height: 32,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.borderMedium,
+  },
+  visitSectionCountText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption + 1,
+    fontWeight: typography.weightBold,
   },
   emptyState: {
     padding: 0,

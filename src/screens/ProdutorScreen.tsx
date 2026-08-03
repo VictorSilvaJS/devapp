@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
+import OperationalCard from '../components/OperationalCard';
 import PropriedadeTalhoesEntry from '../components/PropriedadeTalhoesEntry';
 import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { useToast } from '../components/Toast';
@@ -52,6 +53,12 @@ import {
   ordenarCadernosPorDataRecente,
 } from '../utils/cadernoFormCompat';
 import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
+import { resolveOperationalSummary } from '../utils/operationalCardCompat';
+import {
+  getVisitaStatusPresentation,
+  groupVisitasForList,
+  VisitaStatusTone,
+} from '../utils/visitaListCompat';
 import { buildPropriedadeResumo } from '../utils/propriedadeResumoCompat';
 import {
   getUsuarioNome,
@@ -369,6 +376,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const mensagemSemCaderno = isProdutorView
     ? 'Você ainda não tem registros liberados ou registrados no Caderno.'
     : 'Quando houver registros liberados para esta Propriedade, eles aparecerão aqui.';
+  const visitaSections = groupVisitasForList(visitas);
 
   const handleNovaVisita = () => {
     if (!podeCriarVisitaNaFazenda) {
@@ -427,6 +435,17 @@ export default function ProdutorScreen({ route, navigation }) {
       outro: colors.muted,
     };
     return cores[tipo] || colors.muted;
+  };
+
+  const getVisitaStatusColor = (tone: VisitaStatusTone) => {
+    const cores = {
+      info: colors.info,
+      warning: colors.warning,
+      success: colors.success,
+      danger: colors.danger,
+      muted: colors.muted,
+    };
+    return cores[tone] || colors.muted;
   };
 
   const formatarDataCaderno = (data) => {
@@ -1119,54 +1138,42 @@ export default function ProdutorScreen({ route, navigation }) {
                   style={styles.emptyStateCompact}
                 />
               ) : (
-                visitas.map((v, index) => (
-                  <TouchableOpacity
-                    key={v.id}
-                    style={styles.visitCard}
-                    onPress={() => navigation.navigate('VisitaDetail', { visitaId: v.id })}
-                    activeOpacity={0.85}
-                  >
-                    <View style={styles.visitNumber}>
-                      <Text style={styles.visitNumberText}>#{visitas.length - index}</Text>
+                visitaSections.map((section) => (
+                  <View key={section.id} style={styles.visitGroup}>
+                    <View style={styles.visitGroupHeader}>
+                      <View style={styles.visitGroupHeading}>
+                        <Text style={styles.visitGroupTitle}>{section.title}</Text>
+                        <Text style={styles.visitGroupDescription}>{section.description}</Text>
+                      </View>
+                      <View style={styles.visitGroupCount}>
+                        <Text style={styles.visitGroupCountText}>{section.items.length}</Text>
+                      </View>
                     </View>
-                    <View style={styles.visitContent}>
-                      <View style={styles.visitHeader}>
-                        <View style={styles.visitDateContainer}>
-                          <Ionicons name="calendar-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
-                          <Text style={styles.visitDate}>
-                            {new Date(v.data_visita).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.visitTecnicoContainer}>
-                        <Text style={styles.visitTecnicoLabel}>Técnico Responsável:</Text>
-                        <View style={styles.visitTecnicoRow}>
-                          <Ionicons name="person-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                          <Text style={styles.visitTecnico}>{v.tecnico_responsavel}</Text>
-                        </View>
-                      </View>
-                      <View style={styles.visitDetailRow}>
-                        <View style={styles.visitLabelContainer}>
-                          <Ionicons name="flag-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                          <Text style={styles.visitLabel}>Objetivo:</Text>
-                        </View>
-                        <Text style={styles.visitObjetivo}>{v.objetivo}</Text>
-                      </View>
-                      {v.observacoes && (
-                        <View style={styles.visitDetailRow}>
-                          <View style={styles.visitLabelContainer}>
-                            <Ionicons name="document-text-outline" size={16} color={colors.textLight} style={{ marginRight: 6 }} />
-                            <Text style={styles.visitLabel}>Observações:</Text>
-                          </View>
-                          <Text style={styles.visitObservacoes}>{v.observacoes}</Text>
-                        </View>
-                      )}
-                    </View>
-                  </TouchableOpacity>
+
+                    {section.items.map((v) => {
+                      const objectiveLabel = getVisitaObjetivoLabel(v.objetivo);
+                      const statusPresentation = getVisitaStatusPresentation(v);
+                      const statusColor = getVisitaStatusColor(statusPresentation.tone);
+                      const summary = resolveOperationalSummary([v.observacoes, v.recomendacoes]);
+
+                      return (
+                        <OperationalCard
+                          key={v.id}
+                          title={objectiveLabel}
+                          icon="calendar-outline"
+                          accentColor={colors.primary}
+                          date={v.data_visita}
+                          tags={[{ label: statusPresentation.label, color: statusColor }]}
+                          metadata={[
+                            { icon: 'person-outline', label: `Responsável: ${v.tecnico_responsavel || 'Não informado'}` },
+                          ]}
+                          summary={summary}
+                          accessibilityLabel={`Abrir Visita, ${objectiveLabel}, status ${statusPresentation.label}`}
+                          onPress={() => navigation.navigate('VisitaDetail', { visitaId: v.id })}
+                        />
+                      );
+                    })}
+                  </View>
                 ))
               )}
             </SectionCard>
@@ -1922,83 +1929,44 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody - 1,
     fontWeight: typography.weightBold
   },
-  visitCard: {
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: spacing.radius,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    flexDirection: 'row'
+  visitGroup: {
+    marginTop: spacing.md,
   },
-  visitNumber: {
-    width: 48,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  visitNumberText: {
-    color: colors.white,
-    fontSize: typography.fontBody + 2,
-    fontWeight: typography.weightBold
-  },
-  visitContent: {
-    flex: 1,
-    padding: 12
-  },
-  visitHeader: {
-    marginBottom: 8
-  },
-  visitDateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  visitDate: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold,
-    color: colors.text
-  },
-  visitTecnicoContainer: {
-    marginBottom: 8
-  },
-  visitTecnicoLabel: {
-    fontSize: typography.fontCaption,
-    color: colors.muted,
-    fontWeight: typography.weightSemibold,
-    marginBottom: 4
-  },
-  visitTecnicoRow: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  visitTecnico: {
-    fontSize: typography.fontBody - 1,
-    color: colors.text,
-    fontWeight: typography.weightSemibold
-  },
-  visitDetailRow: {
-    marginBottom: 8
-  },
-  visitLabelContainer: {
+  visitGroupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    marginBottom: spacing.md,
   },
-  visitLabel: {
+  visitGroupHeading: {
+    flex: 1,
+  },
+  visitGroupTitle: {
+    color: colors.text,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+  },
+  visitGroupDescription: {
+    color: colors.textLight,
+    fontSize: typography.fontCaption,
+    marginTop: 2,
+  },
+  visitGroupCount: {
+    minWidth: 30,
+    height: 30,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.borderMedium,
+  },
+  visitGroupCountText: {
+    color: colors.primary,
     fontSize: typography.fontCaption,
     fontWeight: typography.weightBold,
-    color: colors.muted
-  },
-  visitObjetivo: {
-    fontSize: typography.fontBody - 1,
-    color: colors.text,
-    lineHeight: 20
-  },
-  visitObservacoes: {
-    fontSize: typography.fontBody - 1,
-    color: colors.textLight,
-    lineHeight: 20,
-    fontStyle: 'italic'
   },
   cadernoCard: {
     backgroundColor: colors.backgroundAlt,
