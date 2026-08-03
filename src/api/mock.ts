@@ -1361,6 +1361,22 @@ const mapas: any[] = [
 
 // ─── Limites de Área (Shape / Demarcação de Talhões) ───
 // Referência: arquivos no drive com formato LT 2022, 23, 24, 25
+const talhaoEstavelPorLimiteMockId: Record<string, string> = {
+  lt1: 'talhao-p1-a',
+  lt2: 'talhao-p1-b',
+  lt3: 'talhao-p1-a',
+  lt4: 'talhao-p1-c',
+  lt5: 'talhao-p1-a',
+  lt6: 'talhao-p1-b',
+  lt7: 'talhao-p1-a',
+  lt8: 'talhao-p1-b',
+  lt9: 'talhao-p1-c',
+  lt10: 'talhao-p4-pivo-central',
+  lt11: 'talhao-p4-pivo-central',
+  lt12: 'talhao-p5-area-norte',
+  lt13: 'talhao-p5-area-norte',
+};
+
 const limitesArea: any[] = [
   // ─── Produtor p1 - RS ───
   {
@@ -1855,7 +1871,10 @@ const limitesArea: any[] = [
     disponivel_offline: true,
     observacoes: t.observacoes || `Contorno importado de shapefile real — ${t.talhao}`,
   })),
-];
+].map((limite) => {
+  const talhaoId = talhaoEstavelPorLimiteMockId[limite.id];
+  return talhaoId ? { ...limite, talhao_id: talhaoId } : limite;
+});
 
 const cloneMockRecords = <T>(records: T[]): T[] =>
   JSON.parse(JSON.stringify(records));

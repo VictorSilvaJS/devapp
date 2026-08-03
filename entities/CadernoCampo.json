@@ -16,7 +16,11 @@
     },
     "colaborador_responsavel": {
       "type": "string",
-      "description": "Nome do colaborador responsável"
+      "description": "Snapshot legível do nome do usuário responsável"
+    },
+    "responsavel_usuario_id": {
+      "type": "string",
+      "description": "ID estável do usuário responsável"
     },
     "data_atividade": {
       "type": "string",
@@ -30,7 +34,15 @@
     },
     "talhao": {
       "type": "string",
-      "description": "Talhão onde foi realizada a atividade"
+      "description": "Alias legado do nome do Talhão"
+    },
+    "talhao_id": {
+      "type": "string",
+      "description": "ID lógico e estável do Talhão"
+    },
+    "talhao_nome": {
+      "type": "string",
+      "description": "Snapshot legível do nome do Talhão"
     },
     "produtos_utilizados": {
       "type": "array",
@@ -71,6 +83,14 @@
       "type": "string",
       "format": "date-time",
       "description": "Data de criação do registro"
+    },
+    "criado_por_user_id": {
+      "type": "string",
+      "description": "ID do usuário que registrou o conteúdo, quando disponível"
+    },
+    "criado_por_nome": {
+      "type": "string",
+      "description": "Snapshot legível do nome do usuário que registrou o conteúdo"
     }
   },
   "required": ["colaborador_responsavel", "data_atividade", "tipo_atividade"],

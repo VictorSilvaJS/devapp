@@ -3,17 +3,21 @@ const {
   buildCadernoFazendaOptions,
   buildCadernoPeriodoProdutivoOptions,
   buildCadernoPayload,
+  buildCadernoTalhaoOptions,
+  CADERNO_TALHAO_LEGADO_VALUE,
   findCadernoFazendaOption,
   findCadernoPeriodoProdutivoOption,
   getCadernoFormFazendaId,
   getCadernoFormFazendaLabel,
   getCadernoFormPeriodoProdutivoLabel,
   getCadernoOrigemLabel,
+  getCadernoRegistradoPorLabel,
   getCadernoPeriodoProdutivoLabel,
   getCadernoTalhaoLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
   isCadernoRegistradoPeloProdutor,
+  isCadernoTalhaoLegado,
   isCadernoVisivelParaProdutor,
   ordenarCadernosPorDataRecente,
   parseCadernoAreaAplicada,
@@ -118,6 +122,7 @@ const run = async () => {
       fazendaId: 'faz_payload',
       dataAtividade: new Date('2026-04-20T00:00:00.000Z'),
       tipoAtividade: 'adubacao',
+      talhaoId: 'talhao_a',
       talhao: 'Talhão A',
       produtosText: 'MAP, KCl',
       dosagem: '250 kg/ha',
@@ -125,14 +130,20 @@ const run = async () => {
       condicoesClima: 'Ensolarado',
       observacoes: 'Aplicação concluída',
       visivelParaProdutor: false,
+      responsavelUsuarioId: 'u2',
       colaboradorResponsavel: 'Carlos Silva',
       criadoPorUserId: 'u2',
+      criadoPorNome: 'Carlos Silva',
       origemRegistro: 'produtor',
     });
 
     assert.equal(payload.fazenda_id, 'faz_payload');
     assert.equal(payload.fazendaId, 'faz_payload');
     assert.equal(payload.colaborador_responsavel, 'Carlos Silva');
+    assert.equal(payload.responsavel_usuario_id, 'u2');
+    assert.equal(payload.criado_por_nome, 'Carlos Silva');
+    assert.equal(payload.talhao_id, 'talhao_a');
+    assert.equal(payload.talhao_nome, 'Talhão A');
     assert.equal(payload.tipo_atividade, 'adubacao');
     assert.equal(payload.area_aplicada, 120.5);
     assert.equal(payload.visivel_para_produtor, false);
@@ -204,8 +215,15 @@ const run = async () => {
     assert.equal(getCadernoTipoLabel('correcao_solo'), 'Correção de solo');
     assert.equal(getCadernoTipoLabel('ocorrencia'), 'Ocorrência');
     assert.equal(getCadernoTipoLabel('vistoria'), 'Vistoria');
-    assert.equal(getCadernoTalhaoLabel({}), 'Sem talhão vinculado');
+    assert.equal(getCadernoTalhaoLabel({}), 'Toda a Propriedade');
     assert.equal(getCadernoTalhaoLabel({ talhao: 'Talhão A' }), 'Talhão A');
+    assert.equal(isCadernoTalhaoLegado({ talhao: 'Talhão A' }), true);
+    assert.equal(isCadernoTalhaoLegado({ talhao_id: 't1', talhao: 'Talhão A' }), false);
+    assert.equal(getCadernoRegistradoPorLabel({ criado_por_nome: 'Ana Souza' }), 'Ana Souza');
+    assert.equal(getCadernoRegistradoPorLabel({
+      criado_por_user_id: 'id-interno',
+      origem_registro: 'equipe',
+    }), 'Registrado pela equipe');
     assert.equal(isCadernoVisivelParaProdutor({ visivel_para_produtor: false }), false);
     assert.equal(isCadernoVisivelParaProdutor({}), true);
     assert.equal(getCadernoVisibilidadeLabel({ visivel_para_produtor: false }), 'Interno');
@@ -219,6 +237,24 @@ const run = async () => {
       ]).map((item) => item.id),
       ['novo', 'antigo']
     );
+  });
+
+  await test('opções de Talhão usam ID, oferecem Toda a Propriedade e explicitam legado', () => {
+    const stable = buildCadernoTalhaoOptions([
+      { id: 'geometria_1', talhao_id: 'talhao_1', talhao: 'Talhão Norte' },
+      { id: 'geometria_2', talhao_id: 'talhao_1', talhao: 'Talhão Norte' },
+      { id: 'geometria_sem_identidade', talhao: 'Somente geometria' },
+      { talhao: 'Somente nome' },
+    ]);
+    assert.deepEqual(stable.options.map(({ value, label }) => ({ value, label })), [
+      { value: '', label: 'Toda a Propriedade' },
+      { value: 'talhao_1', label: 'Talhão Norte' },
+    ]);
+
+    const legacy = buildCadernoTalhaoOptions([], { nome: 'Talhão antigo' });
+    assert.equal(legacy.selectedValue, CADERNO_TALHAO_LEGADO_VALUE);
+    assert.equal(legacy.legacy, true);
+    assert.match(legacy.options[1].description, /legada em texto/i);
   });
 
   await test('buildCadernoPayload retorna null para data ou área inválida', () => {

@@ -25,9 +25,11 @@ import {
   getCadernoTalhaoLabel,
   getCadernoPeriodoProdutivoLabel,
   getCadernoOrigemLabel,
+  getCadernoRegistradoPorLabel,
   getCadernoTipoLabel,
   getCadernoVisibilidadeLabel,
   isCadernoRegistradoPeloProdutor,
+  isCadernoTalhaoLegado,
   isCadernoVisivelParaProdutor,
 } from '../utils/cadernoFormCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
@@ -168,6 +170,8 @@ export default function CadernoDetailScreen() {
   const tipoLabel = getCadernoTipoLabel(registro.tipo_atividade);
   const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(registro);
   const registradoPeloProdutor = isCadernoRegistradoPeloProdutor(registro);
+  const registradoPorLabel = getCadernoRegistradoPorLabel(registro);
+  const talhaoLegado = isCadernoTalhaoLegado(registro);
   const fotos = Array.isArray(registro.fotos) ? registro.fotos : [];
   const produtos = Array.isArray(registro.produtos_utilizados) ? registro.produtos_utilizados : [];
   const localizacao = normalizeCadernoLocalizacao(registro);
@@ -258,8 +262,16 @@ export default function CadernoDetailScreen() {
           <View style={styles.infoRow}>
             <Ionicons name="person" size={20} color={colors.muted} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Responsável</Text>
+              <Text style={styles.infoLabel}>Executado por</Text>
               <Text style={styles.infoValue}>{registro.colaborador_responsavel || '-'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="create-outline" size={20} color={colors.muted} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Registrado por</Text>
+              <Text style={styles.infoValue}>{registradoPorLabel}</Text>
             </View>
           </View>
 
@@ -268,6 +280,9 @@ export default function CadernoDetailScreen() {
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Talhão</Text>
               <Text style={styles.infoValue}>{getCadernoTalhaoLabel(registro)}</Text>
+              {talhaoLegado ? (
+                <Text style={styles.referenceHint}>Referência legada em texto</Text>
+              ) : null}
             </View>
           </View>
 
@@ -562,6 +577,11 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     fontWeight: '600',
     color: colors.text,
+  },
+  referenceHint: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSmall,
+    color: colors.warning,
   },
   locationExplanation: {
     fontSize: typography.fontSmall,

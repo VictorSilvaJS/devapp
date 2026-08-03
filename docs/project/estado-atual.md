@@ -4218,9 +4218,10 @@ arquivo anterior; `GeoJsonTalhoesLayerService` le somente o ativo; e o
 validador gera IDs a partir de Propriedade, indice e nome. `versao = 1`
 continua sendo versao do schema local, nao da demarcacao.
 
-IDs estaveis e migracao dos vinculos textuais permanecem em `MP-24`;
-persistencia, storage, reconciliacao, publicacao, historico e cache em
-`MP-37`; regressao de renome, area, divisao, fusao e restauracao em `MP-39`.
+IDs selecionaveis locais e compatibilidade explicita dos vinculos textuais
+foram concluidos em `MP-24`; persistencia, storage, migracao, reconciliacao,
+publicacao, historico e cache permanecem em `MP-37`; regressao de renome,
+area, divisao, fusao e restauracao permanece em `MP-39`.
 
 ## MP-07 - Login Responsivo
 
@@ -4648,7 +4649,7 @@ rotacao automatica foi restaurada e nao houve excecao fatal no logcat recente.
 Evidencias: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
 
 Transicoes, comandos auditados e validacao produtiva permanecem em `MP-27`.
-`MP-23` foi executada na sequencia; `MP-24` nao foi iniciada.
+`MP-23` e `MP-24` foram executadas na sequencia; `MP-25` nao foi iniciada.
 
 ## MP-23 - Safras E Safrinha
 
@@ -4677,6 +4678,38 @@ A rotacao automatica foi restaurada e nao houve excecao fatal no logcat
 recente. Evidencias:
 `dist/qa-session-2026-08-03/mp-23-safras-safrinha/`.
 
-IDs produtivos estaveis de responsavel e Talhao permanecem em `MP-24`.
-Backend, sincronizacao, auditoria e regras completas de encerramento ou
-remocao permanecem fora deste corte. `MP-24` nao foi iniciada.
+As referencias locais estaveis de responsavel e Talhao foram concluidas em
+`MP-24`. Backend, sincronizacao, auditoria e regras completas de encerramento
+ou remocao permanecem fora deste corte. `MP-25` nao foi iniciada.
+
+## MP-24 - IDs Estaveis De Responsavel E Talhao
+
+Status em 2026-08-03: `CONCLUIDO`.
+
+Novos registros do Caderno vinculam o responsavel autenticado por
+`responsavel_usuario_id`, bloqueiam a edicao desse campo e preservam os nomes
+de responsavel, autor e Talhao como snapshots legiveis. O detalhe diferencia
+`Executado por` de `Registrado por`. Registros antigos que possuem somente
+texto continuam visiveis e recebem indicacao explicita de legado, sem atribuir
+usuario ou Talhao por suposicao.
+
+Caderno, Safra/Safrinha e o fluxo unificado de Material Tecnico usam
+`talhao_id` logico e explicito para novos vinculos, oferecem `Toda a
+Propriedade` para o escopo geral e nao usam o nome como chave. IDs de
+demarcacao ou versao de `LimiteArea` nao sao promovidos a identidade logica.
+O seed demonstrativo possui um mapeamento explicito apenas para as identidades
+conhecidas; itens sem `talhao_id` ficam fora dos novos seletores.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release final de 92.042.500 bytes, SHA-256
+`330BBE6BCE21BBBEF98A5108B532707F07D8BDFBE99B80A35F3AE3B0946C4820`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke passou em
+retrato e paisagem, incluindo responsavel bloqueado, opcoes de Talhao sem
+duplicar versoes anuais, selecao por ID logico, rolagem e rotacao. A rotacao
+automatica foi restaurada e nao houve excecao fatal no logcat recente.
+Evidencias:
+`dist/qa-session-2026-08-03/mp-24-referencias-estaveis/`.
+
+Persistencia, reconciliacao, versionamento e migracao produtivos permanecem em
+`MP-37`. Ciclo auditavel, obrigatorios por tipo e comandos permanecem em
+`MP-25`. `MP-25` nao foi iniciada.

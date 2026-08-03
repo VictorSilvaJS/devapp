@@ -230,6 +230,13 @@ export const normalizeCadernoCampo = (
     raw as CadernoCampoLegado & CadernoCampoCanonico & CadernoCampoCompativelBorda;
   const contextoFazendaId = firstNonEmptyString(fazenda_id, fazendaId, produtor_id) ?? '';
   const localizacao = normalizeCadernoLocalizacao(raw);
+  const responsavelId = firstNonEmptyString(
+    raw.responsavel_usuario_id,
+    (raw as CadernoCampoLegado).colaborador_responsavel_id
+  );
+  const talhaoId = firstNonEmptyString(raw.talhao_id, raw.talhaoId);
+  const talhaoNome = firstNonEmptyString(raw.talhao_nome, raw.talhao);
+  const criadoPorNome = firstNonEmptyString(raw.criado_por_nome);
 
   return {
     ...clearCadernoLocalizacaoFields(rest),
@@ -237,10 +244,14 @@ export const normalizeCadernoCampo = (
     id: raw.id,
     fazenda_id: contextoFazendaId,
     fazendaId: contextoFazendaId,
+    ...(responsavelId ? { responsavel_usuario_id: responsavelId } : {}),
     colaborador_responsavel: raw.colaborador_responsavel ?? '',
     data_atividade: raw.data_atividade ?? '',
     tipo_atividade: raw.tipo_atividade ?? '',
+    ...(talhaoId ? { talhao_id: talhaoId, talhaoId } : {}),
+    ...(talhaoNome ? { talhao_nome: talhaoNome, talhao: talhaoNome } : {}),
     criado_por_user_id: firstNonEmptyString(raw.criado_por_user_id, criado_por),
+    ...(criadoPorNome ? { criado_por_nome: criadoPorNome } : {}),
   };
 };
 

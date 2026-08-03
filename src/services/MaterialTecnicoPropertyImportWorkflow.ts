@@ -361,7 +361,7 @@ export const validateMaterialTecnicoPropertyImportForm = (
   if ((categoria === 'fertilidade' || categoria === 'correcao') && !profundidade) {
     errors.profundidade = 'Informe a profundidade ou selecione “Não informada”.';
   }
-  if (escopo === 'talhao' && !talhaoId && !talhaoNome) {
+  if (escopo === 'talhao' && (!talhaoId || !talhaoNome)) {
     errors.talhao = 'Selecione o Talhão deste material.';
   }
 

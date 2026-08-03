@@ -7,6 +7,10 @@
       "type": "string",
       "description": "ID único do limite (ex: lt1, lt2)"
     },
+    "talhao_id": {
+      "type": "string",
+      "description": "ID lógico e estável do Talhão; distinto do ID da demarcação"
+    },
     "nome": {
       "type": "string",
       "description": "Nome do levantamento (ex: LT 2025 - Talhão A)"

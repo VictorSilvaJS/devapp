@@ -16,9 +16,10 @@ import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
 import RadioCardGroup from '../components/RadioCardGroup';
+import SelectField from '../components/SelectField';
 import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
-import { CadernoCampo, Produtor } from '../api/mock';
+import { CadernoCampo, LimiteArea, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import { useCadernoLocalizacaoCapture } from '../hooks/useCadernoLocalizacaoCapture';
@@ -26,6 +27,7 @@ import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   filtrarProdutoresPorAcesso,
+  filtrarLimitesPorFazendaIds,
   findFazendaById,
   getFazendaId,
   podeIncluirCaderno,
@@ -33,11 +35,14 @@ import {
 } from '../utils/acessoControle';
 import {
   CADERNO_TIPOS_ATIVIDADE,
+  CADERNO_TALHAO_LEGADO_VALUE,
   buildCadernoFazendaOptions,
   buildCadernoPeriodoProdutivoOptions,
   buildCadernoPayload,
+  buildCadernoTalhaoOptions,
   findCadernoFazendaOption,
   findCadernoPeriodoProdutivoOption,
+  findCadernoTalhaoByRoute,
   getCadernoFormFazendaLabel,
   getCadernoFormPeriodoProdutivoLabel,
   parseCadernoAreaAplicada,
@@ -72,6 +77,7 @@ export default function NovoCadernoScreen() {
   const [dataAtividade, setDataAtividade] = useState(new Date());
   const [tipoAtividade, setTipoAtividade] = useState('observacao');
   const [responsavel, setResponsavel] = useState(responsavelInicial);
+  const [talhaoId, setTalhaoId] = useState(routeTalhaoId);
   const [talhao, setTalhao] = useState(routeTalhao);
   const [produtosText, setProdutosText] = useState('');
   const [dosagem, setDosagem] = useState('');
@@ -82,6 +88,7 @@ export default function NovoCadernoScreen() {
   const [periodoProdutivoId, setPeriodoProdutivoId] = useState('');
 
   const [fazendas, setFazendas] = useState([]);
+  const [talhoesDisponiveis, setTalhoesDisponiveis] = useState<any[]>([]);
   const [periodosProdutivos, setPeriodosProdutivos] = useState([]);
   const [loadingFazendas, setLoadingFazendas] = useState(true);
   const [loadingPeriodos, setLoadingPeriodos] = useState(false);
@@ -174,6 +181,14 @@ export default function NovoCadernoScreen() {
     () => findCadernoPeriodoProdutivoOption(periodoOptions, periodoProdutivoId),
     [periodoOptions, periodoProdutivoId]
   );
+  const talhoesDaFazenda = useMemo(
+    () => filtrarLimitesPorFazendaIds(talhoesDisponiveis, fazendaId ? [fazendaId] : []),
+    [fazendaId, talhoesDisponiveis]
+  );
+  const talhaoSelection = useMemo(
+    () => buildCadernoTalhaoOptions(talhoesDaFazenda, { id: talhaoId, nome: talhao }),
+    [talhao, talhaoId, talhoesDaFazenda]
+  );
   const semFazendasAutorizadas = !loadingFazendas && fazendaOptions.length === 0;
 
   useEffect(() => {
@@ -195,6 +210,14 @@ export default function NovoCadernoScreen() {
   useEffect(() => {
     void loadPeriodosProdutivos(fazendaId);
   }, [fazendaId]);
+
+  useEffect(() => {
+    if (!routeTalhaoId) return;
+
+    const routeTalhaoSelecionado = findCadernoTalhaoByRoute(talhoesDaFazenda, routeTalhaoId);
+    setTalhaoId(routeTalhaoSelecionado?.id || '');
+    setTalhao(routeTalhaoSelecionado?.nome || '');
+  }, [routeTalhaoId, talhoesDaFazenda]);
 
   const loadPeriodosProdutivos = async (contextoFazendaId) => {
     const normalizedFazendaId = String(contextoFazendaId || '').trim();
@@ -230,11 +253,15 @@ export default function NovoCadernoScreen() {
       if (!podeIncluirCaderno(user)) {
         setFazendaId('');
         setFazendas([]);
+        setTalhoesDisponiveis([]);
         setAccessDenied(true);
         return;
       }
 
-      const fazendasDisponiveis = await Produtor.list();
+      const [fazendasDisponiveis, limitesDisponiveis] = await Promise.all([
+        Produtor.list(),
+        LimiteArea.list(),
+      ]);
       const fazendasPermitidas = filtrarProdutoresPorAcesso(fazendasDisponiveis, user);
 
       if (routeFazendaId) {
@@ -243,6 +270,7 @@ export default function NovoCadernoScreen() {
         if (!podeIncluirCadernoEmFazenda(user, fazendaRota)) {
           setFazendaId('');
           setFazendas([]);
+          setTalhoesDisponiveis([]);
           setAccessDenied(true);
           toast.showWarning('Você não tem permissão para criar registro nesta propriedade.');
           return;
@@ -254,6 +282,7 @@ export default function NovoCadernoScreen() {
       }
 
       setFazendas(fazendasPermitidas);
+      setTalhoesDisponiveis(limitesDisponiveis);
     } catch (error) {
       console.error('Erro ao carregar fazendas para caderno:', error);
       toast.showError('Erro ao carregar propriedades');
@@ -277,8 +306,8 @@ export default function NovoCadernoScreen() {
       newErrors.tipoAtividade = 'Selecione o tipo de atividade';
     }
 
-    if (!responsavel.trim()) {
-      newErrors.responsavel = 'Informe o responsável pelo registro';
+    if (!String(user?.id || '').trim() || !responsavel.trim()) {
+      newErrors.responsavel = 'Sessão sem referência estável de usuário';
     }
 
     if (parseCadernoAreaAplicada(areaAplicada) === null) {
@@ -334,7 +363,7 @@ export default function NovoCadernoScreen() {
         fazendaId,
         dataAtividade,
         tipoAtividade,
-        talhaoId: routeTalhaoId,
+        talhaoId,
         talhao,
         produtosText,
         dosagem,
@@ -342,8 +371,10 @@ export default function NovoCadernoScreen() {
         condicoesClima,
         observacoes,
         visivelParaProdutor: visibilidadeEfetiva,
+        responsavelUsuarioId: user?.id,
         colaboradorResponsavel: responsavel,
         criadoPorUserId: user?.id,
+        criadoPorNome: responsavel,
         origemRegistro: isProdutorView ? 'produtor' : 'equipe',
         periodoProdutivo: periodoSelecionado,
       });
@@ -444,6 +475,8 @@ export default function NovoCadernoScreen() {
                       ]}
                       onPress={() => {
                         setFazendaId(fazenda.id);
+                        setTalhaoId('');
+                        setTalhao('');
                         setPeriodoProdutivoId('');
                         setShowFazendaPicker(false);
                         setErrors(prev => ({ ...prev, fazendaId: null }));
@@ -587,24 +620,31 @@ export default function NovoCadernoScreen() {
 
           <View ref={formValidation.registerField('responsavel')} collapsable={false}>
             <FormField
-              ref={formValidation.registerFocusable('responsavel')}
-              label="Responsável"
+              label="Responsável pelo registro"
               required
               value={responsavel}
-              onChangeText={(value) => {
-                setResponsavel(value);
-                setErrors(prev => ({ ...prev, responsavel: null }));
-              }}
-              placeholder="Nome do responsável"
+              disabled
+              leftIcon="person-outline"
+              helperText="Vinculado ao usuário autenticado; o nome será preservado como snapshot."
               error={errors.responsavel}
             />
           </View>
 
-          <FormField
+          <SelectField
             label="Talhão"
-            value={talhao}
-            onChangeText={setTalhao}
-            placeholder="Ex: Talhão A"
+            value={talhaoSelection.selectedValue}
+            options={talhaoSelection.options}
+            onChange={(value) => {
+              if (value === CADERNO_TALHAO_LEGADO_VALUE) return;
+              const selected = talhaoSelection.options.find((option) => option.value === value);
+              setTalhaoId(value);
+              setTalhao(value ? selected?.label || '' : '');
+            }}
+            disabled={!fazendaId}
+            helperText={talhaoSelection.options.length > 1
+              ? 'Opcional. A seleção grava o ID e preserva o nome exibido.'
+              : 'Nenhum Talhão com ID estável; o registro abrangerá toda a Propriedade.'}
+            placeholder="Toda a Propriedade"
           />
 
           <View ref={formValidation.registerField('areaAplicada')} collapsable={false}>
@@ -660,7 +700,7 @@ export default function NovoCadernoScreen() {
           loading={loadingLocalizacao}
           errorMessage={localizacaoError}
           noticeMessage={localizacaoNotice}
-          hasTalhaoContext={Boolean(routeTalhaoId || talhao.trim())}
+          hasTalhaoContext={Boolean(talhaoId)}
           disabled={saving || !fazendaId}
           onCapture={() => {
             if (!savingRef.current) void captureLocalizacao(fazendaId);

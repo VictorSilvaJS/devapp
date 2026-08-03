@@ -161,6 +161,19 @@ const run = async () => {
       profundidade: 'nao_informada',
       escopo: 'talhao',
     }).errors.talhao.length > 0, true);
+    assert.equal(validateMaterialTecnicoPropertyImportForm('correcao', {
+      ano: 2025,
+      profundidade: 'nao_informada',
+      escopo: 'talhao',
+      talhao_nome: 'T01',
+    }).errors.talhao.length > 0, true);
+    assert.equal(validateMaterialTecnicoPropertyImportForm('correcao', {
+      ano: 2025,
+      profundidade: 'nao_informada',
+      escopo: 'talhao',
+      talhao_id: 'talhao_1',
+      talhao_nome: 'T01',
+    }).ok, true);
 
     const prescricao = validateMaterialTecnicoPropertyImportForm('prescricao', {
       ano: '2025',

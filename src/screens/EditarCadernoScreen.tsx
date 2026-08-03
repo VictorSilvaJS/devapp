@@ -16,9 +16,10 @@ import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
 import RadioCardGroup from '../components/RadioCardGroup';
+import SelectField from '../components/SelectField';
 import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
-import { CadernoCampo, Produtor } from '../api/mock';
+import { CadernoCampo, LimiteArea, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import { useCadernoLocalizacaoCapture } from '../hooks/useCadernoLocalizacaoCapture';
@@ -26,17 +27,21 @@ import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import { colors, shadows, spacing, typography } from '../theme';
 import {
   avaliarAcessoCaderno,
+  filtrarLimitesPorFazendaIds,
   findFazendaById,
   podeEditarCadernoEmFazenda,
 } from '../utils/acessoControle';
 import {
   CADERNO_TIPOS_ATIVIDADE,
+  CADERNO_TALHAO_LEGADO_VALUE,
   buildCadernoFazendaOptions,
   buildCadernoPeriodoProdutivoOptions,
   buildCadernoPayload,
+  buildCadernoTalhaoOptions,
   findCadernoPeriodoProdutivoOption,
   getCadernoFormFazendaLabel,
   getCadernoFormPeriodoProdutivoLabel,
+  isCadernoTalhaoLegado,
   isCadernoVisivelParaProdutor,
   parseCadernoAreaAplicada,
   resolveCadernoEdicaoFazendaId,
@@ -65,6 +70,7 @@ export default function EditarCadernoScreen() {
   const [registroOriginal, setRegistroOriginal] = useState<any>(null);
   const [fazenda, setFazenda] = useState<any>(null);
   const [fazendas, setFazendas] = useState<any[]>([]);
+  const [talhoesDisponiveis, setTalhoesDisponiveis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -147,6 +153,15 @@ export default function EditarCadernoScreen() {
     () => findCadernoPeriodoProdutivoOption(periodoOptions, periodoProdutivoId),
     [periodoOptions, periodoProdutivoId]
   );
+  const talhaoSelection = useMemo(
+    () => buildCadernoTalhaoOptions(talhoesDisponiveis, { id: talhaoId, nome: talhao }),
+    [talhao, talhaoId, talhoesDisponiveis]
+  );
+  const responsavelLegado = Boolean(
+    registroOriginal
+    && !registroOriginal.responsavel_usuario_id
+    && !registroOriginal.colaborador_responsavel_id
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -218,9 +233,10 @@ export default function EditarCadernoScreen() {
         throw new Error('Registro de caderno não informado');
       }
 
-      const [registroData, fazendasData] = await Promise.all([
+      const [registroData, fazendasData, limitesData] = await Promise.all([
         CadernoCampo.get(cadernoRouteId),
         Produtor.list(),
+        LimiteArea.list(),
       ]);
       if (editLoadGenerationRef.current !== loadGeneration) return;
 
@@ -240,12 +256,13 @@ export default function EditarCadernoScreen() {
       setLocalizacaoState(getInitialCadernoLocalizacaoEditState(registroData));
       setFazenda(acesso.fazenda);
       setFazendas(fazendasData);
+      setTalhoesDisponiveis(filtrarLimitesPorFazendaIds(limitesData, [contextoFazendaId]));
       setFazendaId(contextoFazendaId);
       setDataAtividade(registroData.data_atividade ? new Date(registroData.data_atividade) : null);
       setTipoAtividade(registroData.tipo_atividade || 'observacao');
-      setResponsavel(registroData.colaborador_responsavel || user?.nome || user?.full_name || '');
+      setResponsavel(registroData.colaborador_responsavel || 'Responsável legado não identificado');
       setTalhaoId(registroData.talhao_id || registroData.talhaoId || '');
-      setTalhao(registroData.talhao || '');
+      setTalhao(registroData.talhao_nome || registroData.talhao || '');
       setProdutosText(Array.isArray(registroData.produtos_utilizados) ? registroData.produtos_utilizados.join(', ') : '');
       setDosagem(registroData.dosagem || '');
       setAreaAplicada(
@@ -337,8 +354,11 @@ export default function EditarCadernoScreen() {
         condicoesClima,
         observacoes,
         visivelParaProdutor,
+        responsavelUsuarioId:
+          registroOriginal.responsavel_usuario_id || registroOriginal.colaborador_responsavel_id,
         colaboradorResponsavel: responsavel,
-        criadoPorUserId: registroOriginal.criado_por_user_id || registroOriginal.criado_por || user?.id,
+        criadoPorUserId: registroOriginal.criado_por_user_id || registroOriginal.criado_por,
+        criadoPorNome: registroOriginal.criado_por_nome,
         origemRegistro: registroOriginal.origem_registro || 'equipe',
         periodoProdutivo: periodoSelecionado,
       });
@@ -556,24 +576,37 @@ export default function EditarCadernoScreen() {
 
           <View ref={formValidation.registerField('responsavel')} collapsable={false}>
             <FormField
-              ref={formValidation.registerFocusable('responsavel')}
-              label="Responsável"
+              label="Responsável pelo registro"
               required
               value={responsavel}
-              onChangeText={(value) => {
-                setResponsavel(value);
-                setErrors(prev => ({ ...prev, responsavel: null }));
-              }}
-              placeholder="Nome do responsável"
+              disabled
+              leftIcon="person-outline"
+              helperText={responsavelLegado
+                ? 'Registro legado: o nome foi preservado sem atribuir um usuário por suposição.'
+                : 'Referência de usuário preservada; este campo não altera autoria na edição.'}
               error={errors.responsavel}
             />
           </View>
 
-          <FormField
+          <SelectField
             label="Talhão"
-            value={talhao}
-            onChangeText={setTalhao}
-            placeholder="Ex: Talhão A"
+            value={talhaoSelection.selectedValue}
+            options={talhaoSelection.options}
+            onChange={(value) => {
+              if (value === CADERNO_TALHAO_LEGADO_VALUE) {
+                setTalhaoId('');
+                return;
+              }
+              const selected = talhaoSelection.options.find((option) => option.value === value);
+              setTalhaoId(value);
+              setTalhao(value ? selected?.label || '' : '');
+            }}
+            helperText={isCadernoTalhaoLegado({ talhao_id: talhaoId, talhao })
+              ? 'Referência legada em texto. Selecione um Talhão para reconciliar por ID ou mantenha como está.'
+              : talhaoSelection.options.length > 1
+                ? 'Opcional. A seleção grava o ID e preserva o nome exibido.'
+                : 'Nenhum Talhão com ID estável; o registro abrangerá toda a Propriedade.'}
+            placeholder="Toda a Propriedade"
           />
 
           <View ref={formValidation.registerField('areaAplicada')} collapsable={false}>

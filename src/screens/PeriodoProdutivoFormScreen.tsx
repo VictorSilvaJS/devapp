@@ -32,6 +32,7 @@ import { getTalhaoConsultaId, getTalhaoConsultaNome } from '../utils/talhaoConsu
 import {
   buildPeriodoProdutivoTalhaoOptions,
   maskPeriodoProdutivoAnoAgricola,
+  PERIODO_PRODUTIVO_TALHAO_LEGADO_VALUE,
   PERIODO_PRODUTIVO_CULTURA_OPTIONS,
   PERIODO_PRODUTIVO_CULTURA_OUTRO,
   PeriodoProdutivoCulturaOption,
@@ -431,10 +432,16 @@ export default function PeriodoProdutivoFormScreen() {
               options={talhaoOptions.options}
               onChange={(value) => {
                 const selected = talhaoOptions.options.find((option) => option.value === value);
+                if (value === PERIODO_PRODUTIVO_TALHAO_LEGADO_VALUE) {
+                  setTalhaoId('');
+                  return;
+                }
                 setTalhaoId(value);
                 setTalhao(value ? selected?.label || '' : '');
               }}
-              helperText="Opcional. Selecione somente um Talhão desta Propriedade."
+              helperText={talhaoOptions.options.length > 1
+                ? 'Opcional. Selecione somente um Talhão com ID estável desta Propriedade.'
+                : 'Nenhum Talhão com ID estável; o período abrangerá toda a Propriedade.'}
             />
           </View>
 

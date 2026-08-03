@@ -3,6 +3,11 @@ import {
 } from './acessoControle';
 import { getFazendaUiInfo } from './fazendaUiCompat';
 import { getPropriedadeId } from './propriedadeCompat';
+import {
+  getTalhaoConsultaId,
+  getTalhaoConsultaNome,
+  getTalhaoStableId,
+} from './talhaoConsultaCompat';
 
 export type CadernoFazendaOption = {
   id: string;
@@ -22,6 +27,84 @@ export type CadernoPeriodoProdutivoOption = {
   fazendaId?: string;
   propriedadeId?: string;
   talhao?: string;
+};
+
+export type CadernoTalhaoOption = {
+  value: string;
+  label: string;
+  description?: string;
+};
+
+export const CADERNO_TALHAO_TODA_PROPRIEDADE_VALUE = '';
+export const CADERNO_TALHAO_LEGADO_VALUE = '__caderno_talhao_legado__';
+
+export const buildCadernoTalhaoOptions = (
+  talhoes: Array<Record<string, any>> = [],
+  current: { id?: unknown; nome?: unknown } = {}
+): { options: CadernoTalhaoOption[]; selectedValue: string; legacy: boolean } => {
+  const currentId = String(current.id ?? '').trim();
+  const currentNome = String(current.nome ?? '').trim();
+  const options: CadernoTalhaoOption[] = [
+    {
+      value: CADERNO_TALHAO_TODA_PROPRIEDADE_VALUE,
+      label: 'Toda a Propriedade',
+      description: 'Registro geral, sem vínculo com um Talhão específico.',
+    },
+  ];
+  const seenIds = new Set<string>();
+
+  talhoes.forEach((item) => {
+    const id = getTalhaoStableId(item);
+    const nome = getTalhaoConsultaNome(item);
+    if (!id || !nome || seenIds.has(id)) return;
+    seenIds.add(id);
+    options.push({ value: id, label: nome });
+  });
+
+  if (currentId) {
+    const selected = options.find((option) => option.value === currentId);
+    if (!selected) {
+      options.push({
+        value: currentId,
+        label: currentNome || 'Talhão salvo',
+        description: 'Referência salva; não consta no catálogo atual da Propriedade.',
+      });
+    }
+    return { options, selectedValue: currentId, legacy: false };
+  }
+
+  if (currentNome) {
+    options.push({
+      value: CADERNO_TALHAO_LEGADO_VALUE,
+      label: currentNome,
+      description: 'Referência legada em texto; preservada sem criar um ID.',
+    });
+    return { options, selectedValue: CADERNO_TALHAO_LEGADO_VALUE, legacy: true };
+  }
+
+  return {
+    options,
+    selectedValue: CADERNO_TALHAO_TODA_PROPRIEDADE_VALUE,
+    legacy: false,
+  };
+};
+
+export const findCadernoTalhaoByRoute = (
+  talhoes: Array<Record<string, any>> = [],
+  routeTalhaoId?: unknown
+): { id: string; nome: string } | null => {
+  const id = String(routeTalhaoId ?? '').trim();
+  if (!id) return null;
+
+  const matched = talhoes.find((item) => (
+    getTalhaoStableId(item) === id || getTalhaoConsultaId(item) === id
+  ));
+  if (!matched) return null;
+
+  const stableId = getTalhaoStableId(matched);
+  if (!stableId) return null;
+
+  return { id: stableId, nome: getTalhaoConsultaNome(matched) };
 };
 
 export const CADERNO_TIPOS_ATIVIDADE = [
@@ -74,8 +157,10 @@ type BuildCadernoPayloadInput = {
   condicoesClima?: string;
   observacoes?: string;
   visivelParaProdutor?: boolean;
+  responsavelUsuarioId?: string;
   colaboradorResponsavel?: string;
   criadoPorUserId?: string;
+  criadoPorNome?: string;
   origemRegistro?: string;
   periodoProdutivo?: CadernoPeriodoProdutivoOption | null;
 };
@@ -164,8 +249,21 @@ export const getCadernoTipoLabel = (tipo?: string | null): string => {
 };
 
 export const getCadernoTalhaoLabel = (registro: any): string => {
-  const talhao = String(registro?.talhao || '').trim();
-  return talhao || 'Sem talhão vinculado';
+  const talhao = String(registro?.talhao_nome || registro?.talhao || '').trim();
+  return talhao || 'Toda a Propriedade';
+};
+
+export const isCadernoTalhaoLegado = (registro: any): boolean =>
+  Boolean(
+    String(registro?.talhao_nome || registro?.talhao || '').trim()
+    && !String(registro?.talhao_id || registro?.talhaoId || '').trim()
+  );
+
+export const getCadernoRegistradoPorLabel = (registro: any): string => {
+  const snapshot = String(registro?.criado_por_nome || '').trim();
+  if (snapshot) return snapshot;
+
+  return getCadernoOrigemLabel(registro);
 };
 
 export const getCadernoPeriodoProdutivoLabel = (registro: any): string => {
@@ -256,8 +354,10 @@ export const buildCadernoPayload = ({
   condicoesClima = '',
   observacoes = '',
   visivelParaProdutor = true,
+  responsavelUsuarioId,
   colaboradorResponsavel,
   criadoPorUserId,
+  criadoPorNome,
   origemRegistro,
   periodoProdutivo,
 }: BuildCadernoPayloadInput) => {
@@ -272,10 +372,12 @@ export const buildCadernoPayload = ({
 
   const talhaoNome = trimOrUndefined(talhao);
   const talhaoIdNormalizado = trimOrUndefined(talhaoId);
+  const responsavelId = trimOrUndefined(responsavelUsuarioId);
+  const responsavelNome = trimOrUndefined(colaboradorResponsavel) || 'Sistema';
   const payload: Record<string, any> = {
     fazenda_id: fazendaId,
     fazendaId,
-    colaborador_responsavel: trimOrUndefined(colaboradorResponsavel) || 'Sistema',
+    colaborador_responsavel: responsavelNome,
     data_atividade: dataAtividade.toISOString(),
     tipo_atividade: tipoAtividade,
     talhao: talhaoNome,
@@ -291,9 +393,18 @@ export const buildCadernoPayload = ({
     ...buildCadernoPeriodoPayloadFields(periodoProdutivo),
   };
 
+  if (responsavelId) {
+    payload.responsavel_usuario_id = responsavelId;
+  }
+
   const autoria = trimOrUndefined(criadoPorUserId);
   if (autoria) {
     payload.criado_por_user_id = autoria;
+  }
+
+  const autoriaNome = trimOrUndefined(criadoPorNome);
+  if (autoriaNome) {
+    payload.criado_por_nome = autoriaNome;
   }
 
   const origem = trimOrUndefined(origemRegistro);

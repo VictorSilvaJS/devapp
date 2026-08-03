@@ -7,9 +7,11 @@ import {
 import {
   getTalhaoConsultaId,
   getTalhaoConsultaNome,
+  getTalhaoStableId,
 } from './talhaoConsultaCompat';
 
 export const PERIODO_PRODUTIVO_CULTURA_OUTRO = 'outro';
+export const PERIODO_PRODUTIVO_TALHAO_LEGADO_VALUE = '__periodo_talhao_legado__';
 
 export const PERIODO_PRODUTIVO_CULTURA_OPTIONS = [
   { value: 'soja', label: 'Soja' },
@@ -50,33 +52,39 @@ export const buildPeriodoProdutivoTalhaoOptions = (
     ? [currentItem, ...talhoes.filter((item) => item !== currentItem)]
     : talhoes;
   const options: Array<{ value: string; label: string; description?: string }> = [
-    { value: '', label: 'Propriedade inteira' },
+    { value: '', label: 'Toda a Propriedade' },
   ];
-  const seenNames = new Set<string>();
+  const seenIds = new Set<string>();
 
   orderedTalhoes.forEach((item) => {
-    const id = getTalhaoConsultaId(item) || getTalhaoConsultaNome(item);
+    const id = getTalhaoStableId(item);
     const nome = getTalhaoConsultaNome(item);
-    const nomeKey = normalizeLookup(nome);
-    if (!id || !nome || !nomeKey || seenNames.has(nomeKey)) return;
-    seenNames.add(nomeKey);
+    if (!id || !nome || seenIds.has(id)) return;
+    seenIds.add(id);
     options.push({ value: id, label: nome });
   });
 
-  let selectedValue = currentId || currentNome;
-  const selectedOption = options.find((option) => option.value === selectedValue)
-    || options.find((option) => (
-      currentNome && normalizeLookup(option.label) === normalizeLookup(currentNome)
-    ));
+  let selectedValue = currentId;
+  const selectedOption = currentId
+    ? options.find((option) => option.value === selectedValue)
+    : undefined;
 
   if (selectedOption) {
     selectedValue = selectedOption.value;
-  } else if (selectedValue) {
+  } else if (currentId) {
     options.push({
-      value: selectedValue,
+      value: currentId,
       label: currentNome || 'Talhão salvo',
-      description: 'Referência preservada do registro atual.',
+      description: 'Referência salva; não consta no catálogo atual da Propriedade.',
     });
+    selectedValue = currentId;
+  } else if (currentNome) {
+    options.push({
+      value: PERIODO_PRODUTIVO_TALHAO_LEGADO_VALUE,
+      label: currentNome,
+      description: 'Referência legada em texto; preservada sem criar um ID.',
+    });
+    selectedValue = PERIODO_PRODUTIVO_TALHAO_LEGADO_VALUE;
   }
 
   return { options, selectedValue };

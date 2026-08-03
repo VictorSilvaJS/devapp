@@ -32,17 +32,18 @@ const run = () => {
   assert.equal(resolvePeriodoProdutivoCulturaValue('outro', ' Feijão '), 'Feijão');
 
   const talhaoOptions = buildPeriodoProdutivoTalhaoOptions([
-    { id: 'limite_1', talhao: 'Área Norte' },
-    { id: 'limite_2', talhao: ' area  norte ' },
-    { id: 'limite_3', talhao: 'Área Sul' },
-  ], { id: 'limite_2', nome: 'Área Norte' });
+    { id: 'limite_1', talhao_id: 'talhao_norte', talhao: 'Área Norte' },
+    { id: 'limite_2', talhao_id: 'talhao_norte', talhao: ' area  norte ' },
+    { id: 'limite_3', talhao_id: 'talhao_sul', talhao: 'Área Sul' },
+    { id: 'limite_sem_identidade', talhao: 'Sem identidade lógica' },
+  ], { id: 'talhao_norte', nome: 'Área Norte' });
   assert.deepEqual(talhaoOptions, {
     options: [
-      { value: '', label: 'Propriedade inteira' },
-      { value: 'limite_2', label: 'area  norte' },
-      { value: 'limite_3', label: 'Área Sul' },
+      { value: '', label: 'Toda a Propriedade' },
+      { value: 'talhao_norte', label: 'Área Norte' },
+      { value: 'talhao_sul', label: 'Área Sul' },
     ],
-    selectedValue: 'limite_2',
+    selectedValue: 'talhao_norte',
   });
 
   const invalid = validatePeriodoProdutivoFormValues({

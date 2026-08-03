@@ -20,6 +20,9 @@ export const normalizeTalhaoLookup = (value: unknown): string =>
 export const getTalhaoConsultaId = (talhao?: Record<string, any> | null): string =>
   firstNonEmptyString(talhao?.id, talhao?.talhao_id, talhao?.talhaoId, talhao?.limite_id, talhao?.limite_area_id);
 
+export const getTalhaoStableId = (talhao?: Record<string, any> | null): string =>
+  firstNonEmptyString(talhao?.talhao_id, talhao?.talhaoId);
+
 export const getTalhaoConsultaNome = (talhao?: Record<string, any> | null): string =>
   firstNonEmptyString(talhao?.talhao_nome, talhao?.talhaoNome, talhao?.talhao, talhao?.nome);
 

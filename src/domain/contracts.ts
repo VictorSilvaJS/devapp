@@ -182,9 +182,13 @@ export interface CadernoCampoCanonico {
   id: string;
   fazenda_id: string;
   fazendaId?: string;
+  responsavel_usuario_id?: string;
   colaborador_responsavel: string;
   data_atividade: string;
   tipo_atividade: string;
+  talhao_id?: string;
+  talhaoId?: string;
+  talhao_nome?: string;
   talhao?: string;
   produtos_utilizados?: string[];
   dosagem?: string;
@@ -206,15 +210,15 @@ export interface CadernoCampoCanonico {
   localizacao_captured_at?: string;
   localizacao_captured_by?: string;
   localizacao_origem?: 'foreground_explicit';
-  /**
-   * Campo reservado para consolidacao futura de autoria sem reabrir a modelagem agora.
-   */
   criado_por_user_id?: string;
+  criado_por_nome?: string;
   origem_registro?: 'produtor' | 'equipe' | string;
 }
 
 export interface LimiteAreaCanonico {
   id: string;
+  talhao_id?: string;
+  talhaoId?: string;
   nome: string;
   ano: number;
   fazenda_id: string;
@@ -323,9 +327,14 @@ export interface CadernoCampoLegado {
   produtor_id?: string;
   fazenda_id?: string;
   fazendaId?: string;
+  responsavel_usuario_id?: string;
+  colaborador_responsavel_id?: string;
   colaborador_responsavel?: string;
   data_atividade?: string;
   tipo_atividade?: string;
+  talhao_id?: string;
+  talhaoId?: string;
+  talhao_nome?: string;
   talhao?: string;
   produtos_utilizados?: string[];
   dosagem?: string;
@@ -349,12 +358,15 @@ export interface CadernoCampoLegado {
   localizacao_origem?: 'foreground_explicit';
   criado_por?: string;
   criado_por_user_id?: string;
+  criado_por_nome?: string;
   origem_registro?: 'produtor' | 'equipe' | string;
   [key: string]: unknown;
 }
 
 export interface LimiteAreaLegado {
   id: string;
+  talhao_id?: string;
+  talhaoId?: string;
   nome?: string;
   ano?: number;
   produtor_id?: string;

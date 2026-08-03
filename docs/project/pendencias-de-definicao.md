@@ -90,9 +90,11 @@ Status em 2026-07-30 (`MP-06`): `versionamento-geojson-talhoes.md` separou
 Talhao logico, importacao imutavel, versao geometrica e linhagem; definiu
 vigencia, reconciliacao, publicacao revisada, consulta historica, permissoes,
 offline e migracao textual. Nao permanece pendente o contrato minimo de
-identidade/versionamento. Permanecem pendentes IDs selecionaveis em `MP-24`,
-limiares de similaridade, retencao de rascunhos/rejeitados, banco, storage,
-migracao e fluxo produtivo em `MP-37`, alem da regressao em `MP-39`.
+identidade/versionamento. IDs selecionaveis locais foram implementados em
+`MP-24` somente quando existe `talhao_id` logico explicito. Continuam
+pendentes os limiares de similaridade, a retencao de rascunhos/rejeitados,
+banco, storage, migracao e fluxo produtivo em `MP-37`, alem da regressao em
+`MP-39`.
 
 ## Pendencias Funcionais
 

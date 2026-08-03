@@ -145,6 +145,7 @@ import {
   getTalhaoConsultaId,
   getTalhaoConsultaNome,
   getTalhaoOrigemDemarcacaoLabel,
+  getTalhaoStableId,
   separarMateriaisPorTalhao,
   separarPeriodosPorTalhao,
 } from '../utils/talhaoConsultaCompat';
@@ -692,10 +693,8 @@ export default function MapasScreen({ route, navigation }) {
           : typeof talhao?.nome === 'string'
             ? talhao.nome.trim()
             : '';
-        const id = typeof talhao?.id === 'string' && talhao.id.trim()
-          ? talhao.id.trim()
-          : nome;
-        if (!nome || seen.has(id)) return;
+        const id = getTalhaoStableId(talhao);
+        if (!id || !nome || seen.has(id)) return;
         seen.add(id);
         options.push({
           value: id,
@@ -3401,14 +3400,9 @@ export default function MapasScreen({ route, navigation }) {
                             placeholder="Selecione o Talhão"
                           />
                         ) : (
-                          <FormField
-                            label="Nome do Talhão"
-                            required
-                            value={materialTecnicoForm.talhao_nome || ''}
-                            onChangeText={(talhao_nome) => updateMaterialTecnicoForm({ talhao_nome })}
-                            error={materialTecnicoFormErrors.talhao}
-                            placeholder="Informe o Talhão"
-                            leftIcon="location-outline"
+                          <InfoBox
+                            variant="warning"
+                            message="Nenhum Talhão com ID estável está disponível nesta Propriedade. Use o escopo Toda a Propriedade ou cadastre os Talhões antes de anexar."
                           />
                         )
                       ) : null}
