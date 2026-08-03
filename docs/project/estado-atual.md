@@ -4417,6 +4417,11 @@ esse modo neste corte; Propriedades, Usuarios e Visitas preservam o
 posicionamento flutuante existente. Rotulo, icone, acessibilidade, permissao
 e navegacao para Novo Registro permaneceram inalterados.
 
+Revisao visual em 2026-08-03: por decisao de produto posterior ao corte
+original, a faixa ancorada foi removida. `CreateActionButton` voltou a possuir
+um unico posicionamento flutuante, compartilhado por Propriedades, Caderno,
+Usuarios e Visitas. O padding inferior seguro das listas foi preservado.
+
 Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
 `assembleRelease` passaram. O APK release foi instalado via `adb`; o smoke
 fisico passou em retrato, paisagem, rolagem intermediaria, fim da lista e
@@ -4506,23 +4511,29 @@ responsivo do mapa permanece em `MP-31`. `MP-18` foi executada na sequencia.
 
 ## MP-18 - Dashboards E Indicadores Responsivos
 
-Status em 2026-07-31: `CONCLUIDO`.
+Status em 2026-08-03: `CONCLUIDO`, com revisao visual aplicada.
 
 Os indicadores do Dashboard de Admin e Colaborador usam duas colunas em
-retrato e tres em paisagem ampla. Em Propriedades, a faixa horizontal de
-indicadores foi substituida por grade de duas colunas em retrato e cinco em
-paisagem; `Nova Propriedade` fica ancorada fora da rolagem e nao compete com
-os cartoes. No Dashboard do Produtor, o resumo da Propriedade permanece acima
-dos indicadores em retrato e passa para a esquerda em paisagem, com os seis
-indicadores organizados em grade 2 x 3 sem truncamento.
+retrato e tres em paisagem ampla. Em Propriedades, os cinco indicadores usam
+o mesmo carrossel horizontal de cartoes compactos do detalhe da Propriedade,
+com largura legivel, borda, sombra, icone e tipografia equivalentes. No
+Dashboard do Produtor, o resumo da Propriedade permanece acima dos indicadores
+em retrato e passa para a esquerda em paisagem, com os seis indicadores
+organizados em grade 2 x 3 sem truncamento.
+
+`Nova Propriedade` e `Novo Registro` usam o mesmo FAB flutuante de Usuarios e
+Visitas. A variante ancorada foi retirada do componente compartilhado; as
+listas mantem padding inferior para que o conteudo final continue alcancavel.
 
 Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
-`assembleRelease` passaram. O APK release de 92.024.392 bytes, SHA-256
-`2A989C69B84F7FB12AA13E393BC543D2496E80E5A2BD9C7B0A8F78E2FFC65079`, foi
+`assembleRelease` passaram. Na revisao de 2026-08-03, o APK release de
+92.020.940 bytes, SHA-256
+`3CBC0CE1A96F2D65F8897FBD077816DE4DB47707F0FB0D90E37165FC619D159E`, foi
 instalado por cima via `adb` no Android fisico `8483A`. O smoke passou nos
-perfis Admin, Colaborador e Produtor em retrato e paisagem. A rotacao
-automatica foi restaurada e nao houve excecao fatal no logcat recente.
-Evidencias: `dist/qa-session-2026-07-31/mp-18-dashboards-responsivos/`.
+indicadores rolaveis de Propriedades e nos FABs de Propriedades e Caderno em
+retrato e paisagem. A rotacao automatica foi restaurada e nao houve excecao
+fatal no logcat recente. Evidencias:
+`dist/qa-session-2026-08-03/mp-18-revisao-carrossel-fab/`.
 
 O conteudo e a priorizacao dos indicadores permanecem em `MP-19`; o sistema
 geral de cartoes em `MP-21`; a matriz completa de acessibilidade e aparelhos

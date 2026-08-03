@@ -27,7 +27,6 @@ test('breakpoints preservam duas colunas no retrato', () => {
   assert.deepEqual(getDashboardResponsiveLayout(800, 1280), {
     isLandscape: false,
     standardColumns: 2,
-    propriedadesColumns: 2,
     produtorColumns: 2,
     splitProdutorOverview: false,
   });
@@ -37,18 +36,16 @@ test('paisagem ampla usa as dimensoes logicas do dispositivo', () => {
   assert.deepEqual(getDashboardResponsiveLayout(853, 533), {
     isLandscape: true,
     standardColumns: 3,
-    propriedadesColumns: 5,
     produtorColumns: 2,
     splitProdutorOverview: true,
   });
-  assert.equal(getDashboardColumnWidth(5), '20%');
+  assert.equal(getDashboardColumnWidth(2), '50%');
 });
 
 test('paisagem compacta evita colunas estreitas demais', () => {
   assert.deepEqual(getDashboardResponsiveLayout(700, 480), {
     isLandscape: true,
     standardColumns: 2,
-    propriedadesColumns: 3,
     produtorColumns: 2,
     splitProdutorOverview: false,
   });
@@ -65,18 +62,17 @@ test('Dashboard de Admin e Colaborador reage a orientacao sem largura fixa', () 
   assert.doesNotMatch(source, /statCardWrapper:\s*\{[\s\S]*?width: '50%'/);
 });
 
-test('Propriedades usa grade fluida e acao ancorada fora da rolagem', () => {
+test('Propriedades reutiliza o carrossel compacto e o FAB flutuante padrao', () => {
   const source = readSource('src/screens/PropriedadesScreen.tsx');
-  const scrollEnd = source.indexOf('</ScrollView>');
-  const safeArea = source.indexOf('<View style={styles.safeActionArea}>');
 
-  assert.match(source, /getDashboardColumnWidth\(responsiveLayout\.propriedadesColumns\)/);
-  assert.match(source, /styles\.metricsGrid/);
-  assert.doesNotMatch(source, /style=\{styles\.metricsCarousel\}/);
-  assert.doesNotMatch(source, /metricCard:\s*\{[\s\S]*?width: 100/);
-  assert.ok(safeArea > scrollEnd, 'a acao deve ficar fora da ScrollView principal');
-  assert.match(source, /placement="docked"/);
-  assert.match(source, /safeActionArea:[\s\S]*?flexShrink: 0/);
+  assert.match(source, /<ScrollView\s+horizontal[\s\S]*?style=\{styles\.metricsCarousel\}/);
+  assert.match(source, /contentContainerStyle=\{styles\.metricsContent\}/);
+  assert.match(source, /metricCard:\s*\{[\s\S]*?minWidth: 132/);
+  assert.match(source, /metricCard:\s*\{[\s\S]*?borderWidth: 2/);
+  assert.doesNotMatch(source, /useWindowDimensions/);
+  assert.doesNotMatch(source, /styles\.metricsGrid/);
+  assert.doesNotMatch(source, /placement="docked"|safeActionArea/);
+  assert.match(source, /paddingBottom: spacing\.screen \+ 80/);
 });
 
 test('Dashboard do Produtor divide Propriedade e indicadores somente no paisagem', () => {

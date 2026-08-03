@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, RefreshControl, Animated, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, RefreshControl, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyState from '../components/EmptyState';
 import CreateActionButton from '../components/CreateActionButton';
@@ -23,13 +23,8 @@ import { useFiltros } from '../contexts/FiltroContext';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { buildFazendaListMetrics, getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 import { formatAreaHa } from '../utils/talhaoMedidasCompat';
-import {
-  getDashboardColumnWidth,
-  getDashboardResponsiveLayout,
-} from '../utils/dashboardResponsive';
 
 export default function PropriedadesScreen() {
-  const { width, height } = useWindowDimensions();
   const [produtores, setProdutores] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');
@@ -47,8 +42,6 @@ export default function PropriedadesScreen() {
   const { user } = useAuth();
   const { filtrarProdutores: filtrarProdutoresPorRegiao, filtros } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
-  const responsiveLayout = getDashboardResponsiveLayout(width, height);
-  const metricCardWidth = getDashboardColumnWidth(responsiveLayout.propriedadesColumns);
 
   useEffect(() => { load(); }, [user, filtros]);
 
@@ -268,59 +261,54 @@ export default function PropriedadesScreen() {
           }}
         />
 
-        {/* Métricas responsivas */}
+        {/* Métricas compactas no padrão do detalhe da Propriedade */}
         {produtores.length > 0 && (
-          <View style={styles.metricsGrid}>
-            <View style={[styles.metricCardWrapper, { width: metricCardWidth }]}>
-              <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: colors.borderLight }]}>
-                  <Ionicons name="business-outline" size={20} color={colors.primary} />
-                </View>
-                <Text style={styles.metricValue}>{metricasFazendas.totalFazendas}</Text>
-                <Text style={styles.metricLabel}>Propriedades</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.metricsCarousel}
+            contentContainerStyle={styles.metricsContent}
+          >
+            <View style={styles.metricCard}>
+              <View style={[styles.metricIcon, { backgroundColor: colors.borderLight }]}>
+                <Ionicons name="business-outline" size={20} color={colors.primary} />
               </View>
+              <Text style={styles.metricValue}>{metricasFazendas.totalFazendas}</Text>
+              <Text style={styles.metricLabel}>Propriedades</Text>
             </View>
 
-            <View style={[styles.metricCardWrapper, { width: metricCardWidth }]}>
-              <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: colors.accent }]}>
-                  <Ionicons name="people-outline" size={20} color={colors.primary} />
-                </View>
-                <Text style={styles.metricValue}>{metricasFazendas.totalTitulares}</Text>
-                <Text style={styles.metricLabel}>Titulares</Text>
+            <View style={styles.metricCard}>
+              <View style={[styles.metricIcon, { backgroundColor: colors.accent }]}>
+                <Ionicons name="people-outline" size={20} color={colors.primary} />
               </View>
+              <Text style={styles.metricValue}>{metricasFazendas.totalTitulares}</Text>
+              <Text style={styles.metricLabel}>Titulares</Text>
             </View>
 
-            <View style={[styles.metricCardWrapper, { width: metricCardWidth }]}>
-              <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
-                  <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
-                </View>
-                <Text style={styles.metricValue}>{formatAreaHa(metricasFazendas.areaTotal)}</Text>
-                <Text style={styles.metricLabel}>Área total informada</Text>
+            <View style={styles.metricCard}>
+              <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
+                <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
               </View>
+              <Text style={styles.metricValue}>{formatAreaHa(metricasFazendas.areaTotal)}</Text>
+              <Text style={styles.metricLabel}>Área total informada</Text>
             </View>
 
-            <View style={[styles.metricCardWrapper, { width: metricCardWidth }]}>
-              <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: colors.successBg }]}>
-                  <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
-                </View>
-                <Text style={styles.metricValue}>{metricasFazendas.fazendasAtivas}</Text>
-                <Text style={styles.metricLabel}>Ativas</Text>
+            <View style={styles.metricCard}>
+              <View style={[styles.metricIcon, { backgroundColor: colors.successBg }]}>
+                <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
               </View>
+              <Text style={styles.metricValue}>{metricasFazendas.fazendasAtivas}</Text>
+              <Text style={styles.metricLabel}>Ativas</Text>
             </View>
 
-            <View style={[styles.metricCardWrapper, { width: metricCardWidth }]}>
-              <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: colors.amberLight }]}>
-                  <Ionicons name="time-outline" size={20} color={colors.warning} />
-                </View>
-                <Text style={styles.metricValue}>{metricasFazendas.fazendasPendentes}</Text>
-                <Text style={styles.metricLabel}>Pendentes</Text>
+            <View style={styles.metricCard}>
+              <View style={[styles.metricIcon, { backgroundColor: colors.amberLight }]}>
+                <Ionicons name="time-outline" size={20} color={colors.warning} />
               </View>
+              <Text style={styles.metricValue}>{metricasFazendas.fazendasPendentes}</Text>
+              <Text style={styles.metricLabel}>Pendentes</Text>
             </View>
-          </View>
+          </ScrollView>
         )}
 
         {/* Lista de Propriedades + Titular */}
@@ -361,15 +349,12 @@ export default function PropriedadesScreen() {
       </ScrollView>
 
       {podeCriarProdutor(user) && (
-        <View style={styles.safeActionArea}>
-          <CreateActionButton
-            label="Nova Propriedade"
-            icon="add-outline"
-            onPress={() => navigation.navigate('NovaPropriedade')}
-            accessibilityLabel="Cadastrar nova propriedade"
-            placement="docked"
-          />
-        </View>
+        <CreateActionButton
+          label="Nova Propriedade"
+          icon="add-outline"
+          onPress={() => navigation.navigate('NovaPropriedade')}
+          accessibilityLabel="Cadastrar nova propriedade"
+        />
       )}
 
       <FilterBottomSheet
@@ -580,25 +565,24 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  // Métricas responsivas
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  // Métricas compactas no padrão do detalhe da Propriedade
+  metricsCarousel: {
     marginBottom: spacing.md,
-    marginHorizontal: -6,
+    marginHorizontal: -spacing.screen,
   },
-  metricCardWrapper: {
-    paddingHorizontal: 6,
-    marginBottom: spacing.md,
+  metricsContent: {
+    paddingHorizontal: spacing.screen,
+    gap: 12,
   },
   metricCard: {
-    flex: 1,
-    minHeight: 116,
+    minWidth: 132,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.card,
     borderRadius: 12,
-    padding: spacing.md,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: colors.border,
     ...shadows.sm,
   },
   metricIcon: {
@@ -617,18 +601,9 @@ const styles = StyleSheet.create({
   metricLabel: {
     fontSize: typography.sizes.xs,
     color: colors.textLight,
+    fontWeight: typography.weightSemibold,
     marginTop: 2,
     textAlign: 'center',
-  },
-  safeActionArea: {
-    flexShrink: 0,
-    alignItems: 'flex-end',
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingHorizontal: spacing.screen,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
   },
 
   // Bottom Sheet

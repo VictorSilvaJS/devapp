@@ -381,6 +381,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-31 | `MP-16` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `e594005` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou Lista inicial, Mapa, abertura contextual de Talhão, retrato e paisagem | `dist/qa-session-2026-07-31/mp-16-entrada-talhoes/` | redesign responsivo do mapa permanece em `MP-31`; `MP-17` não foi iniciada |
 | 2026-07-31 | `MP-17` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `f0e1fef` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou estado neutro, rascunho, Aplicar, chips ativos e rolagens em retrato e paisagem | `dist/qa-session-2026-07-31/mp-17-filtros-materiais/` | fonte única permanece em `MP-28`; mapa responsivo em `MP-31`; `MP-18` não foi iniciada |
 | 2026-07-31 | `MP-18` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `2b2e8f7` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou grades responsivas, ação ancorada e rotação nos três perfis | `dist/qa-session-2026-07-31/mp-18-dashboards-responsivos/` | conteúdo dos indicadores permanece em `MP-19`; cartões em `MP-21`; matriz completa em `MP-40`; `MP-19` não foi iniciada |
+| 2026-08-03 | `MP-18` | `CONCLUIDO` | `appQA` / árvore limpa sobre `3eca4ed` | revisão solicitada: carrossel compacto em Propriedades e FAB flutuante único em Propriedades, Caderno, Usuários e Visitas; testes, assembleRelease e smoke Android passaram | `dist/qa-session-2026-08-03/mp-18-revisao-carrossel-fab/` | conteúdo dos indicadores permanece em `MP-19`; `MP-19` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -505,6 +506,10 @@ existente foi preservado, assim como rótulo, ícone, acessibilidade, regra de
 permissão e navegação para Novo Registro. O modo flutuante padrão das outras
 listas não foi alterado.
 
+Em revisão visual solicitada em 2026-08-03, a faixa inferior foi removida e o
+Caderno voltou ao FAB flutuante compartilhado com Propriedades, Usuários e
+Visitas. O padding seguro permaneceu para manter o último conteúdo alcançável.
+
 Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
 release passaram. No Android físico, o smoke confirmou ausência de oclusão
 durante a rolagem, último cartão totalmente alcançável, retrato, paisagem e
@@ -557,16 +562,19 @@ paisagem. A rotação automática foi restaurada e não houve exceção fatal no
 logcat recente. A fonte única dos Materiais permanece em `MP-28` e o redesign
 responsivo do mapa em `MP-31`. `MP-18` foi executada na sequência.
 
-`MP-18` foi concluída em 2026-07-31. Os indicadores do Dashboard de Admin e
-Colaborador usam duas colunas em retrato e três em paisagem ampla. A tela de
-Propriedades substituiu a faixa horizontal fixa por uma grade de duas ou cinco
-colunas e mantém `Nova Propriedade` em uma faixa ancorada fora da rolagem. No
-Dashboard do Produtor, o panorama da Propriedade fica acima dos indicadores em
-retrato e ao lado de uma grade 2 x 3 em paisagem, sem truncar os rótulos.
+`MP-18` foi concluída em 2026-07-31 e revisada em 2026-08-03. Os indicadores
+do Dashboard de Admin e Colaborador usam duas colunas em retrato e três em
+paisagem ampla. A tela de
+Propriedades usa um carrossel horizontal com o mesmo estilo de cartões
+compactos do detalhe da Propriedade. `Nova Propriedade` e `Novo Registro`
+usam o FAB flutuante compartilhado com Usuários e Visitas. No Dashboard do
+Produtor, o panorama da Propriedade fica acima dos indicadores em retrato e ao
+lado de uma grade 2 x 3 em paisagem, sem truncar os rótulos.
 
 Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
 release passaram. O APK foi instalado por cima no Android físico `8483A`; o
-smoke confirmou Admin, Colaborador e Produtor em retrato e paisagem, sem
-colisões ou exceção fatal no logcat recente. A rotação automática foi
-restaurada. O conteúdo dos indicadores permanece em `MP-19`, o sistema geral
-de cartões em `MP-21` e a matriz completa em `MP-40`. `MP-19` não foi iniciada.
+smoke da revisão confirmou o carrossel de Propriedades e os FABs de
+Propriedades e Caderno em retrato e paisagem, sem exceção fatal no logcat
+recente. A rotação automática foi restaurada. O conteúdo dos indicadores
+permanece em `MP-19`, o sistema geral de cartões em `MP-21` e a matriz completa
+em `MP-40`. `MP-19` não foi iniciada.

@@ -373,15 +373,12 @@ export default function CadernoCampoScreen() {
       </ScrollView>
 
       {podeMostrarCriarCaderno && (
-        <View style={styles.safeActionArea}>
-          <CreateActionButton
-            label={criarCadernoLabel}
-            icon="add-outline"
-            onPress={() => navigation.navigate('NovoCaderno')}
-            accessibilityLabel={isProdutorView ? 'Registrar no caderno de campo' : 'Cadastrar novo registro do caderno'}
-            placement="docked"
-          />
-        </View>
+        <CreateActionButton
+          label={criarCadernoLabel}
+          icon="add-outline"
+          onPress={() => navigation.navigate('NovoCaderno')}
+          accessibilityLabel={isProdutorView ? 'Registrar no caderno de campo' : 'Cadastrar novo registro do caderno'}
+        />
       )}
 
       <FilterBottomSheet
@@ -426,16 +423,6 @@ const styles = StyleSheet.create({
   content: { 
     padding: spacing.screen,
     paddingBottom: spacing.screen + 80
-  },
-  safeActionArea: {
-    flexShrink: 0,
-    alignItems: 'flex-end',
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingHorizontal: spacing.screen,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
   },
   loadingContainer: {
     alignItems: 'center',
