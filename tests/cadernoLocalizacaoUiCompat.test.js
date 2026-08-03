@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
+  CADERNO_LOCALIZACAO_ALL_KEYS,
   CADERNO_LOCALIZACAO_KEYS,
   hasCadernoLocalizacao,
 } = require('../.tmp-domain-compat/src/utils/cadernoLocalizacaoCompat');
@@ -243,11 +244,11 @@ const run = async () => {
     assert.ok(removed.existingLocation);
   });
 
-  await test('patch remove usa exatamente as seis chaves com undefined', () => {
+  await test('patch remove limpa captura e avaliação espacial sem resíduo', () => {
     const patch = buildCadernoLocalizacaoEditPatch('remove');
 
-    assert.deepEqual(Object.keys(patch).sort(), [...CADERNO_LOCALIZACAO_KEYS].sort());
-    CADERNO_LOCALIZACAO_KEYS.forEach((key) => assert.equal(patch[key], undefined));
+    assert.deepEqual(Object.keys(patch).sort(), [...CADERNO_LOCALIZACAO_ALL_KEYS].sort());
+    CADERNO_LOCALIZACAO_ALL_KEYS.forEach((key) => assert.equal(patch[key], undefined));
     assert.equal(JSON.stringify(patch), '{}');
   });
 

@@ -61,6 +61,10 @@ import {
   getCadernoTypeValidationErrors,
   type CadernoActor,
 } from '../utils/cadernoLifecycleCompat';
+import {
+  appendCadernoLocalizacaoSpatialAssessment,
+  pickCadernoLocalizacaoBundleFields,
+} from '../utils/cadernoLocalizacaoSpatialCompat';
 
 const CADERNO_FORM_ERROR_ORDER = [
   'fazendaId', 'dataAtividade', 'tipoAtividade', 'responsavel', 'periodoProdutivoId',
@@ -427,10 +431,22 @@ export default function EditarCadernoScreen() {
         payload.ano_agricola = null;
       }
 
-      const localizacaoPatch = buildCadernoLocalizacaoEditPatch(
+      const localizacaoBasePatch = buildCadernoLocalizacaoEditPatch(
         localizacaoState.intent,
         localizacaoState.draftLocation
       );
+      const localizacaoPatch = localizacaoState.intent === 'remove'
+        ? localizacaoBasePatch
+        : pickCadernoLocalizacaoBundleFields(
+            appendCadernoLocalizacaoSpatialAssessment(
+              {
+                ...registroOriginal,
+                ...payload,
+                ...localizacaoBasePatch,
+              },
+              talhoesDisponiveis
+            )
+          );
 
       const actor: CadernoActor = {
         usuarioId: String(user?.id || '').trim(),

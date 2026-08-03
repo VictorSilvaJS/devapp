@@ -26,6 +26,7 @@ import MapaFazendaView, {
 import { LimiteArea, Produtor } from '../api/mock';
 import {
   resolveRouteFazendaId,
+  resolveRouteCadernoLocation,
   resolveRouteTitularNome,
   resolveTalhaoSelecionadoFromRoute,
 } from '../navigation/mapaRouteCompat';
@@ -96,6 +97,13 @@ function buildLocationSuccessMessage(location: ForegroundUserLocation): string {
     precision,
     capturedAt ? `Leitura às ${capturedAt}` : '',
   ].filter(Boolean).join(' ');
+}
+
+function buildCadernoLocationMessage(location: ForegroundUserLocation): string {
+  const precision = location.accuracy != null
+    ? `Precisão registrada: ${Math.round(location.accuracy)} m.`
+    : 'Precisão não informada.';
+  return `Ponto salvo no Caderno. ${precision}`;
 }
 
 function classificarPH(ph: number): { label: string; cor: string } {
@@ -205,6 +213,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const fazendaId: string | undefined = resolveRouteFazendaId(route?.params);
   const titularNomeParam: string | undefined = resolveRouteTitularNome(route?.params);
   const fazendaNomeParam: string | undefined = route?.params?.fazendaNome;
+  const cadernoLocationParam = resolveRouteCadernoLocation(route?.params);
 
   // ── Estado ──────────────────────────────────────────────────
   const [todosLimites, setTodosLimites] = useState<any[]>([]);
@@ -219,11 +228,14 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
   const [fazendasContexto, setFazendasContexto] = useState<any[]>([]);
   const [geoJsonTalhoesLayer, setGeoJsonTalhoesLayer] = useState<GeoJsonTalhoesLayerResult | null>(null);
-  const [userLocation, setUserLocation] = useState<ForegroundUserLocation | null>(null);
+  const [userLocation, setUserLocation] = useState<ForegroundUserLocation | null>(cadernoLocationParam);
   const [locationMessage, setLocationMessage] = useState<{
     type: 'info' | 'error';
     text: string;
-  } | null>(null);
+  } | null>(cadernoLocationParam ? {
+    type: 'info',
+    text: buildCadernoLocationMessage(cadernoLocationParam),
+  } : null);
   const [requestingLocation, setRequestingLocation] = useState(false);
 
   // Refs
@@ -251,9 +263,19 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   }, [fazendaNomeParam]);
 
   useEffect(() => {
-    setUserLocation(null);
-    setLocationMessage(null);
-  }, [fazendaId]);
+    const routeLocation = resolveRouteCadernoLocation(route?.params);
+    setUserLocation(routeLocation);
+    setLocationMessage(routeLocation ? {
+      type: 'info',
+      text: buildCadernoLocationMessage(routeLocation),
+    } : null);
+  }, [
+    fazendaId,
+    route?.params?.cadernoLatitude,
+    route?.params?.cadernoLongitude,
+    route?.params?.cadernoAccuracy,
+    route?.params?.cadernoCapturedAt,
+  ]);
 
   const carregarDados = async () => {
     setCarregando(true);

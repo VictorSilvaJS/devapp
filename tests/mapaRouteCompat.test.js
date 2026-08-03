@@ -4,6 +4,7 @@ const {
   buildFazendaMapaRouteParamsFromPropriedade,
   buildMapaTalhaoRouteSelection,
   buildMapasRouteParams,
+  resolveRouteCadernoLocation,
   resolveRouteFazendaId,
   resolveRouteTitularNome,
   resolveTalhaoSelecionadoFromRoute,
@@ -101,6 +102,35 @@ const run = async () => {
       talhao: 'Talhão 1',
       talhaoAno: '2026',
     });
+  });
+
+  await test('rota do mapa preserva somente ponto válido salvo no Caderno', () => {
+    const params = buildFazendaMapaRouteParams({
+      fazendaId: 'faz_1',
+      cadernoLatitude: -28.6345,
+      cadernoLongitude: -53.6042,
+      cadernoAccuracy: 18,
+      cadernoCapturedAt: '2026-08-03T12:00:00.000Z',
+    });
+    assert.deepEqual(resolveRouteCadernoLocation(params), {
+      latitude: -28.6345,
+      longitude: -53.6042,
+      accuracy: 18,
+      capturedAt: '2026-08-03T12:00:00.000Z',
+    });
+  });
+
+  await test('rota recusa ponto parcial, fora da faixa ou sem horário válido', () => {
+    assert.equal(resolveRouteCadernoLocation({
+      cadernoLatitude: 91,
+      cadernoLongitude: -53,
+      cadernoCapturedAt: '2026-08-03T12:00:00.000Z',
+    }), null);
+    assert.equal(resolveRouteCadernoLocation({
+      cadernoLatitude: -28,
+      cadernoLongitude: -53,
+      cadernoCapturedAt: 'data inválida',
+    }), null);
   });
 
   await test('buildMapaTalhaoRouteSelection resolve id canônico do limite por talhão e safra', () => {

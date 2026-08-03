@@ -2,7 +2,7 @@ import {
   CADERNO_LOCALIZACAO_ORIGEM_EXPLICITA,
   type CadernoLocalizacaoExplicita,
   type CadernoLocalizacaoFields,
-  type CadernoLocalizacaoKey,
+  type CadernoLocalizacaoBundleKey,
   buildCadernoLocalizacaoFields,
   buildCadernoLocalizacaoRemovalPatch,
   clearCadernoLocalizacaoFields,
@@ -190,7 +190,7 @@ export const undoCadernoLocalizacaoEditRemoval = (
 export const buildCadernoLocalizacaoEditPatch = (
   intent: CadernoLocalizacaoEditIntent,
   draft?: unknown
-): CadernoLocalizacaoFields | Record<CadernoLocalizacaoKey, undefined> => {
+): CadernoLocalizacaoFields | Record<CadernoLocalizacaoBundleKey, undefined> => {
   if (intent === 'preserve') return {};
   if (intent === 'remove') return buildCadernoLocalizacaoRemovalPatch();
 

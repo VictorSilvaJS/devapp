@@ -15,6 +15,17 @@ export type FazendaMapaRouteParams = ParamContextoFazenda & {
   talhaoNome?: string;
   talhao?: string;
   talhaoAno?: string;
+  cadernoLatitude?: number;
+  cadernoLongitude?: number;
+  cadernoAccuracy?: number | null;
+  cadernoCapturedAt?: string;
+};
+
+export type CadernoMapLocationRoute = {
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  capturedAt: string;
 };
 
 type TalhaoSelectionParams = Pick<FazendaMapaRouteParams, 'talhaoId' | 'talhaoNome' | 'talhao' | 'talhaoAno'>;
@@ -40,6 +51,21 @@ const withDefinedString = <T extends Record<string, any>>(
   const normalized = firstNonEmptyString(value);
   if (normalized) {
     target[key] = normalized as T[keyof T];
+  }
+};
+
+const withDefinedNumber = <T extends Record<string, any>>(
+  target: T,
+  key: keyof T,
+  value: unknown,
+  options: { min: number; max: number; allowNull?: boolean }
+) => {
+  if (value === null && options.allowNull) {
+    target[key] = null as T[keyof T];
+    return;
+  }
+  if (typeof value === 'number' && Number.isFinite(value) && value >= options.min && value <= options.max) {
+    target[key] = value as T[keyof T];
   }
 };
 
@@ -178,6 +204,28 @@ export const resolveRouteTalhaoNome = (
   params?: TalhaoSelectionParams | null
 ): string | undefined => firstNonEmptyString(params?.talhaoNome, params?.talhao);
 
+export const resolveRouteCadernoLocation = (
+  params?: FazendaMapaRouteParams | null
+): CadernoMapLocationRoute | null => {
+  const latitude = params?.cadernoLatitude;
+  const longitude = params?.cadernoLongitude;
+  const capturedAt = firstNonEmptyString(params?.cadernoCapturedAt);
+  if (typeof latitude !== 'number' || !Number.isFinite(latitude) || latitude < -90 || latitude > 90) return null;
+  if (typeof longitude !== 'number' || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) return null;
+  if (!capturedAt || !Number.isFinite(Date.parse(capturedAt))) return null;
+
+  const accuracy = params?.cadernoAccuracy;
+  if (accuracy !== undefined && accuracy !== null
+    && (typeof accuracy !== 'number' || !Number.isFinite(accuracy) || accuracy < 0)) return null;
+
+  return {
+    latitude,
+    longitude,
+    accuracy: accuracy ?? null,
+    capturedAt,
+  };
+};
+
 export const buildMapaTalhaoRouteSelection = (
   mapa?: Record<string, any> | null,
   talhoes: Record<string, any>[] = []
@@ -274,6 +322,14 @@ export const buildFazendaMapaRouteParams = (
   withDefinedString(routeParams, 'talhaoNome', params?.talhaoNome);
   withDefinedString(routeParams, 'talhao', params?.talhao);
   withDefinedString(routeParams, 'talhaoAno', params?.talhaoAno);
+  withDefinedNumber(routeParams, 'cadernoLatitude', params?.cadernoLatitude, { min: -90, max: 90 });
+  withDefinedNumber(routeParams, 'cadernoLongitude', params?.cadernoLongitude, { min: -180, max: 180 });
+  withDefinedNumber(routeParams, 'cadernoAccuracy', params?.cadernoAccuracy, {
+    min: 0,
+    max: Number.MAX_SAFE_INTEGER,
+    allowNull: true,
+  });
+  withDefinedString(routeParams, 'cadernoCapturedAt', params?.cadernoCapturedAt);
 
   return Object.keys(routeParams).length > 0 ? routeParams : undefined;
 };

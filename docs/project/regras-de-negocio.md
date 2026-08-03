@@ -336,6 +336,17 @@ O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
 - Arquivamento, reativacao e anulacao preservam registro e historico.
 - Produtor nao altera registro consolidado; Admin e Colaborador tambem nao
   recebem edicao destrutiva, apenas comandos autorizados e auditados.
+- Ponto valido vinculado a Talhao com geometria resolvida recebe avaliacao
+  `dentro`, `proximo` ou `fora`, preservando a versao da demarcacao usada.
+- `Proximo` significa ponto externo cuja distancia ao limite cabe na precisao
+  informada somada a tolerancia local de 15 m; precisao alta nao transforma o
+  ponto em `dentro`.
+- Sem `talhao_id` ou geometria valida, o app nao infere relacao por nome e
+  apresenta a avaliacao como indisponivel.
+- O Produtor recebe a leitura operacional por mini mapa, precisao e relacao;
+  coordenadas cruas, autoria da captura e metadados da geometria ficam em
+  detalhe tecnico recolhido para equipe autorizada.
+- O alerta de baixa precisao permanece visivel depois do salvamento.
 - Safra/Safrinha, quando existir no MVP local, e contexto opcional do Caderno
   por Propriedade. Admin e Colaborador autorizado podem gerenciar periodos
   locais; Produtor pode consultar e vincular ao registrar Caderno, mas nao
@@ -345,6 +356,10 @@ O ciclo de vida esta fechado em nivel de contrato. `MP-25` implementou no app
 e na persistencia local demonstrativa os campos obrigatorios por tipo, a UI e
 os comandos versionados. Persistencia append-only, autorizacao e auditoria no
 backend produtivo permanecem em `MP-36`.
+
+`MP-26` implementou a apresentacao por mini mapa, a avaliacao espacial local,
+o snapshot da versao da geometria e a abertura protegida do ponto no mapa.
+Teste real do provider e dos cenarios dentro/fora permanece em `MP-38`.
 
 ## Regra sobre Validacoes Do Mock Administrativo
 

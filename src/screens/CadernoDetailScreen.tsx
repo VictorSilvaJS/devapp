@@ -13,8 +13,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import CadernoAuditActions from '../components/CadernoAuditActions';
+import CadernoLocalizacaoPreview from '../components/CadernoLocalizacaoPreview';
 import { useToast } from '../components/Toast';
-import { CadernoCampo, Produtor, User } from '../api/mock';
+import { CadernoCampo, LimiteArea, Produtor, User } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import {
@@ -35,8 +36,14 @@ import {
   isCadernoVisivelParaProdutor,
 } from '../utils/cadernoFormCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
+import { buildFazendaMapaRouteParamsFromPropriedade } from '../navigation/mapaRouteCompat';
 import { normalizeCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
 import { getCadernoLocalizacaoPresentation } from '../utils/cadernoLocalizacaoUiCompat';
+import {
+  getCadernoLocalizacaoRelacaoLabel,
+  normalizeCadernoLocalizacaoSpatialAssessment,
+  resolveCadernoTalhaoGeometry,
+} from '../utils/cadernoLocalizacaoSpatialCompat';
 import { formatAreaHa, normalizeAreaValue } from '../utils/talhaoMedidasCompat';
 import {
   getCadernoEstado,
@@ -58,7 +65,9 @@ export default function CadernoDetailScreen() {
   const [registro, setRegistro] = useState<any>(null);
   const [fazenda, setFazenda] = useState<any>(null);
   const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [talhoes, setTalhoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTechnicalLocation, setShowTechnicalLocation] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,10 +82,11 @@ export default function CadernoDetailScreen() {
         throw new Error('Registro de caderno não informado');
       }
 
-      const [registroData, fazendas, usuariosData] = await Promise.all([
+      const [registroData, fazendas, usuariosData, limitesData] = await Promise.all([
         CadernoCampo.get(cadernoRouteId),
         Produtor.list(),
         user?.perfil === 'produtor' ? Promise.resolve([]) : User.list().catch(() => []),
+        LimiteArea.list().catch(() => []),
       ]);
 
       const acesso = avaliarAcessoCaderno(user, registroData, fazendas);
@@ -85,6 +95,7 @@ export default function CadernoDetailScreen() {
         setRegistro(null);
         setFazenda(null);
         setUsuarios([]);
+        setTalhoes([]);
         toast.showWarning('Você não tem permissão para acessar este registro.');
         navigation.goBack();
         return;
@@ -93,6 +104,8 @@ export default function CadernoDetailScreen() {
       setRegistro(user?.perfil === 'produtor' ? toCadernoProducerProjection(registroData) : registroData);
       setFazenda(acesso.fazenda);
       setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
+      setTalhoes(Array.isArray(limitesData) ? limitesData : []);
+      setShowTechnicalLocation(false);
     } catch (error) {
       console.error('Erro ao carregar registro de caderno:', error);
       toast.showError('Erro ao carregar detalhe do caderno');
@@ -185,6 +198,12 @@ export default function CadernoDetailScreen() {
   const produtos = Array.isArray(registro.produtos_utilizados) ? registro.produtos_utilizados : [];
   const localizacao = normalizeCadernoLocalizacao(registro);
   const localizacaoPresentation = getCadernoLocalizacaoPresentation(localizacao);
+  const localizacaoSpatial = normalizeCadernoLocalizacaoSpatialAssessment(registro);
+  const localizacaoRelacaoLabel = getCadernoLocalizacaoRelacaoLabel(registro);
+  const localizacaoGeometry = resolveCadernoTalhaoGeometry(
+    talhoes,
+    localizacaoSpatial?.talhao_geometria_versao_id || registro.talhao_id || registro.talhaoId
+  );
   const usuarioCaptura = localizacao?.localizacao_captured_by
     ? usuarios.find((usuario) => String(usuario?.id || '').trim() === localizacao.localizacao_captured_by)
     : null;
@@ -193,6 +212,20 @@ export default function CadernoDetailScreen() {
   const complementos = Array.isArray(registro.complementos_caderno) ? registro.complementos_caderno : [];
   const eventos = Array.isArray(registro.eventos_caderno) ? registro.eventos_caderno : [];
   const isProdutorView = user?.perfil === 'produtor';
+  const handleVerNoMapa = () => {
+    if (!localizacao || !fazenda) return;
+    const params = buildFazendaMapaRouteParamsFromPropriedade(fazenda, {
+      talhaoId: localizacaoGeometry?.geometryVersionId || registro.talhao_id || registro.talhaoId,
+      talhaoNome: registro.talhao_nome || registro.talhao,
+      talhao: registro.talhao_nome || registro.talhao,
+      talhaoAno: localizacaoGeometry?.year ? String(localizacaoGeometry.year) : undefined,
+      cadernoLatitude: localizacao.localizacao_latitude,
+      cadernoLongitude: localizacao.localizacao_longitude,
+      cadernoAccuracy: localizacao.localizacao_accuracy,
+      cadernoCapturedAt: localizacao.localizacao_captured_at,
+    });
+    navigation.navigate('FazendaMapa', params);
+  };
 
   return (
     <View style={styles.container}>
@@ -363,28 +396,45 @@ export default function CadernoDetailScreen() {
               <Text style={styles.cardTitle}>Ponto registrado em campo</Text>
             </View>
 
-            <View style={styles.infoRow}>
-              <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoValue}>Localização registrada por ação explícita</Text>
-              </View>
-            </View>
+            <CadernoLocalizacaoPreview registro={registro} geometry={localizacaoGeometry} />
 
-            <View style={styles.infoRow}>
-              <Ionicons name="navigate-outline" size={20} color={colors.muted} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Latitude</Text>
-                <Text style={styles.infoValue}>{localizacaoPresentation?.latitudeText}</Text>
+            {localizacaoRelacaoLabel ? (
+              <View style={[
+                styles.spatialStatus,
+                localizacaoSpatial?.localizacao_relacao_talhao === 'fora'
+                  ? styles.spatialStatusDanger
+                  : localizacaoSpatial?.localizacao_relacao_talhao === 'proximo'
+                    ? styles.spatialStatusWarning
+                    : styles.spatialStatusSuccess,
+              ]}>
+                <Ionicons
+                  name={localizacaoSpatial?.localizacao_relacao_talhao === 'fora'
+                    ? 'alert-circle-outline'
+                    : localizacaoSpatial?.localizacao_relacao_talhao === 'proximo'
+                      ? 'navigate-circle-outline'
+                      : 'checkmark-circle-outline'}
+                  size={21}
+                  color={localizacaoSpatial?.localizacao_relacao_talhao === 'fora'
+                    ? colors.error
+                    : localizacaoSpatial?.localizacao_relacao_talhao === 'proximo'
+                      ? colors.warning
+                      : colors.success}
+                />
+                <View style={styles.infoContent}>
+                  <Text style={styles.spatialStatusTitle}>{localizacaoRelacaoLabel}</Text>
+                  <Text style={styles.spatialStatusText}>
+                    Avaliação considera o ponto, a precisão informada e a tolerância local.
+                  </Text>
+                </View>
               </View>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Ionicons name="navigate-outline" size={20} color={colors.muted} />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Longitude</Text>
-                <Text style={styles.infoValue}>{localizacaoPresentation?.longitudeText}</Text>
+            ) : registro.talhao_id || registro.talhaoId ? (
+              <View style={[styles.spatialStatus, styles.spatialStatusNeutral]}>
+                <Ionicons name="information-circle-outline" size={21} color={colors.info} />
+                <Text style={styles.spatialStatusText}>
+                  Relação com o Talhão não avaliada neste registro.
+                </Text>
               </View>
-            </View>
+            ) : null}
 
             <View style={styles.infoRow}>
               <Ionicons name="locate-outline" size={20} color={colors.muted} />
@@ -404,18 +454,93 @@ export default function CadernoDetailScreen() {
               </View>
             </View>
 
-            {nomeUsuarioCaptura ? (
-              <View style={styles.infoRow}>
-                <Ionicons name="person-outline" size={20} color={colors.muted} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Capturada por</Text>
-                  <Text style={styles.infoValue}>{nomeUsuarioCaptura}</Text>
+            {localizacaoPresentation?.lowAccuracy ? (
+              <View style={styles.lowAccuracyWarning}>
+                <Ionicons name="warning-outline" size={20} color={colors.warning} />
+                <Text style={styles.lowAccuracyText}>
+                  Baixa precisão na leitura. Confirme o local no mapa antes de usar este ponto como referência.
+                </Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.mapButton}
+              onPress={handleVerNoMapa}
+              activeOpacity={0.78}
+              accessibilityRole="button"
+              accessibilityLabel="Ver ponto registrado no mapa"
+            >
+              <Ionicons name="map-outline" size={19} color={colors.white} />
+              <Text style={styles.mapButtonText}>Ver no mapa</Text>
+            </TouchableOpacity>
+
+            {!isProdutorView ? (
+              <TouchableOpacity
+                style={styles.technicalToggle}
+                onPress={() => setShowTechnicalLocation((current) => !current)}
+                activeOpacity={0.78}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showTechnicalLocation }}
+              >
+                <Ionicons name="code-slash-outline" size={18} color={colors.primary} />
+                <Text style={styles.technicalToggleText}>Detalhes técnicos</Text>
+                <Ionicons
+                  name={showTechnicalLocation ? 'chevron-up-outline' : 'chevron-down-outline'}
+                  size={18}
+                  color={colors.primary}
+                />
+              </TouchableOpacity>
+            ) : null}
+
+            {!isProdutorView && showTechnicalLocation ? (
+              <View style={styles.technicalDetails}>
+                <View style={styles.technicalRow}>
+                  <Text style={styles.infoLabel}>Latitude</Text>
+                  <Text style={styles.infoValue}>{localizacaoPresentation?.latitudeText}</Text>
                 </View>
+                <View style={styles.technicalRow}>
+                  <Text style={styles.infoLabel}>Longitude</Text>
+                  <Text style={styles.infoValue}>{localizacaoPresentation?.longitudeText}</Text>
+                </View>
+                {nomeUsuarioCaptura ? (
+                  <View style={styles.technicalRow}>
+                    <Text style={styles.infoLabel}>Capturada por</Text>
+                    <Text style={styles.infoValue}>{nomeUsuarioCaptura}</Text>
+                  </View>
+                ) : null}
+                {localizacaoSpatial ? (
+                  <>
+                    <View style={styles.technicalRow}>
+                      <Text style={styles.infoLabel}>Versão da geometria</Text>
+                      <Text style={styles.infoValue}>{localizacaoSpatial.talhao_geometria_versao_id}</Text>
+                    </View>
+                    <View style={styles.technicalRow}>
+                      <Text style={styles.infoLabel}>Fonte da geometria</Text>
+                      <Text style={styles.infoValue}>
+                        {localizacaoSpatial.talhao_geometria_fonte === 'geojson_local'
+                          ? 'GeoJSON local'
+                          : 'Demarcação local'}
+                      </Text>
+                    </View>
+                    <View style={styles.technicalRow}>
+                      <Text style={styles.infoLabel}>Distância ao limite</Text>
+                      <Text style={styles.infoValue}>
+                        {String(localizacaoSpatial.localizacao_distancia_talhao_m).replace('.', ',')} m
+                      </Text>
+                    </View>
+                    <View style={styles.technicalRow}>
+                      <Text style={styles.infoLabel}>Tolerância aplicada</Text>
+                      <Text style={styles.infoValue}>
+                        {String(localizacaoSpatial.localizacao_tolerancia_talhao_m).replace('.', ',')} m
+                      </Text>
+                    </View>
+                  </>
+                ) : null}
               </View>
             ) : null}
 
             <Text style={styles.locationExplanation}>
-              A posição representa a leitura aproximada informada pelo aparelho no momento do registro.
+              A posição representa a leitura aproximada informada pelo aparelho no momento do registro. O aplicativo não acompanha deslocamentos.
             </Text>
           </View>
         ) : null}
@@ -678,6 +803,109 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     fontSize: typography.fontSmall,
     color: colors.warning,
+  },
+  spatialStatus: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+  },
+  spatialStatusSuccess: {
+    backgroundColor: colors.successBg,
+    borderColor: colors.success,
+  },
+  spatialStatusWarning: {
+    backgroundColor: colors.amberLight,
+    borderColor: colors.warning,
+  },
+  spatialStatusDanger: {
+    backgroundColor: colors.errorBgLight,
+    borderColor: colors.errorBorder,
+  },
+  spatialStatusNeutral: {
+    backgroundColor: colors.infoLight,
+    borderColor: colors.info,
+  },
+  spatialStatusTitle: {
+    color: colors.text,
+    fontSize: typography.fontBody,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  spatialStatusText: {
+    flex: 1,
+    color: colors.textLight,
+    fontSize: typography.fontSmall,
+    lineHeight: 18,
+  },
+  lowAccuracyWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    backgroundColor: colors.amberLight,
+  },
+  lowAccuracyText: {
+    flex: 1,
+    color: colors.textLight,
+    fontSize: typography.fontSmall,
+    lineHeight: 18,
+  },
+  mapButton: {
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.primary,
+  },
+  mapButtonText: {
+    color: colors.white,
+    fontSize: typography.fontBody - 1,
+    fontWeight: '700',
+  },
+  technicalToggle: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+  },
+  technicalToggleText: {
+    flex: 1,
+    color: colors.primary,
+    fontSize: typography.fontBody - 1,
+    fontWeight: '700',
+  },
+  technicalDetails: {
+    gap: spacing.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundAlt,
+  },
+  technicalRow: {
+    gap: spacing.xs,
   },
   locationExplanation: {
     fontSize: typography.fontSmall,

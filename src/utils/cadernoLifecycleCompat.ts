@@ -1,6 +1,6 @@
 import {
-  CADERNO_LOCALIZACAO_KEYS,
-  clearCadernoLocalizacaoFields,
+  CADERNO_LOCALIZACAO_ALL_KEYS,
+  clearCadernoLocalizacaoBundleFields,
   validateCadernoLocalizacao,
 } from './cadernoLocalizacaoCompat';
 
@@ -74,7 +74,7 @@ const ORIGINAL_FIELDS = [
   'observacoes',
   'fotos',
   'visivel_para_produtor',
-  ...CADERNO_LOCALIZACAO_KEYS,
+  ...CADERNO_LOCALIZACAO_ALL_KEYS,
 ] as const;
 
 const CORRECTABLE_FIELDS = new Set<string>([
@@ -100,7 +100,7 @@ const CORRECTABLE_FIELDS = new Set<string>([
   'condicoes_clima',
   'observacoes',
   'fotos',
-  ...CADERNO_LOCALIZACAO_KEYS,
+  ...CADERNO_LOCALIZACAO_ALL_KEYS,
 ]);
 
 const cloneValue = <T>(value: T): T => {
@@ -395,7 +395,7 @@ export const updateCadernoDraft = ({
     'origem_registro', 'registrado_em', 'registrado_por_usuario_id',
   ].forEach((key) => delete sanitized[key]);
   const currentBase = replaceLocationGroup
-    ? clearCadernoLocalizacaoFields(cloneValue(record))
+    ? clearCadernoLocalizacaoBundleFields(cloneValue(record))
     : cloneValue(record);
   const next = {
     ...currentBase,
@@ -469,7 +469,7 @@ const applyCorrection = (record: any, changes: Record<string, unknown>): {
     throw new Error(`CadernoCampo.correcao: Campos não permitidos: ${forbidden.join(', ')}.`);
   }
 
-  const locationTouched = entries.some(([key]) => (CADERNO_LOCALIZACAO_KEYS as readonly string[]).includes(key));
+  const locationTouched = entries.some(([key]) => (CADERNO_LOCALIZACAO_ALL_KEYS as readonly string[]).includes(key));
   if (locationTouched) {
     const locationResult = validateCadernoLocalizacao(changes);
     if (locationResult.valid === false || locationResult.status !== 'valid') {
@@ -478,7 +478,7 @@ const applyCorrection = (record: any, changes: Record<string, unknown>): {
   }
 
   let next = cloneValue(record);
-  if (locationTouched) next = clearCadernoLocalizacaoFields(next);
+  if (locationTouched) next = clearCadernoLocalizacaoBundleFields(next);
   const before: Record<string, unknown> = {};
   const after: Record<string, unknown> = {};
   entries.forEach(([key, value]) => {
@@ -665,6 +665,11 @@ export const toCadernoProducerProjection = (record: any): any => {
     'responsavel_usuario_id',
     'colaborador_responsavel_id',
     'localizacao_captured_by',
+    'localizacao_distancia_talhao_m',
+    'localizacao_tolerancia_talhao_m',
+    'talhao_geometria_versao_id',
+    'talhao_geometria_fonte',
+    'talhao_geometria_ano',
     'versao_atual',
     'registro_legado',
   ].forEach((key) => delete projection[key]);

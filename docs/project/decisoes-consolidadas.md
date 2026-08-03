@@ -731,3 +731,40 @@ Materiais, localizacao, backend, storage, cache offline, auditoria e migracao.
   explicito no primeiro contrato;
 - implementacao produtiva permanece em `MP-37`;
 - IDs selecionaveis dependem de `MP-24` e a regressao historica de `MP-39`.
+
+---
+
+## 28. Localizacao do Caderno usa apresentacao simples e avaliacao espacial versionada
+
+### Decisao
+
+Quando o Caderno possuir ponto valido e Talhao com geometria local resolvida,
+o app avalia e preserva no proprio registro a relacao `dentro`, `proximo` ou
+`fora`. Ponto interno ou sobre o limite e `dentro`; ponto externo e `proximo`
+quando sua distancia ao limite nao supera a soma da precisao informada com a
+tolerancia local de 15 m; os demais casos sao `fora`.
+
+A avaliacao preserva `talhao_geometria_versao_id`, fonte, ano quando
+disponivel, distancia calculada e tolerancia aplicada. Ela nao cria identidade
+por nome: sem `talhao_id` compativel ou geometria valida, o registro permanece
+sem avaliacao espacial e a interface informa essa ausencia.
+
+### Alcance
+
+Afeta criacao e envio de rascunho, detalhe do Caderno, mini mapa, rota `Ver no
+mapa`, projecao do Produtor, compatibilidade local e snapshot original do
+registro consolidado.
+
+### Impacto
+
+- o mini mapa prioriza marcador, limite do Talhao e circulo de precisao;
+- baixa precisao continua visivel no detalhe depois do salvamento;
+- Produtor ve o mapa, a precisao e a relacao operacional, mas nao recebe IDs,
+  distancia/tolerancia nem coordenadas brutas como bloco principal;
+- coordenadas, autoria da captura e metadados da geometria ficam recolhidos em
+  `Detalhes tecnicos` para equipe autorizada;
+- `Ver no mapa` reutiliza a rota protegida da Propriedade e nao amplia acesso;
+- registros antigos sem avaliacao continuam validos e nao recebem relacao
+  espacial inventada retroativamente;
+- validacao do provider e dos cenarios reais dentro/fora em campo permanece em
+  `MP-38`; versionamento produtivo da geometria permanece em `MP-37`.

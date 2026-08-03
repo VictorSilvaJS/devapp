@@ -9,7 +9,23 @@ export const CADERNO_LOCALIZACAO_KEYS = [
   'localizacao_origem',
 ] as const;
 
+export const CADERNO_LOCALIZACAO_SPATIAL_KEYS = [
+  'localizacao_relacao_talhao',
+  'localizacao_distancia_talhao_m',
+  'localizacao_tolerancia_talhao_m',
+  'talhao_geometria_versao_id',
+  'talhao_geometria_fonte',
+  'talhao_geometria_ano',
+] as const;
+
+export const CADERNO_LOCALIZACAO_ALL_KEYS = [
+  ...CADERNO_LOCALIZACAO_KEYS,
+  ...CADERNO_LOCALIZACAO_SPATIAL_KEYS,
+] as const;
+
 export type CadernoLocalizacaoKey = typeof CADERNO_LOCALIZACAO_KEYS[number];
+export type CadernoLocalizacaoSpatialKey = typeof CADERNO_LOCALIZACAO_SPATIAL_KEYS[number];
+export type CadernoLocalizacaoBundleKey = typeof CADERNO_LOCALIZACAO_ALL_KEYS[number];
 
 export type CadernoLocalizacaoExplicita = {
   localizacao_latitude: number;
@@ -73,10 +89,10 @@ const isValidIsoTimestamp = (value: unknown): value is string => {
 };
 
 export const hasCadernoLocalizacaoFieldIntent = (value: unknown): boolean =>
-  CADERNO_LOCALIZACAO_KEYS.some((key) => hasOwn(value, key));
+  CADERNO_LOCALIZACAO_ALL_KEYS.some((key) => hasOwn(value, key));
 
 export const isCadernoLocalizacaoRemovalPatch = (value: unknown): boolean =>
-  CADERNO_LOCALIZACAO_KEYS.every((key) => hasOwn(value, key) && (value as any)[key] === undefined);
+  CADERNO_LOCALIZACAO_ALL_KEYS.every((key) => hasOwn(value, key) && (value as any)[key] === undefined);
 
 export const validateCadernoLocalizacao = (value: unknown): CadernoLocalizacaoValidationResult => {
   if (!hasLocationValue(value)) {
@@ -168,11 +184,17 @@ export const clearCadernoLocalizacaoFields = <T extends Record<string, any>>(rec
   return next;
 };
 
-export const buildCadernoLocalizacaoRemovalPatch = (): Record<CadernoLocalizacaoKey, undefined> =>
-  CADERNO_LOCALIZACAO_KEYS.reduce((patch, key) => {
+export const clearCadernoLocalizacaoBundleFields = <T extends Record<string, any>>(record: T): T => {
+  const next = { ...record };
+  CADERNO_LOCALIZACAO_ALL_KEYS.forEach((key) => delete next[key]);
+  return next;
+};
+
+export const buildCadernoLocalizacaoRemovalPatch = (): Record<CadernoLocalizacaoBundleKey, undefined> =>
+  CADERNO_LOCALIZACAO_ALL_KEYS.reduce((patch, key) => {
     patch[key] = undefined;
     return patch;
-  }, {} as Record<CadernoLocalizacaoKey, undefined>);
+  }, {} as Record<CadernoLocalizacaoBundleKey, undefined>);
 
 export const applyCadernoLocalizacaoChange = <T extends Record<string, any>>(
   record: T,
@@ -180,7 +202,7 @@ export const applyCadernoLocalizacaoChange = <T extends Record<string, any>>(
 ): T => {
   if (change.kind === 'preserve') return { ...record };
 
-  const withoutLocation = clearCadernoLocalizacaoFields(record);
+  const withoutLocation = clearCadernoLocalizacaoBundleFields(record);
   if (change.kind === 'remove') return withoutLocation;
 
   return {

@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
+  CADERNO_LOCALIZACAO_ALL_KEYS,
   CADERNO_LOCALIZACAO_KEYS,
   CADERNO_LOCALIZACAO_ORIGEM_EXPLICITA,
   applyCadernoLocalizacaoChange,
@@ -33,7 +34,7 @@ const test = async (name, fn) => {
 };
 
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
-const hasAnyLocationField = (value) => CADERNO_LOCALIZACAO_KEYS.some((key) => hasOwn(value, key));
+const hasAnyLocationField = (value) => CADERNO_LOCALIZACAO_ALL_KEYS.some((key) => hasOwn(value, key));
 
 const validLocation = (overrides = {}) => ({
   localizacao_latitude: 12.345678,

@@ -511,6 +511,16 @@ provider, oito casos dependentes de captura real ficaram `Reexecutar`:
 persistida, e a regressao de GeoJSON/PNG/ZIP, a limpeza e a ausencia de
 background/tracking passaram.
 
+Status em 2026-08-03 (`MP-26`): a apresentacao do ponto persistido foi
+implementada no corte local com mini mapa, limite do Talhao quando resolvido,
+circulo de precisao, alerta persistente, acao `Ver no mapa` e detalhes tecnicos
+recolhidos para a equipe. Novos registros com `talhao_id` e geometria valida
+preservam a relacao `dentro`/`proximo`/`fora`, a versao da demarcacao, a fonte,
+o ano, a distancia e a tolerancia aplicada. Registros antigos permanecem
+validos sem avaliacao retroativa. Nao resta decisao funcional aberta para a
+apresentacao local; a comprovacao em campo continua separada em `MP-38` e o
+versionamento produtivo em `MP-37`.
+
 Pendencias P1 antes de declarar APK apto a campo:
 
 - repetir os oito casos fisicos dependentes do provider em area aberta ou com

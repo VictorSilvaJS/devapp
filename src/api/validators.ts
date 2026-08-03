@@ -14,6 +14,7 @@ import {
 import { normalizeMockFazendaInput } from './produtorCompat';
 import { CADERNO_TIPO_VALUES } from '../utils/cadernoFormCompat';
 import { validateCadernoLocalizacao } from '../utils/cadernoLocalizacaoCompat';
+import { validateCadernoLocalizacaoSpatialAssessment } from '../utils/cadernoLocalizacaoSpatialCompat';
 import {
   assertCadernoReadyToSubmit,
   getCadernoEstado,
@@ -121,6 +122,13 @@ export const validateCadernoCampo = (data) => {
   const localizacaoResult = validateCadernoLocalizacao(data);
   if (localizacaoResult.valid === false) {
     throw new Error(`CadernoCampo.localizacao: ${localizacaoResult.error}`);
+  }
+  const spatialResult = validateCadernoLocalizacaoSpatialAssessment(data);
+  if (spatialResult.valid === false) {
+    throw new Error(`CadernoCampo.localizacao: ${spatialResult.error}`);
+  }
+  if (spatialResult.status === 'valid' && localizacaoResult.status !== 'valid') {
+    throw new Error('CadernoCampo.localizacao: Avaliação espacial exige uma localização válida.');
   }
 
   const normalized = normalizeCadernoCampo(data);

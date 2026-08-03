@@ -4758,3 +4758,44 @@ Persistencia append-only, idempotencia, concorrencia distribuida, autenticacao,
 RBAC, sincronizacao e auditoria produtiva permanecem em `MP-36`. Migracao e
 versionamento produtivos permanecem em `MP-37`; o corte local nao os apresenta
 como backend concluido.
+
+## MP-26 - Apresentacao Da Localizacao
+
+Status em 2026-08-03: `CONCLUIDO` no corte local demonstrativo.
+
+O detalhe do Caderno apresenta o ponto salvo em um mini mapa vetorial local,
+com circulo de precisao e, quando existe vinculo estavel compativel, o limite
+do Talhao. Precisao, horario e relacao espacial sao informacoes principais. O
+aviso de baixa precisao permanece visivel depois do salvamento; latitude,
+longitude, autoria da captura, distancia, tolerancia e versao da geometria
+ficam recolhidas em `Detalhes tecnicos` para a equipe. A projecao do Produtor
+nao recebe esses metadados tecnicos administrativos.
+
+Novos salvamentos com ponto e `talhao_id` logico avaliam a versao local mais
+recente da geometria. Ponto interno ou sobre o limite fica `Dentro do Talhao`;
+ponto externo alcancado pela precisao informada mais a tolerancia local de 15 m
+fica `Proximo ao limite`; os demais ficam `Fora do Talhao`. A avaliacao guarda
+fonte e ID da versao usada, nao resolve Talhao por nome e nao inventa relacao
+quando falta ponto, identidade ou geometria compativel.
+
+A acao `Ver no mapa` abre a Propriedade e reapresenta o ponto salvo com seu
+circulo de precisao, sem solicitar nova leitura. O mini mapa nao depende de
+Google Maps nativo, chave externa ou rede; a primeira tentativa de smoke
+revelou essa dependencia no preview, que foi removida e revalidada no mesmo
+registro.
+
+`test:mp26` (108 casos), `test:mp25`, typecheck, `test:domain-compat`,
+`git diff --check` e `assembleRelease` passaram. O APK release final de
+92.109.236 bytes, SHA-256
+`7EE5FE5C94E7BC10EE4801FC4E7B316C557BD52BD55124161E9BA5F286069198`, foi
+instalado por cima no Android fisico `8483A`.
+
+O smoke fisico como Admin confirmou mini mapa, precisao de 100 m, aviso
+persistente, coordenadas recolhidas, expansao tecnica, `Ver no mapa`, ponto e
+circulo no mapa completo, retrato e paisagem. A rotacao automatica foi
+restaurada e nao houve excecao fatal depois da correcao. Evidencias:
+`dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
+
+Teste real de dentro/fora, permissao, provider, offline e cancelamento
+permanece em `MP-38`. Persistencia, reconciliacao e versionamento produtivos da
+geometria permanecem em `MP-37`. `MP-27` nao foi iniciada.

@@ -210,6 +210,12 @@ export interface CadernoCampoCanonico {
   localizacao_captured_at?: string;
   localizacao_captured_by?: string;
   localizacao_origem?: 'foreground_explicit';
+  localizacao_relacao_talhao?: 'dentro' | 'proximo' | 'fora';
+  localizacao_distancia_talhao_m?: number;
+  localizacao_tolerancia_talhao_m?: number;
+  talhao_geometria_versao_id?: string;
+  talhao_geometria_fonte?: 'geojson_local' | 'limite_area_local';
+  talhao_geometria_ano?: number;
   criado_por_user_id?: string;
   criado_por_nome?: string;
   origem_registro?: 'produtor' | 'equipe' | string;
@@ -367,6 +373,12 @@ export interface CadernoCampoLegado {
   localizacao_captured_at?: string;
   localizacao_captured_by?: string;
   localizacao_origem?: 'foreground_explicit';
+  localizacao_relacao_talhao?: 'dentro' | 'proximo' | 'fora';
+  localizacao_distancia_talhao_m?: number;
+  localizacao_tolerancia_talhao_m?: number;
+  talhao_geometria_versao_id?: string;
+  talhao_geometria_fonte?: 'geojson_local' | 'limite_area_local';
+  talhao_geometria_ano?: number;
   criado_por?: string;
   criado_por_user_id?: string;
   criado_por_nome?: string;

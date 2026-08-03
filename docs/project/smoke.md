@@ -23,6 +23,33 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada MP-26 - Apresentacao Da Localizacao**
+
+Status geral em 2026-08-03: `PASSOU_NO_CORTE_LOCAL`. O APK release foi
+instalado por cima no Android fisico `8483A`, preservando o estado local. O
+smoke reutilizou um registro legado com ponto salvo para validar somente a
+apresentacao; captura real em campo e confirmacao fisica de dentro/fora
+continuam reservadas a `MP-38`.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP26-01 | P0 | Admin | Detalhe | Abrir registro com ponto salvo | Mini mapa vetorial mostra ponto e circulo de precisao sem depender de chave ou rede | Passou | Registro legado com precisao de 100 m abriu sem crash |
+| MP26-02 | P0 | Admin | Leitura principal | Conferir precisao e horario | Precisao e captura ficam visiveis; baixa precisao mantem aviso persistente | Passou | `100 m`, horario salvo e aviso permaneceram visiveis |
+| MP26-03 | P0 | Equipe | Detalhe tecnico | Expandir `Detalhes tecnicos` | Coordenadas cruas ficam recolhidas por padrao e aparecem somente apos a expansao | Passou | Latitude/longitude nao apareciam antes da expansao |
+| MP26-04 | P0 | Admin | Mapa | Acionar `Ver no mapa` | Abrir a Propriedade com o ponto salvo e sua precisao, sem nova captura | Passou | Mensagem `Ponto salvo no Caderno` e marcador/circulo apareceram |
+| MP26-05 | P0 | Todos | Relacao com Talhao | Executar testes espaciais | Classificar `dentro`, `proximo` e `fora` com precisao+tolerancia e versao da geometria | Passou | Suite focada cobriu limite, 15 m de tolerancia, versao e ausencia de inferencia |
+| MP26-06 | P1 | Admin | Responsividade | Revisar detalhe em retrato e paisagem | Mini mapa, aviso, acao e detalhe tecnico permanecem legiveis e alcancaveis | Passou | Ambas as orientacoes passaram; rotacao automatica foi restaurada |
+| MP26-07 | P0 | Todos | Regressao | Executar testes, build e verificar logcat | Dominio/localizacao permanecem verdes e app nao apresenta fatal | Passou | `test:mp26`, `test:mp25`, typecheck, domain-compat e release passaram; sem fatal apos a correcao |
+
+APK: 92.109.236 bytes; SHA-256
+`7EE5FE5C94E7BC10EE4801FC4E7B316C557BD52BD55124161E9BA5F286069198`.
+Evidencias completas:
+`dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
+
+O teste real de dentro/fora, permissao, provider, offline e cancelamento
+permanece em `MP-38`. Versionamento e reconciliacao produtivos da geometria
+permanecem em `MP-37`.
+
 **Rodada MP-25 - Caderno Auditavel E Validacao Por Tipo**
 
 Status geral em 2026-08-03: `PASSOU_NO_CORTE_LOCAL`. APK release instalado por

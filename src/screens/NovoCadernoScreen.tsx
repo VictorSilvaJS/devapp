@@ -60,6 +60,7 @@ import {
   appendCadernoLocalizacaoDraft,
   shouldDiscardCadernoLocalizacaoDraftForPropertyChange,
 } from '../utils/cadernoLocalizacaoUiCompat';
+import { appendCadernoLocalizacaoSpatialAssessment } from '../utils/cadernoLocalizacaoSpatialCompat';
 
 const CADERNO_FORM_ERROR_ORDER = [
   'fazendaId', 'dataAtividade', 'tipoAtividade', 'responsavel', 'periodoProdutivoId',
@@ -428,6 +429,10 @@ export default function NovoCadernoScreen() {
       }
 
       const payloadComLocalizacao = appendCadernoLocalizacaoDraft(novoRegistro, localizacaoDraft);
+      const payloadComAvaliacao = appendCadernoLocalizacaoSpatialAssessment(
+        payloadComLocalizacao,
+        talhoesDaFazenda
+      );
       const actor: CadernoActor = {
         usuarioId: String(user?.id || '').trim(),
         nome: responsavel,
@@ -435,8 +440,8 @@ export default function NovoCadernoScreen() {
         propriedadeIds: [fazendaId],
       };
       const criado = submit
-        ? await CadernoCampo.submit(payloadComLocalizacao, actor)
-        : await CadernoCampo.createDraft(payloadComLocalizacao, actor);
+        ? await CadernoCampo.submit(payloadComAvaliacao, actor)
+        : await CadernoCampo.createDraft(payloadComAvaliacao, actor);
       setLocalizacaoDraft(null);
       setLocalizacaoFazendaId(null);
       setLocalizacaoNotice('');
