@@ -362,6 +362,16 @@ restricoes consolidadas, nao escolhas em aberto. Permanecem pendentes o
 fallback SVG/WebView, criterio de iOS, precisao/consumo em campo, cobertura
 automatizada do adapter nativo e Android fisico.
 
+Status em 2026-08-03 (ajuste pos-smoke de `MP-26`): o comportamento foi
+fechado como captura unica, nao localizacao em tempo real. A leitura solicita
+a maior precisao disponivel ao provider, espera ate 25 s e nao cai para ultima
+posicao conhecida. No Android fisico `8483A`, o provider retornou leitura atual
+de aproximadamente 13 m e o mapa interativo manteve marcador e circulo de
+precisao no ponto. O fallback SVG passou a usar a mesma projecao do ponto e
+teve enquadramento coberto por teste automatizado. Continuam ausentes watch,
+background, trilha e historico. Permanecem pendentes criterio de iOS e a
+revalidacao de permissao, servico desligado, offline e consumo em `MP-38`.
+
 ### 4B. Marcacoes de campo vinculadas ao Caderno
 
 O contrato tecnico, a UI e a captura foreground explicita do primeiro ponto
@@ -520,6 +530,14 @@ o ano, a distancia e a tolerancia aplicada. Registros antigos permanecem
 validos sem avaliacao retroativa. Nao resta decisao funcional aberta para a
 apresentacao local; a comprovacao em campo continua separada em `MP-38` e o
 versionamento produtivo em `MP-37`.
+
+Status em 2026-08-03 (ajuste pos-smoke de `MP-26`): a captura explicita no
+Novo Caderno retornou precisao de aproximadamente 13 m no Android fisico. O
+ponto permaneceu somente no estado do formulario como `Posicao pronta para
+salvar`; ao sair sem salvar, nenhum rascunho ou registro consolidado foi
+criado. Isso fecha o caso fisico de leitura atual e cancelamento desta
+correcao, sem antecipar os testes reais de dentro/fora, permissao e offline de
+`MP-38`.
 
 Pendencias P1 antes de declarar APK apto a campo:
 

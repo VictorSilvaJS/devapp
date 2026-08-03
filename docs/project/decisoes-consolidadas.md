@@ -758,6 +758,12 @@ registro consolidado.
 ### Impacto
 
 - o mini mapa prioriza marcador, limite do Talhao e circulo de precisao;
+- a captura explicita usa uma unica leitura atual com a maior precisao
+  solicitavel ao provider e nao substitui falha por uma posicao antiga;
+- a posicao capturada e seu circulo de precisao permanecem marcados tanto no
+  mapa interativo quanto no fallback vetorial;
+- a captura do formulario so integra o Caderno quando o usuario salva o
+  registro; sair sem salvar descarta o ponto;
 - baixa precisao continua visivel no detalhe depois do salvamento;
 - Produtor ve o mapa, a precisao e a relacao operacional, mas nao recebe IDs,
   distancia/tolerancia nem coordenadas brutas como bloco principal;
@@ -766,5 +772,7 @@ registro consolidado.
 - `Ver no mapa` reutiliza a rota protegida da Propriedade e nao amplia acesso;
 - registros antigos sem avaliacao continuam validos e nao recebem relacao
   espacial inventada retroativamente;
+- captura unica nao cria acompanhamento continuo, background, trilha ou
+  historico de deslocamento;
 - validacao do provider e dos cenarios reais dentro/fora em campo permanece em
   `MP-38`; versionamento produtivo da geometria permanece em `MP-37`.

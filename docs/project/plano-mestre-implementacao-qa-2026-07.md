@@ -390,7 +390,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-23` | `CONCLUIDO` | `appQA` / árvore limpa sobre `c59e777` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou ação única, campos controlados, validações, persistência, edição e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-23-safras-safrinha/` | referências locais estáveis foram concluídas posteriormente em `MP-24`; backend, sincronização e auditoria seguem fora deste corte |
 | 2026-08-03 | `MP-24` | `CONCLUIDO` | `appQA` / árvore limpa sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou responsável bloqueado, Talhão por ID lógico, snapshots, legado explícito e ambas as orientações | `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/` | ciclo auditável foi concluído depois em `MP-25`; versionamento e migração produtivos permanecem em `MP-37` |
 | 2026-08-03 | `MP-25` | `CONCLUIDO` | árvore de trabalho sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou validação de Aplicação, confirmação, registro consolidado, auditoria e complemento versionado | `dist/qa-session-2026-08-03/mp-25-caderno-auditavel/` | backend append-only, RBAC, idempotência, sincronização e conflito distribuído permanecem em `MP-36`; migração produtiva permanece em `MP-37`; `MP-26` não foi iniciada |
-| 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `f5b4179` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou mini mapa, precisão/aviso, detalhe técnico recolhido, `Ver no mapa`, retrato e paisagem | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, provider, permissão, offline e cancelamento permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` não foi iniciada |
+| 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `f5b4179` | 115 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou mini mapa, leitura atual de ~13 m sempre marcada, fallback coberto e cancelamento sem salvar | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -740,13 +740,21 @@ local resolvida por ID estável, a precisão informada e tolerância de 15 m. Se
 ponto, ID lógico ou geometria compatível, não há inferência. `Ver no mapa`
 reapresenta o ponto salvo e seu círculo sem capturar novamente.
 
+Após a reexecução física, a captura passou a pedir uma única leitura atual na
+maior precisão disponível, sem reutilizar último ponto conhecido. O marcador e
+o círculo ficam enquadrados no mapa interativo e no fallback vetorial. Não há
+watch, background, trilha ou histórico.
+
 Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
-release passaram. O APK final de 92.109.236 bytes, SHA-256
-`7EE5FE5C94E7BC10EE4801FC4E7B316C557BD52BD55124161E9BA5F286069198`, foi
+release passaram. O APK final de 92.111.640 bytes, SHA-256
+`72677AEF6B829CFD124F8094E9E66D0BA341A7793DBEB605A1DB357AB03B02F8`, foi
 instalado por cima no Android físico `8483A`. O smoke confirmou o fluxo em
 retrato e paisagem, detalhe técnico recolhido, aviso persistente e abertura no
-mapa completo; não houve exceção fatal após a correção. Evidências:
+mapa completo. Uma leitura atual de aproximadamente 13 m permaneceu marcada no
+mapa; no Novo Caderno, sair depois da captura e antes do salvamento não criou
+registro. Não houve exceção fatal após a correção. Evidências:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
-O teste real de localização permanece em `MP-38`; versionamento produtivo da
-geometria permanece em `MP-37`. `MP-27` não foi iniciada.
+O teste real de dentro/fora, permissão e offline permanece em `MP-38`;
+versionamento produtivo da geometria permanece em `MP-37`. `MP-27` não foi
+iniciada.

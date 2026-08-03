@@ -15,10 +15,17 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { G, Polygon as SvgPolygon, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, {
+  Circle as SvgCircle,
+  G,
+  Polygon as SvgPolygon,
+  Rect,
+  Text as SvgText,
+} from 'react-native-svg';
 import { WebView } from 'react-native-webview';
 import { colors, spacing, typography } from '../theme';
 import type { ForegroundUserLocation } from '../services/LocationForegroundService';
+import { buildLocationMapProjection } from '../utils/locationMapProjectionCompat';
 import { formatAreaHa } from '../utils/talhaoMedidasCompat';
 
 export interface PontoPoligono {
@@ -89,59 +96,43 @@ const getTalhaoPoligonos = (talhao: TalhaoMapa): PontoPoligono[][] => {
   return parts.filter((poligono) => Array.isArray(poligono) && poligono.length >= 3);
 };
 
-function buildSvgTalhoes(talhoes: TalhaoMapa[], width: number, height: number): SvgTalhao[] {
+function buildSvgProjection(
+  talhoes: TalhaoMapa[],
+  userLocation: ForegroundUserLocation | null | undefined,
+  width: number,
+  height: number
+): {
+  talhoes: SvgTalhao[];
+  location: ReturnType<typeof buildLocationMapProjection>['location'];
+} {
   const validTalhoes = talhoes.filter((talhao) => getTalhaoPoligonos(talhao).length > 0);
-  if (validTalhoes.length === 0 || width <= 0 || height <= 0) {
-    return [];
-  }
-
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-  let minLng = Infinity;
-  let maxLng = -Infinity;
-
-  validTalhoes.forEach((talhao) => {
-    getTalhaoPoligonos(talhao).forEach((poligono) => {
-      poligono.forEach((ponto) => {
-        minLat = Math.min(minLat, ponto.lat);
-        maxLat = Math.max(maxLat, ponto.lat);
-        minLng = Math.min(minLng, ponto.lng);
-        maxLng = Math.max(maxLng, ponto.lng);
-      });
-    });
+  const projection = buildLocationMapProjection({
+    shapes: validTalhoes.map((talhao) => ({
+      id: talhao.id,
+      polygons: getTalhaoPoligonos(talhao),
+    })),
+    location: userLocation,
+    width,
+    height,
+    padding: SVG_PADDING,
   });
+  const talhaoById = new Map(validTalhoes.map((talhao) => [talhao.id, talhao]));
 
-  const latRange = Math.max(maxLat - minLat, 0.000001);
-  const lngRange = Math.max(maxLng - minLng, 0.000001);
-  const usableW = Math.max(width - SVG_PADDING * 2, 1);
-  const usableH = Math.max(height - SVG_PADDING * 2, 1);
-  const scale = Math.min(usableW / lngRange, usableH / latRange);
-  const offsetX = SVG_PADDING + (usableW - lngRange * scale) / 2;
-  const offsetY = SVG_PADDING + (usableH - latRange * scale) / 2;
+  return {
+    talhoes: projection.shapes.flatMap((shape) => {
+      const talhao = talhaoById.get(shape.id);
+      if (!talhao) return [];
 
-  return validTalhoes.map((talhao) => {
-    const polygons = getTalhaoPoligonos(talhao).map((poligono) =>
-      poligono.map((ponto) => {
-        const x = offsetX + (ponto.lng - minLng) * scale;
-        const y = offsetY + (maxLat - ponto.lat) * scale;
-        return { x, y };
-      })
-    );
-    const allPoints = polygons.flat();
-    const center = allPoints.reduce(
-      (acc, point) => ({ x: acc.x + point.x, y: acc.y + point.y }),
-      { x: 0, y: 0 }
-    );
-
-    return {
-      ...talhao,
-      svgPolygons: polygons.map((points) => points.map((point) => `${point.x},${point.y}`).join(' ')),
-      center: {
-        x: center.x / allPoints.length,
-        y: center.y / allPoints.length,
-      },
-    };
-  });
+      return [{
+        ...talhao,
+        svgPolygons: shape.polygons.map((points) => points
+          .map((point) => `${point.x},${point.y}`)
+          .join(' ')),
+        center: shape.center,
+      }];
+    }),
+    location: projection.location,
+  };
 }
 
 function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | null): string {
@@ -520,9 +511,9 @@ function FallbackShapeMap({
   onTalhaoPress?: (id: string) => void;
 }) {
   const [layout, setLayout] = useState({ width: 0, height: 0 });
-  const svgTalhoes = useMemo(
-    () => buildSvgTalhoes(talhoes, layout.width, layout.height),
-    [talhoes, layout.width, layout.height]
+  const projection = useMemo(
+    () => buildSvgProjection(talhoes, userLocation, layout.width, layout.height),
+    [talhoes, userLocation, layout.width, layout.height]
   );
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -535,7 +526,7 @@ function FallbackShapeMap({
       {layout.width > 0 && layout.height > 0 && (
         <Svg width={layout.width} height={layout.height}>
           <Rect x={0} y={0} width={layout.width} height={layout.height} fill="#111827" />
-          {svgTalhoes.map((talhao) => {
+          {projection.talhoes.map((talhao) => {
             const selected = talhaoSelecionadoId === talhao.id;
             const cor = normalizeHexColor(talhao.cor);
 
@@ -566,13 +557,42 @@ function FallbackShapeMap({
               </G>
             );
           })}
+          {projection.location?.accuracyRadius != null ? (
+            <SvgCircle
+              cx={projection.location.x}
+              cy={projection.location.y}
+              r={projection.location.accuracyRadius}
+              fill="rgba(59,130,246,0.20)"
+              stroke="#60A5FA"
+              strokeWidth={2}
+            />
+          ) : null}
+          {projection.location ? (
+            <>
+              <SvgCircle
+                cx={projection.location.x}
+                cy={projection.location.y}
+                r={10}
+                fill={colors.white}
+              />
+              <SvgCircle
+                cx={projection.location.x}
+                cy={projection.location.y}
+                r={6.5}
+                fill="#2563EB"
+                stroke="#93C5FD"
+                strokeWidth={1.5}
+              />
+            </>
+          ) : null}
         </Svg>
       )}
-      {userLocation ? (
-        <View style={styles.fallbackLocationNotice}>
-          <Ionicons name="locate-outline" size={15} color={colors.warningLight} />
-          <Text style={styles.fallbackLocationNoticeText}>
-            A posição do aparelho está disponível apenas no mapa interativo.
+      {projection.location ? (
+        <View style={styles.fallbackLocationBadge}>
+          <Ionicons name="location" size={15} color="#93C5FD" />
+          <Text style={styles.fallbackLocationBadgeText}>
+            Posição marcada
+            {userLocation?.accuracy != null ? ` · precisão ${Math.round(userLocation.accuracy)} m` : ''}
           </Text>
         </View>
       ) : null}
@@ -676,13 +696,17 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       [onMapaReady, onTalhaoPress]
     );
 
-    if (!talhoes || talhoes.length === 0) {
+    if ((!talhoes || talhoes.length === 0) && !userLocation) {
       return (
         <View style={styles.vazio}>
           <Ionicons name="map-outline" size={48} color={colors.muted} />
           <Text style={styles.vazioTexto}>Sem talhões para exibir</Text>
         </View>
       );
+    }
+
+    if (!talhoes || talhoes.length === 0) {
+      return <FallbackShapeMap talhoes={[]} userLocation={userLocation} />;
     }
 
     if (fallbackAtivo) {
@@ -767,7 +791,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#111827',
   },
-  fallbackLocationNotice: {
+  fallbackLocationBadge: {
     position: 'absolute',
     left: spacing.md,
     right: spacing.md,
@@ -779,10 +803,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: spacing.radiusSm,
     borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.55)',
+    borderColor: 'rgba(147,197,253,0.68)',
     backgroundColor: 'rgba(0,0,0,0.74)',
   },
-  fallbackLocationNoticeText: {
+  fallbackLocationBadgeText: {
     flex: 1,
     minWidth: 0,
     color: colors.white,

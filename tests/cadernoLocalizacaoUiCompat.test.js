@@ -431,7 +431,9 @@ const run = async () => {
     assert.match(source, /POSITION_REQUEST_TIMEOUT_MS/);
     assert.match(source, /withTimeout\(/);
     assert.match(source, /positionTimeoutMs/);
+    assert.match(source, /Accuracy\?\.Highest/);
     assert.match(source, /status: 'unavailable'/);
+    assert.equal(/getLastKnownPositionAsync/.test(source), false);
     assert.equal(/watchPosition|startLocationUpdates|TaskManager|geofence/i.test(source), false);
   });
 

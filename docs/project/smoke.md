@@ -27,9 +27,9 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 
 Status geral em 2026-08-03: `PASSOU_NO_CORTE_LOCAL`. O APK release foi
 instalado por cima no Android fisico `8483A`, preservando o estado local. O
-smoke reutilizou um registro legado com ponto salvo para validar somente a
-apresentacao; captura real em campo e confirmacao fisica de dentro/fora
-continuam reservadas a `MP-38`.
+smoke reutilizou um registro legado com ponto salvo e depois reexecutou uma
+captura atual no mapa e no Novo Caderno. Confirmacao fisica de dentro/fora,
+permissao e offline continuam reservadas a `MP-38`.
 
 | ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
 |---|---|---|---|---|---|---|---|
@@ -39,16 +39,17 @@ continuam reservadas a `MP-38`.
 | MP26-04 | P0 | Admin | Mapa | Acionar `Ver no mapa` | Abrir a Propriedade com o ponto salvo e sua precisao, sem nova captura | Passou | Mensagem `Ponto salvo no Caderno` e marcador/circulo apareceram |
 | MP26-05 | P0 | Todos | Relacao com Talhao | Executar testes espaciais | Classificar `dentro`, `proximo` e `fora` com precisao+tolerancia e versao da geometria | Passou | Suite focada cobriu limite, 15 m de tolerancia, versao e ausencia de inferencia |
 | MP26-06 | P1 | Admin | Responsividade | Revisar detalhe em retrato e paisagem | Mini mapa, aviso, acao e detalhe tecnico permanecem legiveis e alcancaveis | Passou | Ambas as orientacoes passaram; rotacao automatica foi restaurada |
-| MP26-07 | P0 | Todos | Regressao | Executar testes, build e verificar logcat | Dominio/localizacao permanecem verdes e app nao apresenta fatal | Passou | `test:mp26`, `test:mp25`, typecheck, domain-compat e release passaram; sem fatal apos a correcao |
+| MP26-07 | P0 | Todos | Regressao | Executar testes, build e verificar logcat | Dominio/localizacao permanecem verdes e app nao apresenta fatal | Passou | `test:mp26` com 115 casos, `test:mp25`, typecheck, domain-compat e `packageRelease` passaram; sem fatal apos a correcao |
+| MP26-08 | P0 | Admin | Captura atual | Tocar `Mostrar minha posicao` | Executar uma unica leitura atual, sem ultimo ponto conhecido, e manter marcador/circulo visiveis | Passou | Android fisico retornou aproximadamente 13 m; marcador e circulo permaneceram no mapa |
+| MP26-09 | P0 | Admin | Novo Caderno | Capturar a posicao e sair sem salvar | Manter o ponto apenas no formulario e nao criar registro | Passou | Formulario mostrou aproximadamente 13 m; retorno preservou os mesmos dois registros na lista |
 
-APK: 92.109.236 bytes; SHA-256
-`7EE5FE5C94E7BC10EE4801FC4E7B316C557BD52BD55124161E9BA5F286069198`.
+APK: 92.111.640 bytes; SHA-256
+`72677AEF6B829CFD124F8094E9E66D0BA341A7793DBEB605A1DB357AB03B02F8`.
 Evidencias completas:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
-O teste real de dentro/fora, permissao, provider, offline e cancelamento
-permanece em `MP-38`. Versionamento e reconciliacao produtivos da geometria
-permanecem em `MP-37`.
+O teste real de dentro/fora, permissao e offline permanece em `MP-38`.
+Versionamento e reconciliacao produtivos da geometria permanecem em `MP-37`.
 
 **Rodada MP-25 - Caderno Auditavel E Validacao Por Tipo**
 

@@ -347,6 +347,14 @@ O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
   coordenadas cruas, autoria da captura e metadados da geometria ficam em
   detalhe tecnico recolhido para equipe autorizada.
 - O alerta de baixa precisao permanece visivel depois do salvamento.
+- A captura de localizacao e sempre pontual e acionada pelo usuario: solicita
+  uma leitura atual de alta precisao e nao usa uma ultima posicao conhecida
+  como se fosse a captura corrente.
+- Quando houver leitura valida, mapa interativo e fallback vetorial devem
+  manter marcador e circulo de precisao visiveis.
+- No formulario do Caderno, a leitura permanece transitoria ate o salvamento;
+  sair sem salvar nao cria registro nem persiste o ponto. Nao ha watch
+  continuo, background, trilha ou historico de deslocamento.
 - Safra/Safrinha, quando existir no MVP local, e contexto opcional do Caderno
   por Propriedade. Admin e Colaborador autorizado podem gerenciar periodos
   locais; Produtor pode consultar e vincular ao registrar Caderno, mas nao
@@ -358,8 +366,10 @@ os comandos versionados. Persistencia append-only, autorizacao e auditoria no
 backend produtivo permanecem em `MP-36`.
 
 `MP-26` implementou a apresentacao por mini mapa, a avaliacao espacial local,
-o snapshot da versao da geometria e a abertura protegida do ponto no mapa.
-Teste real do provider e dos cenarios dentro/fora permanece em `MP-38`.
+o snapshot da versao da geometria, a abertura protegida do ponto no mapa e a
+captura unica atual com marcador persistente na visualizacao. O provider e o
+cancelamento sem salvar passaram em Android fisico; os cenarios reais
+dentro/fora, permissao e offline permanecem em `MP-38`.
 
 ## Regra sobre Validacoes Do Mock Administrativo
 

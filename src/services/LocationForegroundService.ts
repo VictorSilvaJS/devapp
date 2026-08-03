@@ -23,13 +23,11 @@ type ExpoLocationModule = Pick<
   | 'requestForegroundPermissionsAsync'
   | 'hasServicesEnabledAsync'
   | 'getCurrentPositionAsync'
-> & Partial<Pick<typeof Location, 'getLastKnownPositionAsync'>> & {
+> & {
   Accuracy?: typeof Location.Accuracy;
 };
 
-const LAST_KNOWN_MAX_AGE_MS = 2 * 60 * 1000;
-const LAST_KNOWN_REQUIRED_ACCURACY_METERS = 200;
-const POSITION_REQUEST_TIMEOUT_MS = 15 * 1000;
+const POSITION_REQUEST_TIMEOUT_MS = 25 * 1000;
 
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
@@ -92,30 +90,13 @@ const normalizeLocationObject = (
   };
 };
 
-const getCurrentOrRecentLastKnownPosition = async (
+const getHighAccuracyCurrentPosition = async (
   locationModule: ExpoLocationModule
-): Promise<Location.LocationObject> => {
-  try {
-    return await locationModule.getCurrentPositionAsync({
-      accuracy: locationModule.Accuracy?.Balanced,
-    });
-  } catch (error) {
-    if (!locationModule.getLastKnownPositionAsync) {
-      throw error;
-    }
-
-    const recentLastKnown = await locationModule.getLastKnownPositionAsync({
-      maxAge: LAST_KNOWN_MAX_AGE_MS,
-      requiredAccuracy: LAST_KNOWN_REQUIRED_ACCURACY_METERS,
-    });
-
-    if (!recentLastKnown) {
-      throw error;
-    }
-
-    return recentLastKnown;
-  }
-};
+): Promise<Location.LocationObject> => locationModule.getCurrentPositionAsync({
+  accuracy: locationModule.Accuracy?.Highest
+    ?? locationModule.Accuracy?.High
+    ?? locationModule.Accuracy?.Balanced,
+});
 
 export interface RequestForegroundLocationOptions {
   locationModule?: ExpoLocationModule;
@@ -157,13 +138,13 @@ export const requestCurrentForegroundLocation = async (
     let locationObject: Location.LocationObject;
     try {
       locationObject = await withTimeout(
-        getCurrentOrRecentLastKnownPosition(locationModule),
+        getHighAccuracyCurrentPosition(locationModule),
         positionTimeoutMs
       );
     } catch {
       return {
         status: 'unavailable',
-        message: 'Não foi possível obter a posição atual do aparelho.',
+        message: 'Não foi possível obter uma posição atual com boa precisão. Tente novamente em uma área aberta.',
       };
     }
 

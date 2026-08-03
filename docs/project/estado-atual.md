@@ -4784,18 +4784,26 @@ Google Maps nativo, chave externa ou rede; a primeira tentativa de smoke
 revelou essa dependencia no preview, que foi removida e revalidada no mesmo
 registro.
 
-`test:mp26` (108 casos), `test:mp25`, typecheck, `test:domain-compat`,
-`git diff --check` e `assembleRelease` passaram. O APK release final de
-92.109.236 bytes, SHA-256
-`7EE5FE5C94E7BC10EE4801FC4E7B316C557BD52BD55124161E9BA5F286069198`, foi
+Apos teste fisico da captura, o servico foi ajustado para uma unica leitura
+atual com a maior precisao solicitavel, espera de ate 25 s e sem fallback para
+ultima posicao conhecida. O mapa interativo e o fallback vetorial mantem o
+marcador e o circulo de precisao enquadrados. Nao foi introduzido watch,
+background, trilha ou historico.
+
+`test:mp26` (115 casos), `test:mp25`, typecheck, `test:domain-compat`,
+`git diff --check` e `:app:packageRelease` passaram. O APK release final de
+92.111.640 bytes, SHA-256
+`72677AEF6B829CFD124F8094E9E66D0BA341A7793DBEB605A1DB357AB03B02F8`, foi
 instalado por cima no Android fisico `8483A`.
 
 O smoke fisico como Admin confirmou mini mapa, precisao de 100 m, aviso
 persistente, coordenadas recolhidas, expansao tecnica, `Ver no mapa`, ponto e
-circulo no mapa completo, retrato e paisagem. A rotacao automatica foi
-restaurada e nao houve excecao fatal depois da correcao. Evidencias:
+circulo no mapa completo, retrato e paisagem. A reexecucao confirmou uma
+leitura atual de aproximadamente 13 m marcada no mapa e a mesma captura no
+Novo Caderno; sair sem salvar preservou a lista sem novo registro. A rotacao
+automatica foi restaurada e nao houve excecao fatal depois da correcao. Evidencias:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
-Teste real de dentro/fora, permissao, provider, offline e cancelamento
-permanece em `MP-38`. Persistencia, reconciliacao e versionamento produtivos da
-geometria permanecem em `MP-37`. `MP-27` nao foi iniciada.
+Teste real de dentro/fora, permissao e offline permanece em `MP-38`.
+Persistencia, reconciliacao e versionamento produtivos da geometria permanecem
+em `MP-37`. `MP-27` nao foi iniciada.

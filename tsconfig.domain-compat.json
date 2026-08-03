@@ -58,6 +58,7 @@
     "src/utils/cadernoLocalizacaoCompat.ts",
     "src/utils/cadernoLocalizacaoSpatialCompat.ts",
     "src/utils/cadernoLocalizacaoUiCompat.ts",
+    "src/utils/locationMapProjectionCompat.ts",
     "src/utils/talhaoConsultaCompat.ts",
     "src/utils/talhaoMedidasCompat.ts",
     "src/utils/visitaFormCompat.ts",
