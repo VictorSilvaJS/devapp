@@ -4502,4 +4502,28 @@ restaurada e nao houve excecao fatal no logcat recente. Evidencias:
 `dist/qa-session-2026-07-31/mp-17-filtros-materiais/`.
 
 A unificacao da fonte dos Materiais permanece em `MP-28`; o redesign
-responsivo do mapa permanece em `MP-31`. `MP-18` nao foi iniciada.
+responsivo do mapa permanece em `MP-31`. `MP-18` foi executada na sequencia.
+
+## MP-18 - Dashboards E Indicadores Responsivos
+
+Status em 2026-07-31: `CONCLUIDO`.
+
+Os indicadores do Dashboard de Admin e Colaborador usam duas colunas em
+retrato e tres em paisagem ampla. Em Propriedades, a faixa horizontal de
+indicadores foi substituida por grade de duas colunas em retrato e cinco em
+paisagem; `Nova Propriedade` fica ancorada fora da rolagem e nao compete com
+os cartoes. No Dashboard do Produtor, o resumo da Propriedade permanece acima
+dos indicadores em retrato e passa para a esquerda em paisagem, com os seis
+indicadores organizados em grade 2 x 3 sem truncamento.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release de 92.024.392 bytes, SHA-256
+`2A989C69B84F7FB12AA13E393BC543D2496E80E5A2BD9C7B0A8F78E2FFC65079`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke passou nos
+perfis Admin, Colaborador e Produtor em retrato e paisagem. A rotacao
+automatica foi restaurada e nao houve excecao fatal no logcat recente.
+Evidencias: `dist/qa-session-2026-07-31/mp-18-dashboards-responsivos/`.
+
+O conteudo e a priorizacao dos indicadores permanecem em `MP-19`; o sistema
+geral de cartoes em `MP-21`; a matriz completa de acessibilidade e aparelhos
+em `MP-40`. `MP-19` nao foi iniciada.

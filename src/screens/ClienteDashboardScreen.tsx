@@ -6,7 +6,8 @@ import {
   StyleSheet, 
   TouchableOpacity,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
@@ -33,11 +34,16 @@ import {
   sortDashboardItemsByDate,
 } from '../utils/dashboardCompat';
 import { getCadernoTipoLabel } from '../utils/cadernoFormCompat';
+import {
+  getDashboardColumnWidth,
+  getDashboardResponsiveLayout,
+} from '../utils/dashboardResponsive';
 
 /**
  * Tela específica para produtores - Dashboard das propriedades vinculadas.
  */
 export default function ClienteDashboardScreen() {
+  const { width, height } = useWindowDimensions();
   const loadedRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,6 +54,11 @@ export default function ClienteDashboardScreen() {
   const [filtroFazenda, setFiltroFazenda] = useState('geral');
   const { user } = useAuthState();
   const navigation = useNavigation<any>();
+  const responsiveLayout = useMemo(
+    () => getDashboardResponsiveLayout(width, height),
+    [height, width]
+  );
+  const statCardWidth = getDashboardColumnWidth(responsiveLayout.produtorColumns);
 
   const loadData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -151,6 +162,68 @@ export default function ClienteDashboardScreen() {
       }),
     [historicoFiltrado, mapasFiltrados, propriedadesExibidas, visitasFiltradas]
   );
+  const cardsResumo = useMemo(() => [
+    {
+      label: 'Propriedades',
+      value: propriedadesExibidas.length,
+      icon: 'business-outline',
+      accent: {
+        color: colors.primary,
+        bgColor: colors.borderLight,
+        gradient: [colors.borderLight, colors.white],
+      },
+    },
+    {
+      label: 'Área total informada',
+      value: resumo.areaTotalLabel,
+      icon: 'resize-outline',
+      accent: {
+        color: colors.secondary,
+        bgColor: colors.secondaryBg,
+        gradient: [colors.secondaryBg, colors.white],
+      },
+    },
+    {
+      label: 'Propriedades Ativas',
+      value: resumo.status.ativo,
+      icon: 'leaf-outline',
+      accent: {
+        color: colors.primary,
+        bgColor: colors.borderLight,
+        gradient: [colors.borderLight, colors.white],
+      },
+    },
+    {
+      label: 'Mapas Disponíveis',
+      value: mapasFiltrados.length,
+      icon: 'map-outline',
+      accent: {
+        color: colors.amber,
+        bgColor: colors.amberLight,
+        gradient: [colors.amberLight, colors.white],
+      },
+    },
+    {
+      label: 'Visitas Registradas',
+      value: visitasFiltradas.length,
+      icon: 'calendar-outline',
+      accent: {
+        color: colors.success,
+        bgColor: colors.successBg,
+        gradient: [colors.successBg, colors.white],
+      },
+    },
+    {
+      label: 'Registros no Caderno',
+      value: historicoFiltrado.length,
+      icon: 'document-text-outline',
+      accent: {
+        color: colors.info,
+        bgColor: colors.infoLight,
+        gradient: [colors.infoLight, colors.white],
+      },
+    },
+  ], [historicoFiltrado.length, mapasFiltrados.length, propriedadesExibidas.length, resumo, visitasFiltradas.length]);
   const mapasCategorizados = useMemo(
     () => agruparMapasPorCategoria(mapasFiltrados),
     [agruparMapasPorCategoria, mapasFiltrados]
@@ -251,107 +324,71 @@ export default function ClienteDashboardScreen() {
           />
         }
       >
-        {/* Cards das Fazendas (filtradas) */}
-        {propriedadesExibidas.map((prop) => {
-          const fazendaInfo = getFazendaUiInfo(prop);
+        <View
+          style={[
+            styles.overviewLayout,
+            responsiveLayout.splitProdutorOverview && styles.overviewLayoutLandscape,
+          ]}
+        >
+          {/* Cards das Propriedades filtradas */}
+          <View
+            style={[
+              styles.propriedadesOverview,
+              responsiveLayout.splitProdutorOverview && styles.propriedadesOverviewLandscape,
+            ]}
+          >
+            {propriedadesExibidas.map((prop) => {
+              const fazendaInfo = getFazendaUiInfo(prop);
 
-          return (
-            <TouchableOpacity
-              key={getFazendaId(prop)}
-              style={styles.propriedadeCard}
-              onPress={() => abrirFazenda(prop)}
-              activeOpacity={0.86}
-            >
-              <View style={styles.propriedadeHeader}>
-                <Ionicons name="home-outline" size={40} color={colors.primary} />
-                <View style={styles.propriedadeInfo}>
-                  <Text style={styles.propriedadeNome}>{fazendaInfo.fazendaNome}</Text>
-                  <Text style={styles.propriedadeLocalização}>
-                    {fazendaInfo.localizacao || 'Localização não informada'}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>
-                    Titular: {fazendaInfo.titularNome || 'Não informado'} • Área total informada: {formatAreaHa(resolveAreaTotalInformada(prop))} • {prop.cultura_atual || 'N/A'}
-                  </Text>
-                  <Text style={styles.propriedadeStatus}>Status: {getPropriedadeStatusLabel(prop)}</Text>
-                </View>
-              </View>
-              <View style={styles.propriedadeAction}>
-                <Text style={styles.propriedadeActionText}>Abrir propriedade</Text>
-                <Ionicons name="chevron-forward-outline" size={18} color={colors.primary} />
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+              return (
+                <TouchableOpacity
+                  key={getFazendaId(prop)}
+                  style={styles.propriedadeCard}
+                  onPress={() => abrirFazenda(prop)}
+                  activeOpacity={0.86}
+                >
+                  <View style={styles.propriedadeHeader}>
+                    <Ionicons name="home-outline" size={40} color={colors.primary} />
+                    <View style={styles.propriedadeInfo}>
+                      <Text style={styles.propriedadeNome}>{fazendaInfo.fazendaNome}</Text>
+                      <Text style={styles.propriedadeLocalização}>
+                        {fazendaInfo.localizacao || 'Localização não informada'}
+                      </Text>
+                      <Text style={styles.propriedadeMeta}>
+                        Titular: {fazendaInfo.titularNome || 'Não informado'} • Área total informada: {formatAreaHa(resolveAreaTotalInformada(prop))} • {prop.cultura_atual || 'N/A'}
+                      </Text>
+                      <Text style={styles.propriedadeStatus}>Status: {getPropriedadeStatusLabel(prop)}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.propriedadeAction}>
+                    <Text style={styles.propriedadeActionText}>Abrir propriedade</Text>
+                    <Ionicons name="chevron-forward-outline" size={18} color={colors.primary} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-        {/* Resumo de Informações */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statsRow}>
-            <StatCard
-              label="Propriedades"
-              value={propriedadesExibidas.length}
-              icon={<Ionicons name="business-outline" size={24} color={colors.primary} />}
-              accent={{
-                color: colors.primary,
-                bgColor: colors.borderLight,
-                gradient: [colors.borderLight, colors.white]
-              }}
-            />
-            <StatCard
-              label="Área total informada"
-              value={resumo.areaTotalLabel}
-              icon={<Ionicons name="resize-outline" size={24} color={colors.secondary} />}
-              accent={{
-                color: colors.secondary,
-                bgColor: colors.secondaryBg,
-                gradient: [colors.secondaryBg, colors.white]
-              }}
-            />
-          </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              label="Propriedades Ativas"
-              value={resumo.status.ativo}
-              icon={<Ionicons name="leaf-outline" size={24} color={colors.primary} />}
-              accent={{
-                color: colors.primary,
-                bgColor: colors.borderLight,
-                gradient: [colors.borderLight, colors.white]
-              }}
-            />
-          </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              label="Mapas Disponíveis"
-              value={mapasFiltrados.length}
-              icon={<Ionicons name="map-outline" size={24} color={colors.amber} />}
-              accent={{
-                color: colors.amber,
-                bgColor: colors.amberLight,
-                gradient: [colors.amberLight, colors.white]
-              }}
-            />
-            <StatCard
-              label="Visitas Registradas"
-              value={visitasFiltradas.length}
-              icon={<Ionicons name="calendar-outline" size={24} color={colors.success} />}
-              accent={{
-                color: colors.success,
-                bgColor: colors.successBg,
-                gradient: [colors.successBg, colors.white]
-              }}
-            />
-          </View>
-          <View style={styles.statsRow}>
-            <StatCard
-              label="Registros no Caderno"
-              value={historicoFiltrado.length}
-              icon={<Ionicons name="document-text-outline" size={24} color={colors.info} />}
-              accent={{
-                color: colors.info,
-                bgColor: colors.infoLight,
-                gradient: [colors.infoLight, colors.white]
-              }}
-            />
+          {/* Resumo de Informações */}
+          <View
+            style={[
+              styles.statsGrid,
+              responsiveLayout.splitProdutorOverview && styles.statsGridLandscape,
+            ]}
+          >
+            {cardsResumo.map((card) => (
+              <View
+                key={card.label}
+                style={[styles.statCardWrapper, { width: statCardWidth }]}
+              >
+                <StatCard
+                  label={card.label}
+                  value={card.value}
+                  icon={<Ionicons name={card.icon as any} size={24} color={card.accent.color} />}
+                  accent={card.accent}
+                />
+              </View>
+            ))}
           </View>
         </View>
 
@@ -563,6 +600,11 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontWeight: typography.weightMedium,
   },
+  propriedadeMeta: {
+    fontSize: typography.fontCaption,
+    color: colors.textLight,
+    marginTop: 2,
+  },
   propriedadeStatus: {
     marginTop: spacing.xs,
     color: colors.primary,
@@ -584,13 +626,32 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: typography.weightBold,
   },
-  statsGrid: {
-    marginBottom: spacing.lg,
-    gap: spacing.md,
+  overviewLayout: {
+    marginBottom: spacing.sm,
   },
-  statsRow: {
+  overviewLayoutLandscape: {
     flexDirection: 'row',
-    gap: spacing.md,
+    alignItems: 'flex-start',
+    gap: spacing.lg,
+  },
+  propriedadesOverview: {
+    minWidth: 0,
+  },
+  propriedadesOverviewLandscape: {
+    width: '38%',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -6,
+    marginBottom: spacing.lg,
+  },
+  statsGridLandscape: {
+    flex: 1,
+    minWidth: 0,
+  },
+  statCardWrapper: {
+    marginBottom: spacing.md,
   },
   secao: {
     marginBottom: spacing.xl,

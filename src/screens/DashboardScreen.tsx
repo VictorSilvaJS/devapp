@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,10 @@ import {
   buildDashboardScopeData,
   buildDashboardSummary,
 } from '../utils/dashboardCompat';
+import {
+  getDashboardColumnWidth,
+  getDashboardResponsiveLayout,
+} from '../utils/dashboardResponsive';
 
 const emptyData = {
   propriedades: [] as any[],
@@ -65,6 +70,7 @@ const metricAccent = {
 };
 
 export default function DashboardScreen() {
+  const { width, height } = useWindowDimensions();
   const { user } = useAuthState();
   const {
     filtros,
@@ -77,6 +83,11 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const responsiveLayout = useMemo(
+    () => getDashboardResponsiveLayout(width, height),
+    [height, width]
+  );
+  const statCardWidth = getDashboardColumnWidth(responsiveLayout.standardColumns);
 
   const loadData = useCallback(async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
@@ -236,7 +247,10 @@ export default function DashboardScreen() {
 
         <View style={styles.statsGrid}>
           {cards.map((card) => (
-            <View key={card.label} style={styles.statCardWrapper}>
+            <View
+              key={card.label}
+              style={[styles.statCardWrapper, { width: statCardWidth }]}
+            >
               <StatCard
                 label={card.label}
                 value={card.value}
@@ -376,7 +390,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   statCardWrapper: {
-    width: '50%',
     marginBottom: spacing.md,
   },
   statusRow: {

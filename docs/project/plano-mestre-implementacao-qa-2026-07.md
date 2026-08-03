@@ -6,8 +6,8 @@
 >
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
-> concluídas; `MP-14`, `MP-15`, `MP-16` e `MP-17` também foram concluídas;
-> `MP-18` não foi iniciada
+> concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17` e `MP-18` também foram
+> concluídas; `MP-19` não foi iniciada
 
 ## 1. Objetivo
 
@@ -193,7 +193,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 16 | `MP-15` Navegação da Propriedade | `QA-P2-01` | Adotar Resumo, Talhões, Safras e Safrinha, Materiais, Visitas e Caderno | `MP-10` | `CONCLUIDO` |
 | 17 | `MP-16` Entrada de Talhões | `QA-P2-02` | Criar `Lista \| Mapa`, com Lista inicial no celular | `MP-15` | `CONCLUIDO` |
 | 18 | `MP-17` Filtros de Materiais | `QA-P2-03` | Reduzir poluição, eliminar seleção inicial indevida e organizar chips | `MP-09`, `MP-15` | `CONCLUIDO` |
-| 19 | `MP-18` Dashboards e indicadores responsivos | `QA-P2-06` | Corrigir grids, paisagem, largura dos cartões e colisão com FAB | `MP-11`, `MP-14` | `BACKLOG` |
+| 19 | `MP-18` Dashboards e indicadores responsivos | `QA-P2-06` | Corrigir grids, paisagem, largura dos cartões e colisão com FAB | `MP-11`, `MP-14` | `CONCLUIDO` |
 | 20 | `MP-19` Resumo da Propriedade | `QA-P2-07` | Remover repetição e priorizar indicadores úteis ao perfil | `MP-15` | `BACKLOG` |
 | 21 | `MP-20` Perfil do Produtor | `QA-P2-12` | Corrigir falsa affordance e oferecer solicitação de atualização | `MP-10` | `BACKLOG` |
 | 22 | `MP-21` Sistema de cartões operacionais | `QA-P2-10` | Criar casca comum para Caderno e Visitas sem apagar diferenças de domínio | `MP-11` | `BACKLOG` |
@@ -380,6 +380,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-31 | `MP-15` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `9383518` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou os seis destinos, retrato, paisagem e retorno | `dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/` | `MP-16`, `MP-17`, `MP-19` e `MP-23` permanecem separadas; `MP-16` não foi iniciada |
 | 2026-07-31 | `MP-16` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `e594005` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou Lista inicial, Mapa, abertura contextual de Talhão, retrato e paisagem | `dist/qa-session-2026-07-31/mp-16-entrada-talhoes/` | redesign responsivo do mapa permanece em `MP-31`; `MP-17` não foi iniciada |
 | 2026-07-31 | `MP-17` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `f0e1fef` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou estado neutro, rascunho, Aplicar, chips ativos e rolagens em retrato e paisagem | `dist/qa-session-2026-07-31/mp-17-filtros-materiais/` | fonte única permanece em `MP-28`; mapa responsivo em `MP-31`; `MP-18` não foi iniciada |
+| 2026-07-31 | `MP-18` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `2b2e8f7` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou grades responsivas, ação ancorada e rotação nos três perfis | `dist/qa-session-2026-07-31/mp-18-dashboards-responsivos/` | conteúdo dos indicadores permanece em `MP-19`; cartões em `MP-21`; matriz completa em `MP-40`; `MP-19` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -554,4 +555,18 @@ smoke confirmou estado neutro, cancelamento do rascunho, aplicação de dois
 filtros, chips removíveis e rolagens vertical e horizontal em retrato e
 paisagem. A rotação automática foi restaurada e não houve exceção fatal no
 logcat recente. A fonte única dos Materiais permanece em `MP-28` e o redesign
-responsivo do mapa em `MP-31`. `MP-18` não foi iniciada.
+responsivo do mapa em `MP-31`. `MP-18` foi executada na sequência.
+
+`MP-18` foi concluída em 2026-07-31. Os indicadores do Dashboard de Admin e
+Colaborador usam duas colunas em retrato e três em paisagem ampla. A tela de
+Propriedades substituiu a faixa horizontal fixa por uma grade de duas ou cinco
+colunas e mantém `Nova Propriedade` em uma faixa ancorada fora da rolagem. No
+Dashboard do Produtor, o panorama da Propriedade fica acima dos indicadores em
+retrato e ao lado de uma grade 2 x 3 em paisagem, sem truncar os rótulos.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. O APK foi instalado por cima no Android físico `8483A`; o
+smoke confirmou Admin, Colaborador e Produtor em retrato e paisagem, sem
+colisões ou exceção fatal no logcat recente. A rotação automática foi
+restaurada. O conteúdo dos indicadores permanece em `MP-19`, o sistema geral
+de cartões em `MP-21` e a matriz completa em `MP-40`. `MP-19` não foi iniciada.

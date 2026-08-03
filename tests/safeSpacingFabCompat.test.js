@@ -39,9 +39,8 @@ test('Caderno ancora a acao fora da rolagem e conserva o padding seguro', () => 
   assert.match(source, /safeActionArea:[\s\S]*?flexShrink: 0/);
 });
 
-test('demais listas mantem o comportamento flutuante existente', () => {
+test('listas ainda fora das migracoes MP-14 e MP-18 mantem o comportamento flutuante', () => {
   [
-    'src/screens/PropriedadesScreen.tsx',
     'src/screens/UsuariosScreen.tsx',
     'src/screens/VisitasScreen.tsx',
   ].forEach((screen) => {
