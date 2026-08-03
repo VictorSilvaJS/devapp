@@ -178,6 +178,26 @@ const run = async () => {
       })),
       /posterior/
     );
+    await assertRejectsWith(
+      () => service.createPeriodoProdutivoMetadata(baseInput({ tipo_periodo: undefined })),
+      /tipo_periodo: obrigatorio/
+    );
+    await assertRejectsWith(
+      () => service.createPeriodoProdutivoMetadata(baseInput({ cultura: '   ' })),
+      /cultura: obrigatorio/
+    );
+    await assertRejectsWith(
+      () => service.createPeriodoProdutivoMetadata(baseInput({ status: undefined })),
+      /status: obrigatorio/
+    );
+    await assertRejectsWith(
+      () => service.createPeriodoProdutivoMetadata(baseInput({ status: 'desconhecida' })),
+      /status: obrigatorio/
+    );
+    await assertRejectsWith(
+      () => service.createPeriodoProdutivoMetadata(baseInput({ ano_agricola: '2026' })),
+      /AAAA\/AAAA/
+    );
   });
 };
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,22 +15,44 @@ import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
 import RadioCardGroup from '../components/RadioCardGroup';
+import SelectField from '../components/SelectField';
 import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
-import { Produtor } from '../api/mock';
+import { LimiteArea, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 import {
   findFazendaById,
+  filtrarLimitesPorFazendaIds,
   getFazendaId,
   podeGerenciarPeriodoProdutivoEmFazenda,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { getTalhaoConsultaId, getTalhaoConsultaNome } from '../utils/talhaoConsultaCompat';
+import {
+  buildPeriodoProdutivoTalhaoOptions,
+  maskPeriodoProdutivoAnoAgricola,
+  PERIODO_PRODUTIVO_CULTURA_OPTIONS,
+  PERIODO_PRODUTIVO_CULTURA_OUTRO,
+  PeriodoProdutivoCulturaOption,
+  resolvePeriodoProdutivoCulturaSelection,
+  resolvePeriodoProdutivoCulturaValue,
+  validatePeriodoProdutivoFormValues,
+} from '../utils/periodoProdutivoFormCompat';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import type { PeriodoProdutivoStatus, PeriodoProdutivoTipo } from '../types/periodoProdutivo';
 import { colors, shadows, spacing, typography } from '../theme';
 
-const PERIODO_FORM_ERROR_ORDER = ['fazenda', 'tipoPeriodo', 'cultura', 'anoAgricola', 'dataFim'] as const;
+const PERIODO_FORM_ERROR_ORDER = [
+  'fazenda',
+  'tipoPeriodo',
+  'cultura',
+  'culturaOutro',
+  'anoAgricola',
+  'talhao',
+  'dataFim',
+  'status',
+] as const;
 
 const TIPO_OPTIONS = [
   {
@@ -100,16 +122,23 @@ export default function PeriodoProdutivoFormScreen() {
   const [saving, setSaving] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
+  const [talhoesDisponiveis, setTalhoesDisponiveis] = useState<any[]>([]);
 
-  const [tipoPeriodo, setTipoPeriodo] = useState<PeriodoProdutivoTipo>('safra');
-  const [cultura, setCultura] = useState('');
+  const [tipoPeriodo, setTipoPeriodo] = useState<PeriodoProdutivoTipo | ''>('');
+  const [culturaOption, setCulturaOption] = useState<PeriodoProdutivoCulturaOption>('');
+  const [culturaOutro, setCulturaOutro] = useState('');
   const [anoAgricola, setAnoAgricola] = useState('');
   const [dataInicio, setDataInicio] = useState<Date | null>(null);
   const [dataFim, setDataFim] = useState<Date | null>(null);
-  const [status, setStatus] = useState<PeriodoProdutivoStatus>('planejada');
+  const [status, setStatus] = useState<PeriodoProdutivoStatus | ''>('');
   const [talhaoId, setTalhaoId] = useState('');
   const [talhao, setTalhao] = useState('');
   const [observacoes, setObservacoes] = useState('');
+
+  const talhaoOptions = useMemo(() => buildPeriodoProdutivoTalhaoOptions(
+    talhoesDisponiveis,
+    { id: talhaoId, nome: talhao }
+  ), [talhao, talhaoId, talhoesDisponiveis]);
 
   useFocusEffect(
     useCallback(() => {
@@ -122,7 +151,10 @@ export default function PeriodoProdutivoFormScreen() {
     setAccessDenied(false);
 
     try {
-      const fazendas = await Produtor.list();
+      const [fazendas, todosLimites] = await Promise.all([
+        Produtor.list(),
+        LimiteArea.list(),
+      ]);
       let fazendaContexto = null;
       let periodo = null;
 
@@ -146,10 +178,15 @@ export default function PeriodoProdutivoFormScreen() {
 
       setFazenda(fazendaContexto);
       setPeriodoOriginal(periodo);
+      const fazendaContextoId = getFazendaId(fazendaContexto);
+      const limitesDaFazenda = filtrarLimitesPorFazendaIds(todosLimites, [fazendaContextoId]);
+      setTalhoesDisponiveis(limitesDaFazenda);
 
       if (periodo) {
         setTipoPeriodo(periodo.tipo_periodo === 'safrinha' ? 'safrinha' : 'safra');
-        setCultura(periodo.cultura || '');
+        const culturaSelection = resolvePeriodoProdutivoCulturaSelection(periodo.cultura);
+        setCulturaOption(culturaSelection.option);
+        setCulturaOutro(culturaSelection.outro);
         setAnoAgricola(periodo.ano_agricola || '');
         setDataInicio(parseDate(periodo.data_inicio));
         setDataFim(parseDate(periodo.data_fim));
@@ -162,8 +199,21 @@ export default function PeriodoProdutivoFormScreen() {
         setTalhao(periodo.talhao_nome || periodo.talhao || '');
         setObservacoes(periodo.observacoes || '');
       } else {
-        setTalhaoId(routeTalhaoId);
-        setTalhao(routeTalhao);
+        setTipoPeriodo('');
+        setCulturaOption('');
+        setCulturaOutro('');
+        setAnoAgricola('');
+        setDataInicio(null);
+        setDataFim(null);
+        setStatus('');
+        setObservacoes('');
+
+        const routeTalhaoMatch = limitesDaFazenda.find((item) => (
+          getTalhaoConsultaId(item) === routeTalhaoId
+          || getTalhaoConsultaNome(item) === routeTalhao
+        ));
+        setTalhaoId(routeTalhaoMatch ? getTalhaoConsultaId(routeTalhaoMatch) : '');
+        setTalhao(routeTalhaoMatch ? getTalhaoConsultaNome(routeTalhaoMatch) : '');
       }
     } catch (error) {
       console.error('Erro ao carregar periodo produtivo:', error);
@@ -181,21 +231,15 @@ export default function PeriodoProdutivoFormScreen() {
       newErrors.fazenda = 'Propriedade não encontrada';
     }
 
-    if (!tipoPeriodo) {
-      newErrors.tipoPeriodo = 'Selecione o tipo';
-    }
-
-    if (!cultura.trim()) {
-      newErrors.cultura = 'Informe a cultura';
-    }
-
-    if (!anoAgricola.trim()) {
-      newErrors.anoAgricola = 'Informe o ano agrícola';
-    }
-
-    if (dataInicio && dataFim && dataInicio.getTime() > dataFim.getTime()) {
-      newErrors.dataFim = 'A data final deve ser posterior ao início';
-    }
+    Object.assign(newErrors, validatePeriodoProdutivoFormValues({
+      tipoPeriodo,
+      culturaOption,
+      culturaOutro,
+      anoAgricola,
+      dataInicio,
+      dataFim,
+      status,
+    }));
 
     setErrors(newErrors);
     formValidation.focusFirstError(newErrors);
@@ -215,18 +259,19 @@ export default function PeriodoProdutivoFormScreen() {
 
     const fazendaId = getFazendaId(fazenda);
     const fazendaInfo = getFazendaUiInfo(fazenda);
+    const cultura = resolvePeriodoProdutivoCulturaValue(culturaOption, culturaOutro);
     const payload = {
       propriedade_id: fazendaId,
       propriedadeId: fazendaId,
       fazenda_id: fazendaId,
       fazendaId,
       nome_propriedade: fazendaInfo.fazendaNome,
-      tipo_periodo: tipoPeriodo,
-      cultura: cultura.trim(),
+      tipo_periodo: tipoPeriodo as PeriodoProdutivoTipo,
+      cultura,
       ano_agricola: anoAgricola.trim(),
       data_inicio: toIsoDate(dataInicio),
       data_fim: toIsoDate(dataFim),
-      status,
+      status: status as PeriodoProdutivoStatus,
       talhao_id: talhao.trim() ? talhaoId || undefined : undefined,
       talhaoId: talhao.trim() ? talhaoId || undefined : undefined,
       talhao_nome: talhao.trim() || undefined,
@@ -330,19 +375,37 @@ export default function PeriodoProdutivoFormScreen() {
           </View>
 
           <View ref={formValidation.registerField('cultura')} collapsable={false}>
-            <FormField
-              ref={formValidation.registerFocusable('cultura')}
+            <SelectField
               label="Cultura"
               required
-              value={cultura}
-              onChangeText={(value) => {
-                setCultura(value);
-                setErrors((prev) => ({ ...prev, cultura: null }));
+              value={culturaOption}
+              options={[...PERIODO_PRODUTIVO_CULTURA_OPTIONS]}
+              onChange={(value) => {
+                setCulturaOption(value as PeriodoProdutivoCulturaOption);
+                if (value !== PERIODO_PRODUTIVO_CULTURA_OUTRO) setCulturaOutro('');
+                setErrors((prev) => ({ ...prev, cultura: null, culturaOutro: null }));
               }}
-              placeholder="Ex: Soja, Milho, Pousio"
+              placeholder="Selecione a cultura"
               error={errors.cultura}
             />
           </View>
+
+          {culturaOption === PERIODO_PRODUTIVO_CULTURA_OUTRO ? (
+            <View ref={formValidation.registerField('culturaOutro')} collapsable={false}>
+              <FormField
+                ref={formValidation.registerFocusable('culturaOutro')}
+                label="Qual cultura?"
+                required
+                value={culturaOutro}
+                onChangeText={(value) => {
+                  setCulturaOutro(value);
+                  setErrors((prev) => ({ ...prev, culturaOutro: null }));
+                }}
+                placeholder="Informe a cultura"
+                error={errors.culturaOutro}
+              />
+            </View>
+          ) : null}
 
           <View ref={formValidation.registerField('anoAgricola')} collapsable={false}>
             <FormField
@@ -351,21 +414,29 @@ export default function PeriodoProdutivoFormScreen() {
               required
               value={anoAgricola}
               onChangeText={(value) => {
-                setAnoAgricola(value);
+                setAnoAgricola(maskPeriodoProdutivoAnoAgricola(value));
                 setErrors((prev) => ({ ...prev, anoAgricola: null }));
               }}
-              placeholder="Ex: 2025/2026"
+              placeholder="AAAA/AAAA"
+              keyboardType="number-pad"
+              maxLength={9}
               error={errors.anoAgricola}
             />
           </View>
 
-          <FormField
-            label="Talhão"
-            value={talhao}
-            onChangeText={setTalhao}
-            placeholder="Opcional"
-            helperText="Deixe em branco para vincular o período à Propriedade inteira."
-          />
+          <View ref={formValidation.registerField('talhao')} collapsable={false}>
+            <SelectField
+              label="Talhão"
+              value={talhaoOptions.selectedValue}
+              options={talhaoOptions.options}
+              onChange={(value) => {
+                const selected = talhaoOptions.options.find((option) => option.value === value);
+                setTalhaoId(value);
+                setTalhao(value ? selected?.label || '' : '');
+              }}
+              helperText="Opcional. Selecione somente um Talhão desta Propriedade."
+            />
+          </View>
 
           <DatePicker
             label="Data de início"
@@ -405,14 +476,20 @@ export default function PeriodoProdutivoFormScreen() {
             </TouchableOpacity>
           ) : null}
 
-          <Text style={styles.label}>
-            Status <Text style={styles.required}>*</Text>
-          </Text>
-          <RadioCardGroup
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={(value) => setStatus(value as PeriodoProdutivoStatus)}
-          />
+          <View ref={formValidation.registerField('status')} collapsable={false}>
+            <Text style={styles.label}>
+              Status <Text style={styles.required}>*</Text>
+            </Text>
+            <RadioCardGroup
+              options={STATUS_OPTIONS}
+              value={status}
+              onChange={(value) => {
+                setStatus(value as PeriodoProdutivoStatus);
+                setErrors((prev) => ({ ...prev, status: null }));
+              }}
+              error={errors.status}
+            />
+          </View>
 
           <FormField
             label="Observações"

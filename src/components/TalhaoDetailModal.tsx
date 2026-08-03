@@ -91,13 +91,11 @@ export default function TalhaoDetailModal({
   materiaisTalhao = [],
   materiaisPropriedade = [],
   canCreateCaderno = false,
-  canManagePeriodo = false,
   isProdutorView = false,
   getCadernoTipoLabel,
   getCadernoTalhaoLabel,
   getCadernoPeriodoProdutivoLabel,
   onCreateCaderno,
-  onCreatePeriodo,
   onViewMateriaisTalhao,
   onViewMapa,
   onOpenCaderno,
@@ -163,7 +161,7 @@ export default function TalhaoDetailModal({
     <TouchableOpacity
       key={periodo.id}
       style={styles.contextItem}
-      activeOpacity={canManagePeriodo && onCreatePeriodo ? 0.82 : 1}
+      activeOpacity={1}
       disabled
     >
       <View style={styles.contextIcon}>
@@ -310,12 +308,6 @@ export default function TalhaoDetailModal({
                   <TouchableOpacity style={styles.actionButton} onPress={() => onCreateCaderno?.(talhao)}>
                     <Ionicons name="book-outline" size={18} color={colors.white} />
                     <Text style={styles.actionButtonText}>Registrar no Caderno</Text>
-                  </TouchableOpacity>
-                ) : null}
-                {canManagePeriodo ? (
-                  <TouchableOpacity style={styles.secondaryActionButton} onPress={() => onCreatePeriodo?.(talhao)}>
-                    <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-                    <Text style={styles.secondaryActionText}>Nova Safra/Safrinha</Text>
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={styles.secondaryActionButton} onPress={() => onViewMateriaisTalhao?.(talhao)}>

@@ -4648,4 +4648,35 @@ rotacao automatica foi restaurada e nao houve excecao fatal no logcat recente.
 Evidencias: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
 
 Transicoes, comandos auditados e validacao produtiva permanecem em `MP-27`.
-`MP-23` nao foi iniciada.
+`MP-23` foi executada na sequencia; `MP-24` nao foi iniciada.
+
+## MP-23 - Safras E Safrinha
+
+Status em 2026-08-03: `CONCLUIDO`.
+
+A aba `Safras e Safrinha` da Propriedade concentra a unica acao de criacao.
+A acao contextual duplicada foi removida do detalhe de Talhao. Em novos
+periodos, tipo e status iniciam sem selecao; cultura usa as opcoes controladas
+`Soja`, `Milho`, `Algodao` e `Outro`; o ano agricola recebe mascara e exige
+`AAAA/AAAA`; e o Talhao pode ser a Propriedade inteira ou um item pertencente
+a Propriedade atual, sem repetir demarcacoes homonimas. Datas continuam
+opcionais, mas o termino nao pode ser anterior ao inicio.
+
+As mensagens permanecem junto aos campos e o primeiro erro segue o contrato
+de foco e rolagem de `MP-13`. O servico local aplica novamente as validacoes
+essenciais antes da persistencia. Edicao preserva referencias textuais legadas
+que ainda nao possuem identidade estavel.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release final de 92.035.304 bytes, SHA-256
+`33C1F9589A36A8C6710C5D0A3D9DDC60CA552DFBEEAD998681AC39DA73CBCDCF`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke passou como
+Admin e Produtor em retrato e paisagem, incluindo acao unica, formulario
+neutro, erros obrigatorios, seletores, mascara, criacao, edicao e permissao.
+A rotacao automatica foi restaurada e nao houve excecao fatal no logcat
+recente. Evidencias:
+`dist/qa-session-2026-08-03/mp-23-safras-safrinha/`.
+
+IDs produtivos estaveis de responsavel e Talhao permanecem em `MP-24`.
+Backend, sincronizacao, auditoria e regras completas de encerramento ou
+remocao permanecem fora deste corte. `MP-24` nao foi iniciada.

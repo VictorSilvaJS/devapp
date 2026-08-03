@@ -7,8 +7,8 @@
 > Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
 > concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17`, `MP-18` e `MP-19` também
-> foram concluídas; `MP-20`, `MP-21` e `MP-22` foram concluídas; `MP-23` não
-> foi iniciada
+> foram concluídas; `MP-20`, `MP-21`, `MP-22` e `MP-23` foram concluídas;
+> `MP-24` não foi iniciada
 
 ## 1. Objetivo
 
@@ -199,7 +199,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 21 | `MP-20` Perfil do Produtor | `QA-P2-12` | Corrigir falsa affordance e oferecer solicitação de atualização | `MP-10` | `CONCLUIDO` |
 | 22 | `MP-21` Sistema de cartões operacionais | `QA-P2-10` | Criar casca comum para Caderno e Visitas sem apagar diferenças de domínio | `MP-11` | `CONCLUIDO` |
 | 23 | `MP-22` Lista de Visitas | `QA-P2-11` | Humanizar enums, separar próximas/histórico e corrigir ordenação/status | `MP-05`, `MP-21` | `CONCLUIDO` |
-| 24 | `MP-23` Safras e Safrinha | `QA-P2-15` | Remover ação duplicada e validar Talhão, ano, cultura, datas e status | `MP-15`, `MP-13` | `BACKLOG` |
+| 24 | `MP-23` Safras e Safrinha | `QA-P2-15` | Remover ação duplicada e validar Talhão, ano, cultura, datas e status | `MP-15`, `MP-13` | `CONCLUIDO` |
 
 #### Critério de aceite transversal da Fase 2
 
@@ -387,6 +387,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-20` | `CONCLUIDO` | `appQA` / árvore limpa sobre `27bf5a4` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou affordance, detalhe, retorno e solicitação sem sucesso falso em retrato e paisagem | `dist/qa-session-2026-08-03/mp-20-perfil-produtor/` | backend, protocolo e edição cadastral direta permanecem fora do corte; `MP-21` não foi iniciada |
 | 2026-08-03 | `MP-21` | `CONCLUIDO` | `appQA` / árvore limpa sobre `5cf9513` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou a casca comum, diferenças de domínio, detalhe, retorno, rolagem e ambas as orientações | `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/` | agrupamento, ordenação e humanização geral dos estados de Visita permanecem em `MP-22`; `MP-22` não foi iniciada |
 | 2026-08-03 | `MP-22` | `CONCLUIDO` | `appQA` / árvore limpa sobre `f2aec81` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou seções, ordem, rótulos, atraso derivado, detalhe e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-22-lista-visitas/` | máquina de estados e comandos permanecem em `MP-27`; `MP-23` não foi iniciada |
+| 2026-08-03 | `MP-23` | `CONCLUIDO` | `appQA` / árvore limpa sobre `c59e777` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou ação única, campos controlados, validações, persistência, edição e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-23-safras-safrinha/` | referências produtivas estáveis permanecem em `MP-24`; backend, sincronização e auditoria seguem fora deste corte; `MP-24` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -656,4 +657,28 @@ não houve exceção fatal no logcat recente. A rotação automática foi restau
 Evidências: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
 
 Transições, comandos auditados e validação produtiva permanecem em `MP-27`.
-`MP-23` não foi iniciada.
+`MP-23` foi executada na sequência; `MP-24` não foi iniciada.
+
+`MP-23` foi concluída em 2026-08-03. A aba `Safras e Safrinha` da
+Propriedade passou a concentrar a única ação de criação; a ação contextual
+duplicada do detalhe de Talhão foi removida. Novos períodos começam sem tipo
+ou status selecionado. Cultura usa a lista `Soja`, `Milho`, `Algodão` e
+`Outro`; ano agrícola exige `AAAA/AAAA`; Talhão aceita a Propriedade inteira
+ou um Talhão pertencente ao contexto, sem repetir demarcações homônimas; e
+datas opcionais rejeitam término anterior ao início. O serviço repete as
+validações essenciais antes de
+persistir.
+
+Teste focado, typecheck, suíte `domain-compat`, `git diff --check` e build
+release passaram. O APK final de 92.035.304 bytes, SHA-256
+`33C1F9589A36A8C6710C5D0A3D9DDC60CA552DFBEEAD998681AC39DA73CBCDCF`, foi
+instalado por cima no Android físico `8483A`. O smoke passou como Admin e
+Produtor em retrato e paisagem, incluindo estado inicial neutro, mensagens de
+erro, seletores controlados, máscara de ano, criação, reabertura para edição e
+ausência da ação de criação para o Produtor; não houve exceção fatal no logcat
+recente. A rotação automática foi restaurada. Evidências:
+`dist/qa-session-2026-08-03/mp-23-safras-safrinha/`.
+
+IDs produtivos estáveis de responsável e Talhão permanecem em `MP-24`.
+Backend, sincronização, auditoria e regras completas de encerramento ou
+remoção continuam fora deste corte. `MP-24` não foi iniciada.

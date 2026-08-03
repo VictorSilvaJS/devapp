@@ -48,7 +48,6 @@ import {
   getFazendaId,
   getLimiteAreaFazendaId,
   getMapaFazendaId,
-  podeGerenciarPeriodoProdutivoEmFazenda,
   podeIncluirCadernoEmFazenda,
 } from '../utils/acessoControle';
 import {
@@ -866,9 +865,6 @@ export default function MapasScreen({ route, navigation }) {
   const podeCriarCadernoNoTalhao = consultaPorFazenda
     && !!contextoConsulta.fazenda
     && podeIncluirCadernoEmFazenda(user, contextoConsulta.fazenda);
-  const podeGerenciarPeriodoNoTalhao = consultaPorFazenda
-    && !!contextoConsulta.fazenda
-    && podeGerenciarPeriodoProdutivoEmFazenda(user, contextoConsulta.fazenda);
 
   // ──────────────────────────────────────────────
   // FILTROS DA DEMARCAÇÃO DO PANORAMA
@@ -1165,32 +1161,6 @@ export default function MapasScreen({ route, navigation }) {
     setTalhaoDetailVisible(false);
     navigation.navigate('NovoCaderno', {
       ...params,
-      talhaoId,
-      talhao_id: talhaoId,
-      talhaoNome,
-      talhao: talhaoNome,
-    });
-  }, [consultaPorFazenda, contextoConsulta.fazenda, navigation, selectedTalhao, toast, user]);
-
-  const handleNovoPeriodoTalhao = useCallback((talhao = selectedTalhao) => {
-    if (!consultaPorFazenda || !contextoConsulta.fazenda || !talhao) {
-      toast.showInfo('Abra uma Propriedade para criar Safra/Safrinha no Talhão.');
-      return;
-    }
-
-    if (!podeGerenciarPeriodoProdutivoEmFazenda(user, contextoConsulta.fazenda)) {
-      toast.showWarning('Você não tem permissão para gerenciar Safra/Safrinha neste Talhão.');
-      return;
-    }
-
-    const fazendaInfo = getFazendaUiInfo(contextoConsulta.fazenda);
-    const talhaoNome = getTalhaoConsultaNome(talhao);
-    const talhaoId = getTalhaoConsultaId(talhao);
-    setTalhaoDetailVisible(false);
-    navigation.navigate('NovoPeriodoProdutivo', {
-      fazendaId: fazendaInfo.id,
-      produtorId: fazendaInfo.id,
-      propriedadeId: fazendaInfo.id,
       talhaoId,
       talhao_id: talhaoId,
       talhaoNome,
@@ -3871,13 +3841,11 @@ export default function MapasScreen({ route, navigation }) {
         materiaisTalhao={materiaisTalhaoConsulta.doTalhao}
         materiaisPropriedade={materiaisTalhaoConsulta.daPropriedade}
         canCreateCaderno={podeCriarCadernoNoTalhao}
-        canManagePeriodo={podeGerenciarPeriodoNoTalhao}
         isProdutorView={isProdutorView}
         getCadernoTipoLabel={getCadernoTipoLabel}
         getCadernoTalhaoLabel={getCadernoTalhaoLabel}
         getCadernoPeriodoProdutivoLabel={getCadernoPeriodoProdutivoLabel}
         onCreateCaderno={handleNovoCadernoTalhao}
-        onCreatePeriodo={handleNovoPeriodoTalhao}
         onViewMateriaisTalhao={handleFiltrarMateriaisTalhao}
         onViewMapa={handleVerTalhaoNoMapa}
         onOpenCaderno={handleAbrirCadernoTalhao}

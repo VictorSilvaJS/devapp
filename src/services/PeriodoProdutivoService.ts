@@ -12,6 +12,7 @@ import {
   PeriodoProdutivoStatus,
   PeriodoProdutivoTipo,
 } from '../types/periodoProdutivo';
+import { isPeriodoProdutivoAnoAgricolaValido } from '../utils/periodoProdutivoFormCompat';
 
 export { PERIODO_PRODUTIVO_STORAGE_KEY } from '../types/periodoProdutivo';
 
@@ -122,8 +123,10 @@ const normalizeTipoPeriodo = (value: unknown): PeriodoProdutivoTipo => {
   throw new Error('PeriodoProdutivo.tipo_periodo: obrigatorio');
 };
 
-const normalizeStatus = (value: unknown): PeriodoProdutivoStatus =>
-  isPeriodoStatus(value) ? value : 'planejada';
+const normalizeStatus = (value: unknown): PeriodoProdutivoStatus => {
+  if (isPeriodoStatus(value)) return value;
+  throw new Error('PeriodoProdutivo.status: obrigatorio');
+};
 
 const normalizeRegistroStatus = (value: unknown): PeriodoProdutivoRegistroStatus =>
   isRegistroStatus(value) ? value : 'ativo';
@@ -176,7 +179,7 @@ const compareDateStrings = (start?: string, end?: string): void => {
   const startTime = new Date(start).getTime();
   const endTime = new Date(end).getTime();
   if (Number.isFinite(startTime) && Number.isFinite(endTime) && startTime > endTime) {
-    throw new Error('PeriodoProdutivo.data_fim: deve ser posterior ao inicio');
+    throw new Error('PeriodoProdutivo.data_fim: deve ser igual ou posterior ao inicio');
   }
 };
 
@@ -258,6 +261,9 @@ const buildMetadataFromInput = (
   }
   if (!anoAgricola) {
     throw new Error('PeriodoProdutivo.ano_agricola: obrigatorio');
+  }
+  if (!isPeriodoProdutivoAnoAgricolaValido(anoAgricola)) {
+    throw new Error('PeriodoProdutivo.ano_agricola: use o formato AAAA/AAAA');
   }
 
   const label = firstNonEmptyString(input.label) || buildPeriodoProdutivoLabel({
