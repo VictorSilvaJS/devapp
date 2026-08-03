@@ -4569,4 +4569,31 @@ Evidencias:
 
 O sistema geral de cartoes permanece em `MP-21`; regras de estado de Visitas
 em `MP-22`; a matriz completa de acessibilidade e aparelhos em `MP-40`.
-`MP-20` nao foi iniciada.
+
+## MP-20 - Perfil Do Produtor
+
+Status em 2026-08-03: `CONCLUIDO`.
+
+No Perfil do Produtor, as Propriedades vinculadas agora sao acoes explicitas,
+com chevron, papel acessivel de botao e abertura do detalhe protegido
+existente. O retorno preserva o Perfil e o contexto da Propriedade. A
+referencia a `cadastro local` foi removida da experiencia final.
+
+A acao `Solicitar atualizacao cadastral` prepara o compartilhador nativo com
+nome do Produtor e Propriedade(s). Ela nao permite edicao direta, nao cria
+persistencia e nao afirma envio, registro ou protocolo. O cancelamento do
+compartilhador retorna ao Perfil sem sucesso falso. Admin e Colaborador
+continuam com `Editar dados` e sem a acao exclusiva do Produtor.
+
+Teste focado, typecheck, `test:domain-compat`, `git diff --check` e
+`assembleRelease` passaram. O APK release final de 92.028.644 bytes, SHA-256
+`A7029A264F34E9DB346E1E3AD61E983C93DE7189007C3A16F8C50DCF45C5DE18`, foi
+instalado por cima via `adb` no Android fisico `8483A`. O smoke passou em
+retrato e paisagem, incluindo detalhe, retorno, compartilhamento e
+cancelamento; a regressao de Admin e Colaborador tambem passou. A rotacao
+automatica foi restaurada e nao houve excecao fatal no logcat recente.
+Evidencias:
+`dist/qa-session-2026-08-03/mp-20-perfil-produtor/`.
+
+Backend, protocolo persistente e edicao cadastral direta permanecem fora do
+corte. `MP-21` nao foi iniciada.

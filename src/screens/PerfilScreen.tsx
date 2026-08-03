@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, LayoutAnimation, ScrollView, Share } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,8 @@ import SectionCard from '../components/SectionCard';
 import { Produtor, User } from '../api/mock';
 import { normalizeNome } from '../domain';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
+import { buildSolicitacaoAtualizacaoCadastral } from '../utils/perfilProdutorCompat';
 import {
   getPropriedadesDoColaborador,
   getPropriedadesDoUsuarioProdutor,
@@ -237,6 +239,31 @@ export default function PerfilScreen({ navigation }) {
     }
   };
 
+  const handleAbrirPropriedade = (propriedade) => {
+    const params = buildPropriedadeDetailRouteParams(propriedade);
+    if (params) {
+      navigation.navigate('ProdutorDetail', params);
+    }
+  };
+
+  const handleSolicitarAtualizacaoCadastral = async () => {
+    const message = buildSolicitacaoAtualizacaoCadastral({
+      produtorNome: nome,
+      propriedades: propriedadesVisiveis.map(
+        (propriedade) => getFazendaUiInfo(propriedade).fazendaNome
+      ),
+    });
+
+    try {
+      await Share.share({
+        title: 'Solicitar atualização cadastral',
+        message,
+      });
+    } catch (error) {
+      toast.showError('Não foi possível preparar a solicitação');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -286,7 +313,7 @@ export default function PerfilScreen({ navigation }) {
             <SectionCard
               title="Minhas Propriedades"
               icon="business-outline"
-              subtitle={propriedadesVisiveis.length > 0 ? 'Propriedades vinculadas ao seu cadastro local.' : 'Nenhuma propriedade vinculada.'}
+              subtitle={propriedadesVisiveis.length > 0 ? 'Propriedades vinculadas ao seu perfil.' : 'Nenhuma propriedade vinculada.'}
             >
               {propriedadesVisiveis.length === 0 ? (
                 <Text style={styles.emptyText}>Nenhuma propriedade vinculada</Text>
@@ -294,7 +321,14 @@ export default function PerfilScreen({ navigation }) {
                 propriedadesVisiveis.map((propriedade) => {
                   const info = getFazendaUiInfo(propriedade);
                   return (
-                    <View key={info.id} style={styles.propertyRow}>
+                    <TouchableOpacity
+                      key={info.id}
+                      style={[styles.propertyRow, styles.propertyRowAction]}
+                      onPress={() => handleAbrirPropriedade(propriedade)}
+                      activeOpacity={0.75}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Abrir ${info.fazendaNome || 'Propriedade sem nome'}`}
+                    >
                       <Ionicons name="home-outline" size={18} color={colors.primary} />
                       <View style={styles.propertyText}>
                         <Text style={styles.propertyTitle}>{info.fazendaNome || 'Propriedade sem nome'}</Text>
@@ -302,15 +336,25 @@ export default function PerfilScreen({ navigation }) {
                           {info.localizacao || 'Localização não informada'}
                         </Text>
                       </View>
-                    </View>
+                      <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
+                    </TouchableOpacity>
                   );
                 })
               )}
               <InfoBox
-                variant="warning"
-                message="Para alterar seus dados cadastrais, solicite atualização ao administrador ou colaborador responsável."
+                message="Se algum dado estiver incorreto, prepare uma solicitação para a equipe responsável. A alteração não é feita diretamente pelo Perfil."
                 style={styles.infoBoxInline}
               />
+              <TouchableOpacity
+                style={styles.requestUpdateButton}
+                onPress={handleSolicitarAtualizacaoCadastral}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Solicitar atualização cadastral"
+              >
+                <Ionicons name="share-social-outline" size={18} color={colors.white} />
+                <Text style={styles.requestUpdateButtonText}>Solicitar atualização cadastral</Text>
+              </TouchableOpacity>
             </SectionCard>
           )}
 
@@ -504,6 +548,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight
   },
+  propertyRowAction: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.backgroundAlt,
+  },
   propertyText: {
     flex: 1,
     minWidth: 0
@@ -517,6 +570,26 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.fontCaption + 1,
     marginTop: 2
+  },
+  requestUpdateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    minHeight: 48,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.radius,
+    backgroundColor: colors.primary,
+    ...shadows.sm,
+  },
+  requestUpdateButtonText: {
+    flexShrink: 1,
+    color: colors.white,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+    textAlign: 'center',
   },
   emptyText: {
     color: colors.muted,
