@@ -5018,3 +5018,45 @@ Evidencias: `dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/`.
 
 Rede, SSL, ciclo de vida da WebView e fallback offline permanecem fora deste
 corte e reservados a `MP-32`.
+
+## MP-32 - WebView, Rede E Fallback Offline
+
+Status em 2026-08-04: `CONCLUIDO` no corte local demonstrativo.
+
+O mapa agora diferencia falha do mapa-base, do motor Leaflet, do documento e
+do processo renderizador. Erros SSL, inclusive o codigo Android `-202`, rede,
+HTTP e timeout geram estado controlado e diagnostico tecnico sanitizado, sem
+registrar URL completa ou parametros. Quando somente os mosaicos falham, a
+WebView continua montada, as demarcacoes de Talhoes permanecem disponiveis e
+o usuario recebe `Mapa-base indisponivel` com `Tentar novamente`. Falha do
+motor usa a demarcacao vetorial local, sem declarar cache offline completo.
+
+O HTML do mapa observa carga, falha e timeout dos mosaicos e reconhece
+recuperacao posterior. O cache HTTPS da WebView e reutilizado de forma
+oportunista e conteudo misto permanece bloqueado. O aviso respeita os insets
+do cabecalho e nao cobre os controles principais.
+
+No Android, a WebView agora e destruida somente depois do `detach` real do
+container React. Um `postinstall` versionado aplica esse ajuste exclusivamente
+a `react-native-webview@13.16.1` e falha se a dependencia ou o trecho nativo
+nao corresponderem ao que foi revisado.
+
+O teste focado cobriu 9 cenarios; contratos de mapa e rota, typecheck,
+`git diff --check` e `packageRelease` passaram. A suite global executou a
+cobertura da MP-32 e parou depois somente na referencia preexistente ao arquivo
+ausente `tests/prescriptionZipPropertyManageWorkflow.test.js`.
+
+O APK release final de 92.339.816 bytes, SHA-256
+`3745F9E5859A92D61F18D5D220AB87D9A26565082E2115346AEFE1D55173B86F`, foi
+instalado por cima no Android fisico `8483A`. Com o Wi-Fi ja desligado, o smoke
+confirmou reaproveitamento de mosaicos em cache, estado controlado ao navegar
+para area sem cache, lista de Talhoes utilizavel, nova tentativa e cinco ciclos
+confirmados de abrir/voltar. Nao houve excecao fatal nem aviso de destruicao da
+WebView ainda anexada a janela.
+
+O SSL `-202` nao foi reproduzido fisicamente; o classificador e o fallback
+foram validados automaticamente, sem atribuir a causa ao aplicativo ou ao
+certificado. Cache de mosaicos nao representa pacote offline. Localizacao
+offline real permanece em `MP-38`; autenticacao real permanece bloqueada em
+`MP-33`, que nao foi iniciada. Evidencias:
+`dist/qa-session-2026-08-04/mp-32-webview-rede-offline/`.

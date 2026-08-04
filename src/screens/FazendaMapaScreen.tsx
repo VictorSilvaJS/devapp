@@ -691,6 +691,13 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         talhaoSelecionadoId={talhaoSelecionadoId}
         userLocation={userLocation}
         onTalhaoPress={handleTalhaoPress}
+        noticeTopInset={
+          insets.top
+          + 110
+          + (anosDisponiveis.length > 1 ? 44 : 0)
+          + (geoJsonTalhoesLocalAtivo || geoJsonTalhoesLocalErro ? 38 : 0)
+          + (locationMessage ? 52 : 0)
+        }
       />
 
       <SafeAreaView edges={['top']} style={styles.cabecalho} pointerEvents="box-none">

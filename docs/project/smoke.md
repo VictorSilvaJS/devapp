@@ -23,6 +23,30 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada MP-32 - WebView, Rede E Fallback Offline**
+
+Status geral em 2026-08-04: `PASSOU_NO_CORTE_LOCAL`. O APK release final foi
+instalado por cima no Android fisico `8483A`. O Wi-Fi global do aparelho ja
+estava desligado antes da rodada e permaneceu desligado. Cache de mosaicos foi
+tratado como oportunista, nao como pacote offline.
+
+| ID | Criticidade | Perfil | Area | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|---|
+| MP32-01 | P1 | Admin | Mapa | Abrir mapa com mosaicos previamente armazenados e rede indisponivel | Cache seguro pode aparecer sem bloquear demarcacoes e lista | Passou | Mapa-base em cache e 15 Talhoes abriram no APK final |
+| MP32-02 | P1 | Admin | Mapa-base | Navegar para area sem mosaicos armazenados | Mostrar estado controlado, manter consulta local e nao exibir erro nativo | Passou | Banner `Mapa-base indisponivel`, `Tentar novamente` e lista completa ficaram visiveis |
+| MP32-03 | P1 | Admin | Recuperacao | Acionar nova tentativa sem rede | Reexecutar a carga sem sucesso falso ou desmontar a WebView | Passou | Nova tentativa foi executada e o estado indisponivel permaneceu explicito |
+| MP32-04 | P1 | Admin | Ciclo de vida | Abrir o mapa e voltar cinco vezes | Retornar a Talhoes sem crash nem destruir WebView ainda anexada | Passou | Cinco aberturas e cinco retornos confirmados por hierarquia; zero aviso de `WebView.destroy` e zero fatal |
+| MP32-05 | P2 | Todos | Diagnostico | Classificar falhas de SSL, rede, HTTP, timeout, motor e processo | Registrar somente host/codigos e escolher fallback por recurso | Passou | Nove cenarios automatizados; SSL Android `-202` coberto sem registrar query string |
+
+APK: 92.339.816 bytes; SHA-256
+`3745F9E5859A92D61F18D5D220AB87D9A26565082E2115346AEFE1D55173B86F`.
+Evidencias completas:
+`dist/qa-session-2026-08-04/mp-32-webview-rede-offline/`.
+
+O erro SSL `-202` nao foi reproduzido no aparelho; nao se atribuiu causa ao
+aplicativo ou ao certificado sem evidencia. A localizacao offline real
+continua reservada a `MP-38`.
+
 **Rodada MP-26 - Apresentacao Da Localizacao**
 
 Status geral em 2026-08-03: `PASSOU_NO_CORTE_LOCAL`. O APK release foi

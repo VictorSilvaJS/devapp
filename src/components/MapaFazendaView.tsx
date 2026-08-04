@@ -10,6 +10,7 @@ import React, {
 import {
   ActivityIndicator,
   LayoutChangeEvent,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -23,8 +24,19 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
+import type {
+  WebViewErrorEvent,
+  WebViewHttpErrorEvent,
+  WebViewRenderProcessGoneEvent,
+  WebViewTerminatedEvent,
+} from 'react-native-webview/lib/WebViewTypes';
 import { colors, spacing, typography } from '../theme';
 import type { ForegroundUserLocation } from '../services/LocationForegroundService';
+import {
+  classifyMapaWebViewFailure,
+  type MapaWebViewDiagnostic,
+  type MapaWebViewFailureInput,
+} from '../utils/mapaWebViewCompat';
 import { buildLocationMapProjection } from '../utils/locationMapProjectionCompat';
 import { formatAreaHa } from '../utils/talhaoMedidasCompat';
 
@@ -61,6 +73,7 @@ interface Props {
   userLocation?: ForegroundUserLocation | null;
   onTalhaoPress?: (id: string) => void;
   onMapaReady?: () => void;
+  noticeTopInset?: number;
 }
 
 type SvgTalhao = TalhaoMapa & {
@@ -240,6 +253,12 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
       var map = null;
       var userLocationMarker = null;
       var userLocationAccuracyCircle = null;
+      var baseMapLayer = null;
+      var baseMapLoadedTiles = 0;
+      var baseMapFailedTiles = 0;
+      var baseMapConsecutiveFailures = 0;
+      var baseMapTimeout = null;
+      var baseMapStatus = 'idle';
 
       function post(tipo, payload) {
         try {
@@ -436,12 +455,74 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
         map.invalidateSize(false);
       }
 
+      function informarStatusMapaBase(status, motivo) {
+        if (baseMapStatus === status && status !== 'loading') {
+          return;
+        }
+        baseMapStatus = status;
+        post('mapa_base_status', { status: status, motivo: motivo || null });
+      }
+
+      function limparTimeoutMapaBase() {
+        if (baseMapTimeout) {
+          clearTimeout(baseMapTimeout);
+          baseMapTimeout = null;
+        }
+      }
+
+      function carregarMapaBase() {
+        if (!map) return false;
+
+        limparTimeoutMapaBase();
+        if (baseMapLayer) {
+          map.removeLayer(baseMapLayer);
+        }
+
+        baseMapLoadedTiles = 0;
+        baseMapFailedTiles = 0;
+        baseMapConsecutiveFailures = 0;
+        informarStatusMapaBase('loading', 'retry');
+
+        baseMapLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        });
+
+        baseMapLayer.on('tileload', function () {
+          baseMapLoadedTiles += 1;
+          baseMapConsecutiveFailures = 0;
+          limparTimeoutMapaBase();
+          informarStatusMapaBase('available', 'tile_loaded');
+        });
+
+        baseMapLayer.on('tileerror', function () {
+          baseMapFailedTiles += 1;
+          baseMapConsecutiveFailures += 1;
+          if (
+            (baseMapLoadedTiles === 0 && baseMapFailedTiles >= 2)
+            || baseMapConsecutiveFailures >= 3
+          ) {
+            informarStatusMapaBase('unavailable', 'tile_error');
+          }
+        });
+
+        baseMapLayer.addTo(map);
+        baseMapTimeout = setTimeout(function () {
+          baseMapTimeout = null;
+          if (baseMapLoadedTiles === 0) {
+            informarStatusMapaBase('unavailable', 'tile_timeout');
+          }
+        }, 4500);
+        return true;
+      }
+
       window.selecionarTalhao = selecionarTalhao;
       window.centralizarTalhao = centralizarTalhao;
       window.ajustarLimites = ajustarLimites;
       window.atualizarLocalizacaoUsuario = atualizarLocalizacaoUsuario;
       window.centralizarLocalizacaoUsuario = centralizarLocalizacaoUsuario;
       window.recalcularDimensoes = recalcularDimensoes;
+      window.recarregarMapaBase = carregarMapaBase;
 
       try {
         map = L.map('map', {
@@ -456,10 +537,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
         userLocationPane.style.zIndex = 720;
         userLocationPane.style.pointerEvents = 'none';
 
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+        carregarMapaBase();
 
         geojsonLayer = L.geoJSON(GEOJSON, {
           style: function (feature) {
@@ -649,14 +727,26 @@ function FallbackShapeMap({
 }
 
 const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
-  ({ talhoes, talhaoSelecionadoId, userLocation, onTalhaoPress, onMapaReady }, ref) => {
+  ({
+    talhoes,
+    talhaoSelecionadoId,
+    userLocation,
+    onTalhaoPress,
+    onMapaReady,
+    noticeTopInset = spacing.md,
+  }, ref) => {
     const webViewRef = useRef<WebView>(null);
     const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const locationSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const userLocationRef = useRef<ForegroundUserLocation | null | undefined>(userLocation);
+    const onMapaReadyRef = useRef(onMapaReady);
+    const mapaReadyNotificadoRef = useRef(false);
+    const ultimoDiagnosticoRef = useRef<string | null>(null);
     const [mapaPronto, setMapaPronto] = useState(false);
     const [fallbackAtivo, setFallbackAtivo] = useState(false);
+    const [diagnostico, setDiagnostico] = useState<MapaWebViewDiagnostic | null>(null);
     userLocationRef.current = userLocation;
+    onMapaReadyRef.current = onMapaReady;
 
     const html = useMemo(
       () => gerarHTMLLeaflet(talhoes || []),
@@ -664,39 +754,78 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
     );
     const webViewSource = useMemo(() => ({ html }), [html]);
 
+    const clearReadyTimeout = useCallback(() => {
+      if (readyTimeoutRef.current) {
+        clearTimeout(readyTimeoutRef.current);
+        readyTimeoutRef.current = null;
+      }
+    }, []);
+
+    const notifyMapaReady = useCallback(() => {
+      if (mapaReadyNotificadoRef.current) return;
+      mapaReadyNotificadoRef.current = true;
+      onMapaReadyRef.current?.();
+    }, []);
+
+    const reportFailure = useCallback((input: MapaWebViewFailureInput) => {
+      const nextDiagnostic = classifyMapaWebViewFailure(input);
+      const diagnosticKey = JSON.stringify(nextDiagnostic.technical);
+
+      if (ultimoDiagnosticoRef.current !== diagnosticKey) {
+        ultimoDiagnosticoRef.current = diagnosticKey;
+        console.warn('[MapaWebView]', {
+          kind: nextDiagnostic.kind,
+          scope: nextDiagnostic.scope,
+          fallbackMode: nextDiagnostic.fallbackMode,
+          ...nextDiagnostic.technical,
+        });
+      }
+
+      setDiagnostico((current) => (
+        current?.fallbackMode === 'vector' && nextDiagnostic.fallbackMode === 'base-only'
+          ? current
+          : nextDiagnostic
+      ));
+      if (nextDiagnostic.fallbackMode === 'vector') {
+        clearReadyTimeout();
+        setMapaPronto(false);
+        setFallbackAtivo(true);
+        notifyMapaReady();
+      }
+    }, [clearReadyTimeout, notifyMapaReady]);
+
+    const armReadyTimeout = useCallback(() => {
+      clearReadyTimeout();
+      readyTimeoutRef.current = setTimeout(() => {
+        reportFailure({
+          source: 'ready-timeout',
+          reason: 'leaflet_ready_timeout',
+        });
+      }, LEAFLET_READY_TIMEOUT_MS);
+    }, [clearReadyTimeout, reportFailure]);
+
     useEffect(() => {
       setMapaPronto(false);
       setFallbackAtivo(false);
+      setDiagnostico(null);
+      ultimoDiagnosticoRef.current = null;
+      mapaReadyNotificadoRef.current = false;
 
-      if (readyTimeoutRef.current) {
-        clearTimeout(readyTimeoutRef.current);
-      }
       if (locationSyncTimeoutRef.current) {
         clearTimeout(locationSyncTimeoutRef.current);
         locationSyncTimeoutRef.current = null;
       }
 
-      readyTimeoutRef.current = setTimeout(() => {
-        setFallbackAtivo(true);
-      }, LEAFLET_READY_TIMEOUT_MS);
+      armReadyTimeout();
 
       return () => {
-        if (readyTimeoutRef.current) {
-          clearTimeout(readyTimeoutRef.current);
-          readyTimeoutRef.current = null;
-        }
+        clearReadyTimeout();
         if (locationSyncTimeoutRef.current) {
           clearTimeout(locationSyncTimeoutRef.current);
           locationSyncTimeoutRef.current = null;
         }
       };
-    }, [html]);
-
-    useEffect(() => {
-      if (fallbackAtivo) {
-        onMapaReady?.();
-      }
-    }, [fallbackAtivo, onMapaReady]);
+    }, [armReadyTimeout, clearReadyTimeout, html]);
 
     const syncUserLocationToWebView = useCallback(() => {
       const currentLocation = userLocationRef.current;
@@ -785,18 +914,38 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
         try {
           const data = JSON.parse(event.nativeEvent.data);
           if (data.tipo === 'ready') {
-            if (readyTimeoutRef.current) {
-              clearTimeout(readyTimeoutRef.current);
-              readyTimeoutRef.current = null;
-            }
+            clearReadyTimeout();
             setMapaPronto(true);
             setFallbackAtivo(false);
-            onMapaReady?.();
+            setDiagnostico((current) => (
+              current?.fallbackMode === 'vector' ? null : current
+            ));
+            notifyMapaReady();
             syncUserLocationToWebView();
             return;
           }
           if (data.tipo === 'erro_mapa') {
-            setFallbackAtivo(true);
+            reportFailure({
+              source: 'leaflet',
+              reason: data.motivo || 'leaflet_error',
+            });
+            return;
+          }
+          if (data.tipo === 'mapa_base_status') {
+            if (data.status === 'available') {
+              setDiagnostico((current) => {
+                if (current?.fallbackMode !== 'base-only') return current;
+                ultimoDiagnosticoRef.current = null;
+                return null;
+              });
+            }
+            if (data.status === 'unavailable') {
+              reportFailure({
+                source: 'tile-layer',
+                url: 'https://tile.openstreetmap.org/',
+                reason: data.motivo || 'tile_error',
+              });
+            }
             return;
           }
           if (data.tipo === 'talhaoPress') {
@@ -804,8 +953,68 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           }
         } catch (_) {}
       },
-      [onMapaReady, onTalhaoPress, syncUserLocationToWebView]
+      [clearReadyTimeout, notifyMapaReady, onTalhaoPress, reportFailure, syncUserLocationToWebView]
     );
+
+    const handleWebViewError = useCallback((event: WebViewErrorEvent) => {
+      event.preventDefault();
+      reportFailure({
+        source: 'main-frame',
+        url: event.nativeEvent.url,
+        code: event.nativeEvent.code,
+        description: event.nativeEvent.description,
+      });
+    }, [reportFailure]);
+
+    const handleSubResourceError = useCallback((event: WebViewErrorEvent) => {
+      reportFailure({
+        source: 'subresource',
+        url: event.nativeEvent.url,
+        code: event.nativeEvent.code,
+        description: event.nativeEvent.description,
+      });
+    }, [reportFailure]);
+
+    const handleHttpError = useCallback((event: WebViewHttpErrorEvent) => {
+      reportFailure({
+        source: 'http',
+        url: event.nativeEvent.url,
+        statusCode: event.nativeEvent.statusCode,
+        description: event.nativeEvent.description,
+      });
+    }, [reportFailure]);
+
+    const handleRenderProcessGone = useCallback((event: WebViewRenderProcessGoneEvent) => {
+      reportFailure({
+        source: 'render-process',
+        reason: event.nativeEvent.didCrash ? 'android_webview_crash' : 'android_webview_killed',
+      });
+    }, [reportFailure]);
+
+    const handleContentProcessTerminated = useCallback((event: WebViewTerminatedEvent) => {
+      reportFailure({
+        source: 'render-process',
+        url: event.nativeEvent.url,
+        reason: 'ios_webview_terminated',
+      });
+    }, [reportFailure]);
+
+    const retryMap = useCallback(() => {
+      ultimoDiagnosticoRef.current = null;
+      setDiagnostico(null);
+
+      if (fallbackAtivo) {
+        setMapaPronto(false);
+        setFallbackAtivo(false);
+        armReadyTimeout();
+        webViewRef.current?.reload();
+        return;
+      }
+
+      webViewRef.current?.injectJavaScript(
+        'window.recarregarMapaBase && window.recarregarMapaBase(); true;'
+      );
+    }, [armReadyTimeout, fallbackAtivo]);
 
     if ((!talhoes || talhoes.length === 0) && !userLocation) {
       return (
@@ -818,17 +1027,6 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
 
     if (!talhoes || talhoes.length === 0) {
       return <FallbackShapeMap talhoes={[]} userLocation={userLocation} />;
-    }
-
-    if (fallbackAtivo) {
-      return (
-        <FallbackShapeMap
-          talhoes={talhoes}
-          talhaoSelecionadoId={talhaoSelecionadoId}
-          userLocation={userLocation}
-          onTalhaoPress={onTalhaoPress}
-        />
-      );
     }
 
     return (
@@ -850,8 +1048,13 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           javaScriptEnabled
           domStorageEnabled
           onMessage={handleMessage}
-          onError={() => setFallbackAtivo(true)}
-          onHttpError={() => setFallbackAtivo(true)}
+          onError={handleWebViewError}
+          onLoadSubResourceError={handleSubResourceError}
+          onHttpError={handleHttpError}
+          onRenderProcessGone={handleRenderProcessGone}
+          onContentProcessDidTerminate={handleContentProcessTerminated}
+          cacheEnabled
+          cacheMode="LOAD_CACHE_ELSE_NETWORK"
           scrollEnabled={false}
           bounces={false}
           showsVerticalScrollIndicator={false}
@@ -859,14 +1062,51 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           overScrollMode="never"
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
-          mixedContentMode="always"
+          mixedContentMode="never"
         />
-        {!mapaPronto && (
+        {fallbackAtivo ? (
+          <View testID="mapa-fallback-overlay" style={styles.fallbackOverlay}>
+            <FallbackShapeMap
+              talhoes={talhoes}
+              talhaoSelecionadoId={talhaoSelecionadoId}
+              userLocation={userLocation}
+              onTalhaoPress={onTalhaoPress}
+            />
+          </View>
+        ) : null}
+        {!mapaPronto && !fallbackAtivo && (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Carregando mapa...</Text>
           </View>
         )}
+        {diagnostico ? (
+          <View
+            testID="mapa-network-notice"
+            accessibilityLiveRegion="polite"
+            style={[styles.networkNotice, { top: noticeTopInset }]}
+          >
+            <Ionicons
+              name={diagnostico.kind === 'ssl' ? 'shield-outline' : 'cloud-offline-outline'}
+              size={20}
+              color="#FCD34D"
+            />
+            <Text style={styles.networkNoticeText}>{diagnostico.userMessage}</Text>
+            <Pressable
+              testID="mapa-retry-button"
+              accessibilityRole="button"
+              accessibilityLabel="Tentar carregar o mapa novamente"
+              onPress={retryMap}
+              style={({ pressed }) => [
+                styles.retryButton,
+                pressed ? styles.retryButtonPressed : null,
+              ]}
+            >
+              <Ionicons name="refresh" size={16} color={colors.white} />
+              <Text style={styles.retryButtonText}>Tentar novamente</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -895,6 +1135,50 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: typography.fontBody,
     marginTop: spacing.xs,
+  },
+  fallbackOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: '#111827',
+  },
+  networkNotice: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.radius,
+    borderWidth: 1,
+    borderColor: 'rgba(252,211,77,0.72)',
+    backgroundColor: 'rgba(17,24,39,0.96)',
+  },
+  networkNoticeText: {
+    flex: 1,
+    minWidth: 0,
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    lineHeight: 17,
+  },
+  retryButton: {
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.primary,
+  },
+  retryButtonPressed: {
+    backgroundColor: colors.primaryDark,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
   },
   vazio: {
     flex: 1,

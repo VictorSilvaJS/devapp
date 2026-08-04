@@ -4,8 +4,8 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa da fila: `MP-32 — WebView, rede e fallback offline`;
-> `MP-08` a `MP-31` foram concluídas. A revalidação de `MP-07 — Login
+> Próxima tarefa da fila: `MP-33 — Autenticação e sessão reais`, bloqueada por
+> backend; `MP-08` a `MP-32` foram concluídas. A revalidação de `MP-07 — Login
 > responsivo` continua parcial até haver IME que respeite o modo inline em
 > paisagem
 
@@ -238,7 +238,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `CONCLUIDO` |
 | 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `CONCLUIDO` |
 | 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `CONCLUIDO` |
-| 33 | `MP-32` WebView, rede e fallback offline | `QA-P3-02` | Corrigir ciclo de vida, diagnosticar SSL e tratar mapa indisponível | `MP-31` | `BACKLOG` |
+| 33 | `MP-32` WebView, rede e fallback offline | `QA-P3-02` | Corrigir ciclo de vida, diagnosticar SSL e tratar mapa indisponível | `MP-31` | `CONCLUIDO` |
 
 #### Subtarefas obrigatórias de `MP-29`
 
@@ -395,6 +395,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-04 | `MP-29` | `CONCLUIDO` | árvore de trabalho sobre `99ae14c` | 17 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou modal, rolagem externa neutralizada, toque duplo, arraste contido, retorno na mesma posição e ausência de exceção fatal | `dist/qa-session-2026-08-04/mp-29-visualizador-material/` | pinça teve contrato automatizado, pois ADB não injeta dois ponteiros; PDF/ZIP não tinham fixture física ativa; fotos permanecem em `MP-30` |
 | 2026-08-04 | `MP-30` | `CONCLUIDO` | árvore de trabalho sobre `2e28dd5` | 10 cenários focados, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou Caderno/Visita, modal, 200%, arraste, paisagem e download com confirmação visível | `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/` | pinça teve contrato automatizado porque ADB não injeta dois ponteiros; a suíte global parou em referência preexistente a teste ZIP ausente; foto real permanece futura; `MP-31` não foi iniciada |
 | 2026-08-04 | `MP-31` | `CONCLUIDO` | árvore de trabalho sobre `298de87` | 10 cenários focados, contratos de rota/entrada/localização, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou três snap points, lista e busca completas, seleção sem recentralização, mapa manipulável com detalhe aberto, expansão real e painel lateral em paisagem | `dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/` | a suíte global parou na referência preexistente ao teste ZIP ausente; rede, ciclo de vida e fallback offline permanecem exclusivamente em `MP-32` |
+| 2026-08-04 | `MP-32` | `CONCLUIDO` | árvore de trabalho sobre `516af8d` | 9 cenários focados, contratos de mapa/rota, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou cache oportunista, estado controlado sem mapa-base, nova tentativa e cinco ciclos de abrir/voltar sem aviso de destruição anexada nem exceção fatal | `dist/qa-session-2026-08-04/mp-32-webview-rede-offline/` | SSL `-202` ficou coberto pelo classificador automatizado, sem reprodução física; a suíte global parou na referência preexistente ao teste ZIP ausente; localização offline real permanece em `MP-38`; `MP-33` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -912,6 +913,41 @@ expansão/restauração e painel lateral em paisagem. Não houve exceção fatal
 recente e a rotação automática foi restaurada. Evidências:
 `dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/`.
 
-A próxima tarefa da fila é `MP-32`; rede, diagnóstico SSL, ciclo de vida e
-fallback offline não foram alterados neste corte. A revalidação pendente de
-`MP-07` permanece registrada separadamente.
+`MP-32` concluiu o tratamento de rede e ciclo de vida da WebView do mapa. As
+falhas agora são classificadas por recurso e natureza (`SSL`, rede, HTTP,
+timeout, motor de renderização ou processo), com diagnóstico técnico limitado
+a origem, host e códigos; URLs completas e parâmetros não são registrados.
+Falha isolada dos mosaicos mantém a WebView e as demarcações de Talhões, mostra
+`Mapa-base indisponível` e oferece `Tentar novamente`. Falha do motor Leaflet
+usa a demarcação vetorial local, sem prometer mapa offline completo.
+
+O cache seguro da WebView é reaproveitado de forma oportunista e conteúdo
+misto continua bloqueado. O estado do mapa-base acompanha `tileload`,
+`tileerror` e timeout e volta ao normal quando um mosaico carrega. No Android,
+o descarte da WebView espera o `detach` real do contêiner React antes de
+destruí-la. O patch é reaplicado no `postinstall`, fixado e validado somente
+para `react-native-webview@13.16.1`, falhando explicitamente em versão ou fonte
+não revisada.
+
+Nove cenários focados, contratos de mapa/rota, typecheck, `git diff --check` e
+`packageRelease` passaram. A suíte global executou os testes da MP-32 e parou
+depois somente na referência preexistente ao arquivo ausente
+`tests/prescriptionZipPropertyManageWorkflow.test.js`.
+
+O APK final tem 92.339.816 bytes e SHA-256
+`3745F9E5859A92D61F18D5D220AB87D9A26565082E2115346AEFE1D55173B86F`.
+No Android físico `8483A`, com Wi-Fi já desligado, o smoke confirmou mosaicos
+em cache quando disponíveis, estado controlado ao navegar para área sem cache,
+lista de Talhões utilizável, ação de nova tentativa e cinco ciclos verificados
+de abrir/voltar. Não houve exceção fatal nem o aviso
+`WebView.destroy() called while WebView is still attached to window`.
+Evidências: `dist/qa-session-2026-08-04/mp-32-webview-rede-offline/`.
+
+O erro SSL `-202` não foi reproduzido no aparelho e não foi atribuído
+indevidamente ao aplicativo ou ao certificado; sua classificação e o fallback
+foram cobertos automaticamente. Cache de mosaicos não é pacote offline. O
+teste real de localização offline continua em `MP-38`.
+
+A próxima tarefa da fila é `MP-33`, que permanece bloqueada por backend e não
+foi iniciada. A revalidação pendente de `MP-07` permanece registrada
+separadamente.
