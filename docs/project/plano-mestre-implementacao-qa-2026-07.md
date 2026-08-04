@@ -8,7 +8,8 @@
 > IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
 > concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17`, `MP-18` e `MP-19` também
 > foram concluídas; `MP-20`, `MP-21`, `MP-22` e `MP-23` foram concluídas;
-> `MP-24`, `MP-25` e `MP-26` foram concluídas; `MP-27` não foi iniciada
+> `MP-24`, `MP-25`, `MP-26` e `MP-27` foram concluídas; `MP-28` não foi
+> iniciada
 
 ## 1. Objetivo
 
@@ -216,7 +217,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 25 | `MP-24` IDs estáveis de responsável e Talhão | `QA-P1-07` | Substituir texto livre por referências estáveis e preservar snapshots legíveis | `MP-02`, `MP-06` | `CONCLUIDO` |
 | 26 | `MP-25` Caderno auditável e validação por tipo | `QA-P0-03`, `QA-P1-08` | Implementar ciclo aprovado, autoria, complemento, correção e obrigatórios por tipo | `MP-04`, `MP-24`, `MP-13` | `CONCLUIDO` |
 | 27 | `MP-26` Apresentação da localização | `QA-P2-14` | Usar mini mapa, precisão, relação com Talhão e detalhe técnico recolhido | `MP-06`, `MP-25` | `CONCLUIDO` |
-| 28 | `MP-27` Implementação dos estados de Visita | `QA-P1-04` | Aplicar máquina de estados, atraso, motivo e histórico | `MP-05`, `MP-13` | `BACKLOG` |
+| 28 | `MP-27` Implementação dos estados de Visita | `QA-P1-04` | Aplicar máquina de estados, atraso, motivo e histórico | `MP-05`, `MP-13` | `CONCLUIDO` |
 
 #### Subtarefas obrigatórias de `MP-25`
 
@@ -368,7 +369,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-02` | `CONCLUIDO` | `appteste` / árvore de trabalho | typecheck, domain-compat e 7 testes focados passaram; `git diff --check` passou; smoke Android não reexecutado por `adb` ausente | `docs/project/modelo-territorial.md`; `dist/qa-session-2026-07-30/mp-02-modelo-territorial-autoedicao.md` | backend, migração, auditoria e revalidação produtiva permanecem em `MP-35` |
 | 2026-07-30 | `MP-03` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/contrato-notificacoes.md`; `dist/qa-session-2026-07-30/mp-03-contrato-notificacoes.md` | implementação, isolamento, persistência e testes negativos permanecem em `MP-34` |
 | 2026-07-30 | `MP-04` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/ciclo-vida-caderno.md`; `dist/qa-session-2026-07-30/mp-04-ciclo-vida-caderno.md` | implementação no app permanece em `MP-25`; backend append-only e auditoria produtiva em `MP-36` |
-| 2026-07-30 | `MP-05` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/estados-visita.md`; `dist/qa-session-2026-07-30/mp-05-estados-visita.md` | implementação permanece em `MP-27`; organização visual da lista em `MP-22`; validação produtiva depende do backend |
+| 2026-07-30 | `MP-05` | `CONCLUIDO` | `appteste` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/estados-visita.md`; `dist/qa-session-2026-07-30/mp-05-estados-visita.md` | implementação local concluída depois em `MP-27`; organização visual concluída em `MP-22`; validação produtiva depende do backend |
 | 2026-07-30 | `MP-06` | `CONCLUIDO` | `appQA` / árvore de trabalho | `git diff --check`, referências locais e consistência documental passaram; sem suíte de código por ser mudança documental | `docs/project/versionamento-geojson-talhoes.md`; `dist/qa-session-2026-07-30/mp-06-versionamento-geojson-talhoes.md` | IDs e vínculos locais foram concluídos depois em `MP-24`; implementação produtiva em `MP-37`; regressão histórica em `MP-39` |
 | 2026-07-30 | `MP-07` | `PARCIAL` | `appQA` / árvore de trabalho | typecheck, domain-compat e assembleRelease passaram; smoke físico passou em retrato e paisagem com teclado fechado, e em retrato com teclado aberto | `dist/qa-session-2026-07-30/mp-07-login-responsivo/` | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração em paisagem; repetir com IME/aparelho que permita teclado inline antes de concluir |
 | 2026-07-30 | `MP-08` | `CONCLUIDO` | `appQA` / árvore de trabalho | typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em Propriedades e Visitas | `dist/qa-session-2026-07-30/mp-08-filtros-rascunho/` | bottom sheet comum e gesto de arraste permanecem fora deste corte, em `MP-09` |
@@ -376,7 +377,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-07-30 | `MP-10` | `CONCLUIDO` | `appQA` / árvore de trabalho | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato e paisagem | `dist/qa-session-2026-07-30/mp-10-cabecalhos-retorno/` | reorganização da Propriedade permanece em `MP-15`; contraste em `MP-11`; `MP-11` não foi iniciada |
 | 2026-07-30 | `MP-11` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `8680761` | teste focado WCAG, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato, paisagem e busca com teclado | `dist/qa-session-2026-07-30/mp-11-contraste-opacidade/` | sistema de cartões permanece em `MP-21`; matriz completa de acessibilidade em `MP-40`; `MP-12` não foi iniciada |
 | 2026-07-30 | `MP-12` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `4efa1d2` | testes focados, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico passou em retrato e paisagem | `dist/qa-session-2026-07-30/mp-12-linguagem-formatacao/` | reorganização de filtros permanece em `MP-17`; cartões em `MP-21`; `MP-13` não foi iniciada |
-| 2026-07-31 | `MP-13` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `c37cc2a` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou obrigatórios, mensagens adjacentes, correção progressiva, rolagem, foco e teclado | `dist/qa-session-2026-07-31/mp-13-validacao-formularios/` | regras específicas permanecem em `MP-23`, `MP-25` e `MP-27`; `MP-14` não foi iniciada |
+| 2026-07-31 | `MP-13` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `c37cc2a` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou obrigatórios, mensagens adjacentes, correção progressiva, rolagem, foco e teclado | `dist/qa-session-2026-07-31/mp-13-validacao-formularios/` | regras específicas foram concluídas depois em `MP-23`, `MP-25` e `MP-27`; `MP-14` não foi iniciada |
 | 2026-07-31 | `MP-14` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `3034d70` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou faixa de ação sem oclusão, conteúdo final, retrato, paisagem e navegação | `dist/qa-session-2026-07-31/mp-14-espacamento-seguro-fab/` | grids e colisões de Dashboard permanecem em `MP-18`; cartões em `MP-21`; `MP-15` não foi iniciada |
 | 2026-07-31 | `MP-15` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `9383518` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou os seis destinos, retrato, paisagem e retorno | `dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/` | `MP-16`, `MP-17`, `MP-19` e `MP-23` permanecem separadas; `MP-16` não foi iniciada |
 | 2026-07-31 | `MP-16` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `e594005` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou Lista inicial, Mapa, abertura contextual de Talhão, retrato e paisagem | `dist/qa-session-2026-07-31/mp-16-entrada-talhoes/` | redesign responsivo do mapa permanece em `MP-31`; `MP-17` não foi iniciada |
@@ -386,11 +387,12 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-19` | `CONCLUIDO` | `appQA` / árvore limpa sobre `1ba3457` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou indicadores úteis, Resumo sem repetição, três perfis e duas orientações | `dist/qa-session-2026-08-03/mp-19-resumo-propriedade/` | cartões permanecem em `MP-21`; estados de Visita em `MP-22`; `MP-20` não foi iniciada |
 | 2026-08-03 | `MP-20` | `CONCLUIDO` | `appQA` / árvore limpa sobre `27bf5a4` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou affordance, detalhe, retorno e solicitação sem sucesso falso em retrato e paisagem | `dist/qa-session-2026-08-03/mp-20-perfil-produtor/` | backend, protocolo e edição cadastral direta permanecem fora do corte; `MP-21` não foi iniciada |
 | 2026-08-03 | `MP-21` | `CONCLUIDO` | `appQA` / árvore limpa sobre `5cf9513` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou a casca comum, diferenças de domínio, detalhe, retorno, rolagem e ambas as orientações | `dist/qa-session-2026-08-03/mp-21-cartoes-operacionais/` | agrupamento, ordenação e humanização geral dos estados de Visita permanecem em `MP-22`; `MP-22` não foi iniciada |
-| 2026-08-03 | `MP-22` | `CONCLUIDO` | `appQA` / árvore limpa sobre `f2aec81` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou seções, ordem, rótulos, atraso derivado, detalhe e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-22-lista-visitas/` | máquina de estados e comandos permanecem em `MP-27`; `MP-23` não foi iniciada |
+| 2026-08-03 | `MP-22` | `CONCLUIDO` | `appQA` / árvore limpa sobre `f2aec81` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou seções, ordem, rótulos, atraso derivado, detalhe e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-22-lista-visitas/` | máquina de estados e comandos foram concluídos depois em `MP-27`; `MP-23` não foi iniciada |
 | 2026-08-03 | `MP-23` | `CONCLUIDO` | `appQA` / árvore limpa sobre `c59e777` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou ação única, campos controlados, validações, persistência, edição e permissões em retrato e paisagem | `dist/qa-session-2026-08-03/mp-23-safras-safrinha/` | referências locais estáveis foram concluídas posteriormente em `MP-24`; backend, sincronização e auditoria seguem fora deste corte |
 | 2026-08-03 | `MP-24` | `CONCLUIDO` | `appQA` / árvore limpa sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou responsável bloqueado, Talhão por ID lógico, snapshots, legado explícito e ambas as orientações | `dist/qa-session-2026-08-03/mp-24-referencias-estaveis/` | ciclo auditável foi concluído depois em `MP-25`; versionamento e migração produtivos permanecem em `MP-37` |
 | 2026-08-03 | `MP-25` | `CONCLUIDO` | árvore de trabalho sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou validação de Aplicação, confirmação, registro consolidado, auditoria e complemento versionado | `dist/qa-session-2026-08-03/mp-25-caderno-auditavel/` | backend append-only, RBAC, idempotência, sincronização e conflito distribuído permanecem em `MP-36`; migração produtiva permanece em `MP-37`; `MP-26` não foi iniciada |
-| 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `77c62f4` | 117 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou captura de ~13 m, recaptura, falha preservando ponto e retorno durante leitura | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` não foi iniciada |
+| 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `77c62f4` | 117 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou captura de ~13 m, recaptura, falha preservando ponto e retorno durante leitura | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` foi concluída depois |
+| 2026-08-04 | `MP-27` | `CONCLUIDO` | árvore de trabalho sobre `2b9eafa` | 25 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou conclusão, complemento, correção, anulação terminal, cancelamento, nova vinculada, reentrada, Produtor consultivo e paisagem | `dist/qa-session-2026-08-04/mp-27-estados-visita/` | RBAC, append-only, idempotência, concorrência, sincronização e bloqueio offline produtivos dependem do backend; `MP-28` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -764,5 +766,32 @@ houve exceção fatal após a correção. Evidências:
 `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/`.
 
 O teste real de dentro/fora, permissão e offline permanece em `MP-38`;
-versionamento produtivo da geometria permanece em `MP-37`. `MP-27` não foi
-iniciada.
+versionamento produtivo da geometria permanece em `MP-37`. `MP-27` foi
+concluída na sequência.
+
+`MP-27` concluiu a máquina de estados de Visita no corte local demonstrativo.
+Criação, reagendamento, conclusão, cancelamento, complemento, correção,
+anulação e nova Visita vinculada usam operações explícitas, validam estado e
+versão e registram eventos com autor, horário, idempotência local e
+antes/depois quando aplicável. Atraso continua derivado e não altera o estado.
+
+Edição geral deixou de oferecer status. Visitas realizadas, canceladas e
+anuladas não reabrem edição destrutiva; exclusão física é recusada; Propriedade
+e origem ficam protegidas. Registros legados continuam legíveis sem histórico
+inventado. A projeção do Produtor oculta trilha administrativa e complementos
+internos, preservando somente consulta autorizada.
+
+Teste focado com 25 cenários, typecheck, suíte `domain-compat`,
+`git diff --check` e build release passaram. O APK final de 92.155.720 bytes,
+SHA-256
+`0C61A184748A9549C6A8C88064F51BFA6527EA812BE8FFC890DEAA31E73C387F`, foi
+instalado por cima no Android físico `8483A`. O smoke passou em retrato e
+paisagem, incluindo reentrada após anulação terminal e criação efetiva de nova
+Visita a partir de uma cancelada. Um cartão vazio de ações no estado terminal
+foi corrigido durante a rodada; não houve exceção fatal recente e a rotação
+automática foi restaurada. Evidências:
+`dist/qa-session-2026-08-04/mp-27-estados-visita/`.
+
+RBAC, persistência append-only, idempotência, concorrência, sincronização e
+exigência real de conexão continuam dependentes do backend e não são
+apresentados como segurança produtiva neste corte. `MP-28` não foi iniciada.

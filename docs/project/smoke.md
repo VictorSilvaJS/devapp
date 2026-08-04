@@ -1399,3 +1399,26 @@ Evidencias completas:
 `dist/qa-session-2026-07-31/mp-15-navegacao-propriedade/`.
 
 `MP-16` nao foi iniciada nesta rodada.
+
+## MP-27 - Estados De Visita
+
+Dispositivo da rodada: Android fisico `8483A` / `Lugh_10_WiFi`, Android
+15/API 35, display `800x1280` a `240 dpi`, APK release instalado por `adb`.
+
+| ID | Criticidade | Perfil | Acao | Resultado esperado | Status | Observacao |
+|---|---|---|---|---|---|---|
+| MP27-01 | P1 | Admin | Concluir agendada sem e depois com resumo | Sem resumo permanece no formulario; com inicio real e resumo muda para `realizada` | Passou | Evento `Visita concluida`, versao 2 |
+| MP27-02 | P1 | Admin | Complementar e corrigir uma realizada | Original preservado; eventos separados, motivo e antes/depois visiveis | Passou | Complemento versao 3; correcao versao 4 |
+| MP27-03 | P1 | Admin | Anular realizada e reabrir apos reinstalacao por cima | `anulada` persiste como terminal e nenhuma acao fica disponivel | Passou | Versao 5; cartao vazio de acoes encontrado, corrigido e revalidado |
+| MP27-04 | P1 | Admin | Cancelar agendada por condicoes climaticas | Motivo, autor, horario e versao ficam no historico; sem edicao geral | Passou | Cancelamento versao 2 |
+| MP27-05 | P1 | Admin | Usar `Agendar nova Visita` na cancelada | Origem permanece cancelada; novo ID agendado na mesma Propriedade com vinculo historico | Passou | Nova Visita criada para 04/08/2026 23:20 com dois eventos iniciais |
+| MP27-06 | P1 | Admin | Abrir agendada legada | Registro permanece legivel sem evento inventado | Passou | Mensagem explicita de historico legado |
+| MP27-07 | P1 | Produtor | Abrir Visita da propria Propriedade | Consulta permitida sem historico administrativo, editar ou comandos | Passou | Validado em retrato e paisagem |
+| MP27-08 | P1 | Todos | Revisar logcat recente e restaurar rotacao | Sem excecao fatal; rotacao automatica ativa ao final | Passou | `accelerometer_rotation=1` |
+
+Os testes automatizados complementam o smoke para transicao invalida, payload
+de status/origem manipulado, propriedade fora do escopo informado, versao
+obsoleta, idempotencia, exclusao fisica e projecao de complemento interno.
+
+Evidencias completas:
+`dist/qa-session-2026-08-04/mp-27-estados-visita/`.

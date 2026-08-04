@@ -34,6 +34,21 @@ const getReferenceTimestamp = (referenceDate: Date): number => {
   return Number.isNaN(timestamp) ? Date.now() : timestamp;
 };
 
+const getVisitaListTimestamp = (visita: any): number | null => {
+  const status = typeof visita?.status === 'string'
+    ? visita.status.trim().toLocaleLowerCase('pt-BR')
+    : '';
+  if (status === 'realizada' || status === 'anulada') {
+    return getTimestamp(visita?.concluida_em)
+      ?? getTimestamp(visita?.inicio_real_em)
+      ?? getTimestamp(visita?.data_visita);
+  }
+  if (status === 'cancelada') {
+    return getTimestamp(visita?.cancelada_em) ?? getTimestamp(visita?.data_visita);
+  }
+  return getTimestamp(visita?.data_visita);
+};
+
 export const isVisitaAtrasada = (
   visita: any,
   referenceDate: Date = new Date()
@@ -88,8 +103,8 @@ export const getVisitaStatusPresentation = (
 };
 
 const compareByDate = (direction: 'asc' | 'desc') => (a: any, b: any): number => {
-  const timestampA = getTimestamp(a?.data_visita);
-  const timestampB = getTimestamp(b?.data_visita);
+  const timestampA = getVisitaListTimestamp(a);
+  const timestampB = getVisitaListTimestamp(b);
 
   if (timestampA == null && timestampB == null) {
     return String(a?.id || '').localeCompare(String(b?.id || ''));

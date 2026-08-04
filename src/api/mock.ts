@@ -37,6 +37,15 @@ import {
   type CadernoCommand,
 } from '../utils/cadernoLifecycleCompat';
 import {
+  applyVisitaCommand,
+  buildVisitaIdempotencyKey,
+  createVisitaLifecycleRecord,
+  getVisitaEstado,
+  withVisitaLifecycleReadCompat,
+  type VisitaActor,
+  type VisitaCommand,
+} from '../utils/visitaLifecycleCompat';
+import {
   buildFazendaDeleteIntegrity,
   filterMockProdutores,
   listMockProdutores,
@@ -2387,6 +2396,138 @@ export const Produtor: any = {
 };
 
 // API para Visita
+const inferVisitaActor = (data: any = {}, fallbackRecord: any = null): VisitaActor => ({
+  usuarioId: String(
+    data?.criada_por_usuario_id
+    || data?.concluida_por_usuario_id
+    || data?.usuario_id
+    || fallbackRecord?.criada_por_usuario_id
+    || '__mock_local_compat__'
+  ).trim(),
+  nome: String(
+    data?.criada_por_nome
+    || data?.concluida_por_nome
+    || data?.tecnico_responsavel
+    || fallbackRecord?.criada_por_nome
+    || fallbackRecord?.tecnico_responsavel
+    || ''
+  ).trim() || undefined,
+  perfil: 'colaborador',
+  propriedadeIds: [
+    String(
+      data?.fazenda_id
+      || data?.fazendaId
+      || data?.produtor_id
+      || fallbackRecord?.fazenda_id
+      || fallbackRecord?.fazendaId
+      || fallbackRecord?.produtor_id
+      || ''
+    ).trim(),
+  ].filter(Boolean),
+});
+
+const VISITA_AGENDA_UPDATE_FIELDS = [
+  'data_visita',
+  'agendada_para',
+  'objetivo',
+  'observacoes',
+  'recomendacoes',
+  'clima',
+  'proximaVisita',
+  'tecnico_responsavel',
+  'responsavel_usuario_id',
+  'fotos',
+] as const;
+
+const VISITA_AGENDA_REQUEST_FIELDS = new Set([
+  ...VISITA_AGENDA_UPDATE_FIELDS,
+  'fazenda_id',
+  'fazendaId',
+  'produtor_id',
+  'motivo_reagendamento',
+]);
+
+const VISITA_CREATE_REQUEST_FIELDS = new Set([
+  'fazenda_id',
+  'fazendaId',
+  'produtor_id',
+  'propriedade_id',
+  'tecnico_responsavel',
+  'responsavel_usuario_id',
+  'responsavel_executante_usuario_id',
+  'responsavel_executante_nome',
+  'data_visita',
+  'objetivo',
+  'status',
+  'observacoes',
+  'recomendacoes',
+  'clima',
+  'proximaVisita',
+  'fotos',
+  'resumo_conclusao',
+  'visita_origem_id',
+]);
+
+const assertVisitaAgendaRequestFields = (data: any = {}): void => {
+  const forbidden = Object.keys(data || {}).filter((field) => !VISITA_AGENDA_REQUEST_FIELDS.has(field));
+  if (forbidden.length > 0) {
+    throw new Error(`Visita.agendamento: Campos não permitidos: ${forbidden.join(', ')}.`);
+  }
+};
+
+const assertVisitaCreateRequestFields = (data: any = {}, allowLinkedOrigin = false): void => {
+  const forbidden = Object.keys(data || {}).filter((field) => (
+    !VISITA_CREATE_REQUEST_FIELDS.has(field)
+    || (field === 'visita_origem_id' && !allowLinkedOrigin)
+  ));
+  if (forbidden.length > 0) {
+    throw new Error(`Visita.criacao: Campos protegidos: ${forbidden.join(', ')}.`);
+  }
+};
+
+const buildVisitaAgendaChanges = (data: any = {}): Record<string, unknown> =>
+  VISITA_AGENDA_UPDATE_FIELDS.reduce<Record<string, unknown>>((changes, field) => {
+    if (Object.prototype.hasOwnProperty.call(data || {}, field)) {
+      changes[field] = data[field];
+    }
+    return changes;
+  }, {});
+
+const assertVisitaPropertyUnchanged = (record: any, data: any): void => {
+  const currentId = String(record?.fazenda_id || record?.produtor_id || '').trim();
+  const attemptedId = String(data?.fazenda_id || data?.fazendaId || data?.produtor_id || '').trim();
+  if (attemptedId && attemptedId !== currentId) {
+    throw new Error('Visita.agendamento: A Propriedade da Visita não pode ser reatribuída.');
+  }
+};
+
+const createVisitaWithLifecycle = ({
+  data,
+  actor,
+  idempotencyKey,
+  allowLinkedOrigin = false,
+}: {
+  data: any;
+  actor: VisitaActor;
+  idempotencyKey: string;
+  allowLinkedOrigin?: boolean;
+}) => {
+  assertVisitaCreateRequestFields(data, allowLinkedOrigin);
+  const duplicate = visitas.find((item) => (
+    Array.isArray(item?.eventos_visita)
+    && item.eventos_visita.some((event) => event?.chave_idempotencia === idempotencyKey)
+  ));
+  if (duplicate) return readMockVisita(duplicate);
+
+  validateVisita(data);
+  const id = `v${Date.now()}`;
+  const base = persistMockVisita({ id, data });
+  const novo = createVisitaLifecycleRecord({ id, data: base, actor, idempotencyKey });
+  validateVisita(novo);
+  visitas.unshift(novo);
+  return readMockVisita(novo);
+};
+
 export const Visita: any = {
   list: async () =>
     readHydratedMock(200, () => listMockVisitas(visitas)),
@@ -2400,29 +2541,119 @@ export const Visita: any = {
     readHydratedMock(200, () => filterMockVisitas(visitas, query)),
   create: async (data) =>
     mutateHydratedMock(200, () => {
-      validateVisita(data);
-      const id = `v${Date.now()}`;
-      const novo = persistMockVisita({ id, data });
-      visitas.unshift(novo);
-      return readMockVisita(novo);
+      const actor = inferVisitaActor(data);
+      return createVisitaWithLifecycle({
+        data,
+        actor,
+        idempotencyKey: buildVisitaIdempotencyKey('nova', getVisitaEstado(data) || 'agendada'),
+      });
+    }),
+  createScheduled: async (data, actor: VisitaActor, idempotencyKey?: string) =>
+    mutateHydratedMock(200, () => createVisitaWithLifecycle({
+      data: { ...data, status: 'agendada' },
+      actor,
+      idempotencyKey: idempotencyKey || buildVisitaIdempotencyKey('nova', 'agendar'),
+    })),
+  registerCompleted: async (data, actor: VisitaActor, idempotencyKey?: string) =>
+    mutateHydratedMock(200, () => createVisitaWithLifecycle({
+      data: { ...data, status: 'realizada' },
+      actor,
+      idempotencyKey: idempotencyKey || buildVisitaIdempotencyKey('nova', 'registrar_realizada'),
+    })),
+  createFromCancelled: async (originId, data, actor: VisitaActor, idempotencyKey?: string) =>
+    mutateHydratedMock(200, () => {
+      const origin = visitas.find((item) => item.id === originId);
+      if (!origin) throw new Error('Visita de origem não encontrada');
+      const originRecord = withVisitaLifecycleReadCompat(origin);
+      if (getVisitaEstado(originRecord) !== 'cancelada') {
+        throw new Error('Visita.vinculo: Somente Visita cancelada pode originar uma nova.');
+      }
+      const originPropertyId = String(originRecord.fazenda_id || originRecord.produtor_id || '').trim();
+      const targetPropertyId = String(data?.fazenda_id || data?.produtor_id || '').trim();
+      if (!targetPropertyId || targetPropertyId !== originPropertyId) {
+        throw new Error('Visita.vinculo: A nova Visita deve permanecer na mesma Propriedade.');
+      }
+      return createVisitaWithLifecycle({
+        data: { ...data, status: 'agendada', visita_origem_id: originId },
+        actor,
+        idempotencyKey: idempotencyKey || buildVisitaIdempotencyKey(originId, 'nova_vinculada'),
+        allowLinkedOrigin: true,
+      });
     }),
   update: async (id, data) =>
     mutateHydratedMock(300, () => {
       const index = visitas.findIndex(v => v.id === id);
       if (index === -1) throw new Error('Visita não encontrada');
-
-      const atualizado = persistMockVisita({ id, data, existing: visitas[index] });
-      validateVisita(atualizado);
-      visitas[index] = atualizado;
-      return readMockVisita(visitas[index]);
+      if (Object.prototype.hasOwnProperty.call(data || {}, 'status')) {
+        throw new Error('Visita.update: Estado não pode ser alterado por atualização genérica.');
+      }
+      assertVisitaAgendaRequestFields(data);
+      const current = readMockVisita(visitas[index]);
+      assertVisitaPropertyUnchanged(current, data);
+      const command: VisitaCommand = {
+        tipo: 'alterar_agendamento',
+        versaoBase: Number(current.versao_atual),
+        chaveIdempotencia: buildVisitaIdempotencyKey(id, 'alterar_agendamento'),
+        alteracoes: buildVisitaAgendaChanges(data),
+        motivo: data?.motivo_reagendamento,
+      };
+      const updated = applyVisitaCommand({
+        record: current,
+        command,
+        actor: inferVisitaActor(data, current),
+      });
+      validateVisita(updated);
+      visitas[index] = updated;
+      return readMockVisita(updated);
+    }),
+  updateAgenda: async (
+    id,
+    data,
+    actor: VisitaActor,
+    motivo?: string,
+    idempotencyKey?: string
+  ) => mutateHydratedMock(300, () => {
+    const index = visitas.findIndex(v => v.id === id);
+    if (index === -1) throw new Error('Visita não encontrada');
+    const current = readMockVisita(visitas[index]);
+    assertVisitaPropertyUnchanged(current, data);
+    if (Object.prototype.hasOwnProperty.call(data || {}, 'status')) {
+      throw new Error('Visita.update: Estado não pode ser alterado por atualização genérica.');
+    }
+    assertVisitaAgendaRequestFields(data);
+    const updated = applyVisitaCommand({
+      record: current,
+      actor,
+      command: {
+        tipo: 'alterar_agendamento',
+        versaoBase: Number(current.versao_atual),
+        chaveIdempotencia: idempotencyKey || buildVisitaIdempotencyKey(id, 'alterar_agendamento'),
+        alteracoes: buildVisitaAgendaChanges(data),
+        motivo,
+      },
+    });
+    validateVisita(updated);
+    visitas[index] = updated;
+    return readMockVisita(updated);
+  }),
+  command: async (id, command: VisitaCommand, actor: VisitaActor) =>
+    mutateHydratedMock(250, () => {
+      const index = visitas.findIndex(v => v.id === id);
+      if (index === -1) throw new Error('Visita não encontrada');
+      const updated = applyVisitaCommand({
+        record: readMockVisita(visitas[index]),
+        command,
+        actor,
+      });
+      validateVisita(updated);
+      visitas[index] = updated;
+      return readMockVisita(updated);
     }),
   delete: async (id) =>
     mutateHydratedMock(200, () => {
       const index = visitas.findIndex(v => v.id === id);
       if (index === -1) throw new Error('Visita não encontrada');
-
-      visitas.splice(index, 1);
-      return { success: true };
+      throw new Error('Visita.delete: Visita persistida não pode ser excluída pelo fluxo comum.');
     })
 };
 

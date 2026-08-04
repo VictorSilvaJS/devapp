@@ -19,7 +19,7 @@ declare global {
       Mapas: MapasRouteParams | undefined;
       NovaPropriedade: undefined;
       EditarPropriedade: PropriedadeDetailRouteParams | undefined;
-      NovaVisita: FazendaIdRouteParams | undefined;
+      NovaVisita: (FazendaIdRouteParams & { visitaOrigemId?: string }) | undefined;
       VisitaDetail: { id?: string; visitaId?: string } | undefined;
       EditarVisita: { id?: string; visitaId?: string } | undefined;
       CadernoDetail: { id?: string; cadernoId?: string; registroId?: string } | undefined;

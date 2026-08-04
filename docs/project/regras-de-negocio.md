@@ -319,6 +319,12 @@ O contrato canonico de estados esta em `estados-visita.md`.
   manipulado.
 - Nenhuma Visita persistida deve ser excluida fisicamente pelo fluxo comum.
 
+`MP-27` implementou essas regras na interface, no dominio e na persistencia
+local demonstrativa, com comandos versionados, idempotencia local, historico,
+motivos, antes/depois, compatibilidade legada e projecao consultiva do Produtor.
+Autorizacao server-side, armazenamento append-only, conflito distribuido,
+sincronizacao e exigencia real de conexao permanecem fora desse corte local.
+
 ## Regra sobre Caderno de Campo
 
 O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.

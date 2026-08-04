@@ -200,7 +200,7 @@ const testVisitas = async () => {
     const nova = await Visita.create({
       produtor_id: 'p1',
       tecnico_responsavel: 'Teste',
-      data_visita: new Date().toISOString(),
+      data_visita: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       objetivo: 'consultoria'
     });
     if (!nova.id) throw new Error('Visita não foi criada');

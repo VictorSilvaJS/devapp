@@ -16,6 +16,7 @@ import {
 } from '../utils/cadernoLocalizacaoCompat';
 import { buildCadernoLocalizacaoSpatialFields } from '../utils/cadernoLocalizacaoSpatialCompat';
 import { withCadernoLifecycleReadCompat } from '../utils/cadernoLifecycleCompat';
+import { withVisitaLifecycleReadCompat } from '../utils/visitaLifecycleCompat';
 
 const cloneRecord = <T extends Record<string, any>>(record: T): T => ({ ...record });
 
@@ -24,7 +25,8 @@ const matchesQuery = (record: Record<string, any>, query?: Record<string, any>) 
   return entries.every(([key, value]) => String(record[key]) === String(value));
 };
 
-export const readMockVisita = (record: any) => cloneRecord(toVisitaCompativelBorda(record));
+export const readMockVisita = (record: any) =>
+  cloneRecord(withVisitaLifecycleReadCompat(toVisitaCompativelBorda(record)));
 
 export const listMockVisitas = (records: any[]) => records.map(readMockVisita);
 

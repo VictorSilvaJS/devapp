@@ -112,6 +112,7 @@ type BuildVisitaPayloadInput = {
   status?: string;
   fotos?: any[];
   tecnicoResponsavel?: string;
+  visitaOrigemId?: string;
 };
 
 export const buildVisitaFazendaOptions = (fazendas: any[] = []): VisitaFazendaOption[] =>
@@ -210,6 +211,7 @@ export const buildVisitaPayload = ({
   status = 'agendada',
   fotos = [],
   tecnicoResponsavel,
+  visitaOrigemId,
 }: BuildVisitaPayloadInput) => {
   const dataCompleta = combineVisitaDateTime(dataVisita, horaVisita);
 
@@ -233,5 +235,24 @@ export const buildVisitaPayload = ({
     payload.tecnico_responsavel = tecnicoResponsavel.trim();
   }
 
+  if (status === VISITA_STATUS_REALIZADA && observacoes.trim().length > 0) {
+    payload.resumo_conclusao = observacoes.trim();
+  }
+
+  if (typeof visitaOrigemId === 'string' && visitaOrigemId.trim().length > 0) {
+    payload.visita_origem_id = visitaOrigemId.trim();
+  }
+
+  return payload;
+};
+
+export const buildVisitaAgendaUpdatePayload = (
+  input: Omit<BuildVisitaPayloadInput, 'status'>
+): Record<string, any> | null => {
+  const payload = buildVisitaPayload({ ...input, status: VISITA_STATUS_AGENDADA });
+  if (!payload) return null;
+  delete payload.status;
+  delete payload.resumo_conclusao;
+  delete payload.visita_origem_id;
   return payload;
 };

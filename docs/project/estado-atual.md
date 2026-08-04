@@ -4187,14 +4187,14 @@ Realizada nao regride e somente recebe complemento, correcao ou anulacao.
 Cancelada fica somente leitura e pode originar nova Visita vinculada. Atraso e
 indicador derivado, sem transicao automatica.
 
-O estado efetivo continua inalterado: `EditarVisitaScreen` oferece os tres
-status livremente, `Visita.update` nao valida transicao, conclusao no detalhe e
-imediata, cancelamento nao persiste motivo e Admin ainda pode excluir o
-registro. Nao existe historico ou controle de concorrencia.
+Naquele corte contratual, `EditarVisitaScreen` ainda oferecia os tres status
+livremente, `Visita.update` nao validava transicao, cancelamento nao persistia
+motivo e Admin ainda podia excluir o registro. Essas limitacoes locais foram
+removidas posteriormente em `MP-27`.
 
-Implementacao no dominio/interface permanece em `MP-27`; a organizacao visual
-da lista permanece em `MP-22`. Validacao e autorizacao produtivas dependem do
-backend.
+A organizacao visual da lista foi concluida em `MP-22` e a implementacao local
+da maquina de estados em `MP-27`. Validacao, autorizacao e concorrencia
+produtivas continuam dependentes do backend.
 
 ## MP-06 - Contrato De Versao Do GeoJSON
 
@@ -4401,8 +4401,9 @@ e correcao progressiva em Nova Visita, alem de rolagem, foco real e teclado
 na edicao de Propriedade. Nenhuma alteracao do smoke foi salva. Evidencias:
 `dist/qa-session-2026-07-31/mp-13-validacao-formularios/`.
 
-Regras especificas de Safra, Caderno e estados de Visita permanecem em
-`MP-23`, `MP-25` e `MP-27`. `MP-14` foi executada na sequencia.
+Regras especificas de Safra, Caderno e estados de Visita foram concluídas
+posteriormente em `MP-23`, `MP-25` e `MP-27`. `MP-14` foi executada na
+sequencia.
 
 ## MP-14 - Espacamento Seguro E FAB
 
@@ -4648,8 +4649,9 @@ global, historico contextual, detalhe, retorno, rolagem, FAB e permissoes. A
 rotacao automatica foi restaurada e nao houve excecao fatal no logcat recente.
 Evidencias: `dist/qa-session-2026-08-03/mp-22-lista-visitas/`.
 
-Transicoes, comandos auditados e validacao produtiva permanecem em `MP-27`.
-`MP-23`, `MP-24` e `MP-25` foram executadas na sequencia.
+Transicoes e comandos auditados locais foram concluídos posteriormente em
+`MP-27`; validacao produtiva continua dependente do backend. `MP-23`, `MP-24`
+e `MP-25` foram executadas na sequencia.
 
 ## MP-23 - Safras E Safrinha
 
@@ -4815,4 +4817,46 @@ nao houve excecao fatal depois da correcao. Evidencias:
 
 Teste real de dentro/fora, permissao e offline permanece em `MP-38`.
 Persistencia, reconciliacao e versionamento produtivos da geometria permanecem
-em `MP-37`. `MP-27` nao foi iniciada.
+em `MP-37`. `MP-27` foi concluida na sequencia.
+
+## MP-27 - Implementacao Dos Estados De Visita
+
+Status em 2026-08-04: `CONCLUIDO` no corte local demonstrativo.
+
+Visitas novas agora nascem por operacoes explicitas de agendamento ou registro
+direto como realizada. O estado deixou de ser campo livre de edicao:
+`agendada` aceita reagendamento com motivo, conclusao ou cancelamento;
+`realizada` aceita complemento, correcao auditada ou anulacao; `cancelada`
+fica somente leitura e pode originar uma nova Visita vinculada; `anulada` e
+terminal. Atraso permanece indicador derivado, sem transicao automatica.
+
+Cada operacao local registra autor, horario, estado anterior/novo, versao base,
+versao resultante, chave de idempotencia e, quando cabivel, motivo e
+antes/depois. Versao obsoleta e recusada. Propriedade, origem e estado nao
+podem ser reescritos por update generico; exclusao fisica foi removida da UI e
+recusada pela API local. Registros legados continuam legiveis e recebem a
+mensagem explicita de que nao existe historico anterior, sem inventar eventos.
+
+O detalhe passou a usar formularios proprios para concluir, cancelar,
+complementar, corrigir e anular. A conclusao exige inicio real e resumo
+operacional; o cancelamento exige motivo catalogado e descricao quando
+`outro`. A projecao do Produtor remove eventos, versao, IDs administrativos e
+complementos internos, mantendo somente consulta operacional autorizada.
+
+Teste focado com 25 cenarios, typecheck, suite `domain-compat`,
+`git diff --check` e `packageRelease` passaram. O APK release de 92.155.720
+bytes, SHA-256
+`0C61A184748A9549C6A8C88064F51BFA6527EA812BE8FFC890DEAA31E73C387F`, foi
+instalado por cima no Android fisico `8483A`.
+
+O smoke confirmou conclusao com campo obrigatorio, complemento, correcao com
+antes/depois, anulação terminal apos reentrada, cancelamento, nova Visita
+vinculada e consulta do Produtor sem acoes administrativas em retrato e
+paisagem. Um cartao vazio de acoes no estado `anulada` foi encontrado,
+corrigido e revalidado. A rotacao automatica foi restaurada e nao houve
+excecao fatal recente. Evidencias:
+`dist/qa-session-2026-08-04/mp-27-estados-visita/`.
+
+Este fechamento nao representa RBAC, armazenamento append-only, idempotencia,
+concorrencia distribuida, sincronizacao ou bloqueio offline produtivos. Essas
+garantias continuam dependentes do backend e das fases produtivas do plano.

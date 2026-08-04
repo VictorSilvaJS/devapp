@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
 import DatePicker from '../components/DatePicker';
+import ConfirmDialog from '../components/ConfirmDialog';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
@@ -39,8 +40,9 @@ import {
   getVisitaFluxoUi,
   getVisitaFormFazendaLabel,
 } from '../utils/visitaFormCompat';
+import { buildVisitaIdempotencyKey, type VisitaActor } from '../utils/visitaLifecycleCompat';
 
-const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo'] as const;
+const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo', 'observacoes'] as const;
 
 export default function NovaVisitaScreen() {
   const navigation = useNavigation();
@@ -48,6 +50,7 @@ export default function NovaVisitaScreen() {
   const toast = useToast();
   const { user } = useAuth();
   const routeFazendaId = route.params?.fazendaId || route.params?.produtorId;
+  const visitaOrigemId = route.params?.visitaOrigemId;
 
   // Estados do formulário
   const [fazendaId, setFazendaId] = useState('');
@@ -65,6 +68,7 @@ export default function NovaVisitaScreen() {
   const [loadingFazendas, setLoadingFazendas] = useState(true);
   const [errors, setErrors] = useState<any>({});
   const [contextAccessDenied, setContextAccessDenied] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const formValidation = useFormValidationFocus(VISITA_FORM_ERROR_ORDER);
 
   // Dropdown de fazendas
@@ -143,12 +147,16 @@ export default function NovaVisitaScreen() {
       newErrors.objetivo = 'Selecione o objetivo da visita';
     }
 
+    if (status === VISITA_STATUS_REALIZADA && !observacoes.trim()) {
+      newErrors.observacoes = 'Informe o resumo operacional da visita realizada';
+    }
+
     const dataCompleta = combineVisitaDateTime(dataVisita, horaVisita);
 
     if (dataCompleta) {
       const agora = new Date();
 
-      if (status === VISITA_STATUS_AGENDADA && dataCompleta.getTime() < agora.getTime()) {
+      if (status === VISITA_STATUS_AGENDADA && dataCompleta.getTime() <= agora.getTime()) {
         newErrors.dataVisita = 'Visita agendada precisa ter data e hora futuras';
       }
 
@@ -162,7 +170,7 @@ export default function NovaVisitaScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!podeCriarVisita(user)) {
       toast.showWarning('Você não tem permissão para criar visitas.');
       return;
@@ -176,6 +184,17 @@ export default function NovaVisitaScreen() {
     const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
 
     if (!podeCriarVisitaEmFazenda(user, fazendaSelecionadaData)) {
+      toast.showWarning('Você não tem permissão para criar visita nesta propriedade.');
+      return;
+    }
+
+    setShowConfirmDialog(true);
+  };
+
+  const confirmSave = async () => {
+    const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
+    if (!podeCriarVisitaEmFazenda(user, fazendaSelecionadaData)) {
+      setShowConfirmDialog(false);
       toast.showWarning('Você não tem permissão para criar visita nesta propriedade.');
       return;
     }
@@ -194,23 +213,39 @@ export default function NovaVisitaScreen() {
         status,
         fotos: [],
         tecnicoResponsavel: user?.nome || user?.full_name || 'Sistema',
+        visitaOrigemId,
       });
 
       if (!novaVisita) {
         throw new Error('Não foi possível montar o payload da visita');
       }
 
-      await Visita.create(novaVisita);
+      const actor: VisitaActor = {
+        usuarioId: String(user?.id || '').trim(),
+        nome: user?.nome || user?.full_name,
+        perfil: user?.perfil || '',
+        propriedadeIds: [fazendaId],
+      };
+      const idempotencyKey = buildVisitaIdempotencyKey(visitaOrigemId || 'nova', status);
+
+      if (visitaOrigemId) {
+        await Visita.createFromCancelled(visitaOrigemId, novaVisita, actor, idempotencyKey);
+      } else if (status === VISITA_STATUS_REALIZADA) {
+        await Visita.registerCompleted(novaVisita, actor, idempotencyKey);
+      } else {
+        await Visita.createScheduled(novaVisita, actor, idempotencyKey);
+      }
 
       toast.showSuccess(fluxoInfo.successMessage);
+      setShowConfirmDialog(false);
       
       // Voltar para tela de visitas
       setTimeout(() => {
         navigation.goBack();
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar visita:', error);
-      toast.showError(fluxoInfo.errorMessage);
+      toast.showError(error?.message || fluxoInfo.errorMessage);
     } finally {
       setLoading(false);
     }
@@ -319,7 +354,7 @@ export default function NovaVisitaScreen() {
         </SectionCard>
 
         <SectionCard title="Agenda" subtitle="Informe o fluxo operacional, data e horário da visita.">
-          <View style={styles.field}>
+          {!visitaOrigemId ? <View style={styles.field}>
             <Text style={styles.label}>
               Fluxo da Visita <Text style={styles.required}>*</Text>
             </Text>
@@ -335,7 +370,12 @@ export default function NovaVisitaScreen() {
                 setErrors(prev => ({ ...prev, dataVisita: null }));
               }}
             />
-          </View>
+          </View> : (
+            <InfoBox
+              title="Nova Visita vinculada"
+              message="A Visita cancelada permanece no histórico. Este formulário criará um novo agendamento na mesma Propriedade."
+            />
+          )}
 
           <View ref={formValidation.registerField('dataVisita')} collapsable={false}>
             <DatePicker
@@ -389,14 +429,21 @@ export default function NovaVisitaScreen() {
             />
           </View>
 
+          <View ref={formValidation.registerField('observacoes')} collapsable={false}>
           <FormField
-            label="Observações"
+            label={status === VISITA_STATUS_REALIZADA ? 'Resumo operacional' : 'Observações'}
+            required={status === VISITA_STATUS_REALIZADA}
             value={observacoes}
-            onChangeText={setObservacoes}
+            onChangeText={(value) => {
+              setObservacoes(value);
+              setErrors(prev => ({ ...prev, observacoes: null }));
+            }}
             placeholder={fluxoInfo.observacoesPlaceholder}
             textarea
             numberOfLines={4}
+            error={errors.observacoes}
           />
+          </View>
 
           <FormField
             label="Recomendações Técnicas"
@@ -441,6 +488,19 @@ export default function NovaVisitaScreen() {
         submitLabel={fluxoInfo.submitLabel}
         loading={loading}
         disabled={loadingFazendas || semFazendasAutorizadas}
+      />
+
+      <ConfirmDialog
+        visible={showConfirmDialog}
+        title={status === VISITA_STATUS_REALIZADA ? 'Registrar Visita realizada' : 'Agendar Visita'}
+        message={status === VISITA_STATUS_REALIZADA
+          ? `Confirme o registro realizado em ${getVisitaFormFazendaLabel(fazendaSelecionada)}. O histórico não poderá voltar para Agendada.`
+          : `Confirme o agendamento em ${getVisitaFormFazendaLabel(fazendaSelecionada)}. A data poderá ser reagendada com motivo registrado.`}
+        type={status === VISITA_STATUS_REALIZADA ? 'success' : 'info'}
+        confirmText={status === VISITA_STATUS_REALIZADA ? 'Registrar' : 'Agendar'}
+        onConfirm={confirmSave}
+        onCancel={() => setShowConfirmDialog(false)}
+        loading={loading}
       />
 
     </View>

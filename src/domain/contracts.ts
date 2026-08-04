@@ -176,6 +176,32 @@ export interface VisitaCanonica {
   clima?: string;
   proximaVisita?: string;
   status?: string;
+  agendada_para?: string;
+  inicio_real_em?: string;
+  concluida_em?: string;
+  concluida_por_usuario_id?: string;
+  concluida_por_nome?: string;
+  resumo_conclusao?: string;
+  cancelamento_motivo_codigo?: string;
+  cancelamento_motivo_descricao?: string;
+  cancelada_em?: string;
+  cancelada_por_usuario_id?: string;
+  cancelada_por_nome?: string;
+  anulada_em?: string;
+  anulada_por_usuario_id?: string;
+  anulada_por_nome?: string;
+  anulacao_motivo?: string;
+  criada_por_usuario_id?: string;
+  criada_por_nome?: string;
+  criada_em?: string;
+  responsavel_usuario_id?: string;
+  responsavel_executante_usuario_id?: string;
+  responsavel_executante_nome?: string;
+  visita_origem_id?: string;
+  versao_atual?: number;
+  eventos_visita?: unknown[];
+  complementos_visita?: unknown[];
+  registro_legado?: boolean;
 }
 
 export interface CadernoCampoCanonico {

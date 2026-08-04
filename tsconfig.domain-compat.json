@@ -47,6 +47,7 @@
     "src/utils/perfilProdutorCompat.ts",
     "src/utils/operationalCardCompat.ts",
     "src/utils/visitaListCompat.ts",
+    "src/utils/visitaLifecycleCompat.ts",
     "src/utils/periodoProdutivoFormCompat.ts",
     "src/utils/propriedadeCompat.ts",
     "src/utils/fazendaCadastroCompat.ts",

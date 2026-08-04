@@ -32,8 +32,10 @@ import {
 import {
   VISITA_FOTOS_MVP_INFO,
   VISITA_OBJETIVO_OPTIONS,
+  VISITA_STATUS_AGENDADA,
   buildVisitaFazendaOptions,
-  buildVisitaPayload,
+  buildVisitaAgendaUpdatePayload,
+  combineVisitaDateTime,
   getVisitaFotoUri,
   getVisitaFluxoUi,
   getVisitaFormFazendaId,
@@ -41,8 +43,13 @@ import {
   removeVisitaFotoAtIndex,
   resolveVisitaEdicaoFazendaId,
 } from '../utils/visitaFormCompat';
+import {
+  buildVisitaIdempotencyKey,
+  getVisitaEstado,
+  type VisitaActor,
+} from '../utils/visitaLifecycleCompat';
 
-const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo'] as const;
+const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo', 'motivoReagendamento'] as const;
 
 export default function EditarVisitaScreen() {
   const route = useRoute<any>();
@@ -63,7 +70,7 @@ export default function EditarVisitaScreen() {
   const [recomendacoes, setRecomendacoes] = useState('');
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
-  const [status, setStatus] = useState('agendada');
+  const [motivoReagendamento, setMotivoReagendamento] = useState('');
   const [fotos, setFotos] = useState<any[]>([]);
   const [removePhotoDialog, setRemovePhotoDialog] = useState<{
     visible: boolean;
@@ -77,10 +84,11 @@ export default function EditarVisitaScreen() {
   const [visitaOriginal, setVisitaOriginal] = useState(null);
   const [fazendaOriginal, setFazendaOriginal] = useState(null);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [notEditableReason, setNotEditableReason] = useState('');
   const [errors, setErrors] = useState<any>({});
 
   const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(fazendas), [fazendas]);
-  const fluxoInfo = getVisitaFluxoUi(status);
+  const fluxoInfo = getVisitaFluxoUi(VISITA_STATUS_AGENDADA);
 
   useEffect(() => {
     loadData();
@@ -90,6 +98,7 @@ export default function EditarVisitaScreen() {
     setLoading(true);
     try {
       setAccessDenied(false);
+      setNotEditableReason('');
 
       if (!visitaRouteId) {
         throw new Error('Visita não informada');
@@ -111,6 +120,14 @@ export default function EditarVisitaScreen() {
         return;
       }
 
+      if (getVisitaEstado(visitaData) !== 'agendada') {
+        setVisitaOriginal(visitaData);
+        setFazendaOriginal(acesso.fazenda);
+        setAccessDenied(true);
+        setNotEditableReason('Somente uma Visita agendada pode ter o agendamento editado.');
+        return;
+      }
+
       // Preencher formulário com dados da visita
       if (visitaData) {
         setVisitaOriginal(visitaData);
@@ -126,7 +143,6 @@ export default function EditarVisitaScreen() {
         setObservacoes(visitaData.observacoes || '');
         setRecomendacoes(visitaData.recomendacoes || '');
         setClima(visitaData.clima || '');
-        setStatus(visitaData.status || 'agendada');
         
         if (visitaData.proximaVisita) {
           setProximaVisita(new Date(visitaData.proximaVisita));
@@ -167,6 +183,21 @@ export default function EditarVisitaScreen() {
       newErrors.objetivo = 'Selecione o objetivo da visita';
     }
 
+    const nextDate = combineVisitaDateTime(dataVisita, horaVisita);
+    const originalDate = visitaOriginal ? new Date(visitaOriginal.data_visita) : null;
+    if (nextDate && nextDate.getTime() <= Date.now()) {
+      newErrors.dataVisita = 'O reagendamento precisa ter data e hora futuras';
+    }
+    if (
+      nextDate
+      && originalDate
+      && !Number.isNaN(originalDate.getTime())
+      && nextDate.getTime() !== originalDate.getTime()
+      && !motivoReagendamento.trim()
+    ) {
+      newErrors.motivoReagendamento = 'Informe o motivo do reagendamento';
+    }
+
     setErrors(newErrors);
     formValidation.focusFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -198,7 +229,7 @@ export default function EditarVisitaScreen() {
 
     setSaving(true);
     try {
-      const visitaAtualizada = buildVisitaPayload({
+      const visitaAtualizada = buildVisitaAgendaUpdatePayload({
         fazendaId: fazendaContextoId,
         dataVisita,
         horaVisita,
@@ -207,7 +238,6 @@ export default function EditarVisitaScreen() {
         recomendacoes,
         clima,
         proximaVisita,
-        status,
         fotos,
       });
 
@@ -215,7 +245,19 @@ export default function EditarVisitaScreen() {
         throw new Error('Não foi possível montar o payload da visita');
       }
 
-      await Visita.update(visitaRouteId, visitaAtualizada);
+      const actor: VisitaActor = {
+        usuarioId: String(user?.id || '').trim(),
+        nome: user?.nome || user?.full_name,
+        perfil: user?.perfil || '',
+        propriedadeIds: [fazendaContextoId],
+      };
+      await Visita.updateAgenda(
+        visitaRouteId,
+        visitaAtualizada,
+        actor,
+        motivoReagendamento.trim() || undefined,
+        buildVisitaIdempotencyKey(visitaRouteId, 'alterar_agendamento')
+      );
 
       toast.showSuccess('Visita atualizada com sucesso!');
       
@@ -223,19 +265,13 @@ export default function EditarVisitaScreen() {
       setTimeout(() => {
         navigation.goBack();
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar visita:', error);
-      toast.showError('Erro ao atualizar visita');
+      toast.showError(error?.message || 'Erro ao atualizar visita');
     } finally {
       setSaving(false);
     }
   };
-
-  const statusOptions = [
-    { value: 'agendada', label: 'Agendada' },
-    { value: 'realizada', label: 'Realizada' },
-    { value: 'cancelada', label: 'Cancelada' },
-  ];
 
   const removerFoto = (fotoIndex: number) => {
     setRemovePhotoDialog({ visible: true, fotoIndex });
@@ -272,7 +308,9 @@ export default function EditarVisitaScreen() {
         <Header title="Editar Visita" showBack />
         <View style={styles.loadingContainer}>
           <Ionicons name="lock-closed-outline" size={48} color={colors.muted} />
-          <Text style={styles.loadingText}>Você não tem permissão para editar esta visita.</Text>
+          <Text style={styles.loadingText}>
+            {notEditableReason || 'Você não tem permissão para editar esta visita.'}
+          </Text>
         </View>
       </View>
     );
@@ -308,20 +346,11 @@ export default function EditarVisitaScreen() {
           </View>
         </SectionCard>
 
-        <SectionCard title="Agenda" subtitle="Atualize status, data e horário da visita.">
-          <View style={styles.field}>
-            <Text style={styles.label}>
-              Status <Text style={styles.required}>*</Text>
-            </Text>
-            <RadioCardGroup
-              options={statusOptions.map((opt) => ({
-                value: opt.value,
-                label: opt.label,
-              }))}
-              value={status}
-              onChange={setStatus}
-            />
-          </View>
+        <SectionCard title="Agenda" subtitle="A Visita permanece agendada; conclusão e cancelamento usam ações próprias no detalhe.">
+          <InfoBox
+            title="Estado protegido"
+            message="Editar este formulário não muda o estado da Visita. Mudanças de data ou horário ficam registradas como reagendamento."
+          />
 
           <View ref={formValidation.registerField('dataVisita')} collapsable={false}>
             <DatePicker
@@ -350,6 +379,21 @@ export default function EditarVisitaScreen() {
               placeholder="Selecione o horário"
               error={errors.horaVisita}
               mode="time"
+            />
+          </View>
+
+          <View ref={formValidation.registerField('motivoReagendamento')} collapsable={false}>
+            <FormField
+              label="Motivo do reagendamento"
+              value={motivoReagendamento}
+              onChangeText={(value) => {
+                setMotivoReagendamento(value);
+                setErrors(prev => ({ ...prev, motivoReagendamento: null }));
+              }}
+              placeholder="Obrigatório ao alterar data ou horário"
+              textarea
+              numberOfLines={3}
+              error={errors.motivoReagendamento}
             />
           </View>
         </SectionCard>

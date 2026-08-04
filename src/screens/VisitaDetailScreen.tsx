@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Header from '../components/Header';
-import ConfirmDialog from '../components/ConfirmDialog';
+import VisitaLifecycleActions from '../components/VisitaLifecycleActions';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
 import { Visita, Produtor } from '../api/mock';
@@ -28,6 +28,12 @@ import {
   getVisitaStatusPresentation,
   VisitaStatusTone,
 } from '../utils/visitaListCompat';
+import {
+  getVisitaCancelamentoMotivoLabel,
+  getVisitaEstado,
+  getVisitaEventLabel,
+  toVisitaProducerProjection,
+} from '../utils/visitaLifecycleCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -43,12 +49,7 @@ export default function VisitaDetailScreen() {
   const [visita, setVisita] = useState(null);
   const [fazenda, setFazenda] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const [photoLoadErrors, setPhotoLoadErrors] = useState<Record<number, boolean>>({});
-
-  // Estados de modais
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Recarregar visita sempre que a tela ganhar foco (ex: ao voltar da edição)
   useFocusEffect(
@@ -79,7 +80,7 @@ export default function VisitaDetailScreen() {
         return;
       }
 
-      setVisita(visitaData);
+      setVisita(user?.perfil === 'produtor' ? toVisitaProducerProjection(visitaData) : visitaData);
       setFazenda(acesso.fazenda);
       setPhotoLoadErrors({});
     } catch (error) {
@@ -88,64 +89,6 @@ export default function VisitaDetailScreen() {
       navigation.goBack();
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleMarcarRealizada = async () => {
-    if (!canEdit()) {
-      toast.showWarning('Você não tem permissão para alterar esta visita.');
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      await Visita.update(visitaRouteId, { status: 'realizada' });
-      toast.showSuccess('Visita marcada como realizada!');
-      await loadVisita();
-    } catch (error) {
-      console.error('Erro ao atualizar visita:', error);
-      toast.showError('Erro ao atualizar status da visita');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCancelar = async () => {
-    if (!canEdit()) {
-      toast.showWarning('Você não tem permissão para alterar esta visita.');
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      await Visita.update(visitaRouteId, { status: 'cancelada' });
-      toast.showSuccess('Visita cancelada');
-      setShowCancelDialog(false);
-      await loadVisita();
-    } catch (error) {
-      console.error('Erro ao cancelar visita:', error);
-      toast.showError('Erro ao cancelar visita');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleExcluir = async () => {
-    if (!canDelete()) {
-      toast.showWarning('Você não tem permissão para excluir esta visita.');
-      return;
-    }
-
-    setActionLoading(true);
-    try {
-      await Visita.delete(visitaRouteId);
-      toast.showSuccess('Visita excluída');
-      setShowDeleteDialog(false);
-      navigation.goBack();
-    } catch (error) {
-      console.error('Erro ao excluir visita:', error);
-      toast.showError('Erro ao excluir visita');
-      setActionLoading(false);
     }
   };
 
@@ -191,19 +134,7 @@ export default function VisitaDetailScreen() {
   };
 
   const canEdit = () => {
-    return podeEditarVisita(user, visita, fazenda);
-  };
-
-  const canMarkDone = () => {
-    return visita?.status === 'agendada' && canEdit();
-  };
-
-  const canCancel = () => {
-    return visita?.status === 'agendada' && canEdit();
-  };
-
-  const canDelete = () => {
-    return user?.perfil === 'admin' && !!visita;
+    return getVisitaEstado(visita) === 'agendada' && podeEditarVisita(user, visita, fazenda);
   };
 
   if (loading) {
@@ -232,6 +163,20 @@ export default function VisitaDetailScreen() {
 
   const fazendaInfo = fazenda ? getFazendaUiInfo(fazenda) : null;
   const statusPresentation = getVisitaStatusPresentation(visita);
+  const estado = getVisitaEstado(visita);
+  const isProdutorView = user?.perfil === 'produtor';
+  const eventos = Array.isArray(visita.eventos_visita) ? visita.eventos_visita : [];
+  const complementos = Array.isArray(visita.complementos_visita) ? visita.complementos_visita : [];
+  const canCommand = podeEditarVisita(user, visita, fazenda)
+    && estado != null
+    && ['agendada', 'realizada', 'cancelada'].includes(estado);
+  const handleScheduleFromCancelled = () => {
+    if (!fazendaInfo?.id || estado !== 'cancelada' || !canCommand) return;
+    navigation.navigate('NovaVisita', {
+      fazendaId: fazendaInfo.id,
+      visitaOrigemId: visitaRouteId,
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -285,8 +230,10 @@ export default function VisitaDetailScreen() {
           <View style={styles.infoRow}>
             <Ionicons name="calendar" size={20} color={colors.muted} />
             <View style={styles.infoContent}>
-              <Text style={styles.infoLabel}>Data e Hora</Text>
-              <Text style={styles.infoValue}>{formatDateTime(visita.data_visita)}</Text>
+              <Text style={styles.infoLabel}>
+                {estado === 'agendada' ? 'Agendada para' : 'Data de referência'}
+              </Text>
+              <Text style={styles.infoValue}>{formatDateTime(visita.agendada_para || visita.data_visita)}</Text>
             </View>
           </View>
 
@@ -316,6 +263,69 @@ export default function VisitaDetailScreen() {
             </View>
           )}
         </View>
+
+        {estado === 'realizada' || estado === 'anulada' ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="checkmark-circle-outline" size={24} color={colors.success} />
+              <Text style={styles.cardTitle}>Conclusão</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Ionicons name="time-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Início real</Text>
+                <Text style={styles.infoValue}>{formatDateTime(visita.inicio_real_em)}</Text>
+              </View>
+            </View>
+            <View style={styles.infoRow}>
+              <Ionicons name="shield-checkmark-outline" size={20} color={colors.muted} />
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Concluída em</Text>
+                <Text style={styles.infoValue}>{formatDateTime(visita.concluida_em)}</Text>
+              </View>
+            </View>
+            {visita.resumo_conclusao ? (
+              <View style={styles.summaryBox}>
+                <Text style={styles.infoLabel}>Resumo operacional</Text>
+                <Text style={styles.textContent}>{visita.resumo_conclusao}</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
+        {estado === 'cancelada' ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="close-circle-outline" size={24} color={colors.error} />
+              <Text style={styles.cardTitle}>Cancelamento</Text>
+            </View>
+            <Text style={styles.infoLabel}>Motivo</Text>
+            <Text style={styles.infoValue}>
+              {getVisitaCancelamentoMotivoLabel(visita.cancelamento_motivo_codigo)}
+            </Text>
+            {visita.cancelamento_motivo_descricao ? (
+              <Text style={[styles.textContent, styles.detailSpacing]}>
+                {visita.cancelamento_motivo_descricao}
+              </Text>
+            ) : null}
+            {visita.cancelada_em ? (
+              <Text style={styles.auditMeta}>Cancelada em {formatDateTime(visita.cancelada_em)}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {estado === 'anulada' ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="alert-circle-outline" size={24} color={colors.error} />
+              <Text style={styles.cardTitle}>Anulação</Text>
+            </View>
+            <Text style={styles.textContent}>{visita.anulacao_motivo || 'Justificativa não informada.'}</Text>
+            {visita.anulada_em ? (
+              <Text style={styles.auditMeta}>Anulada em {formatDateTime(visita.anulada_em)}</Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* Observações */}
         {visita.observacoes && (
@@ -349,6 +359,66 @@ export default function VisitaDetailScreen() {
             <Text style={styles.textContent}>{formatDate(visita.proximaVisita)}</Text>
           </View>
         )}
+
+        {complementos.length > 0 ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Complementos técnicos</Text>
+            </View>
+            {complementos.map((complemento, index) => (
+              <View key={complemento.complemento_id || index} style={styles.auditItem}>
+                <Text style={styles.textContent}>{complemento.texto}</Text>
+                <Text style={styles.auditMeta}>
+                  {[complemento.autor_nome, formatDateTime(complemento.criado_em)].filter(Boolean).join(' • ')}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {!isProdutorView ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="shield-checkmark-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Histórico da Visita</Text>
+            </View>
+            {eventos.length > 0 ? eventos.slice().reverse().map((evento, index) => (
+              <View key={evento.evento_id || index} style={styles.auditItem}>
+                <Text style={styles.infoValue}>{getVisitaEventLabel(evento.tipo)}</Text>
+                <Text style={styles.auditMeta}>
+                  {[evento.autor_nome || evento.autor_perfil, formatDateTime(evento.ocorrido_em)].filter(Boolean).join(' • ')}
+                  {evento.versao_resultante ? ` • versão ${evento.versao_resultante}` : ''}
+                </Text>
+                {evento.motivo ? <Text style={styles.textContent}>Motivo: {evento.motivo}</Text> : null}
+                {evento.antes && evento.depois ? (
+                  <Text style={styles.auditDiff}>Antes/depois preservado para {Object.keys(evento.depois).join(', ')}.</Text>
+                ) : null}
+              </View>
+            )) : (
+              <Text style={styles.legacyHint}>
+                Registro legado: o histórico anterior não existia e não foi inventado.
+              </Text>
+            )}
+          </View>
+        ) : null}
+
+        {canCommand && fazendaInfo ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="settings-outline" size={24} color={colors.primary} />
+              <Text style={styles.cardTitle}>Ações da Visita</Text>
+            </View>
+            <VisitaLifecycleActions
+              visita={visita}
+              user={user}
+              fazendaId={String(fazendaInfo.id)}
+              fazendaLabel={fazendaInfo.fazendaNome}
+              onUpdated={setVisita}
+              onScheduleFromCancelled={handleScheduleFromCancelled}
+            />
+          </View>
+        ) : null}
 
         {/* Fotos */}
         {visita.fotos && visita.fotos.length > 0 && (
@@ -392,82 +462,14 @@ export default function VisitaDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Ações */}
-      <View style={styles.footer}>
-        {canMarkDone() && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.successButton]}
-            onPress={handleMarcarRealizada}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <ActivityIndicator color={colors.card} size="small" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={20} color={colors.card} />
-                <Text style={styles.actionButtonText}>Marcar Realizada</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {canEdit() && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.primaryButton]}
-            onPress={handleEditar}
-            disabled={actionLoading}
-          >
+      {canEdit() ? (
+        <View style={styles.footer}>
+          <TouchableOpacity style={[styles.actionButton, styles.primaryButton]} onPress={handleEditar}>
             <Ionicons name="create-outline" size={20} color={colors.card} />
-            <Text style={styles.actionButtonText}>Editar</Text>
+            <Text style={styles.actionButtonText}>Editar agendamento</Text>
           </TouchableOpacity>
-        )}
-
-        {canCancel() && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.warningButton]}
-            onPress={() => setShowCancelDialog(true)}
-            disabled={actionLoading}
-          >
-            <Ionicons name="close-circle-outline" size={20} color={colors.card} />
-            <Text style={styles.actionButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-        )}
-
-        {canDelete() && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.dangerButton]}
-            onPress={() => setShowDeleteDialog(true)}
-            disabled={actionLoading}
-          >
-            <Ionicons name="trash-outline" size={20} color={colors.card} />
-            <Text style={styles.actionButtonText}>Excluir</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Diálogo de Confirmação - Cancelar */}
-      <ConfirmDialog
-        visible={showCancelDialog}
-        title="Cancelar Visita"
-        message="Tem certeza que deseja cancelar esta visita? Esta ação não poderá ser desfeita."
-        type="warning"
-        confirmText="Sim, Cancelar"
-        onConfirm={handleCancelar}
-        onCancel={() => setShowCancelDialog(false)}
-        loading={actionLoading}
-      />
-
-      {/* Diálogo de Confirmação - Excluir */}
-      <ConfirmDialog
-        visible={showDeleteDialog}
-        title="Excluir Visita"
-        message="Tem certeza que deseja excluir esta visita permanentemente? Esta ação não poderá ser desfeita."
-        type="danger"
-        confirmText="Sim, Excluir"
-        onConfirm={handleExcluir}
-        onCancel={() => setShowDeleteDialog(false)}
-        loading={actionLoading}
-      />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -584,6 +586,36 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     color: colors.textLight,
     lineHeight: 22,
+  },
+  summaryBox: {
+    padding: spacing.md,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.backgroundAlt,
+  },
+  detailSpacing: {
+    marginTop: spacing.sm,
+  },
+  auditItem: {
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    gap: spacing.xs,
+  },
+  auditMeta: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSmall,
+    color: colors.muted,
+    lineHeight: 18,
+  },
+  auditDiff: {
+    fontSize: typography.fontSmall,
+    color: colors.textLight,
+    lineHeight: 18,
+  },
+  legacyHint: {
+    fontSize: typography.fontSmall,
+    color: colors.textLight,
+    lineHeight: 20,
   },
   photosContainer: {
     marginTop: spacing.sm,

@@ -689,12 +689,15 @@ backend e regras de acesso dos tres perfis.
 
 ### Impacto
 
-- seletor livre de status e updates diretos atuais continuam limitacao do mock;
+- `MP-27` removeu o seletor livre de status e bloqueou update generico do
+  estado no mock local;
 - Visita realizada/cancelada nao abre edicao geral;
 - Admin nao exclui fisicamente Visita persistida;
 - registros legados sao preservados sem historico inventado;
-- implementacao permanece em `MP-27`;
-- organizacao visual das listas permanece em `MP-22`.
+- comandos locais versionados e historico foram implementados em `MP-27`;
+- organizacao visual das listas foi concluida em `MP-22`;
+- autorizacao, append-only, concorrencia, idempotencia e sincronizacao
+  produtivas continuam dependentes do backend.
 
 ---
 

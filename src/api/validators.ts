@@ -107,7 +107,22 @@ export const validateVisita = (data) => {
   validateEnum(normalized.objetivo, ['consultoria', 'coleta_solo', 'avaliacao_cultivo', 'entrega_material', 'outro'], 'objetivo', 'Visita');
   
   if (normalized.status) {
-    validateEnum(normalized.status, ['agendada', 'realizada', 'cancelada'], 'status', 'Visita');
+    validateEnum(normalized.status, ['agendada', 'realizada', 'cancelada', 'anulada'], 'status', 'Visita');
+  }
+
+  if (normalized.versao_atual !== undefined) {
+    const versao = Number(normalized.versao_atual);
+    if (!Number.isInteger(versao) || versao < 1) {
+      throw new Error('Visita.versao_atual: Deve ser um inteiro maior ou igual a 1');
+    }
+  }
+
+  if (normalized.eventos_visita !== undefined && !Array.isArray(normalized.eventos_visita)) {
+    throw new Error('Visita.eventos_visita: Deve ser um array');
+  }
+
+  if (normalized.complementos_visita !== undefined && !Array.isArray(normalized.complementos_visita)) {
+    throw new Error('Visita.complementos_visita: Deve ser um array');
   }
   
   if (normalized.fotos && !Array.isArray(normalized.fotos)) {

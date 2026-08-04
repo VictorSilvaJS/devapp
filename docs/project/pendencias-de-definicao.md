@@ -83,8 +83,9 @@ em `MP-34`.
 Status em 2026-07-30 (`MP-05`): `estados-visita.md` definiu criacao agendada
 ou realizada, reagendamento, atraso derivado, conclusao, cancelamento,
 complemento, correcao, anulacao, concorrencia e auditoria. Nao permanece
-pendente a maquina de estados. Permanecem pendentes implementacao em `MP-27`,
-organizacao visual em `MP-22`, persistencia de eventos e validacao no backend.
+pendente a maquina de estados. A organizacao visual foi concluida em `MP-22` e
+a implementacao local em `MP-27`. Permanecem pendentes persistencia append-only
+de eventos, autorizacao, concorrencia e validacao no backend.
 
 Status em 2026-07-30 (`MP-06`): `versionamento-geojson-talhoes.md` separou
 Talhao logico, importacao imutavel, versao geometrica e linhagem; definiu
@@ -787,7 +788,14 @@ Status em 2026-07-30 (`MP-05`): permissao para abrir Visita nao implica poder
 de mudar estado. Produtor permanece em consulta. Colaborador/Admin dependem de
 acao explicita e escopo para reagendar, concluir, cancelar, complementar,
 corrigir ou anular. Status livre, exclusao fisica, rota direta e payload
-manipulado devem ser recusados pelo dominio/backend em `MP-27`.
+manipulado foram recusados pelo dominio local em `MP-27`; a mesma garantia no
+backend continua pendente.
+
+Status em 2026-08-04 (`MP-27`): dominio e API locais recusam status livre,
+exclusao fisica, versao obsoleta, Propriedade fora do escopo informado e
+campos protegidos. Produtor permaneceu consultivo no teste automatizado e no
+Android fisico. A protecao produtiva nao pode confiar no escopo enviado pelo
+cliente; RBAC e reautorizacao server-side continuam pendentes com o backend.
 
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
@@ -866,7 +874,9 @@ Status em 2026-07-30 (`MP-05`): Visitas em cache podem ser consultadas dentro
 da sessao e do ultimo escopo autorizados. Agendar, registrar realizada,
 reagendar, concluir, cancelar, complementar, corrigir e anular exigem conexao.
 Nao ha fila de transicao offline nem sucesso otimista no primeiro contrato.
-Implementacao e testes permanecem em `MP-27`.
+`MP-27` implementou e testou os comandos na persistencia local demonstrativa,
+mas nao simula conectividade nem fila offline. A exigencia produtiva de
+conexao, sincronizacao e conflitos continua pendente com o backend.
 
 Status em 2026-07-30 (`MP-06`): versoes GeoJSON publicadas previamente
 armazenadas podem ser consultadas offline dentro da sessao e do ultimo escopo,

@@ -180,7 +180,7 @@ const run = async () => {
     const visita = await Visita.create({
       fazenda_id: 'p1',
       tecnico_responsavel: 'Ana Santos',
-      data_visita: new Date().toISOString(),
+      data_visita: new Date(Date.now() + 86400000).toISOString(),
       objetivo: 'consultoria',
     });
 
@@ -191,16 +191,29 @@ const run = async () => {
     assert.equal(visita.status, 'agendada');
   });
 
-  await test('Visita.update parcial preserva fazenda existente e valida o registro completo', async () => {
+  await test('Visita exige comando para concluir e preserva fazenda existente', async () => {
     const visita = await Visita.create({
       fazenda_id: 'p2',
       tecnico_responsavel: 'Carlos Silva',
-      data_visita: new Date().toISOString(),
+      data_visita: new Date(Date.now() + 86400000).toISOString(),
       objetivo: 'coleta_solo',
     });
 
-    const atualizada = await Visita.update(visita.id, {
-      status: 'realizada',
+    await assert.rejects(
+      () => Visita.update(visita.id, { status: 'realizada' }),
+      /Estado não pode ser alterado/
+    );
+    const atualizada = await Visita.command(visita.id, {
+      tipo: 'concluir',
+      versaoBase: visita.versao_atual,
+      chaveIdempotencia: `mock-compat-concluir-${visita.id}`,
+      inicioRealEm: new Date().toISOString(),
+      resumo: 'Coleta de solo concluída.',
+    }, {
+      usuarioId: 'u2',
+      nome: 'Carlos Silva',
+      perfil: 'colaborador',
+      propriedadeIds: ['p2'],
     });
 
     assert.equal(atualizada.fazenda_id, 'p2');
@@ -307,7 +320,7 @@ const run = async () => {
     const visita = await Visita.create({
       fazenda_id: 'p_sela1',
       tecnico_responsavel: 'Colaborador de Campo',
-      data_visita: '2026-06-15T14:00:00.000Z',
+      data_visita: new Date(Date.now() + 86400000 * 3).toISOString(),
       objetivo: 'outro',
       observacoes: 'Registro local demonstrativo.',
     });
@@ -327,14 +340,24 @@ const run = async () => {
     const visitaRemovida = await Visita.create({
       fazenda_id: 'p_sela1',
       tecnico_responsavel: 'Colaborador de Campo',
-      data_visita: '2026-06-16T14:00:00.000Z',
+      data_visita: new Date(Date.now() + 86400000 * 4).toISOString(),
       objetivo: 'outro',
     });
 
     await Produtor.update(propriedade.id, {
       fazenda_nome: 'Propriedade Persistência Local Atualizada',
     });
-    await Visita.delete(visitaRemovida.id);
+    const visitaCancelada = await Visita.command(visitaRemovida.id, {
+      tipo: 'cancelar',
+      versaoBase: visitaRemovida.versao_atual,
+      chaveIdempotencia: `mock-compat-cancelar-${visitaRemovida.id}`,
+      motivoCodigo: 'duplicidade',
+    }, {
+      usuarioId: 'u2',
+      nome: 'Colaborador de Campo',
+      perfil: 'colaborador',
+      propriedadeIds: ['p_sela1'],
+    });
 
     const snapshot = await MockLocalData.readLocalSnapshot();
     assert.ok(snapshot.produtores.some((item) => (
@@ -343,7 +366,11 @@ const run = async () => {
     )));
     assert.ok(snapshot.users.some((item) => item.id === usuario.id));
     assert.ok(snapshot.visitas.some((item) => item.id === visita.id));
-    assert.ok(snapshot.visitas.every((item) => item.id !== visitaRemovida.id));
+    assert.ok(snapshot.visitas.some((item) => (
+      item.id === visitaCancelada.id
+      && item.status === 'cancelada'
+      && item.eventos_visita.at(-1).tipo === 'visita_cancelada'
+    )));
     assert.ok(snapshot.cadernos.some((item) => item.id === caderno.id));
     assert.ok(snapshot.mapas.some((item) => item.id === mapa.id));
     assert.equal(Object.prototype.hasOwnProperty.call(snapshot, 'limitesArea'), false);
