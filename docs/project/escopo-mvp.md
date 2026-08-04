@@ -57,7 +57,8 @@ O fluxo e local/demonstrativo: o arquivo fisico fica no storage interno e
 apenas metadados pequenos ficam no indice local. Cada material abre por id,
 versao e contexto autorizado da Propriedade. Imagens abrem em modal de tela
 cheia e podem ser ampliadas por pinca, toque duplo ou botoes acessiveis, com
-arraste limitado ao quadro quando ampliadas. Uma camada so e apresentada como
+arraste limitado ao quadro quando ampliadas. Gestos iniciados dentro do quadro
+nao rolam a pagina externa. Uma camada so e apresentada como
 mapa quando carrega geometria GeoJSON
 renderizavel, com legenda e metadados. PDF usa visualizacao real embutida onde
 a plataforma suporta ou um visualizador compativel do sistema, sem simular

@@ -52,6 +52,14 @@ const run = async () => {
     assert.match(viewer, /accessibilityLabel="Redefinir ampliação"/);
   });
 
+  await test('toque dentro da imagem neutraliza a rolagem da pagina externa', () => {
+    assert.match(viewer, /onTouchStart=\{\(\) => onInteractionChange\(true\)\}/);
+    assert.match(viewer, /onTouchEnd=\{\(event\) => onInteractionChange\(event\.nativeEvent\.touches\.length > 0\)\}/);
+    assert.match(viewer, /onTouchCancel=\{\(\) => onInteractionChange\(false\)\}/);
+    assert.match(viewer, /scrollEnabled=\{!imageTouchActive\}/);
+    assert.match(viewer, /Gestos iniciados no quadro não rolam a página/);
+  });
+
   await test('acao de arquivo verifica autorizacao e nao produz sucesso falso ao abrir', () => {
     assert.match(viewer, /podeBaixarMapa\(user, material, fazendasPermitidas\)/);
     assert.match(viewer, /downloadStatus\.podeAbrir/);

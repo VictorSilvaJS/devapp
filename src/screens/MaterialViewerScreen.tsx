@@ -286,10 +286,12 @@ function MaterialImageView({
   source,
   title,
   onError,
+  onInteractionChange,
 }: {
   source: ImageSourcePropType;
   title: string;
   onError: () => void;
+  onInteractionChange: (active: boolean) => void;
 }) {
   const { width } = useWindowDimensions();
   const [zoom, setZoom] = useState(1);
@@ -345,6 +347,10 @@ function MaterialImageView({
   useEffect(() => {
     resetZoom();
   }, [resetZoom]);
+
+  useEffect(() => () => {
+    onInteractionChange(false);
+  }, [onInteractionChange]);
 
   const pinchGesture = useMemo(
     () => Gesture.Pinch()
@@ -468,6 +474,9 @@ function MaterialImageView({
           style={[styles.imageViewport, { width: baseWidth, height: viewportHeight }]}
           accessibilityLabel={`Visualizador da imagem ${title}`}
           accessibilityHint="Use pinça ou toque duas vezes para ampliar. Os botões também controlam a ampliação."
+          onTouchStart={() => onInteractionChange(true)}
+          onTouchEnd={(event) => onInteractionChange(event.nativeEvent.touches.length > 0)}
+          onTouchCancel={() => onInteractionChange(false)}
         >
           <View
             style={[
@@ -489,7 +498,7 @@ function MaterialImageView({
         </View>
       </GestureDetector>
       <Text style={styles.viewerHint}>
-        Use pinça ou toque duas vezes para ampliar até 400%. Quando ampliada, arraste a imagem em qualquer direção.
+        Use pinça ou toque duas vezes para ampliar até 400%. Quando ampliada, arraste a imagem em qualquer direção. Gestos iniciados no quadro não rolam a página.
       </Text>
     </View>
   );
@@ -504,6 +513,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
   const [fazendasPermitidas, setFazendasPermitidas] = useState<Record<string, any>[]>([]);
   const [imageSource, setImageSource] = useState<ImageSourcePropType | null>(null);
   const [imageError, setImageError] = useState('');
+  const [imageTouchActive, setImageTouchActive] = useState(false);
   const [fileActionLoading, setFileActionLoading] = useState(false);
 
   const identity = useMemo(
@@ -775,6 +785,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
             source={imageSource}
             title={title}
             onError={() => setImageError('Não foi possível renderizar esta imagem.')}
+            onInteractionChange={setImageTouchActive}
           />
         </>
       );
@@ -835,6 +846,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
           style={styles.scroll}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
+          scrollEnabled={!imageTouchActive}
         >
           <View style={styles.heroCard}>
             <View style={styles.heroIcon}>

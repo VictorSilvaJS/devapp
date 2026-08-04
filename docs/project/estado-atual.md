@@ -4906,7 +4906,8 @@ escopo recebem estado controlado e nao abrem o mapa geral de Talhoes.
 
 O tipo real define a apresentacao: imagem abre em modal de tela cheia e
 oferece zoom de 100% a 400% por pinca, toque duplo ou botoes, com arraste
-limitado ao quadro; GeoJSON renderizavel vira camada vetorial com legenda e
+limitado ao quadro e rolagem externa neutralizada enquanto o toque permanece
+sobre a imagem; GeoJSON renderizavel vira camada vetorial com legenda e
 metadados; PDF usa WebView apenas onde ha suporte real e, nos demais casos,
 delega a visualizador compativel do sistema; ZIP e outros arquivos ficam em
 detalhes sem preview ficticio. A acao de arquivo exige permissao,
@@ -4918,18 +4919,20 @@ voltar desse fluxo somente leitura, preservando busca, filtros, aba e posicao.
 O gerenciamento local da equipe continua separado por `Gerenciar` nos
 cartoes, mantendo substituicao/remocao existentes fora do visualizador.
 
-O teste focado cobriu 16 cenarios de rota, versao, Propriedade, formatos,
+O teste focado cobriu 17 cenarios de rota, versao, Propriedade, formatos,
 GeoJSON, preview honesto, autorizacao, limites de zoom, ponto focal, arraste,
 abertura/download e retorno. Typecheck, suite `domain-compat`,
 `git diff --check` e `packageRelease` passaram.
 
-O APK release final de 92.303.748 bytes, SHA-256
-`B5C312BD68B3F81A0FB9AF05C58315F58D1CE1203DD67D282FCA66D30652B10B`, foi
+O APK release final de 92.307.076 bytes, SHA-256
+`25F04E1225036178313C4C092D5A8EF8AA31D753BB70DA2C7BF2A5D5F6E6A9FF`, foi
 instalado por cima no Android fisico `8483A`. O smoke final abriu
 `retest-talhao-landscape.png` pela acao `Abrir material` do detalhe da
 Propriedade, ampliou de 100% para 200% por toque duplo, arrastou a imagem sem
-rolar a pagina externa e voltou com o botao nas mesmas coordenadas
-`[67,1188][733,1250]`. Nao houve excecao fatal recente. A automacao ADB nao
+rolar a pagina externa e voltou com o botao nas mesmas coordenadas. Antes da
+ampliacao, um arraste sobre a imagem em 100% manteve o quadro exatamente em
+`[48,507][752,1154]`; o retorno manteve o segundo botao em
+`[67,744][733,806]`. Nao houve excecao fatal recente. A automacao ADB nao
 injeta dois ponteiros simultaneos; a pinca foi coberta pelo contrato do gesto
 e pelos testes de ponto focal, sem declarar smoke manual inexistente.
 

@@ -150,7 +150,8 @@ Propriedade.
   Propriedade. A consulta revalida o item na fonte unica e no escopo do perfil.
 - PNG local pode abrir em modal de tela cheia quando a URI interna for segura
   e o arquivo existir. O zoom aceita pinca, toque duplo e botoes de 100% a
-  400%; o arraste atua dentro do quadro somente quando ha ampliacao.
+  400%; o arraste atua dentro do quadro somente quando ha ampliacao e nenhum
+  gesto iniciado sobre a imagem rola a pagina externa.
 - Camada georreferenciada so abre como mapa quando o material contem GeoJSON
   renderizavel; formato ou nome, isoladamente, nao autorizam inventar camada.
 - PDF deve aparecer com metadados e nome original. A visualizacao embutida e
