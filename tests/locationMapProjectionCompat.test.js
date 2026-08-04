@@ -155,7 +155,7 @@ test('recaptura preserva o último marcador e ignora resposta de tela antiga', (
   assert.doesNotMatch(failedResultBranch[1], /setUserLocation\(null\)/);
 });
 
-test('retorno ao mapa sincroniza novamente o ponto depois do WebView pronto', () => {
+test('retorno sincroniza o marcador sem centralizar e mantém centralização como comando explícito', () => {
   const source = fs.readFileSync(
     path.join(__dirname, '..', 'src/components/MapaFazendaView.tsx'),
     'utf8'
@@ -164,8 +164,14 @@ test('retorno ao mapa sincroniza novamente o ponto depois do WebView pronto', ()
   assert.match(source, /syncUserLocationToWebView/);
   assert.match(source, /locationSyncTimeoutRef/);
   assert.match(source, /setTimeout\(\(\) => \{\s+syncUserLocationToWebView\(\)/);
+  const markerFunction = source.slice(
+    source.indexOf('function atualizarLocalizacaoUsuario(payload)'),
+    source.indexOf('function centralizarLocalizacaoUsuario(payload)')
+  );
+  assert.doesNotMatch(markerFunction, /map\.setView|map\.panTo|map\.fitBounds/);
+  assert.match(source, /function centralizarLocalizacaoUsuario\(payload\)/);
   assert.match(source, /map\.stop\(\)/);
-  assert.match(source, /map\.setView\(latLng, map\.getZoom\(\), \{ animate: false \}\)/);
+  assert.match(source, /map\.setView\(latLng, Math\.max\(map\.getZoom\(\), 16\), \{ animate: false \}\)/);
 });
 
 if (failed > 0) {

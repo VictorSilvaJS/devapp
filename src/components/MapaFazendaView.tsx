@@ -49,7 +49,10 @@ export interface TalhaoMapa {
 
 export interface MapaFazendaViewRef {
   selecionarTalhao: (id: string | null) => void;
+  centralizarTalhao: (id: string) => void;
+  centralizarLocalizacao: (location: ForegroundUserLocation) => void;
   ajustarLimites: () => void;
+  recalcularDimensoes: () => void;
 }
 
 interface Props {
@@ -135,7 +138,7 @@ function buildSvgProjection(
   };
 }
 
-function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | null): string {
+function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
   const features = talhoes
     .filter((talhao) => getTalhaoPoligonos(talhao).length > 0)
     .map((talhao) => ({
@@ -170,8 +173,6 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
     }));
 
   const geojsonStr = JSON.stringify({ type: 'FeatureCollection', features });
-  const selectedStr = JSON.stringify(talhaoSelecionadoId || null);
-
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -182,7 +183,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body, #map { width: 100%; height: 100%; background: #101827; }
     .leaflet-container { background: #101827; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .leaflet-control-zoom { border: none !important; margin-top: 76px !important; }
+    .leaflet-control-zoom { display: none !important; }
     .leaflet-control-zoom a {
       background: rgba(255,255,255,0.94) !important;
       color: #172033 !important;
@@ -232,7 +233,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
   <script>
     (function () {
       var GEOJSON = ${geojsonStr};
-      var SELECTED_ID = ${selectedStr};
+      var SELECTED_ID = null;
       var layersById = {};
       var labelsById = {};
       var geojsonLayer = null;
@@ -291,10 +292,25 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
           var selectedLayer = layersById[id];
           selectedLayer.setStyle(getEstilo(selectedLayer.feature, true));
           selectedLayer.bringToFront();
-          map.panTo(selectedLayer.getBounds().getCenter(), { animate: true, duration: 0.45 });
         }
 
+        atualizarVisibilidadeRotulos();
         trazerLocalizacaoUsuarioParaFrente();
+      }
+
+      function centralizarTalhao(id) {
+        if (!id || !layersById[id]) {
+          return false;
+        }
+        map.panTo(layersById[id].getBounds().getCenter(), { animate: true, duration: 0.45 });
+        return true;
+      }
+
+      function atualizarVisibilidadeRotulos() {
+        var mostrarTodos = map && map.getZoom() >= 15.5;
+        Object.keys(labelsById).forEach(function (id) {
+          labelsById[id].setOpacity(mostrarTodos || SELECTED_ID === id ? 1 : 0);
+        });
       }
 
       function isFiniteNumber(value) {
@@ -398,16 +414,34 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
 
         trazerLocalizacaoUsuarioParaFrente();
         map.invalidateSize(false);
-        if (map.stop) {
-          map.stop();
-        }
-        map.setView(latLng, map.getZoom(), { animate: false });
         return true;
       }
 
+      function centralizarLocalizacaoUsuario(payload) {
+        var localizacao = normalizarLocalizacaoUsuario(payload);
+        if (!localizacao) {
+          return false;
+        }
+        atualizarLocalizacaoUsuario(localizacao);
+        var latLng = [localizacao.latitude, localizacao.longitude];
+        if (map.stop) {
+          map.stop();
+        }
+        map.setView(latLng, Math.max(map.getZoom(), 16), { animate: false });
+        return true;
+      }
+
+      function recalcularDimensoes() {
+        if (!map) return;
+        map.invalidateSize(false);
+      }
+
       window.selecionarTalhao = selecionarTalhao;
+      window.centralizarTalhao = centralizarTalhao;
       window.ajustarLimites = ajustarLimites;
       window.atualizarLocalizacaoUsuario = atualizarLocalizacaoUsuario;
+      window.centralizarLocalizacaoUsuario = centralizarLocalizacaoUsuario;
+      window.recalcularDimensoes = recalcularDimensoes;
 
       try {
         map = L.map('map', {
@@ -464,9 +498,8 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
           map.setView([-15.0, -52.0], 4);
         }
 
-        if (SELECTED_ID) {
-          selecionarTalhao(SELECTED_ID);
-        }
+        atualizarVisibilidadeRotulos();
+        map.on('zoomend', atualizarVisibilidadeRotulos);
 
         map.on('click', function () {
           post('mapaPress');
@@ -478,11 +511,20 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[], talhaoSelecionadoId?: string | 
             if (data.tipo === 'selecionarTalhao') {
               selecionarTalhao(data.id);
             }
+            if (data.tipo === 'centralizarTalhao') {
+              centralizarTalhao(data.id);
+            }
             if (data.tipo === 'ajustarLimites') {
               ajustarLimites();
             }
             if (data.tipo === 'atualizarLocalizacaoUsuario') {
               atualizarLocalizacaoUsuario(data.payload);
+            }
+            if (data.tipo === 'centralizarLocalizacaoUsuario') {
+              centralizarLocalizacaoUsuario(data.payload);
+            }
+            if (data.tipo === 'recalcularDimensoes') {
+              recalcularDimensoes();
             }
           } catch (err) {}
         }
@@ -546,18 +588,20 @@ function FallbackShapeMap({
                     strokeLinejoin="round"
                   />
                 ))}
-                <SvgText
-                  x={talhao.center.x}
-                  y={talhao.center.y}
-                  fill={colors.white}
-                  fontSize={11}
-                  fontWeight="700"
-                  textAnchor="middle"
-                  stroke="rgba(0,0,0,0.9)"
-                  strokeWidth={0.8}
-                >
-                  {shortenTalhaoLabel(talhao.talhao)}
-                </SvgText>
+                {(selected || projection.talhoes.length <= 8) ? (
+                  <SvgText
+                    x={talhao.center.x}
+                    y={talhao.center.y}
+                    fill={colors.white}
+                    fontSize={11}
+                    fontWeight="700"
+                    textAnchor="middle"
+                    stroke="rgba(0,0,0,0.9)"
+                    strokeWidth={0.8}
+                  >
+                    {shortenTalhaoLabel(talhao.talhao)}
+                  </SvgText>
+                ) : null}
               </G>
             );
           })}
@@ -615,9 +659,10 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
     userLocationRef.current = userLocation;
 
     const html = useMemo(
-      () => gerarHTMLLeaflet(talhoes || [], talhaoSelecionadoId),
-      [talhoes, talhaoSelecionadoId]
+      () => gerarHTMLLeaflet(talhoes || []),
+      [talhoes]
     );
+    const webViewSource = useMemo(() => ({ html }), [html]);
 
     useEffect(() => {
       setMapaPronto(false);
@@ -691,15 +736,46 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       };
     }, [fallbackAtivo, mapaPronto, syncUserLocationToWebView, userLocation]);
 
+    useEffect(() => {
+      if (!mapaPronto || fallbackAtivo) {
+        return;
+      }
+
+      webViewRef.current?.injectJavaScript(
+        `window.selecionarTalhao && window.selecionarTalhao(${JSON.stringify(talhaoSelecionadoId || null)}); true;`
+      );
+    }, [fallbackAtivo, mapaPronto, talhaoSelecionadoId]);
+
     useImperativeHandle(ref, () => ({
       selecionarTalhao(id: string | null) {
         webViewRef.current?.injectJavaScript(
           `window.selecionarTalhao && window.selecionarTalhao(${JSON.stringify(id)}); true;`
         );
       },
+      centralizarTalhao(id: string) {
+        webViewRef.current?.injectJavaScript(
+          `window.centralizarTalhao && window.centralizarTalhao(${JSON.stringify(id)}); true;`
+        );
+      },
+      centralizarLocalizacao(location: ForegroundUserLocation) {
+        const payload = {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy,
+          capturedAt: location.capturedAt,
+        };
+        webViewRef.current?.injectJavaScript(
+          `window.centralizarLocalizacaoUsuario && window.centralizarLocalizacaoUsuario(${JSON.stringify(payload)}); true;`
+        );
+      },
       ajustarLimites() {
         webViewRef.current?.injectJavaScript(
           `window.ajustarLimites && window.ajustarLimites(); true;`
+        );
+      },
+      recalcularDimensoes() {
+        webViewRef.current?.injectJavaScript(
+          'window.recalcularDimensoes && window.recalcularDimensoes(); true;'
         );
       },
     }));
@@ -756,10 +832,19 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
     }
 
     return (
-      <View style={styles.webviewContainer}>
+      <View
+        style={styles.webviewContainer}
+        onLayout={() => {
+          if (mapaPronto) {
+            webViewRef.current?.injectJavaScript(
+              'window.recalcularDimensoes && window.recalcularDimensoes(); true;'
+            );
+          }
+        }}
+      >
         <WebView
           ref={webViewRef}
-          source={{ html }}
+          source={webViewSource}
           style={styles.webview}
           originWhitelist={['*']}
           javaScriptEnabled

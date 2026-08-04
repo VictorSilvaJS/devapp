@@ -4974,5 +4974,47 @@ ADB nao injeta dois ponteiros; a pinca foi validada pelo contrato automatizado
 de escala, ponto focal e limites, sem declarar gesto fisico inexistente.
 
 Captura por camera/galeria, foto georreferenciada, backend, URLs assinadas e
-sincronizacao permanecem fora deste corte. `MP-31` nao foi iniciada.
-Evidencias: `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/`.
+sincronizacao permanecem fora deste corte. Evidencias:
+`dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/`.
+
+## MP-31 - Redesign Responsivo Do Mapa De Talhoes
+
+Status em 2026-08-04: `CONCLUIDO` no corte local demonstrativo.
+
+O mapa de Talhoes agora preserva a mesma instancia durante selecao, abertura
+de detalhe e mudanca de orientacao. Selecionar atualiza apenas o destaque pela
+ponte JavaScript da WebView; nao recria o HTML nem desloca o mapa. Centralizar
+o Talhao e uma acao explicita. Marcador de localizacao e centralizacao da
+localizacao tambem ficaram separados, mantendo o mapa no enquadramento atual
+ate pedido do usuario.
+
+No celular em retrato, lista e detalhe usam bottom sheet nao modal com estados
+recolhido, medio e expandido, acessiveis por arraste e controle explicito. A
+area exposta do mapa continua recebendo pan e zoom. Em paisagem ou tablet, o
+mesmo conteudo ocupa painel lateral de 30% a 35%, enquanto o mapa permanece
+com cerca de 65% a 70% da largura. A lista e completa, rolavel e pesquisavel
+por Talhao, cultura ou solo. `Expandir mapa` oculta o painel de fato e
+`Mostrar painel` restaura a consulta.
+
+Rotulos deixaram de formar uma nuvem visual no zoom distante; somente o
+selecionado permanece destacado, e os demais aparecem em aproximacao
+adequada. Controles sobrepostos sem funcao foram removidos. O mapa recalcula
+as dimensoes depois de orientacao, expansao ou restauracao sem remontar a
+WebView.
+
+O teste focado cobriu 10 cenarios e os contratos de rota, entrada de Talhoes e
+projecao de localizacao tambem passaram. Typecheck, `git diff --check` e
+`packageRelease` passaram. A suite global executou os testes da MP-31 e parou
+depois somente na referencia preexistente ao arquivo ausente
+`tests/prescriptionZipPropertyManageWorkflow.test.js`.
+
+O APK release final de 92.331.720 bytes, SHA-256
+`DC427D3007E1C65DFDB60527E8A4941A17406ED2CE30A44FC5FA47E6AF8BF87F`, foi
+instalado por cima no Android fisico `8483A`. O smoke confirmou os tres snap
+points, busca `T14`, selecao sem recentralizacao, pan do mapa com painel e
+detalhe abertos, expansao/restauracao, rotacao e painel lateral em paisagem.
+Nao houve excecao fatal recente e a rotacao automatica foi restaurada.
+Evidencias: `dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/`.
+
+Rede, SSL, ciclo de vida da WebView e fallback offline permanecem fora deste
+corte e reservados a `MP-32`.

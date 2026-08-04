@@ -12,13 +12,14 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Dimensions,
   Animated,
-  Modal,
-  Platform,
+  Keyboard,
+  PanResponder,
   StatusBar,
+  TextInput,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import MapaFazendaView, {
@@ -59,14 +60,14 @@ import {
   ForegroundUserLocation,
   requestCurrentForegroundLocation,
 } from '../services/LocationForegroundService';
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// Altura do mapa: 56% da tela — equilibra mapa visível e painel inferior
-const MAP_HEIGHT = Math.round(SCREEN_HEIGHT * 0.56);
-
-// Altura do drawer de detalhes
-const DRAWER_HEIGHT = Math.round(SCREEN_HEIGHT * 0.44);
+import {
+  FazendaMapaSheetSnap,
+  filterFazendaMapaTalhoes,
+  resolveClosestFazendaMapaSheetSnap,
+  resolveFazendaMapaPanelMode,
+  resolveFazendaMapaSheetSnapPoints,
+  resolveFazendaMapaSidePanelWidth,
+} from '../utils/fazendaMapaResponsiveCompat';
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS DE FORMATAÇÃO
@@ -208,6 +209,8 @@ function InfoRow({
 // ─────────────────────────────────────────────────────────────
 export default function FazendaMapaScreen({ route, navigation }: any) {
   const { user } = useAuth();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isProdutorView = user?.perfil === 'produtor';
 
   // Params da rota
@@ -222,8 +225,9 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const [talhaoSelecionadoId, setTalhaoSelecionadoId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erroConexao, setErroConexao] = useState(false);
-  const [drawerVisivel, setDrawerVisivel] = useState(false);
-  const [listaExpandida, setListaExpandida] = useState(false);
+  const [buscaTalhao, setBuscaTalhao] = useState('');
+  const [mapaExpandido, setMapaExpandido] = useState(false);
+  const [sheetSnap, setSheetSnap] = useState<FazendaMapaSheetSnap>('medium');
   const [titularNome, setTitularNome] = useState(titularNomeParam ?? '');
   const [fazendaNome, setFazendaNome] = useState(fazendaNomeParam ?? '');
   const [estadoBloqueio, setEstadoBloqueio] = useState<string | null>(null);
@@ -241,12 +245,23 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
 
   // Refs
   const mapaRef = useRef<MapaFazendaViewRef>(null);
-  const drawerAnim = useRef(new Animated.Value(DRAWER_HEIGHT)).current;
+  const sheetTranslateY = useRef(new Animated.Value(0)).current;
+  const sheetGestureStartRef = useRef(0);
   const locationRequestIdRef = useRef(0);
   const locationRequestInFlightRef = useRef(false);
   const locationScreenFocusedRef = useRef(true);
   const userLocationRef = useRef<ForegroundUserLocation | null>(userLocation);
   userLocationRef.current = userLocation;
+
+  const panelMode = resolveFazendaMapaPanelMode(windowWidth, windowHeight);
+  const isSidePanel = panelMode === 'side-panel';
+  const sidePanelWidth = resolveFazendaMapaSidePanelWidth(windowWidth);
+  const sheetSnapPoints = useMemo(
+    () => resolveFazendaMapaSheetSnapPoints(windowHeight, insets.bottom),
+    [insets.bottom, windowHeight]
+  );
+  const sheetExpandedHeight = sheetSnapPoints.expanded;
+  const sheetTargetTranslate = sheetExpandedHeight - sheetSnapPoints[sheetSnap];
 
   useFocusEffect(
     useCallback(() => {
@@ -382,6 +397,11 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
     return todosLimites.filter((l) => !anoSelecionado || l.ano === anoSelecionado);
   }, [todosLimites, anoSelecionado]);
 
+  const talhoesPesquisados = useMemo(
+    () => filterFazendaMapaTalhoes(talhoesExibidos, buscaTalhao),
+    [buscaTalhao, talhoesExibidos]
+  );
+
   // ── Anos disponíveis ─────────────────────────────────────────
   const anosDisponiveis = useMemo<number[]>(() => {
     return [...new Set<number>(todosLimites.map((l) => l.ano))].sort((a, b) => b - a);
@@ -404,70 +424,109 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const geoJsonTalhoesLocalAtivo = isGeoJsonTalhoesLayerActive(geoJsonTalhoesLayer);
   const geoJsonTalhoesLocalErro = isGeoJsonTalhoesLayerFallback(geoJsonTalhoesLayer);
 
-  // ── Drawer animation ─────────────────────────────────────────
-  const abrirDrawer = useCallback(() => {
-    setDrawerVisivel(true);
-    Animated.spring(drawerAnim, {
-      toValue: 0,
+  // ── Painel responsivo e orientacao ────────────────────────────
+  const animateSheetTo = useCallback((snap: FazendaMapaSheetSnap) => {
+    setSheetSnap(snap);
+    Animated.spring(sheetTranslateY, {
+      toValue: sheetExpandedHeight - sheetSnapPoints[snap],
       useNativeDriver: true,
-      tension: 80,
-      friction: 12,
+      damping: 24,
+      stiffness: 230,
+      mass: 0.85,
     }).start();
-  }, [drawerAnim]);
-
-  const fecharDrawer = useCallback(() => {
-    Animated.timing(drawerAnim, {
-      toValue: DRAWER_HEIGHT,
-      duration: 260,
-      useNativeDriver: true,
-    }).start(() => {
-      setDrawerVisivel(false);
-      setTalhaoSelecionadoId(null);
-      mapaRef.current?.selecionarTalhao(null);
-    });
-  }, [drawerAnim]);
+  }, [sheetExpandedHeight, sheetSnapPoints, sheetTranslateY]);
 
   useEffect(() => {
-    if (!talhaoSelecionadoId || !talhaoDetalhe) {
-      return;
-    }
+    sheetTranslateY.setValue(sheetTargetTranslate);
+    const timeout = setTimeout(() => mapaRef.current?.recalcularDimensoes(), 120);
+    return () => clearTimeout(timeout);
+  }, [isSidePanel, sheetTargetTranslate, sheetTranslateY, windowHeight, windowWidth]);
 
-    mapaRef.current?.selecionarTalhao(talhaoSelecionadoId);
-    if (!drawerVisivel) {
-      abrirDrawer();
-    }
-  }, [talhaoSelecionadoId, talhaoDetalhe, drawerVisivel, abrirDrawer]);
+  const sheetPanResponder = useMemo(
+    () => PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gesture) => (
+        Math.abs(gesture.dy) > 5 && Math.abs(gesture.dy) > Math.abs(gesture.dx)
+      ),
+      onPanResponderGrant: () => {
+        sheetGestureStartRef.current = sheetExpandedHeight - sheetSnapPoints[sheetSnap];
+      },
+      onPanResponderMove: (_, gesture) => {
+        const minTranslate = 0;
+        const maxTranslate = sheetExpandedHeight - sheetSnapPoints.collapsed;
+        const nextTranslate = Math.min(
+          Math.max(sheetGestureStartRef.current + gesture.dy, minTranslate),
+          maxTranslate
+        );
+        sheetTranslateY.setValue(nextTranslate);
+      },
+      onPanResponderRelease: (_, gesture) => {
+        const currentTranslate = Math.min(
+          Math.max(
+            sheetGestureStartRef.current + gesture.dy,
+            0
+          ),
+          sheetExpandedHeight - sheetSnapPoints.collapsed
+        );
+        const visibleHeight = sheetExpandedHeight - currentTranslate;
+        animateSheetTo(resolveClosestFazendaMapaSheetSnap(
+          visibleHeight,
+          sheetSnapPoints,
+          gesture.vy
+        ));
+      },
+      onPanResponderTerminate: () => animateSheetTo(sheetSnap),
+    }),
+    [animateSheetTo, sheetExpandedHeight, sheetSnap, sheetSnapPoints, sheetTranslateY]
+  );
 
   // ── Handlers ─────────────────────────────────────────────────
   const handleTalhaoPress = useCallback(
     (id: string) => {
       if (talhaoSelecionadoId === id) {
-        fecharDrawer();
+        setTalhaoSelecionadoId(null);
         return;
       }
       setTalhaoSelecionadoId(id);
-      mapaRef.current?.selecionarTalhao(id);
-      if (!drawerVisivel) abrirDrawer();
+      if (!isSidePanel && sheetSnap === 'collapsed') {
+        animateSheetTo('medium');
+      }
     },
-    [talhaoSelecionadoId, drawerVisivel, abrirDrawer, fecharDrawer]
+    [animateSheetTo, isSidePanel, sheetSnap, talhaoSelecionadoId]
   );
 
-  const handleMapaPress = useCallback(() => {
-    if (drawerVisivel) fecharDrawer();
-  }, [drawerVisivel, fecharDrawer]);
+  const handleFecharDetalhe = useCallback(() => {
+    setTalhaoSelecionadoId(null);
+  }, []);
 
   const handleAnoChange = useCallback(
     (ano: number | null) => {
       setAnoSelecionado(ano);
       setTalhaoSelecionadoId(null);
-      if (drawerVisivel) fecharDrawer();
       setTimeout(() => mapaRef.current?.ajustarLimites(), 300);
     },
-    [drawerVisivel, fecharDrawer]
+    []
   );
 
   const handleAjustarLimites = useCallback(() => {
     mapaRef.current?.ajustarLimites();
+  }, []);
+
+  const handleCentralizarTalhao = useCallback(() => {
+    if (talhaoSelecionadoId) {
+      mapaRef.current?.centralizarTalhao(talhaoSelecionadoId);
+    }
+  }, [talhaoSelecionadoId]);
+
+  const handleExpandirMapa = useCallback(() => {
+    Keyboard.dismiss();
+    setMapaExpandido(true);
+    setTimeout(() => mapaRef.current?.recalcularDimensoes(), 120);
+  }, []);
+
+  const handleRestaurarPainel = useCallback(() => {
+    setMapaExpandido(false);
+    setTimeout(() => mapaRef.current?.recalcularDimensoes(), 120);
   }, []);
 
   // ── Título da tela ────────────────────────────────────────────
@@ -527,6 +586,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       if (result.status === 'ok') {
         userLocationRef.current = result.location;
         setUserLocation(result.location);
+        mapaRef.current?.centralizarLocalizacao(result.location);
         setLocationMessage({
           type: 'info',
           text: `${buildLocationSuccessMessage(result.location)} A posição será mostrada apenas no mapa de Talhões, não em PNGs ou prescrições.`,
@@ -600,58 +660,92 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   }
 
   // ── Render principal ──────────────────────────────────────────
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#111" translucent />
+  const painel = (
+    <TalhoesPanel
+      mode={panelMode}
+      snap={sheetSnap}
+      dragHandlers={!isSidePanel ? sheetPanResponder.panHandlers : undefined}
+      talhoes={talhoesPesquisados}
+      totalTalhoes={talhoesExibidos.length}
+      busca={buscaTalhao}
+      onBuscaChange={setBuscaTalhao}
+      talhaoSelecionado={talhaoDetalhe as any}
+      onTalhaoPress={handleTalhaoPress}
+      onFecharDetalhe={handleFecharDetalhe}
+      onCentralizarTalhao={handleCentralizarTalhao}
+      onExpandirMapa={handleExpandirMapa}
+      onToggleSnap={() => animateSheetTo(sheetSnap === 'expanded' ? 'collapsed' : 'expanded')}
+      resumoArea={`${resumoAreaMapeada.label}: ${resumoAreaMapeada.valorFormatado}`}
+      emptyLabel={buscaTalhao.trim()
+        ? 'Nenhum Talhão corresponde à busca.'
+        : `Nenhum Talhão para${anoSelecionado ? ` LT ${anoSelecionado}` : ' o período selecionado'}.`}
+      bottomInset={isSidePanel ? spacing.sm : Math.max(insets.bottom, spacing.sm)}
+    />
+  );
 
-      {/* ── CABEÇALHO (sobre o mapa) ─────────────────────────── */}
-      <SafeAreaView edges={['top']} style={styles.cabecalho}>
+  const mapa = (
+    <View style={styles.mapaContainer}>
+      <MapaFazendaView
+        ref={mapaRef}
+        talhoes={talhoesExibidos}
+        talhaoSelecionadoId={talhaoSelecionadoId}
+        userLocation={userLocation}
+        onTalhaoPress={handleTalhaoPress}
+      />
+
+      <SafeAreaView edges={['top']} style={styles.cabecalho} pointerEvents="box-none">
         <View style={styles.cabecalhoConteudo}>
           <TouchableOpacity
-            style={styles.btnVoltar}
+            style={styles.mapControlButton}
             onPress={() => navigation.goBack()}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
           >
             <Ionicons name="arrow-back" size={22} color={colors.white} />
           </TouchableOpacity>
 
           <View style={styles.cabecalhoTextos}>
-            <Text style={styles.cabecalhoTitulo} numberOfLines={1}>
-              {tituloCabecalho}
-            </Text>
+            <Text style={styles.cabecalhoTitulo} numberOfLines={1}>{tituloCabecalho}</Text>
+            <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>{contextoCabecalho}</Text>
             <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
-              {contextoCabecalho}
-            </Text>
-            {consultaPorFazenda && (
-              <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
-                Área total informada: {formatAreaHa(areaTotalInformada)}
-              </Text>
-            )}
-            <Text style={styles.cabecalhoSubtitulo} numberOfLines={1}>
-              {resumoTalhoes}
+              {consultaPorFazenda
+                ? `Área total: ${formatAreaHa(areaTotalInformada)} · ${resumoTalhoes}`
+                : resumoTalhoes}
             </Text>
           </View>
 
+          {canUseForegroundLocation ? (
+            <TouchableOpacity
+              style={[styles.mapControlButton, styles.locationControlButton]}
+              onPress={handleMostrarMinhaPosicao}
+              disabled={requestingLocation}
+              accessibilityRole="button"
+              accessibilityLabel={requestingLocation ? 'Obtendo posição' : 'Mostrar minha posição'}
+            >
+              {requestingLocation
+                ? <ActivityIndicator size="small" color={colors.white} />
+                : <Ionicons name="locate-outline" size={21} color={colors.white} />}
+            </TouchableOpacity>
+          ) : null}
+
           <TouchableOpacity
-            style={styles.btnAjustar}
+            style={styles.mapControlButton}
             onPress={handleAjustarLimites}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Enquadrar todos os Talhões"
           >
             <Ionicons name="scan-outline" size={22} color={colors.white} />
           </TouchableOpacity>
         </View>
 
-        {/* ── FILTRO DE ANO ───────────────────────────────────── */}
-        {anosDisponiveis.length > 1 && (
+        {anosDisponiveis.length > 1 ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filtroAnoContent}
             style={styles.filtroAnoScroll}
           >
-            {anosDisponiveis.length > 1 && (
-              <ChipAno ano={null} ativo={anoSelecionado === null} onPress={() => handleAnoChange(null)} />
-            )}
+            <ChipAno ano={null} ativo={anoSelecionado === null} onPress={() => handleAnoChange(null)} />
             {anosDisponiveis.map((ano) => (
               <ChipAno
                 key={ano}
@@ -661,13 +755,10 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
               />
             ))}
           </ScrollView>
-        )}
+        ) : null}
 
-        {(geoJsonTalhoesLocalAtivo || geoJsonTalhoesLocalErro) && (
-          <View style={[
-            styles.camadaLocalBanner,
-            geoJsonTalhoesLocalErro && styles.camadaLocalBannerErro,
-          ]}>
+        {(geoJsonTalhoesLocalAtivo || geoJsonTalhoesLocalErro) ? (
+          <View style={[styles.camadaLocalBanner, geoJsonTalhoesLocalErro && styles.camadaLocalBannerErro]}>
             <Ionicons
               name={geoJsonTalhoesLocalAtivo ? 'layers-outline' : 'alert-circle-outline'}
               size={15}
@@ -676,190 +767,243 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
             <Text style={styles.camadaLocalBannerTexto} numberOfLines={1}>
               {geoJsonTalhoesLocalAtivo
                 ? isProdutorView ? 'Talhões disponíveis para consulta' : 'Talhões carregados do GeoJSON local'
-                : 'Não foi possível carregar o GeoJSON local. Exibindo demarcação disponível.'}
+                : 'GeoJSON local indisponível. Exibindo a demarcação disponível.'}
             </Text>
           </View>
-        )}
+        ) : null}
 
-        {canUseForegroundLocation && (
-          <View style={styles.localizacaoContainer}>
-            <TouchableOpacity
-              style={[
-                styles.localizacaoButton,
-                requestingLocation && styles.localizacaoButtonDisabled,
-              ]}
-              onPress={handleMostrarMinhaPosicao}
-              activeOpacity={0.82}
-              disabled={requestingLocation}
-            >
-              {requestingLocation ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Ionicons name="locate-outline" size={16} color={colors.white} />
-              )}
-              <Text style={styles.localizacaoButtonText}>
-                {requestingLocation ? 'Obtendo posição' : 'Mostrar minha posição'}
-              </Text>
-            </TouchableOpacity>
-
-            {locationMessage ? (
-              <View
-                style={[
-                  styles.localizacaoStatus,
-                  locationMessage.type === 'error' && styles.localizacaoStatusErro,
-                ]}
-              >
-                <Ionicons
-                  name={locationMessage.type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'}
-                  size={14}
-                  color={locationMessage.type === 'error' ? colors.warningLight : colors.white}
-                />
-                <Text style={styles.localizacaoStatusText} numberOfLines={2}>
-                  {locationMessage.text}
-                </Text>
-              </View>
-            ) : null}
+        {locationMessage ? (
+          <View style={[styles.localizacaoStatus, locationMessage.type === 'error' && styles.localizacaoStatusErro]}>
+            <Ionicons
+              name={locationMessage.type === 'error' ? 'alert-circle-outline' : 'information-circle-outline'}
+              size={14}
+              color={locationMessage.type === 'error' ? colors.warningLight : colors.white}
+            />
+            <Text style={styles.localizacaoStatusText} numberOfLines={2}>{locationMessage.text}</Text>
           </View>
-        )}
+        ) : null}
       </SafeAreaView>
 
-      {/* ── MAPA LEAFLET ─────────────────────────────────────── */}
-      <View style={styles.mapaContainer}>
-        <MapaFazendaView
-          ref={mapaRef}
-          talhoes={talhoesExibidos}
-          talhaoSelecionadoId={talhaoSelecionadoId}
-          userLocation={userLocation}
-          onTalhaoPress={handleTalhaoPress}
-          onMapaReady={() => {
-            if (talhaoSelecionadoId) {
-              mapaRef.current?.selecionarTalhao(talhaoSelecionadoId);
-            }
-          }}
-        />
-
-        {/* Badge do mapa no canto inferior esquerdo */}
-        <View style={styles.badgeSatelite}>
-          <Ionicons name="earth" size={12} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.badgeSateliteTexto}>
-            {geoJsonTalhoesLocalAtivo ? isProdutorView ? 'TALHÕES' : 'GEOJSON LOCAL' : 'MAPA'}
-          </Text>
-        </View>
-
-        {/* Legenda de cores dos talhões */}
-        {talhoesExibidos.length > 0 && (
-          <View style={styles.legendaMapa}>
-            {talhoesExibidos.slice(0, 4).map((t) => (
-              <TouchableOpacity
-                key={t.id}
-                style={[
-                  styles.legendaItem,
-                  talhaoSelecionadoId === t.id && styles.legendaItemAtivo,
-                ]}
-                onPress={() => handleTalhaoPress(t.id)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.legendaCor, { backgroundColor: t.cor || colors.primary }]} />
-                <Text style={styles.legendaNome} numberOfLines={1}>
-                  {t.talhao}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            {talhoesExibidos.length > 4 && (
-              <Text style={styles.legendaMais}>+{talhoesExibidos.length - 4}</Text>
-            )}
-          </View>
-        )}
+      <View style={styles.badgeSatelite} pointerEvents="none">
+        <Ionicons name="earth" size={12} color="rgba(255,255,255,0.8)" />
+        <Text style={styles.badgeSateliteTexto}>
+          {geoJsonTalhoesLocalAtivo ? isProdutorView ? 'TALHÕES' : 'GEOJSON LOCAL' : 'MAPA'}
+        </Text>
       </View>
 
-      {/* ── PAINEL INFERIOR — LISTA DE TALHÕES ───────────────── */}
-      <View style={styles.painelInferior}>
-        {/* Cabeçalho do painel */}
+      {mapaExpandido ? (
         <TouchableOpacity
-          style={styles.painelCabecalho}
-          onPress={() => setListaExpandida((v) => !v)}
-          activeOpacity={0.85}
+          style={[styles.restorePanelButton, { bottom: Math.max(insets.bottom, spacing.md) }]}
+          onPress={handleRestaurarPainel}
+          accessibilityRole="button"
+          accessibilityLabel="Mostrar painel de Talhões"
         >
-          <View style={styles.painelCabecalhoEsq}>
-            <Ionicons name="layers-outline" size={18} color={colors.primary} />
-            <Text style={styles.painelTitulo}>Talhões</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeTexto}>{talhoesExibidos.length}</Text>
-            </View>
-          </View>
-          <View style={styles.painelCabecalhoDir}>
-            <Text style={styles.painelAreaTotal} numberOfLines={1}>
-              {resumoAreaMapeada.label}: {resumoAreaMapeada.valorFormatado}
-            </Text>
-            <Ionicons
-              name={listaExpandida ? 'chevron-down' : 'chevron-up'}
-              size={18}
-              color={colors.muted}
-            />
-          </View>
+          <Ionicons name="albums-outline" size={18} color={colors.white} />
+          <Text style={styles.restorePanelButtonText}>Mostrar painel</Text>
         </TouchableOpacity>
+      ) : null}
+    </View>
+  );
 
-        {/* Lista horizontal de cartões */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.listaTalhoesContent}
-          style={[styles.listaTalhoesScroll, listaExpandida && styles.listaTalhoesExpandida]}
-        >
-          {talhoesExibidos.length === 0 ? (
-            <View style={styles.listaVazia}>
-              <Text style={styles.listaVaziaTexto}>
-                Nenhum talhão para{anoSelecionado ? ` LT ${anoSelecionado}` : ' o período selecionado'}
-              </Text>
-            </View>
-          ) : (
-            talhoesExibidos.map((t) => (
-              <CardTalhao
-                key={t.id}
-                talhao={t}
-                selecionado={talhaoSelecionadoId === t.id}
-                onPress={() => handleTalhaoPress(t.id)}
-              />
-            ))
-          )}
-        </ScrollView>
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#111" translucent />
+      <View style={styles.wideLayout}>
+        {mapa}
+        {isSidePanel && !mapaExpandido ? (
+          <SafeAreaView
+            edges={['top', 'right', 'bottom']}
+            style={[styles.sidePanel, { width: sidePanelWidth }]}
+          >
+            {painel}
+          </SafeAreaView>
+        ) : null}
       </View>
 
-      {/* ── DRAWER DE DETALHE DO TALHÃO ──────────────────────── */}
-      {drawerVisivel && talhaoDetalhe && (
+      {!isSidePanel && !mapaExpandido ? (
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-          {/* Backdrop semi-transparente */}
-          <TouchableOpacity
-            style={styles.backdrop}
-            activeOpacity={1}
-            onPress={fecharDrawer}
-          />
           <Animated.View
             style={[
-              styles.drawer,
-              { transform: [{ translateY: drawerAnim }] },
+              styles.bottomSheet,
+              {
+                height: sheetExpandedHeight,
+                transform: [{ translateY: sheetTranslateY }],
+              },
             ]}
           >
-            <DrawerDetalheTalhao
-              talhao={talhaoDetalhe as any}
-              onFechar={fecharDrawer}
-            />
+            {painel}
           </Animated.View>
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// DRAWER: DETALHES DO TALHÃO
+// PAINEL RESPONSIVO: LISTA E DETALHE
+// ─────────────────────────────────────────────────────────────
+function TalhoesPanel({
+  mode,
+  snap,
+  dragHandlers,
+  talhoes,
+  totalTalhoes,
+  busca,
+  onBuscaChange,
+  talhaoSelecionado,
+  onTalhaoPress,
+  onFecharDetalhe,
+  onCentralizarTalhao,
+  onExpandirMapa,
+  onToggleSnap,
+  resumoArea,
+  emptyLabel,
+  bottomInset,
+}: {
+  mode: 'bottom-sheet' | 'side-panel';
+  snap: FazendaMapaSheetSnap;
+  dragHandlers?: Record<string, any>;
+  talhoes: (MapaTalhao & { elementos?: any })[];
+  totalTalhoes: number;
+  busca: string;
+  onBuscaChange: (value: string) => void;
+  talhaoSelecionado: (MapaTalhao & { elementos?: any }) | null;
+  onTalhaoPress: (id: string) => void;
+  onFecharDetalhe: () => void;
+  onCentralizarTalhao: () => void;
+  onExpandirMapa: () => void;
+  onToggleSnap: () => void;
+  resumoArea: string;
+  emptyLabel: string;
+  bottomInset: number;
+}) {
+  const isBottomSheet = mode === 'bottom-sheet';
+
+  return (
+    <View style={[styles.panel, { paddingBottom: bottomInset }]}>
+      {isBottomSheet ? (
+        <View
+          style={styles.sheetDragArea}
+          accessibilityRole="adjustable"
+          accessibilityLabel={`Painel de Talhões, posição ${snap}`}
+          accessibilityHint="Arraste para cima ou para baixo para ajustar a altura"
+          {...dragHandlers}
+        >
+          <View style={styles.sheetHandle} />
+        </View>
+      ) : null}
+
+      <View style={styles.panelHeader}>
+        <View style={styles.panelTitleRow}>
+          <Ionicons name="layers-outline" size={20} color={colors.primary} />
+          <Text style={styles.panelTitle}>Talhões</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeTexto}>{totalTalhoes}</Text>
+          </View>
+        </View>
+        <View style={styles.panelHeaderActions}>
+          {isBottomSheet ? (
+            <TouchableOpacity
+              style={styles.snapToggleButton}
+              onPress={onToggleSnap}
+              accessibilityRole="button"
+              accessibilityLabel={snap === 'expanded' ? 'Recolher painel de Talhões' : 'Expandir painel de Talhões'}
+            >
+              <Ionicons
+                name={snap === 'expanded' ? 'chevron-down' : 'chevron-up'}
+                size={18}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity
+            style={styles.expandMapButton}
+            onPress={onExpandirMapa}
+            accessibilityRole="button"
+            accessibilityLabel="Expandir mapa em tela inteira"
+          >
+            <Ionicons name="expand-outline" size={17} color={colors.primary} />
+            <Text style={styles.expandMapButtonText}>Expandir mapa</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.panelSummary} numberOfLines={1}>{resumoArea}</Text>
+
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={18} color={colors.muted} />
+        <TextInput
+          style={styles.searchInput}
+          value={busca}
+          onChangeText={onBuscaChange}
+          placeholder="Buscar Talhão, cultura ou solo"
+          placeholderTextColor={colors.muted}
+          returnKeyType="search"
+          accessibilityLabel="Buscar na lista de Talhões"
+        />
+        {busca ? (
+          <TouchableOpacity
+            onPress={() => onBuscaChange('')}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar busca"
+          >
+            <Ionicons name="close-circle" size={20} color={colors.muted} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      <ScrollView
+        style={styles.panelScroll}
+        contentContainerStyle={styles.panelScrollContent}
+        showsVerticalScrollIndicator
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+      >
+        {talhaoSelecionado ? (
+          <View style={styles.selectedDetailCard}>
+            <DrawerDetalheTalhao
+              talhao={talhaoSelecionado as any}
+              onFechar={onFecharDetalhe}
+              onCentralizar={onCentralizarTalhao}
+            />
+          </View>
+        ) : null}
+
+        <View style={styles.listSectionHeader}>
+          <Text style={styles.listSectionTitle}>Lista completa</Text>
+          <Text style={styles.listSectionCount}>
+            {talhoes.length} {talhoes.length === 1 ? 'resultado' : 'resultados'}
+          </Text>
+        </View>
+
+        {talhoes.length === 0 ? (
+          <View style={styles.listaVazia}>
+            <Ionicons name="search-outline" size={26} color={colors.muted} />
+            <Text style={styles.listaVaziaTexto}>{emptyLabel}</Text>
+          </View>
+        ) : talhoes.map((talhao) => (
+          <CardTalhao
+            key={talhao.id}
+            talhao={talhao}
+            selecionado={talhaoSelecionado?.id === talhao.id}
+            onPress={() => onTalhaoPress(talhao.id)}
+          />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// DETALHES DO TALHÃO
 // ─────────────────────────────────────────────────────────────
 function DrawerDetalheTalhao({
   talhao,
   onFechar,
+  onCentralizar,
 }: {
   talhao: MapaTalhao & { elementos?: any; observacoes?: string; perimetro_km?: number; perimetro_origem?: string; tipo_solo?: string; safra?: string };
   onFechar: () => void;
+  onCentralizar: () => void;
 }) {
   const phInfo = talhao.elementos?.ph != null ? classificarPH(talhao.elementos.ph) : null;
   const perimetroFormatado = formatPerimeter(
@@ -869,15 +1013,7 @@ function DrawerDetalheTalhao({
   );
 
   return (
-    <ScrollView
-      style={styles.drawerScroll}
-      showsVerticalScrollIndicator={false}
-      bounces={false}
-    >
-      {/* Handle bar */}
-      <View style={styles.drawerHandle} />
-
-      {/* Cabeçalho do drawer */}
+    <View style={styles.drawerScroll}>
       <View style={styles.drawerCabecalho}>
         <View style={[styles.drawerCorBarra, { backgroundColor: talhao.cor || colors.primary }]} />
         <View style={styles.drawerCabecalhoTextos}>
@@ -910,6 +1046,16 @@ function DrawerDetalheTalhao({
           <Ionicons name="close" size={22} color={colors.text} />
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity
+        style={styles.centerTalhaoButton}
+        onPress={onCentralizar}
+        accessibilityRole="button"
+        accessibilityLabel={`Centralizar ${talhao.talhao} no mapa`}
+      >
+        <Ionicons name="locate-outline" size={17} color={colors.primary} />
+        <Text style={styles.centerTalhaoButtonText}>Centralizar Talhão</Text>
+      </TouchableOpacity>
 
       {/* Métricas principais */}
       <View style={styles.drawerMetricas}>
@@ -974,8 +1120,7 @@ function DrawerDetalheTalhao({
         </View>
       ) : null}
 
-      <View style={{ height: 24 }} />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -1001,6 +1146,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#111',
+  },
+  wideLayout: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidePanel: {
+    backgroundColor: colors.card,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+  },
+  bottomSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: spacing.radiusLg * 1.5,
+    borderTopRightRadius: spacing.radiusLg * 1.5,
+    overflow: 'hidden',
+    ...shadows.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 18,
   },
 
   // ── Loading / Erro ──
@@ -1069,15 +1239,17 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
-  btnVoltar: {
+  mapControlButton: {
     backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 8,
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  btnAjustar: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: 20,
-    padding: 8,
+  locationControlButton: {
+    backgroundColor: 'rgba(37,99,235,0.92)',
   },
   cabecalhoTextos: {
     flex: 1,
@@ -1140,7 +1312,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: spacing.radiusSm,
     backgroundColor: 'rgba(34,139,34,0.86)',
-    maxWidth: SCREEN_WIDTH - spacing.lg * 2,
+    maxWidth: 520,
   },
   camadaLocalBannerErro: {
     backgroundColor: 'rgba(0,0,0,0.72)',
@@ -1154,36 +1326,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption,
     fontWeight: typography.weightSemibold,
   },
-  localizacaoContainer: {
-    alignSelf: 'flex-start',
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    maxWidth: SCREEN_WIDTH - spacing.lg * 2,
-    gap: spacing.xs,
-  },
-  localizacaoButton: {
-    alignSelf: 'flex-start',
-    minHeight: 34,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: 18,
-    backgroundColor: 'rgba(37,99,235,0.92)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.32)',
-  },
-  localizacaoButtonDisabled: {
-    borderWidth: 2,
-    borderColor: colors.disabledBorder,
-    borderStyle: 'dashed',
-  },
-  localizacaoButtonText: {
-    color: colors.white,
-    fontSize: typography.fontCaption,
-    fontWeight: typography.weightBold,
-  },
   localizacaoStatus: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1194,6 +1336,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.68)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.18)',
+    alignSelf: 'flex-start',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    maxWidth: 520,
   },
   localizacaoStatusErro: {
     backgroundColor: 'rgba(0,0,0,0.76)',
@@ -1210,8 +1356,9 @@ const styles = StyleSheet.create({
 
   // ── Mapa ──
   mapaContainer: {
-    height: MAP_HEIGHT,
+    flex: 1,
     overflow: 'hidden',
+    backgroundColor: '#111827',
   },
 
   // ── Badge do mapa ──
@@ -1233,81 +1380,153 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightBold,
     letterSpacing: 0.8,
   },
-
-  // ── Legenda no mapa ──
-  legendaMapa: {
+  restorePanelButton: {
     position: 'absolute',
-    bottom: spacing.md,
     right: spacing.md,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: spacing.radiusSm,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    gap: 4,
-    minWidth: 110,
-  },
-  legendaItem: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 2,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 22,
+    backgroundColor: 'rgba(22,101,52,0.94)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.32)',
+    elevation: 8,
   },
-  legendaItemAtivo: {
-    opacity: 1,
-  },
-  legendaCor: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-  },
-  legendaNome: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 10,
-    flex: 1,
-  },
-  legendaMais: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 9,
-    marginTop: 2,
-    textAlign: 'right',
+  restorePanelButtonText: {
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
   },
 
-  // ── Painel inferior ──
-  painelInferior: {
+  // ── Painel responsivo ──
+  panel: {
     flex: 1,
     backgroundColor: colors.card,
-    borderTopLeftRadius: spacing.radiusLg,
-    borderTopRightRadius: spacing.radiusLg,
-    ...shadows.sm,
   },
-  painelCabecalho: {
+  sheetDragArea: {
+    minHeight: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.muted,
+  },
+  panelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
-  painelCabecalhoEsq: {
+  panelTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    minWidth: 0,
   },
-  painelCabecalhoDir: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  painelTitulo: {
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightSemibold,
+  panelTitle: {
     color: colors.text,
+    fontSize: typography.fontSubtitle,
+    fontWeight: typography.weightBold,
   },
-  painelAreaTotal: {
-    fontSize: typography.fontCaption,
+  panelHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  snapToggleButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundAlt,
+  },
+  panelSummary: {
     color: colors.muted,
+    fontSize: typography.fontCaption,
+    paddingHorizontal: spacing.md,
+    marginTop: 2,
   },
+  expandMapButton: {
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.accent,
+  },
+  expandMapButtonText: {
+    color: colors.primary,
+    fontSize: typography.fontSmall,
+    fontWeight: typography.weightBold,
+  },
+  searchContainer: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: spacing.radius,
+    backgroundColor: colors.backgroundAlt,
+  },
+  searchInput: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: spacing.sm,
+    color: colors.text,
+    fontSize: typography.fontCaption,
+  },
+  panelScroll: {
+    flex: 1,
+    marginTop: spacing.sm,
+  },
+  panelScrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  selectedDetailCard: {
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    borderRadius: spacing.radius,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.white,
+  },
+  listSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  listSectionTitle: {
+    color: colors.text,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  listSectionCount: {
+    color: colors.muted,
+    fontSize: typography.fontSmall,
+  },
+
   badge: {
     backgroundColor: colors.accent,
     borderRadius: 10,
@@ -1320,21 +1539,11 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
-  // ── Lista horizontal de talhões ──
-  listaTalhoesScroll: {
-    maxHeight: 120,
-  },
-  listaTalhoesExpandida: {
-    maxHeight: 240,
-  },
-  listaTalhoesContent: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-  },
   listaVazia: {
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   listaVaziaTexto: {
     color: colors.muted,
@@ -1350,10 +1559,11 @@ const styles = StyleSheet.create({
     borderRadius: spacing.radius,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    width: 180,
+    width: '100%',
     borderWidth: 1.5,
     borderColor: colors.border,
     gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   cardTalhaoSelecionado: {
     borderColor: colors.primary,
@@ -1380,41 +1590,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // ── Backdrop ──
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-
-  // ── Drawer ──
-  drawer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: DRAWER_HEIGHT,
-    backgroundColor: colors.card,
-    borderTopLeftRadius: spacing.radiusLg * 1.5,
-    borderTopRightRadius: spacing.radiusLg * 1.5,
-    ...shadows.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 16,
-  },
   drawerScroll: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-  },
-  drawerHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    alignSelf: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    width: '100%',
   },
 
   // ── Drawer cabeçalho ──
@@ -1474,6 +1651,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundAlt,
     borderRadius: 18,
     padding: 6,
+  },
+  centerTalhaoButton: {
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    borderRadius: spacing.radiusSm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.accent,
+  },
+  centerTalhaoButtonText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightBold,
   },
 
   // ── Métricas ──
@@ -1551,7 +1745,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundAlt,
     borderRadius: spacing.radiusSm,
     padding: spacing.sm,
-    width: (SCREEN_WIDTH - spacing.lg * 2 - spacing.sm * 4) / 5,
+    width: '30%',
+    minWidth: 74,
+    flexGrow: 1,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,

@@ -4,8 +4,8 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa da fila: `MP-31 — Redesign do mapa de Talhões`;
-> `MP-08` a `MP-30` foram concluídas. A revalidação de `MP-07 — Login
+> Próxima tarefa da fila: `MP-32 — WebView, rede e fallback offline`;
+> `MP-08` a `MP-31` foram concluídas. A revalidação de `MP-07 — Login
 > responsivo` continua parcial até haver IME que respeite o modo inline em
 > paisagem
 
@@ -237,7 +237,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | 29 | `MP-28` Fonte única de Materiais | `QA-P1-05` | Unificar resumo, listagem, imports e visibilidade | `MP-17` | `CONCLUIDO` |
 | 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `CONCLUIDO` |
 | 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `CONCLUIDO` |
-| 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `BACKLOG` |
+| 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `CONCLUIDO` |
 | 33 | `MP-32` WebView, rede e fallback offline | `QA-P3-02` | Corrigir ciclo de vida, diagnosticar SSL e tratar mapa indisponível | `MP-31` | `BACKLOG` |
 
 #### Subtarefas obrigatórias de `MP-29`
@@ -394,6 +394,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-04 | `MP-28` | `CONCLUIDO` | árvore de trabalho sobre `667836d` | 7 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou 8 materiais no resumo e na consulta completa do Produtor, inclusive após reabertura | `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/` | contrato/backend produtivo e visualizadores permanecem fora deste corte; `MP-29` não foi iniciada |
 | 2026-08-04 | `MP-29` | `CONCLUIDO` | árvore de trabalho sobre `99ae14c` | 17 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou modal, rolagem externa neutralizada, toque duplo, arraste contido, retorno na mesma posição e ausência de exceção fatal | `dist/qa-session-2026-08-04/mp-29-visualizador-material/` | pinça teve contrato automatizado, pois ADB não injeta dois ponteiros; PDF/ZIP não tinham fixture física ativa; fotos permanecem em `MP-30` |
 | 2026-08-04 | `MP-30` | `CONCLUIDO` | árvore de trabalho sobre `2e28dd5` | 10 cenários focados, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou Caderno/Visita, modal, 200%, arraste, paisagem e download com confirmação visível | `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/` | pinça teve contrato automatizado porque ADB não injeta dois ponteiros; a suíte global parou em referência preexistente a teste ZIP ausente; foto real permanece futura; `MP-31` não foi iniciada |
+| 2026-08-04 | `MP-31` | `CONCLUIDO` | árvore de trabalho sobre `298de87` | 10 cenários focados, contratos de rota/entrada/localização, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou três snap points, lista e busca completas, seleção sem recentralização, mapa manipulável com detalhe aberto, expansão real e painel lateral em paisagem | `dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/` | a suíte global parou na referência preexistente ao teste ZIP ausente; rede, ciclo de vida e fallback offline permanecem exclusivamente em `MP-32` |
 
 ## 12. Próxima ação
 
@@ -883,6 +884,34 @@ escala, limites, foco e arraste. Evidências:
 `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/`.
 
 Captura por câmera/galeria, metadados geográficos da foto, backend, URL
-assinada e sincronização não foram implementados. A próxima tarefa é `MP-31`;
-ela não foi iniciada. A revalidação pendente de `MP-07` permanece registrada
-separadamente.
+assinada e sincronização não foram implementados.
+
+`MP-31` concluiu o redesign responsivo do mapa de Talhões. Em celular no
+retrato, a lista e o detalhe agora ocupam um bottom sheet não modal com três
+snap points reais; em paisagem e tablet, ocupam painel lateral entre 30% e 35%
+da largura. A lista é completa, rolável e pesquisável, e o detalhe mantém a
+área exposta do mapa manipulável.
+
+A seleção simples passou a atualizar o estilo do Talhão por JavaScript sem
+recriar a WebView nem recentralizar o mapa. Centralização do Talhão,
+atualização do marcador de localização e centralização da localização são
+comandos separados. `Expandir mapa` remove realmente o painel e oferece
+restauração explícita; mudanças de layout invalidam as dimensões do mapa sem
+remontar o componente.
+
+Dez cenários focados, contratos de rota/entrada/localização, typecheck,
+`git diff --check` e `packageRelease` passaram. A suíte global avançou por
+todos os testes da MP-31 e parou somente na referência preexistente ao arquivo
+ausente `tests/prescriptionZipPropertyManageWorkflow.test.js`.
+
+O APK final tem 92.331.720 bytes e SHA-256
+`DC427D3007E1C65DFDB60527E8A4941A17406ED2CE30A44FC5FA47E6AF8BF87F`.
+No Android físico `8483A`, o smoke confirmou os três snap points, busca por
+`T14`, detalhe sem recentralização, pan com o painel e com o detalhe abertos,
+expansão/restauração e painel lateral em paisagem. Não houve exceção fatal
+recente e a rotação automática foi restaurada. Evidências:
+`dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/`.
+
+A próxima tarefa da fila é `MP-32`; rede, diagnóstico SSL, ciclo de vida e
+fallback offline não foram alterados neste corte. A revalidação pendente de
+`MP-07` permanece registrada separadamente.
