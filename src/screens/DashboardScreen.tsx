@@ -14,11 +14,16 @@ import Header from '../components/Header';
 import FiltroRegional from '../components/FiltroRegional';
 import SectionCard from '../components/SectionCard';
 import StatCard from '../components/StatCard';
-import { CadernoCampo, Mapa, Produtor, User, Visita } from '../api/mock';
+import { CadernoCampo, Produtor, User, Visita } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
 import { colors, spacing, typography } from '../theme';
-import { filtrarProdutoresPorAcesso, getSubRegioes } from '../utils/acessoControle';
+import {
+  filtrarProdutoresPorAcesso,
+  getFazendaIds,
+  getSubRegioes,
+} from '../utils/acessoControle';
+import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import {
   buildDashboardScopeData,
   buildDashboardSummary,
@@ -94,15 +99,25 @@ export default function DashboardScreen() {
     setLoadError('');
 
     try {
-      const [propriedades, usuarios, visitas, cadernos, mapas] = await Promise.all([
+      const [propriedades, usuarios, visitas, cadernos] = await Promise.all([
         Produtor.list(),
         user?.perfil === 'admin' ? User.list() : Promise.resolve([]),
         Visita.list(),
         CadernoCampo.list(),
-        Mapa.list(),
       ]);
+      const propriedadeIds = getFazendaIds(filtrarProdutoresPorAcesso(propriedades, user));
+      const catalogoMateriais = await MaterialCatalogService.consultarMateriais({
+        propriedadeIds,
+        perfil: user?.perfil,
+      });
 
-      setData({ propriedades, usuarios, visitas, cadernos, mapas });
+      setData({
+        propriedades,
+        usuarios,
+        visitas,
+        cadernos,
+        mapas: catalogoMateriais.materiais,
+      });
       loadedRef.current = true;
     } catch (error) {
       console.error('Erro ao carregar dados do Dashboard:', error);
@@ -163,7 +178,7 @@ export default function DashboardScreen() {
         { label: 'Colaboradores', value: summary.colaboradores, icon: 'people-outline', accent: metricAccent.purple },
         { label: 'Visitas registradas', value: summary.visitas, icon: 'calendar-outline', accent: metricAccent.success },
         { label: 'Registros no caderno', value: summary.cadernos, icon: 'book-outline', accent: metricAccent.warning },
-        { label: 'Mapas e materiais', value: summary.mapas, icon: 'map-outline', accent: metricAccent.info },
+        { label: 'Materiais técnicos', value: summary.mapas, icon: 'map-outline', accent: metricAccent.info },
       ];
     }
 
@@ -172,7 +187,7 @@ export default function DashboardScreen() {
       { label: 'Produtores vinculados', value: summary.titularesNoEscopo, icon: 'leaf-outline', accent: metricAccent.secondary },
       { label: 'Visitas no escopo', value: summary.visitas, icon: 'calendar-outline', accent: metricAccent.success },
       { label: 'Registros no caderno', value: summary.cadernos, icon: 'book-outline', accent: metricAccent.warning },
-      { label: 'Mapas no escopo', value: summary.mapas, icon: 'map-outline', accent: metricAccent.info },
+      { label: 'Materiais no escopo', value: summary.mapas, icon: 'map-outline', accent: metricAccent.info },
       { label: 'Área no escopo', value: summary.areaTotalLabel, icon: 'resize-outline', accent: metricAccent.purple },
     ];
   }, [summary, user?.perfil]);

@@ -4,12 +4,10 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa: finalizar a revalidação de `MP-07 — Login responsivo` com
-> IME que respeite o modo inline em paisagem; `MP-08` a `MP-13` foram
-> concluídas; `MP-14`, `MP-15`, `MP-16`, `MP-17`, `MP-18` e `MP-19` também
-> foram concluídas; `MP-20`, `MP-21`, `MP-22` e `MP-23` foram concluídas;
-> `MP-24`, `MP-25`, `MP-26` e `MP-27` foram concluídas; `MP-28` não foi
-> iniciada
+> Próxima tarefa da fila: `MP-29 — Rota e visualizador por material`;
+> `MP-08` a `MP-28` foram concluídas. A revalidação de `MP-07 — Login
+> responsivo` continua parcial até haver IME que respeite o modo inline em
+> paisagem
 
 ## 1. Objetivo
 
@@ -236,7 +234,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
-| 29 | `MP-28` Fonte única de Materiais | `QA-P1-05` | Unificar resumo, listagem, imports e visibilidade | `MP-17` | `BACKLOG` |
+| 29 | `MP-28` Fonte única de Materiais | `QA-P1-05` | Unificar resumo, listagem, imports e visibilidade | `MP-17` | `CONCLUIDO` |
 | 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `BACKLOG` |
 | 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `BACKLOG` |
 | 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `BACKLOG` |
@@ -393,6 +391,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-25` | `CONCLUIDO` | árvore de trabalho sobre `4e75862` | teste focado, typecheck, domain-compat, diff-check e assembleRelease passaram; smoke Android físico confirmou validação de Aplicação, confirmação, registro consolidado, auditoria e complemento versionado | `dist/qa-session-2026-08-03/mp-25-caderno-auditavel/` | backend append-only, RBAC, idempotência, sincronização e conflito distribuído permanecem em `MP-36`; migração produtiva permanece em `MP-37`; `MP-26` não foi iniciada |
 | 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `77c62f4` | 117 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou captura de ~13 m, recaptura, falha preservando ponto e retorno durante leitura | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` foi concluída depois |
 | 2026-08-04 | `MP-27` | `CONCLUIDO` | árvore de trabalho sobre `2b9eafa` | 25 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou conclusão, complemento, correção, anulação terminal, cancelamento, nova vinculada, reentrada, Produtor consultivo e paisagem | `dist/qa-session-2026-08-04/mp-27-estados-visita/` | RBAC, append-only, idempotência, concorrência, sincronização e bloqueio offline produtivos dependem do backend; `MP-28` não foi iniciada |
+| 2026-08-04 | `MP-28` | `CONCLUIDO` | árvore de trabalho sobre `667836d` | 7 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou 8 materiais no resumo e na consulta completa do Produtor, inclusive após reabertura | `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/` | contrato/backend produtivo e visualizadores permanecem fora deste corte; `MP-29` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -794,4 +793,29 @@ automática foi restaurada. Evidências:
 
 RBAC, persistência append-only, idempotência, concorrência, sincronização e
 exigência real de conexão continuam dependentes do backend e não são
-apresentados como segurança produtiva neste corte. `MP-28` não foi iniciada.
+apresentados como segurança produtiva neste corte.
+
+`MP-28` concluiu a fonte única local de Materiais. A consulta central carrega
+a base `Mapa`, os imports PNG e ZIP legados e o índice unificado de materiais
+técnicos; em seguida aplica o mesmo escopo de Propriedade, perfil, categoria,
+status, disponibilidade e visibilidade antes de contar ou listar. Duplicatas
+exatas são eliminadas com precedência para o índice unificado, preservando
+versões diferentes.
+
+Dashboard global, Dashboard do Produtor, resumo da Propriedade e listagem de
+Materiais passaram a consumir essa consulta. O teste focado cobriu as quatro
+fontes, filtros, visibilidade do Produtor, deduplicação, versionamento,
+reconsulta após reinício e remoção persistida. Typecheck, suíte
+`domain-compat`, `git diff --check` e `packageRelease` passaram.
+
+O APK release final tem 92.162.604 bytes e SHA-256
+`5565D619D60FC0DB6EE9319A0CC14D2CA947CDEAA9FB04906BA86C24A42B6538`.
+Instalado por cima no Android físico `8483A`, o smoke do Produtor confirmou
+`8` em `Materiais disponíveis`, `8` na consulta completa da Fazenda Sela de
+Prata I e o mesmo total após encerrar e reabrir o aplicativo. Evidências:
+`dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/`.
+
+Este corte não implementa backend produtivo, sincronização remota nem os
+visualizadores por `material_id` e versão. Esses visualizadores permanecem em
+`MP-29`, que não foi iniciada. A revalidação pendente de `MP-07` continua
+registrada separadamente.

@@ -87,6 +87,7 @@
     "src/services/MaterialTecnicoImportService.ts",
     "src/services/MaterialTecnicoPropertyImportWorkflow.ts",
     "src/services/MaterialTecnicoPropertyManageWorkflow.ts",
+    "src/services/MaterialCatalogService.ts",
     "src/services/PeriodoProdutivoService.ts"
   ]
 }

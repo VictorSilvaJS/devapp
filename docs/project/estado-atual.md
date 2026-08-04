@@ -4860,3 +4860,36 @@ excecao fatal recente. Evidencias:
 Este fechamento nao representa RBAC, armazenamento append-only, idempotencia,
 concorrencia distribuida, sincronizacao ou bloqueio offline produtivos. Essas
 garantias continuam dependentes do backend e das fases produtivas do plano.
+
+## MP-28 - Fonte Unica De Materiais
+
+Status em 2026-08-04: `CONCLUIDO` no corte local demonstrativo.
+
+`MaterialCatalogService` passou a ser a consulta unica para Materiais. Ela
+carrega a base demonstrativa `Mapa`, os imports PNG e ZIP legados e o indice
+unificado de materiais tecnicos, aplicando antes da contagem o mesmo escopo de
+Propriedade, perfil, categoria, status, disponibilidade e visibilidade para o
+Produtor.
+
+Resumo, Dashboard e listagem agora recebem a mesma projecao. A deduplicacao
+usa Propriedade, arquivo original, categoria, formato, ano, Talhao e versao;
+quando o mesmo item existe em mais de uma fonte, o indice unificado tem
+precedencia, seguido pelos imports legados e pela fixture. Versoes diferentes
+continuam visiveis. Itens removidos, inativos, indisponiveis, fora do escopo ou
+ocultos para o Produtor nao entram em sua contagem.
+
+O teste focado cobriu 7 cenarios: unificacao das quatro fontes, filtros,
+visibilidade por perfil, deduplicacao, versoes diferentes, persistencia apos
+reconsulta/remocao e auditoria das telas consumidoras. Typecheck, suite
+`domain-compat`, `git diff --check` e `packageRelease` passaram.
+
+O APK release final de 92.162.604 bytes, SHA-256
+`5565D619D60FC0DB6EE9319A0CC14D2CA947CDEAA9FB04906BA86C24A42B6538`, foi
+instalado por cima no Android fisico `8483A`. No smoke, o Produtor exibiu `8`
+em `Materiais disponiveis` e `8` na consulta completa da Fazenda Sela de
+Prata I; apos encerramento forcado e reabertura, o resumo permaneceu com `8`.
+Evidencias: `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/`.
+
+Backend produtivo, sincronizacao remota e abertura por `material_id` e versao
+nao fazem parte deste corte. Os visualizadores permanecem em `MP-29`, que nao
+foi iniciada.

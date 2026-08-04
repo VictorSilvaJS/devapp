@@ -12,7 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import StatCard from '../components/StatCard';
-import { Produtor, Mapa, Visita, CadernoCampo } from '../api/mock';
+import { Produtor, Visita, CadernoCampo } from '../api/mock';
+import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import { buildMapasRouteParams } from '../navigation/mapaRouteCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { colors, typography, spacing, shadows, border } from '../theme';
@@ -21,6 +22,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   filtrarCadernosPorFazendaIds,
   filtrarMapasPorFazendaIds,
+  filtrarProdutoresPorAcesso,
   filtrarVisitasPorFazendaIds,
   getFazendaId,
   getFazendaIds,
@@ -64,17 +66,21 @@ export default function ClienteDashboardScreen() {
     if (showLoading) setLoading(true);
     try {
       if (user?.produtor_id) {
-        const [todosProdutores, todosMapas, todasVisitas, todosCadernos] = await Promise.all([
+        const [todosProdutores, todasVisitas, todosCadernos] = await Promise.all([
           Produtor.list(),
-          Mapa.list(),
           Visita.list(),
           CadernoCampo.list()
         ]);
+        const propriedadeIds = getFazendaIds(filtrarProdutoresPorAcesso(todosProdutores, user));
+        const catalogoMateriais = await MaterialCatalogService.consultarMateriais({
+          propriedadeIds,
+          perfil: user?.perfil,
+        });
 
         const escopo = buildDashboardScopeData({
           user,
           propriedades: todosProdutores,
-          mapas: todosMapas,
+          mapas: catalogoMateriais.materiais,
           visitas: todasVisitas,
           cadernos: todosCadernos,
         });
@@ -194,7 +200,7 @@ export default function ClienteDashboardScreen() {
       },
     },
     {
-      label: 'Mapas Disponíveis',
+      label: 'Materiais disponíveis',
       value: mapasFiltrados.length,
       icon: 'map-outline',
       accent: {

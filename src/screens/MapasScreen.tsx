@@ -31,7 +31,7 @@ import {
   SegmentedChips,
   SelectField,
 } from '../components';
-import { Mapa, Produtor, LimiteArea, CadernoCampo } from '../api/mock';
+import { Produtor, LimiteArea, CadernoCampo } from '../api/mock';
 import {
   buildFazendaMapaRouteParamsFromPropriedade,
   resolveRouteFazendaId,
@@ -42,7 +42,6 @@ import { useFiltros } from '../contexts/FiltroContext';
 import {
   avaliarAcessoFazendaPorId,
   filtrarLimitesPorFazendaIds,
-  filtrarMapasPorFazendaIds,
   filtrarCadernosPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaId,
@@ -60,18 +59,15 @@ import { avaliarDownloadMapa } from '../utils/mapaDownloadCompat';
 import {
   PNG_LOCAL_MAPA_OPEN_ERROR_MESSAGE,
   isPngLocalMapa,
-  mergeMapasWithPngMapImports,
   resolveMapaPngImageSource,
 } from '../utils/pngMapToMapaCompat';
 import {
   PRESCRIPTION_ZIP_DETAILS_MESSAGE,
   isPrescriptionZipLocalMapa,
-  mergeMapasWithPrescriptionZipImports,
 } from '../utils/prescriptionZipToMapaCompat';
 import {
   MATERIAL_TECNICO_LOCAL_OPEN_ERROR_MESSAGE,
   isMaterialTecnicoLocalMapa,
-  mergeMapasWithMaterialTecnicoImports,
   resolveMaterialTecnicoImageSource,
 } from '../utils/materialTecnicoToMapaCompat';
 import {
@@ -139,6 +135,10 @@ import type {
   MaterialTecnicoImportMetadata,
 } from '../types/materialTecnicoLocal';
 import { MaterialTecnicoStorageService } from '../services/MaterialTecnicoStorageService';
+import {
+  buildMateriaisCatalogo,
+  MaterialCatalogService,
+} from '../services/MaterialCatalogService';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import {
   filtrarRegistrosDoTalhao,
@@ -478,15 +478,15 @@ export default function MapasScreen({ route, navigation }) {
           : FILTRO_TODOS;
       });
 
-      const [todosMapas, todosLimites, todosCadernos] = await Promise.all([
-        Mapa.list(),
+      const [catalogoMateriais, todosLimites, todosCadernos] = await Promise.all([
+        MaterialCatalogService.consultarMateriais({
+          propriedadeIds: idsPermitidos,
+          perfil: user?.perfil,
+        }),
         LimiteArea.list(),
         CadernoCampo.list(),
       ]);
 
-      const mapasFiltrados = filtrarMapasPorFazendaIds(todosMapas, idsPermitidos, {
-        somenteDisponiveisDownload: user?.perfil === 'produtor',
-      });
       const cadernosFiltrados = ordenarCadernosPorDataRecente(
         filtrarCadernosPorFazendaIds(todosCadernos, idsPermitidos, {
           somenteVisivelParaProdutor: user?.perfil === 'produtor',
@@ -497,19 +497,7 @@ export default function MapasScreen({ route, navigation }) {
         ? Promise.all(idsPermitidos.map((id) => PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(id)))
             .then((listas) => listas.flat())
         : Promise.resolve([]);
-      const pngImportsPromise = idsPermitidos.length > 0
-        ? Promise.all(idsPermitidos.map((id) => listActivePngMapImportsForPropriedade(id)))
-            .then((listas) => listas.flat())
-        : Promise.resolve([]);
-      const prescriptionZipImportsPromise = idsPermitidos.length > 0
-        ? Promise.all(idsPermitidos.map((id) => listActivePrescriptionZipImportsForPropriedade(id)))
-            .then((listas) => listas.flat())
-        : Promise.resolve([]);
-      const materialTecnicoImportsPromise = idsPermitidos.length > 0
-        ? Promise.all(idsPermitidos.map((id) => listActiveMaterialTecnicoImportsForPropriedade(id)))
-            .then((listas) => listas.flat())
-        : Promise.resolve([]);
-      const [importsGeoJson, talhoesLayer, periodosLocais, importsPng, importsPrescriptionZip, importsMaterialTecnico] = await Promise.all([
+      const [importsGeoJson, talhoesLayer, periodosLocais] = await Promise.all([
         fazendaId && idsPermitidos.length === 1
           ? listGeoJsonImportsForPropriedade(idsPermitidos[0])
           : Promise.resolve([]),
@@ -520,19 +508,16 @@ export default function MapasScreen({ route, navigation }) {
             })
           : Promise.resolve(null),
         periodosPromise,
-        pngImportsPromise,
-        prescriptionZipImportsPromise,
-        materialTecnicoImportsPromise,
       ]);
 
-      setMapas(mapasFiltrados);
+      setMapas(catalogoMateriais.fontes.mapasBase);
       setCadernos(cadernosFiltrados);
       setPeriodosProdutivos(periodosLocais);
       setLimites(limitesFiltrados);
       setGeoJsonImports(importsGeoJson);
-      setPngImports(importsPng);
-      setPrescriptionZipImports(importsPrescriptionZip);
-      setMaterialTecnicoImports(importsMaterialTecnico);
+      setPngImports(catalogoMateriais.fontes.pngImports);
+      setPrescriptionZipImports(catalogoMateriais.fontes.prescriptionZipImports);
+      setMaterialTecnicoImports(catalogoMateriais.fontes.materialTecnicoImports);
       setGeoJsonTalhoesLayer(talhoesLayer);
 
       const baseTalhoesParaAno = isGeoJsonTalhoesLayerActive(talhoesLayer)
@@ -615,32 +600,23 @@ export default function MapasScreen({ route, navigation }) {
     () => (contextoConsulta.fazendasPermitidas || []).map(getFazendaId).filter(Boolean),
     [contextoConsulta.fazendasPermitidas]
   );
-  const mapasComPngLocal = useMemo(
-    () => mergeMapasWithPngMapImports(mapas, pngImports, {
+  const catalogoMateriais = useMemo(
+    () => buildMateriaisCatalogo({
+      mapasBase: mapas,
+      pngImports,
+      prescriptionZipImports,
+      materialTecnicoImports,
+    }, {
       propriedadeIds: propriedadeIdsPermitidos,
       perfil: user?.perfil,
     }),
-    [mapas, pngImports, propriedadeIdsPermitidos, user?.perfil]
-  );
-  const mapasComMateriaisLocais = useMemo(
-    () => mergeMapasWithPrescriptionZipImports(mapasComPngLocal, prescriptionZipImports, {
-      propriedadeIds: propriedadeIdsPermitidos,
-      perfil: user?.perfil,
-    }),
-    [mapasComPngLocal, prescriptionZipImports, propriedadeIdsPermitidos, user?.perfil]
-  );
-  const mapasComTodosMateriaisLocais = useMemo(
-    () => mergeMapasWithMaterialTecnicoImports(mapasComMateriaisLocais, materialTecnicoImports, {
-      propriedadeIds: propriedadeIdsPermitidos,
-      perfil: user?.perfil,
-    }),
-    [mapasComMateriaisLocais, materialTecnicoImports, propriedadeIdsPermitidos, user?.perfil]
+    [mapas, pngImports, prescriptionZipImports, materialTecnicoImports, propriedadeIdsPermitidos, user?.perfil]
   );
 
   const mapasNoContexto = useMemo(() => {
-    if (!fazendaFiltroId) return mapasComTodosMateriaisLocais;
-    return mapasComTodosMateriaisLocais.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
-  }, [mapasComTodosMateriaisLocais, fazendaFiltroId]);
+    if (!fazendaFiltroId) return catalogoMateriais;
+    return catalogoMateriais.filter((mapa) => getMapaFazendaId(mapa) === fazendaFiltroId);
+  }, [catalogoMateriais, fazendaFiltroId]);
   const materiaisTecnicosNoContexto = useMemo(
     () => mapasNoContexto.filter((mapa) => isCategoriaMaterialTecnico(mapa?.categoria)),
     [mapasNoContexto]

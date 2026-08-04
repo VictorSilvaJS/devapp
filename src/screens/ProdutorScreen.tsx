@@ -11,8 +11,9 @@ import OperationalCard from '../components/OperationalCard';
 import PropriedadeTalhoesEntry from '../components/PropriedadeTalhoesEntry';
 import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { useToast } from '../components/Toast';
-import { Produtor, Visita, Mapa, CadernoCampo, LimiteArea, User } from '../api/mock';
+import { Produtor, Visita, CadernoCampo, LimiteArea, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
+import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import {
   buildFazendaMapaRouteParamsFromPropriedade,
@@ -28,7 +29,6 @@ import { useAuth } from '../auth/AuthContext';
 import {
   filtrarCadernosPorFazendaIds,
   filtrarLimitesPorFazendaIds,
-  filtrarMapasPorFazendaIds,
   filtrarProdutoresPorAcesso,
   getFazendaId,
   podeCriarVisitaEmFazenda,
@@ -139,18 +139,19 @@ export default function ProdutorScreen({ route, navigation }) {
       }
 
       const fazendaAtualId = getFazendaId(p) || id;
-      const [v, todosMapas, todosCadernos, periodos, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
+      const [v, catalogoMateriais, todosCadernos, periodos, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
         Visita.filter({ fazenda_id: fazendaAtualId }),
-        Mapa.list(),
+        MaterialCatalogService.consultarMateriais({
+          propriedadeIds: [fazendaAtualId],
+          perfil: user?.perfil,
+        }),
         CadernoCampo.list(),
         PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(fazendaAtualId),
         LimiteArea.list(),
         Produtor.list(),
         User.list(),
       ]);
-      const m = filtrarMapasPorFazendaIds(todosMapas, [fazendaAtualId], {
-        somenteDisponiveisDownload: user?.perfil === 'produtor',
-      });
+      const m = catalogoMateriais.materiais;
       const c = ordenarCadernosPorDataRecente(
         filtrarCadernosPorFazendaIds(todosCadernos, [fazendaAtualId], {
           somenteVisivelParaProdutor: user?.perfil === 'produtor',
