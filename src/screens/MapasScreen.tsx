@@ -9,7 +9,6 @@ import {
   RefreshControl,
   Modal,
   Dimensions,
-  Linking,
   Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +35,7 @@ import {
   buildFazendaMapaRouteParamsFromPropriedade,
   resolveRouteFazendaId,
 } from '../navigation/mapaRouteCompat';
+import { buildMaterialViewerRouteParams } from '../navigation/materialRouteCompat';
 import { colors, typography, spacing, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
 import { useFiltros } from '../contexts/FiltroContext';
@@ -76,7 +76,6 @@ import {
   getMaterialScopeLabel,
   getMaterialVersionLabel,
 } from '../utils/materialPresentationCompat';
-import { resolveSelaPrataIFertilidadeAssetSource } from '../assets/mapas/sela-prata-i/2025/fertilidade';
 import {
   confirmGeoJsonPropertyImport,
   listGeoJsonImportsForPropriedade,
@@ -338,11 +337,6 @@ export default function MapasScreen({ route, navigation }) {
   const [anoFiltroMateriais, setAnoFiltroMateriais] = useState(FILTRO_TODOS);
   const [safraFiltroMapas, setSafraFiltroMapas] = useState(FILTRO_TODOS);
   const [talhaoFiltroMapas, setTalhaoFiltroMapas] = useState(FILTRO_TODOS);
-  const [downloadDialog, setDownloadDialog] = useState<any>({
-    visible: false,
-    mapa: null,
-    status: null,
-  });
   const [imagePreview, setImagePreview] = useState<any>({
     visible: false,
     mapa: null,
@@ -999,7 +993,7 @@ export default function MapasScreen({ route, navigation }) {
     return prescriptionZipImports.find((item) => item.id === importId) ?? null;
   }, [prescriptionZipImports]);
 
-  const handleDownload = async (mapa) => {
+  const handleGerenciarMaterialLocal = async (mapa) => {
     if (isMaterialTecnicoLocalMapa(mapa)) {
       if (getFormatoArquivo(mapa) !== 'png') {
         openPrescriptionZipDetail(mapa);
@@ -1047,69 +1041,16 @@ export default function MapasScreen({ route, navigation }) {
       }
       return;
     }
-
-    const status = avaliarDownloadMapa(mapa);
-
-    if (!status.podeAbrir) {
-      toast.showInfo(status.descricao);
-      return;
-    }
-
-    const assetSource = resolveSelaPrataIFertilidadeAssetSource(status.arquivoUrl);
-    if (assetSource) {
-      openImagePreview(mapa, assetSource);
-      return;
-    }
-
-    setDownloadDialog({ visible: true, mapa, status });
   };
 
-  const confirmDownload = async () => {
-    if (isMaterialTecnicoLocalMapa(downloadDialog.mapa)) {
-      const mapaSelecionado = downloadDialog.mapa;
-      setDownloadDialog({ visible: false, mapa: null, status: null });
-      await handleDownload(mapaSelecionado);
+  const handleDownload = (mapa) => {
+    const params = buildMaterialViewerRouteParams(mapa);
+    if (!params) {
+      toast.showError('Não foi possível identificar este material e sua versão.');
       return;
     }
 
-    if (isPrescriptionZipLocalMapa(downloadDialog.mapa)) {
-      const mapaSelecionado = downloadDialog.mapa;
-      setDownloadDialog({ visible: false, mapa: null, status: null });
-      openPrescriptionZipDetail(mapaSelecionado);
-      return;
-    }
-
-    if (isPngLocalMapa(downloadDialog.mapa)) {
-      const mapaSelecionado = downloadDialog.mapa;
-      setDownloadDialog({ visible: false, mapa: null, status: null });
-      await handleDownload(mapaSelecionado);
-      return;
-    }
-
-    const status = downloadDialog.status || avaliarDownloadMapa(downloadDialog.mapa);
-    setDownloadDialog({ visible: false, mapa: null, status: null });
-
-    if (!status.podeAbrir || !status.arquivoUrl) {
-      toast.showInfo(status.descricao);
-      return;
-    }
-
-    const assetSource = resolveSelaPrataIFertilidadeAssetSource(status.arquivoUrl);
-    if (assetSource) {
-      openImagePreview(downloadDialog.mapa, assetSource);
-      return;
-    }
-
-    if (status.arquivoUrl.startsWith('asset://')) {
-      toast.showError('Não foi possível localizar o asset interno deste material.');
-      return;
-    }
-
-    try {
-      await Linking.openURL(status.arquivoUrl);
-    } catch (error) {
-      toast.showError('Não foi possível abrir o material informado.');
-    }
+    navigation.navigate('MaterialViewer', params);
   };
 
   const handleTalhaoPress = useCallback((talhao) => {
@@ -2211,8 +2152,17 @@ export default function MapasScreen({ route, navigation }) {
       : isPrescriptionZip
       ? isProdutorView ? '' : 'ZIP local'
       : formatarTipoMaterial(mapa.tipo_material);
-    const podeAcionarMapa = isMaterialTecnicoLocal || isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
+    const podeAcionarMapa = Boolean(buildMaterialViewerRouteParams(mapa));
     const indicadorDisponivel = isMaterialTecnicoLocal || isPngLocal || isPrescriptionZip || statusDownload.podeAbrir;
+    const podeGerenciarMaterialLocal = Boolean(
+      consultaPorFazenda
+      && contextoConsulta.fazenda
+      && (
+        (isMaterialTecnicoLocal && canManageMaterialTecnicoItem(user, contextoConsulta.fazenda, mapa))
+        || (isPngLocal && canManagePngMapItem(user, contextoConsulta.fazenda, mapa))
+        || (isPrescriptionZip && canManagePrescriptionZipItem(user, contextoConsulta.fazenda, mapa))
+      )
+    );
     const fazendaMapaInfo = fazendaInfoPorId.get(getMapaFazendaId(mapa))
       || fazendaContextoInfo
       || fazendaFiltroInfo;
@@ -2279,6 +2229,20 @@ export default function MapasScreen({ route, navigation }) {
       </View>
 
       <View style={styles.mapaFooter}>
+        {podeGerenciarMaterialLocal ? (
+          <TouchableOpacity
+            style={styles.manageMaterialButton}
+            onPress={(event) => {
+              event.stopPropagation();
+              void handleGerenciarMaterialLocal(mapa);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Gerenciar material local"
+          >
+            <Ionicons name="settings-outline" size={16} color={colors.primary} />
+            <Text style={styles.manageMaterialButtonText}>Gerenciar</Text>
+          </TouchableOpacity>
+        ) : null}
         <View style={[
           styles.downloadIndicator,
           indicadorDisponivel ? styles.downloadIndicatorDisponivel : styles.downloadIndicatorIndisponivel,
@@ -3092,20 +3056,6 @@ export default function MapasScreen({ route, navigation }) {
           />
         </FilterSection>
       </FilterBottomSheet>
-
-      {/* Dialog de visualização de material */}
-      <ConfirmDialog
-        visible={downloadDialog.visible}
-        title="Abrir material"
-        message={downloadDialog.mapa 
-          ? `Abrir para consulta o material "${downloadDialog.mapa.titulo}"?`
-          : ''}
-        type="info"
-        confirmText="Abrir"
-        cancelText="Cancelar"
-        onConfirm={confirmDownload}
-        onCancel={() => setDownloadDialog({ visible: false, mapa: null, status: null })}
-      />
 
       <ConfirmDialog
         visible={geoJsonManageDialog.visible}
@@ -4921,7 +4871,8 @@ const styles = StyleSheet.create({
   mapaFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
     paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -4933,6 +4884,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingVertical: 3,
     borderRadius: spacing.radiusSm,
+  },
+  manageMaterialButton: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.backgroundAlt,
+  },
+  manageMaterialButtonText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
   },
   downloadIndicatorDisponivel: {
     backgroundColor: colors.successBg,

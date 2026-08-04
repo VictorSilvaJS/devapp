@@ -54,11 +54,16 @@ quando o acervo nao a comprova. A visibilidade para o Produtor continua
 explicita. O contrato canonico esta em `modelo-material-tecnico.md`.
 
 O fluxo e local/demonstrativo: o arquivo fisico fica no storage interno e
-apenas metadados pequenos ficam no indice local. PNG pode abrir como imagem;
-PDF e ZIP podem ser catalogados e consultados por seus metadados, sem afirmar
-visualizador PDF, preview de ZIP, unzip, leitura/processamento de conteudo,
-upload, backend, sincronizacao, download remoto ou publicacao automatica.
-Registros PNG e ZIP anteriores continuam legiveis por compatibilidade.
+apenas metadados pequenos ficam no indice local. Cada material abre por id,
+versao e contexto autorizado da Propriedade. Imagens podem ser ampliadas; uma
+camada so e apresentada como mapa quando carrega geometria GeoJSON
+renderizavel, com legenda e metadados. PDF usa visualizacao real embutida onde
+a plataforma suporta ou um visualizador compativel do sistema, sem simular
+sucesso. ZIP permanece sem preview, unzip ou leitura/processamento de
+conteudo. Acoes de arquivo dependem de autorizacao, disponibilidade e URI
+abrivel. Isso nao representa backend, sincronizacao, URL assinada, publicacao
+automatica ou download remoto produtivo. Registros PNG e ZIP anteriores
+continuam legiveis por compatibilidade.
 
 Para o MVP, a entrada ideal para visualizacao no app e um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, ja convertido a partir dos originais fora do celular.
 

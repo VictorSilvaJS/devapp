@@ -146,12 +146,21 @@ Propriedade.
 
 ## 7. Consulta, Abertura E Offline
 
-- PNG local pode abrir como imagem quando a URI interna for segura e o arquivo
-  existir.
-- PDF deve aparecer com seus metadados e nome original; o MVP nao afirma
-  visualizador PDF integrado.
+- A rota de abertura deve transportar `material_id`, versao e contexto de
+  Propriedade. A consulta revalida o item na fonte unica e no escopo do perfil.
+- PNG local pode abrir como imagem com zoom quando a URI interna for segura e
+  o arquivo existir.
+- Camada georreferenciada so abre como mapa quando o material contem GeoJSON
+  renderizavel; formato ou nome, isoladamente, nao autorizam inventar camada.
+- PDF deve aparecer com metadados e nome original. A visualizacao embutida e
+  usada somente onde a plataforma realmente suporta; nos demais casos, a
+  abertura e delegada a visualizador compativel do sistema e a falha e
+  explicita.
 - ZIP deve aparecer com seus metadados e nome original; o MVP nao descompacta,
   interpreta nem exibe preview do pacote.
+- A acao de arquivo exige permissao do perfil, disponibilidade declarada e
+  referencia abrivel. Falha de abertura ou download nao produz sucesso falso.
+- Voltar do visualizador preserva a instancia, filtros e posicao da lista.
 - A presenca local nao equivale a download remoto ou sincronizacao.
 
 Os materiais copiados para o storage interno podem ser consultados no mesmo
@@ -182,7 +191,6 @@ futuros:
 - publicacao, revisao, versao e auditoria;
 - sincronizacao e cache offline controlado;
 - agrupamento de varias representacoes em um material de negocio;
-- visualizador PDF integrado;
+- visualizador PDF integrado universal/multiplataforma;
 - processamento, unzip ou leitura agronomica de ZIP;
 - importacao automatica do Drive.
-

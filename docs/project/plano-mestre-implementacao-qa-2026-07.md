@@ -4,8 +4,8 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa da fila: `MP-29 — Rota e visualizador por material`;
-> `MP-08` a `MP-28` foram concluídas. A revalidação de `MP-07 — Login
+> Próxima tarefa da fila: `MP-30 — Fotos com ampliação e ação autorizada`;
+> `MP-08` a `MP-29` foram concluídas. A revalidação de `MP-07 — Login
 > responsivo` continua parcial até haver IME que respeite o modo inline em
 > paisagem
 
@@ -235,7 +235,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
 | 29 | `MP-28` Fonte única de Materiais | `QA-P1-05` | Unificar resumo, listagem, imports e visibilidade | `MP-17` | `CONCLUIDO` |
-| 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `BACKLOG` |
+| 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `CONCLUIDO` |
 | 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `BACKLOG` |
 | 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `BACKLOG` |
 | 33 | `MP-32` WebView, rede e fallback offline | `QA-P3-02` | Corrigir ciclo de vida, diagnosticar SSL e tratar mapa indisponível | `MP-31` | `BACKLOG` |
@@ -392,6 +392,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-03 | `MP-26` | `CONCLUIDO` | árvore de trabalho sobre `77c62f4` | 117 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou captura de ~13 m, recaptura, falha preservando ponto e retorno durante leitura | `dist/qa-session-2026-08-03/mp-26-apresentacao-localizacao/` | teste real de dentro/fora, permissão e offline permanece em `MP-38`; versionamento produtivo em `MP-37`; `MP-27` foi concluída depois |
 | 2026-08-04 | `MP-27` | `CONCLUIDO` | árvore de trabalho sobre `2b9eafa` | 25 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou conclusão, complemento, correção, anulação terminal, cancelamento, nova vinculada, reentrada, Produtor consultivo e paisagem | `dist/qa-session-2026-08-04/mp-27-estados-visita/` | RBAC, append-only, idempotência, concorrência, sincronização e bloqueio offline produtivos dependem do backend; `MP-28` não foi iniciada |
 | 2026-08-04 | `MP-28` | `CONCLUIDO` | árvore de trabalho sobre `667836d` | 7 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou 8 materiais no resumo e na consulta completa do Produtor, inclusive após reabertura | `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/` | contrato/backend produtivo e visualizadores permanecem fora deste corte; `MP-29` não foi iniciada |
+| 2026-08-04 | `MP-29` | `CONCLUIDO` | árvore de trabalho sobre `99ae14c` | 11 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou material específico, zoom de imagem, retorno na mesma posição e ausência de exceção fatal | `dist/qa-session-2026-08-04/mp-29-visualizador-material/` | PDF/ZIP não tinham fixture física ativa; contrato foi coberto automaticamente sem afirmar smoke; fotos permanecem em `MP-30` |
 
 ## 12. Próxima ação
 
@@ -815,7 +816,39 @@ Instalado por cima no Android físico `8483A`, o smoke do Produtor confirmou
 Prata I e o mesmo total após encerrar e reabrir o aplicativo. Evidências:
 `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/`.
 
-Este corte não implementa backend produtivo, sincronização remota nem os
-visualizadores por `material_id` e versão. Esses visualizadores permanecem em
-`MP-29`, que não foi iniciada. A revalidação pendente de `MP-07` continua
+Este corte não implementa backend produtivo nem sincronização remota.
+
+`MP-29` concluiu a rota dedicada `MaterialViewer`, identificada por
+`material_id`, versão e contexto de Propriedade. A abertura direta reconsulta
+a fonte única de `MP-28` somente para as Propriedades autorizadas e exige
+correspondência exata de id, versão e, quando informado, `fazenda_id`. Rota
+incompleta, item removido/substituído e item fora do perfil produzem estados
+controlados, sem cair no mapa geral de Talhões.
+
+O visualizador é escolhido pelo formato real. Imagens oferecem zoom de 100% a
+400% e deslocamento; uma camada só vira mapa quando contém GeoJSON
+renderizável, com legenda e metadados; PDF usa visualização embutida onde a
+plataforma suporta e delega a um visualizador real do sistema nos demais
+casos; ZIP e outros arquivos exibem detalhes sem simular prévia. A ação de
+arquivo exige disponibilidade, referência abrível e autorização do perfil.
+
+Abrir a nova rota mantém a lista anterior na pilha, preservando filtros,
+busca e posição no retorno. O gerenciamento local de substituir/remover
+permaneceu separado nos cartões da equipe. Teste focado com 11 cenários,
+typecheck, suíte `domain-compat`, `git diff --check` e `packageRelease`
+passaram.
+
+O APK release final tem 92.193.640 bytes e SHA-256
+`E31DD02858C9C957A44FE1769AEE92ABF6C4DDC669B5A1CFE89CE41229546612`.
+Instalado por cima no Android físico `8483A`, o smoke do Produtor abriu
+`tche-smoke-pdf-detail.png` pela ação `Abrir material` do detalhe da
+Propriedade na rota específica, sem cair no mapa geral de Talhões. A imagem
+foi ampliada de 100% para 150% e o retorno preservou a aba, o item e a posição,
+sem exceção fatal recente. O catálogo físico não continha PDF ou ZIP real;
+esses formatos foram cobertos pelos testes sem registrar smoke inexistente.
+Evidências: `dist/qa-session-2026-08-04/mp-29-visualizador-material/`.
+
+Fotos de Caderno/Visita permanecem fora deste corte e seguem em `MP-30`, que
+não foi iniciada. O visualizador PDF universal, backend, URLs assinadas e
+sincronização continuam futuros. A revalidação pendente de `MP-07` permanece
 registrada separadamente.

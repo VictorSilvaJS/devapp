@@ -4893,3 +4893,42 @@ Evidencias: `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/`.
 Backend produtivo, sincronizacao remota e abertura por `material_id` e versao
 nao fazem parte deste corte. Os visualizadores permanecem em `MP-29`, que nao
 foi iniciada.
+
+## MP-29 - Rota E Visualizador Por Material
+
+Status em 2026-08-04: `CONCLUIDO` no corte local demonstrativo.
+
+Materiais agora abrem a rota dedicada `MaterialViewer` com `material_id`,
+versao e contexto de Propriedade. A tela reconsulta o catalogo unificado
+somente para Propriedades permitidas ao perfil e exige correspondencia exata
+da identidade. Rota incompleta, item ausente/substituido e tentativa fora do
+escopo recebem estado controlado e nao abrem o mapa geral de Talhoes.
+
+O tipo real define a apresentacao: imagem oferece zoom de 100% a 400% e
+deslocamento; GeoJSON renderizavel vira camada vetorial com legenda e
+metadados; PDF usa WebView apenas onde ha suporte real e, nos demais casos,
+delega a visualizador compativel do sistema; ZIP e outros arquivos ficam em
+detalhes sem preview ficticio. A acao de arquivo exige permissao,
+disponibilidade e URI abrivel. Falha nao gera mensagem de sucesso.
+
+A nova rota e empilhada sobre a lista, preservando busca, filtros e posicao no
+retorno. O gerenciamento local da equipe continua separado por `Gerenciar`
+nos cartoes, mantendo substituicao/remocao existentes fora do visualizador.
+
+O teste focado cobriu 11 cenarios de rota, versao, Propriedade, formatos,
+GeoJSON, preview honesto, autorizacao, abertura/download e retorno. Typecheck,
+suite `domain-compat`, `git diff --check` e `packageRelease` passaram.
+
+O APK release final de 92.193.640 bytes, SHA-256
+`E31DD02858C9C957A44FE1769AEE92ABF6C4DDC669B5A1CFE89CE41229546612`, foi
+instalado por cima no Android fisico `8483A`. Como Produtor, o smoke abriu
+`tche-smoke-pdf-detail.png` pela acao `Abrir material` do detalhe da
+Propriedade na rota especifica, sem cair no mapa geral de Talhoes. A imagem
+foi ampliada para 150% e o retorno preservou a aba, o item e a posicao. Nao
+houve excecao fatal recente.
+
+Nao havia PDF ou ZIP real no catalogo persistido do aparelho; esses formatos
+foram validados automaticamente e nao sao apresentados como smoke fisico.
+Fotos de Caderno/Visita permanecem em `MP-30`. Visualizador PDF universal,
+backend, URLs assinadas e sincronizacao continuam futuros. Evidencias:
+`dist/qa-session-2026-08-04/mp-29-visualizador-material/`.

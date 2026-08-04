@@ -31,6 +31,7 @@
     "src/auth/selfProfileUpdate.ts",
     "src/auth/localCredentials.ts",
     "src/navigation/mapaRouteCompat.ts",
+    "src/navigation/materialRouteCompat.ts",
     "src/navigation/propriedadeRouteCompat.ts",
     "src/utils/acessoControle.ts",
     "src/utils/geojsonImportValidator.ts",

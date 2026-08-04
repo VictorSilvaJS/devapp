@@ -2,6 +2,7 @@ import type {
   FazendaMapaRouteParams,
   MapasRouteParams,
 } from '../navigation/mapaRouteCompat';
+import type { MaterialViewerRouteParams } from '../navigation/materialRouteCompat';
 import type {
   FazendaIdRouteParams,
   PropriedadeDetailRouteParams,
@@ -17,6 +18,7 @@ declare global {
       Main: undefined;
       ProdutorDetail: PropriedadeDetailRouteParams | undefined;
       Mapas: MapasRouteParams | undefined;
+      MaterialViewer: MaterialViewerRouteParams;
       NovaPropriedade: undefined;
       EditarPropriedade: PropriedadeDetailRouteParams | undefined;
       NovaVisita: (FazendaIdRouteParams & { visitaOrigemId?: string }) | undefined;

@@ -17,9 +17,9 @@ import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import {
   buildFazendaMapaRouteParamsFromPropriedade,
-  buildMapaTalhaoRouteSelection,
   buildMapasRouteParams,
 } from '../navigation/mapaRouteCompat';
+import { buildMaterialViewerRouteParams } from '../navigation/materialRouteCompat';
 import {
   buildPropriedadeContextRouteParams,
   buildPropriedadeDetailRouteParams,
@@ -298,9 +298,15 @@ export default function ProdutorScreen({ route, navigation }) {
   const podeExcluir = podeExcluirProdutor(user, produtor);
   const integridadeExclusao = deleteIntegrity || getCurrentDeleteIntegrity();
   const exclusaoBloqueadaPorIntegridade = podeExcluir && !integridadeExclusao.canDelete;
-  const getMapaAtualRouteParams = (mapa) => buildFazendaMapaRouteParamsFromPropriedade(produtor, {
-    ...buildMapaTalhaoRouteSelection(mapa, limites),
-  });
+  const handleAbrirMaterial = (mapa) => {
+    const params = buildMaterialViewerRouteParams(mapa);
+    if (!params) {
+      toast.showError('Não foi possível identificar este material e sua versão.');
+      return;
+    }
+
+    navigation.navigate('MaterialViewer', params);
+  };
   const handleAbrirTalhaoNoMapa = (talhao?) => navigation.navigate(
     'FazendaMapa',
     buildFazendaMapaRouteParamsFromPropriedade(
@@ -1073,16 +1079,14 @@ export default function ProdutorScreen({ route, navigation }) {
                           </Text>
                         ) : null}
                       </View>
-                      {(mapa.disponivel_para_download || mapa.disponivel_download) && (
-                        <TouchableOpacity
-                          style={styles.mapaButton}
-                          onPress={() => navigation.navigate('FazendaMapa', getMapaAtualRouteParams(mapa))}
-                          activeOpacity={0.8}
-                        >
-                          <Ionicons name="open-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
-                          <Text style={styles.mapaButtonText}>Abrir material</Text>
-                        </TouchableOpacity>
-                      )}
+                      <TouchableOpacity
+                        style={styles.mapaButton}
+                        onPress={() => handleAbrirMaterial(mapa)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="open-outline" size={16} color={colors.white} style={{ marginRight: 6 }} />
+                        <Text style={styles.mapaButtonText}>Abrir material</Text>
+                      </TouchableOpacity>
                     </View>
                   ))}
                   {mapas.length > 3 && (
