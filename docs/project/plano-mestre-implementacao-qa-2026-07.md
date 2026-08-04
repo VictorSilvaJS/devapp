@@ -4,8 +4,8 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa da fila: `MP-30 — Fotos com ampliação e ação autorizada`;
-> `MP-08` a `MP-29` foram concluídas. A revalidação de `MP-07 — Login
+> Próxima tarefa da fila: `MP-31 — Redesign do mapa de Talhões`;
+> `MP-08` a `MP-30` foram concluídas. A revalidação de `MP-07 — Login
 > responsivo` continua parcial até haver IME que respeite o modo inline em
 > paisagem
 
@@ -236,7 +236,7 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 |---:|---|---|---|---|---|
 | 29 | `MP-28` Fonte única de Materiais | `QA-P1-05` | Unificar resumo, listagem, imports e visibilidade | `MP-17` | `CONCLUIDO` |
 | 30 | `MP-29` Rota e visualizador por material | `QA-P1-01`, `QA-P2-13` | Abrir mapa, imagem, PDF ou arquivo a partir de `material_id` e versão | `MP-28` | `CONCLUIDO` |
-| 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `BACKLOG` |
+| 31 | `MP-30` Fotos com ampliação e ação autorizada | `QA-P2-13` | Permitir zoom e download conforme permissão e disponibilidade | `MP-11` | `CONCLUIDO` |
 | 32 | `MP-31` Redesign do mapa de Talhões | `QA-P1-02` | Corrigir painel, legenda, localização, expandir e paisagem | `MP-16`, `MP-24` | `BACKLOG` |
 | 33 | `MP-32` WebView, rede e fallback offline | `QA-P3-02` | Corrigir ciclo de vida, diagnosticar SSL e tratar mapa indisponível | `MP-31` | `BACKLOG` |
 
@@ -393,6 +393,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-04 | `MP-27` | `CONCLUIDO` | árvore de trabalho sobre `2b9eafa` | 25 testes focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou conclusão, complemento, correção, anulação terminal, cancelamento, nova vinculada, reentrada, Produtor consultivo e paisagem | `dist/qa-session-2026-08-04/mp-27-estados-visita/` | RBAC, append-only, idempotência, concorrência, sincronização e bloqueio offline produtivos dependem do backend; `MP-28` não foi iniciada |
 | 2026-08-04 | `MP-28` | `CONCLUIDO` | árvore de trabalho sobre `667836d` | 7 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou 8 materiais no resumo e na consulta completa do Produtor, inclusive após reabertura | `dist/qa-session-2026-08-04/mp-28-fonte-unica-materiais/` | contrato/backend produtivo e visualizadores permanecem fora deste corte; `MP-29` não foi iniciada |
 | 2026-08-04 | `MP-29` | `CONCLUIDO` | árvore de trabalho sobre `99ae14c` | 17 cenários focados, typecheck, domain-compat, diff-check e `packageRelease` passaram; smoke Android físico confirmou modal, rolagem externa neutralizada, toque duplo, arraste contido, retorno na mesma posição e ausência de exceção fatal | `dist/qa-session-2026-08-04/mp-29-visualizador-material/` | pinça teve contrato automatizado, pois ADB não injeta dois ponteiros; PDF/ZIP não tinham fixture física ativa; fotos permanecem em `MP-30` |
+| 2026-08-04 | `MP-30` | `CONCLUIDO` | árvore de trabalho sobre `2e28dd5` | 10 cenários focados, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou Caderno/Visita, modal, 200%, arraste, paisagem e download com confirmação visível | `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/` | pinça teve contrato automatizado porque ADB não injeta dois ponteiros; a suíte global parou em referência preexistente a teste ZIP ausente; foto real permanece futura; `MP-31` não foi iniciada |
 
 ## 12. Próxima ação
 
@@ -854,7 +855,34 @@ ZIP real; esses formatos foram cobertos pelos testes sem registrar smoke
 inexistente.
 Evidências: `dist/qa-session-2026-08-04/mp-29-visualizador-material/`.
 
-Fotos de Caderno/Visita permanecem fora deste corte e seguem em `MP-30`, que
-não foi iniciada. O visualizador PDF universal, backend, URLs assinadas e
-sincronização continuam futuros. A revalidação pendente de `MP-07` permanece
-registrada separadamente.
+`MP-30` concluiu a ampliação das fotos demonstrativas já existentes em Caderno
+e Visita. Cada miniatura válida abre um modal de tela cheia comum, com zoom de
+100% a 400% por pinça, toque duplo ou botões, arraste limitado ao quadro e sem
+rolagem da tela de detalhe por gesto iniciado na imagem. Referência inválida ou
+falha de carregamento mantém estado explícito de imagem indisponível.
+
+O download só aparece quando a URI é acionável e o perfil continua autorizado
+ao registro e à Propriedade. URL remota é copiada para o storage interno do
+aplicativo; URI local compatível é copiada para a mesma área. A confirmação é
+mostrada dentro do próprio modal somente depois de o arquivo existir; falha de
+rede/storage recebe erro visível e não produz sucesso falso.
+
+Teste focado com 10 cenários, typecheck, `git diff --check` e `packageRelease`
+passaram. A suíte global avançou até a referência preexistente ao arquivo
+ausente `tests/prescriptionZipPropertyManageWorkflow.test.js`; essa falha do
+roteiro global não pertence ao corte de fotos. O APK final tem 92.318.840 bytes
+e SHA-256
+`9D508C9BD06C53F2FCFAFF3E5427995FD260B862D15BF05905278993D79A16FC`.
+
+No Android físico `8483A`, o smoke abriu foto de Caderno e de Visita, ampliou
+para 200%, arrastou a imagem, manteve o modal utilizável em paisagem e concluiu
+o download remoto com a mensagem visível `Foto baixada para o armazenamento
+local do aplicativo.`. Não houve exceção fatal recente. ADB não injeta dois
+ponteiros simultâneos; a pinça ficou coberta pelo contrato automatizado de
+escala, limites, foco e arraste. Evidências:
+`dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/`.
+
+Captura por câmera/galeria, metadados geográficos da foto, backend, URL
+assinada e sincronização não foram implementados. A próxima tarefa é `MP-31`;
+ela não foi iniciada. A revalidação pendente de `MP-07` permanece registrada
+separadamente.

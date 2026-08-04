@@ -76,9 +76,19 @@ No mock, esse corte pode ser validado com uma amostragem controlada de uma propr
 
 O MVP deve incluir o registro e a consulta de visitas tecnicas ligadas ao contexto do produtor e da propriedade.
 
+Fotos demonstrativas ja associadas a uma Visita podem ser abertas em modal de
+tela cheia, ampliadas por pinca, toque duplo ou botoes e baixadas para o
+storage interno somente quando a URI estiver disponivel e o perfil mantiver
+acesso a Visita e a Propriedade. Isso nao inclui captura real, galeria,
+georreferenciamento, backend ou sincronizacao de fotos.
+
 ### 5. Caderno de campo enxuto
 
 O MVP deve incluir um caderno de campo orientado ao uso operacional, sem tentar cobrir desde o inicio um universo amplo e generico de funcionalidades agricolas.
+
+Fotos demonstrativas ja existentes em um registro seguem a mesma experiencia
+de ampliacao e a mesma revalidacao de download das fotos de Visita, respeitando
+tambem a visibilidade do registro para o Produtor.
 
 No corte demonstrativo atual, Safra/Safrinha pode existir como organizacao
 local e opcional por Propriedade para ajudar a contextualizar registros do

@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
+import RegistroFotoViewerModal from '../components/RegistroFotoViewerModal';
 import CadernoAuditActions from '../components/CadernoAuditActions';
 import CadernoLocalizacaoPreview from '../components/CadernoLocalizacaoPreview';
 import { useToast } from '../components/Toast';
@@ -50,6 +51,7 @@ import {
   getCadernoEstadoLabel,
   toCadernoProducerProjection,
 } from '../utils/cadernoLifecycleCompat';
+import { getRegistroFotoUri, podeBaixarFotoRegistro } from '../utils/registroFotoCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -68,6 +70,8 @@ export default function CadernoDetailScreen() {
   const [talhoes, setTalhoes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTechnicalLocation, setShowTechnicalLocation] = useState(false);
+  const [photoLoadErrors, setPhotoLoadErrors] = useState<Record<number, boolean>>({});
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -106,6 +110,8 @@ export default function CadernoDetailScreen() {
       setUsuarios(Array.isArray(usuariosData) ? usuariosData : []);
       setTalhoes(Array.isArray(limitesData) ? limitesData : []);
       setShowTechnicalLocation(false);
+      setPhotoLoadErrors({});
+      setSelectedPhotoIndex(null);
     } catch (error) {
       console.error('Erro ao carregar registro de caderno:', error);
       toast.showError('Erro ao carregar detalhe do caderno');
@@ -212,6 +218,15 @@ export default function CadernoDetailScreen() {
   const complementos = Array.isArray(registro.complementos_caderno) ? registro.complementos_caderno : [];
   const eventos = Array.isArray(registro.eventos_caderno) ? registro.eventos_caderno : [];
   const isProdutorView = user?.perfil === 'produtor';
+  const selectedPhoto = selectedPhotoIndex == null ? null : fotos[selectedPhotoIndex];
+  const selectedPhotoUri = getRegistroFotoUri(selectedPhoto);
+  const canDownloadSelectedPhoto = selectedPhotoIndex != null && podeBaixarFotoRegistro({
+    user,
+    registro,
+    fazenda,
+    origem: 'caderno',
+    foto: selectedPhoto,
+  });
   const handleVerNoMapa = () => {
     if (!localizacao || !fazenda) return;
     const params = buildFazendaMapaRouteParamsFromPropriedade(fazenda, {
@@ -651,14 +666,39 @@ export default function CadernoDetailScreen() {
               <Text style={styles.cardTitle}>Fotos ({fotos.length})</Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosContainer}>
-              {fotos.map((foto, index) => (
-                <Image
-                  key={`${typeof foto === 'string' ? foto : foto?.uri}-${index}`}
-                  source={{ uri: typeof foto === 'string' ? foto : foto?.uri }}
-                  style={styles.photo}
-                  resizeMode="cover"
-                />
-              ))}
+              {fotos.map((foto, index) => {
+                const fotoUri = getRegistroFotoUri(foto);
+                const imageUnavailable = !fotoUri || photoLoadErrors[index];
+
+                return (
+                  <View key={`${fotoUri || 'imagem'}-${index}`} style={styles.photoItem}>
+                    {imageUnavailable ? (
+                      <View style={[styles.photo, styles.photoUnavailable]}>
+                        <Ionicons name="image-outline" size={32} color={colors.muted} />
+                        <Text style={styles.photoUnavailableText}>Imagem indisponível</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={() => setSelectedPhotoIndex(index)}
+                        activeOpacity={0.82}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Ampliar foto ${index + 1} do Caderno`}
+                      >
+                        <Image
+                          source={{ uri: fotoUri }}
+                          style={styles.photo}
+                          resizeMode="cover"
+                          onError={() => setPhotoLoadErrors((current) => ({ ...current, [index]: true }))}
+                        />
+                        <View style={styles.photoExpandBadge}>
+                          <Ionicons name="expand-outline" size={18} color={colors.card} />
+                          <Text style={styles.photoExpandText}>Ampliar</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -672,6 +712,17 @@ export default function CadernoDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <RegistroFotoViewerModal
+        visible={selectedPhotoIndex != null}
+        uri={selectedPhotoUri}
+        title="Foto do Caderno"
+        origem="caderno"
+        index={selectedPhotoIndex ?? 0}
+        total={fotos.length}
+        downloadAuthorized={canDownloadSelectedPhoto}
+        onClose={() => setSelectedPhotoIndex(null)}
+      />
     </View>
   );
 }
@@ -963,11 +1014,42 @@ const styles = StyleSheet.create({
   photosContainer: {
     marginTop: spacing.sm,
   },
+  photoItem: {
+    marginRight: spacing.md,
+  },
   photo: {
     width: width * 0.6,
     height: width * 0.4,
     borderRadius: spacing.radiusSm,
-    marginRight: spacing.md,
+  },
+  photoUnavailable: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundNeutral,
+  },
+  photoUnavailableText: {
+    color: colors.muted,
+    fontSize: typography.fontCaption,
+  },
+  photoExpandBadge: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    minHeight: 34,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+  },
+  photoExpandText: {
+    color: colors.card,
+    fontSize: typography.fontCaption,
+    fontWeight: '700',
   },
   footer: {
     padding: spacing.lg,

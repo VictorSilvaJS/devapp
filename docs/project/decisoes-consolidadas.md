@@ -794,3 +794,32 @@ registro consolidado.
   historico de deslocamento;
 - validacao do provider e dos cenarios reais dentro/fora em campo permanece em
   `MP-38`; versionamento produtivo da geometria permanece em `MP-37`.
+
+---
+
+## 29. Foto existente usa modal comum e acao revalidada pelo registro
+
+### Decisao
+
+Fotos demonstrativas preexistentes de Caderno e Visita usam um unico modal de
+tela cheia. A imagem admite pinca, toque duplo e botoes entre 100% e 400%, com
+arraste limitado ao quadro. O modal isola o gesto da rolagem do detalhe.
+
+O download depende, no momento da acao, de URI acionavel e do acesso do perfil
+ao registro e a Propriedade. A interface confirma somente depois de comprovar
+a copia no storage interno e exibe a falha dentro do proprio modal.
+
+### Alcance
+
+Afeta somente a consulta das fotos ja existentes nos detalhes de Caderno e
+Visita e a copia local demonstrativa autorizada.
+
+### Impacto
+
+- string legada e objeto com `uri` continuam legiveis;
+- referencia vazia/invalida ou falha de carregamento fica indisponivel;
+- Produtor segue titularidade e visibilidade; Colaborador segue escopo
+  regional; Admin segue acesso global local;
+- a copia interna nao e download produtivo nem promessa offline;
+- camera, galeria, consentimento, metadados da foto, georreferenciamento,
+  backend, URL assinada e sincronizacao permanecem para fase propria.

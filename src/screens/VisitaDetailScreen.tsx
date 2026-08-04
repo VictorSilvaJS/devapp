@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import Header from '../components/Header';
+import RegistroFotoViewerModal from '../components/RegistroFotoViewerModal';
 import VisitaLifecycleActions from '../components/VisitaLifecycleActions';
 import { useToast } from '../components/Toast';
 import { colors, typography, spacing, shadows } from '../theme';
@@ -24,6 +25,7 @@ import {
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { getVisitaFotoUri, getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
+import { getRegistroFotoUri, podeBaixarFotoRegistro } from '../utils/registroFotoCompat';
 import {
   getVisitaStatusPresentation,
   VisitaStatusTone,
@@ -50,6 +52,7 @@ export default function VisitaDetailScreen() {
   const [fazenda, setFazenda] = useState(null);
   const [loading, setLoading] = useState(true);
   const [photoLoadErrors, setPhotoLoadErrors] = useState<Record<number, boolean>>({});
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   // Recarregar visita sempre que a tela ganhar foco (ex: ao voltar da edição)
   useFocusEffect(
@@ -83,6 +86,7 @@ export default function VisitaDetailScreen() {
       setVisita(user?.perfil === 'produtor' ? toVisitaProducerProjection(visitaData) : visitaData);
       setFazenda(acesso.fazenda);
       setPhotoLoadErrors({});
+      setSelectedPhotoIndex(null);
     } catch (error) {
       console.error('Erro ao carregar visita:', error);
       toast.showError('Erro ao carregar detalhes da visita');
@@ -170,6 +174,15 @@ export default function VisitaDetailScreen() {
   const canCommand = podeEditarVisita(user, visita, fazenda)
     && estado != null
     && ['agendada', 'realizada', 'cancelada'].includes(estado);
+  const selectedPhoto = selectedPhotoIndex == null ? null : visita.fotos?.[selectedPhotoIndex];
+  const selectedPhotoUri = getRegistroFotoUri(selectedPhoto);
+  const canDownloadSelectedPhoto = selectedPhotoIndex != null && podeBaixarFotoRegistro({
+    user,
+    registro: visita,
+    fazenda,
+    origem: 'visita',
+    foto: selectedPhoto,
+  });
   const handleScheduleFromCancelled = () => {
     if (!fazendaInfo?.id || estado !== 'cancelada' || !canCommand) return;
     navigation.navigate('NovaVisita', {
@@ -446,12 +459,23 @@ export default function VisitaDetailScreen() {
                         <Text style={styles.photoUnavailableText}>Imagem indisponível</Text>
                       </View>
                     ) : (
-                      <Image
-                        source={{ uri: fotoUri }}
-                        style={styles.photo}
-                        resizeMode="cover"
-                        onError={() => setPhotoLoadErrors((current) => ({ ...current, [index]: true }))}
-                      />
+                      <TouchableOpacity
+                        onPress={() => setSelectedPhotoIndex(index)}
+                        activeOpacity={0.82}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Ampliar imagem ${index + 1} do registro`}
+                      >
+                        <Image
+                          source={{ uri: fotoUri }}
+                          style={styles.photo}
+                          resizeMode="cover"
+                          onError={() => setPhotoLoadErrors((current) => ({ ...current, [index]: true }))}
+                        />
+                        <View style={styles.photoExpandBadge}>
+                          <Ionicons name="expand-outline" size={18} color={colors.card} />
+                          <Text style={styles.photoExpandText}>Ampliar</Text>
+                        </View>
+                      </TouchableOpacity>
                     )}
                     <Text style={styles.photoCaption}>Exemplo visual do registro</Text>
                   </View>
@@ -470,6 +494,17 @@ export default function VisitaDetailScreen() {
           </TouchableOpacity>
         </View>
       ) : null}
+
+      <RegistroFotoViewerModal
+        visible={selectedPhotoIndex != null}
+        uri={selectedPhotoUri}
+        title="Imagem da Visita"
+        origem="visita"
+        index={selectedPhotoIndex ?? 0}
+        total={visita.fotos?.length ?? 0}
+        downloadAuthorized={canDownloadSelectedPhoto}
+        onClose={() => setSelectedPhotoIndex(null)}
+      />
     </View>
   );
 }
@@ -635,6 +670,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: width * 0.4,
     borderRadius: spacing.radiusSm,
+  },
+  photoExpandBadge: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    minHeight: 34,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+  },
+  photoExpandText: {
+    color: colors.card,
+    fontSize: typography.fontCaption,
+    fontWeight: '700',
   },
   photoUnavailable: {
     alignItems: 'center',

@@ -573,6 +573,11 @@ Pendencias P2/futuras:
 - implementar pipeline produtivo de mapas, publicacao, download e sync no
   backend.
 
+Status em 2026-08-04 (`MP-30`): as fotos demonstrativas ja existentes em
+Caderno e Visita ganharam ampliacao e copia local autorizada, sem criar ou
+alterar imagens. A pendencia acima continua integral para o fluxo real de
+camera/galeria, metadados, privacidade, backend e sincronizacao.
+
 Implementacoes/evidencias mantidas como pendentes, sem ambiguidade decisoria:
 
 - concluir a validacao fisica do ponto opcional em condicao adequada para o

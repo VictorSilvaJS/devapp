@@ -325,6 +325,17 @@ motivos, antes/depois, compatibilidade legada e projecao consultiva do Produtor.
 Autorizacao server-side, armazenamento append-only, conflito distribuido,
 sincronizacao e exigencia real de conexao permanecem fora desse corte local.
 
+### Fotos existentes de Visita e Caderno
+
+- Foto so pode ser ampliada ou baixada dentro de um detalhe de registro ao qual
+  o perfil tenha acesso pela Propriedade e pelas regras do proprio dominio.
+- Download exige referencia acionavel e disponibilidade real; falha de
+  rede/storage nao pode gerar confirmacao de sucesso.
+- A copia local demonstrativa fica no storage interno do aplicativo e nao
+  representa download produtivo, publicacao, URL assinada ou sincronizacao.
+- Fotos demonstrativas legadas permanecem legiveis. `MP-30` nao autoriza criar
+  foto simulada nova nem implementa camera, galeria ou georreferenciamento.
+
 ## Regra sobre Caderno de Campo
 
 O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.

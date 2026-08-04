@@ -4941,3 +4941,38 @@ foram validados automaticamente e nao sao apresentados como smoke fisico.
 Fotos de Caderno/Visita permanecem em `MP-30`. Visualizador PDF universal,
 backend, URLs assinadas e sincronizacao continuam futuros. Evidencias:
 `dist/qa-session-2026-08-04/mp-29-visualizador-material/`.
+
+## MP-30 - Fotos Com Ampliacao E Acao Autorizada
+
+Status em 2026-08-04: `CONCLUIDO` no corte local demonstrativo.
+
+Fotos preexistentes de Caderno e Visita agora possuem affordance `Ampliar` e
+abrem o mesmo modal de tela cheia. O visualizador oferece zoom de 100% a 400%
+por pinca, toque duplo ou controles acessiveis, redefine a escala e limita o
+arraste ao quadro. Como o gesto ocorre no modal nativo, a tela de detalhe que
+ficou abaixo nao recebe rolagem. Referencia vazia ou falha de imagem continua
+com estado indisponivel, sem abertura ficticia.
+
+A acao de download e derivada novamente do perfil, do acesso ao registro e a
+Propriedade e de uma URI `http(s)`, `file` ou `content` acionavel. O arquivo so
+gera confirmacao depois da copia/download e da comprovacao de existencia no
+storage interno do aplicativo. Erro de rede ou storage permanece visivel
+dentro do proprio modal e nao produz sucesso falso. Isso e uma copia local
+demonstrativa, nao download produtivo ou sincronizacao.
+
+Teste focado com 10 cenarios, typecheck, `git diff --check` e `packageRelease`
+passaram. A suite global parou somente quando alcancou uma referencia
+preexistente a `tests/prescriptionZipPropertyManageWorkflow.test.js`, arquivo
+ausente e fora do corte de `MP-30`.
+
+O APK release final de 92.318.840 bytes, SHA-256
+`9D508C9BD06C53F2FCFAFF3E5427995FD260B862D15BF05905278993D79A16FC`, foi
+instalado por cima no Android fisico `8483A`. O smoke confirmou foto de
+Caderno e de Visita, modal em retrato/paisagem, 200%, arraste contido, retorno
+e download remoto com confirmacao visivel. Nao houve excecao fatal recente.
+ADB nao injeta dois ponteiros; a pinca foi validada pelo contrato automatizado
+de escala, ponto focal e limites, sem declarar gesto fisico inexistente.
+
+Captura por camera/galeria, foto georreferenciada, backend, URLs assinadas e
+sincronizacao permanecem fora deste corte. `MP-31` nao foi iniciada.
+Evidencias: `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/`.
