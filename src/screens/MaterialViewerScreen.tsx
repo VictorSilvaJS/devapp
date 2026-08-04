@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { G, Polygon, Text as SvgText } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
 import Header from '../components/Header';
@@ -44,6 +45,15 @@ import {
   avaliarDownloadMapa,
   isMapaArquivoUrlUsavel,
 } from '../utils/mapaDownloadCompat';
+import {
+  MATERIAL_IMAGE_DOUBLE_TAP_ZOOM,
+  MATERIAL_IMAGE_MAX_ZOOM,
+  MATERIAL_IMAGE_MIN_ZOOM,
+  MaterialImageOffset,
+  clampMaterialImageOffset,
+  clampMaterialImageZoom,
+  resolveMaterialImageZoomAroundPoint,
+} from '../utils/materialImageGestureCompat';
 import {
   getMaterialPublicDescription,
   getMaterialPublicTitle,
@@ -283,60 +293,204 @@ function MaterialImageView({
 }) {
   const { width } = useWindowDimensions();
   const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState<MaterialImageOffset>({ x: 0, y: 0 });
+  const [canPan, setCanPan] = useState(false);
+  const zoomRef = useRef(1);
+  const offsetRef = useRef<MaterialImageOffset>({ x: 0, y: 0 });
+  const pinchStartZoomRef = useRef(1);
+  const pinchStartOffsetRef = useRef<MaterialImageOffset>({ x: 0, y: 0 });
+  const pinchFocalRef = useRef<MaterialImageOffset>({ x: 0, y: 0 });
+  const panStartOffsetRef = useRef<MaterialImageOffset>({ x: 0, y: 0 });
   const baseWidth = Math.max(280, Math.min(760, width - spacing.screen * 2 - spacing.lg * 2));
-  const baseHeight = Math.max(340, Math.min(560, baseWidth * 1.12));
-  const viewportHeight = Math.min(560, Math.max(360, baseHeight * 0.82));
+  const viewportHeight = Math.min(600, Math.max(360, baseWidth * 0.92));
+  const viewport = useMemo(
+    () => ({ width: baseWidth, height: viewportHeight }),
+    [baseWidth, viewportHeight]
+  );
+
+  const applyTransform = useCallback((
+    nextZoom: number,
+    nextOffset: MaterialImageOffset
+  ) => {
+    const safeZoom = clampMaterialImageZoom(nextZoom);
+    const safeOffset = clampMaterialImageOffset(nextOffset, safeZoom, viewport);
+    zoomRef.current = safeZoom;
+    offsetRef.current = safeOffset;
+    setZoom(safeZoom);
+    setOffset(safeOffset);
+  }, [viewport]);
+
+  const applyZoomAroundPoint = useCallback((
+    nextZoom: number,
+    point: MaterialImageOffset,
+    finishInteraction = true
+  ) => {
+    const safeZoom = clampMaterialImageZoom(nextZoom);
+    const nextOffset = resolveMaterialImageZoomAroundPoint({
+      startZoom: zoomRef.current,
+      nextZoom: safeZoom,
+      startOffset: offsetRef.current,
+      point,
+      viewport,
+    });
+    applyTransform(safeZoom, nextOffset);
+    if (finishInteraction) setCanPan(safeZoom > MATERIAL_IMAGE_MIN_ZOOM);
+  }, [applyTransform, viewport]);
+
+  const resetZoom = useCallback(() => {
+    applyTransform(MATERIAL_IMAGE_MIN_ZOOM, { x: 0, y: 0 });
+    setCanPan(false);
+  }, [applyTransform]);
+
+  useEffect(() => {
+    resetZoom();
+  }, [resetZoom]);
+
+  const pinchGesture = useMemo(
+    () => Gesture.Pinch()
+      .runOnJS(true)
+      .onStart((event) => {
+        pinchStartZoomRef.current = zoomRef.current;
+        pinchStartOffsetRef.current = offsetRef.current;
+        pinchFocalRef.current = { x: event.focalX, y: event.focalY };
+      })
+      .onUpdate((event) => {
+        const nextZoom = clampMaterialImageZoom(pinchStartZoomRef.current * event.scale);
+        const nextOffset = resolveMaterialImageZoomAroundPoint({
+          startZoom: pinchStartZoomRef.current,
+          nextZoom,
+          startOffset: pinchStartOffsetRef.current,
+          point: pinchFocalRef.current,
+          viewport,
+        });
+        applyTransform(nextZoom, nextOffset);
+      })
+      .onFinalize(() => {
+        setCanPan(zoomRef.current > MATERIAL_IMAGE_MIN_ZOOM);
+      }),
+    [applyTransform, viewport]
+  );
+
+  const panGesture = useMemo(
+    () => Gesture.Pan()
+      .enabled(canPan)
+      .maxPointers(1)
+      .runOnJS(true)
+      .onStart(() => {
+        panStartOffsetRef.current = offsetRef.current;
+      })
+      .onUpdate((event) => {
+        applyTransform(zoomRef.current, {
+          x: panStartOffsetRef.current.x + event.translationX,
+          y: panStartOffsetRef.current.y + event.translationY,
+        });
+      }),
+    [applyTransform, canPan]
+  );
+
+  const doubleTapGesture = useMemo(
+    () => Gesture.Tap()
+      .numberOfTaps(2)
+      .maxDuration(300)
+      .runOnJS(true)
+      .onEnd((event, success) => {
+        if (!success) return;
+        if (zoomRef.current > MATERIAL_IMAGE_MIN_ZOOM) {
+          resetZoom();
+          return;
+        }
+        applyZoomAroundPoint(
+          MATERIAL_IMAGE_DOUBLE_TAP_ZOOM,
+          { x: event.x, y: event.y }
+        );
+      }),
+    [applyZoomAroundPoint, resetZoom]
+  );
+
+  const imageGesture = useMemo(
+    () => Gesture.Race(
+      doubleTapGesture,
+      Gesture.Simultaneous(pinchGesture, panGesture)
+    ),
+    [doubleTapGesture, panGesture, pinchGesture]
+  );
+
+  const viewportCenter = useMemo(
+    () => ({ x: viewport.width / 2, y: viewport.height / 2 }),
+    [viewport]
+  );
 
   return (
     <View>
       <View style={styles.zoomToolbar}>
         <TouchableOpacity
           style={styles.zoomButton}
-          onPress={() => setZoom((current) => Math.max(1, Number((current - 0.5).toFixed(1))))}
-          disabled={zoom <= 1}
+          onPress={() => applyZoomAroundPoint(
+            Number((zoomRef.current - 0.5).toFixed(1)),
+            viewportCenter
+          )}
+          disabled={zoom <= MATERIAL_IMAGE_MIN_ZOOM}
           accessibilityLabel="Diminuir imagem"
         >
-          <Ionicons name="remove-outline" size={22} color={zoom <= 1 ? colors.disabledText : colors.primary} />
+          <Ionicons
+            name="remove-outline"
+            size={22}
+            color={zoom <= MATERIAL_IMAGE_MIN_ZOOM ? colors.disabledText : colors.primary}
+          />
         </TouchableOpacity>
         <Text style={styles.zoomValue}>{Math.round(zoom * 100)}%</Text>
         <TouchableOpacity
           style={styles.zoomButton}
-          onPress={() => setZoom((current) => Math.min(4, Number((current + 0.5).toFixed(1))))}
-          disabled={zoom >= 4}
+          onPress={() => applyZoomAroundPoint(
+            Number((zoomRef.current + 0.5).toFixed(1)),
+            viewportCenter
+          )}
+          disabled={zoom >= MATERIAL_IMAGE_MAX_ZOOM}
           accessibilityLabel="Ampliar imagem"
         >
-          <Ionicons name="add-outline" size={22} color={zoom >= 4 ? colors.disabledText : colors.primary} />
+          <Ionicons
+            name="add-outline"
+            size={22}
+            color={zoom >= MATERIAL_IMAGE_MAX_ZOOM ? colors.disabledText : colors.primary}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.resetZoomButton}
-          onPress={() => setZoom(1)}
+          onPress={resetZoom}
           accessibilityLabel="Redefinir ampliação"
         >
           <Ionicons name="scan-outline" size={18} color={colors.primary} />
           <Text style={styles.resetZoomText}>Redefinir</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView
-        horizontal
-        style={[styles.imageViewport, { height: viewportHeight }]}
-        contentContainerStyle={styles.imageScrollContent}
-        nestedScrollEnabled
-      >
-        <ScrollView
-          style={{ width: baseWidth * zoom, height: viewportHeight }}
-          contentContainerStyle={{ minHeight: baseHeight * zoom }}
-          nestedScrollEnabled
+      <GestureDetector gesture={imageGesture}>
+        <View
+          style={[styles.imageViewport, { width: baseWidth, height: viewportHeight }]}
+          accessibilityLabel={`Visualizador da imagem ${title}`}
+          accessibilityHint="Use pinça ou toque duas vezes para ampliar. Os botões também controlam a ampliação."
         >
-          <Image
-            source={source}
-            accessibilityLabel={`Imagem do material ${title}`}
-            style={{ width: baseWidth * zoom, height: baseHeight * zoom }}
-            resizeMode="contain"
-            onError={onError}
-          />
-        </ScrollView>
-      </ScrollView>
-      <Text style={styles.viewerHint}>Use os controles para ampliar até 400% e arraste a imagem nas duas direções.</Text>
+          <View
+            style={[
+              styles.zoomImageTranslation,
+              { transform: [{ translateX: offset.x }, { translateY: offset.y }] },
+            ]}
+          >
+            <Image
+              source={source}
+              accessibilityLabel={`Imagem do material ${title}`}
+              style={[
+                styles.zoomImage,
+                { width: baseWidth, height: viewportHeight, transform: [{ scale: zoom }] },
+              ]}
+              resizeMode="contain"
+              onError={onError}
+            />
+          </View>
+        </View>
+      </GestureDetector>
+      <Text style={styles.viewerHint}>
+        Use pinça ou toque duas vezes para ampliar até 400%. Quando ampliada, arraste a imagem em qualquer direção.
+      </Text>
     </View>
   );
 }
@@ -962,16 +1116,22 @@ const styles = StyleSheet.create({
     fontWeight: typography.weightSemibold,
   },
   imageViewport: {
-    width: '100%',
-    maxHeight: 640,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
     borderRadius: border.radius,
     borderWidth: 1.5,
     borderColor: colors.border,
     backgroundColor: colors.black,
   },
-  imageScrollContent: {
+  zoomImageTranslation: {
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  zoomImage: {
+    backgroundColor: colors.black,
   },
   inlineLoading: {
     minHeight: 260,

@@ -4904,28 +4904,34 @@ somente para Propriedades permitidas ao perfil e exige correspondencia exata
 da identidade. Rota incompleta, item ausente/substituido e tentativa fora do
 escopo recebem estado controlado e nao abrem o mapa geral de Talhoes.
 
-O tipo real define a apresentacao: imagem oferece zoom de 100% a 400% e
-deslocamento; GeoJSON renderizavel vira camada vetorial com legenda e
+O tipo real define a apresentacao: imagem abre em modal de tela cheia e
+oferece zoom de 100% a 400% por pinca, toque duplo ou botoes, com arraste
+limitado ao quadro; GeoJSON renderizavel vira camada vetorial com legenda e
 metadados; PDF usa WebView apenas onde ha suporte real e, nos demais casos,
 delega a visualizador compativel do sistema; ZIP e outros arquivos ficam em
 detalhes sem preview ficticio. A acao de arquivo exige permissao,
 disponibilidade e URI abrivel. Falha nao gera mensagem de sucesso.
 
-A nova rota e empilhada sobre a lista, preservando busca, filtros e posicao no
-retorno. O gerenciamento local da equipe continua separado por `Gerenciar`
-nos cartoes, mantendo substituicao/remocao existentes fora do visualizador.
+A nova rota usa apresentacao modal empilhada sobre a lista. A tela anterior
+permanece montada e o detalhe da Propriedade nao reconsulta toda a fonte ao
+voltar desse fluxo somente leitura, preservando busca, filtros, aba e posicao.
+O gerenciamento local da equipe continua separado por `Gerenciar` nos
+cartoes, mantendo substituicao/remocao existentes fora do visualizador.
 
-O teste focado cobriu 11 cenarios de rota, versao, Propriedade, formatos,
-GeoJSON, preview honesto, autorizacao, abertura/download e retorno. Typecheck,
-suite `domain-compat`, `git diff --check` e `packageRelease` passaram.
+O teste focado cobriu 16 cenarios de rota, versao, Propriedade, formatos,
+GeoJSON, preview honesto, autorizacao, limites de zoom, ponto focal, arraste,
+abertura/download e retorno. Typecheck, suite `domain-compat`,
+`git diff --check` e `packageRelease` passaram.
 
-O APK release final de 92.193.640 bytes, SHA-256
-`E31DD02858C9C957A44FE1769AEE92ABF6C4DDC669B5A1CFE89CE41229546612`, foi
-instalado por cima no Android fisico `8483A`. Como Produtor, o smoke abriu
-`tche-smoke-pdf-detail.png` pela acao `Abrir material` do detalhe da
-Propriedade na rota especifica, sem cair no mapa geral de Talhoes. A imagem
-foi ampliada para 150% e o retorno preservou a aba, o item e a posicao. Nao
-houve excecao fatal recente.
+O APK release final de 92.303.748 bytes, SHA-256
+`B5C312BD68B3F81A0FB9AF05C58315F58D1CE1203DD67D282FCA66D30652B10B`, foi
+instalado por cima no Android fisico `8483A`. O smoke final abriu
+`retest-talhao-landscape.png` pela acao `Abrir material` do detalhe da
+Propriedade, ampliou de 100% para 200% por toque duplo, arrastou a imagem sem
+rolar a pagina externa e voltou com o botao nas mesmas coordenadas
+`[67,1188][733,1250]`. Nao houve excecao fatal recente. A automacao ADB nao
+injeta dois ponteiros simultaneos; a pinca foi coberta pelo contrato do gesto
+e pelos testes de ponto focal, sem declarar smoke manual inexistente.
 
 Nao havia PDF ou ZIP real no catalogo persistido do aparelho; esses formatos
 foram validados automaticamente e nao sao apresentados como smoke fisico.

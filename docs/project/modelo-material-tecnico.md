@@ -148,8 +148,9 @@ Propriedade.
 
 - A rota de abertura deve transportar `material_id`, versao e contexto de
   Propriedade. A consulta revalida o item na fonte unica e no escopo do perfil.
-- PNG local pode abrir como imagem com zoom quando a URI interna for segura e
-  o arquivo existir.
+- PNG local pode abrir em modal de tela cheia quando a URI interna for segura
+  e o arquivo existir. O zoom aceita pinca, toque duplo e botoes de 100% a
+  400%; o arraste atua dentro do quadro somente quando ha ampliacao.
 - Camada georreferenciada so abre como mapa quando o material contem GeoJSON
   renderizavel; formato ou nome, isoladamente, nao autorizam inventar camada.
 - PDF deve aparecer com metadados e nome original. A visualizacao embutida e

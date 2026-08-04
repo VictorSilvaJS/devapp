@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, LayoutAnimation, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -99,6 +99,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const [activeTab, setActiveTab] = useState<PropriedadeNavigationId>('resumo');
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const skipNextMaterialFocusReloadRef = useRef(false);
 
   const loadData = async (id) => {
     if (!id) {
@@ -195,6 +196,10 @@ export default function ProdutorScreen({ route, navigation }) {
   // Recarregar dados quando voltar da tela de edição
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
+      if (skipNextMaterialFocusReloadRef.current) {
+        skipNextMaterialFocusReloadRef.current = false;
+        return;
+      }
       const id = route?.params?.id;
       if (id) {
         loadData(id);
@@ -305,6 +310,7 @@ export default function ProdutorScreen({ route, navigation }) {
       return;
     }
 
+    skipNextMaterialFocusReloadRef.current = true;
     navigation.navigate('MaterialViewer', params);
   };
   const handleAbrirTalhaoNoMapa = (talhao?) => navigation.navigate(

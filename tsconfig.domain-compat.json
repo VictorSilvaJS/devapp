@@ -36,6 +36,7 @@
     "src/utils/acessoControle.ts",
     "src/utils/geojsonImportValidator.ts",
     "src/utils/mapaDownloadCompat.ts",
+    "src/utils/materialImageGestureCompat.ts",
     "src/utils/pngMapToMapaCompat.ts",
     "src/utils/prescriptionZipToMapaCompat.ts",
     "src/utils/materialTecnicoToMapaCompat.ts",

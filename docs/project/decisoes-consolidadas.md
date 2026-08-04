@@ -322,7 +322,8 @@ Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingest
 - No MVP atual, o mapa interativo e apenas a base de talhoes/limites. Mapas de elementos, como PNGs de fertilidade, devem ser tratados como anexos visuais da biblioteca de materiais.
 - PNGs de elementos nao devem ser sobrepostos ao mapa interativo nesta etapa.
   A experiencia esperada e abrir o PNG por `material_id` e versao, como
-  imagem/anexo com ampliacao.
+  imagem/anexo em modal de tela cheia. A ampliacao combina pinca, toque duplo,
+  arraste e botoes acessiveis, sem remover a rota dedicada.
 - Uma camada de material so deve abrir como mapa quando houver GeoJSON
   renderizavel real; extensao, titulo ou coordenada solta nao justificam uma
   camada tematica inventada. Quando existir, a tela mostra legenda e

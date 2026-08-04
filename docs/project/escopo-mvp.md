@@ -55,8 +55,10 @@ explicita. O contrato canonico esta em `modelo-material-tecnico.md`.
 
 O fluxo e local/demonstrativo: o arquivo fisico fica no storage interno e
 apenas metadados pequenos ficam no indice local. Cada material abre por id,
-versao e contexto autorizado da Propriedade. Imagens podem ser ampliadas; uma
-camada so e apresentada como mapa quando carrega geometria GeoJSON
+versao e contexto autorizado da Propriedade. Imagens abrem em modal de tela
+cheia e podem ser ampliadas por pinca, toque duplo ou botoes acessiveis, com
+arraste limitado ao quadro quando ampliadas. Uma camada so e apresentada como
+mapa quando carrega geometria GeoJSON
 renderizavel, com legenda e metadados. PDF usa visualizacao real embutida onde
 a plataforma suporta ou um visualizador compativel do sistema, sem simular
 sucesso. ZIP permanece sem preview, unzip ou leitura/processamento de

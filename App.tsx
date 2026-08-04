@@ -7,22 +7,25 @@ import { NotificacaoProvider } from './src/contexts/NotificacaoContext';
 import { FiltroProvider } from './src/contexts/FiltroContext';
 import { ToastProvider } from './src/components/Toast';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <FiltroProvider>
-          <NotificacaoProvider>
-            <ToastProvider>
-              <NavigationContainer>
-                <Navigation />
-              </NavigationContainer>
-            </ToastProvider>
-          </NotificacaoProvider>
-        </FiltroProvider>
-      </AuthProvider>
-      <StatusBar style="dark" />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <FiltroProvider>
+            <NotificacaoProvider>
+              <ToastProvider>
+                <NavigationContainer>
+                  <Navigation />
+                </NavigationContainer>
+              </ToastProvider>
+            </NotificacaoProvider>
+          </FiltroProvider>
+        </AuthProvider>
+        <StatusBar style="dark" />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

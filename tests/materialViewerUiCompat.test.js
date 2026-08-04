@@ -22,6 +22,7 @@ const run = async () => {
   const mapas = read('src/screens/MapasScreen.tsx');
   const produtor = read('src/screens/ProdutorScreen.tsx');
   const navigation = read('src/navigation/index.tsx');
+  const app = read('App.tsx');
 
   await test('rota dedicada esta registrada e resolve catalogo no escopo do perfil', () => {
     assert.match(navigation, /name="MaterialViewer"/);
@@ -33,10 +34,22 @@ const run = async () => {
   await test('tela cobre mapa, zoom de imagem, PDF real quando suportado e arquivo honesto', () => {
     assert.match(viewer, /Camada georreferenciada/);
     assert.match(viewer, /Ampliar imagem/);
-    assert.match(viewer, /Math\.min\(4/);
+    assert.match(viewer, /MATERIAL_IMAGE_MAX_ZOOM/);
     assert.match(viewer, /<WebView/);
     assert.match(viewer, /Visualização pelo sistema/);
     assert.match(viewer, /Sem prévia disponível/);
+  });
+
+  await test('imagem usa modal de tela cheia, pinca, arraste e toque duplo com alternativa acessivel', () => {
+    assert.match(navigation, /presentation: 'transparentModal'/);
+    assert.match(navigation, /animation: 'slide_from_bottom'/);
+    assert.match(app, /GestureHandlerRootView/);
+    assert.match(viewer, /Gesture\.Pinch\(\)/);
+    assert.match(viewer, /Gesture\.Pan\(\)/);
+    assert.match(viewer, /Gesture\.Race\(/);
+    assert.match(viewer, /numberOfTaps\(2\)/);
+    assert.match(viewer, /Use pinça ou toque duas vezes/);
+    assert.match(viewer, /accessibilityLabel="Redefinir ampliação"/);
   });
 
   await test('acao de arquivo verifica autorizacao e nao produz sucesso falso ao abrir', () => {
@@ -54,6 +67,7 @@ const run = async () => {
     assert.match(mapas, /Gerenciar material local/);
     assert.match(produtor, /buildMaterialViewerRouteParams/);
     assert.match(produtor, /navigation\.navigate\('MaterialViewer'/);
+    assert.match(produtor, /skipNextMaterialFocusReloadRef/);
     assert.doesNotMatch(produtor, /navigate\('FazendaMapa', getMapaAtualRouteParams/);
   });
 

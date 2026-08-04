@@ -151,7 +151,15 @@ export default function Navigation() {
           <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="FazendaMapa" component={FazendaMapaScreen} />
-          <Stack.Screen name="MaterialViewer" component={MaterialViewerScreen} />
+          <Stack.Screen
+            name="MaterialViewer"
+            component={MaterialViewerScreen}
+            options={{
+              presentation: 'transparentModal',
+              animation: 'slide_from_bottom',
+              gestureEnabled: true,
+            }}
+          />
         </>
       )}
     </Stack.Navigator>
