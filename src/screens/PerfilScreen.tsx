@@ -19,9 +19,7 @@ import { buildSolicitacaoAtualizacaoCadastral } from '../utils/perfilProdutorCom
 import {
   getPropriedadesDoColaborador,
   getPropriedadesDoUsuarioProdutor,
-  getSubRegioesUsuario,
   getUsuarioStatusInfo,
-  getVinculosMicroregiaoUsuario,
 } from '../utils/usuarioAdminCompat';
 
 const smokeRoutes = [
@@ -212,8 +210,6 @@ export default function PerfilScreen({ navigation }) {
   const telefone = usuarioPerfil.telefone || usuarioPerfil.phone || '';
   const documento = usuarioPerfil.documento || usuarioPerfil.cpf || usuarioPerfil.cnpj || '';
   const status = getUsuarioStatusInfo(usuarioPerfil);
-  const subRegioes = getSubRegioesUsuario(usuarioPerfil);
-  const vinculosMicroregioes = getVinculosMicroregiaoUsuario(usuarioPerfil);
   const propriedadesProdutor = useMemo(
     () => getPropriedadesDoUsuarioProdutor(usuarioPerfil, propriedades),
     [usuarioPerfil, propriedades]
@@ -361,33 +357,15 @@ export default function PerfilScreen({ navigation }) {
           {usuarioPerfil.perfil === 'colaborador' && (
             <SectionCard
               title="Escopo operacional"
-              icon="location-outline"
-              subtitle="Vínculos territoriais legados, disponíveis somente para consulta."
+              icon="link-outline"
+              subtitle="Acesso definido somente pelas Propriedades vinculadas diretamente."
             >
-              {usuarioPerfil.regiao ? (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Referência regional legada</Text>
-                  <Text style={styles.infoValue}>{usuarioPerfil.regiao}</Text>
-                </View>
-              ) : null}
+              <InfoBox
+                message="Município e UF servem para localização e filtros; não concedem acesso."
+                style={styles.infoBoxInline}
+              />
 
-              <Text style={styles.subsectionTitle}>Vínculos de área/município legados</Text>
-              {vinculosMicroregioes.length === 0 && subRegioes.length === 0 ? (
-                <Text style={styles.emptyText}>Nenhum vínculo territorial informado</Text>
-              ) : (
-                <View style={styles.chipWrap}>
-                  {(vinculosMicroregioes.length > 0
-                    ? vinculosMicroregioes.map((item) => item.microregiao)
-                    : subRegioes
-                  ).map((microregiao) => (
-                    <View key={microregiao} style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>{microregiao}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              <Text style={styles.subsectionTitle}>Propriedades atribuídas</Text>
+              <Text style={styles.subsectionTitle}>Propriedades vinculadas diretamente</Text>
               {propriedadesVisiveis.length === 0 ? (
                 <Text style={styles.emptyText}>Nenhuma propriedade atribuída</Text>
               ) : (

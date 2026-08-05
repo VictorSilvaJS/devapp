@@ -80,7 +80,7 @@ Um item só muda para concluído quando existir:
 | Vocabulário | `Propriedade` é a unidade operacional visível; `Produtor` é o perfil final; `Titular` é o vínculo cadastral principal; `Talhão` é subdivisão da Propriedade |
 | Compatibilidade | `fazenda_id` permanece como contexto operacional técnico temporário; a limpeza total dos nomes legados não bloqueia o MVP |
 | Perfis | Admin tem visão administrativa; Produtor consulta a própria realidade operacional; Colaborador respeita escopo territorial |
-| Acesso futuro do Colaborador | Território e vínculo direto com Propriedade são fontes aditivas de acesso; vínculo direto não deve restringir o território já autorizado |
+| Acesso futuro do Colaborador | Vínculo direto ativo com Propriedade é a única fonte de escopo; Município/UF não concedem acesso |
 | Produtor | Não recebe edição estrutural de Propriedade, usuário, território ou material técnico |
 | Sessão | Access token de 15 minutos, refresh absoluto de 30 dias, bloqueio local após 15 minutos e consulta offline por até 24 horas desde a última revalidação |
 | Caderno | Ciclo local de rascunho, confirmação, complemento, correção auditada e preservação de autoria está definido; localização é opcional e explícita |
@@ -97,9 +97,9 @@ Um item só muda para concluído quando existir:
 | ID | Prioridade | Natureza | Pendência | Bloqueia | Evidência de fechamento |
 |---|---|---|---|---|---|
 | `PRE-01` | `P0-A` | Governança | Reconciliar documentos ativos conflitantes ou desatualizados | Schema e API | Trilha ativa sem contratos territoriais concorrentes e sem pendências já encerradas marcadas como abertas |
-| `PRE-02` | `P0-A` | Decisão | Definir organização/tenant e IDs canônicos | Schema | ADR/decisão com entidades, chaves, unicidade e escopo organizacional |
-| `PRE-03` | `P0-A` | Decisão | Fechar modelo territorial canônico e migração de `microregiao` | Schema, `MP-35` | Modelo e contrato API usam Regional/Área Operacional; legado tem mapeamento explícito |
-| `PRE-04` | `P0-A` | Decisão | Fechar cadastro de Usuário, Produtor, Titular e Propriedade | Schema, `MP-33`, cadastros | Fluxo aprovado, transações e estados documentados |
+| `PRE-02` | `P0-A` | Decisão/implementação | Organização única e IDs centrais definidos; completar IDs das demais verticais | Schema | `modelo-dados-mock-v2.md` implementado e contratos das verticais reconciliados |
+| `PRE-03` | `P0-A` | Implementação | Migrar escopo territorial legado para vínculo direto por Propriedade | Schema, `MP-35` | Mock v2, API e testes sem autorização por texto territorial |
+| `PRE-04` | `P0-A` | Implementação | Aplicar cadastro de Usuário, Produtor, Titular e Propriedade aprovado no v2 | Schema, `MP-33`, cadastros | Fluxo, integridade e transações implementados/testados |
 | `PRE-05` | `P0-A` | Decisão | Fechar RBAC por ação e ciclo dos vínculos | API, `MP-35` | Matriz allowlist aprovada e casos 2xx/401/403/404/409 definidos |
 | `PRE-06` | `P0-A` | Dados | Inventariar e mapear aliases e valores territoriais legados | Migrações | Planilha/fixture de migração revisada, sem inferência silenciosa |
 | `PRE-07` | `P0-A` | Contrato | Produzir contrato API e modelo de dados v1 coerentes | Todas as verticais | OpenAPI ou contrato equivalente, diagrama, migrations e regras de integridade revisados |
@@ -117,9 +117,10 @@ Um item só muda para concluído quando existir:
 
 ## 6. Agenda de Decisões Humanas
 
-As recomendações abaixo são propostas desta auditoria. Elas só viram decisão de
-produto quando forem aprovadas e registradas em `decisoes-consolidadas.md` ou em
-um contrato ativo específico.
+As recomendações originais abaixo devem ser lidas com o fechamento de
+2026-08-05. `DEC-01`, o núcleo de identidade de `DEC-02`, `DEC-03` e a regra
+de Titular de `DEC-05` foram aprovados em `modelo-dados-mock-v2.md` e nas
+decisões 31 a 33. Os demais pontos continuam exigindo decisão própria.
 
 ### `DEC-01` — Organização e isolamento de dados
 
@@ -131,9 +132,8 @@ Decidir:
 - quais unicidades são globais e quais são por organização;
 - se Admin Global atravessa organizações ou é global apenas dentro de uma.
 
-Recomendação: modelar isolamento por `organizacao_id` desde o início, mesmo com
-uma única organização semeada no primeiro corte. Isso evita migração estrutural
-quando surgir um segundo cliente.
+Decisão: usar uma única organização interna, Tchê Fertilidade, identificada por
+`org_tche_fertilidade`. Multiempresa fica fora do primeiro contrato.
 
 Saída obrigatória: decisão, diagrama de ownership e testes de isolamento.
 
@@ -167,10 +167,10 @@ Há uma divergência real a resolver:
 - o código atual usa `sub_regioes`, com `vinculos_microregioes` como fallback;
 - `propriedades_atribuidas` é apenas visual/preparatório no mock.
 
-Recomendação: adotar Regional + Área Operacional como contrato canônico;
-preservar `microregiao`, `sub_regioes` e `vinculos_microregioes` somente no
-adaptador/migração; manter vínculo direto de usuário com Propriedade como fonte
-aditiva de acesso.
+Decisão: não adotar Regional ou Área Operacional no primeiro contrato.
+Município/UF representam localização; Colaborador acessa somente por vínculo
+direto ativo com Propriedade. Campos territoriais legados permanecem apenas
+durante a migração do código v1.
 
 Saída obrigatória: um único modelo, endpoints revisados e tabela de migração dos
 valores legados.
@@ -193,20 +193,20 @@ próximo contato com o servidor.
 ### `DEC-05` — Cadastro de Propriedade e Titular
 
 O código local suporta selecionar Titular existente e também criar um Titular
-mínimo durante o cadastro. Antes do backend, escolher uma regra única:
+mínimo durante o cadastro. A regra de domínio foi fechada:
 
 1. cadastrar o Usuário/Produtor primeiro e apenas selecioná-lo em Nova
    Propriedade; ou
 2. permitir criação combinada de Produtor + Propriedade.
 
-Recomendação: usar a opção 1 como fluxo padrão administrativo. Se a opção 2 for
-mantida por necessidade de campo, ela deve ser uma transação única, idempotente
-e com tratamento explícito de e-mail/documento duplicado; não pode deixar
-usuário órfão ou Propriedade sem Titular.
+Decisão: cada Propriedade possui um Produtor Titular principal ativo; um
+Produtor pode titularizar várias Propriedades; outros usuários acessam por
+vínculo sem se tornarem Titulares. O fluxo administrativo padrão deve
+selecionar Produtor existente. Eventual criação combinada futura precisa ser
+transacional e idempotente.
 
-Também decidir:
+Ainda decidir:
 
-- se uma Propriedade pode ter mais de um Titular ativo;
 - validade temporal e origem do vínculo;
 - procedimento de troca de titularidade;
 - impacto da desativação do Titular sobre o acesso do Produtor.

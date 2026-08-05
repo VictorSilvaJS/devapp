@@ -91,21 +91,21 @@ const run = async () => {
     ]);
   });
 
-  await test('diagnostico: colaborador ve Propriedades por sub_regioes', () => {
+  await test('v2: colaborador ve somente Propriedades vinculadas diretamente', () => {
     const colaborador = {
       id: 'u_colaborador',
       perfil: 'colaborador',
-      regiao: 'Sul',
-      sub_regioes: ['Micro A'],
+      vinculos_propriedades: [
+        { propriedade_id: 'faz_micro_a_1', tipo_vinculo: 'colaborador', status: 'ativo' },
+      ],
     };
 
     assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
       'faz_micro_a_1',
-      'faz_micro_a_2',
     ]);
   });
 
-  await test('diagnostico: colaborador sem sub_regioes usa vinculos_microregioes como fallback', () => {
+  await test('v2: microregiao sem vinculo direto nao concede acesso', () => {
     const colaborador = {
       id: 'u_colaborador_vinculos_microregioes',
       perfil: 'colaborador',
@@ -115,12 +115,10 @@ const run = async () => {
       ],
     };
 
-    assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
-      'faz_micro_b_1',
-    ]);
+    assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), []);
   });
 
-  await test('diagnostico: sub_regioes tem prioridade quando tambem existem vinculos_microregioes', () => {
+  await test('v2: vinculo direto ativo prevalece sobre qualquer texto territorial legado', () => {
     const colaborador = {
       id: 'u_colaborador_prioridade_subregioes',
       perfil: 'colaborador',
@@ -129,15 +127,17 @@ const run = async () => {
       vinculos_microregioes: [
         { usuario_id: 'u_colaborador_prioridade_subregioes', regiao: 'Sul', microregiao: 'Micro B' },
       ],
+      vinculos_propriedades: [
+        { propriedade_id: 'faz_micro_b_1', tipo_vinculo: 'colaborador', status: 'ativo' },
+      ],
     };
 
     assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
-      'faz_micro_a_1',
-      'faz_micro_a_2',
+      'faz_micro_b_1',
     ]);
   });
 
-  await test('diagnostico: authMock alimenta colaborador com sub_regioes efetivas', () => {
+  await test('v2: authMock alimenta colaborador com vinculos diretos efetivos', () => {
     const colaboradorGoias = authUsers.find((user) => user.id === 'u2');
     const fazendasGoias = [
       {
@@ -161,9 +161,9 @@ const run = async () => {
     ];
 
     assert.ok(colaboradorGoias);
-    assert.ok(colaboradorGoias.sub_regioes.includes('Rio Verde'));
+    assert.ok(colaboradorGoias.vinculos_propriedades.some((item) => item.propriedade_id === 'p4'));
     assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasGoias, colaboradorGoias)), [
-      'faz_rio_verde',
+      // Os IDs territoriais não coincidem com os vínculos e não concedem acesso.
     ]);
   });
 
@@ -179,7 +179,7 @@ const run = async () => {
     assert.equal(colaborador.full_name, 'Colaborador de Campo');
     assert.equal(colaborador.email, 'colaborador.campo@example.com');
     assert.equal(colaborador.perfil, 'colaborador');
-    assert.ok(colaborador.sub_regioes.includes('MT - Norte'));
+    assert.ok(colaborador.vinculos_propriedades.some((item) => item.propriedade_id === 'p_sela1'));
 
     assert.equal(produtor.full_name, 'Produtor Demonstração');
     assert.equal(produtor.email, 'produtor.demonstracao@example.com');
@@ -187,43 +187,47 @@ const run = async () => {
     assert.equal(produtor.produtor_id, 'prop_sela1');
   });
 
-  await test('diagnostico: colaborador nao usa propriedades_atribuidas como regra efetiva', () => {
+  await test('v2: colaborador usa vinculo direto como regra efetiva', () => {
     const colaborador = {
       id: 'u_colaborador_atribuido',
       perfil: 'colaborador',
       regiao: 'Sul',
       sub_regioes: ['Micro A'],
       propriedades_atribuidas: ['faz_micro_b_1'],
+      vinculos_propriedades: [
+        { propriedade_id: 'faz_micro_b_1', tipo_vinculo: 'colaborador', status: 'ativo' },
+      ],
     };
 
     assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
-      'faz_micro_a_1',
-      'faz_micro_a_2',
+      'faz_micro_b_1',
     ]);
     assert.deepEqual(ids(getPropriedadesDoColaborador(colaborador, fazendasBase)), [
       'faz_micro_b_1',
     ]);
   });
 
-  await test('diagnostico: sub_regioes ampla permite Propriedade nao atribuida diretamente', () => {
+  await test('v2: sub_regioes ampla nao permite Propriedade sem vinculo direto', () => {
     const colaborador = {
       id: 'u_colaborador_amplo',
       perfil: 'colaborador',
       regiao: 'Sul',
       sub_regioes: ['Micro A'],
       propriedades_atribuidas: ['faz_micro_a_1'],
+      vinculos_propriedades: [
+        { propriedade_id: 'faz_micro_a_1', tipo_vinculo: 'colaborador', status: 'ativo' },
+      ],
     };
 
     assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), [
       'faz_micro_a_1',
-      'faz_micro_a_2',
     ]);
     assert.deepEqual(ids(getPropriedadesDoColaborador(colaborador, fazendasBase)), [
       'faz_micro_a_1',
     ]);
   });
 
-  await test('diagnostico: colaborador com propriedades_atribuidas mas sem microregioes efetivas fica sem acesso efetivo', () => {
+  await test('v2: propriedades_atribuidas sem vinculo direto nao concede acesso', () => {
     const colaborador = {
       id: 'u_colaborador_sem_subregiao',
       perfil: 'colaborador',
@@ -232,9 +236,7 @@ const run = async () => {
     };
 
     assert.deepEqual(ids(filtrarProdutoresPorAcesso(fazendasBase, colaborador)), []);
-    assert.deepEqual(ids(getPropriedadesDoColaborador(colaborador, fazendasBase)), [
-      'faz_micro_a_1',
-    ]);
+    assert.deepEqual(ids(getPropriedadesDoColaborador(colaborador, fazendasBase)), []);
   });
 
   await test('diagnostico: propriedade_id e titular_id sao aliases, legado ainda sustenta acesso efetivo', () => {

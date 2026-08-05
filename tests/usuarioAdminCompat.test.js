@@ -71,29 +71,23 @@ const run = async () => {
     });
 
     assert.equal(payload.produtor_id, 'titular_sul');
-    assert.deepEqual(payload.vinculos_propriedades, [
-      {
-        usuario_id: '',
-        propriedade_id: 'prop_sul_1',
-        tipo_vinculo: 'titular',
-        principal: true,
-      },
-    ]);
+    assert.equal(payload.vinculos_propriedades.length, 1);
+    assert.equal(payload.vinculos_propriedades[0].propriedade_id, 'prop_sul_1');
+    assert.equal(payload.vinculos_propriedades[0].tipo_vinculo, 'titular');
+    assert.equal(payload.vinculos_propriedades[0].status, 'ativo');
     assert.deepEqual(payload.propriedades_atribuidas, []);
   });
 
-  await test('colaborador recebe propriedades automaticamente por regiao e microregiao', () => {
+  await test('colaborador recebe somente propriedades selecionadas diretamente', () => {
     const payload = buildUsuarioAdminPayload({
       form: {
         ...baseForm,
         perfil: 'colaborador',
-        regiao: 'sul',
         cargo: 'Colaborador de Campo',
-        subRegioesText: 'RS - Norte',
         vinculosPropriedades: [
           {
             propriedade_id: 'prop_centro',
-            tipo_vinculo: 'colaborador_atribuido',
+            tipo_vinculo: 'colaborador',
             principal: true,
           },
         ],
@@ -101,20 +95,18 @@ const run = async () => {
       propriedades,
     });
 
-    assert.deepEqual(payload.sub_regioes, ['RS - Norte']);
-    assert.deepEqual(payload.propriedades_atribuidas, ['prop_sul_1', 'prop_sul_2']);
+    assert.deepEqual(payload.sub_regioes, []);
+    assert.deepEqual(payload.propriedades_atribuidas, ['prop_centro']);
     assert.deepEqual(
       payload.vinculos_propriedades.map((vinculo) => vinculo.tipo_vinculo),
-      ['colaborador_atribuido', 'colaborador_atribuido']
+      ['colaborador']
     );
     assert.equal(payload.vinculos_propriedades[0].principal, true);
-    assert.equal(payload.vinculos_propriedades[1].principal, false);
-    assert.deepEqual(payload.vinculos_microregioes, [
-      { regiao: 'sul', microregiao: 'RS - Norte' },
-    ]);
+    assert.equal(payload.vinculos_propriedades[0].status, 'ativo');
+    assert.deepEqual(payload.vinculos_microregioes, []);
   });
 
-  await test('atribuicao automatica tolera acentos e respeita a regiao selecionada', () => {
+  await test('helper territorial legado permanece isolado da montagem do payload v2', () => {
     const vinculos = buildVinculosPropriedadesPorMicroregioes({
       propriedades: [
         ...propriedades,

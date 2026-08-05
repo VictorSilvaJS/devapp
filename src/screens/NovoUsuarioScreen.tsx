@@ -34,18 +34,12 @@ import {
   getVinculoPropriedadeLabel,
   getVinculosPropriedadeUsuario,
   normalizeFormVinculosPropriedade,
-  parseListaTexto,
 } from '../utils/usuarioAdminCompat';
 import {
   createUsuarioAdminWithLocalCredential,
   updateUsuarioAdminAndSyncLocalCredential,
   validateSenhaLocalAdmin,
 } from '../utils/usuarioLocalAccessAdmin';
-import {
-  listarMicroregioesPorRegiao,
-  listarPropriedadesPorMicroregioes,
-  listarRegioes,
-} from '../utils/territorioCompat';
 
 const USUARIO_FORM_ERROR_ORDER = [
   'nome',
@@ -57,7 +51,6 @@ const USUARIO_FORM_ERROR_ORDER = [
   'perfil',
   'status',
   'vinculosPropriedades',
-  'regiao',
   'escopoColaborador',
 ] as const;
 
@@ -68,7 +61,7 @@ const PERFIS_FORM = [
 ];
 
 const TIPOS_VINCULO_PRODUTOR = TIPOS_VINCULO_PROPRIEDADE_USUARIO.filter((tipo) =>
-  ['titular', 'responsavel', 'outro'].includes(tipo.key)
+  ['titular', 'usuario_autorizado'].includes(tipo.key)
 );
 
 const emptyForm = {
@@ -231,49 +224,6 @@ export default function NovoUsuarioScreen() {
     return propriedadesOrdenadas.filter((propriedade) => ids.has(getFazendaId(propriedade)));
   }, [propriedadesOrdenadas, vinculosPropriedades]);
 
-  const microRegioesInformadas = useMemo(
-    () => parseListaTexto(form.subRegioesText),
-    [form.subRegioesText]
-  );
-
-  const regioesTerritorio = useMemo(() => listarRegioes(propriedades), [propriedades]);
-
-  const microregioesTerritorio = useMemo(
-    () => listarMicroregioesPorRegiao(propriedades, form.regiao),
-    [propriedades, form.regiao]
-  );
-
-  const propriedadesAbrangidasMicroregioes = useMemo(
-    () => listarPropriedadesPorMicroregioes(propriedadesOrdenadas, microRegioesInformadas, form.regiao),
-    [propriedadesOrdenadas, microRegioesInformadas, form.regiao]
-  );
-
-  const selecionarRegiaoColaborador = (regiao: string) => {
-    setForm((prev) => ({
-      ...prev,
-      regiao,
-      subRegioesText: prev.regiao === regiao ? prev.subRegioesText : '',
-    }));
-    setErrors((prev) => ({ ...prev, regiao: null, escopoColaborador: null }));
-  };
-
-  const toggleMicroRegiaoColaborador = (microregiao: string, regiao?: string) => {
-    setForm((prev) => {
-      const atuais = parseListaTexto(prev.subRegioesText);
-      const selected = atuais.includes(microregiao);
-      const next = selected
-        ? atuais.filter((item) => item !== microregiao)
-        : [...atuais, microregiao];
-
-      return {
-        ...prev,
-        regiao: prev.regiao || regiao || '',
-        subRegioesText: next.join(', '),
-      };
-    });
-    setErrors((prev) => ({ ...prev, regiao: null, escopoColaborador: null }));
-  };
-
   const emailEmUso = (email: string) => {
     const normalizedEmail = email.trim().toLowerCase();
     return usuarios.some((usuario) =>
@@ -290,7 +240,7 @@ export default function NovoUsuarioScreen() {
       return 'Produtor ativo é perfil de usuário e precisa ter ao menos uma Propriedade vinculada no mock.';
     }
     if (message.includes('Colaborador ativo')) {
-      return 'Colaborador ativo precisa ter Região e Microrregião como escopo de trabalho no mock.';
+      return 'Colaborador ativo precisa ter ao menos uma Propriedade vinculada diretamente.';
     }
     if (message.includes('Status obrigatório')) {
       return 'Selecione um status para o usuário.';
@@ -424,14 +374,8 @@ export default function NovoUsuarioScreen() {
     }
 
     if (form.perfil === 'colaborador') {
-      const temMicroRegiao = microRegioesInformadas.length > 0;
-
-      if (temMicroRegiao && !form.regiao.trim()) {
-        nextErrors.regiao = 'Informe a região para organizar as microregiões.';
-      }
-
-      if (form.status === 'ativo' && (!form.regiao.trim() || !temMicroRegiao)) {
-        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter Região e Microrregião como escopo de trabalho no mock.';
+      if (form.status === 'ativo' && vinculosPropriedades.length === 0) {
+        nextErrors.escopoColaborador = 'Colaborador ativo precisa ter ao menos uma Propriedade vinculada diretamente.';
       }
     }
 
@@ -726,88 +670,34 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'colaborador' && (
           <SectionCard
             title="Escopo do Colaborador"
-            subtitle="Região e Microrregião atribuem automaticamente Propriedades locais para demonstração. Esses vínculos não implementam RBAC real."
+            subtitle="Selecione diretamente as Propriedades que este Colaborador poderá acessar no mock local. Município e UF servem apenas para localizar e filtrar."
           >
             <FormField
               label="Função/cargo"
               value={form.cargo}
               onChangeText={(value) => updateField('cargo', value)}
-              placeholder="Ex: Consultor regional"
+              placeholder="Ex: Consultor de campo"
             />
 
-            <View ref={formValidation.registerField('regiao')} collapsable={false}>
-            {regioesTerritorio.length > 0 ? (
-              <>
-                <Text style={styles.label}>Região {form.status === 'ativo' ? <Text style={styles.required}>*</Text> : null}</Text>
-                <View style={styles.miniChipWrap}>
-                  {regioesTerritorio.map((regiao) => {
-                    const selected = form.regiao === regiao.nome;
-                    return (
-                      <TouchableOpacity
-                        key={regiao.id}
-                        style={[styles.miniChip, selected && styles.miniChipActive]}
-                        onPress={() => selecionarRegiaoColaborador(regiao.nome)}
-                        activeOpacity={0.78}
-                      >
-                        <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>
-                          {regiao.nome}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-                {errors.regiao && <Text style={styles.errorText}>{errors.regiao}</Text>}
-              </>
-            ) : (
-              <FormField
-                label="Região"
-                required={form.status === 'ativo'}
-                value={form.regiao}
-                onChangeText={(value) => updateField('regiao', value)}
-                placeholder="Ex: Goiás"
-                error={errors.regiao}
-              />
-            )}
+            <Text style={styles.label}>Propriedades vinculadas</Text>
+            <View style={styles.optionList}>
+              {propriedadesOrdenadas.map((propriedade) =>
+                renderPropriedadeOption({
+                  propriedade,
+                  tipoPadrao: 'colaborador',
+                  showTipo: false,
+                  showPrincipal: false,
+                })
+              )}
             </View>
 
-            {microregioesTerritorio.length > 0 ? (
-              <View style={styles.territoryBlock}>
-                <Text style={styles.label}>Microrregião {form.status === 'ativo' ? <Text style={styles.required}>*</Text> : null}</Text>
-                <View style={styles.miniChipWrap}>
-                  {microregioesTerritorio.map((microregiao) => {
-                    const selected = microRegioesInformadas.includes(microregiao.nome);
-                    return (
-                      <TouchableOpacity
-                        key={microregiao.id}
-                        style={[styles.miniChip, selected && styles.miniChipActive]}
-                        onPress={() => toggleMicroRegiaoColaborador(microregiao.nome, microregiao.regiao)}
-                        activeOpacity={0.78}
-                      >
-                        <Text style={[styles.miniChipText, selected && styles.miniChipTextActive]}>
-                          {microregiao.nome}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : (
-              <FormField
-                label="Microrregião"
-                required={form.status === 'ativo'}
-                value={form.subRegioesText}
-                onChangeText={(value) => updateField('subRegioesText', value)}
-                placeholder="Ex: Rio Verde, Jataí"
-              />
-            )}
-
-            {microRegioesInformadas.length > 0 && (
+            {propriedadesSelecionadas.length > 0 && (
               <View style={styles.linkedBox}>
-                <Text style={styles.linkedTitle}>Propriedades atribuídas por microrregião</Text>
+                <Text style={styles.linkedTitle}>Acesso direto</Text>
                 <Text style={styles.linkedText}>
-                  {propriedadesAbrangidasMicroregioes.length} propriedade{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} será{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 'o'} vinculada{propriedadesAbrangidasMicroregioes.length === 1 ? '' : 's'} automaticamente neste cadastro local.
+                  {propriedadesSelecionadas.length} propriedade{propriedadesSelecionadas.length === 1 ? '' : 's'} vinculada{propriedadesSelecionadas.length === 1 ? '' : 's'} diretamente.
                 </Text>
-                {propriedadesAbrangidasMicroregioes.map((propriedade) => {
+                {propriedadesSelecionadas.map((propriedade) => {
                   const option = getFazendaOptionLabel(propriedade);
                   return (
                     <Text key={option.id} style={styles.linkedItemText}>

@@ -10,20 +10,23 @@ derivada deste contrato foi registrada em `testes-contrato-api-rbac.md`. Ela
 deve orientar testes automatizados futuros de backend/API, mas tambem nao
 implementa backend nem altera o MVP mockado.
 
+Revisao em 2026-08-05: o contrato de escopo foi alinhado a
+`modelo-dados-mock-v2.md`. Regional/Microregiao deixaram de ser fonte futura de
+acesso; Colaborador usa somente vinculo direto ativo com Propriedade.
+
 ## Decisoes De Base
 
 - Backend valida permissao por acao e por Propriedade.
 - Frontend nao e fonte de seguranca.
 - Admin tem acesso global.
 - Produtor acessa Propriedade por vinculo/titularidade.
-- Colaborador acessa por microregiao vinculada OU Propriedade atribuida
-  diretamente.
-- `propriedades_atribuidas` no backend futuro e regra aditiva: amplia acesso
-  direto e nao restringe automaticamente o acesso regional.
+- Colaborador acessa somente Propriedade atribuida diretamente por vinculo
+  ativo.
+- Municipio/UF sao localizacao e filtro, nao fonte de autorizacao.
 - Campos legados como `fazenda_id`, `produtor_id` e `proprietario_id` devem
   existir apenas como compatibilidade/migracao, nao como contrato final.
-- Contratos novos devem preferir `propriedade_id`, `titular_id`,
-  `usuario_id`, `microregiao_id` e ids canonicos equivalentes.
+- Contratos novos usam `organizacao_id`, `propriedade_id`, `titular_id`,
+  `usuario_id`, `municipio_id`, `uf_id` e ids canonicos equivalentes.
 
 ## Respostas Padrao
 
@@ -94,7 +97,6 @@ Resposta minima:
     "status": "ativo"
   },
   "escopo": {
-    "microregioes": ["mic_1"],
     "propriedades": ["prop_1"]
   }
 }
@@ -177,11 +179,11 @@ Resposta minima:
 ### `GET /propriedades`
 
 - Objetivo: listar Propriedades conforme escopo do usuario.
-- Payload minimo: filtros opcionais por status, regiao, microregiao, busca.
+- Payload minimo: filtros opcionais por status, UF, Municipio e busca.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`.
 - Regra de permissao: Admin lista global; Produtor lista vinculadas;
-  Colaborador lista por microregiao OU atribuicao direta.
+  Colaborador lista somente as atribuidas diretamente.
 - Compatibilidade: resposta pode incluir `fazenda_id` temporario, mas contrato
   final deve usar `propriedade_id`.
 
@@ -203,8 +205,10 @@ Resposta minima:
 ```json
 {
   "nome": "Propriedade Exemplo",
-  "titular_id": "usr_produtor",
-  "microregiao_id": "mic_1",
+  "titular_id": "prod_1",
+  "municipio_id": "4306106",
+  "uf_id": "43",
+  "uf_sigla": "RS",
   "area_total": 120.5,
   "status": "ativa"
 }
@@ -252,7 +256,7 @@ Resposta minima:
   "propriedades": [
     {
       "propriedade_id": "prop_1",
-      "tipo_vinculo": "colaborador_atribuido",
+      "tipo_vinculo": "colaborador",
       "status": "ativo"
     }
   ]
@@ -267,39 +271,6 @@ Resposta minima:
 - Compatibilidade: `propriedades_atribuidas` deve migrar para vinculos
   persistentes, auditaveis e com status.
 
-### `GET /usuarios/:id/microregioes`
-
-- Objetivo: listar vinculos territoriais do usuario.
-- Payload minimo: `id` canonico do usuario.
-- Resposta de sucesso: `200 OK`.
-- Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Regra de permissao: Admin/papel autorizado; proprio usuario apenas se a
-  politica permitir consulta de escopo.
-- Compatibilidade: substitui `sub_regioes`/`vinculos_microregioes` como fonte
-  persistente futura.
-
-### `PUT /usuarios/:id/microregioes`
-
-- Objetivo: substituir ou sincronizar vinculos usuario-microregiao.
-- Payload minimo:
-
-```json
-{
-  "microregioes": [
-    {
-      "microregiao_id": "mic_1",
-      "status": "ativo"
-    }
-  ]
-}
-```
-
-- Resposta de sucesso: `200 OK`.
-- Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Outros erros: `400 Bad Request`; `409 Conflict`.
-- Regra de permissao: Admin/papel autorizado.
-- Compatibilidade: `sub_regioes` deve ser migrado para vinculos canonicos.
-
 ## Permissao E Escopo
 
 ### `GET /me/propriedades`
@@ -309,7 +280,7 @@ Resposta minima:
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`.
 - Regra de permissao: Admin global; Produtor por vinculo/titularidade;
-  Colaborador por microregiao OU atribuicao direta.
+  Colaborador por vinculo direto ativo.
 - Compatibilidade: endpoint substitui dependencia de filtro frontend como fonte
   de seguranca.
 
@@ -349,7 +320,7 @@ Resposta minima:
 {
   "propriedade_id": "prop_1",
   "permitido": true,
-  "origens": ["microregiao", "propriedade_atribuida"],
+  "origens": ["vinculo_direto"],
   "acoes": ["read", "create_visita"]
 }
 ```
@@ -386,7 +357,7 @@ Resposta minima:
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`.
 - Regra de permissao: Admin global; Produtor por Propriedades vinculadas quando
-  liberado; Colaborador por escopo aditivo.
+  liberado; Colaborador por vinculo direto ativo.
 - Compatibilidade: `fazenda_id` temporario deve migrar para `propriedade_id`.
 
 ### `POST /visitas`
@@ -420,7 +391,7 @@ Resposta minima:
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`.
 - Regra de permissao: Admin global; Produtor por Propriedades vinculadas e
-  visibilidade; Colaborador por escopo aditivo.
+  visibilidade; Colaborador por vinculo direto ativo.
 - Compatibilidade: migrar `fazenda_id` para `propriedade_id` com leitura dupla.
 
 ### `POST /caderno`

@@ -14,7 +14,9 @@ Este documento lista pontos reais ainda abertos no projeto. Seu papel e registra
 
 A nomenclatura de produto foi consolidada em `decisoes-consolidadas.md`: `Propriedade`, `Produtor`, `Titular` e `Talhao` sao os termos oficiais de superficie.
 
-Nao permanece pendente a definicao da linguagem de produto. O que ainda fica para uma fase futura separada e a limpeza tecnica interna de nomes legados como `fazenda`, `fazenda_id`, `getFazendaId`, rotas, arquivos, contratos e campos internos, caso o projeto decida reduzir essa compatibilidade.
+Nao permanece pendente a definicao da linguagem de produto. Em 2026-08-05,
+a limpeza tecnica foi aprovada para a transicao ao modelo v2. A pendencia agora
+e de implementacao e validacao, nao de decisao.
 
 Termos tecnicos legados atualmente permitidos por compatibilidade incluem `fazenda_id`, `fazendaId`, `fazenda_nome`, `fazendaNome`, `produtor_id`, `proprietario_id`, `produtor_nome`, `FazendaMapa`, `FazendaMapaScreen`, `MapaFazendaView`, `getFazenda*`, `fazendaUiCompat`, `fazendaCadastroCompat`, `FazendaCanonica` e `FazendaLegada`.
 
@@ -41,18 +43,28 @@ e nao fecha a migracao real de backend.
 
 **Pendencia futura**
 
-- planejar migracao tecnica controlada de `fazenda_id` para `propriedade_id`
+- executar a migracao tecnica controlada de `fazenda_id` para
+  `propriedade_id` conforme `modelo-dados-mock-v2.md`
 - avaliar `acessoControle.ts` e o motor de permissoes antes de qualquer remocao de legado
-- manter documentada a regra efetiva atual: Admin ve todas as Propriedades,
-  Produtor ve por vinculo titular/produtor compativel e Colaborador ve por
-  `sub_regioes` com fallback para `vinculos_microregioes`
-- avaliar `propriedades_atribuidas` apenas como decisao futura de RBAC por
-  propriedade, nao como regra efetiva do MVP mockado
-- avaliar `usuario_propriedade`
+- manter documentada a regra efetiva durante a transicao: Admin ve todas as
+  Propriedades, Produtor ainda possui fallback titular legado e Colaborador ja
+  usa vinculo direto ativo
+- migrar `propriedades_atribuidas` para vinculos ativos
+  `usuario_propriedade`
 - planejar migracao real de contrato/backend
 - testar fluxos de produtor, colaborador, admin, mapas, visitas, caderno e filtros antes de remover legado
-- remover legado somente em fase futura, depois de backend, contratos e testes
-- manter `fazenda*` apenas para compatibilidade existente ate a migracao estar validada
+- remover legado depois que contratos, acesso, rotas, servicos, storage e
+  testes locais estiverem migrados; backend nao bloqueia a limpeza do mock
+  demonstrativo
+- manter `fazenda*` apenas durante a implementacao incremental, sem grava-lo
+  no snapshot v2
+
+Status de implementacao em 2026-08-05: contratos, seed estrutural vazio,
+persistencia `@tche:mock-mvp:v2`, descarte do snapshot v1 e teste de ausencia
+de aliases foram criados. A carga v2 tambem valida integridade referencial,
+Titular, vinculos e contexto de Talhao. O acesso efetivo do Colaborador e o cadastro
+administrativo ja usam vinculo direto. Permanecem a migracao das entidades
+operacionais/storages e a carga do novo conjunto demonstrativo aprovado.
 
 ### 2. Contratos centrais do dominio
 
@@ -72,6 +84,12 @@ futuros e proibiu autoedicao territorial. Nao permanece pendente a diferenca
 conceitual. Permanecem pendentes a tabela administrativa de migracao dos
 valores legados, os IDs reais da organizacao, a persistencia dos vinculos,
 auditoria e implementacao do backend.
+
+Status em 2026-08-05: a decisao foi revisada. O primeiro modelo canonico nao
+tera Regional ou Area operacional. Municipio/UF permanecem como localizacao e
+Colaborador acessa somente por vinculo direto ativo com Propriedade. Nao resta
+decisao territorial para o mock v2; permanecem a implementacao, o mapeamento
+dos vinculos, a regressao e o backend.
 
 Status em 2026-07-30 (`MP-03`): `contrato-notificacoes.md` definiu evento,
 entrega individual, destinatario, organizacao, escopo, recurso, persistencia
@@ -691,6 +709,12 @@ acesso por microregiao vinculada OU por Propriedade atribuida diretamente.
 automaticamente o acesso regional. Permanece pendente transformar essa direcao
 em modelagem real, politicas por acao, API, persistencia e testes de backend.
 
+Status em 2026-08-05: os dois parágrafos anteriores permanecem apenas como
+histórico do v1 e da recomendação então vigente. A decisão 33 os substitui:
+Colaborador acessa somente por vínculo direto ativo em
+`usuario_propriedade`; Município/UF não concedem acesso. Permanece pendente a
+implementação no mock v2 e, futuramente, no backend.
+
 Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
 Propriedade foram renomeados para `PropriedadesScreen`,
 `NovaPropriedadeScreen` e `EditarPropriedadeScreen`.
@@ -752,6 +776,11 @@ Ainda precisam ser definidos:
   `fazenda_id` e `propriedade_id`;
 - validacao de permissao no backend para rotas diretas e operacoes por
   Propriedade.
+
+Status em 2026-08-05: a regra combinada acima foi substituida pela decisao 33.
+Colaborador usara somente `usuario_propriedade` direto e ativo; Municipio/UF
+nao concedem acesso. Permanecem pendentes a implementacao no mock v2, a matriz
+por acao e a autorizacao server-side.
 
 Status em 2026-06-03 (Fase 14F): foi criada
 `docs/project/matriz-rbac-backend.md` com matriz tecnica de permissoes por

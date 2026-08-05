@@ -1,9 +1,9 @@
 /**
- * Utilitários para controle de acesso baseado em perfil e região
+ * Utilitários para controle de acesso baseado em perfil e vínculo direto.
  * 
  * PERFIS:
  * - admin: Bruna/César - acesso TOTAL ao Brasil
- * - colaborador: Mesmas funcionalidades do admin, mas LIMITADO à sua região/sub-regiões
+ * - colaborador: funcionalidades operacionais limitadas às Propriedades vinculadas
  * - produtor: (= cliente = proprietário) - Dono da fazenda
  *   - Apenas visualização e download
  *   - Pode registrar caderno de campo nas próprias fazendas
@@ -49,7 +49,7 @@ export const isProdutor = (user) => user?.perfil === 'produtor';
 
 /**
  * Verifica se o usuário pode gerenciar dados (admin ou colaborador)
- * Colaboradores têm as MESMAS funcionalidades do admin, limitadas à região
+ * O recurso concreto ainda precisa passar pela validação da Propriedade.
  */
 export const podeGerenciar = (user) => isAdmin(user) || isColaborador(user);
 
@@ -69,22 +69,26 @@ const firstNonEmptyString = (...values) => {
 const buildAllowedIds = (ids = []) =>
   new Set((ids || []).filter((value) => typeof value === 'string' && value.trim().length > 0));
 
-const normalizeStringList = (values = []) =>
-  (Array.isArray(values) ? values : [])
-    .filter((value) => typeof value === 'string')
-    .map((value) => value.trim())
-    .filter(Boolean);
+const getVinculosPropriedadeAtivos = (user) =>
+  (Array.isArray(user?.vinculos_propriedades) ? user.vinculos_propriedades : [])
+    .filter((vinculo) => vinculo?.status !== 'inativo')
+    .filter((vinculo) => firstNonEmptyString(vinculo?.propriedade_id));
 
-const getMicroregioesEfetivasColaborador = (user) => {
-  const subRegioes = normalizeStringList(user?.sub_regioes);
-  if (subRegioes.length > 0) {
-    return subRegioes;
-  }
+export const getPropriedadeIdsVinculados = (user) => {
+  if (!user) return [];
 
-  return normalizeStringList(
-    (Array.isArray(user?.vinculos_microregioes) ? user.vinculos_microregioes : [])
-      .map((vinculo) => vinculo?.microregiao)
-  );
+  const tiposPermitidos = isColaborador(user)
+    ? new Set(['colaborador', 'colaborador_atribuido'])
+    : isProdutor(user)
+      ? new Set(['titular', 'usuario_autorizado', 'responsavel'])
+      : null;
+
+  return [...new Set(
+    getVinculosPropriedadeAtivos(user)
+      .filter((vinculo) => !tiposPermitidos || tiposPermitidos.has(vinculo?.tipo_vinculo))
+      .map((vinculo) => firstNonEmptyString(vinculo?.propriedade_id))
+      .filter(Boolean)
+  )];
 };
 
 const filterByFazendaIds = (items, getId, fazendaIds) => {
@@ -265,11 +269,16 @@ export const getFazendasPorAcesso = (fazendas, user) => {
   if (isAdmin(user)) return fazendas;
 
   if (isProdutor(user)) {
+    const idsVinculados = buildAllowedIds(getPropriedadeIdsVinculados(user));
+    if (idsVinculados.size > 0) {
+      return fazendas.filter((fazenda) => idsVinculados.has(getFazendaId(fazenda)));
+    }
     return getFazendasDoTitular(fazendas, user);
   }
 
   if (isColaborador(user)) {
-    return fazendas.filter((fazenda) => produtorNaRegiao(user, fazenda));
+    const idsVinculados = buildAllowedIds(getPropriedadeIdsVinculados(user));
+    return fazendas.filter((fazenda) => idsVinculados.has(getFazendaId(fazenda)));
   }
 
   return [];
@@ -278,17 +287,15 @@ export const getFazendasPorAcesso = (fazendas, user) => {
 export const getFazendaIdsPorAcesso = (user, fazendas) => getFazendaIds(getFazendasPorAcesso(fazendas, user));
 
 /**
- * Verifica se o produtor/fazenda pertence às microregiões efetivas do colaborador.
- * Prioriza sub_regioes para preservar o motor atual e usa vinculos_microregioes
- * apenas como fallback quando sub_regioes estiver ausente ou vazio.
+ * Alias temporário para consumidores antigos. Região não participa mais da
+ * autorização; o resultado depende exclusivamente do vínculo direto ativo.
  */
 export const produtorNaRegiao = (user, produtor) => {
   if (!user || !produtor) return false;
   if (isAdmin(user)) return true;
   if (!isColaborador(user)) return false;
 
-  const microregioes = getMicroregioesEfetivasColaborador(user);
-  return Boolean(produtor.microregiao) && microregioes.includes(produtor.microregiao);
+  return getPropriedadeIdsVinculados(user).includes(getFazendaId(produtor));
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -311,7 +318,7 @@ export const temAcessoProdutor = (user, produtor) => {
     return fazendaPertenceAoTitular(produtor, user);
   }
 
-  // Colaborador: acessa produtores da sua região/sub-regiões
+  // Colaborador: acessa somente Propriedades vinculadas diretamente.
   if (isColaborador(user)) {
     return produtorNaRegiao(user, produtor);
   }
@@ -509,26 +516,29 @@ export const filtrarLimitesPorAcesso = (limites, user, produtores = []) => {
 };
 
 // ────────────────────────────────────────────────────────────────
-// REGIÕES E SUB-REGIÕES
+// LOCALIZAÇÃO (FILTRO, NÃO AUTORIZAÇÃO)
 // ────────────────────────────────────────────────────────────────
 
 /**
- * Obtém as regiões disponíveis para um usuário
- * Sub-regiões: Goiás 1, Goiás 2, Goiânia, Rio Verde, etc.
+ * Mantém o nome público por compatibilidade. Os valores retornados são
+ * localizações das Propriedades já autorizadas, nunca fonte de permissão.
  */
 export const getRegioesDisponiveis = (user, produtores = []) => {
   if (!user) return [];
 
   if (isAdmin(user)) {
-    const regioes = [...new Set(produtores.map(p => p.regiao).filter(Boolean))];
-    return regioes.sort();
+    const localizacoes = [...new Set(produtores
+      .map((propriedade) => [propriedade?.cidade, propriedade?.estado].filter(Boolean).join(' - '))
+      .filter(Boolean))];
+    return localizacoes.sort();
   }
 
   if (isColaborador(user)) {
-    // Retorna região principal e sub-regiões
-    const regioes = [user.regiao];
-    regioes.push(...getMicroregioesEfetivasColaborador(user));
-    return [...new Set(regioes)];
+    return getFazendasPorAcesso(produtores, user)
+      .map((propriedade) => [propriedade?.cidade, propriedade?.estado].filter(Boolean).join(' - '))
+      .filter(Boolean)
+      .filter((value, index, values) => values.indexOf(value) === index)
+      .sort();
   }
 
   return [];
@@ -538,8 +548,7 @@ export const getRegioesDisponiveis = (user, produtores = []) => {
  * Obtém as sub-regiões de um colaborador
  */
 export const getSubRegioes = (user) => {
-  if (!user || !isColaborador(user)) return [];
-  return getMicroregioesEfetivasColaborador(user);
+  return [];
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -677,7 +686,11 @@ export const podeBaixarMapa = (user, mapa, produtores = []) => {
     return isAdmin(user);
   }
 
-  if (isAdmin(user) || isColaborador(user)) return true;
+  if (isAdmin(user)) return true;
+
+  if (isColaborador(user)) {
+    return getPropriedadeIdsVinculados(user).includes(mapaNormalizado.fazenda_id);
+  }
   
   if (isProdutor(user)) {
     const minhasFazendas = getFazendasDoTitular(produtores, user);
@@ -736,7 +749,7 @@ export const getLabelPerfil = (user) => {
   if (!user) return '';
   const labels = {
     admin: 'Administrador',
-    colaborador: 'Consultor Regional',
+    colaborador: 'Colaborador',
     produtor: 'Proprietário',
   };
   return labels[user.perfil] || user.perfil;

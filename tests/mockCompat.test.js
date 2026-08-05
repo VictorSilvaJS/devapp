@@ -52,8 +52,11 @@ const run = async () => {
 
     assert.equal(colaborador.nome, 'Colaborador de Campo');
     assert.equal(colaborador.email, 'colaborador.campo@example.com');
-    assert.ok(colaborador.sub_regioes.includes('MT - Norte'));
-    assert.ok(colaborador.vinculos_propriedades.some((item) => item.propriedade_id === 'p_sela1'));
+    assert.ok(colaborador.vinculos_propriedades.some((item) => (
+      item.propriedade_id === 'p_sela1'
+      && item.tipo_vinculo === 'colaborador'
+      && item.status === 'ativo'
+    )));
 
     assert.equal(produtor.nome, 'Produtor Demonstração');
     assert.equal(produtor.email, 'produtor.demonstracao@example.com');

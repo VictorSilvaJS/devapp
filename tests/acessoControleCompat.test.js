@@ -73,8 +73,10 @@ const produtorUser = { id: 'u1', perfil: 'produtor', produtor_id: 'prop1' };
 const colaboradorUser = {
   id: 'u2',
   perfil: 'colaborador',
-  regiao: 'Sul',
-  sub_regioes: ['Sul 1'],
+  vinculos_propriedades: [
+    { propriedade_id: 'fz1', tipo_vinculo: 'colaborador', status: 'ativo' },
+    { propriedade_id: 'fz3', tipo_vinculo: 'colaborador', status: 'ativo' },
+  ],
 };
 const adminUser = { id: 'u3', perfil: 'admin' };
 
@@ -302,7 +304,7 @@ const run = async () => {
     assert.equal(podeBaixarMapa(adminUser, { ...mapaDeOutro, disponivel_download: false }, fazendasBase), true);
   });
 
-  await test('temAcessoProdutor protege detalhe por titular e escopo regional', () => {
+  await test('temAcessoProdutor protege detalhe por titular e vínculo direto', () => {
     const fazendaPropria = fazendasBase[0];
     const fazendaForaEscopo = fazendasBase[1];
 

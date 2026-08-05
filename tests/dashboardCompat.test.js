@@ -84,9 +84,15 @@ const run = async () => {
     assert.equal(escopo.mapas.length, 3);
   });
 
-  await test('colaborador recebe somente dados das microregioes efetivas', () => {
+  await test('colaborador recebe somente dados das Propriedades vinculadas', () => {
     const escopo = buildDashboardScopeData({
-      user: { perfil: 'colaborador', regiao: 'Mato Grosso', sub_regioes: ['Sorriso'] },
+      user: {
+        perfil: 'colaborador',
+        vinculos_propriedades: [
+          { propriedade_id: 'p_mt', tipo_vinculo: 'colaborador', status: 'ativo' },
+          { propriedade_id: 'p_mt_2', tipo_vinculo: 'colaborador', status: 'ativo' },
+        ],
+      },
       propriedades,
       visitas,
       cadernos,

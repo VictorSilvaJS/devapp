@@ -196,16 +196,16 @@ const run = async () => {
     assert.equal(buildNovoTitularId('Ana Souza', ['prop_ana_souza']), 'prop_ana_souza_2');
   });
 
-  await test('validateCadastroFazendaScope permite colaborador dentro da regiao e microregiao', () => {
+  await test('validateCadastroFazendaScope bloqueia colaborador mesmo com texto regional', () => {
     const result = validateCadastroFazendaScope(
       { perfil: 'colaborador', regiao: 'Sul', sub_regioes: ['Sul 1'] },
       { regiao: 'Sul', microregiao: 'Sul 1' }
     );
 
-    assert.equal(result.ok, true);
+    assert.deepEqual(result, { ok: false, reason: 'perfil_sem_permissao' });
   });
 
-  await test('validateCadastroFazendaScope bloqueia colaborador fora do proprio escopo', () => {
+  await test('validateCadastroFazendaScope nao usa regiao ou microregiao como permissao', () => {
     const foraRegiao = validateCadastroFazendaScope(
       { perfil: 'colaborador', regiao: 'Sul', sub_regioes: ['Sul 1'] },
       { regiao: 'Norte', microregiao: 'Norte 1' }
@@ -215,8 +215,8 @@ const run = async () => {
       { regiao: 'Sul', microregiao: 'Sul 2' }
     );
 
-    assert.deepEqual(foraRegiao, { ok: false, reason: 'regiao_fora_escopo' });
-    assert.deepEqual(foraMicroregiao, { ok: false, reason: 'microregiao_fora_escopo' });
+    assert.deepEqual(foraRegiao, { ok: false, reason: 'perfil_sem_permissao' });
+    assert.deepEqual(foraMicroregiao, { ok: false, reason: 'perfil_sem_permissao' });
   });
 
   await test('validateCadastroFazendaScope permite admin sem restricao regional', () => {
@@ -228,8 +228,8 @@ const run = async () => {
     assert.equal(result.ok, true);
   });
 
-  await test('payload do cadastro cria fazenda visivel no escopo do colaborador', async () => {
-    const user = { perfil: 'colaborador', regiao: 'Sul', sub_regioes: ['RS - Norte'] };
+  await test('Propriedade criada pelo admin exige vinculo direto para o colaborador', async () => {
+    const admin = { perfil: 'admin' };
     const titulares = buildCadastroTitularOptions(await Produtor.list());
     const titularProp1 = titulares.find((titular) => titular.id === 'prop1');
     assert.ok(titularProp1);
@@ -246,7 +246,7 @@ const run = async () => {
       titulares,
     });
 
-    const scope = validateCadastroFazendaScope(user, payload);
+    const scope = validateCadastroFazendaScope(admin, payload);
     assert.equal(scope.ok, true);
 
     const criado = await Produtor.create(payload);
@@ -258,6 +258,12 @@ const run = async () => {
     assert.equal(criado.microregiao, 'RS - Norte');
 
     const listaAtualizada = await Produtor.list();
+    const user = {
+      perfil: 'colaborador',
+      vinculos_propriedades: [
+        { propriedade_id: criado.id, tipo_vinculo: 'colaborador', status: 'ativo' },
+      ],
+    };
     const visiveis = filtrarProdutoresPorAcesso(listaAtualizada, user);
     assert.ok(visiveis.some((fazenda) => fazenda.id === criado.id));
   });

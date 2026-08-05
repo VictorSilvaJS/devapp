@@ -24,7 +24,7 @@ const test = async (name, fn) => {
 
 const admin = { id: 'u_admin', nome: 'Admin', perfil: 'admin' };
 const produtor = { id: 'u_produtor', nome: 'Produtor', perfil: 'produtor', produtor_id: 'titular_a' };
-const colaboradorFora = { id: 'u_colab', nome: 'Colab', perfil: 'colaborador', sub_regioes: ['Sorriso'] };
+const colaboradorFora = { id: 'u_colab', nome: 'Colab', perfil: 'colaborador', vinculos_propriedades: [] };
 const propriedade = {
   id: 'prop_a',
   propriedade_id: 'prop_a',

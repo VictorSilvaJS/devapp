@@ -37,14 +37,16 @@ const colaboradorRioVerde = {
   id: 'u_colab',
   nome: 'Colaborador Rio Verde',
   perfil: 'colaborador',
-  sub_regioes: ['Rio Verde'],
+  vinculos_propriedades: [
+    { propriedade_id: 'prop_a', tipo_vinculo: 'colaborador', status: 'ativo' },
+  ],
 };
 
 const colaboradorForaDoEscopo = {
   id: 'u_colab_fora',
   nome: 'Colaborador Fora',
   perfil: 'colaborador',
-  sub_regioes: ['Sorriso'],
+  vinculos_propriedades: [],
 };
 
 const produtor = {

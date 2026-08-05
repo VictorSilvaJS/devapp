@@ -184,8 +184,12 @@ const run = async () => {
       email: 'colaborador.ativo.cred@example.com',
       perfil: 'colaborador',
       status: 'ativo',
-      regiao: propriedade.regiao,
-      subRegioesText: propriedade.microregiao,
+      vinculosPropriedades: [{
+        propriedade_id: propriedade.id,
+        tipo_vinculo: 'colaborador',
+        status: 'ativo',
+        principal: true,
+      }],
     }, propriedades);
     const colaborador = await createUsuarioAdminWithLocalCredential({
       userApi: User,

@@ -24,18 +24,16 @@ Hoje o projeto ainda depende de simulacoes ou implementacoes parciais para fluxo
 ### 1. Tirar os fluxos principais do mock
 
 - Backend real para autenticacao, usuarios, propriedades, visitas, caderno e mapas
-- Persistencia real para `usuarios`, `propriedades`, `usuario_propriedade`, `usuario_microregiao` e estrutura territorial
-- Definir tabelas/colecoes reais para `regioes` e `microregioes`, substituindo gradualmente a derivacao visual feita por `territorioCompat`
-- Definir se sera necessario `usuario_regiao` alem de `usuario_microregiao`, sem quebrar escopo regional atual
+- Persistencia real para `organizacoes`, `usuarios`, `produtores`,
+  `propriedades` e `usuario_propriedade`
+- Persistir Municipio/UF na Propriedade com codigos estaveis do IBGE
 - Migrar o modulo `Admin -> Usuarios` do mock backend-ready para API/banco real
 - Implementar criacao combinada transacional de `usuario` + `propriedade` + `usuario_propriedade` para substituir o cadastro rapido mockado de propriedade no usuario produtor
 - Sincronizar cadastro administrativo de usuario com autenticacao real, convites, senha/reset e sessao quando essa frente for definida
 - Definir RBAC/permissoes granulares a partir dos perfis atuais e dos niveis administrativos simples
 - Implementar contrato futuro de escopo por perfil: Admin global, Produtor por
-  vinculo com Propriedade/Titular e Colaborador por microregiao vinculada OU
-  Propriedade atribuida diretamente
-- Tratar `propriedades_atribuidas` no backend como ampliacao direta de acesso
-  do colaborador, nao como restricao implicita do acesso regional
+  vinculo/titularidade e Colaborador somente por vinculo direto ativo com a
+  Propriedade
 - Usar `docs/project/matriz-rbac-backend.md` como criterio de aceite para
   testes positivos e negativos de backend/RBAC antes de liberar a migracao
 - Usar `docs/project/contrato-api-rbac.md` como base dos endpoints, payloads e
@@ -80,23 +78,20 @@ A frente funcional de `Produtor` / `Propriedade` esta fechada para o MVP atual. 
 
 O modulo `Admin -> Usuarios` esta em MVP visual/mockado com estrutura preparada para backend, mas ainda nao possui autenticacao real nem persistencia externa. Itens futuros:
 
-- transformar as relacoes mock `usuario_propriedade` e `usuario_microregiao` em tabelas/colecoes reais
+- transformar a relacao mock `usuario_propriedade` em tabela/colecao real
 - transformar o cadastro rapido de propriedade no usuario produtor em operacao transacional de backend
 - garantir rollback/consistencia quando a criacao combinada de usuario, propriedade e vinculo falhar parcialmente
-- transformar a leitura visual Regiao -> Microregiao -> Propriedade em modelo persistente real
-- substituir a derivacao de regioes/microregioes por cadastro ou fonte territorial controlada quando houver backend
-- decidir como propriedades passam a referenciar `regiao_id` e `microregiao_id`, preservando compatibilidade temporaria com `regiao` e `microregiao` textuais
-- definir se colaboradores poderao ser vinculados a regioes inteiras, microregioes e/ou propriedades especificas no backend
-- adotar, como direcao recomendada, escopo aditivo para colaborador:
-  microregiao vinculada somada a Propriedade atribuida diretamente
-- definir politica explicita caso a organizacao queira restringir colaborador
-  apenas a propriedades atribuidas, em vez de usar a regra aditiva recomendada
+- retirar a leitura visual Regiao -> Microregiao -> Propriedade durante a
+  migracao do mock v1
+- persistir Municipio/UF como localizacao da Propriedade sem transforma-los em
+  fonte de autorizacao
 - ligar usuario administrativo a conta/login real sem duplicar dados pessoais
 - definir fluxo de convite, ativacao, reset de senha e bloqueio/desbloqueio
 - consolidar status de usuario em banco como `ativo`, `inativo` ou `pendente`
 - manter `ativo` apenas como campo derivado/compatibilidade enquanto necessario
-- definir como vinculos visuais de colaborador passam a influenciar permissoes efetivas, preservando a diferenca entre acesso regional e acesso direto
-- migrar o `acessoControle` apenas em fase propria, depois de decidir o modelo territorial e as permissoes efetivas
+- transformar vinculos visuais de colaborador em permissoes efetivas por
+  Propriedade
+- migrar o `acessoControle` para a regra direta ja aprovada
 - transformar a matriz `matriz-rbac-backend.md` em testes automatizados de API,
   dominio e rotas diretas quando houver backend
 - transformar o contrato `contrato-api-rbac.md` em testes de contrato/API para

@@ -20,6 +20,64 @@ Esses nomes tecnicos continuam vinculados a rotas, mocks, contratos, helpers de 
 
 Para novas implementacoes, novos textos visiveis e novos documentos ativos devem usar `Propriedade`/`Propriedades`. Novos modelos futuros devem preferir `propriedade_id`. O uso de `fazenda*` deve ficar restrito a compatibilidade com codigo existente.
 
+## Direcao Aprovada Para O Modelo V2
+
+Status em 2026-08-05: foi aprovado
+`docs/project/modelo-dados-mock-v2.md` para orientar a substituicao integral
+dos dados demonstrativos e a limpeza tecnica do frontend.
+
+Decisoes aprovadas:
+
+- a Tche Fertilidade e a unica organizacao do primeiro contrato;
+- cada Propriedade possui exatamente um Produtor Titular principal ativo;
+- um Produtor pode titularizar varias Propriedades;
+- outros usuarios acessam por vinculo explicito em `usuario_propriedade` sem
+  se tornarem Titulares;
+- Colaborador acessa somente Propriedades atribuidas diretamente;
+- Municipio/UF representam localizacao e filtro, sem conceder permissao;
+- Regional, Area operacional e campos de Regiao/Microregiao nao entram no
+  contrato v2 inicial;
+- entidades operacionais novas usam `propriedade_id`, sem `fazenda_id`.
+
+O runtime principal ainda usa os registros e aliases do mock v1, mas a
+migracao tecnica foi iniciada. O motor efetivo do Colaborador ja usa vinculo
+direto; as secoes historicas abaixo continuam descrevendo o estado anterior
+quando isso for indicado. Dados novos ainda nao foram carregados e nao devem
+ser inventados.
+
+### Implementacao iniciada em 2026-08-05
+
+Concluido nesta primeira onda tecnica:
+
+- contratos TypeScript v2 para Organizacao, Usuario, Produtor, Propriedade,
+  Vinculo, Talhao e recursos operacionais;
+- seed estrutural vazio separado, contendo apenas a organizacao
+  `org_tche_fertilidade`;
+- persistencia v2 isolada em `@tche:mock-mvp:v2`, com instalacao que remove o
+  snapshot demonstrativo `@tche:mock-mvp:v1`;
+- teste que impede campos territoriais e `fazenda_id` no snapshot v2;
+- validador de carga para IDs unicos, referencias, Titular, vinculos ativos,
+  localizacao, Talhoes e recursos operacionais;
+- motor efetivo do Colaborador migrado para vinculos diretos ativos;
+- login demonstrativo e sessao local preservam esses vinculos;
+- cadastro e detalhe administrativo do Colaborador usam selecao direta de
+  Propriedades, sem Regiao/Microregiao;
+- Municipio/UF nao participam da autorizacao;
+- criacao estrutural de Propriedade ficou restrita ao Admin no controle local
+  atual.
+
+Ainda nao concluido:
+
+- conectar todo o runtime ao repositorio/snapshot v2;
+- migrar entidades operacionais, rotas, storages e nomes tecnicos restantes de
+  `fazenda_id` para `propriedade_id`;
+- substituir o conjunto demonstrativo antigo pela nova carga aprovada;
+- executar a limpeza unica dos arquivos e indices associados aos IDs v1.
+
+O seed v2 nao foi ativado no app porque a base nova ainda nao foi fornecida.
+Ativa-lo vazio removeria os logins e todos os registros demonstrativos sem
+oferecer um conjunto substituto utilizavel.
+
 ## Compatibilidade Dupla De Propriedade E Titular
 
 Status em 2026-06-03: o projeto possui compatibilidade dupla aditiva para
@@ -75,17 +133,17 @@ intencao for compatibilidade explicita. Campos legados nao devem ser removidos
 nesta fase. Payloads de visitas, caderno e cadastro ainda podem continuar
 usando `fazenda_id` por compatibilidade.
 
-## Regra Efetiva Atual De Acesso A Propriedades
+## Historico Da Regra De Acesso V1
 
-Status em 2026-06-03 (Fase 14D): no MVP mockado, a regra efetiva de acesso a
-Propriedades permanece concentrada em `src/utils/acessoControle.ts` e segue
-este corte:
+Status historico em 2026-06-03 (Fase 14D): no MVP mockado, a regra efetiva de
+acesso a Propriedades seguia este corte. A parte regional abaixo foi
+substituida no codigo em 2026-08-05 pelo vinculo direto ativo:
 
 - Admin ve todas as Propriedades.
 - Produtor ve Propriedades pelo vinculo de titular/produtor compativel,
   preservando campos legados como `produtor_id` e `proprietario_id` e aliases
   futuros como `titular_id` quando passarem pela borda de compatibilidade.
-- Colaborador ve Propriedades pelo escopo territorial de `sub_regioes`.
+- Colaborador via Propriedades pelo escopo territorial de `sub_regioes`.
 - Quando `sub_regioes` estiver ausente ou vazio, Colaborador usa
   `vinculos_microregioes` como fallback territorial.
 - Quando `sub_regioes` e `vinculos_microregioes` existirem ao mesmo tempo, a
@@ -94,18 +152,15 @@ este corte:
   preparatorio no MVP mockado, mas ainda nao restringe nem amplia acesso
   efetivo.
 
-Escopo regional e diferente de propriedade atribuida. O escopo regional e o
-conjunto de microregioes usado pelo motor atual para filtrar Propriedades do
-colaborador. A propriedade atribuida e um vinculo direto planejado para
-administracao futura, exibido no mock como preparacao para backend/RBAC, mas
-sem efeito de permissao nesta fase.
+Nesse estado historico, escopo regional era diferente de propriedade
+atribuida. Essa diferenca deixou de definir autorizacao: o motor atual consulta
+os vinculos diretos ativos em `vinculos_propriedades`.
 
 Risco conhecido: se alguem interpretar o bloco visual de propriedades
 atribuidas no Admin como permissao real, pode esperar que ele altere o acesso
-do colaborador. Isso nao ocorre no MVP atual. A decisao futura de backend/RBAC
-deve escolher se o acesso sera por microregiao, por propriedade atribuida ou
-por combinacao das duas, persistindo vinculos reais usuario-propriedade e
-validando permissoes por acao e por Propriedade no backend.
+do colaborador. Esse risco foi tratado no frontend em 2026-08-05: a atribuicao
+direta passou a alterar o acesso local. O backend futuro ainda deve revalidar
+usuario, vinculo, acao e Propriedade.
 
 Status em 2026-06-03 (Fase 14E): o contrato futuro recomendado de
 backend/RBAC foi documentado em `regras-de-negocio.md`,
@@ -113,18 +168,14 @@ backend/RBAC foi documentado em `regras-de-negocio.md`,
 `roadmap-futuro.md`. Essa documentacao nao altera o comportamento funcional do
 MVP mockado.
 
-A direcao futura recomendada e:
+A direcao aprovada em 2026-08-05, que substitui a recomendacao regional desta
+fase historica, e:
 
 - Admin com acesso global.
 - Produtor por vinculo com Propriedade/Titular.
-- Colaborador por regra combinada/aditiva: microregiao vinculada OU
-  Propriedade atribuida diretamente.
-
-No backend futuro, `propriedades_atribuidas` deve ampliar acesso direto do
-colaborador quando houver uma Propriedade atribuida fora do escopo regional.
-Ela nao deve restringir automaticamente o acesso regional. Qualquer regra
-restritiva deve ser politica explicita futura, nao inferencia implicita do
-campo.
+- Colaborador somente por `usuario_propriedade` direto e ativo.
+- Municipio/UF como localizacao e filtro, nunca como autorizacao.
+- Sem Regiao, Microregiao, Regional ou Area Operacional no contrato inicial.
 
 Status em 2026-06-03 (Fase 14F): foi criada
 `docs/project/matriz-rbac-backend.md` como matriz tecnica futura de testes e
@@ -320,8 +371,8 @@ usam `Propriedade`; rotas de stack usam `NovaPropriedade` e
 - criacao real de login a partir do cadastro administrativo de usuario
 - senha real, convite, reset de senha e sessao real
 - RBAC/permissoes granulares completas
-- implementacao do contrato futuro de RBAC/backend com escopo aditivo do
-  colaborador por microregiao OU Propriedade atribuida
+- implementacao do contrato v2 de RBAC/backend com escopo direto do
+  colaborador por `usuario_propriedade`
 - transacao real no fluxo combinado `Usuario + Propriedade`
 - integridade referencial real entre usuarios, propriedades, titulares e vinculos
 - upload real de arquivos

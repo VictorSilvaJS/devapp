@@ -24,9 +24,11 @@ O sistema busca centralizar informacoes ligadas ao trabalho tecnico e ao acompan
 
 Perfil com visao ampla da operacao. Precisa navegar entre regioes, produtores e propriedades sem perder o panorama consolidado do sistema.
 
-### Colaborador Regional
+### Colaborador
 
-Perfil operacional com escopo geografico restrito. Atua na consulta e manutencao dos dados dentro da sua regiao ou sub-regiao, conforme permissao.
+Perfil operacional da Tche Fertilidade. Atua na consulta e manutencao dos
+dados somente nas Propriedades atribuidas diretamente, conforme permissao por
+acao.
 
 ### Produtor
 
@@ -52,7 +54,8 @@ O projeto precisa considerar algumas restricoes reais do contexto de uso:
 
 - internet instavel ou inexistente em campo
 - necessidade de clareza de acesso por perfil sem UX excessivamente burocratica
-- necessidade de organizacao por regiao para a operacao da equipe
+- necessidade de localizar e filtrar Propriedades por Municipio/UF e atribuir
+  explicitamente o escopo de cada Colaborador
 - necessidade de preservar contexto de propriedade ao navegar entre dados
 
 ## Relacao com o MVP

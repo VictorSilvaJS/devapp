@@ -531,13 +531,17 @@ const usuarioPropriedade: any[] = [
   { usuario_id: 'u11', propriedade_id: 'p3', tipo_vinculo: 'titular', principal: true },
   { usuario_id: 'u12', propriedade_id: 'p2', tipo_vinculo: 'titular', principal: true },
   { usuario_id: 'u_sela1', propriedade_id: SELA_DEPRATA_1_PRODUTOR_ID, tipo_vinculo: 'titular', principal: true },
-  { usuario_id: 'u2', propriedade_id: 'p4', tipo_vinculo: 'colaborador_atribuido', principal: true },
-  { usuario_id: 'u2', propriedade_id: 'p4b', tipo_vinculo: 'colaborador_atribuido', principal: false },
-  { usuario_id: 'u5', propriedade_id: 'p5', tipo_vinculo: 'colaborador_atribuido', principal: true },
-  { usuario_id: 'u5', propriedade_id: 'p5b', tipo_vinculo: 'colaborador_atribuido', principal: false },
-  { usuario_id: 'u5', propriedade_id: SELA_DEPRATA_1_PRODUTOR_ID, tipo_vinculo: 'colaborador_atribuido', principal: false },
-  { usuario_id: 'u6', propriedade_id: 'p6', tipo_vinculo: 'colaborador_atribuido', principal: true },
-  { usuario_id: 'u6', propriedade_id: 'p6b', tipo_vinculo: 'colaborador_atribuido', principal: false },
+  { usuario_id: 'u2', propriedade_id: 'p4', tipo_vinculo: 'colaborador', status: 'ativo', principal: true },
+  { usuario_id: 'u2', propriedade_id: 'p4b', tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
+  { usuario_id: 'u3', propriedade_id: 'p1', tipo_vinculo: 'colaborador', status: 'ativo', principal: true },
+  { usuario_id: 'u3', propriedade_id: 'p1b', tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
+  { usuario_id: 'u3', propriedade_id: 'p2', tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
+  { usuario_id: 'u3', propriedade_id: 'p3', tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
+  { usuario_id: 'u5', propriedade_id: 'p5', tipo_vinculo: 'colaborador', status: 'ativo', principal: true },
+  { usuario_id: 'u5', propriedade_id: 'p5b', tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
+  { usuario_id: 'u5', propriedade_id: SELA_DEPRATA_1_PRODUTOR_ID, tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
+  { usuario_id: 'u6', propriedade_id: 'p6', tipo_vinculo: 'colaborador', status: 'ativo', principal: true },
+  { usuario_id: 'u6', propriedade_id: 'p6b', tipo_vinculo: 'colaborador', status: 'ativo', principal: false },
 ];
 
 const usuarioMicroregiao: any[] = [
@@ -2032,7 +2036,15 @@ export const MockLocalData = {
 };
 
 const statusUsuarioMock = new Set(['ativo', 'inativo', 'pendente']);
-const tiposVinculoUsuarioPropriedade = new Set(['titular', 'responsavel', 'colaborador_atribuido', 'outro']);
+const tiposVinculoUsuarioPropriedade = new Set([
+  'titular',
+  'usuario_autorizado',
+  'colaborador',
+  // Compatibilidade de leitura durante a migração do formulário v1.
+  'responsavel',
+  'colaborador_atribuido',
+  'outro',
+]);
 
 const hasOwn = (value: any, key: string) =>
   value && Object.prototype.hasOwnProperty.call(value, key);
@@ -2072,9 +2084,14 @@ const normalizeUsuarioPropriedadeLink = (link: any, usuarioId: string) => {
     : 'outro';
 
   return {
+    id: typeof link?.id === 'string' && link.id.trim()
+      ? link.id.trim()
+      : `up_${usuarioId}_${propriedadeId}_${tipo}`,
+    organizacao_id: 'org_tche_fertilidade',
     usuario_id: usuarioId,
     propriedade_id: propriedadeId,
     tipo_vinculo: tipo,
+    status: link?.status === 'inativo' ? 'inativo' : 'ativo',
     principal: link?.principal === true,
   };
 };
@@ -2120,7 +2137,8 @@ const deriveUsuarioPropriedadeLinks = (usuario: any, usuarioId: string) => {
         .map((id, index) => ({
           usuario_id: usuarioId,
           propriedade_id: id.trim(),
-          tipo_vinculo: 'colaborador_atribuido',
+          tipo_vinculo: 'colaborador',
+          status: 'ativo',
           principal: index === 0,
         }))
     );
@@ -2226,10 +2244,9 @@ const validateUsuarioMock = (
   if (
     usuario.perfil === 'colaborador'
     && usuario.status === 'ativo'
-    && vinculosMicroregioes.length === 0
     && vinculosPropriedades.length === 0
   ) {
-    throw new Error('User.colaborador: Colaborador ativo precisa ter micro-região/sub-região ou propriedade atribuída');
+    throw new Error('User.colaborador: Colaborador ativo precisa ter ao menos uma Propriedade vinculada diretamente');
   }
 
   return true;

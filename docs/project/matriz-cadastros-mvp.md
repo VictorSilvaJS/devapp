@@ -21,12 +21,10 @@ propriedade.
 
 ### Colaborador
 
-Usuario com atuacao operacional restrita por territorio. No MVP
-visual/mockado, `sub_regioes` define o escopo regional efetivo e
-`vinculos_microregioes` e fallback quando `sub_regioes` estiver ausente ou
-vazio. `propriedades_atribuidas` representa vinculo direto visual/admin
-preparatorio, mas ainda nao substitui nem altera o motor efetivo de
-permissoes.
+Usuario da Tche Fertilidade com atuacao operacional restrita as Propriedades
+atribuidas diretamente. O codigo v1 ainda calcula escopo por campos
+territoriais, mas o contrato v2 usa somente vinculo ativo em
+`usuario_propriedade`.
 
 ### Administrador
 
@@ -41,18 +39,16 @@ arquivos e materiais tecnicos devem ser entendidos no contexto da propriedade.
 
 ### Titular
 
-Produtor vinculado como responsavel cadastral ou vinculo principal da
-propriedade. O titular nao deve ser alterado acidentalmente em edicoes simples
-da propriedade.
+Produtor dono e responsavel cadastral principal da Propriedade. Cada
+Propriedade possui exatamente um Titular principal ativo; um mesmo Produtor
+pode titularizar varias Propriedades. O Titular nao deve ser alterado em
+edicoes simples da Propriedade.
 
 ### Vinculo
 
-Relacao entre usuario e propriedade ou entre usuario e territorio. No MVP
-visual/mockado, o vinculo de produtor com propriedade aparece em
-`usuario_propriedade`; o vinculo territorial do colaborador aparece em
-`usuario_microregiao`, `vinculos_microregioes` e campos legados equivalentes.
-Vinculos diretos em `propriedades_atribuidas` sao preparatorios para backend,
-sem efeito de RBAC por propriedade no MVP atual.
+Relacao entre Usuario e Propriedade. No contrato v2, todos os acessos de
+Produtor e Colaborador usam `usuario_propriedade`. Campos territoriais do v1
+nao fazem parte do modelo novo.
 
 ## Regra Principal
 
@@ -60,7 +56,7 @@ sem efeito de RBAC por propriedade no MVP atual.
 - Produtor e perfil de usuario.
 - Propriedade e unidade rural.
 - Titular e o produtor vinculado a propriedade.
-- Colaborador e usuario com escopo territorial/propriedades.
+- Colaborador e usuario com Propriedades atribuidas diretamente.
 - Administrador e usuario gestor.
 
 ## Matriz De Campos Obrigatorios No MVP
@@ -80,10 +76,8 @@ sem efeito de RBAC por propriedade no MVP atual.
 ### Colaborador
 
 - usuario com perfil colaborador
-- microregiao, regiao ou propriedade atribuida quando ativo no mock
-  administrativo
-- acesso efetivo por `sub_regioes` ou, se ausente/vazio, por
-  `vinculos_microregioes`
+- ao menos uma Propriedade vinculada diretamente quando ativo
+- acesso efetivo somente pelos vinculos ativos
 
 ### Administrador
 
@@ -95,15 +89,15 @@ sem efeito de RBAC por propriedade no MVP atual.
 - titular
 - nome da propriedade
 - area total
-- regiao
-- microregiao
+- Municipio
+- UF
 - status
 
 ### Cadastro Rapido De Propriedade
 
 - nome da propriedade
-- regiao
-- microregiao
+- Municipio
+- UF
 - area total
 - status
 - titular inferido pelo usuario produtor em edicao/cadastro
@@ -115,8 +109,6 @@ sem efeito de RBAC por propriedade no MVP atual.
 - observacoes
 - cargo
 - nivel administrativo
-- cidade
-- UF
 - cultura atual/principal
 - senha
 - convite
@@ -126,9 +118,8 @@ sem efeito de RBAC por propriedade no MVP atual.
 
 ## Campos Legados E Compatibilidade Preservada
 
-Os itens abaixo nao devem ser alterados agora. Eles sustentam compatibilidade
-com mocks, rotas, helpers, filtros, visitas, caderno, mapas, permissoes e
-payloads existentes.
+Os itens abaixo pertencem ao mock v1. Permanecem somente durante a migracao do
+codigo e nao podem ser gravados em registros v2.
 
 - `fazenda_id`
 - `fazendaId`
@@ -162,8 +153,7 @@ explicita. Payloads de visita, caderno e cadastro ainda podem continuar usando
 
 ## Semantica Atual De Acesso Por Perfil
 
-Status em 2026-06-03 (Fase 14D): para o MVP mockado, a leitura oficial da
-matriz e:
+Status do codigo v1: a implementacao ainda segue temporariamente:
 
 - Administrador ve todas as Propriedades.
 - Produtor ve Propriedades por vinculo de titular/produtor compativel.
@@ -171,16 +161,14 @@ matriz e:
 - Colaborador sem `sub_regioes` usa `vinculos_microregioes` como fallback.
 - `propriedades_atribuidas` nao restringe nem amplia acesso efetivo.
 
-Escopo regional e diferente de propriedade atribuida. Escopo regional e a base
-territorial usada pelo motor atual. Propriedade atribuida e um vinculo direto
-visual/admin preparatorio, util para desenhar o futuro modelo de
-usuario-propriedade, mas ainda sem efeito de permissao.
+Esse comportamento foi substituido como decisao de produto em 2026-08-05. O
+contrato v2 usa vinculo direto; a lista acima serve apenas para orientar a
+refatoracao e a regressao.
 
 ## Contrato Futuro De RBAC/Backend
 
-Status em 2026-06-03 (Fase 14E): a direcao futura recomendada para backend e
-RBAC e manter uma regra combinada/aditiva para o colaborador. Esta secao nao
-altera o MVP mockado atual.
+Status em 2026-08-05: a direcao futura de backend foi revisada para vinculo
+direto por Propriedade.
 
 Matriz futura de escopo:
 
@@ -188,25 +176,22 @@ Matriz futura de escopo:
 |---|---|---|
 | Administrador | Papel administrativo | Acesso global, limitado apenas por politica organizacional futura |
 | Produtor | `usuario_propriedade` e titularidade | Acesso as Propriedades vinculadas ao usuario/produtor/titular |
-| Colaborador | `usuario_microregiao` OU `usuario_propriedade` | Acesso por microregiao vinculada somado a Propriedade atribuida diretamente |
+| Colaborador | `usuario_propriedade` | Acesso somente a Propriedade atribuida diretamente |
 
 Entidades minimas esperadas no backend:
 
 - `usuarios`
 - `propriedades`
 - `usuario_propriedade`
-- `usuario_microregiao`
 - `perfis`/`papeis`
 
-No backend, a propriedade atribuida diretamente ao colaborador deve ampliar
-acesso direto. Ela nao deve restringir automaticamente o acesso regional por
-microregiao. Qualquer regra restritiva futura precisa ser politica explicita,
-documentada e testada.
+No backend, a Propriedade atribuida diretamente ao Colaborador e a fonte do
+escopo. Municipio/UF nao substituem esse vinculo.
 
 Leitura futura recomendada:
 
-- listar e abrir detalhe de Propriedades usando a uniao dos escopos permitidos
-  para o perfil;
+- listar e abrir detalhe de Propriedades usando os vinculos permitidos para o
+  perfil;
 - ver mapas/anexos apenas quando houver acesso a Propriedade e liberacao do
   material para o perfil/acao;
 - criar visita apenas para Admin/Colaborador com permissao de acao e escopo da
@@ -219,24 +204,19 @@ Leitura futura recomendada:
 - misturar nome de usuario com nome de propriedade
 - trocar `produtor_id`/`proprietario_id` sem plano
 - quebrar vinculo de titular
-- quebrar colaborador por regiao/microregiao
+- migrar o Colaborador sem criar os vinculos diretos correspondentes
 - quebrar permissoes de acesso
 - duplicar cadastro rapido de propriedade
-- assumir que `propriedades_atribuidas` no Admin altera acesso real do
-  colaborador
-- backend implementar `propriedades_atribuidas` como restricao implicita e
-  cortar acesso regional esperado
-- backend ignorar vinculo direto de Propriedade atribuida e manter o Admin
-  visual sem efeito operacional
+- inferir permissao por Municipio/UF
+- backend ignorar vinculo direto e manter o Admin visual sem efeito operacional
 
 ## Ordem Futura Recomendada
 
 1. Padronizar rotulos e secoes visiveis.
 2. Revisar validacoes visuais.
 3. Revisar cadastro rapido de propriedade.
-4. Revisar vinculos do colaborador.
-5. Definir contrato real de backend/RBAC para `usuario_propriedade` e
-   `usuario_microregiao`.
+4. Migrar vinculos do colaborador para `usuario_propriedade`.
+5. Implementar o contrato real de backend/RBAC para `usuario_propriedade`.
 6. So depois planejar migracao tecnica dos nomes legados.
 
 ## Leitura Do Estado Atual Das Telas
@@ -284,9 +264,7 @@ Limitacoes conhecidas que permanecem fora do escopo desta matriz:
 
 - fluxo combinado `Usuario + Propriedade` ainda nao e transacional;
 - novo titular minimo nao cria login real;
-- `Propriedades atribuidas` ao colaborador ainda nao representam RBAC final por propriedade;
-- `propriedades_atribuidas` e visual/admin preparatorio e nao altera acesso
-  efetivo no MVP mockado;
+- o motor v1 ainda nao aplica os vinculos diretos como regra efetiva;
 - integridade referencial real fica para backend;
 - campos como `fazenda_id`, `produtor_id` e `proprietario_id` permanecem por compatibilidade.
 - aliases futuros de Propriedade/Titular existem no mock e na borda de

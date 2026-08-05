@@ -8,13 +8,16 @@ Este documento resume a linguagem oficial de produto para evitar ambiguidade dur
 - `Propriedades`: plural oficial para a unidade operacional vista pelo usuario.
 - `Produtor`: usuario/perfil final que consulta sua realidade operacional.
 - `Titular`: responsavel cadastral ou vinculo principal da propriedade.
-- `Colaborador`: usuario regional com escopo operacional restrito.
+- `Colaborador`: usuario operacional com escopo restrito as Propriedades
+  vinculadas diretamente.
 - `Administrador`: texto visivel para o perfil interno `admin`.
-- `Vinculo`: relacao cadastral entre usuario e propriedade ou entre usuario e territorio.
+- `Vinculo`: relacao cadastral entre usuario e Propriedade.
 - `Talhao`: subdivisao interna da propriedade.
 - `Safra`: periodo agricola.
-- `Regiao`: agrupamento territorial amplo.
-- `Microregiao`: subdivisao territorial usada no MVP visual/mockado.
+- `Municipio`: localizacao oficial da Propriedade; nao concede acesso.
+- `UF`: unidade federativa da localizacao; nao concede acesso.
+- `Regiao` e `Microregiao`: termos legados do mock v1, sem lugar no contrato
+  v2 inicial.
 - `Anexo de fertilidade`: arquivo ou imagem tecnica de fertilidade vinculado a propriedade, talhao e safra quando aplicavel.
 
 ## Compatibilidade Tecnica
@@ -104,8 +107,12 @@ Esses termos ainda sustentam mocks, contratos, helpers de compatibilidade, filtr
 
 ### Semantica De Escopo Do Colaborador
 
-No MVP mockado, `sub_regioes` e `vinculos_microregioes` pertencem ao escopo
-regional efetivo do colaborador:
+No contrato v2, o Colaborador acessa somente Propriedades com vinculo direto
+ativo em `usuario_propriedade`. Municipio e UF sao filtros de localizacao e
+nao concedem permissao.
+
+No mock v1 ainda executado, `sub_regioes` e `vinculos_microregioes` pertencem
+ao escopo regional legado do colaborador:
 
 - `sub_regioes`: fonte prioritaria do escopo territorial.
 - `vinculos_microregioes`: fallback quando `sub_regioes` estiver ausente ou
@@ -121,9 +128,9 @@ A diferenca operacional e:
 - propriedade atribuida documenta um vinculo direto previsto, mas ainda sem
   efeito de permissao no MVP mockado.
 
-Se o Admin visual exibir ou editar propriedades atribuidas, isso nao deve ser
-interpretado como alteracao real de acesso enquanto nao houver decisao e
-implementacao de RBAC/backend por propriedade.
+Durante a migracao, a interface v1 nao deve ser confundida com a regra
+aprovada. No v2, a atribuicao administrativa deve criar ou encerrar vinculos
+diretos efetivos.
 
 ### Regra Para Novas Implementacoes
 
@@ -134,7 +141,8 @@ implementacao de RBAC/backend por propriedade.
 - Codigo novo deve preferir os resolvers de `src/utils/propriedadeCompat.ts`.
 - Use `fazenda*` apenas quando estiver lidando com compatibilidade existente.
 - Nao acesse diretamente `fazenda_id`, `produtor_id` ou `proprietario_id` em novas telas/helpers, salvo compatibilidade explicita.
-- Nao remova campos legados enquanto payloads, mocks, permissoes, visitas, caderno, mapas e contratos dependerem deles.
+- Remova campos legados somente depois que payloads, mocks, permissoes,
+  visitas, caderno, mapas, storage e testes locais estiverem migrados.
 - Payloads de visita, caderno e cadastro ainda podem usar `fazenda_id` por compatibilidade.
 - Rotas novas de Propriedade devem usar nomes tecnicos baseados em `Propriedade`.
 

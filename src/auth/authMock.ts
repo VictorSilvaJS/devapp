@@ -7,8 +7,8 @@
  *    - Acesso TOTAL ao Brasil
  *    - Todas as funcionalidades
  * 
- * 2. COLABORADOR (colaborador): Acesso regional
- *    - Mesmas funcionalidades do admin, mas limitado à sua região/sub-regiões
+ * 2. COLABORADOR (colaborador): Acesso por vínculo direto
+ *    - Funcionalidades operacionais limitadas às Propriedades vinculadas
  *    - Direcionamento automático após autenticação ou acesso rápido demonstrativo
  *    - Regiões divididas por sub-regiões: Goiás 1, Goiás 2, Goiânia, Rio Verde, etc.
  * 
@@ -45,13 +45,15 @@ export const users = [
     regioes_acesso: ['Brasil']
   },
 
-  // ─── COLABORADORES ─ Acesso regional (mesmas funções do admin, limitado à região) ──
+  // ─── COLABORADORES ─ acesso somente por Propriedade vinculada ──────────────
   { 
     id: 'u2', 
     full_name: 'Colaborador Campo Goiás',
     perfil: 'colaborador', 
-    regiao: 'Goiás',
-    sub_regioes: ['Goiás 1', 'Rio Verde', 'Jataí'],
+    vinculos_propriedades: [
+      { propriedade_id: 'p4', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p4b', tipo_vinculo: 'colaborador', status: 'ativo' },
+    ],
     email: 'colaborador.goias@example.com',
     senha: 'colab123'
   },
@@ -59,8 +61,12 @@ export const users = [
     id: 'u3', 
     full_name: 'Colaborador Campo Sul',
     perfil: 'colaborador', 
-    regiao: 'Sul',
-    sub_regioes: ['RS - Norte', 'RS - Centro', 'RS - Sul'],
+    vinculos_propriedades: [
+      { propriedade_id: 'p1', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p1b', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p2', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p3', tipo_vinculo: 'colaborador', status: 'ativo' },
+    ],
     email: 'colaborador.sul@example.com',
     senha: 'colab123'
   },
@@ -68,8 +74,11 @@ export const users = [
     id: 'u5', 
     full_name: 'Colaborador de Campo',
     perfil: 'colaborador', 
-    regiao: 'Mato Grosso',
-    sub_regioes: ['MT - Norte', 'Sorriso', 'Lucas do Rio Verde'],
+    vinculos_propriedades: [
+      { propriedade_id: 'p5', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p5b', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p_sela1', tipo_vinculo: 'colaborador', status: 'ativo' },
+    ],
     email: 'colaborador.campo@example.com',
     senha: 'colab123'
   },
@@ -77,8 +86,10 @@ export const users = [
     id: 'u6', 
     full_name: 'Colaborador Campo Goiás 2',
     perfil: 'colaborador', 
-    regiao: 'Goiás',
-    sub_regioes: ['Goiás 2', 'Goiânia', 'Anápolis'],
+    vinculos_propriedades: [
+      { propriedade_id: 'p6', tipo_vinculo: 'colaborador', status: 'ativo' },
+      { propriedade_id: 'p6b', tipo_vinculo: 'colaborador', status: 'ativo' },
+    ],
     email: 'colaborador.goias2@example.com',
     senha: 'colab123'
   },

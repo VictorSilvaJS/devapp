@@ -26,12 +26,10 @@ import {
   getNivelAdminLabel,
   getPropriedadesDoColaborador,
   getPropriedadesDoUsuarioProdutor,
-  getPropriedadeIdsAtribuidas,
   getUsuarioNome,
   getUsuarioPerfilLabel,
   getUsuarioStatusInfo,
   getVinculoPropriedadeLabel,
-  getVinculosMicroregiaoUsuario,
   getVinculosPropriedadeUsuario,
 } from '../utils/usuarioAdminCompat';
 
@@ -166,9 +164,7 @@ export default function UsuarioDetailScreen() {
   const vinculo = buildUsuarioVinculoPrincipal(usuario, propriedades);
   const propriedadesProdutor = getPropriedadesDoUsuarioProdutor(usuario, propriedades);
   const propriedadesColaborador = getPropriedadesDoColaborador(usuario, propriedades);
-  const propriedadesAtribuidas = getPropriedadeIdsAtribuidas(usuario);
   const vinculosPropriedades = getVinculosPropriedadeUsuario(usuario, propriedades);
-  const vinculosMicroregioes = getVinculosMicroregiaoUsuario(usuario);
   const getVinculoDaPropriedade = (id: string) =>
     vinculosPropriedades.find((item) => item.propriedade_id === id);
   const abrirPropriedade = (propriedade: any) => {
@@ -291,33 +287,14 @@ export default function UsuarioDetailScreen() {
 
         {usuario.perfil === 'colaborador' && (
           <SectionCard title="Escopo do Colaborador">
-            <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Consultoria regional'} />
-            <InfoRow icon="location-outline" label="Região" value={usuario.regiao} />
+            <InfoRow icon="briefcase-outline" label="Função/cargo" value={usuario.cargo || 'Colaborador de campo'} />
             <InfoBox
-              message="Região, Microrregião e Propriedades atribuídas automaticamente são vínculos demonstrativos. Eles não são RBAC final e não alteram sozinhos o acesso efetivo."
+              message="O acesso local é concedido somente pelos vínculos diretos ativos abaixo. Município e UF são informações de localização e não ampliam o escopo."
               style={styles.inlineInfoBox}
             />
 
-            <Text style={styles.subsectionTitle}>Microregiões atendidas</Text>
-            {vinculosMicroregioes.length === 0 ? (
-              <EmptyState
-                icon="location-outline"
-                title="Nenhuma microregião vinculada"
-                style={styles.emptyStateCompact}
-              />
-            ) : (
-              <View style={styles.chipWrap}>
-                {vinculosMicroregioes.map((item) => (
-                  <View key={`${item.regiao}-${item.microregiao}`} style={styles.infoChip}>
-                    <Text style={styles.infoChipText}>{item.microregiao}</Text>
-                    {item.regiao ? <Text style={styles.infoChipMeta}>{item.regiao}</Text> : null}
-                  </View>
-                ))}
-              </View>
-            )}
-
             <Text style={styles.subsectionTitle}>
-              {propriedadesAtribuidas.length > 0 ? 'Propriedades atribuídas por microrregião' : 'Propriedades no escopo visual'}
+              Propriedades vinculadas diretamente
             </Text>
             {propriedadesColaborador.length === 0 ? (
               <EmptyState

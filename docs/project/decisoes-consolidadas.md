@@ -8,6 +8,12 @@ Este documento registra decisoes ja assumidas pelo projeto e que devem orientar 
 - Se um ponto ainda depender de validacao ou detalhamento, ele deve ir para `pendencias-de-definicao.md`.
 - Quando houver conflito entre historico e este documento, priorize este documento e os demais arquivos ativos de `docs/project/`.
 
+As decisoes 31 a 33, aprovadas em 2026-08-05, substituem especificamente a
+classificacao do Colaborador como regional nas decisoes 1 e 7, a compatibilidade
+territorial da decisao 12 e o modelo Regional/Area operacional da decisao 23.
+Essas secoes anteriores permanecem como registro do contrato que ainda existe
+no codigo v1 ate a migracao tecnica terminar; elas nao orientam novos dados v2.
+
 ## 1. O projeto trabalha com tres perfis principais
 
 ### Decisao
@@ -847,3 +853,84 @@ com os criterios ja aprovados.
 - teclado inline em paisagem nao e declarado como comportamento aprovado;
 - outro IME ou patch nativo so deve ser reavaliado se surgir requisito novo;
 - autenticacao, sessao, credenciais e regras de acesso permanecem inalteradas.
+
+---
+
+## 31. A Tche Fertilidade e a unica organizacao do primeiro contrato
+
+### Decisao
+
+A Tche Fertilidade e a unica organizacao operadora e proprietaria do
+aplicativo no primeiro contrato. O modelo usa o identificador interno
+`org_tche_fertilidade`, sem seletor de organizacao ou administracao
+multiempresa na interface.
+
+### Alcance
+
+Afeta o mock v2, o futuro modelo de banco, isolamento de dados, sessao,
+auditoria e relacoes entre usuarios, Propriedades e recursos operacionais.
+
+### Impacto
+
+- registros v2 pertencem a organizacao Tche Fertilidade;
+- Admin possui visao global dentro dessa organizacao;
+- multiplas organizacoes ficam fora do primeiro backend;
+- o identificador interno nao precisa aparecer para o usuario;
+- dados de Produtores e Propriedades continuam sujeitos a autorizacao,
+  privacidade e escopo, embora pertençam a uma unica organizacao operadora.
+
+---
+
+## 32. Cada Propriedade possui um Produtor Titular principal
+
+### Decisao
+
+Cada Propriedade possui exatamente um Produtor como Titular principal ativo.
+Um mesmo Produtor pode ser Titular de uma ou mais Propriedades. Outros usuarios
+podem acessar a Propriedade por vinculo explicito sem se tornarem Titulares.
+
+### Alcance
+
+Afeta cadastro, identidade, navegacao, autorizacao, mock v2, banco, API e
+integridade dos vinculos.
+
+### Impacto
+
+- `titular_id` referencia o cadastro de Produtor;
+- `usuario_propriedade` registra Titular, usuario autorizado ou Colaborador;
+- perfil define a capacidade e vinculo ativo define a Propriedade;
+- troca de Titular nao ocorre em edicao cadastral comum;
+- troca futura deve ser transacional e auditada;
+- o modelo nao assume relacao de um Produtor para uma unica Propriedade.
+
+---
+
+## 33. Colaborador acessa por vinculo direto com Propriedade
+
+### Decisao
+
+No contrato v2, Colaborador acessa somente Propriedades atribuidas diretamente
+por um vinculo ativo `usuario_propriedade`. Municipio e UF representam
+localizacao oficial e servem para cadastro, busca, filtro e selecao
+administrativa em lote; nao concedem acesso.
+
+Regional, Area operacional, Regiao, Microregiao e aliases territoriais nao
+fazem parte do primeiro modelo canonico v2.
+
+### Alcance
+
+Afeta regras de acesso, filtros, Admin, Perfil do Colaborador, rotas diretas,
+mock, persistencia local, testes e futuro backend/RBAC.
+
+### Impacto
+
+- Admin pode filtrar Propriedades por Municipio/UF e atribuir varias de uma
+  vez, mas a permissao resultante continua explicita por Propriedade;
+- Propriedade nova no mesmo Municipio nao concede acesso automatico;
+- `sub_regioes`, `vinculos_microregioes`, `propriedades_atribuidas` e
+  `territorioCompat` ficam restritos a migracao do mock v1;
+- o motor local deve migrar de texto territorial para vinculos diretos;
+- o backend futuro deve revalidar perfil, organizacao, vinculo, acao e
+  Propriedade no servidor;
+- o contrato detalhado fica em `modelo-dados-mock-v2.md` e
+  `modelo-territorial.md`.

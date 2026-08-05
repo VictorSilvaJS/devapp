@@ -15,10 +15,15 @@ O MVP nao deve assumir como obrigatorio tudo o que ja foi discutido historicamen
 O MVP deve sustentar tres visoes principais:
 
 - administracao geral
-- colaborador regional
+- colaborador vinculado a Propriedades
 - produtor
 
 Isso inclui navegacao coerente com o perfil e restricao de acesso aos dados conforme o escopo de cada usuario.
+
+No contrato v2, Admin possui visao global dentro da Tche Fertilidade,
+Produtor acessa por titularidade/vinculo e Colaborador acessa somente por
+vinculo direto ativo com Propriedade. Municipio/UF servem para localizacao e
+filtros, nao para conceder acesso.
 
 ### 2. Organizacao por produtor e propriedade
 

@@ -100,9 +100,9 @@ const createColaboradorUser = async (email = 'login.colab.local@example.com') =>
     senha: 'mock123',
     perfil: 'colaborador',
     status: 'ativo',
-    regiao: 'Mato Grosso',
-    sub_regioes: ['Sorriso'],
-    vinculos_microregioes: [{ regiao: 'Mato Grosso', microregiao: 'Sorriso' }],
+    vinculos_propriedades: [
+      { propriedade_id: 'p_sela1', tipo_vinculo: 'colaborador', status: 'ativo' },
+    ],
   });
 
 const createProdutorUser = async (email = 'login.produtor.local@example.com') =>
@@ -293,7 +293,7 @@ const run = async () => {
     assert.equal(authenticated.acesso_global, true);
   });
 
-  await test('usuario local colaborador preserva regiao e vinculos territoriais', async () => {
+  await test('usuario local colaborador preserva vinculos diretos', async () => {
     await setupMock();
     const { service } = createCredentialService();
     const usuario = await createColaboradorUser();
@@ -302,11 +302,11 @@ const run = async () => {
     const authenticated = await loginLocal(usuario.email, 'SenhaColab123', service);
 
     assert.equal(authenticated.perfil, 'colaborador');
-    assert.equal(authenticated.regiao, 'Mato Grosso');
-    assert.deepEqual(authenticated.sub_regioes, ['Sorriso']);
-    assert.deepEqual(authenticated.vinculos_microregioes, [
-      { usuario_id: usuario.id, regiao: 'Mato Grosso', microregiao: 'Sorriso' },
-    ]);
+    assert.ok(authenticated.vinculos_propriedades.some((item) => (
+      item.propriedade_id === 'p_sela1'
+      && item.tipo_vinculo === 'colaborador'
+      && item.status === 'ativo'
+    )));
   });
 
   await test('usuario local produtor preserva produtor_id e vinculos com Propriedades', async () => {
@@ -319,14 +319,12 @@ const run = async () => {
 
     assert.equal(authenticated.perfil, 'produtor');
     assert.equal(authenticated.produtor_id, 'prop_sela1');
-    assert.deepEqual(authenticated.vinculos_propriedades, [
-      {
-        usuario_id: usuario.id,
-        propriedade_id: 'p_sela1',
-        tipo_vinculo: 'titular',
-        principal: true,
-      },
-    ]);
+    assert.ok(authenticated.vinculos_propriedades.some((item) => (
+      item.usuario_id === usuario.id
+      && item.propriedade_id === 'p_sela1'
+      && item.tipo_vinculo === 'titular'
+      && item.status === 'ativo'
+    )));
   });
 
   await test('credencial existe mas usuario nao existe retorna erro controlado', async () => {
@@ -520,8 +518,9 @@ const run = async () => {
       id: 'u_restart',
       full_name: 'Usuario Restaurado',
       perfil: 'colaborador',
-      regiao: 'Sul',
-      sub_regioes: ['RS - Norte'],
+      vinculos_propriedades: [
+        { propriedade_id: 'prop_restart', tipo_vinculo: 'colaborador', status: 'ativo' },
+      ],
     });
 
     const restored = await restoreAuthSessionUser(sessionStorage.adapter);
@@ -529,7 +528,7 @@ const run = async () => {
     assert.equal(restored.id, 'u_restart');
     assert.equal(restored.nome, 'Usuario Restaurado');
     assert.equal(restored.perfil, 'colaborador');
-    assert.deepEqual(restored.sub_regioes, ['RS - Norte']);
+    assert.equal(restored.vinculos_propriedades[0].propriedade_id, 'prop_restart');
   });
 
   await test('mock123 nao autentica usuario administrativo sem credencial', async () => {

@@ -58,10 +58,6 @@ export const validateUser = (data) => {
   
   validateEnum(normalized.perfil, ['admin', 'colaborador', 'produtor'], 'perfil', 'User');
   
-  if (normalized.perfil === 'colaborador' && !normalized.regiao) {
-    console.warn('User: Colaborador sem região definida');
-  }
-  
   if (normalized.perfil === 'produtor' && !normalized.produtor_id) {
     console.warn('User: Produtor/Proprietário sem produtor_id vinculado');
   }

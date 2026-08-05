@@ -9,8 +9,9 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
 
 **Pontos Mais Arriscados**
 1. Produtor por rota direta: `NovaVisita`, `EditarVisita`, `CadernoDetail` restrito, `EditarCaderno` de outro autor.
-2. Colaborador fora de escopo regional: criação/edição/detalhe de visita e caderno.
-3. Preservação de `fazenda_id` em edição de visita e caderno.
+2. Colaborador sem vínculo direto: criação/edição/detalhe de visita e caderno.
+3. Preservação temporária de `fazenda_id` em edição de visita e caderno até a
+   migração operacional para `propriedade_id`.
 4. Caderno no detalhe da propriedade: registros corretos por propriedade e visibilidade para produtor.
 5. Criação a partir do detalhe da propriedade: novo caderno nasce vinculado à propriedade atual.
 6. Criação de visita pelo detalhe da propriedade: `NovaVisita` deve pré-selecionar/travar a propriedade contextual e manter bloqueio fora de escopo.
@@ -20,8 +21,22 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
    Fertilidade/Correcao de solo/Prescricao, preservando nome original,
    visibilidade, compatibilidade dos materiais antigos e separacao de
    GeoJSON/talhoes.
-10. Admin visual: `propriedades_atribuidas` no cadastro/detalhe do colaborador não deve ser interpretado como alteração real de acesso.
+10. Admin: vínculo direto no cadastro/detalhe do Colaborador deve alterar o
+    acesso local; Município/UF não podem conceder acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
+
+**Rodada V2-01 - Vínculo Direto Do Colaborador**
+
+Status geral em 2026-08-05: `PASSOU_AUTOMATIZADO_PENDENTE_SMOKE_ANDROID`.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| V2-01 | P0 | Admin | Usuários | Criar/editar Colaborador ativo sem Propriedade | Salvamento bloqueado | Reexecutar | Coberto por teste automatizado; validar no aparelho |
+| V2-02 | P0 | Admin | Usuários | Vincular duas Propriedades diretamente | Detalhe mostra somente as duas vinculadas, sem Região/Microregião | Reexecutar | Cadastro administrativo migrado |
+| V2-03 | P0 | Colaborador | Propriedades | Entrar após vínculo direto | Lista contém somente Propriedades vinculadas ativas | Reexecutar | Motor e login cobertos por testes |
+| V2-04 | P0 | Colaborador | Rota direta | Abrir ID sem vínculo | Acesso negado sem expor conteúdo | Reexecutar | Avaliação de rota coberta por teste |
+| V2-05 | P0 | Colaborador | Localização | Usar Município/UF iguais aos de Propriedade não vinculada | Propriedade continua inacessível | Reexecutar | Localização não autoriza |
+| V2-06 | P1 | Admin | Propriedades | Tentar criar Propriedade como Colaborador | Ação estrutural permanece bloqueada | Reexecutar | Admin é o perfil autorizado neste corte |
 
 **Rodada MP-32 - WebView, Rede E Fallback Offline**
 

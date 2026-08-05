@@ -21,7 +21,6 @@ import { colors, spacing, typography } from '../theme';
 import {
   filtrarProdutoresPorAcesso,
   getFazendaIds,
-  getSubRegioes,
 } from '../utils/acessoControle';
 import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import {
@@ -168,8 +167,6 @@ export default function DashboardScreen() {
     [data.usuarios, scopeData]
   );
 
-  const microregioes = useMemo(() => getSubRegioes(user), [user]);
-
   const cards = useMemo(() => {
     if (user?.perfil === 'admin') {
       return [
@@ -203,9 +200,7 @@ export default function DashboardScreen() {
   const isAdmin = user?.perfil === 'admin';
   const escopoLabel = isAdmin
     ? getFiltroAtivo()
-    : user?.regiao
-      ? `${user.regiao} • ${microregioes.length} ${microregioes.length === 1 ? 'microrregião' : 'microrregiões'}`
-      : 'Região não definida';
+    : `${summary.propriedades} Propriedade${summary.propriedades === 1 ? '' : 's'} vinculada${summary.propriedades === 1 ? '' : 's'}`;
 
   if (isLoading) {
     return (
@@ -243,16 +238,12 @@ export default function DashboardScreen() {
             <View style={styles.filtrosContainer}>
               <FiltroRegional />
             </View>
-          ) : (
-            <View style={styles.filtrosContainer}>
-              <FiltroRegional fixedRegiao={user?.regiao} microregiaoOptions={microregioes} />
-            </View>
-          )}
+          ) : null}
 
           <View style={styles.scopeCard}>
-            <Ionicons name={isAdmin ? 'globe-outline' : 'location-outline'} size={22} color={colors.primary} />
+            <Ionicons name={isAdmin ? 'globe-outline' : 'link-outline'} size={22} color={colors.primary} />
             <View style={styles.scopeText}>
-              <Text style={styles.scopeLabel}>{isAdmin ? 'Abrangência atual' : 'Região e microrregiões'}</Text>
+              <Text style={styles.scopeLabel}>{isAdmin ? 'Abrangência atual' : 'Escopo por vínculo direto'}</Text>
               <Text style={styles.scopeValue}>{escopoLabel}</Text>
             </View>
           </View>

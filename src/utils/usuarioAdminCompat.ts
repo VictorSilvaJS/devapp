@@ -23,9 +23,8 @@ export const STATUS_USUARIO_ADMIN = [
 
 export const TIPOS_VINCULO_PROPRIEDADE_USUARIO = [
   { key: 'titular', label: 'Titular' },
-  { key: 'responsavel', label: 'Responsável' },
-  { key: 'colaborador_atribuido', label: 'Colaborador atribuído' },
-  { key: 'outro', label: 'Outro' },
+  { key: 'usuario_autorizado', label: 'Usuário autorizado' },
+  { key: 'colaborador', label: 'Colaborador' },
 ];
 
 export const NIVEIS_ADMIN_USUARIO = [
@@ -128,9 +127,12 @@ const normalizeVinculoPropriedade = (vinculo: any, usuarioId?: string) => {
   if (!propriedadeId) return null;
 
   return {
+    id: vinculo?.id || `up_${usuarioId || vinculo?.usuario_id || 'usuario'}_${propriedadeId}_${vinculo?.tipo_vinculo || 'outro'}`,
+    organizacao_id: vinculo?.organizacao_id || 'org_tche_fertilidade',
     usuario_id: vinculo?.usuario_id || usuarioId || '',
     propriedade_id: propriedadeId,
     tipo_vinculo: vinculo?.tipo_vinculo || 'outro',
+    status: vinculo?.status === 'inativo' ? 'inativo' : 'ativo',
     principal: vinculo?.principal === true,
   };
 };
@@ -152,17 +154,6 @@ export const getVinculosPropriedadeUsuario = (usuario: any, propriedades: any[] 
         usuario_id: usuario?.id || '',
         propriedade_id: resolvePropriedadeId(propriedade),
         tipo_vinculo: usuario?.tipo_vinculo_produtor || 'titular',
-        principal: index === 0,
-      }));
-  }
-
-  if (usuario?.perfil === 'colaborador' && Array.isArray(usuario?.propriedades_atribuidas)) {
-    return usuario.propriedades_atribuidas
-      .filter((id) => typeof id === 'string' && id.trim().length > 0)
-      .map((id, index) => ({
-        usuario_id: usuario?.id || '',
-        propriedade_id: id.trim(),
-        tipo_vinculo: 'colaborador_atribuido',
         principal: index === 0,
       }));
   }
@@ -199,7 +190,8 @@ export const getSubRegioesUsuario = (usuario: any): string[] =>
 
 export const getPropriedadeIdsAtribuidas = (usuario: any): string[] =>
   getVinculosPropriedadeUsuario(usuario)
-    .filter((vinculo) => usuario?.perfil !== 'colaborador' || vinculo.tipo_vinculo === 'colaborador_atribuido')
+    .filter((vinculo) => vinculo.status !== 'inativo')
+    .filter((vinculo) => usuario?.perfil !== 'colaborador' || ['colaborador', 'colaborador_atribuido'].includes(vinculo.tipo_vinculo))
     .map((vinculo) => vinculo.propriedade_id);
 
 export const getPropriedadesDoUsuarioProdutor = (usuario: any, propriedades: any[] = []) => {
@@ -217,14 +209,7 @@ export const getPropriedadesDoUsuarioProdutor = (usuario: any, propriedades: any
 
 export const getPropriedadesDoColaborador = (usuario: any, propriedades: any[] = []) => {
   const idsAtribuidos = new Set(getPropriedadeIdsAtribuidas(usuario));
-  if (idsAtribuidos.size > 0) {
-    return propriedades.filter((propriedade) => idsAtribuidos.has(resolvePropriedadeId(propriedade)));
-  }
-
-  const subRegioes = new Set(getSubRegioesUsuario(usuario));
-  if (subRegioes.size === 0) return [];
-
-  return propriedades.filter((propriedade) => subRegioes.has(propriedade?.microregiao));
+  return propriedades.filter((propriedade) => idsAtribuidos.has(resolvePropriedadeId(propriedade)));
 };
 
 export const getVinculoPropriedadeLabel = (tipo?: string) => {
@@ -239,18 +224,13 @@ export const buildUsuarioVinculoPrincipal = (usuario: any, propriedades: any[] =
   }
 
   if (usuario?.perfil === 'colaborador') {
-    const subRegioes = getSubRegioesUsuario(usuario);
     const propriedadesAtribuidas = getPropriedadeIdsAtribuidas(usuario);
 
-    if (subRegioes.length > 0) {
-      return `${usuario?.regiao || 'Região'} • ${subRegioes.length} microregião${subRegioes.length === 1 ? '' : 's'}`;
-    }
-
     if (propriedadesAtribuidas.length > 0) {
-      return `${propriedadesAtribuidas.length} propriedade${propriedadesAtribuidas.length === 1 ? '' : 's'} atribuída${propriedadesAtribuidas.length === 1 ? '' : 's'}`;
+      return `${propriedadesAtribuidas.length} propriedade${propriedadesAtribuidas.length === 1 ? '' : 's'} vinculada${propriedadesAtribuidas.length === 1 ? '' : 's'}`;
     }
 
-    return usuario?.regiao ? `Região ${usuario.regiao}` : 'Sem escopo definido';
+    return 'Sem Propriedade vinculada';
   }
 
   if (usuario?.perfil === 'produtor') {
@@ -340,27 +320,22 @@ export const buildUsuarioAdminPayload = ({
   }
 
   if (perfil === 'colaborador') {
-    const subRegioes = parseListaTexto(form.subRegioesText);
-    const regiao = form.regiao?.trim() || '';
-    const vinculosColaborador = buildVinculosPropriedadesPorMicroregioes({
-      propriedades,
-      regiao,
-      microregioes: subRegioes,
-    });
+    const vinculosColaborador = vinculosPropriedades.map((vinculo) => ({
+      ...vinculo,
+      tipo_vinculo: 'colaborador',
+      status: vinculo.status === 'inativo' ? 'inativo' : 'ativo',
+    }));
 
     return {
       ...base,
       produtor_id: '',
       tipo_vinculo_produtor: '',
-      regiao,
+      regiao: '',
       cargo: form.cargo?.trim() || '',
-      sub_regioes: subRegioes,
+      sub_regioes: [],
       propriedades_atribuidas: vinculosColaborador.map((vinculo) => vinculo.propriedade_id),
       vinculos_propriedades: vinculosColaborador,
-      vinculos_microregioes: subRegioes.map((microregiao) => ({
-        regiao,
-        microregiao,
-      })),
+      vinculos_microregioes: [],
       regioes_acesso: [],
       nivel_administrativo: '',
       acesso_global: false,
@@ -406,7 +381,6 @@ export const normalizeFormVinculosPropriedade = (vinculos?: any[]) => {
 
 export const buildUsuarioFormFromMock = (usuario: any, propriedades: any[] = []) => {
   const vinculosPropriedades = getVinculosPropriedadeUsuario(usuario, propriedades);
-  const vinculosMicroregioes = getVinculosMicroregiaoUsuario(usuario);
 
   return {
     nome: getUsuarioNome(usuario) === 'Usuário sem nome' ? '' : getUsuarioNome(usuario),
@@ -418,9 +392,9 @@ export const buildUsuarioFormFromMock = (usuario: any, propriedades: any[] = [])
     observacoes: usuario?.observacoes || '',
     vinculosPropriedades,
     produtor_id: usuario?.produtor_id || '',
-    regiao: usuario?.regiao || vinculosMicroregioes[0]?.regiao || '',
+    regiao: '',
     cargo: usuario?.cargo || '',
-    subRegioesText: vinculosMicroregioes.map((vinculo) => vinculo.microregiao).join(', '),
+    subRegioesText: '',
     nivelAdministrativo: usuario?.nivel_administrativo || 'global',
   };
 };

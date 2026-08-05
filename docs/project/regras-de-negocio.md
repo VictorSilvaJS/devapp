@@ -13,6 +13,13 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 ### Produtor e propriedade
 
 - O sistema deve considerar que um produtor pode estar vinculado a uma ou mais propriedades.
+- Cada Propriedade do contrato v2 possui exatamente um Produtor como Titular
+  principal ativo.
+- Outros usuarios podem ser vinculados a Propriedade sem se tornarem
+  Titulares.
+- O perfil define quais acoes o usuario pode executar; o vinculo ativo em
+  `usuario_propriedade` define em quais Propriedades essas acoes podem ser
+  executadas.
 - A navegacao, os dados e as permissoes devem respeitar essa relacao.
 - O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
 - No mock administrativo, o vinculo entre usuario produtor e propriedade deve ser representado visualmente por uma relacao explicita `usuario_propriedade`, preservando compatibilidade com `produtor_id`/titular enquanto a base legada existir.
@@ -28,21 +35,20 @@ O contrato canonico esta em `modelo-territorial.md`.
 
 - UF e Municipio representam a localizacao oficial da Propriedade e devem usar
   codigos estaveis do IBGE.
-- Regional e Area operacional representam agrupamentos de trabalho da
-  organizacao, com IDs proprios.
 - Municipio/UF nao concedem acesso por si so.
-- Colaborador recebe escopo por vinculo administrativo ativo com Regional,
-  Area operacional ou Propriedade direta.
+- Colaborador recebe escopo somente por vinculo administrativo direto e ativo
+  com Propriedade.
 - Colaborador consulta os proprios vinculos e nao pode altera-los pelo Perfil.
 - Somente Admin autorizado altera vinculos, com justificativa, auditoria e
   revalidacao do escopo.
 - `regiao`, `microregiao`, `sub_regioes` e `vinculos_microregioes` permanecem
-  legados ambiguos ate migracao controlada; nomes nao devem ser
-  reclassificados automaticamente.
+  legados do mock v1 ate sua substituicao integral; nomes nao devem ser
+  reclassificados automaticamente nem gravados no modelo v2.
 
 ### Territorio e vinculos visuais no mock
 
-- Esta secao descreve somente compatibilidade do mock e nao o modelo canonico.
+- Esta secao descreve somente o comportamento ainda existente no mock v1. Ela
+  nao orienta o mock v2 e deve ser removida quando a migracao tecnica terminar.
 - A leitura territorial do MVP visual/mockado deve favorecer a cadeia Regiao -> Microregiao -> Propriedade.
 - Enquanto nao houver backend/banco real para territorio, `territorioCompat` deriva regioes e microregioes a partir das propriedades mockadas.
 - Os campos textuais legados `regiao` e `microregiao` continuam validos e devem ser preservados para compatibilidade.
@@ -86,19 +92,17 @@ O contrato canonico esta em `modelo-territorial.md`.
 - No MVP mockado, Admin ve todas as Propriedades; edicoes visuais de
   `propriedades_atribuidas` nao alteram acesso efetivo do colaborador.
 
-### Colaborador regional
+### Colaborador
 
-- Possui escopo regional ou sub-regional.
-- Nao deve acessar dados fora do seu escopo.
 - Atua na manutencao operacional dos dados conforme permissao.
-- No mock administrativo, pode ter microregioes/sub-regioes e propriedades atribuidas visualmente.
-- No cadastro visual/mockado, pode selecionar uma ou mais microregioes e ver previa das propriedades abrangidas por essas microregioes.
-- Tambem pode ter propriedades atribuidas diretamente no mock visual.
-- A regra efetiva atual usa `sub_regioes` como fonte prioritaria do escopo.
-- Se `sub_regioes` estiver ausente ou vazio, a regra efetiva usa
-  `vinculos_microregioes` como fallback.
-- `propriedades_atribuidas` continua sendo vinculo direto preparatorio e nao
-  restringe nem amplia acesso efetivo nesta fase.
+- No contrato v2, acessa somente Propriedades com vinculo direto ativo do tipo
+  `colaborador` em `usuario_propriedade`.
+- Nao deve acessar Propriedade sem vinculo ativo, inclusive por rota direta.
+- Municipio e UF podem filtrar a interface administrativa, mas nao concedem
+  acesso.
+- Somente Admin autorizado atribui ou encerra vinculos.
+- O motor v1 ainda usa `sub_regioes` e `vinculos_microregioes`; esse
+  comportamento e legado em migracao e nao deve aparecer nos novos dados.
 
 ### Produtor
 
@@ -113,8 +117,8 @@ O contrato canonico esta em `modelo-territorial.md`.
 ## Regra de Visibilidade
 
 - A visualizacao do produtor deve ser a mais restrita entre os perfis principais.
-- A visualizacao do colaborador deve respeitar seu escopo geografico por
-  `sub_regioes` ou fallback `vinculos_microregioes`.
+- A visualizacao do colaborador deve respeitar os vinculos diretos ativos com
+  Propriedades.
 - A administracao geral deve conseguir enxergar o panorama consolidado da operacao.
 
 ## Regra Sobre Notificacoes
@@ -138,11 +142,9 @@ O contrato canonico esta em `contrato-notificacoes.md`.
 
 ## Contrato Futuro De Backend/RBAC
 
-Status em 2026-06-03 (Fase 14E): este contrato e direcao futura recomendada
-para backend/RBAC e nao altera o comportamento funcional do MVP mockado. O MVP
-atual continua usando `sub_regioes` e fallback `vinculos_microregioes` para o
-colaborador; `propriedades_atribuidas` continua visual/preparatorio ate haver
-backend.
+Status em 2026-08-05: a decisao 33 substituiu a recomendacao regional anterior.
+O motor v1 continua territorial apenas ate a migracao tecnica; o contrato v2 e
+o backend futuro usam vinculo direto por Propriedade para Colaborador.
 
 Status em 2026-06-03 (Fase 14F): a matriz tecnica de testes e criterios de
 aceite deste contrato foi registrada em `matriz-rbac-backend.md`. Ela deve
@@ -155,17 +157,15 @@ nova no MVP mockado.
 |---|---|---|---|
 | Admin | Global | Lista e abre todas as Propriedades autorizadas pela organizacao | Pode administrar cadastros e vinculos conforme papel administrativo |
 | Produtor | Vinculo com Propriedade/Titular | Lista e abre Propriedades em que possui vinculo ativo | Consulta mapas/anexos, visitas e caderno autorizados; nao administra estrutura geral |
-| Colaborador | Microregiao vinculada OU Propriedade atribuida diretamente | Lista e abre Propriedades dentro do escopo combinado/aditivo | Atua operacionalmente conforme permissoes por acao |
+| Colaborador | `usuario_propriedade` direto e ativo | Lista e abre somente Propriedades atribuidas | Atua operacionalmente conforme permissoes por acao |
 
 ### Entidades minimas de backend
 
 - `usuarios`: pessoa/acesso, perfil principal, status e dados de autenticacao.
-- `propriedades`: unidade operacional, titular principal, regiao,
-  microregiao, status e dados cadastrais.
+- `propriedades`: unidade operacional, titular principal, Municipio/UF,
+  status e dados cadastrais.
 - `usuario_propriedade`: vinculos diretos entre usuario e Propriedade, com
   tipo de vinculo, status, principal quando aplicavel e origem do vinculo.
-- `usuario_microregiao`: vinculos territoriais entre usuario e microregiao,
-  com status e periodo de validade quando necessario.
 - `perfis`/`papeis`: definicao de capacidades por perfil e, se necessario,
   papeis administrativos mais granulares.
 
@@ -173,7 +173,7 @@ nova no MVP mockado.
 
 - Listar Propriedades: Admin lista tudo; Produtor lista por
   `usuario_propriedade`/titularidade; Colaborador lista por
-  `usuario_microregiao` ou por `usuario_propriedade` direto.
+  `usuario_propriedade` direto e ativo.
 - Abrir detalhe de Propriedade: permitido quando a Propriedade estiver dentro
   do escopo do perfil, seguindo a mesma precedencia de listagem.
 - Ver mapas/anexos: permitido quando o usuario tem acesso a Propriedade e o
@@ -188,30 +188,22 @@ nova no MVP mockado.
 
 1. Admin tem acesso global.
 2. Produtor tem acesso por titularidade/vinculo direto com a Propriedade.
-3. Colaborador tem acesso aditivo por microregiao vinculada OU Propriedade
-   atribuida diretamente.
+3. Colaborador tem acesso apenas por Propriedade atribuida diretamente.
 
-Para Colaborador, `propriedades_atribuidas` no backend deve ampliar acesso
-direto quando a Propriedade nao estiver na microregiao vinculada. Ela nao deve
-restringir automaticamente o acesso regional. Qualquer politica restritiva,
-como "somente propriedades atribuidas dentro da microregiao", deve ser uma
-decisao futura explicita e implementada como regra propria, nao inferida do
-campo.
+### Localizacao e acesso direto
 
-### Diferenca entre acesso regional e acesso direto
-
-- Acesso regional: deriva de `usuario_microregiao` e cobre todas as
-  Propriedades ativas daquela microregiao conforme regra da organizacao.
-- Acesso direto: deriva de `usuario_propriedade` e concede acesso a uma
-  Propriedade especifica, mesmo que ela esteja fora das microregioes
-  vinculadas ao colaborador, quando a politica permitir.
+- Municipio/UF descrevem a localizacao e ajudam a selecionar Propriedades em
+  lote.
+- Acesso deriva de `usuario_propriedade` e concede escopo somente para a
+  Propriedade especifica.
+- Nova Propriedade no mesmo Municipio exige atribuicao administrativa propria.
 
 ### Riscos de divergencia
 
-- Se o backend tratar `propriedades_atribuidas` como restricao implicita, o
-  colaborador pode perder acesso regional que hoje e esperado no MVP.
-- Se o backend ignorar o acesso direto por Propriedade atribuida, o Admin
-  pode cadastrar vinculos que nao produzem efeito real.
+- Se o backend inferir acesso por Municipio/UF, uma nova Propriedade pode ser
+  exposta sem atribuicao administrativa.
+- Se o backend ignorar `usuario_propriedade`, o Admin pode cadastrar vinculos
+  que nao produzem efeito real.
 - Se mapas, visitas e caderno nao validarem permissao por Propriedade no
   backend, rotas diretas podem expor dados fora do escopo.
 - Se `fazenda_id`, `propriedade_id`, titularidade e vinculos forem migrados sem
@@ -219,16 +211,15 @@ campo.
 
 ### Pendencias para modelagem real
 
-- Definir ids canonicos para Propriedade, microregiao e usuario.
-- Definir status e validade dos vinculos `usuario_propriedade` e
-  `usuario_microregiao`.
-- Definir se existe escopo por regiao alem de microregiao.
+- Implementar os ids canonicos definidos em `modelo-dados-mock-v2.md`.
+- Definir validade, origem e auditoria dos vinculos `usuario_propriedade` no
+  backend.
 - Definir matriz de permissoes por acao: listar, abrir detalhe, criar visita,
   editar visita, criar caderno, editar caderno, liberar/download de anexos e
   editar cadastro.
 - Definir como auditar alteracoes de vinculos e permissoes.
-- Definir estrategia de migracao a partir de `sub_regioes`,
-  `vinculos_microregioes`, `propriedades_atribuidas`, `produtor_id`,
+- Definir estrategia de descarte do mock v1 e migracao do codigo que usa
+  `sub_regioes`, `vinculos_microregioes`, `propriedades_atribuidas`, `produtor_id`,
   `proprietario_id`, `titular_id`, `fazenda_id` e `propriedade_id`.
 
 ## Regra sobre Mapas e Arquivos
@@ -406,7 +397,7 @@ Enquanto `Admin -> Usuarios` estiver em MVP visual/mockado, as validacoes minima
 - produtor ativo com propriedade existente vinculada ou cadastro rapido de propriedade valido
 - produtor pendente podendo ficar sem propriedade vinculada
 - cadastro rapido de propriedade ativo com campos minimos validos, evitando criacao vazia
-- colaborador ativo com microregiao/sub-regiao ou propriedade atribuida
+- colaborador ativo com ao menos uma Propriedade vinculada diretamente
 - admin sem obrigatoriedade de propriedade ou microregiao
 - `User.update` validando o registro mesclado de forma equivalente ao `User.create`
 

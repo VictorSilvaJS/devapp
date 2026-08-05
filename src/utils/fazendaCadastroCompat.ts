@@ -52,13 +52,11 @@ type BuildCadastroFazendaPayloadInput = {
 
 type UserScope = {
   perfil?: string;
-  regiao?: string;
-  sub_regioes?: string[];
 };
 
 export type CadastroFazendaScopeResult = {
   ok: boolean;
-  reason?: 'sem_usuario' | 'perfil_sem_permissao' | 'regiao_fora_escopo' | 'microregiao_fora_escopo';
+  reason?: 'sem_usuario' | 'perfil_sem_permissao';
 };
 
 const trimString = (value: unknown): string =>
@@ -224,21 +222,5 @@ export const validateCadastroFazendaScope = (
     return { ok: true };
   }
 
-  if (user.perfil !== 'colaborador') {
-    return { ok: false, reason: 'perfil_sem_permissao' };
-  }
-
-  if (!trimString(user.regiao) || trimString(payload.regiao) !== trimString(user.regiao)) {
-    return { ok: false, reason: 'regiao_fora_escopo' };
-  }
-
-  const subRegioesPermitidas = (user.sub_regioes || []).map(trimString).filter(Boolean);
-  if (
-    subRegioesPermitidas.length === 0 ||
-    !subRegioesPermitidas.includes(trimString(payload.microregiao))
-  ) {
-    return { ok: false, reason: 'microregiao_fora_escopo' };
-  }
-
-  return { ok: true };
+  return { ok: false, reason: 'perfil_sem_permissao' };
 };
