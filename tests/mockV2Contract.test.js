@@ -13,8 +13,11 @@ const {
   authenticateWithEmailAndPassword,
   AUTH_INVALID_CREDENTIALS_MESSAGE,
 } = require('../.tmp-domain-compat/src/auth/authLocal');
+const { testMockV2DemoSeed } = require('./mockV2DemoSeed.test');
 
 const run = async () => {
+  await testMockV2DemoSeed();
+
   const values = new Map([['@tche:mock-mvp:v1', '{"version":1}']]);
   const storage = {
     getItem: async (key) => values.get(key) ?? null,

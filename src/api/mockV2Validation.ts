@@ -82,6 +82,18 @@ export const validateMockV2State = (state: MockV2State): true => {
     throw new Error('organizacao: Tchê Fertilidade ativa é obrigatória');
   }
 
+  if (state.dataset) {
+    if (!state.dataset.id?.trim() || state.dataset.tipo !== 'demonstracao') {
+      throw new Error('dataset: identificação demonstrativa inválida');
+    }
+    if (!state.dataset.fonte?.trim() || !/^[a-f0-9]{64}$/i.test(state.dataset.fonte_sha256)) {
+      throw new Error('dataset: fonte e SHA-256 válidos são obrigatórios');
+    }
+    if (Number.isNaN(Date.parse(state.dataset.gerado_em))) {
+      throw new Error('dataset.gerado_em: data inválida');
+    }
+  }
+
   assertNoLegacyKeys(state);
 
   const usuarioIds = assertUniqueIds('usuarios', state.usuarios);
@@ -96,6 +108,7 @@ export const validateMockV2State = (state: MockV2State): true => {
   assertOrganization('usuarios_propriedades', state.usuarios_propriedades);
   assertOrganization('talhoes', state.talhoes);
 
+  const emails = new Set<string>();
   for (const usuario of state.usuarios) {
     if (!['admin', 'colaborador', 'produtor'].includes(usuario.perfil)) {
       throw new Error(`usuarios.perfil: perfil inválido ${usuario.perfil}`);
@@ -106,12 +119,18 @@ export const validateMockV2State = (state: MockV2State): true => {
     if (!usuario.nome?.trim() || !usuario.email?.trim()) {
       throw new Error('usuarios: nome e e-mail são obrigatórios');
     }
+    const email = usuario.email.trim().toLowerCase();
+    if (emails.has(email)) throw new Error(`usuarios.email: duplicado ${usuario.email}`);
+    emails.add(email);
   }
 
   for (const produtor of state.produtores) {
     const usuario = state.usuarios.find((item) => item.id === produtor.usuario_id);
     if (!usuario || usuario.perfil !== 'produtor') {
       throw new Error(`produtores.usuario_id: usuário Produtor inexistente ${produtor.usuario_id}`);
+    }
+    if (!produtor.nome?.trim() || !['ativo', 'inativo'].includes(produtor.status)) {
+      throw new Error(`produtores: nome ou status inválido em ${produtor.id}`);
     }
   }
 
@@ -125,6 +144,7 @@ export const validateMockV2State = (state: MockV2State): true => {
     if (!['ativa', 'inativa'].includes(propriedade.status)) {
       throw new Error(`propriedades.status: status inválido ${propriedade.status}`);
     }
+    if (!propriedade.nome?.trim()) throw new Error(`propriedades.nome: obrigatório em ${propriedade.id}`);
   }
 
   const activeLinkKeys = new Set<string>();
@@ -169,6 +189,7 @@ export const validateMockV2State = (state: MockV2State): true => {
     if (!['ativo', 'inativo'].includes(talhao.status)) {
       throw new Error(`talhoes.status: status inválido ${talhao.status}`);
     }
+    if (!talhao.nome?.trim()) throw new Error(`talhoes.nome: obrigatório em ${talhao.id}`);
     talhaoPorId.set(talhao.id, talhao.propriedade_id);
   }
   if (talhaoPorId.size !== talhaoIds.size) throw new Error('talhoes: índice inconsistente');

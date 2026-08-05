@@ -959,6 +959,14 @@ produtor/Titular pela persona `Produtor Demonstracao`, sem inferir ou incluir
 um nome pessoal real. A area e os materiais/localizacao permanecem sem
 alteracao ate confirmacao.
 
+Atualizacao em 2026-08-05: para o novo dataset demonstrativo v2, foi autorizada
+explicitamente a utilização dos nomes de Produtores, nomes de Propriedades e
+limites presentes em `Clientes_26.1.kml`. Município/UF foram obtidos por
+interseção espacial com a malha oficial do IBGE. Essa autorização não altera
+automaticamente a situação dos anexos históricos da Sela de Prata I nem
+autoriza o uso produtivo desses dados. Área cadastral, cultura e demais campos
+ausentes não foram inferidos.
+
 Status em 2026-06-11 (Fase 16H.6): no APK SDK 56 instalado em emulador Android,
 o DocumentPicker de PNG local passou em selecao, metadados, salvamento e
 reabertura para a Sela de Prata I, e o fluxo de GeoJSON local foi corrigido e

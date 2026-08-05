@@ -5180,3 +5180,47 @@ rotacao automatica foram restauradas. O build nao repetiu o aviso de
 `NODE_ENV`; as deprecacoes gerais do Gradle permanecem para uma atualizacao
 coordenada das dependencias. A referencia remota corrompida `origin/appQA`
 foi removida, a branch local foi preservada e `git fsck --no-dangling` passou.
+
+## Dataset Demonstrativo Mock V2
+
+Status em 2026-08-05: `CONCLUIDO` na geração e validação; instalação automática
+na primeira execução ainda não ativada.
+
+O arquivo autorizado `Clientes_26.1.kml` foi convertido em um conjunto v2 com
+IDs canônicos e estáveis. O conjunto possui uma única organização, 2 Admins,
+2 Colaboradores, 36 Produtores, 70 Propriedades, 140 vínculos diretos e 470
+Talhões. Todos os registros estão no MT. Município e UF foram atribuídos por
+interseção espacial com a malha oficial do IBGE, sem transformar localização
+em regra de acesso.
+
+Victor recebeu 18 Produtores e 35 Propriedades. Bruna Brito recebeu os outros
+18 Produtores e 35 Propriedades. O conjunto não contém sobreposição de
+Propriedades entre os dois Colaboradores. Cada Propriedade possui exatamente
+um vínculo titular ativo e um vínculo colaborador ativo.
+
+As 470 geometrias normalizadas permanecem em arquivo separado do snapshot e
+são projetadas em runtime para o mapa por `propriedade_id` e `talhao_id`.
+Contornos inválidos foram reparados no processo de geração; nomes repetidos de
+um mesmo Talhão com partes separadas foram preservados como uma única geometria
+`MultiPolygon`. Área cadastral e cultura principal não foram inferidas. A área
+presente nas geometrias é identificada somente como área mapeada aproximada.
+
+Foram criados 70 registros sintéticos de cada recurso operacional — Visita,
+Caderno e Material — exclusivamente para exercitar telas e permissões. Eles
+estão identificados como demonstrativos e não representam fatos reais do KML.
+As 40 credenciais de teste ficam em artefato separado; nenhuma senha integra
+`UsuarioV2`.
+
+Artefatos principais:
+
+- `src/api/generated/mockV2DemoSeed.json`;
+- `src/assets/geojson/generated/mockV2DemoTalhoes.geojson.json`;
+- `src/auth/generated/mockV2DemoCredentials.json`;
+- `docs/project/generated/mock-v2-colaboradores.json`;
+- `scripts/generateMockV2DemoData.py`;
+- `docs/project/dataset-demonstrativo-v2.md`.
+
+A próxima execução correta é implementar o bootstrap único: remover snapshots,
+índices, sessão, credenciais e arquivos demonstrativos v1; instalar o seed e as
+credenciais v2 de forma atômica; depois gerar o APK e validar Admin,
+Colaborador e Produtor no Android físico.

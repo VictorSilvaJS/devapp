@@ -61,6 +61,7 @@ import type { MockLocalState, MockLocalStorageAdapter } from './mockLocalPersist
 import { createMockV2LocalPersistence } from './mockV2LocalPersistence';
 import type { MockV2State } from '../domain/contractsV2';
 import { mergeRuntimeIntoMockV2, projectMockV2ToRuntime } from './mockV2RuntimeCompat';
+import { buildMockV2LimitesArea } from './mockV2TalhaoGeometry';
 
 const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
 const SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL =
@@ -1957,7 +1958,7 @@ const ensureMockLocalHydrated = async () => {
         activeMockStorageVersion = 2;
         activeMockV2State = savedV2;
         applyMockLocalState(projectMockV2ToRuntime(savedV2));
-        replaceMockRecords(limitesArea, []);
+        replaceMockRecords(limitesArea, buildMockV2LimitesArea(savedV2));
         return;
       }
 

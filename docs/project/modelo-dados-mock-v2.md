@@ -241,7 +241,9 @@ O snapshot v2 deve conter, no mínimo:
 - Cadernos;
 - metadados de Materiais.
 
-Talhões, geometrias e arquivos grandes continuam fora do `AsyncStorage`.
+Os registros leves de Talhão pertencem ao snapshot v2. Geometrias e arquivos
+grandes continuam fora do `AsyncStorage` e são relacionados por
+`propriedade_id` e `talhao_id`.
 
 Como os dados v1 são exclusivamente demonstrativos, a entrada no v2 será uma
 substituição integral, não uma conversão de conteúdo. Uma rotina executada uma

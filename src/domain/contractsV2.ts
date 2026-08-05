@@ -5,6 +5,14 @@ export type StatusUsuarioV2 = 'ativo' | 'inativo' | 'pendente';
 export type StatusCadastroV2 = 'ativo' | 'inativo';
 export type TipoVinculoPropriedadeV2 = 'titular' | 'usuario_autorizado' | 'colaborador';
 
+export interface MockV2DatasetMetadata {
+  id: string;
+  tipo: 'demonstracao';
+  fonte: string;
+  fonte_sha256: string;
+  gerado_em: string;
+}
+
 export interface OrganizacaoV2 {
   id: typeof ORGANIZACAO_TCHE_ID;
   nome: 'Tchê Fertilidade';
@@ -72,6 +80,7 @@ export interface RecursoPropriedadeV2 {
 }
 
 export interface MockV2State {
+  dataset?: MockV2DatasetMetadata;
   organizacao: OrganizacaoV2;
   usuarios: UsuarioV2[];
   produtores: ProdutorV2[];
@@ -82,4 +91,3 @@ export interface MockV2State {
   cadernos: RecursoPropriedadeV2[];
   materiais: RecursoPropriedadeV2[];
 }
-

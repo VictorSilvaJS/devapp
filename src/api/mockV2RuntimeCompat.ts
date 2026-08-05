@@ -184,6 +184,7 @@ export const mergeRuntimeIntoMockV2 = (
   base: MockV2State,
   runtime: MockLocalState
 ): MockV2State => ({
+  ...(base.dataset ? { dataset: clone(base.dataset) } : {}),
   organizacao: clone(base.organizacao),
   usuarios: toV2Users(runtime.users),
   produtores: clone(base.produtores),

@@ -70,6 +70,9 @@ Depois da trilha principal:
 2. documentos de `architecture/` conforme a necessidade tecnica
 3. documentos de `guides/` conforme o fluxo em estudo
 4. documentos de `testing/` para validacao
+5. [Contrato do mock v2](project/modelo-dados-mock-v2.md) e
+   [dataset demonstrativo v2](project/dataset-demonstrativo-v2.md) quando a
+   tarefa envolver dados locais, seed, geometrias ou bootstrap
 
 ## Regra Pratica
 
