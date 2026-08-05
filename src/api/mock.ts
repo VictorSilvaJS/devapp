@@ -58,6 +58,9 @@ import {
 } from '../assets/geojson/selaDePrata1Talhoes';
 import { createMockLocalPersistence } from './mockLocalPersistence';
 import type { MockLocalState, MockLocalStorageAdapter } from './mockLocalPersistence';
+import { createMockV2LocalPersistence } from './mockV2LocalPersistence';
+import type { MockV2State } from '../domain/contractsV2';
+import { mergeRuntimeIntoMockV2, projectMockV2ToRuntime } from './mockV2RuntimeCompat';
 
 const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
 const SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL =
@@ -1902,6 +1905,8 @@ const limitesArea: any[] = [
 const cloneMockRecords = <T>(records: T[]): T[] =>
   JSON.parse(JSON.stringify(records));
 
+const seedMockLimitesArea = cloneMockRecords(limitesArea);
+
 const seedMockLocalState: MockLocalState = {
   users: cloneMockRecords(users),
   produtores: cloneMockRecords(produtores),
@@ -1913,9 +1918,12 @@ const seedMockLocalState: MockLocalState = {
 };
 
 const mockLocalPersistence = createMockLocalPersistence();
+const mockV2LocalPersistence = createMockV2LocalPersistence();
 let mockLocalHydration: Promise<void> | null = null;
 let mockLocalSaveQueue: Promise<void> = Promise.resolve();
 let mockLocalMutationQueue: Promise<void> = Promise.resolve();
+let activeMockStorageVersion: 1 | 2 = 1;
+let activeMockV2State: MockV2State | null = null;
 
 const replaceMockRecords = (target: any[], records: any[]) => {
   target.splice(0, target.length, ...cloneMockRecords(records));
@@ -1944,13 +1952,32 @@ const applyMockLocalState = (state: MockLocalState) => {
 const ensureMockLocalHydrated = async () => {
   if (!mockLocalHydration) {
     mockLocalHydration = (async () => {
-      const saved = await mockLocalPersistence.load();
-      if (saved) {
-        applyMockLocalState(saved);
+      const savedV2 = await mockV2LocalPersistence.load();
+      if (savedV2) {
+        activeMockStorageVersion = 2;
+        activeMockV2State = savedV2;
+        applyMockLocalState(projectMockV2ToRuntime(savedV2));
+        replaceMockRecords(limitesArea, []);
         return;
       }
 
+      if (await mockV2LocalPersistence.hasSnapshot()) {
+        throw new Error('MockV2.storage: snapshot v2 inválido; fallback v1 bloqueado.');
+      }
+
+      const saved = await mockLocalPersistence.load();
+      if (saved) {
+        activeMockStorageVersion = 1;
+        activeMockV2State = null;
+        applyMockLocalState(saved);
+        replaceMockRecords(limitesArea, seedMockLimitesArea);
+        return;
+      }
+
+      activeMockStorageVersion = 1;
+      activeMockV2State = null;
       applyMockLocalState(seedMockLocalState);
+      replaceMockRecords(limitesArea, seedMockLimitesArea);
       await mockLocalPersistence.save(readCurrentMockLocalState());
     })();
   }
@@ -1961,6 +1988,12 @@ const ensureMockLocalHydrated = async () => {
 const persistCurrentMockLocalState = async () => {
   const state = readCurrentMockLocalState();
   const save = mockLocalSaveQueue.then(async () => {
+    if (activeMockStorageVersion === 2 && activeMockV2State) {
+      const nextV2State = mergeRuntimeIntoMockV2(activeMockV2State, state);
+      activeMockV2State = await mockV2LocalPersistence.save(nextV2State);
+      return;
+    }
+
     await mockLocalPersistence.save(state);
   });
 
@@ -2008,7 +2041,11 @@ export const MockLocalData = {
   async restoreSeed() {
     await ensureMockLocalHydrated();
     await mockLocalMutationQueue;
+    await mockV2LocalPersistence.clear();
+    activeMockStorageVersion = 1;
+    activeMockV2State = null;
     applyMockLocalState(seedMockLocalState);
+    replaceMockRecords(limitesArea, seedMockLimitesArea);
     await persistCurrentMockLocalState();
     return readCurrentMockLocalState();
   },
@@ -2023,15 +2060,26 @@ export const MockLocalData = {
 
   async readLocalSnapshot() {
     await ensureMockLocalHydrated();
-    return mockLocalPersistence.load();
+    return activeMockStorageVersion === 2
+      ? mockV2LocalPersistence.load()
+      : mockLocalPersistence.load();
+  },
+
+  async readStorageVersion() {
+    await ensureMockLocalHydrated();
+    return activeMockStorageVersion;
   },
 
   __setStorageForTests(storage: MockLocalStorageAdapter) {
     mockLocalPersistence.setStorageAdapter(storage);
+    mockV2LocalPersistence.setStorageAdapter(storage);
     applyMockLocalState(seedMockLocalState);
+    replaceMockRecords(limitesArea, seedMockLimitesArea);
     mockLocalHydration = null;
     mockLocalSaveQueue = Promise.resolve();
     mockLocalMutationQueue = Promise.resolve();
+    activeMockStorageVersion = 1;
+    activeMockV2State = null;
   },
 };
 
@@ -2229,7 +2277,14 @@ const validateUsuarioMock = (
     vinculosMicroregioes,
   }: { ignoreId?: string; vinculosPropriedades: any[]; vinculosMicroregioes: any[] }
 ) => {
-  validateUser(usuario);
+  if (activeMockStorageVersion === 2) {
+    const requiredFields = ['nome', 'email', 'perfil'].filter((field) => !String(usuario?.[field] || '').trim());
+    if (requiredFields.length > 0) {
+      throw new Error(`User: Campos obrigatórios faltando: ${requiredFields.join(', ')}`);
+    }
+  } else {
+    validateUser(usuario);
+  }
 
   if (!usuario.status || !statusUsuarioMock.has(usuario.status)) {
     throw new Error('User.status: Status obrigatório');

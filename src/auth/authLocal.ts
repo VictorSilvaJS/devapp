@@ -1,4 +1,4 @@
-import { User } from '../api/mock';
+import { MockLocalData, User } from '../api/mock';
 import { authLogin } from './authMock';
 import { LocalCredentialService, normalizeEmail } from './localCredentials';
 import { sanitizeAuthUserForSession } from './authSession';
@@ -25,6 +25,7 @@ export interface ManualAuthDeps {
   credentialService?: ManualAuthCredentialService;
   userApi?: ManualAuthUserApi;
   fallbackLogin?: (email: string, senha: string) => Promise<any>;
+  allowLegacyFallback?: () => Promise<boolean>;
 }
 
 const invalidCredentials = () => new Error(AUTH_INVALID_CREDENTIALS_MESSAGE);
@@ -43,6 +44,7 @@ export const authenticateWithEmailAndPassword = async (
     credentialService = LocalCredentialService,
     userApi = User,
     fallbackLogin = authLogin,
+    allowLegacyFallback = async () => (await MockLocalData.readStorageVersion()) === 1,
   }: ManualAuthDeps = {}
 ) => {
   const emailNormalizado = normalizeEmail(email);
@@ -72,6 +74,10 @@ export const authenticateWithEmailAndPassword = async (
       (controlledError as any).cause = error;
       throw controlledError;
     }
+  }
+
+  if (!(await allowLegacyFallback())) {
+    throw invalidCredentials();
   }
 
   const fallbackUser = await fallbackLogin(emailNormalizado, senha);

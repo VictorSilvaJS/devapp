@@ -25,6 +25,7 @@
     "src/api/mock.ts",
     "src/api/mockV2Seed.ts",
     "src/api/mockV2LocalPersistence.ts",
+    "src/api/mockV2RuntimeCompat.ts",
     "src/api/mockV2Validation.ts",
     "src/api/mapaSyncEndpoints.ts",
     "src/auth/authMock.ts",

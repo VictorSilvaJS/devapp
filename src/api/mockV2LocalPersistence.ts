@@ -17,11 +17,28 @@ export interface MockV2StorageAdapter {
   removeItem: (key: string) => Promise<void>;
 }
 
-const defaultStorage: MockV2StorageAdapter = {
+const nodeFallbackValues = new Map<string, string>();
+
+const nodeFallbackStorage: MockV2StorageAdapter = {
+  getItem: async (key) => nodeFallbackValues.get(key) ?? null,
+  setItem: async (key, value) => {
+    nodeFallbackValues.set(key, value);
+  },
+  removeItem: async (key) => {
+    nodeFallbackValues.delete(key);
+  },
+};
+
+const asyncStorageAdapter: MockV2StorageAdapter = {
   getItem: (key) => AsyncStorage.getItem(key),
   setItem: (key, value) => AsyncStorage.setItem(key, value),
   removeItem: (key) => AsyncStorage.removeItem(key),
 };
+
+const defaultStorage =
+  typeof (globalThis as any).window === 'undefined'
+    ? nodeFallbackStorage
+    : asyncStorageAdapter;
 
 const isArray = (value: unknown): value is unknown[] => Array.isArray(value);
 
@@ -39,41 +56,53 @@ export const isMockV2Snapshot = (value: any): value is MockV2LocalSnapshot =>
   && isArray(value?.materiais);
 
 export const createMockV2LocalPersistence = (
-  storage: MockV2StorageAdapter = defaultStorage
-) => ({
-  async load(): Promise<MockV2LocalSnapshot | null> {
-    const raw = await storage.getItem(MOCK_V2_LOCAL_STORAGE_KEY);
-    if (!raw) return null;
+  initialStorage: MockV2StorageAdapter = defaultStorage
+) => {
+  let storage = initialStorage;
 
-    try {
-      const parsed = JSON.parse(raw);
-      if (!isMockV2Snapshot(parsed)) return null;
-      validateMockV2State(parsed);
-      return parsed;
-    } catch {
-      return null;
-    }
-  },
+  return {
+    setStorageAdapter(nextStorage: MockV2StorageAdapter) {
+      storage = nextStorage;
+    },
 
-  async save(state: MockV2State): Promise<MockV2LocalSnapshot> {
-    validateMockV2State(state);
-    const snapshot: MockV2LocalSnapshot = {
-      ...state,
-      version: MOCK_V2_LOCAL_STORAGE_VERSION,
-      saved_at: new Date().toISOString(),
-    };
-    await storage.setItem(MOCK_V2_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
-    return snapshot;
-  },
+    async hasSnapshot(): Promise<boolean> {
+      return (await storage.getItem(MOCK_V2_LOCAL_STORAGE_KEY)) !== null;
+    },
 
-  async installSeed(state: MockV2State): Promise<MockV2LocalSnapshot> {
-    for (const key of MOCK_V1_LEGACY_STORAGE_KEYS) {
-      await storage.removeItem(key);
-    }
-    return this.save(state);
-  },
+    async load(): Promise<MockV2LocalSnapshot | null> {
+      const raw = await storage.getItem(MOCK_V2_LOCAL_STORAGE_KEY);
+      if (!raw) return null;
 
-  async clear(): Promise<void> {
-    await storage.removeItem(MOCK_V2_LOCAL_STORAGE_KEY);
-  },
-});
+      try {
+        const parsed = JSON.parse(raw);
+        if (!isMockV2Snapshot(parsed)) return null;
+        validateMockV2State(parsed);
+        return parsed;
+      } catch {
+        return null;
+      }
+    },
+
+    async save(state: MockV2State): Promise<MockV2LocalSnapshot> {
+      validateMockV2State(state);
+      const snapshot: MockV2LocalSnapshot = {
+        ...state,
+        version: MOCK_V2_LOCAL_STORAGE_VERSION,
+        saved_at: new Date().toISOString(),
+      };
+      await storage.setItem(MOCK_V2_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
+      return snapshot;
+    },
+
+    async installSeed(state: MockV2State): Promise<MockV2LocalSnapshot> {
+      for (const key of MOCK_V1_LEGACY_STORAGE_KEYS) {
+        await storage.removeItem(key);
+      }
+      return this.save(state);
+    },
+
+    async clear(): Promise<void> {
+      await storage.removeItem(MOCK_V2_LOCAL_STORAGE_KEY);
+    },
+  };
+};

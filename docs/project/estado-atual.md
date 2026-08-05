@@ -39,11 +39,13 @@ Decisoes aprovadas:
   contrato v2 inicial;
 - entidades operacionais novas usam `propriedade_id`, sem `fazenda_id`.
 
-O runtime principal ainda le os registros do mock v1 por adaptadores de
-compatibilidade, mas os consumidores operacionais novos ja usam o contrato
-canonico v2. O motor efetivo do Colaborador usa vinculo direto; as secoes
-historicas abaixo continuam descrevendo o estado anterior quando isso for
-indicado. Dados novos ainda nao foram carregados e nao devem ser inventados.
+O runtime estruturado principal ja reconhece o snapshot v2 como fonte
+prioritaria e o projeta para os adaptadores de compatibilidade ainda usados
+pela interface. Na ausencia de uma carga v2 instalada, o mock v1 continua
+como fallback demonstrativo temporario. O motor efetivo do Colaborador usa
+vinculo direto; as secoes historicas abaixo continuam descrevendo o estado
+anterior quando isso for indicado. Dados novos ainda nao foram carregados e
+nao devem ser inventados.
 
 ### Implementacao iniciada em 2026-08-05
 
@@ -80,11 +82,27 @@ Concluido na segunda onda tecnica:
 - normalizacao GeoJSON gera `propriedade_id`, `talhao_id` e `talhao_nome`;
 - validadores, controle de acesso e testes foram alinhados ao contrato v2.
 
+Concluido na terceira onda tecnica:
+
+- o runtime central de Usuario, Propriedade, Vinculo, Visita, Caderno e
+  Material prioriza `@tche:mock-mvp:v2` quando existe um snapshot valido;
+- a presenca de um snapshot v2 invalido bloqueia o fallback v1 para evitar
+  ressuscitar dados demonstrativos antigos silenciosamente;
+- a projecao para as APIs de compatibilidade ocorre somente em memoria e as
+  mutacoes retornam ao snapshot v2 sem aliases legados;
+- o validador v2 rejeita tambem aliases camelCase, `produtor_id`, campos de
+  Fazenda, campos territoriais e valores de status/perfil/vinculo invalidos;
+- o login estatico demonstrativo v1 nao e aceito quando o runtime ativo e v2;
+- limites/geometrias estaticos associados aos IDs do seed v1 nao sao expostos
+  quando o runtime ativo e v2;
+- enquanto nenhum snapshot v2 estiver instalado, o comportamento
+  demonstrativo v1 permanece inalterado para nao ativar uma base vazia.
+
 Ainda nao concluido:
 
-- conectar todo o runtime ao repositorio/snapshot v2;
 - conectar a camada mock/offline legada e seus endpoints de sincronizacao ao
-  contrato v2; essa superficie permanece como borda de compatibilidade;
+  contrato v2, incluindo os indices e arquivos mantidos fora do snapshot
+  estruturado; essa superficie permanece como borda de compatibilidade;
 - substituir o conjunto demonstrativo antigo pela nova carga aprovada;
 - executar a limpeza unica dos arquivos e indices associados aos IDs v1.
 
