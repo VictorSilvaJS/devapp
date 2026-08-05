@@ -24,7 +24,6 @@ export type CadernoPeriodoProdutivoOption = {
   cultura?: string;
   anoAgricola?: string;
   status?: string;
-  fazendaId?: string;
   propriedadeId?: string;
   talhao?: string;
 };
@@ -146,7 +145,7 @@ export const CADERNO_TIPO_VALUES = Array.from(new Set([
 ]));
 
 type BuildCadernoPayloadInput = {
-  fazendaId: string;
+  propriedadeId: string;
   dataAtividade: Date | null;
   tipoAtividade: string;
   talhaoId?: string;
@@ -234,8 +233,13 @@ export const buildCadernoPeriodoProdutivoOptions = (
       cultura: String(periodo?.cultura || '').trim() || undefined,
       anoAgricola: String(periodo?.ano_agricola || '').trim() || undefined,
       status: String(periodo?.status || '').trim() || undefined,
-      fazendaId: String(periodo?.fazenda_id || periodo?.fazendaId || '').trim() || undefined,
-      propriedadeId: String(periodo?.propriedade_id || periodo?.propriedadeId || '').trim() || undefined,
+      propriedadeId: String(
+        periodo?.propriedade_id
+        || periodo?.propriedadeId
+        || periodo?.fazenda_id
+        || periodo?.fazendaId
+        || ''
+      ).trim() || undefined,
       talhao: talhao || undefined,
     };
   }).filter((option) => option.id.length > 0);
@@ -379,7 +383,7 @@ const buildCadernoPeriodoPayloadFields = (
 };
 
 export const buildCadernoPayload = ({
-  fazendaId,
+  propriedadeId,
   dataAtividade,
   tipoAtividade,
   talhaoId = '',
@@ -415,15 +419,13 @@ export const buildCadernoPayload = ({
   const responsavelId = trimOrUndefined(responsavelUsuarioId);
   const responsavelNome = trimOrUndefined(colaboradorResponsavel) || 'Sistema';
   const payload: Record<string, any> = {
-    fazenda_id: fazendaId,
-    fazendaId,
+    propriedade_id: propriedadeId,
     colaborador_responsavel: responsavelNome,
     data_atividade: dataAtividade.toISOString(),
     tipo_atividade: tipoAtividade,
     talhao: talhaoNome,
     talhao_nome: talhaoNome,
     talhao_id: talhaoNome ? talhaoIdNormalizado : undefined,
-    talhaoId: talhaoNome ? talhaoIdNormalizado : undefined,
     produtos_utilizados: parseCadernoProdutos(produtosText),
     operacao: trimOrUndefined(operacao),
     dosagem: trimOrUndefined(dosagem),

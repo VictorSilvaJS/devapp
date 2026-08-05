@@ -108,7 +108,7 @@ const run = async () => {
     assert.equal(created.titulo, 'Mapa pH 2025.PNG');
     assert.equal(created.arquivo_nome_original, 'Mapa pH 2025.PNG');
     assert.equal(created.propriedade_id, 'prop_a');
-    assert.equal(created.fazenda_id, 'prop_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(created, 'fazenda_id'), false);
     assert.equal(created.ano, 2025);
     assert.equal(created.periodo_produtivo_id, 'periodo_1');
     assert.equal(created.safra, 'Safra Soja 2025/2026');
@@ -229,7 +229,6 @@ const run = async () => {
             ok: true,
             file: {
               propriedade_id: input.propriedade_id,
-              fazenda_id: input.fazenda_id,
               ano: input.ano,
               categoria: input.categoria,
               formato_arquivo: input.formato_arquivo,
@@ -270,9 +269,6 @@ const run = async () => {
         getPeriodoProdutivoById: async () => ({
           id: 'periodo_fora',
           propriedade_id: 'prop_b',
-          propriedadeId: 'prop_b',
-          fazenda_id: 'prop_b',
-          fazendaId: 'prop_b',
           label: 'Safra externa',
           registro_status: 'ativo',
         }),
@@ -297,7 +293,6 @@ const run = async () => {
     });
     const copied = await storage.copyMaterialTecnicoToInternalStorage({
       propriedade_id: 'Propriedade A',
-      fazenda_id: 'prop_a',
       ano: 2025,
       categoria: 'correcao',
       formato_arquivo: 'pdf',

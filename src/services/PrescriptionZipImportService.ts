@@ -109,16 +109,6 @@ const normalizeEscopo = (value: unknown): PrescriptionZipEscopo => {
   throw new Error('PrescriptionZipImport.escopo: obrigatorio');
 };
 
-const resolvePropriedadeIds = (input: {
-  propriedade_id?: unknown;
-  fazenda_id?: unknown;
-}): { propriedade_id: string; fazenda_id: string } => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
-
-  return { propriedade_id: propriedadeId, fazenda_id: fazendaId };
-};
-
 const isPlainObject = (value: unknown): boolean =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -145,8 +135,7 @@ const assertSmallMetadataOnly = (input: Record<string, any>): void => {
 
 const isMetadataRecord = (value: any): value is PrescriptionZipImportMetadata =>
   typeof value?.id === 'string'
-  && typeof value?.propriedade_id === 'string'
-  && typeof value?.fazenda_id === 'string'
+  && Boolean(firstNonEmptyString(value?.propriedade_id, value?.fazenda_id))
   && typeof value?.titulo === 'string'
   && value?.categoria === 'prescricao'
   && value?.categoria_label === 'Prescrição'
@@ -163,11 +152,15 @@ const isMetadataRecord = (value: any): value is PrescriptionZipImportMetadata =>
   && value?.origem === 'arquivo_local'
   && value?.versao === PRESCRIPTION_ZIP_IMPORT_VERSION;
 
-const isSnapshot = (value: any): value is PrescriptionZipImportSnapshot =>
-  value?.version === PRESCRIPTION_ZIP_IMPORT_VERSION
-  && typeof value?.savedAt === 'string'
-  && Array.isArray(value?.items)
-  && value.items.every(isMetadataRecord);
+const normalizeStoredMetadata = (value: any): PrescriptionZipImportMetadata | null => {
+  if (!isMetadataRecord(value)) return null;
+  const stored: any = value;
+  const { fazenda_id: _legacyFazendaId, ...canonical } = stored;
+  return {
+    ...canonical,
+    propriedade_id: firstNonEmptyString(stored.propriedade_id, stored.fazenda_id),
+  };
+};
 
 const emptySnapshot = (): PrescriptionZipImportSnapshot => ({
   version: PRESCRIPTION_ZIP_IMPORT_VERSION,
@@ -187,7 +180,7 @@ const buildMetadataFromInput = (
 ): PrescriptionZipImportMetadata => {
   assertSmallMetadataOnly(input);
 
-  const ids = resolvePropriedadeIds(input);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const titulo = firstNonEmptyString(input.titulo);
   const camada = normalizeCamada(input.camada);
   const camadaLabel = firstNonEmptyString(input.camada_label, input.elemento_label);
@@ -196,7 +189,7 @@ const buildMetadataFromInput = (
   const talhaoId = normalizeOptionalString(input.talhao_id);
   const talhaoNome = normalizeOptionalString(input.talhao_nome);
 
-  if (!ids.propriedade_id || !ids.fazenda_id) throw new Error('PrescriptionZipImport.propriedade_id: obrigatorio');
+  if (!propriedadeId) throw new Error('PrescriptionZipImport.propriedade_id: obrigatorio');
   if (!titulo) throw new Error('PrescriptionZipImport.titulo: obrigatorio');
   if (!camadaLabel) throw new Error('PrescriptionZipImport.camada_label: obrigatorio');
   if (!arquivoNomeOriginal) throw new Error('PrescriptionZipImport.arquivo_nome_original: obrigatorio');
@@ -207,8 +200,7 @@ const buildMetadataFromInput = (
 
   return {
     id: firstNonEmptyString(input.id) || params.generateId(),
-    propriedade_id: ids.propriedade_id,
-    fazenda_id: ids.fazenda_id,
+    propriedade_id: propriedadeId,
     nome_propriedade: normalizeOptionalString(input.nome_propriedade),
     titulo,
     descricao: normalizeOptionalString(input.descricao),
@@ -288,7 +280,18 @@ export const createPrescriptionZipImportService = ({
 
     try {
       const parsed = JSON.parse(raw);
-      return isSnapshot(parsed) ? parsed : emptySnapshot();
+      if (
+        parsed?.version === PRESCRIPTION_ZIP_IMPORT_VERSION
+        && typeof parsed?.savedAt === 'string'
+        && Array.isArray(parsed?.items)
+      ) {
+        return {
+          version: PRESCRIPTION_ZIP_IMPORT_VERSION,
+          savedAt: parsed.savedAt,
+          items: parsed.items.map(normalizeStoredMetadata).filter(Boolean) as PrescriptionZipImportMetadata[],
+        };
+      }
+      return emptySnapshot();
     } catch {
       return emptySnapshot();
     }
@@ -321,7 +324,7 @@ export const createPrescriptionZipImportService = ({
       if (!id) return [];
 
       const snapshot = await loadSnapshot();
-      return snapshot.items.filter((item) => item.propriedade_id === id || item.fazenda_id === id);
+      return snapshot.items.filter((item) => item.propriedade_id === id);
     },
 
     async listActivePrescriptionZipImportsByPropriedade(propriedadeId: string): Promise<PrescriptionZipImportMetadata[]> {

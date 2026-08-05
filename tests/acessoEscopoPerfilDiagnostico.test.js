@@ -239,7 +239,7 @@ const run = async () => {
     assert.deepEqual(ids(getPropriedadesDoColaborador(colaborador, fazendasBase)), []);
   });
 
-  await test('diagnostico: propriedade_id e titular_id sao aliases, legado ainda sustenta acesso efetivo', () => {
+  await test('v2: propriedade_id e titular_id sustentam o acesso efetivo', () => {
     const somenteAliasesFuturos = {
       id: 'faz_alias',
       propriedade_id: 'prop_alias_id',
@@ -253,7 +253,9 @@ const run = async () => {
 
     assert.equal(getPropriedadeId(somenteAliasesFuturos), 'prop_alias_id');
     assert.equal(getTitularId(somenteAliasesFuturos), 'titular_alias');
-    assert.deepEqual(filtrarProdutoresPorAcesso([somenteAliasesFuturos], produtor), []);
+    assert.deepEqual(ids(filtrarProdutoresPorAcesso([somenteAliasesFuturos], produtor)), [
+      'faz_alias',
+    ]);
 
     const comLegadoTitular = {
       ...somenteAliasesFuturos,

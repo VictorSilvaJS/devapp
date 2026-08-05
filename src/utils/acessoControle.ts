@@ -135,7 +135,7 @@ export const getFazendaId = (fazenda) => {
 
 export const getTitularIdFazenda = (fazenda) => {
   if (!fazenda) return '';
-  return normalizeFazenda(fazenda).produtor_id;
+  return normalizeFazenda(fazenda).titular_id;
 };
 
 export const getNomeFazenda = (fazenda) => {
@@ -151,22 +151,22 @@ export const getNomeTitularFazenda = (fazenda) => {
 
 export const getMapaFazendaId = (mapa) => {
   if (!mapa) return '';
-  return normalizeMapa(mapa).fazenda_id;
+  return normalizeMapa(mapa).propriedade_id;
 };
 
 export const getVisitaFazendaId = (visita) => {
   if (!visita) return '';
-  return normalizeVisita(visita).fazenda_id;
+  return normalizeVisita(visita).propriedade_id;
 };
 
 export const getCadernoFazendaId = (registro) => {
   if (!registro) return '';
-  return normalizeCadernoCampo(registro).fazenda_id;
+  return normalizeCadernoCampo(registro).propriedade_id;
 };
 
 export const getLimiteAreaFazendaId = (limite) => {
   if (!limite) return '';
-  return normalizeLimiteArea(limite).fazenda_id;
+  return normalizeLimiteArea(limite).propriedade_id;
 };
 
 export const findFazendaById = (fazendas, fazendaId) => {
@@ -689,7 +689,7 @@ export const podeBaixarMapa = (user, mapa, produtores = []) => {
   if (isAdmin(user)) return true;
 
   if (isColaborador(user)) {
-    return getPropriedadeIdsVinculados(user).includes(mapaNormalizado.fazenda_id);
+    return getPropriedadeIdsVinculados(user).includes(mapaNormalizado.propriedade_id);
   }
   
   if (isProdutor(user)) {
@@ -697,11 +697,11 @@ export const podeBaixarMapa = (user, mapa, produtores = []) => {
     const minhasFazendaIds = getFazendaIds(minhasFazendas);
 
     if (minhasFazendaIds.length > 0) {
-      return minhasFazendaIds.includes(mapaNormalizado.fazenda_id);
+      return minhasFazendaIds.includes(mapaNormalizado.propriedade_id);
     }
 
     // Fallback temporário enquanto nem todos os chamadores enviam as fazendas.
-    return mapaNormalizado.fazenda_id === getTitularIdUsuario(user);
+    return mapaNormalizado.propriedade_id === getTitularIdUsuario(user);
   }
 
   return false;

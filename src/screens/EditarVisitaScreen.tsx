@@ -222,7 +222,7 @@ export default function EditarVisitaScreen() {
       return;
     }
 
-    if (!podeEditarVisita(user, { ...visitaOriginal, fazenda_id: fazendaContextoId }, fazendaSelecionadaData)) {
+    if (!podeEditarVisita(user, { ...visitaOriginal, propriedade_id: fazendaContextoId }, fazendaSelecionadaData)) {
       toast.showWarning('Você não tem permissão para editar visita nesta propriedade.');
       return;
     }
@@ -230,7 +230,7 @@ export default function EditarVisitaScreen() {
     setSaving(true);
     try {
       const visitaAtualizada = buildVisitaAgendaUpdatePayload({
-        fazendaId: fazendaContextoId,
+        propriedadeId: fazendaContextoId,
         dataVisita,
         horaVisita,
         objetivo,

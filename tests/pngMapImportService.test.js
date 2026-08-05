@@ -143,7 +143,7 @@ const run = async () => {
 
     assert.equal(created.id, 'pngmap_test_1');
     assert.equal(created.propriedade_id, 'p_png_a');
-    assert.equal(created.fazenda_id, 'p_png_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(created, 'fazenda_id'), false);
     assert.equal(created.titulo, 'pH - Propriedade Demo');
     assert.equal(created.categoria, 'fertilidade');
     assert.equal(created.categoria_label, 'Fertilidade');
@@ -160,23 +160,24 @@ const run = async () => {
     assert.equal(storage.values.has(MOCK_LOCAL_STORAGE_KEY), false);
   });
 
-  await test('preenche fazenda_id por propriedade_id e propriedade_id por fazenda_id', async () => {
+  await test('nova escrita exige propriedade_id e nao grava fazenda_id', async () => {
     const { service } = createService();
     const byPropriedade = await service.createPngMapImportMetadata(baseInput({
       propriedade_id: 'prop_fallback',
       fazenda_id: undefined,
       arquivo_nome_original: 'por-propriedade.png',
     }));
-    const byFazenda = await service.createPngMapImportMetadata(baseInput({
-      propriedade_id: undefined,
-      fazenda_id: 'fazenda_fallback',
-      arquivo_nome_original: 'por-fazenda.png',
-    }));
 
     assert.equal(byPropriedade.propriedade_id, 'prop_fallback');
-    assert.equal(byPropriedade.fazenda_id, 'prop_fallback');
-    assert.equal(byFazenda.propriedade_id, 'fazenda_fallback');
-    assert.equal(byFazenda.fazenda_id, 'fazenda_fallback');
+    assert.equal(Object.prototype.hasOwnProperty.call(byPropriedade, 'fazenda_id'), false);
+    await assertRejectsWith(
+      () => service.createPngMapImportMetadata(baseInput({
+        propriedade_id: undefined,
+        fazenda_id: 'fazenda_fallback',
+        arquivo_nome_original: 'por-fazenda.png',
+      })),
+      /propriedade_id/
+    );
   });
 
   await test('gera id estavel e aplica default de visivel_para_produtor', async () => {
@@ -304,16 +305,22 @@ const run = async () => {
     );
   });
 
-  await test('metadados podem ser listados por fazenda_id legado', async () => {
-    const { service } = createService();
+  await test('snapshot v1 com fazenda_id e normalizado na leitura', async () => {
+    const { service, storage } = createService();
     await service.createPngMapImportMetadata(baseInput({
       propriedade_id: 'prop_duplo',
-      fazenda_id: 'fazenda_dupla',
       arquivo_nome_original: 'duplo.png',
     }));
 
-    assert.equal((await service.listPngMapImportsByPropriedade('prop_duplo')).length, 1);
-    assert.equal((await service.listPngMapImportsByPropriedade('fazenda_dupla')).length, 1);
+    const snapshot = readSnapshot(storage);
+    snapshot.items[0].fazenda_id = 'fazenda_legada';
+    delete snapshot.items[0].propriedade_id;
+    storage.values.set(PNG_MAP_IMPORT_STORAGE_KEY, JSON.stringify(snapshot));
+
+    const legacy = await service.listPngMapImportsByPropriedade('fazenda_legada');
+    assert.equal(legacy.length, 1);
+    assert.equal(legacy[0].propriedade_id, 'fazenda_legada');
+    assert.equal(Object.prototype.hasOwnProperty.call(legacy[0], 'fazenda_id'), false);
   });
 
   await test('lista ativos e exclui removido e substituido', async () => {

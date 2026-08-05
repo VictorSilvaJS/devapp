@@ -127,7 +127,6 @@ export const canShowPrescriptionZipImportInMapaList = (
   if (
     propriedadeIds.size > 0
     && !propriedadeIds.has(metadata.propriedade_id)
-    && !propriedadeIds.has(metadata.fazenda_id)
   ) {
     return false;
   }
@@ -161,8 +160,8 @@ export const prescriptionZipImportToMapaCompat = (
     camada_label: camadaLabel,
     elemento: metadata.camada,
     elemento_label: camadaLabel,
-    produtor_id: metadata.fazenda_id,
-    fazenda_id: metadata.fazenda_id,
+    produtor_id: metadata.propriedade_id,
+    fazenda_id: metadata.propriedade_id,
     propriedade_id: metadata.propriedade_id,
     talhao: talhaoLabel,
     talhao_id: metadata.escopo === 'talhao' ? firstNonEmptyString(metadata.talhao_id) || null : null,

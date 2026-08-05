@@ -195,7 +195,7 @@ const run = async () => {
 
     assert.equal(result.ok, true);
     assert.equal(result.file.propriedade_id, 'p_sela1');
-    assert.equal(result.file.fazenda_id, 'p_sela1');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.file, 'fazenda_id'), false);
     assert.equal(result.file.name, 'import-001-mapa-ph.png');
     assert.equal(result.file.uri, `file:///app/${PNG_STORAGE_DIRECTORY_NAME}/p_sela1/import-001-mapa-ph.png`);
     assert.equal(result.file.originalName, 'Mapa pH.PNG');

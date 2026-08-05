@@ -22,7 +22,6 @@ export interface PrescriptionZipStorageError {
 
 export interface CopyPrescriptionZipToStorageInput {
   propriedade_id: string;
-  fazenda_id?: string;
   sourceUri: string;
   originalName: string;
   importId?: string;
@@ -37,7 +36,6 @@ export interface BuildPrescriptionZipStorageUriInput {
 
 export interface StoredPrescriptionZipFile {
   propriedade_id: string;
-  fazenda_id: string;
   uri: string;
   name: string;
   originalName: string;
@@ -304,11 +302,10 @@ export const copyPrescriptionZipToInternalStorage = async (
   input: CopyPrescriptionZipToStorageInput,
   deps: PrescriptionZipStorageServiceDeps = {}
 ): Promise<PrescriptionZipStorageCopyResult> => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const sourceUri = firstNonEmptyString(input.sourceUri);
 
-  if (!propriedadeId || !fazendaId) {
+  if (!propriedadeId) {
     return {
       ok: false,
       error: buildError('ZIP_PROPRIEDADE_ID_REQUIRED', 'propriedade_id é obrigatório para copiar ZIP.'),
@@ -392,7 +389,6 @@ export const copyPrescriptionZipToInternalStorage = async (
       ok: true,
       file: {
         propriedade_id: propriedadeId,
-        fazenda_id: fazendaId,
         uri: destinationUri,
         name,
         originalName: firstNonEmptyString(input.originalName) || DEFAULT_PRESCRIPTION_ZIP_FILE_NAME,

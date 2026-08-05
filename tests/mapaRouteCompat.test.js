@@ -41,18 +41,17 @@ const run = async () => {
     assert.equal(fazendaId, 'faz_legado');
   });
 
-  await test('buildMapasRouteParams gera params compatíveis com alias legado controlado', () => {
+  await test('buildMapasRouteParams lê alias legado e gera propriedadeId canônico', () => {
     const params = buildMapasRouteParams({
       fazendaId: 'faz_mapas',
     });
 
     assert.deepEqual(params, {
-      fazendaId: 'faz_mapas',
-      produtorId: 'faz_mapas',
+      propriedadeId: 'faz_mapas',
     });
   });
 
-  await test('buildFazendaMapaRouteParams preserva nomes e talhao junto com compatibilidade de id', () => {
+  await test('buildFazendaMapaRouteParams preserva nomes e talhao com propriedadeId', () => {
     const params = buildFazendaMapaRouteParams({
       produtorId: 'faz_sat',
       fazendaNome: 'Fazenda Satélite',
@@ -64,8 +63,7 @@ const run = async () => {
     });
 
     assert.deepEqual(params, {
-      fazendaId: 'faz_sat',
-      produtorId: 'faz_sat',
+      propriedadeId: 'faz_sat',
       fazendaNome: 'Fazenda Satélite',
       titularNome: 'João Silva',
       produtorNome: 'João Silva',
@@ -76,7 +74,7 @@ const run = async () => {
     });
   });
 
-  await test('buildFazendaMapaRouteParamsFromPropriedade usa aliases futuros sem mudar fazendaId efetivo', () => {
+  await test('buildFazendaMapaRouteParamsFromPropriedade usa propriedadeId canônico', () => {
     const params = buildFazendaMapaRouteParamsFromPropriedade(
       {
         propriedade_id: 'prop_alias',
@@ -92,8 +90,7 @@ const run = async () => {
     );
 
     assert.deepEqual(params, {
-      fazendaId: 'prop_alias',
-      produtorId: 'prop_alias',
+      propriedadeId: 'prop_alias',
       fazendaNome: 'Propriedade Alias',
       titularNome: 'Titular Alias',
       produtorNome: 'Titular Alias',

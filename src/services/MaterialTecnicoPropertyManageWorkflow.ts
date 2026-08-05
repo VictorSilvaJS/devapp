@@ -130,7 +130,6 @@ export const removeMaterialTecnicoForPropriedade = async (
   }
   if (
     !propriedadeIds.includes(metadata.propriedade_id)
-    && !propriedadeIds.includes(metadata.fazenda_id)
   ) {
     return { ok: false, error: createError('MATERIAL_OUT_OF_SCOPE', 'O material não pertence a esta Propriedade.') };
   }

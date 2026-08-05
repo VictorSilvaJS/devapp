@@ -68,7 +68,6 @@ export interface PngMapPropertyManageContext {
   user: any;
   propriedade: any;
   propriedade_id?: string;
-  fazenda_id?: string;
   metadata?: PngMapImportMetadata | null;
   metadataId?: string;
   mapa?: Record<string, any> | null;
@@ -123,7 +122,6 @@ export interface PngMapPropertyManageWorkflowDeps {
   copyPngToInternalStorage?: (
     input: {
       propriedade_id: string;
-      fazenda_id?: string;
       sourceUri: string;
       originalName: string;
       importId?: string;
@@ -186,7 +184,7 @@ const buildUsuarioId = (user: any): string | undefined =>
   ) || undefined;
 
 const resolveIds = (
-  input: Pick<PngMapPropertyManageContext, 'propriedade' | 'propriedade_id' | 'fazenda_id'>
+  input: Pick<PngMapPropertyManageContext, 'propriedade' | 'propriedade_id'>
 ) => {
   const propriedade = input.propriedade;
   const compatFazendaId = getFazendaId(propriedade);
@@ -199,31 +197,14 @@ const resolveIds = (
     propriedade?.fazenda_id,
     propriedade?.fazendaId
   );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    propriedade?.fazenda_id,
-    propriedade?.fazendaId,
-    compatFazendaId,
-    propriedadeId
-  );
-
-  return {
-    propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
-  };
+  return { propriedade_id: propriedadeId };
 };
 
 const metadataMatchesContext = (
   metadata: PngMapImportMetadata,
-  ids: { propriedade_id: string; fazenda_id: string }
+  ids: { propriedade_id: string }
 ): boolean => {
-  const allowedIds = new Set(
-    [ids.propriedade_id, ids.fazenda_id]
-      .map(firstNonEmptyString)
-      .filter(Boolean)
-  );
-
-  return allowedIds.has(metadata.propriedade_id) || allowedIds.has(metadata.fazenda_id);
+  return metadata.propriedade_id === ids.propriedade_id;
 };
 
 const getImportService = (
@@ -272,13 +253,13 @@ const resolveManageTarget = async (
   actionLabel: 'substituir' | 'remover'
 ): Promise<{
   ok: boolean;
-  ids?: { propriedade_id: string; fazenda_id: string };
+  ids?: { propriedade_id: string };
   metadata?: PngMapImportMetadata;
   service?: PngMapManageServiceLike;
   error?: PngMapPropertyManageError;
 }> => {
   const ids = resolveIds(input);
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!ids.propriedade_id) {
     return {
       ok: false,
       error: createError(
@@ -394,7 +375,6 @@ const buildReplacementMetadataInput = (
 ): PngMapImportMetadataInput => ({
   id: params.newId,
   propriedade_id: previous.propriedade_id,
-  fazenda_id: previous.fazenda_id,
   nome_propriedade: previous.nome_propriedade,
   titulo: previous.titulo,
   descricao: previous.descricao,
@@ -559,7 +539,6 @@ export const replacePngMapForPropriedade = async (
   const copy = deps.copyPngToInternalStorage ?? copyPngToInternalStorage;
   const copied = await copy({
     propriedade_id: target.ids.propriedade_id,
-    fazenda_id: target.ids.fazenda_id,
     sourceUri: picked.file.uri,
     originalName: picked.file.name,
     importId: newId,

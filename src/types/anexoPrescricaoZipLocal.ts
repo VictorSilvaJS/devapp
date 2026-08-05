@@ -28,7 +28,6 @@ export type PrescriptionZipOrigem = 'arquivo_local';
 export interface PrescriptionZipImportMetadata {
   id: string;
   propriedade_id: string;
-  fazenda_id: string;
   nome_propriedade?: string;
 
   titulo: string;
@@ -70,7 +69,6 @@ export type PrescriptionZipImportMetadataInput = Partial<
     PrescriptionZipImportMetadata,
     | 'id'
     | 'propriedade_id'
-    | 'fazenda_id'
     | 'nome_propriedade'
     | 'titulo'
     | 'descricao'
@@ -101,7 +99,6 @@ export type PrescriptionZipImportMetadataPatch = Partial<
   Pick<
     PrescriptionZipImportMetadata,
     | 'propriedade_id'
-    | 'fazenda_id'
     | 'nome_propriedade'
     | 'titulo'
     | 'descricao'

@@ -1,6 +1,7 @@
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 
 type ParamContextoFazenda = {
+  propriedadeId?: string;
   fazendaId?: string;
   produtorId?: string;
 };
@@ -84,7 +85,7 @@ const normalizeLookupText = (value: unknown): string | undefined => {
 };
 
 const resolveItemFazendaId = (item?: Record<string, any> | null): string | undefined =>
-  firstNonEmptyString(item?.fazenda_id, item?.produtor_id);
+  firstNonEmptyString(item?.propriedade_id, item?.propriedadeId, item?.fazenda_id, item?.produtor_id);
 
 const resolveItemTalhaoId = (item?: Record<string, any> | null): string | undefined =>
   firstNonEmptyString(item?.id, item?.talhao_id, item?.limite_id, item?.limite_area_id);
@@ -190,7 +191,7 @@ const findTalhaoCompativel = (
 
 export const resolveRouteFazendaId = (
   params?: ParamContextoFazenda | null
-): string | undefined => firstNonEmptyString(params?.fazendaId, params?.produtorId);
+): string | undefined => firstNonEmptyString(params?.propriedadeId, params?.fazendaId, params?.produtorId);
 
 export const resolveRouteTitularNome = (
   params?: FazendaMapaRouteParams | null
@@ -298,8 +299,7 @@ export const buildMapasRouteParams = (
   }
 
   return {
-    fazendaId,
-    produtorId: fazendaId,
+    propriedadeId: fazendaId,
   };
 };
 
@@ -311,8 +311,7 @@ export const buildFazendaMapaRouteParams = (
   const routeParams: FazendaMapaRouteParams = {};
 
   if (fazendaId) {
-    routeParams.fazendaId = fazendaId;
-    routeParams.produtorId = fazendaId;
+    routeParams.propriedadeId = fazendaId;
   }
 
   withDefinedString(routeParams, 'titularNome', titularNome);
@@ -342,7 +341,7 @@ export const buildFazendaMapaRouteParamsFromPropriedade = (
 
   return buildFazendaMapaRouteParams({
     ...params,
-    fazendaId: info.id || params?.fazendaId,
+    propriedadeId: info.id || params?.propriedadeId || params?.fazendaId,
     fazendaNome: info.fazendaNome || params?.fazendaNome,
     titularNome: info.titularNome || params?.titularNome,
   });

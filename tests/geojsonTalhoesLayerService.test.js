@@ -189,15 +189,14 @@ const run = async () => {
     assert.equal(result.source, 'geojson_local_ativo');
     assert.equal(result.metadata.id, 'import_a');
     assert.equal(result.talhoes.length, 2);
-    assert.equal(result.talhoes[0].fazenda_id, 'fazenda_a');
-    assert.equal(result.talhoes[0].produtor_id, 'titular_a');
+    assert.equal(result.talhoes[0].propriedade_id, 'prop_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.talhoes[0], 'fazenda_id'), false);
     assert.equal(result.talhoes[0].talhao, 'T01');
     assert.equal(result.talhoes[0].poligono.length >= 4, true);
     assert.equal(result.talhoes[1].poligonos.length, 2);
     assert.equal(calls.validate[0].uri, 'file:///app/tche-geojson-imports/prop_a/import-a.geojson');
     assert.equal(calls.validate[0].options.propriedade_id, 'prop_a');
-    assert.equal(calls.validate[0].options.fazenda_id, 'fazenda_a');
-    assert.equal(calls.validate[0].options.produtor_id, 'titular_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(calls.validate[0].options, 'fazenda_id'), false);
     assert.equal(calls.validate[0].options.ano, 2025);
     assert.equal(calls.validate[0].options.safra, '2025/2026');
     assert.equal(storage.calls.setItem.length, setCallsBeforeLoad);
@@ -295,7 +294,7 @@ const run = async () => {
     assert.equal(calls.validate.length, 0);
   });
 
-  await test('fazenda_id e propriedade_id permanecem compativeis na busca', async () => {
+  await test('busca usa propriedade_id canônico quando aliases divergem', async () => {
     const { service } = createService();
     await service.createGeoJsonImportMetadata(activeInput({
       propriedade_id: 'prop_duplo',
@@ -305,7 +304,7 @@ const run = async () => {
     const calls = { validate: [] };
 
     const result = await loadGeoJsonTalhoesLayer({
-      propriedade_id: 'fazenda_dupla',
+      propriedade_id: 'prop_duplo',
     }, {
       importService: service,
       validateStoredGeoJson: createValidateStoredOk(calls),
@@ -313,9 +312,7 @@ const run = async () => {
 
     assert.equal(result.ok, true);
     assert.equal(result.metadata.propriedade_id, 'prop_duplo');
-    assert.equal(result.metadata.fazenda_id, 'fazenda_dupla');
     assert.equal(calls.validate[0].options.propriedade_id, 'prop_duplo');
-    assert.equal(calls.validate[0].options.fazenda_id, 'fazenda_dupla');
   });
 
   await test('Sela de Prata I usa fallback seed quando GeoJSON local falha', async () => {

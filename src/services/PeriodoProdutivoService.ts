@@ -134,33 +134,6 @@ const normalizeRegistroStatus = (value: unknown): PeriodoProdutivoRegistroStatus
 const getTipoPeriodoLabel = (tipo: PeriodoProdutivoTipo): string =>
   tipo === 'safrinha' ? 'Safrinha' : 'Safra';
 
-const resolvePropriedadeIds = (input: {
-  propriedade_id?: unknown;
-  propriedadeId?: unknown;
-  fazenda_id?: unknown;
-  fazendaId?: unknown;
-}): { propriedade_id: string; propriedadeId: string; fazenda_id: string; fazendaId: string } => {
-  const propriedadeId = firstNonEmptyString(
-    input.propriedade_id,
-    input.propriedadeId,
-    input.fazenda_id,
-    input.fazendaId
-  );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    input.fazendaId,
-    input.propriedade_id,
-    input.propriedadeId
-  );
-
-  return {
-    propriedade_id: propriedadeId,
-    propriedadeId,
-    fazenda_id: fazendaId,
-    fazendaId,
-  };
-};
-
 const normalizeDateString = (value: unknown, fieldName: string): string | undefined => {
   const normalized = normalizeOptionalString(value);
   if (!normalized) return undefined;
@@ -202,10 +175,12 @@ export const buildPeriodoProdutivoLabel = (input: {
 
 const isMetadataRecord = (value: any): value is PeriodoProdutivoMetadata =>
   typeof value?.id === 'string'
-  && typeof value?.propriedade_id === 'string'
-  && typeof value?.propriedadeId === 'string'
-  && typeof value?.fazenda_id === 'string'
-  && typeof value?.fazendaId === 'string'
+  && Boolean(firstNonEmptyString(
+    value?.propriedade_id,
+    value?.propriedadeId,
+    value?.fazenda_id,
+    value?.fazendaId
+  ))
   && isPeriodoTipo(value?.tipo_periodo)
   && typeof value?.tipo_periodo_label === 'string'
   && typeof value?.cultura === 'string'
@@ -218,11 +193,29 @@ const isMetadataRecord = (value: any): value is PeriodoProdutivoMetadata =>
   && value?.origem === 'local'
   && value?.versao === PERIODO_PRODUTIVO_VERSION;
 
-const isSnapshot = (value: any): value is PeriodoProdutivoSnapshot =>
-  value?.version === PERIODO_PRODUTIVO_VERSION
-  && typeof value?.savedAt === 'string'
-  && Array.isArray(value?.items)
-  && value.items.every(isMetadataRecord);
+const normalizeStoredMetadata = (value: any): PeriodoProdutivoMetadata | null => {
+  if (!isMetadataRecord(value)) return null;
+  const stored: any = value;
+  const {
+    propriedadeId: _legacyPropriedadeId,
+    fazenda_id: _legacyFazendaId,
+    fazendaId: _legacyFazendaIdCamel,
+    talhaoId: _legacyTalhaoId,
+    talhao: _legacyTalhao,
+    ...canonical
+  } = stored;
+  return {
+    ...canonical,
+    propriedade_id: firstNonEmptyString(
+      stored.propriedade_id,
+      stored.propriedadeId,
+      stored.fazenda_id,
+      stored.fazendaId
+    ),
+    talhao_id: normalizeOptionalString(stored.talhao_id ?? stored.talhaoId),
+    talhao_nome: normalizeOptionalString(stored.talhao_nome ?? stored.talhao),
+  };
+};
 
 const emptySnapshot = (): PeriodoProdutivoSnapshot => ({
   version: PERIODO_PRODUTIVO_VERSION,
@@ -242,18 +235,18 @@ const buildMetadataFromInput = (
 ): PeriodoProdutivoMetadata => {
   assertSmallMetadataOnly(input);
 
-  const ids = resolvePropriedadeIds(input);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const tipoPeriodo = normalizeTipoPeriodo(input.tipo_periodo);
   const cultura = firstNonEmptyString(input.cultura);
   const anoAgricola = firstNonEmptyString(input.ano_agricola);
   const dataInicio = normalizeDateString(input.data_inicio, 'data_inicio');
   const dataFim = normalizeDateString(input.data_fim, 'data_fim');
-  const talhaoId = normalizeOptionalString(input.talhao_id ?? input.talhaoId);
-  const talhaoNome = normalizeOptionalString(input.talhao_nome ?? input.talhao);
+  const talhaoId = normalizeOptionalString(input.talhao_id);
+  const talhaoNome = normalizeOptionalString(input.talhao_nome);
 
   compareDateStrings(dataInicio, dataFim);
 
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!propriedadeId) {
     throw new Error('PeriodoProdutivo.propriedade_id: obrigatorio');
   }
   if (!cultura) {
@@ -275,10 +268,7 @@ const buildMetadataFromInput = (
 
   return {
     id: firstNonEmptyString(input.id) || params.generateId(),
-    propriedade_id: ids.propriedade_id,
-    propriedadeId: ids.propriedadeId,
-    fazenda_id: ids.fazenda_id,
-    fazendaId: ids.fazendaId,
+    propriedade_id: propriedadeId,
     nome_propriedade: normalizeOptionalString(input.nome_propriedade),
     tipo_periodo: tipoPeriodo,
     tipo_periodo_label: firstNonEmptyString(input.tipo_periodo_label) || getTipoPeriodoLabel(tipoPeriodo),
@@ -290,9 +280,7 @@ const buildMetadataFromInput = (
     status: normalizeStatus(input.status),
     observacoes: normalizeOptionalString(input.observacoes),
     talhao_id: talhaoId,
-    talhaoId: talhaoId,
     talhao_nome: talhaoNome,
-    talhao: talhaoNome,
     criado_por_user_id: normalizeOptionalString(input.criado_por_user_id),
     criado_por_nome: normalizeOptionalString(input.criado_por_nome),
     criado_em: params.now,
@@ -363,7 +351,18 @@ export const createPeriodoProdutivoService = ({
 
     try {
       const parsed = JSON.parse(raw);
-      return isSnapshot(parsed) ? parsed : emptySnapshot();
+      if (
+        parsed?.version === PERIODO_PRODUTIVO_VERSION
+        && typeof parsed?.savedAt === 'string'
+        && Array.isArray(parsed?.items)
+      ) {
+        return {
+          version: PERIODO_PRODUTIVO_VERSION,
+          savedAt: parsed.savedAt,
+          items: parsed.items.map(normalizeStoredMetadata).filter(Boolean) as PeriodoProdutivoMetadata[],
+        };
+      }
+      return emptySnapshot();
     } catch {
       return emptySnapshot();
     }
@@ -404,12 +403,7 @@ export const createPeriodoProdutivoService = ({
       if (!id) return [];
 
       const items = await this.listPeriodosProdutivos();
-      return items.filter((item) => (
-        item.propriedade_id === id
-        || item.propriedadeId === id
-        || item.fazenda_id === id
-        || item.fazendaId === id
-      ));
+      return items.filter((item) => item.propriedade_id === id);
     },
 
     async listActivePeriodosProdutivosByPropriedade(propriedadeId: string): Promise<PeriodoProdutivoMetadata[]> {
@@ -426,9 +420,9 @@ export const createPeriodoProdutivoService = ({
       if (!talhaoNormalized) return items;
 
       return items.filter((item) => (
-        firstNonEmptyString(item.talhao_id, item.talhaoId).toLowerCase() === talhaoNormalized
-        || firstNonEmptyString(item.talhao_nome, item.talhao).toLowerCase() === talhaoNormalized
-        || !firstNonEmptyString(item.talhao_id, item.talhaoId, item.talhao_nome, item.talhao)
+        firstNonEmptyString(item.talhao_id).toLowerCase() === talhaoNormalized
+        || firstNonEmptyString(item.talhao_nome).toLowerCase() === talhaoNormalized
+        || !firstNonEmptyString(item.talhao_id, item.talhao_nome)
       ));
     },
 

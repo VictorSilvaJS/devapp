@@ -159,7 +159,7 @@ const buildFazendaFutureAliases = (
     record.titular_id,
     record.titularId,
     record.proprietario_id,
-    canonical.produtor_id,
+    canonical.titular_id,
     record.produtor_id
   );
   const titularNome = firstNonEmptyString(
@@ -299,6 +299,7 @@ const buildCanonicalFazendaFromBoundary = (
       },
       canonical
     ),
+    titular_id: canonical.titular_id,
   });
 };
 
@@ -391,10 +392,10 @@ export const buildFazendaDeleteIntegrity = (
   const fazendaNome = firstNonEmptyString(current.fazenda_nome, current.fazenda) ?? 'esta propriedade';
 
   const counts = {
-    mapas: countByFazendaId(dependencies.mapas, fazendaId, (item) => normalizeMapa(item).fazenda_id),
-    visitas: countByFazendaId(dependencies.visitas, fazendaId, (item) => normalizeVisita(item).fazenda_id),
-    cadernos: countByFazendaId(dependencies.cadernos, fazendaId, (item) => normalizeCadernoCampo(item).fazenda_id),
-    limites: countByFazendaId(dependencies.limites, fazendaId, (item) => normalizeLimiteArea(item).fazenda_id),
+    mapas: countByFazendaId(dependencies.mapas, fazendaId, (item) => normalizeMapa(item).propriedade_id),
+    visitas: countByFazendaId(dependencies.visitas, fazendaId, (item) => normalizeVisita(item).propriedade_id),
+    cadernos: countByFazendaId(dependencies.cadernos, fazendaId, (item) => normalizeCadernoCampo(item).propriedade_id),
+    limites: countByFazendaId(dependencies.limites, fazendaId, (item) => normalizeLimiteArea(item).propriedade_id),
   };
 
   const dependencyLabels = [

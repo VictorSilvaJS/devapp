@@ -45,7 +45,6 @@ export type MaterialTecnicoPrescricaoInferida =
 export interface MaterialTecnicoImportMetadata {
   id: string;
   propriedade_id: string;
-  fazenda_id: string;
   nome_propriedade?: string;
 
   titulo: string;

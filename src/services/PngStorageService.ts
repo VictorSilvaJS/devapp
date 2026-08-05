@@ -22,7 +22,6 @@ export interface PngStorageError {
 
 export interface CopyPngToStorageInput {
   propriedade_id: string;
-  fazenda_id?: string;
   sourceUri: string;
   originalName: string;
   importId?: string;
@@ -37,7 +36,6 @@ export interface BuildPngStorageUriInput {
 
 export interface StoredPngFile {
   propriedade_id: string;
-  fazenda_id: string;
   uri: string;
   name: string;
   originalName: string;
@@ -319,11 +317,10 @@ export const copyPngToInternalStorage = async (
   input: CopyPngToStorageInput,
   deps: PngStorageServiceDeps = {}
 ): Promise<PngStorageCopyResult> => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const sourceUri = firstNonEmptyString(input.sourceUri);
 
-  if (!propriedadeId || !fazendaId) {
+  if (!propriedadeId) {
     return {
       ok: false,
       error: buildError('PNG_PROPRIEDADE_ID_REQUIRED', 'propriedade_id e obrigatorio para copiar PNG.'),
@@ -419,7 +416,6 @@ export const copyPngToInternalStorage = async (
       ok: true,
       file: {
         propriedade_id: propriedadeId,
-        fazenda_id: fazendaId,
         uri: destinationUri,
         name,
         originalName: firstNonEmptyString(input.originalName) || DEFAULT_PNG_FILE_NAME,

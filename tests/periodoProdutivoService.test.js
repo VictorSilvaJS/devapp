@@ -86,15 +86,13 @@ const assertRejectsWith = async (fn, pattern) => {
 };
 
 const run = async () => {
-  await test('cria periodo produtivo em chave propria preservando aliases de propriedade e fazenda', async () => {
+  await test('cria periodo produtivo canônico somente com propriedade_id', async () => {
     const { service, storage } = createService();
     const created = await service.createPeriodoProdutivoMetadata(baseInput());
 
     assert.equal(created.id, 'periodo_gerado');
     assert.equal(created.propriedade_id, 'prop_a');
-    assert.equal(created.propriedadeId, 'prop_a');
-    assert.equal(created.fazenda_id, 'fazenda_a');
-    assert.equal(created.fazendaId, 'fazenda_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(created, 'fazenda_id'), false);
     assert.equal(created.tipo_periodo_label, 'Safra');
     assert.equal(created.label, 'Safra • Soja • 2025/2026 • Talhao 1');
     assert.equal(created.registro_status, 'ativo');
@@ -104,7 +102,7 @@ const run = async () => {
     assert.equal(readSnapshot(storage).items.length, 1);
   });
 
-  await test('lista por propriedade, fazenda e talhao sem bloquear periodo da propriedade inteira', async () => {
+  await test('lista por propriedade e talhao sem bloquear periodo da propriedade inteira', async () => {
     const { service } = createService();
     await service.createPeriodoProdutivoMetadata(baseInput({ id: 'safra_talhao' }));
     await service.createPeriodoProdutivoMetadata(baseInput({
@@ -116,7 +114,6 @@ const run = async () => {
     await service.createPeriodoProdutivoMetadata(baseInput({
       id: 'outra_fazenda',
       propriedade_id: 'prop_b',
-      fazenda_id: 'fazenda_b',
     }));
 
     assert.deepEqual(
@@ -124,11 +121,7 @@ const run = async () => {
       ['safra_talhao', 'safrinha_propriedade'].sort()
     );
     assert.deepEqual(
-      (await service.listPeriodosProdutivosByPropriedade('fazenda_a')).map((item) => item.id).sort(),
-      ['safra_talhao', 'safrinha_propriedade'].sort()
-    );
-    assert.deepEqual(
-      (await service.listActivePeriodosProdutivosByTalhao('fazenda_a', 'Talhao 1')).map((item) => item.id).sort(),
+      (await service.listActivePeriodosProdutivosByTalhao('prop_a', 'Talhao 1')).map((item) => item.id).sort(),
       ['safra_talhao', 'safrinha_propriedade'].sort()
     );
   });

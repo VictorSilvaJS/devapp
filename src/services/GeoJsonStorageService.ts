@@ -30,7 +30,6 @@ export interface GeoJsonStorageError {
 
 export interface CopyGeoJsonToStorageInput {
   propriedade_id: string;
-  fazenda_id?: string;
   sourceUri: string;
   originalName: string;
   content?: string;
@@ -46,7 +45,6 @@ export interface BuildGeoJsonStorageUriInput {
 
 export interface StoredGeoJsonFile {
   propriedade_id: string;
-  fazenda_id: string;
   uri: string;
   name: string;
   originalName: string;
@@ -362,11 +360,10 @@ export const copyGeoJsonToInternalStorage = async (
   input: CopyGeoJsonToStorageInput,
   deps: GeoJsonStorageServiceDeps = {}
 ): Promise<GeoJsonStorageCopyResult> => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const sourceUri = firstNonEmptyString(input.sourceUri);
 
-  if (!propriedadeId || !fazendaId) {
+  if (!propriedadeId) {
     return {
       ok: false,
       error: buildError('PROPRIEDADE_ID_REQUIRED', 'propriedade_id e obrigatorio para copiar GeoJSON.'),
@@ -475,7 +472,6 @@ export const copyGeoJsonToInternalStorage = async (
       ok: true,
       file: {
         propriedade_id: propriedadeId,
-        fazenda_id: fazendaId,
         uri: destinationUri,
         name,
         originalName: firstNonEmptyString(input.originalName) || DEFAULT_GEOJSON_FILE_NAME,

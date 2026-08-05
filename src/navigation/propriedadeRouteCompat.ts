@@ -11,12 +11,10 @@ export type FazendaIdRouteParams = {
 };
 
 export type PropriedadeContextRouteParams = FazendaIdRouteParams & {
-  fazendaId: string;
-  produtorId: string;
   propriedadeId: string;
 };
 
-type PropriedadeRouteIdSource = 'fazendaId' | 'produtorId' | 'id';
+type PropriedadeRouteIdSource = 'propriedadeId' | 'fazendaId' | 'produtorId' | 'id';
 
 export type PropriedadeRouteContextParams = FazendaIdRouteParams & {
   id?: string;
@@ -28,6 +26,7 @@ export type PropriedadeRouteContext = {
   id?: string;
   propriedadeId?: string;
   propriedadeIdAlias?: string;
+  effectivePropriedadeId?: string;
   effectiveFazendaId?: string;
   source?: PropriedadeRouteIdSource;
 };
@@ -60,8 +59,6 @@ export const buildPropriedadeContextRouteParams = (
 
   return info.id
     ? {
-        fazendaId: info.id,
-        produtorId: info.id,
         propriedadeId: info.id,
       }
     : undefined;
@@ -76,8 +73,12 @@ export const resolvePropriedadeRouteContext = (
   const id = firstNonEmptyString(params?.id);
   const propriedadeId = firstNonEmptyString(params?.propriedadeId);
 
-  let effectiveFazendaId = fazendaId;
-  let source: PropriedadeRouteIdSource | undefined = fazendaId ? 'fazendaId' : undefined;
+  let effectiveFazendaId = propriedadeId || fazendaId;
+  let source: PropriedadeRouteIdSource | undefined = propriedadeId
+    ? 'propriedadeId'
+    : fazendaId
+      ? 'fazendaId'
+      : undefined;
 
   if (!effectiveFazendaId && produtorId) {
     effectiveFazendaId = produtorId;
@@ -95,6 +96,7 @@ export const resolvePropriedadeRouteContext = (
     id,
     propriedadeId,
     propriedadeIdAlias: propriedadeId,
+    effectivePropriedadeId: effectiveFazendaId,
     effectiveFazendaId,
     source,
   };

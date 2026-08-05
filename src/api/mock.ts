@@ -2432,9 +2432,11 @@ const inferVisitaActor = (data: any = {}, fallbackRecord: any = null): VisitaAct
   perfil: 'colaborador',
   propriedadeIds: [
     String(
-      data?.fazenda_id
+      data?.propriedade_id
+      || data?.fazenda_id
       || data?.fazendaId
       || data?.produtor_id
+      || fallbackRecord?.propriedade_id
       || fallbackRecord?.fazenda_id
       || fallbackRecord?.fazendaId
       || fallbackRecord?.produtor_id
@@ -2458,6 +2460,7 @@ const VISITA_AGENDA_UPDATE_FIELDS = [
 
 const VISITA_AGENDA_REQUEST_FIELDS = new Set([
   ...VISITA_AGENDA_UPDATE_FIELDS,
+  'propriedade_id',
   'fazenda_id',
   'fazendaId',
   'produtor_id',
@@ -2511,8 +2514,8 @@ const buildVisitaAgendaChanges = (data: any = {}): Record<string, unknown> =>
   }, {});
 
 const assertVisitaPropertyUnchanged = (record: any, data: any): void => {
-  const currentId = String(record?.fazenda_id || record?.produtor_id || '').trim();
-  const attemptedId = String(data?.fazenda_id || data?.fazendaId || data?.produtor_id || '').trim();
+  const currentId = String(record?.propriedade_id || record?.fazenda_id || record?.produtor_id || '').trim();
+  const attemptedId = String(data?.propriedade_id || data?.fazenda_id || data?.fazendaId || data?.produtor_id || '').trim();
   if (attemptedId && attemptedId !== currentId) {
     throw new Error('Visita.agendamento: A Propriedade da Visita não pode ser reatribuída.');
   }
@@ -2585,8 +2588,8 @@ export const Visita: any = {
       if (getVisitaEstado(originRecord) !== 'cancelada') {
         throw new Error('Visita.vinculo: Somente Visita cancelada pode originar uma nova.');
       }
-      const originPropertyId = String(originRecord.fazenda_id || originRecord.produtor_id || '').trim();
-      const targetPropertyId = String(data?.fazenda_id || data?.produtor_id || '').trim();
+      const originPropertyId = String(originRecord.propriedade_id || originRecord.fazenda_id || originRecord.produtor_id || '').trim();
+      const targetPropertyId = String(data?.propriedade_id || data?.fazenda_id || data?.produtor_id || '').trim();
       if (!targetPropertyId || targetPropertyId !== originPropertyId) {
         throw new Error('Visita.vinculo: A nova Visita deve permanecer na mesma Propriedade.');
       }
@@ -2689,9 +2692,11 @@ const inferCadernoActor = (data: any = {}, fallbackRecord: any = null): CadernoA
     : 'colaborador',
   propriedadeIds: [
     String(
-      data?.fazenda_id
+      data?.propriedade_id
+      || data?.fazenda_id
       || data?.fazendaId
       || data?.produtor_id
+      || fallbackRecord?.propriedade_id
       || fallbackRecord?.fazenda_id
       || fallbackRecord?.fazendaId
       || fallbackRecord?.produtor_id

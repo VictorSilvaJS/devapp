@@ -66,8 +66,7 @@ export interface GeoJsonPropertyImportContext {
   user: any;
   propriedade: any;
   propriedade_id?: string;
-  fazenda_id?: string;
-  produtor_id?: string;
+  titular_id?: string;
   nome_propriedade?: string;
   ano?: number;
   safra?: string;
@@ -82,8 +81,7 @@ export interface GeoJsonPropertyImportResolvedContext {
   user: any;
   propriedade: any;
   propriedade_id: string;
-  fazenda_id: string;
-  produtor_id: string;
+  titular_id: string;
   nome_propriedade?: string;
   ano: number;
   safra?: string;
@@ -160,7 +158,6 @@ export interface GeoJsonPropertyImportWorkflowDeps {
   copyGeoJsonToInternalStorage?: (
     input: {
       propriedade_id: string;
-      fazenda_id?: string;
       sourceUri: string;
       originalName: string;
       content?: string;
@@ -326,38 +323,28 @@ const resolveIds = (input: GeoJsonPropertyImportContext) => {
     propriedade?.fazenda_id,
     propriedade?.fazendaId
   );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    propriedade?.fazenda_id,
-    propriedade?.fazendaId,
-    compatFazendaId,
-    propriedadeId
-  );
   const titularId = firstNonEmptyString(
-    input.produtor_id,
+    input.titular_id,
+    propriedade?.titular_id,
     propriedade?.produtor_id,
     propriedade?.proprietario_id,
-    propriedade?.titular_id,
     propriedade?.titularId,
     getTitularIdFazenda(propriedade),
-    fazendaId,
     propriedadeId
   );
 
   return {
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
-    produtor_id: titularId,
+    titular_id: titularId,
   };
 };
 
 export const isSelaPrataIPropriedade = (
-  input: Pick<GeoJsonPropertyImportContext, 'propriedade' | 'propriedade_id' | 'fazenda_id'>
+  input: Pick<GeoJsonPropertyImportContext, 'propriedade' | 'propriedade_id'>
 ): boolean => {
   const propriedade = input.propriedade;
   const ids = [
     input.propriedade_id,
-    input.fazenda_id,
     propriedade?.propriedade_id,
     propriedade?.propriedadeId,
     propriedade?.fazenda_id,
@@ -379,14 +366,13 @@ const resolveContext = (
   deps: GeoJsonPropertyImportWorkflowDeps
 ): GeoJsonPropertyImportResolvedContext | null => {
   const ids = resolveIds(input);
-  if (!ids.propriedade_id || !ids.fazenda_id) return null;
+  if (!ids.propriedade_id) return null;
 
   return {
     user: input.user,
     propriedade: input.propriedade,
     propriedade_id: ids.propriedade_id,
-    fazenda_id: ids.fazenda_id,
-    produtor_id: ids.produtor_id,
+    titular_id: ids.titular_id,
     nome_propriedade: resolveNomePropriedade(input),
     ano: resolveAno(input.ano, deps),
     safra: normalizeOptionalString(input.safra),
@@ -396,7 +382,6 @@ const resolveContext = (
     requiresSelaPrataConfirmation: isSelaPrataIPropriedade({
       propriedade: input.propriedade,
       propriedade_id: ids.propriedade_id,
-      fazenda_id: ids.fazenda_id,
     }),
   };
 };
@@ -406,8 +391,6 @@ const buildValidationOptions = (
   deps: GeoJsonPropertyImportWorkflowDeps
 ): GeoJsonNormalizeOptions => ({
   propriedade_id: context.propriedade_id,
-  fazenda_id: context.fazenda_id,
-  produtor_id: context.produtor_id,
   ano: context.ano,
   safra: context.safra,
   data_upload: resolveNow(deps),
@@ -517,7 +500,6 @@ const buildMetadataInput = (
 ): GeoJsonImportMetadataInput => ({
   id: preview.importId,
   propriedade_id: preview.resolvedContext.propriedade_id,
-  fazenda_id: preview.resolvedContext.fazenda_id,
   nome_propriedade: preview.resolvedContext.nome_propriedade,
   arquivo_nome_original: preview.file.name,
   arquivo_uri_local: storedFile.uri,
@@ -550,7 +532,6 @@ export const confirmGeoJsonPropertyImport = async (
   const copy = deps.copyGeoJsonToInternalStorage ?? copyGeoJsonToInternalStorage;
   const copied = await copy({
     propriedade_id: preview.resolvedContext.propriedade_id,
-    fazenda_id: preview.resolvedContext.fazenda_id,
     sourceUri: preview.file.uri,
     originalName: preview.file.name,
     content: preview.content,

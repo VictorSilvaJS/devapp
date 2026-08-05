@@ -39,8 +39,6 @@ export interface GeoJsonTalhoesLayerError {
 
 export interface LoadGeoJsonTalhoesLayerInput {
   propriedade_id: string;
-  fazenda_id?: string;
-  produtor_id?: string;
   ano?: number;
   safra?: string;
   activeMetadata?: GeoJsonImportMetadata | null;
@@ -125,19 +123,10 @@ const buildValidationOptions = (
   const propriedadeId = firstNonEmptyString(
     metadata.propriedade_id,
     input.propriedade_id,
-    metadata.fazenda_id,
-    input.fazenda_id
+    input.propriedade_id
   );
-  const fazendaId = firstNonEmptyString(
-    metadata.fazenda_id,
-    input.fazenda_id,
-    propriedadeId
-  );
-
   return {
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
-    produtor_id: firstNonEmptyString(input.produtor_id, fazendaId, propriedadeId),
     ano: metadata.ano ?? input.ano ?? getCurrentYear(deps),
     safra: firstNonEmptyString(metadata.safra, input.safra) || undefined,
     data_upload: firstNonEmptyString(metadata.importado_em) || (deps.now ?? (() => new Date().toISOString()))(),
@@ -162,7 +151,7 @@ export const loadGeoJsonTalhoesLayer = async (
   input: LoadGeoJsonTalhoesLayerInput,
   deps: GeoJsonTalhoesLayerServiceDeps = {}
 ): Promise<GeoJsonTalhoesLayerResult> => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   if (!propriedadeId) {
     return buildErrorResult(
       undefined,

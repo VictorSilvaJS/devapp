@@ -78,9 +78,6 @@ export interface AnexoFertilidade {
   /** Nome preferencial futuro para vinculo com a unidade operacional. */
   propriedade_id: string;
 
-  /** Legado/mock temporario enquanto rotas, mocks e contratos usam fazenda_id. */
-  fazenda_id?: string;
-
   tipo_anexo: TipoAnexoFertilidade;
   categoria: CategoriaAnexoFertilidade;
   tipo_material: TipoMaterialAnexoFertilidade;

@@ -108,12 +108,12 @@ export const deriveProdutorFromFazenda = (
   const fazenda = normalizeFazenda(raw);
   const nome = firstNonEmptyString(fazenda.produtor_nome);
 
-  if (!fazenda.produtor_id || !nome) {
+  if (!fazenda.titular_id || !nome) {
     return null;
   }
 
   return {
-    id: fazenda.produtor_id,
+    id: fazenda.titular_id,
     nome,
     email: fazenda.email,
     telefone: fazenda.telefone,
@@ -128,6 +128,8 @@ export const normalizeFazenda = (
   const legadoComNomeSeparado = hasOwn(raw, 'fazenda');
   const {
     proprietario_id,
+    produtor_id,
+    titular_id,
     fazenda,
     produtor_nome,
     nome,
@@ -137,7 +139,7 @@ export const normalizeFazenda = (
   return {
     ...rest,
     id: raw.id,
-    produtor_id: firstNonEmptyString(rest.produtor_id, proprietario_id) ?? '',
+    titular_id: firstNonEmptyString(titular_id, produtor_id, proprietario_id) ?? '',
     nome: legadoComNomeSeparado
       ? firstNonEmptyString(fazenda, nome) ?? ''
       : firstNonEmptyString(nome) ?? '',
@@ -156,7 +158,8 @@ export const toFazendaCompativelBorda = (
     ...fazendaCanonica,
     nome: firstNonEmptyString(fazendaCanonica.produtor_nome, fazendaCanonica.nome) ?? '',
     fazenda: fazendaCanonica.nome,
-    proprietario_id: fazendaCanonica.produtor_id,
+    produtor_id: fazendaCanonica.titular_id,
+    proprietario_id: fazendaCanonica.titular_id,
     produtor_nome: fazendaCanonica.produtor_nome,
   };
 };
@@ -166,6 +169,7 @@ export const normalizeMapa = (
 ): MapaCanonico => {
   const {
     produtor_id,
+    propriedade_id,
     fazenda_id,
     disponivel_para_download,
     disponivel_download,
@@ -177,8 +181,9 @@ export const normalizeMapa = (
     id: raw.id,
     titulo: raw.titulo ?? '',
     categoria: raw.categoria ?? '',
-    talhao: raw.talhao ?? '',
-    fazenda_id: firstNonEmptyString(fazenda_id, produtor_id) ?? '',
+    propriedade_id: firstNonEmptyString(propriedade_id, fazenda_id, produtor_id) ?? '',
+    talhao_id: firstNonEmptyString(raw.talhao_id),
+    talhao_nome: firstNonEmptyString(raw.talhao_nome, (raw as MapaLegado | MapaCompativelBorda).talhao),
     disponivel_download: normalizeDisponibilidadeDownload({
       disponivel_download,
       disponivel_para_download,
@@ -193,7 +198,9 @@ export const toMapaCompativelBorda = (
 
   return {
     ...mapa,
-    produtor_id: mapa.fazenda_id,
+    fazenda_id: mapa.propriedade_id,
+    produtor_id: mapa.propriedade_id,
+    talhao: mapa.talhao_nome ?? '',
     disponivel_para_download: mapa.disponivel_download,
   };
 };
@@ -201,12 +208,12 @@ export const toMapaCompativelBorda = (
 export const normalizeVisita = (
   raw: VisitaLegada | VisitaCanonica | VisitaCompativelBorda
 ): VisitaCanonica => {
-  const { produtor_id, fazenda_id, ...rest } = raw as VisitaLegada & VisitaCanonica & VisitaCompativelBorda;
+  const { produtor_id, propriedade_id, fazenda_id, ...rest } = raw as VisitaLegada & VisitaCanonica & VisitaCompativelBorda;
 
   return {
     ...rest,
     id: raw.id,
-    fazenda_id: firstNonEmptyString(fazenda_id, produtor_id) ?? '',
+    propriedade_id: firstNonEmptyString(propriedade_id, fazenda_id, produtor_id) ?? '',
     tecnico_responsavel: raw.tecnico_responsavel ?? '',
     data_visita: raw.data_visita ?? '',
     objetivo: raw.objetivo ?? '',
@@ -220,16 +227,17 @@ export const toVisitaCompativelBorda = (
 
   return {
     ...visita,
-    produtor_id: visita.fazenda_id,
+    fazenda_id: visita.propriedade_id,
+    produtor_id: visita.propriedade_id,
   };
 };
 
 export const normalizeCadernoCampo = (
   raw: CadernoCampoLegado | CadernoCampoCanonico | CadernoCampoCompativelBorda
 ): CadernoCampoCanonico => {
-  const { produtor_id, criado_por, fazenda_id, fazendaId, ...rest } =
+  const { produtor_id, criado_por, propriedade_id, fazenda_id, fazendaId, ...rest } =
     raw as CadernoCampoLegado & CadernoCampoCanonico & CadernoCampoCompativelBorda;
-  const contextoFazendaId = firstNonEmptyString(fazenda_id, fazendaId, produtor_id) ?? '';
+  const propriedadeId = firstNonEmptyString(propriedade_id, fazenda_id, fazendaId, produtor_id) ?? '';
   const localizacao = normalizeCadernoLocalizacao(raw);
   const localizacaoSpatial = localizacao
     ? normalizeCadernoLocalizacaoSpatialAssessment(raw)
@@ -247,8 +255,7 @@ export const normalizeCadernoCampo = (
     ...(localizacao || {}),
     ...(localizacaoSpatial || {}),
     id: raw.id,
-    fazenda_id: contextoFazendaId,
-    fazendaId: contextoFazendaId,
+    propriedade_id: propriedadeId,
     ...(responsavelId ? { responsavel_usuario_id: responsavelId } : {}),
     colaborador_responsavel: raw.colaborador_responsavel ?? '',
     data_atividade: raw.data_atividade ?? '',
@@ -267,16 +274,17 @@ export const toCadernoCampoCompativelBorda = (
 
   return {
     ...caderno,
-    produtor_id: caderno.fazenda_id,
+    fazenda_id: caderno.propriedade_id,
+    produtor_id: caderno.propriedade_id,
     criado_por: caderno.criado_por_user_id,
-    fazendaId: caderno.fazenda_id,
+    fazendaId: caderno.propriedade_id,
   };
 };
 
 export const normalizeLimiteArea = (
   raw: LimiteAreaLegado | LimiteAreaCanonico | LimiteAreaCompativelBorda
 ): LimiteAreaCanonico => {
-  const { produtor_id, fazenda_id, ...rest } =
+  const { produtor_id, propriedade_id, fazenda_id, ...rest } =
     raw as LimiteAreaLegado & LimiteAreaCanonico & LimiteAreaCompativelBorda;
 
   return {
@@ -284,8 +292,8 @@ export const normalizeLimiteArea = (
     id: raw.id,
     nome: raw.nome ?? '',
     ano: raw.ano ?? 0,
-    fazenda_id: firstNonEmptyString(fazenda_id, produtor_id) ?? '',
-    talhao: raw.talhao ?? '',
+    propriedade_id: firstNonEmptyString(propriedade_id, fazenda_id, produtor_id) ?? '',
+    talhao_nome: firstNonEmptyString(raw.talhao_nome, (raw as LimiteAreaLegado | LimiteAreaCompativelBorda).talhao),
     poligono: raw.poligono ?? [],
   };
 };
@@ -297,6 +305,8 @@ export const toLimiteAreaCompativelBorda = (
 
   return {
     ...limite,
-    produtor_id: limite.fazenda_id,
+    fazenda_id: limite.propriedade_id,
+    produtor_id: limite.propriedade_id,
+    talhao: limite.talhao_nome ?? '',
   };
 };

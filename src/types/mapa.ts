@@ -37,6 +37,9 @@ export interface EscopoMapaFazenda {
  */
 export interface MapaTalhao {
   id: string;
+  propriedade_id?: string;
+  talhao_id?: string;
+  talhao_nome?: string;
   fazenda_id?: string;
   produtor_id?: string;
   talhao: string;                      // nome do talhão (T01, T02, etc)

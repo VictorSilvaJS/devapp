@@ -202,7 +202,7 @@ export default function NovaVisitaScreen() {
     setLoading(true);
     try {
       const novaVisita = buildVisitaPayload({
-        fazendaId,
+        propriedadeId: fazendaId,
         dataVisita,
         horaVisita,
         objetivo,

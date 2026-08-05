@@ -35,12 +35,16 @@ export const filterMockVisitas = (records: any[], query?: Record<string, any>) =
 
 export const persistMockVisita = ({ id, data, existing }: { id?: any; data: any; existing?: any }) => {
   const current = existing ? readMockVisita(existing) : null;
-  const nextFazendaId = data?.fazenda_id ?? data?.produtor_id ?? current?.fazenda_id;
+  const nextPropriedadeId = data?.propriedade_id
+    ?? data?.fazenda_id
+    ?? data?.produtor_id
+    ?? current?.propriedade_id
+    ?? current?.fazenda_id;
   const normalized = normalizeVisita({
     ...(current || {}),
     ...(data || {}),
     id: id ?? data?.id ?? current?.id,
-    fazenda_id: nextFazendaId,
+    propriedade_id: nextPropriedadeId,
     status: data?.status ?? current?.status ?? 'agendada',
     fotos: data?.fotos ?? current?.fotos ?? [],
   });
@@ -58,7 +62,13 @@ export const filterMockCadernosCampo = (records: any[], query?: Record<string, a
 
 export const persistMockCadernoCampo = ({ id, data, existing }: { id?: any; data: any; existing?: any }) => {
   const current = existing ? readMockCadernoCampo(existing) : null;
-  const nextFazendaId = data?.fazenda_id ?? data?.fazendaId ?? data?.produtor_id ?? current?.fazenda_id ?? current?.fazendaId;
+  const nextPropriedadeId = data?.propriedade_id
+    ?? data?.fazenda_id
+    ?? data?.fazendaId
+    ?? data?.produtor_id
+    ?? current?.propriedade_id
+    ?? current?.fazenda_id
+    ?? current?.fazendaId;
   const hasLocalizacaoIntent = hasCadernoLocalizacaoFieldIntent(data);
   let localizacaoFields = buildCadernoLocalizacaoFields(current);
   let localizacaoSpatialFields = buildCadernoLocalizacaoSpatialFields(current);
@@ -82,8 +92,7 @@ export const persistMockCadernoCampo = ({ id, data, existing }: { id?: any; data
     ...localizacaoFields,
     ...localizacaoSpatialFields,
     id: id ?? data?.id ?? current?.id,
-    fazenda_id: nextFazendaId,
-    fazendaId: nextFazendaId,
+    propriedade_id: nextPropriedadeId,
     visivel_para_produtor: data?.visivel_para_produtor ?? current?.visivel_para_produtor ?? true,
     fotos: data?.fotos ?? current?.fotos ?? [],
     data_criacao: data?.data_criacao ?? current?.data_criacao ?? new Date().toISOString(),
@@ -101,12 +110,16 @@ export const filterMockMapas = (records: any[], query?: Record<string, any>) =>
 
 export const persistMockMapa = ({ id, data, existing }: { id?: any; data: any; existing?: any }) => {
   const current = existing ? readMockMapa(existing) : null;
-  const nextFazendaId = data?.fazenda_id ?? data?.produtor_id ?? current?.fazenda_id;
+  const nextPropriedadeId = data?.propriedade_id
+    ?? data?.fazenda_id
+    ?? data?.produtor_id
+    ?? current?.propriedade_id
+    ?? current?.fazenda_id;
   const normalized = normalizeMapa({
     ...(current || {}),
     ...(data || {}),
     id: id ?? data?.id ?? current?.id,
-    fazenda_id: nextFazendaId,
+    propriedade_id: nextPropriedadeId,
     data_criacao: data?.data_criacao ?? current?.data_criacao ?? new Date().toISOString(),
     disponivel_download:
       data?.disponivel_download ??
@@ -127,12 +140,16 @@ export const filterMockLimitesArea = (records: any[], query?: Record<string, any
 
 export const persistMockLimiteArea = ({ id, data, existing }: { id?: any; data: any; existing?: any }) => {
   const current = existing ? readMockLimiteArea(existing) : null;
-  const nextFazendaId = data?.fazenda_id ?? data?.produtor_id ?? current?.fazenda_id;
+  const nextPropriedadeId = data?.propriedade_id
+    ?? data?.fazenda_id
+    ?? data?.produtor_id
+    ?? current?.propriedade_id
+    ?? current?.fazenda_id;
   const normalized = normalizeLimiteArea({
     ...(current || {}),
     ...(data || {}),
     id: id ?? data?.id ?? current?.id,
-    fazenda_id: nextFazendaId,
+    propriedade_id: nextPropriedadeId,
     data_upload: data?.data_upload ?? current?.data_upload ?? new Date().toISOString(),
     disponivel_offline: data?.disponivel_offline ?? current?.disponivel_offline ?? true,
   });

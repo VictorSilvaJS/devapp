@@ -36,8 +36,7 @@ const run = async () => {
     assert.deepEqual(buildMaterialViewerRouteParams(baseMaterial()), {
       materialId: 'material_local:mat_1',
       materialVersion: '2',
-      fazendaId: 'prop_1',
-      produtorId: 'prop_1',
+      propriedadeId: 'prop_1',
     });
   });
 
@@ -47,7 +46,7 @@ const run = async () => {
     assert.deepEqual(resolveMaterialViewerIdentity({ material_id: 'mat_1', versao: 'v3' }), {
       materialId: 'mat_1',
       materialVersion: 'v3',
-      fazendaId: undefined,
+      propriedadeId: undefined,
     });
   });
 

@@ -105,7 +105,7 @@ const run = async () => {
 
     assert.equal(result.ok, true);
     assert.equal(result.file.uri, `file:///app/${PRESCRIPTION_ZIP_STORAGE_DIRECTORY_NAME}/prop_a/zip-001-prescricao.zip`);
-    assert.equal(result.file.fazenda_id, 'fazenda_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.file, 'fazenda_id'), false);
     assert.equal(result.file.size, 5);
     assert.equal(result.file.mimeType, 'application/zip');
     assert.equal(fileSystem.calls.copy.length, 1);

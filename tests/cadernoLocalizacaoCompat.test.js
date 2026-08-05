@@ -301,7 +301,7 @@ const run = async () => {
 
   await test('registro parcial legado é lido sem propagar o grupo corrompido', () => {
     const result = normalizeCadernoCampo(baseCaderno({ localizacao_latitude: 10 }));
-    assert.equal(result.fazenda_id, 'faz_teste_localizacao');
+    assert.equal(result.propriedade_id, 'faz_teste_localizacao');
     assert.equal(hasAnyLocationField(result), false);
   });
 

@@ -99,24 +99,32 @@ const run = async () => {
     assert.equal(created.formato_arquivo, 'zip');
     assert.equal(created.status, 'ativo');
     assert.equal(created.versao, PRESCRIPTION_ZIP_IMPORT_VERSION);
+    assert.equal(Object.prototype.hasOwnProperty.call(created, 'fazenda_id'), false);
     assert.equal(storage.values.has(PRESCRIPTION_ZIP_IMPORT_STORAGE_KEY), true);
     assert.equal(storage.values.has(MOCK_LOCAL_STORAGE_KEY), false);
     assert.equal(readSnapshot(storage).items.length, 1);
   });
 
-  await test('lista por propriedade, fazenda_id e somente ativos', async () => {
-    const { service } = createService();
+  await test('lista por propriedade, normaliza snapshot legado e filtra ativos', async () => {
+    const { service, storage } = createService();
     await service.createPrescriptionZipImportMetadata(baseInput({ id: 'zip_1' }));
     await service.createPrescriptionZipImportMetadata(baseInput({
       id: 'zip_2',
       propriedade_id: 'prop_b',
-      fazenda_id: 'fazenda_b',
       status: 'removido',
     }));
 
     assert.equal((await service.listPrescriptionZipImportsByPropriedade('prop_a')).length, 1);
-    assert.equal((await service.listPrescriptionZipImportsByPropriedade('fazenda_a')).length, 1);
     assert.equal((await service.listActivePrescriptionZipImportsByPropriedade('prop_b')).length, 0);
+
+    const snapshot = readSnapshot(storage);
+    snapshot.items[0].fazenda_id = 'fazenda_legada';
+    delete snapshot.items[0].propriedade_id;
+    storage.values.set(PRESCRIPTION_ZIP_IMPORT_STORAGE_KEY, JSON.stringify(snapshot));
+    const legacy = await service.listPrescriptionZipImportsByPropriedade('fazenda_legada');
+    assert.equal(legacy.length, 1);
+    assert.equal(legacy[0].propriedade_id, 'fazenda_legada');
+    assert.equal(Object.prototype.hasOwnProperty.call(legacy[0], 'fazenda_id'), false);
   });
 
   await test('marca substituido e removido sem apagar metadado imediatamente', async () => {

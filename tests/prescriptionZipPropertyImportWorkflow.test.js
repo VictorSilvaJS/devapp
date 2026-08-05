@@ -127,7 +127,7 @@ const run = async () => {
     assert.equal(result.ok, true);
     assert.equal(result.preview.importId, 'zip_import_1');
     assert.equal(result.preview.resolvedContext.propriedade_id, 'prop_a');
-    assert.equal(result.preview.resolvedContext.fazenda_id, 'fazenda_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.preview.resolvedContext, 'fazenda_id'), false);
     assert.equal(result.preview.form.camada, 'prescricao');
     assert.equal(calls.pick.length, 1);
   });

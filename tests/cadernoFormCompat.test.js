@@ -117,9 +117,9 @@ const run = async () => {
     assert.equal(parseCadernoAreaAplicada('abc'), null);
   });
 
-  await test('buildCadernoPayload gera contrato canônico com fazenda_id e visibilidade explícita', () => {
+  await test('buildCadernoPayload gera contrato canônico com propriedade_id e visibilidade explícita', () => {
     const payload = buildCadernoPayload({
-      fazendaId: 'faz_payload',
+      propriedadeId: 'faz_payload',
       dataAtividade: new Date('2026-04-20T00:00:00.000Z'),
       tipoAtividade: 'adubacao',
       talhaoId: 'talhao_a',
@@ -137,8 +137,8 @@ const run = async () => {
       origemRegistro: 'produtor',
     });
 
-    assert.equal(payload.fazenda_id, 'faz_payload');
-    assert.equal(payload.fazendaId, 'faz_payload');
+    assert.equal(payload.propriedade_id, 'faz_payload');
+    assert.equal(Object.prototype.hasOwnProperty.call(payload, 'fazenda_id'), false);
     assert.equal(payload.colaborador_responsavel, 'Carlos Silva');
     assert.equal(payload.responsavel_usuario_id, 'u2');
     assert.equal(payload.criado_por_nome, 'Carlos Silva');
@@ -171,7 +171,7 @@ const run = async () => {
     ]);
     const periodo = findCadernoPeriodoProdutivoOption(options, 'periodo_1');
     const payload = buildCadernoPayload({
-      fazendaId: 'faz_payload',
+      propriedadeId: 'faz_payload',
       dataAtividade: new Date('2026-04-20T00:00:00.000Z'),
       tipoAtividade: 'observacao',
       periodoProdutivo: periodo,
@@ -190,7 +190,7 @@ const run = async () => {
 
   await test('estado auxiliar da UI de localização não entra no payload comum do formulário', () => {
     const payload = buildCadernoPayload({
-      fazendaId: 'faz_payload',
+      propriedadeId: 'faz_payload',
       dataAtividade: new Date('2026-07-21T12:00:00.000Z'),
       tipoAtividade: 'observacao',
       talhaoId: 'talhao_2',
@@ -259,13 +259,13 @@ const run = async () => {
 
   await test('buildCadernoPayload retorna null para data ou área inválida', () => {
     assert.equal(buildCadernoPayload({
-      fazendaId: 'faz_payload',
+      propriedadeId: 'faz_payload',
       dataAtividade: null,
       tipoAtividade: 'vistoria',
     }), null);
 
     assert.equal(buildCadernoPayload({
-      fazendaId: 'faz_payload',
+      propriedadeId: 'faz_payload',
       dataAtividade: new Date('2026-04-20T00:00:00.000Z'),
       tipoAtividade: 'vistoria',
       areaAplicadaText: '-1',

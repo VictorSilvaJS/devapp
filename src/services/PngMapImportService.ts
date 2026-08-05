@@ -117,19 +117,6 @@ const normalizeEscopo = (value: unknown): PngMapEscopo => {
   throw new Error('PngMapImport.escopo: obrigatorio');
 };
 
-const resolvePropriedadeIds = (input: {
-  propriedade_id?: unknown;
-  fazenda_id?: unknown;
-}): { propriedade_id: string; fazenda_id: string } => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
-
-  return {
-    propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
-  };
-};
-
 const isPlainObject = (value: unknown): boolean =>
   typeof value === 'object'
   && value !== null
@@ -158,8 +145,7 @@ const assertSmallMetadataOnly = (input: Record<string, any>): void => {
 
 const isMetadataRecord = (value: any): value is PngMapImportMetadata =>
   typeof value?.id === 'string'
-  && typeof value?.propriedade_id === 'string'
-  && typeof value?.fazenda_id === 'string'
+  && Boolean(firstNonEmptyString(value?.propriedade_id, value?.fazenda_id))
   && typeof value?.titulo === 'string'
   && isPngMapCategoria(value?.categoria)
   && typeof value?.categoria_label === 'string'
@@ -172,11 +158,15 @@ const isMetadataRecord = (value: any): value is PngMapImportMetadata =>
   && value?.origem === 'arquivo_local'
   && value?.versao === PNG_MAP_IMPORT_VERSION;
 
-const isSnapshot = (value: any): value is PngMapImportSnapshot =>
-  value?.version === PNG_MAP_IMPORT_VERSION
-  && typeof value?.savedAt === 'string'
-  && Array.isArray(value?.items)
-  && value.items.every(isMetadataRecord);
+const normalizeStoredMetadata = (value: any): PngMapImportMetadata | null => {
+  if (!isMetadataRecord(value)) return null;
+  const stored: any = value;
+  const { fazenda_id: _legacyFazendaId, ...canonical } = stored;
+  return {
+    ...canonical,
+    propriedade_id: firstNonEmptyString(stored.propriedade_id, stored.fazenda_id),
+  };
+};
 
 const emptySnapshot = (): PngMapImportSnapshot => ({
   version: PNG_MAP_IMPORT_VERSION,
@@ -196,7 +186,7 @@ const buildMetadataFromInput = (
 ): PngMapImportMetadata => {
   assertSmallMetadataOnly(input);
 
-  const ids = resolvePropriedadeIds(input);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const titulo = firstNonEmptyString(input.titulo);
   const categoria = normalizeCategoria(input.categoria);
   const categoriaLabel = firstNonEmptyString(input.categoria_label);
@@ -205,7 +195,7 @@ const buildMetadataFromInput = (
   const talhaoId = normalizeOptionalString(input.talhao_id);
   const talhaoNome = normalizeOptionalString(input.talhao_nome);
 
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!propriedadeId) {
     throw new Error('PngMapImport.propriedade_id: obrigatorio');
   }
   if (!titulo) {
@@ -226,8 +216,7 @@ const buildMetadataFromInput = (
 
   return {
     id: firstNonEmptyString(input.id) || params.generateId(),
-    propriedade_id: ids.propriedade_id,
-    fazenda_id: ids.fazenda_id,
+    propriedade_id: propriedadeId,
     nome_propriedade: normalizeOptionalString(input.nome_propriedade),
     titulo,
     descricao: normalizeOptionalString(input.descricao),
@@ -305,7 +294,18 @@ export const createPngMapImportService = ({
 
     try {
       const parsed = JSON.parse(raw);
-      return isSnapshot(parsed) ? parsed : emptySnapshot();
+      if (
+        parsed?.version === PNG_MAP_IMPORT_VERSION
+        && typeof parsed?.savedAt === 'string'
+        && Array.isArray(parsed?.items)
+      ) {
+        return {
+          version: PNG_MAP_IMPORT_VERSION,
+          savedAt: parsed.savedAt,
+          items: parsed.items.map(normalizeStoredMetadata).filter(Boolean) as PngMapImportMetadata[],
+        };
+      }
+      return emptySnapshot();
     } catch {
       return emptySnapshot();
     }
@@ -341,7 +341,7 @@ export const createPngMapImportService = ({
       if (!id) return [];
 
       const snapshot = await loadSnapshot();
-      return snapshot.items.filter((item) => item.propriedade_id === id || item.fazenda_id === id);
+      return snapshot.items.filter((item) => item.propriedade_id === id);
     },
 
     async listActivePngMapImportsByPropriedade(propriedadeId: string): Promise<PngMapImportMetadata[]> {

@@ -107,7 +107,7 @@ const cloneValue = <T>(value: T): T => {
 const normalizeText = (value: unknown): string => String(value ?? '').trim();
 
 const getFazendaId = (record: any): string =>
-  normalizeText(record?.fazenda_id || record?.fazendaId || record?.produtor_id || record?.propriedade_id);
+  normalizeText(record?.propriedade_id || record?.fazenda_id || record?.fazendaId || record?.produtor_id);
 
 const getEvents = (record: any): any[] =>
   Array.isArray(record?.eventos_visita) ? cloneValue(record.eventos_visita) : [];

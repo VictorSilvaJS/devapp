@@ -277,7 +277,7 @@ const run = async () => {
     assert.equal(result.ok, true);
     assert.equal(result.metadata.id, 'import_ok_1');
     assert.equal(result.metadata.propriedade_id, 'prop_duplo');
-    assert.equal(result.metadata.fazenda_id, 'fazenda_dupla');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.metadata, 'fazenda_id'), false);
     assert.equal(result.metadata.nome_propriedade, 'Propriedade Com IDs Duplos');
     assert.equal(result.metadata.status, 'ativo');
     assert.equal(result.metadata.arquivo_nome_original, 'limites.geojson');

@@ -95,12 +95,12 @@ const run = async () => {
     assert.deepEqual(items.map((item) => item.prescription_zip_import_id), ['visivel']);
   });
 
-  await test('filtra por propriedade_id ou fazenda_id e mescla ao final da lista', () => {
+  await test('filtra por propriedade_id e mescla ao final da lista', () => {
     const mapas = [{ id: 'mock_1', titulo: 'Mapa existente' }];
     const merged = mergeMapasWithPrescriptionZipImports(mapas, [
       baseMetadata({ id: 'zip_a', propriedade_id: 'prop_a' }),
       baseMetadata({ id: 'zip_b', propriedade_id: 'prop_b', fazenda_id: 'fazenda_b' }),
-    ], { propriedadeIds: ['fazenda_b'] });
+    ], { propriedadeIds: ['prop_b'] });
 
     assert.equal(merged.length, 2);
     assert.equal(merged[0].id, 'mock_1');

@@ -119,7 +119,7 @@ const hasOwn = (value: unknown, key: string): boolean =>
   Boolean(value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, key));
 
 const getFazendaId = (record: any): string =>
-  normalizeText(record?.fazenda_id || record?.fazendaId || record?.produtor_id);
+  normalizeText(record?.propriedade_id || record?.fazenda_id || record?.fazendaId || record?.produtor_id);
 
 const getCreatorId = (record: any): string =>
   normalizeText(record?.criado_por_user_id || record?.criado_por);

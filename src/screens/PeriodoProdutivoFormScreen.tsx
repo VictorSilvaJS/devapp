@@ -165,7 +165,7 @@ export default function PeriodoProdutivoFormScreen() {
           throw new Error('Periodo produtivo nao encontrado');
         }
 
-        fazendaContexto = findFazendaById(fazendas, periodo.fazenda_id || periodo.fazendaId);
+        fazendaContexto = findFazendaById(fazendas, periodo.propriedade_id);
       } else if (routeFazendaId) {
         fazendaContexto = findFazendaById(fazendas, routeFazendaId);
       }
@@ -196,8 +196,8 @@ export default function PeriodoProdutivoFormScreen() {
             ? periodo.status
             : 'planejada'
         );
-        setTalhaoId(periodo.talhao_id || periodo.talhaoId || '');
-        setTalhao(periodo.talhao_nome || periodo.talhao || '');
+        setTalhaoId(periodo.talhao_id || '');
+        setTalhao(periodo.talhao_nome || '');
         setObservacoes(periodo.observacoes || '');
       } else {
         setTipoPeriodo('');
@@ -263,9 +263,6 @@ export default function PeriodoProdutivoFormScreen() {
     const cultura = resolvePeriodoProdutivoCulturaValue(culturaOption, culturaOutro);
     const payload = {
       propriedade_id: fazendaId,
-      propriedadeId: fazendaId,
-      fazenda_id: fazendaId,
-      fazendaId,
       nome_propriedade: fazendaInfo.fazendaNome,
       tipo_periodo: tipoPeriodo as PeriodoProdutivoTipo,
       cultura,
@@ -274,9 +271,7 @@ export default function PeriodoProdutivoFormScreen() {
       data_fim: toIsoDate(dataFim),
       status: status as PeriodoProdutivoStatus,
       talhao_id: talhao.trim() ? talhaoId || undefined : undefined,
-      talhaoId: talhao.trim() ? talhaoId || undefined : undefined,
       talhao_nome: talhao.trim() || undefined,
-      talhao: talhao.trim() || undefined,
       observacoes: observacoes.trim() || undefined,
       criado_por_user_id: periodoOriginal?.criado_por_user_id || user?.id,
       criado_por_nome: periodoOriginal?.criado_por_nome || user?.nome || user?.full_name,

@@ -362,7 +362,6 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       const talhoesLayer = fazendaId && idsPermitidos.length === 1
         ? await loadGeoJsonTalhoesLayer({
             propriedade_id: idsPermitidos[0],
-            fazenda_id: idsPermitidos[0],
           })
         : null;
       const camadaEfetiva = resolveEffectiveTalhoesLayer(limitesFiltrados, talhoesLayer);

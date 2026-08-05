@@ -327,7 +327,7 @@ export default function NovoCadernoScreen() {
   };
 
   const buildFormPayload = () => buildCadernoPayload({
-    fazendaId,
+    propriedadeId: fazendaId,
     dataAtividade,
     tipoAtividade,
     talhaoId,

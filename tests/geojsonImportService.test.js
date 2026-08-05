@@ -107,7 +107,7 @@ const run = async () => {
 
     assert.equal(created.id, 'geojson_test_1');
     assert.equal(created.propriedade_id, 'p_geo_a');
-    assert.equal(created.fazenda_id, 'p_geo_a');
+    assert.equal(Object.prototype.hasOwnProperty.call(created, 'fazenda_id'), false);
     assert.equal(created.arquivo_nome_original, 'limites.geojson');
     assert.equal(created.status, 'rascunho');
     assert.equal(created.origem, 'arquivo_local');
@@ -120,7 +120,7 @@ const run = async () => {
     assert.equal(storage.values.has(MOCK_LOCAL_STORAGE_KEY), false);
   });
 
-  await test('preenche propriedade_id e fazenda_id por fallback nos dois sentidos', async () => {
+  await test('aceita entrada legada e grava somente propriedade_id', async () => {
     const { service } = createService();
     const byPropriedade = await service.createGeoJsonImportMetadata(baseInput({
       propriedade_id: 'prop_fallback',
@@ -134,9 +134,9 @@ const run = async () => {
     }));
 
     assert.equal(byPropriedade.propriedade_id, 'prop_fallback');
-    assert.equal(byPropriedade.fazenda_id, 'prop_fallback');
     assert.equal(byFazenda.propriedade_id, 'fazenda_fallback');
-    assert.equal(byFazenda.fazenda_id, 'fazenda_fallback');
+    assert.equal(Object.prototype.hasOwnProperty.call(byPropriedade, 'fazenda_id'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(byFazenda, 'fazenda_id'), false);
   });
 
   await test('busca por ID e lista por Propriedade sem vazar dados de outra Propriedade', async () => {
@@ -258,16 +258,22 @@ const run = async () => {
     assert.equal(raw.includes('"poligonos"'), false);
   });
 
-  await test('metadados podem ser listados por fazenda_id legado', async () => {
-    const { service } = createService();
+  await test('snapshot v1 com fazenda_id e normalizado na leitura', async () => {
+    const { service, storage } = createService();
     await service.createGeoJsonImportMetadata(baseInput({
       propriedade_id: 'prop_duplo',
-      fazenda_id: 'fazenda_dupla',
       arquivo_nome_original: 'duplo.geojson',
     }));
 
-    assert.equal((await service.listGeoJsonImportsByPropriedade('prop_duplo')).length, 1);
-    assert.equal((await service.listGeoJsonImportsByPropriedade('fazenda_dupla')).length, 1);
+    const snapshot = readSnapshot(storage);
+    snapshot.imports[0].fazenda_id = 'fazenda_legada';
+    delete snapshot.imports[0].propriedade_id;
+    storage.values.set(GEOJSON_IMPORT_STORAGE_KEY, JSON.stringify(snapshot));
+
+    const legacy = await service.listGeoJsonImportsByPropriedade('fazenda_legada');
+    assert.equal(legacy.length, 1);
+    assert.equal(legacy[0].propriedade_id, 'fazenda_legada');
+    assert.equal(Object.prototype.hasOwnProperty.call(legacy[0], 'fazenda_id'), false);
   });
 
   if (failed > 0) {

@@ -84,8 +84,9 @@ test('normaliza FeatureCollection com um Polygon para o runtime do app', () => {
 
   const [talhao] = result.talhoes;
   assert.equal(talhao.id, 'geojson_prop_geo_001_t01');
-  assert.equal(talhao.fazenda_id, 'prop_geo');
-  assert.equal(talhao.produtor_id, 'prop_geo');
+  assert.equal(talhao.propriedade_id, 'prop_geo');
+  assert.equal(talhao.talhao_id, 'geojson_prop_geo_001_t01');
+  assert.equal(talhao.talhao_nome, 'T01');
   assert.equal(talhao.talhao, 'T01');
   assert.equal(talhao.nome, 'T01');
   assert.equal(talhao.ano, 2025);
@@ -269,22 +270,13 @@ test('detecta provavel inversao lat/lng evidente sem corrigir silenciosamente', 
   assert.equal(result.talhoes.length, 0);
 });
 
-test('preenche fazenda_id e produtor_id por fallback compativel', () => {
+test('normaliza o escopo somente com propriedade_id', () => {
   const defaultScope = validateAndNormalizeGeoJson(collection([
     polygonFeature({ talhao: 'Escopo padrao' }),
   ]), options({ propriedade_id: 'prop_escopo' }));
-  const explicitScope = validateAndNormalizeGeoJson(collection([
-    polygonFeature({ talhao: 'Escopo explicito' }),
-  ]), options({
-    propriedade_id: 'prop_escopo',
-    fazenda_id: 'fazenda_legada',
-    produtor_id: 'produtor_legado',
-  }));
-
-  assert.equal(defaultScope.talhoes[0].fazenda_id, 'prop_escopo');
-  assert.equal(defaultScope.talhoes[0].produtor_id, 'prop_escopo');
-  assert.equal(explicitScope.talhoes[0].fazenda_id, 'fazenda_legada');
-  assert.equal(explicitScope.talhoes[0].produtor_id, 'produtor_legado');
+  assert.equal(defaultScope.talhoes[0].propriedade_id, 'prop_escopo');
+  assert.equal(Object.prototype.hasOwnProperty.call(defaultScope.talhoes[0], 'fazenda_id'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(defaultScope.talhoes[0], 'produtor_id'), false);
 });
 
 test('gera IDs estaveis em duas execucoes iguais', () => {
@@ -312,8 +304,7 @@ test('caracteriza amostra leve compativel com campos da Sela de Prata I', () => 
   }));
 
   assert.equal(result.ok, true);
-  assert.equal(result.talhoes[0].fazenda_id, 'p_sela1');
-  assert.equal(result.talhoes[0].produtor_id, 'p_sela1');
+  assert.equal(result.talhoes[0].propriedade_id, 'p_sela1');
   assert.equal(result.talhoes[0].talhao, 'T01 - 230');
   assert.equal(result.talhoes[0].nome, 'T01 - 230');
   assert.equal(result.talhoes[0].ano, 2025);

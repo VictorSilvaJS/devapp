@@ -135,7 +135,7 @@ const run = async () => {
     assert.equal(item.talhao_id, 'T01');
   });
 
-  await test('preenche fazenda_id, propriedade_id e safra por ano quando necessario', () => {
+  await test('adaptador de borda deriva aliases de propriedade_id e safra por ano', () => {
     const item = pngMapImportToMapaCompat(baseMetadata({
       propriedade_id: 'prop_dupla',
       fazenda_id: 'fazenda_dupla',
@@ -144,8 +144,8 @@ const run = async () => {
     }));
 
     assert.equal(item.propriedade_id, 'prop_dupla');
-    assert.equal(item.fazenda_id, 'fazenda_dupla');
-    assert.equal(item.produtor_id, 'fazenda_dupla');
+    assert.equal(item.fazenda_id, 'prop_dupla');
+    assert.equal(item.produtor_id, 'prop_dupla');
     assert.equal(item.safra, '2025');
     assert.equal(item.ano, 2025);
   });

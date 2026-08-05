@@ -75,8 +75,8 @@ export const validateProdutor = (data) => {
     console.warn('Produtor/Fazenda: nome do produtor titular não informado de forma explícita');
   }
 
-  if (!normalized.produtor_id) {
-    console.warn('Produtor/Fazenda: produtor_id do titular não informado');
+  if (!normalized.titular_id) {
+    console.warn('Propriedade: titular_id não informado');
   }
   
   if (normalized.area_total && (typeof normalized.area_total !== 'number' || normalized.area_total <= 0)) {
@@ -98,7 +98,7 @@ export const validateProdutor = (data) => {
 export const validateVisita = (data) => {
   const normalized = normalizeVisita(data);
 
-  validateRequired(normalized, ['fazenda_id', 'tecnico_responsavel', 'data_visita', 'objetivo'], 'Visita');
+  validateRequired(normalized, ['propriedade_id', 'tecnico_responsavel', 'data_visita', 'objetivo'], 'Visita');
   
   validateEnum(normalized.objetivo, ['consultoria', 'coleta_solo', 'avaliacao_cultivo', 'entrega_material', 'outro'], 'objetivo', 'Visita');
   
@@ -148,8 +148,8 @@ export const validateCadernoCampo = (data) => {
   validateRequired(
     normalized,
     estado === 'rascunho'
-      ? ['fazenda_id', 'colaborador_responsavel', 'data_atividade']
-      : ['fazenda_id', 'colaborador_responsavel', 'data_atividade', 'tipo_atividade'],
+      ? ['propriedade_id', 'colaborador_responsavel', 'data_atividade']
+      : ['propriedade_id', 'colaborador_responsavel', 'data_atividade', 'tipo_atividade'],
     'CadernoCampo'
   );
   
@@ -189,7 +189,7 @@ export const validateCadernoCampo = (data) => {
 export const validateMapa = (data) => {
   const normalized = normalizeMapa(data);
 
-  validateRequired(normalized, ['titulo', 'categoria', 'fazenda_id', 'talhao'], 'Mapa');
+  validateRequired(normalized, ['titulo', 'categoria', 'propriedade_id'], 'Mapa');
 
   if (normalized.categoria && !CATEGORIAS_MAPA_PROVISORIAS.includes(normalized.categoria as any)) {
     console.warn(
@@ -232,7 +232,7 @@ export const validateMapa = (data) => {
 export const validateLimiteArea = (data) => {
   const normalized = normalizeLimiteArea(data);
 
-  validateRequired(normalized, ['nome', 'fazenda_id', 'talhao'], 'LimiteArea');
+  validateRequired(normalized, ['nome', 'propriedade_id'], 'LimiteArea');
 
   if (typeof normalized.ano !== 'number' || normalized.ano <= 0) {
     throw new Error('LimiteArea.ano: Deve ser um ano válido');

@@ -123,7 +123,6 @@ export const canShowMaterialTecnicoImportInMapaList = (
   if (
     propriedadeIds.size > 0
     && !propriedadeIds.has(metadata.propriedade_id)
-    && !propriedadeIds.has(metadata.fazenda_id)
   ) {
     return false;
   }
@@ -147,8 +146,8 @@ export const materialTecnicoImportToMapaCompat = (
     subcategoria,
     tipo_material: 'material_tecnico',
     tipo_anexo: MATERIAL_TECNICO_LOCAL_TIPO_ANEXO,
-    produtor_id: metadata.fazenda_id,
-    fazenda_id: metadata.fazenda_id,
+    produtor_id: metadata.propriedade_id,
+    fazenda_id: metadata.propriedade_id,
     propriedade_id: metadata.propriedade_id,
     ano: metadata.ano,
     safra: periodoLabel,

@@ -8,10 +8,11 @@
  * - docs/project/pendencias-de-definicao.md
  *
  * Decisoes desta camada:
- * - `produtor` segue como termo oficial provisiorio do dominio.
- * - `fazenda` e a unidade central para mapas, visitas, caderno e limites.
- * - `produtor_id` permanece canonico apenas quando aponta para o produtor.
- * - Entidades ligadas ao contexto operacional usam `fazenda_id`.
+ * - `Propriedade` e a unidade central para mapas, visitas, caderno e limites.
+ * - `titular_id` referencia o Produtor titular da Propriedade.
+ * - Entidades ligadas ao contexto operacional usam `propriedade_id`.
+ * - Campos `fazenda*`, `produtor_id` ambiguo e aliases camelCase ficam
+ *   restritos aos contratos de borda legados.
  * - Categorias de mapa seguem como catalogo provisiorio de implementacao
  *   enquanto a taxonomia final continuar pendente na documentacao ativa.
  */
@@ -91,7 +92,7 @@ export interface FazendaCanonica {
    * ID do produtor titular da fazenda.
    * No legado, este mesmo valor costuma aparecer como `proprietario_id`.
    */
-  produtor_id: string;
+  titular_id: string;
   /**
    * Nome canonico da fazenda.
    * No legado, costuma aparecer em `fazenda`.
@@ -134,8 +135,9 @@ export interface MapaCanonico {
    * Referencia canonica da fazenda ao qual o mapa pertence.
    * No legado, este valor costuma aparecer como `produtor_id`.
    */
-  fazenda_id: string;
-  talhao: string;
+  propriedade_id: string;
+  talhao_id?: string;
+  talhao_nome?: string;
   /**
    * Classificacao operacional do arquivo dentro da biblioteca da fazenda.
    * No MVP, "diagnostico" cobre mapas como argila, fosforo e pH; outros
@@ -166,7 +168,9 @@ export interface MapaCanonico {
 
 export interface VisitaCanonica {
   id: string;
-  fazenda_id: string;
+  propriedade_id: string;
+  talhao_id?: string;
+  talhao_nome?: string;
   tecnico_responsavel: string;
   data_visita: string;
   objetivo: string;
@@ -206,8 +210,7 @@ export interface VisitaCanonica {
 
 export interface CadernoCampoCanonico {
   id: string;
-  fazenda_id: string;
-  fazendaId?: string;
+  propriedade_id: string;
   responsavel_usuario_id?: string;
   colaborador_responsavel: string;
   data_atividade: string;
@@ -264,8 +267,8 @@ export interface LimiteAreaCanonico {
   talhaoId?: string;
   nome: string;
   ano: number;
-  fazenda_id: string;
-  talhao: string;
+  propriedade_id: string;
+  talhao_nome?: string;
   area_hectares?: number;
   perimetro_km?: number;
   textura?: string;
@@ -453,31 +456,39 @@ export interface UsuarioCompativelBorda extends UsuarioCanonico {
 
 /**
  * Tipo de borda para compatibilidade com o cadastro legado de fazenda.
- * Deve permanecer fora do nucleo canonico porque `nome` aqui continua
+ * Deve permanecer fora do nucleo canonico porque
+ome` aqui continua
  * com semantica legado: nome do produtor, nao nome da fazenda.
  */
 export interface FazendaCompativelBorda extends Omit<FazendaCanonica, 'nome' | 'produtor_nome'> {
   nome: string;
   fazenda: string;
+  produtor_id: string;
   proprietario_id: string;
   produtor_nome?: string;
 }
 
 export interface MapaCompativelBorda extends MapaCanonico {
+  fazenda_id: string;
   produtor_id: string;
+  talhao: string;
   disponivel_para_download: boolean;
 }
 
 export interface VisitaCompativelBorda extends VisitaCanonica {
+  fazenda_id: string;
   produtor_id: string;
 }
 
 export interface CadernoCampoCompativelBorda extends CadernoCampoCanonico {
+  fazenda_id: string;
   produtor_id: string;
   criado_por?: string;
   fazendaId: string;
 }
 
 export interface LimiteAreaCompativelBorda extends LimiteAreaCanonico {
+  fazenda_id: string;
   produtor_id: string;
+  talhao: string;
 }

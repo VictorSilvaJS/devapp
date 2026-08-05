@@ -60,7 +60,6 @@ export type PngMapOrigem = 'arquivo_local';
 export interface PngMapImportMetadata {
   id: string;
   propriedade_id: string;
-  fazenda_id: string;
   nome_propriedade?: string;
 
   titulo: string;
@@ -99,7 +98,6 @@ export type PngMapImportMetadataInput = Partial<
     PngMapImportMetadata,
     | 'id'
     | 'propriedade_id'
-    | 'fazenda_id'
     | 'nome_propriedade'
     | 'titulo'
     | 'descricao'
@@ -130,7 +128,6 @@ export type PngMapImportMetadataPatch = Partial<
   Pick<
     PngMapImportMetadata,
     | 'propriedade_id'
-    | 'fazenda_id'
     | 'nome_propriedade'
     | 'titulo'
     | 'descricao'

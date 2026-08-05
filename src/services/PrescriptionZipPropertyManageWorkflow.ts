@@ -59,7 +59,6 @@ export interface PrescriptionZipPropertyManageContext {
   user: any;
   propriedade: any;
   propriedade_id?: string;
-  fazenda_id?: string;
   metadata?: PrescriptionZipImportMetadata | null;
   metadataId?: string;
   mapa?: Record<string, any> | null;
@@ -114,7 +113,6 @@ export interface PrescriptionZipPropertyManageWorkflowDeps {
   copyPrescriptionZipToInternalStorage?: (
     input: {
       propriedade_id: string;
-      fazenda_id?: string;
       sourceUri: string;
       originalName: string;
       importId?: string;
@@ -160,7 +158,7 @@ const createDefaultImportId = (): string =>
   `zipmap_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 const resolveIds = (
-  input: Pick<PrescriptionZipPropertyManageContext, 'propriedade' | 'propriedade_id' | 'fazenda_id'>
+  input: Pick<PrescriptionZipPropertyManageContext, 'propriedade' | 'propriedade_id'>
 ) => {
   const propriedade = input.propriedade;
   const compatFazendaId = getFazendaId(propriedade);
@@ -173,22 +171,14 @@ const resolveIds = (
     propriedade?.fazenda_id,
     propriedade?.fazendaId
   );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    propriedade?.fazenda_id,
-    propriedade?.fazendaId,
-    compatFazendaId,
-    propriedadeId
-  );
-  return { propriedade_id: propriedadeId, fazenda_id: fazendaId };
+  return { propriedade_id: propriedadeId };
 };
 
 const metadataMatchesContext = (
   metadata: PrescriptionZipImportMetadata,
-  ids: { propriedade_id: string; fazenda_id: string }
+  ids: { propriedade_id: string }
 ): boolean => {
-  const allowedIds = new Set([ids.propriedade_id, ids.fazenda_id].map(firstNonEmptyString).filter(Boolean));
-  return allowedIds.has(metadata.propriedade_id) || allowedIds.has(metadata.fazenda_id);
+  return metadata.propriedade_id === ids.propriedade_id;
 };
 
 const getMetadataId = (input: PrescriptionZipPropertyManageContext): string =>
@@ -231,7 +221,7 @@ const resolveManageTarget = async (
   actionLabel: 'substituir' | 'remover'
 ) => {
   const ids = resolveIds(input);
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!ids.propriedade_id) {
     return {
       ok: false,
       error: createError('PROPRIEDADE_ID_REQUIRED', `Propriedade obrigatória para ${actionLabel} prescrição local.`),
@@ -309,7 +299,6 @@ const buildReplacementMetadataInput = (
 ): PrescriptionZipImportMetadataInput => ({
   id: params.newId,
   propriedade_id: previous.propriedade_id,
-  fazenda_id: previous.fazenda_id,
   nome_propriedade: previous.nome_propriedade,
   titulo: previous.titulo,
   descricao: previous.descricao,
@@ -396,7 +385,6 @@ export const replacePrescriptionZipForPropriedade = async (
   const copy = deps.copyPrescriptionZipToInternalStorage ?? copyPrescriptionZipToInternalStorage;
   const copied = await copy({
     propriedade_id: target.ids.propriedade_id,
-    fazenda_id: target.ids.fazenda_id,
     sourceUri: picked.file.uri,
     originalName: picked.file.name,
     importId: newId,

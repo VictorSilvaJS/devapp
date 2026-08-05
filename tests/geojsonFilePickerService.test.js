@@ -27,8 +27,6 @@ const test = async (name, fn) => {
 
 const options = (overrides = {}) => ({
   propriedade_id: 'prop_geo',
-  fazenda_id: 'fazenda_geo',
-  produtor_id: 'produtor_geo',
   ano: 2025,
   safra: '2025/2026',
   ...overrides,
@@ -288,7 +286,7 @@ const run = async () => {
     assert.equal(result.ok, true);
     assert.equal(result.file.name, 'limites.geojson');
     assert.equal(result.validation.talhoes.length, 1);
-    assert.equal(result.validation.talhoes[0].fazenda_id, 'fazenda_geo');
+    assert.equal(result.validation.talhoes[0].propriedade_id, 'prop_geo');
     assert.equal(fileSystem.calls[0].uri, 'file:///cache/limites.geojson');
     assert.equal(fileSystem.calls[0].readOptions.encoding, 'utf8');
   });

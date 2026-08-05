@@ -32,7 +32,6 @@ export interface MaterialTecnicoStorageError {
 
 export interface CopyMaterialTecnicoToStorageInput {
   propriedade_id: string;
-  fazenda_id?: string;
   ano: number;
   categoria: MaterialTecnicoCategoria;
   formato_arquivo: MaterialTecnicoFormato;
@@ -53,7 +52,6 @@ export interface BuildMaterialTecnicoStorageUriInput {
 
 export interface StoredMaterialTecnicoFile {
   propriedade_id: string;
-  fazenda_id: string;
   ano: number;
   categoria: MaterialTecnicoCategoria;
   formato_arquivo: MaterialTecnicoFormato;
@@ -316,9 +314,8 @@ export const copyMaterialTecnicoToInternalStorage = async (
   input: CopyMaterialTecnicoToStorageInput,
   deps: MaterialTecnicoStorageServiceDeps = {}
 ): Promise<MaterialTecnicoStorageCopyResult> => {
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
-  if (!propriedadeId || !fazendaId) {
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
+  if (!propriedadeId) {
     return { ok: false, error: buildError('MATERIAL_PROPRIEDADE_ID_REQUIRED', 'Propriedade é obrigatória para copiar o arquivo.') };
   }
   if (!isValidYear(input.ano)) {
@@ -422,7 +419,6 @@ export const copyMaterialTecnicoToInternalStorage = async (
       ok: true,
       file: {
         propriedade_id: propriedadeId,
-        fazenda_id: fazendaId,
         ano: input.ano,
         categoria: input.categoria,
         formato_arquivo: input.formato_arquivo,

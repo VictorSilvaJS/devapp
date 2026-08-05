@@ -16,7 +16,6 @@ export type GeoJsonImportOrigin = 'arquivo_local';
 export interface GeoJsonImportMetadata {
   id: string;
   propriedade_id: string;
-  fazenda_id: string;
   nome_propriedade?: string;
   arquivo_nome_original: string;
   arquivo_uri_local?: string;
@@ -44,7 +43,6 @@ export type GeoJsonImportMetadataInput = Partial<
     GeoJsonImportMetadata,
     | 'id'
     | 'propriedade_id'
-    | 'fazenda_id'
     | 'nome_propriedade'
     | 'arquivo_uri_local'
     | 'arquivo_tamanho_bytes'
@@ -69,7 +67,6 @@ export type GeoJsonImportMetadataPatch = Partial<
   Pick<
     GeoJsonImportMetadata,
     | 'propriedade_id'
-    | 'fazenda_id'
     | 'nome_propriedade'
     | 'arquivo_nome_original'
     | 'arquivo_uri_local'

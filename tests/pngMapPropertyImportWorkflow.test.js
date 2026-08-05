@@ -380,7 +380,7 @@ const run = async () => {
     assert.equal(result.ok, true);
     assert.equal(result.metadata.id, 'png_ok_1');
     assert.equal(result.metadata.propriedade_id, 'prop_duplo');
-    assert.equal(result.metadata.fazenda_id, 'fazenda_dupla');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.metadata, 'fazenda_id'), false);
     assert.equal(result.metadata.nome_propriedade, 'Propriedade Com IDs Duplos');
     assert.equal(result.metadata.titulo, 'pH - Propriedade A');
     assert.equal(result.metadata.categoria, 'fertilidade');
@@ -569,7 +569,7 @@ const run = async () => {
 
     assert.equal(result.ok, true);
     assert.equal(result.metadata.propriedade_id, 'p_sela1');
-    assert.equal(result.metadata.fazenda_id, 'p_sela1');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.metadata, 'fazenda_id'), false);
 
     const raw = readRawImports(storage);
     assert.equal(raw.includes('m_sela1_ph_10a20_2025'), false);

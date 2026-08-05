@@ -36,9 +36,6 @@ export type PeriodoProdutivoOrigem = 'local';
 export interface PeriodoProdutivoMetadata {
   id: string;
   propriedade_id: string;
-  propriedadeId: string;
-  fazenda_id: string;
-  fazendaId: string;
   nome_propriedade?: string;
 
   tipo_periodo: PeriodoProdutivoTipo;
@@ -53,9 +50,7 @@ export interface PeriodoProdutivoMetadata {
   observacoes?: string;
 
   talhao_id?: string;
-  talhaoId?: string;
   talhao_nome?: string;
-  talhao?: string;
 
   criado_por_user_id?: string;
   criado_por_nome?: string;
@@ -73,9 +68,6 @@ export type PeriodoProdutivoMetadataInput = Partial<
     PeriodoProdutivoMetadata,
     | 'id'
     | 'propriedade_id'
-    | 'propriedadeId'
-    | 'fazenda_id'
-    | 'fazendaId'
     | 'nome_propriedade'
     | 'tipo_periodo'
     | 'tipo_periodo_label'
@@ -87,9 +79,7 @@ export type PeriodoProdutivoMetadataInput = Partial<
     | 'status'
     | 'observacoes'
     | 'talhao_id'
-    | 'talhaoId'
     | 'talhao_nome'
-    | 'talhao'
     | 'criado_por_user_id'
     | 'criado_por_nome'
     | 'registro_status'
@@ -101,9 +91,6 @@ export type PeriodoProdutivoMetadataPatch = Partial<
   Pick<
     PeriodoProdutivoMetadata,
     | 'propriedade_id'
-    | 'propriedadeId'
-    | 'fazenda_id'
-    | 'fazendaId'
     | 'nome_propriedade'
     | 'tipo_periodo'
     | 'tipo_periodo_label'
@@ -115,9 +102,7 @@ export type PeriodoProdutivoMetadataPatch = Partial<
     | 'status'
     | 'observacoes'
     | 'talhao_id'
-    | 'talhaoId'
     | 'talhao_nome'
-    | 'talhao'
     | 'criado_por_user_id'
     | 'criado_por_nome'
     | 'registro_status'

@@ -101,7 +101,7 @@ export const getVisitaFluxoUi = (status?: string | null) => {
 };
 
 type BuildVisitaPayloadInput = {
-  fazendaId: string;
+  propriedadeId: string;
   dataVisita: Date | null;
   horaVisita: Date | null;
   objetivo: string;
@@ -200,7 +200,7 @@ export const combineVisitaDateTime = (
 };
 
 export const buildVisitaPayload = ({
-  fazendaId,
+  propriedadeId,
   dataVisita,
   horaVisita,
   objetivo,
@@ -220,7 +220,7 @@ export const buildVisitaPayload = ({
   }
 
   const payload: Record<string, any> = {
-    fazenda_id: fazendaId,
+    propriedade_id: propriedadeId,
     data_visita: dataCompleta.toISOString(),
     objetivo,
     observacoes,

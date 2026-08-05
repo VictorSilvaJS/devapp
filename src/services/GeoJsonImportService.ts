@@ -77,20 +77,17 @@ const normalizeStatus = (value: unknown): GeoJsonImportStatus =>
 const resolvePropriedadeIds = (input: {
   propriedade_id?: unknown;
   fazenda_id?: unknown;
-}): { propriedade_id: string; fazenda_id: string } => {
+}): { propriedade_id: string } => {
   const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
 
   return {
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
   };
 };
 
 const isMetadataRecord = (value: any): value is GeoJsonImportMetadata =>
   typeof value?.id === 'string'
-  && typeof value?.propriedade_id === 'string'
-  && typeof value?.fazenda_id === 'string'
+  && Boolean(firstNonEmptyString(value?.propriedade_id, value?.fazenda_id))
   && typeof value?.arquivo_nome_original === 'string'
   && typeof value?.importado_em === 'string'
   && typeof value?.atualizado_em === 'string'
@@ -103,6 +100,14 @@ const isSnapshot = (value: any): value is GeoJsonImportSnapshot =>
   && typeof value?.savedAt === 'string'
   && Array.isArray(value?.imports)
   && value.imports.every(isMetadataRecord);
+
+const normalizeStoredMetadata = (value: any): GeoJsonImportMetadata => {
+  const { fazenda_id: _legacyFazendaId, ...rest } = value;
+  return {
+    ...rest,
+    propriedade_id: firstNonEmptyString(value?.propriedade_id, value?.fazenda_id),
+  } as GeoJsonImportMetadata;
+};
 
 const emptySnapshot = (): GeoJsonImportSnapshot => ({
   version: GEOJSON_IMPORT_VERSION,
@@ -123,7 +128,7 @@ const buildMetadataFromInput = (
   const ids = resolvePropriedadeIds(input);
   const arquivoNomeOriginal = firstNonEmptyString(input.arquivo_nome_original);
 
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!ids.propriedade_id) {
     throw new Error('GeoJsonImport.propriedade_id: obrigatório');
   }
   if (!arquivoNomeOriginal) {
@@ -133,7 +138,6 @@ const buildMetadataFromInput = (
   return {
     id: firstNonEmptyString(input.id) || params.generateId(),
     propriedade_id: ids.propriedade_id,
-    fazenda_id: ids.fazenda_id,
     nome_propriedade: normalizeOptionalString(input.nome_propriedade),
     arquivo_nome_original: arquivoNomeOriginal,
     arquivo_uri_local: normalizeOptionalString(input.arquivo_uri_local),
@@ -164,13 +168,12 @@ const applyPatchToMetadata = (
 ): GeoJsonImportMetadata => {
   const ids = resolvePropriedadeIds({
     propriedade_id: patch.propriedade_id ?? existing.propriedade_id,
-    fazenda_id: patch.fazenda_id ?? existing.fazenda_id,
   });
   const arquivoNomeOriginal = patch.arquivo_nome_original !== undefined
     ? firstNonEmptyString(patch.arquivo_nome_original)
     : existing.arquivo_nome_original;
 
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!ids.propriedade_id) {
     throw new Error('GeoJsonImport.propriedade_id: obrigatório');
   }
   if (!arquivoNomeOriginal) {
@@ -180,7 +183,6 @@ const applyPatchToMetadata = (
   return {
     ...existing,
     propriedade_id: ids.propriedade_id,
-    fazenda_id: ids.fazenda_id,
     nome_propriedade:
       patch.nome_propriedade !== undefined
         ? normalizeOptionalString(patch.nome_propriedade)
@@ -287,7 +289,9 @@ export const createGeoJsonImportService = ({
 
     try {
       const parsed = JSON.parse(raw);
-      return isSnapshot(parsed) ? parsed : emptySnapshot();
+      return isSnapshot(parsed)
+        ? { ...parsed, imports: parsed.imports.map(normalizeStoredMetadata) }
+        : emptySnapshot();
     } catch {
       return emptySnapshot();
     }
@@ -323,7 +327,7 @@ export const createGeoJsonImportService = ({
       if (!id) return [];
 
       const snapshot = await loadSnapshot();
-      return snapshot.imports.filter((item) => item.propriedade_id === id || item.fazenda_id === id);
+      return snapshot.imports.filter((item) => item.propriedade_id === id);
     },
 
     async getActiveGeoJsonImportForPropriedade(propriedadeId: string): Promise<GeoJsonImportMetadata | null> {

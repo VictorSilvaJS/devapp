@@ -336,7 +336,7 @@ export default function EditarCadernoScreen() {
   const contextoFazendaIdAtual = () => resolveCadernoEdicaoFazendaId(registroOriginal, fazendaId);
 
   const buildFormPayload = () => buildCadernoPayload({
-    fazendaId: contextoFazendaIdAtual(),
+    propriedadeId: contextoFazendaIdAtual(),
     dataAtividade,
     tipoAtividade,
     talhaoId,
@@ -406,7 +406,7 @@ export default function EditarCadernoScreen() {
 
     const contextoFazendaId = resolveCadernoEdicaoFazendaId(registroOriginal, fazendaId);
     const fazendaContexto = findFazendaById(fazendas, contextoFazendaId) || fazenda;
-    const registroComContexto = { ...registroOriginal, fazenda_id: contextoFazendaId };
+    const registroComContexto = { ...registroOriginal, propriedade_id: contextoFazendaId };
 
     if (!podeEditarCadernoEmFazenda(user, registroComContexto, fazendaContexto)) {
       toast.showWarning('Você não tem permissão para editar este registro.');

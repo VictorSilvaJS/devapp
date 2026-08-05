@@ -542,7 +542,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
         if (!active) return;
         setFazendasPermitidas(permitidas);
 
-        if (identity.fazendaId && !idsPermitidos.includes(identity.fazendaId)) {
+        if (identity.propriedadeId && !idsPermitidos.includes(identity.propriedadeId)) {
           setLoadState('access_denied');
           return;
         }

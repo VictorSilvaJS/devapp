@@ -95,7 +95,7 @@ test('normalizeFazenda converte proprietario_id e separa nome da fazenda do nome
 
   assert.deepEqual(canonica, {
     id: 'p1',
-    produtor_id: 'prop1',
+    titular_id: 'prop1',
     nome: 'Fazenda Boa Vista',
     produtor_nome: 'Joao Silva',
     cidade: 'Cruz Alta',
@@ -105,7 +105,7 @@ test('normalizeFazenda converte proprietario_id e separa nome da fazenda do nome
 test('toFazendaCompativelBorda reintroduz os campos legados apenas na borda', () => {
   const compativel = toFazendaCompativelBorda({
     id: 'p1',
-    produtor_id: 'prop1',
+    titular_id: 'prop1',
     nome: 'Fazenda Boa Vista',
     produtor_nome: 'Joao Silva',
     cidade: 'Cruz Alta',
@@ -113,6 +113,7 @@ test('toFazendaCompativelBorda reintroduz os campos legados apenas na borda', ()
 
   assert.deepEqual(compativel, {
     id: 'p1',
+    titular_id: 'prop1',
     produtor_id: 'prop1',
     nome: 'Joao Silva',
     fazenda: 'Fazenda Boa Vista',
@@ -141,7 +142,7 @@ test('deriveProdutorFromFazenda recupera o produtor titular a partir do registro
   });
 });
 
-test('normalizeMapa trata produtor_id legado como fazenda_id e unifica flag de download', () => {
+test('normalizeMapa trata produtor_id legado como propriedade_id e unifica flag de download', () => {
   const mapa = normalizeMapa({
     id: 'm1',
     titulo: 'Mapa de Fertilidade',
@@ -155,7 +156,9 @@ test('normalizeMapa trata produtor_id legado como fazenda_id e unifica flag de d
     id: 'm1',
     titulo: 'Mapa de Fertilidade',
     categoria: 'panorama',
-    fazenda_id: 'p1',
+    propriedade_id: 'p1',
+    talhao_id: undefined,
+    talhao_nome: 'Talhao A',
     talhao: 'Talhao A',
     disponivel_download: false,
   });
@@ -180,8 +183,8 @@ test('toMapaCompativelBorda reexpone produtor_id e disponivel_para_download', ()
     id: 'm1',
     titulo: 'Mapa de Fertilidade',
     categoria: 'fertilidade',
-    fazenda_id: 'p1',
-    talhao: 'Talhao A',
+    propriedade_id: 'p1',
+    talhao_nome: 'Talhao A',
     disponivel_download: true,
   });
 
@@ -189,15 +192,18 @@ test('toMapaCompativelBorda reexpone produtor_id e disponivel_para_download', ()
     id: 'm1',
     titulo: 'Mapa de Fertilidade',
     categoria: 'fertilidade',
+    propriedade_id: 'p1',
     fazenda_id: 'p1',
     talhao: 'Talhao A',
+    talhao_id: undefined,
+    talhao_nome: 'Talhao A',
     disponivel_download: true,
     produtor_id: 'p1',
     disponivel_para_download: true,
   });
 });
 
-test('normalizeVisita migra produtor_id legado para fazenda_id', () => {
+test('normalizeVisita migra produtor_id legado para propriedade_id', () => {
   const visita = normalizeVisita({
     id: 'v1',
     produtor_id: 'p1',
@@ -208,7 +214,7 @@ test('normalizeVisita migra produtor_id legado para fazenda_id', () => {
 
   assert.deepEqual(visita, {
     id: 'v1',
-    fazenda_id: 'p1',
+    propriedade_id: 'p1',
     tecnico_responsavel: 'Ana Santos',
     data_visita: '2026-04-14T10:00:00.000Z',
     objetivo: 'consultoria',
@@ -229,8 +235,7 @@ test('normalizeCadernoCampo migra produtor_id legado e centraliza autoria futura
 
   assert.deepEqual(caderno, {
     id: 'c1',
-    fazenda_id: 'p1',
-    fazendaId: 'p1',
+    propriedade_id: 'p1',
     colaborador_responsavel: 'Ana Santos',
     data_atividade: '2026-04-14T10:00:00.000Z',
     tipo_atividade: 'vistoria',
@@ -262,7 +267,7 @@ test('normalizeCadernoCampo preserva metadados opcionais de Safra/Safrinha', () 
   assert.equal(toCadernoCampoCompativelBorda(caderno).periodo_produtivo_id, 'periodo_1');
 });
 
-test('normalizeLimiteArea migra produtor_id legado para fazenda_id', () => {
+test('normalizeLimiteArea migra produtor_id legado para propriedade_id', () => {
   const limite = normalizeLimiteArea({
     id: 'lt1',
     nome: 'Talhao A',
@@ -276,8 +281,9 @@ test('normalizeLimiteArea migra produtor_id legado para fazenda_id', () => {
     id: 'lt1',
     nome: 'Talhao A',
     ano: 2025,
-    fazenda_id: 'p1',
+    propriedade_id: 'p1',
     talhao: 'Talhao A',
+    talhao_nome: 'Talhao A',
     poligono: [{ lat: -1, lng: -2 }],
   });
 

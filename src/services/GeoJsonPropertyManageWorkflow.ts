@@ -50,7 +50,6 @@ export interface GeoJsonPropertyManageContext {
   user: any;
   propriedade: any;
   propriedade_id?: string;
-  fazenda_id?: string;
   activeMetadata?: GeoJsonImportMetadata | null;
 }
 
@@ -116,7 +115,7 @@ const createWarning = (
   details?: unknown
 ): GeoJsonPropertyManageWarning => ({ code, message, details });
 
-const resolveIds = (input: Pick<GeoJsonPropertyManageContext, 'propriedade' | 'propriedade_id' | 'fazenda_id'>) => {
+const resolveIds = (input: Pick<GeoJsonPropertyManageContext, 'propriedade' | 'propriedade_id'>) => {
   const propriedade = input.propriedade;
   const compatFazendaId = getFazendaId(propriedade);
   const propriedadeId = firstNonEmptyString(
@@ -128,31 +127,22 @@ const resolveIds = (input: Pick<GeoJsonPropertyManageContext, 'propriedade' | 'p
     propriedade?.fazenda_id,
     propriedade?.fazendaId
   );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    propriedade?.fazenda_id,
-    propriedade?.fazendaId,
-    compatFazendaId,
-    propriedadeId
-  );
-
   return {
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
   };
 };
 
 const metadataMatchesContext = (
   metadata: GeoJsonImportMetadata,
-  ids: { propriedade_id: string; fazenda_id: string }
+  ids: { propriedade_id: string }
 ): boolean => {
   const allowedIds = new Set(
-    [ids.propriedade_id, ids.fazenda_id]
+    [ids.propriedade_id]
       .map(firstNonEmptyString)
       .filter(Boolean)
   );
 
-  return allowedIds.has(metadata.propriedade_id) || allowedIds.has(metadata.fazenda_id);
+  return allowedIds.has(metadata.propriedade_id);
 };
 
 const getImportService = (
@@ -165,7 +155,7 @@ export const canManageGeoJsonForPropriedade = (
 ): boolean => canStartGeoJsonPropertyImport(user, propriedade);
 
 export const shouldShowSelaPrataIRemovalWarning = (
-  input: Pick<GeoJsonPropertyManageContext, 'propriedade' | 'propriedade_id' | 'fazenda_id'>
+  input: Pick<GeoJsonPropertyManageContext, 'propriedade' | 'propriedade_id'>
 ): boolean => isSelaPrataIPropriedade(input);
 
 const deleteGeoJsonWithWarnings = async (
@@ -236,7 +226,7 @@ export const removeActiveGeoJsonForPropriedade = async (
   }
 
   const ids = resolveIds(input);
-  if (!ids.propriedade_id || !ids.fazenda_id) {
+  if (!ids.propriedade_id) {
     return {
       ok: false,
       error: createError(
@@ -352,7 +342,6 @@ export const replaceGeoJsonForPropriedade = async (
   );
   const ids = {
     propriedade_id: context.propriedade_id,
-    fazenda_id: context.fazenda_id,
   };
 
   if (previousActiveMetadata && !metadataMatchesContext(previousActiveMetadata, ids)) {

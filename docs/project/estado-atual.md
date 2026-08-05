@@ -39,11 +39,11 @@ Decisoes aprovadas:
   contrato v2 inicial;
 - entidades operacionais novas usam `propriedade_id`, sem `fazenda_id`.
 
-O runtime principal ainda usa os registros e aliases do mock v1, mas a
-migracao tecnica foi iniciada. O motor efetivo do Colaborador ja usa vinculo
-direto; as secoes historicas abaixo continuam descrevendo o estado anterior
-quando isso for indicado. Dados novos ainda nao foram carregados e nao devem
-ser inventados.
+O runtime principal ainda le os registros do mock v1 por adaptadores de
+compatibilidade, mas os consumidores operacionais novos ja usam o contrato
+canonico v2. O motor efetivo do Colaborador usa vinculo direto; as secoes
+historicas abaixo continuam descrevendo o estado anterior quando isso for
+indicado. Dados novos ainda nao foram carregados e nao devem ser inventados.
 
 ### Implementacao iniciada em 2026-08-05
 
@@ -66,11 +66,25 @@ Concluido nesta primeira onda tecnica:
 - criacao estrutural de Propriedade ficou restrita ao Admin no controle local
   atual.
 
+Concluido na segunda onda tecnica:
+
+- contratos canonicos de Propriedade, Mapa, Visita, Caderno e Limite usam
+  `propriedade_id`, `titular_id`, `talhao_id` e `talhao_nome` conforme o caso;
+- formularios e rotas novas gravam/transportam somente os identificadores
+  canonicos, mantendo aliases antigos apenas na leitura de borda;
+- catalogos locais de GeoJSON, PNG, ZIP de prescricao, material tecnico e
+  Periodo Produtivo normalizam snapshots v1 na leitura e nao regravam
+  `fazenda_id`;
+- storage fisico e workflows de importacao/gestao usam `propriedade_id` nas
+  novas operacoes;
+- normalizacao GeoJSON gera `propriedade_id`, `talhao_id` e `talhao_nome`;
+- validadores, controle de acesso e testes foram alinhados ao contrato v2.
+
 Ainda nao concluido:
 
 - conectar todo o runtime ao repositorio/snapshot v2;
-- migrar entidades operacionais, rotas, storages e nomes tecnicos restantes de
-  `fazenda_id` para `propriedade_id`;
+- conectar a camada mock/offline legada e seus endpoints de sincronizacao ao
+  contrato v2; essa superficie permanece como borda de compatibilidade;
 - substituir o conjunto demonstrativo antigo pela nova carga aprovada;
 - executar a limpeza unica dos arquivos e indices associados aos IDs v1.
 
@@ -129,9 +143,9 @@ Legados preservados:
 Regra atual: codigo novo deve preferir os resolvers de
 `src/utils/propriedadeCompat.ts`. Novas telas e novos helpers nao devem acessar
 diretamente `fazenda_id`, `produtor_id` ou `proprietario_id`, salvo quando a
-intencao for compatibilidade explicita. Campos legados nao devem ser removidos
-nesta fase. Payloads de visitas, caderno e cadastro ainda podem continuar
-usando `fazenda_id` por compatibilidade.
+intencao for compatibilidade explicita. Adaptadores podem ler esses aliases,
+mas novas escritas de Visita, Caderno, Periodo Produtivo e catalogos locais
+devem emitir somente `propriedade_id`.
 
 ## Historico Da Regra De Acesso V1
 

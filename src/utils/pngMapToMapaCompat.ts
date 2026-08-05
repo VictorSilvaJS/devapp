@@ -318,7 +318,6 @@ export const canShowPngMapImportInMapaList = (
   if (
     propriedadeIds.size > 0
     && !propriedadeIds.has(metadata.propriedade_id)
-    && !propriedadeIds.has(metadata.fazenda_id)
   ) {
     return false;
   }
@@ -352,8 +351,8 @@ export const pngMapImportToMapaCompat = (
     elemento: metadata.elemento,
     elemento_label: elementoLabel || undefined,
     profundidade: firstNonEmptyString(metadata.profundidade) || undefined,
-    produtor_id: metadata.fazenda_id,
-    fazenda_id: metadata.fazenda_id,
+    produtor_id: metadata.propriedade_id,
+    fazenda_id: metadata.propriedade_id,
     propriedade_id: metadata.propriedade_id,
     talhao: talhaoLabel,
     talhao_id: metadata.escopo === 'talhao' ? firstNonEmptyString(metadata.talhao_id) || null : null,

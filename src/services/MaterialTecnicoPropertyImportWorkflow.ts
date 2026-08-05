@@ -61,8 +61,7 @@ export interface MaterialTecnicoPropertyImportContext {
   propriedade: any;
   categoria: MaterialTecnicoCategoria;
   propriedade_id?: string;
-  fazenda_id?: string;
-  produtor_id?: string;
+  titular_id?: string;
   nome_propriedade?: string;
 }
 
@@ -70,8 +69,7 @@ export interface MaterialTecnicoPropertyImportResolvedContext {
   user: any;
   propriedade: any;
   propriedade_id: string;
-  fazenda_id: string;
-  produtor_id: string;
+  titular_id: string;
   nome_propriedade?: string;
   importado_por_usuario_id?: string;
   importado_por_nome?: string;
@@ -159,7 +157,6 @@ export interface MaterialTecnicoPropertyImportWorkflowDeps {
   copyMaterialTecnicoToInternalStorage?: (
     input: {
       propriedade_id: string;
-      fazenda_id?: string;
       ano: number;
       categoria: MaterialTecnicoCategoria;
       formato_arquivo: PickedMaterialTecnicoFile['formato'];
@@ -242,37 +239,28 @@ const resolveIds = (input: MaterialTecnicoPropertyImportContext) => {
     propriedade?.fazenda_id,
     propriedade?.fazendaId
   );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    propriedade?.fazenda_id,
-    propriedade?.fazendaId,
-    compatFazendaId,
-    propriedadeId
-  );
-  const produtorId = firstNonEmptyString(
-    input.produtor_id,
+  const titularId = firstNonEmptyString(
+    input.titular_id,
+    propriedade?.titular_id,
     propriedade?.produtor_id,
     propriedade?.proprietario_id,
-    propriedade?.titular_id,
     getTitularIdFazenda(propriedade),
-    fazendaId,
     propriedadeId
   );
-  return { propriedadeId, fazendaId, produtorId };
+  return { propriedadeId, titularId };
 };
 
 const resolveContext = (
   input: MaterialTecnicoPropertyImportContext
 ): MaterialTecnicoPropertyImportResolvedContext | null => {
-  const { propriedadeId, fazendaId, produtorId } = resolveIds(input);
-  if (!propriedadeId || !fazendaId) return null;
+  const { propriedadeId, titularId } = resolveIds(input);
+  if (!propriedadeId) return null;
   const propriedade = input.propriedade;
   return {
     user: input.user,
     propriedade,
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
-    produtor_id: produtorId,
+    titular_id: titularId,
     nome_propriedade: optionalString(
       input.nome_propriedade,
       propriedade?.propriedade_nome,
@@ -447,13 +435,10 @@ const periodoMatchesContext = (
   periodo: PeriodoProdutivoMetadata,
   context: MaterialTecnicoPropertyImportResolvedContext
 ): boolean => {
-  const ids = [
-    periodo.propriedade_id,
-    periodo.propriedadeId,
-    periodo.fazenda_id,
-    periodo.fazendaId,
-  ].map((id) => firstNonEmptyString(id)).filter(Boolean);
-  return ids.includes(context.propriedade_id) || ids.includes(context.fazenda_id);
+  const ids = [periodo.propriedade_id]
+    .map((id) => firstNonEmptyString(id))
+    .filter(Boolean);
+  return ids.includes(context.propriedade_id);
 };
 
 const resolvePeriodo = async (
@@ -487,7 +472,6 @@ const buildMetadataInput = (
 ): MaterialTecnicoImportMetadataInput => ({
   id: preview.importId,
   propriedade_id: preview.resolvedContext.propriedade_id,
-  fazenda_id: preview.resolvedContext.fazenda_id,
   nome_propriedade: preview.resolvedContext.nome_propriedade,
   titulo: preview.file.name,
   categoria: preview.categoria,
@@ -534,7 +518,6 @@ export const confirmMaterialTecnicoPropertyImport = async (
   const copy = deps.copyMaterialTecnicoToInternalStorage ?? copyMaterialTecnicoToInternalStorage;
   const copied = await copy({
     propriedade_id: preview.resolvedContext.propriedade_id,
-    fazenda_id: preview.resolvedContext.fazenda_id,
     ano: form.ano,
     categoria: preview.categoria,
     formato_arquivo: preview.file.formato,

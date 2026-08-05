@@ -246,7 +246,7 @@ const run = async () => {
 
     assert.equal(result.ok, true);
     assert.equal(result.file.propriedade_id, 'p_sela1');
-    assert.equal(result.file.fazenda_id, 'p_sela1');
+    assert.equal(Object.prototype.hasOwnProperty.call(result.file, 'fazenda_id'), false);
     assert.equal(result.file.name, 'import-001-limites-talhoes.geojson');
     assert.equal(result.file.uri, `file:///app/${GEOJSON_STORAGE_DIRECTORY_NAME}/p_sela1/import-001-limites-talhoes.geojson`);
     assert.equal(result.file.originalName, 'Limites Talhoes.geojson');
@@ -369,7 +369,7 @@ const run = async () => {
     assert.equal(result.validation.ok, true);
     assert.equal(result.validation.talhoes.length, 1);
     assert.equal(result.validation.talhoes[0].talhao, 'T01');
-    assert.equal(result.validation.talhoes[0].fazenda_id, 'p_sela1');
+    assert.equal(result.validation.talhoes[0].propriedade_id, 'p_sela1');
   });
 
   await test('retorna validation false para conteudo invalido armazenado', async () => {

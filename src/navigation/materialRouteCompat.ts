@@ -1,4 +1,5 @@
 type MaterialRoutePropertyContext = {
+  propriedadeId?: string;
   fazendaId?: string;
   produtorId?: string;
 };
@@ -14,7 +15,7 @@ export type MaterialViewerRouteParams = MaterialRoutePropertyContext & {
 export type MaterialViewerIdentity = {
   materialId: string;
   materialVersion: string;
-  fazendaId?: string;
+  propriedadeId?: string;
 };
 
 export type MaterialViewerKind = 'geospatial' | 'image' | 'pdf' | 'file';
@@ -78,7 +79,7 @@ const resolveMaterialFazendaId = (
 
 const resolveRouteFazendaId = (
   params?: MaterialViewerRouteParams | null
-): string | undefined => firstNonEmptyString(params?.fazendaId, params?.produtorId);
+): string | undefined => firstNonEmptyString(params?.propriedadeId, params?.fazendaId, params?.produtorId);
 
 export const buildMaterialViewerRouteParams = (
   material?: Record<string, any> | null
@@ -92,7 +93,7 @@ export const buildMaterialViewerRouteParams = (
   return {
     materialId,
     materialVersion,
-    ...(fazendaId ? { fazendaId, produtorId: fazendaId } : {}),
+    ...(fazendaId ? { propriedadeId: fazendaId } : {}),
   };
 };
 
@@ -111,7 +112,7 @@ export const resolveMaterialViewerIdentity = (
   return {
     materialId,
     materialVersion,
-    fazendaId: resolveRouteFazendaId(params),
+    propriedadeId: resolveRouteFazendaId(params),
   };
 };
 
@@ -128,7 +129,7 @@ export const resolveMaterialFromCatalog = (
       return false;
     }
 
-    return !identity.fazendaId || resolveMaterialFazendaId(material) === identity.fazendaId;
+    return !identity.propriedadeId || resolveMaterialFazendaId(material) === identity.propriedadeId;
   }) ?? null;
 };
 

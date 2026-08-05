@@ -109,10 +109,9 @@ const buildMetadata = (
   params: { timestamp: string; generateId: () => string }
 ): MaterialTecnicoImportMetadata => {
   assertSmallMetadataOnly(input);
-  const propriedadeId = firstNonEmptyString(input.propriedade_id, input.fazenda_id);
-  const fazendaId = firstNonEmptyString(input.fazenda_id, input.propriedade_id);
+  const propriedadeId = firstNonEmptyString(input.propriedade_id);
   const arquivoNome = firstNonEmptyString(input.arquivo_nome_original);
-  if (!propriedadeId || !fazendaId) throw new Error('MaterialTecnicoImport.propriedade_id: obrigatório');
+  if (!propriedadeId) throw new Error('MaterialTecnicoImport.propriedade_id: obrigatório');
   if (!arquivoNome) throw new Error('MaterialTecnicoImport.arquivo_nome_original: obrigatório');
   if (!isCategoria(input.categoria)) throw new Error('MaterialTecnicoImport.categoria: inválida');
   if (!isFormato(input.formato_arquivo)) throw new Error('MaterialTecnicoImport.formato_arquivo: inválido');
@@ -152,7 +151,6 @@ const buildMetadata = (
   return {
     id: firstNonEmptyString(input.id) || params.generateId(),
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
     nome_propriedade: optionalString(input.nome_propriedade),
     titulo: arquivoNome,
     categoria: input.categoria,
@@ -187,8 +185,7 @@ const buildMetadata = (
 
 const isMetadataRecord = (value: any): value is MaterialTecnicoImportMetadata =>
   typeof value?.id === 'string'
-  && typeof value?.propriedade_id === 'string'
-  && typeof value?.fazenda_id === 'string'
+  && Boolean(firstNonEmptyString(value?.propriedade_id, value?.fazenda_id))
   && typeof value?.titulo === 'string'
   && isCategoria(value?.categoria)
   && typeof value?.categoria_label === 'string'
@@ -202,6 +199,16 @@ const isMetadataRecord = (value: any): value is MaterialTecnicoImportMetadata =>
   && typeof value?.visivel_para_produtor === 'boolean'
   && value?.origem === 'arquivo_local'
   && value?.versao === MATERIAL_TECNICO_IMPORT_VERSION;
+
+const normalizeStoredMetadata = (value: any): MaterialTecnicoImportMetadata | null => {
+  if (!isMetadataRecord(value)) return null;
+  const stored: any = value;
+  const { fazenda_id: _legacyFazendaId, ...canonical } = stored;
+  return {
+    ...canonical,
+    propriedade_id: firstNonEmptyString(stored.propriedade_id, stored.fazenda_id),
+  };
+};
 
 const emptySnapshot = (): MaterialTecnicoImportSnapshot => ({
   version: MATERIAL_TECNICO_IMPORT_VERSION,
@@ -228,7 +235,7 @@ export const createMaterialTecnicoImportService = ({
         return {
           version: MATERIAL_TECNICO_IMPORT_VERSION,
           savedAt: parsed.savedAt,
-          items: parsed.items.filter(isMetadataRecord),
+          items: parsed.items.map(normalizeStoredMetadata).filter(Boolean) as MaterialTecnicoImportMetadata[],
         };
       }
     } catch {
@@ -256,9 +263,7 @@ export const createMaterialTecnicoImportService = ({
     async listMaterialTecnicoImportsByPropriedade(propriedadeId: string): Promise<MaterialTecnicoImportMetadata[]> {
       const id = firstNonEmptyString(propriedadeId);
       if (!id) return [];
-      return (await loadSnapshot()).items.filter(
-        (item) => item.propriedade_id === id || item.fazenda_id === id
-      );
+      return (await loadSnapshot()).items.filter((item) => item.propriedade_id === id);
     },
     async listActiveMaterialTecnicoImportsByPropriedade(propriedadeId: string): Promise<MaterialTecnicoImportMetadata[]> {
       return (await this.listMaterialTecnicoImportsByPropriedade(propriedadeId))

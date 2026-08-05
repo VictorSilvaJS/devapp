@@ -188,24 +188,23 @@ const run = async () => {
     assert.equal(registro.titularId, 'titular_produtor_compat');
   });
 
-  await test('diagnostico: Visita e Caderno continuam emitindo fazenda_id como contrato operacional do MVP', () => {
+  await test('v2: Visita e Caderno emitem apenas propriedade_id nas novas escritas', () => {
     const visita = buildVisitaPayload({
-      fazendaId: 'faz_operacional',
+      propriedadeId: 'prop_operacional',
       dataVisita: new Date('2026-04-20T00:00:00.000Z'),
       horaVisita: new Date('2026-04-20T10:00:00.000Z'),
       objetivo: 'consultoria',
     });
     const caderno = buildCadernoPayload({
-      fazendaId: 'faz_operacional',
+      propriedadeId: 'prop_operacional',
       dataAtividade: new Date('2026-04-20T00:00:00.000Z'),
       tipoAtividade: 'vistoria',
     });
 
-    assert.equal(visita.fazenda_id, 'faz_operacional');
-    assert.equal(caderno.fazenda_id, 'faz_operacional');
-    assert.equal(caderno.fazendaId, 'faz_operacional');
-    assert.equal(Object.prototype.hasOwnProperty.call(visita, 'propriedade_id'), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(caderno, 'propriedade_id'), false);
+    assert.equal(visita.propriedade_id, 'prop_operacional');
+    assert.equal(caderno.propriedade_id, 'prop_operacional');
+    assert.equal(Object.prototype.hasOwnProperty.call(visita, 'fazenda_id'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(caderno, 'fazenda_id'), false);
   });
 
   await test('diagnostico: fixtures com propriedade_id nao quebram leitura compativel de formularios', () => {
@@ -256,20 +255,19 @@ const run = async () => {
 
     assert.equal(usuarioProdutor.produtor_id, 'titular_usuario');
     assert.equal(getTitularId(propriedade), 'titular_propriedade');
-    assert.equal(normalizeFazenda(propriedade).produtor_id, 'titular_propriedade');
+    assert.equal(normalizeFazenda(propriedade).titular_id, 'titular_propriedade');
   });
 
   await test('diagnostico: produtor_id em mapa/visita/caderno/limite e contexto legado de Propriedade', () => {
-    // Nao promover produtor_id globalmente para Titular: nestas entidades ele e
-    // alias legado do contexto operacional. fazenda_id ainda e obrigatorio no MVP;
-    // propriedade_id/titular_id sao aliases futuros e nao substituem essa leitura.
+    // Nestas entidades, produtor_id e lido somente como alias legado do contexto
+    // operacional e normalizado para propriedade_id.
     assert.equal(normalizeMapa({
       id: 'mapa_legado',
       titulo: 'Mapa Legado',
       categoria: 'fertilidade',
       produtor_id: 'faz_contexto_mapa',
       talhao: 'T1',
-    }).fazenda_id, 'faz_contexto_mapa');
+    }).propriedade_id, 'faz_contexto_mapa');
 
     assert.equal(normalizeVisita({
       id: 'visita_legada',
@@ -277,7 +275,7 @@ const run = async () => {
       tecnico_responsavel: 'Ana',
       data_visita: '2026-04-20T00:00:00.000Z',
       objetivo: 'consultoria',
-    }).fazenda_id, 'faz_contexto_visita');
+    }).propriedade_id, 'faz_contexto_visita');
 
     assert.equal(normalizeCadernoCampo({
       id: 'caderno_legado',
@@ -285,7 +283,7 @@ const run = async () => {
       colaborador_responsavel: 'Ana',
       data_atividade: '2026-04-20T00:00:00.000Z',
       tipo_atividade: 'vistoria',
-    }).fazenda_id, 'faz_contexto_caderno');
+    }).propriedade_id, 'faz_contexto_caderno');
 
     assert.equal(normalizeLimiteArea({
       id: 'limite_legado',
@@ -294,7 +292,7 @@ const run = async () => {
       produtor_id: 'faz_contexto_limite',
       talhao: 'T1',
       poligono: [{ lat: -10, lng: -50 }],
-    }).fazenda_id, 'faz_contexto_limite');
+    }).propriedade_id, 'faz_contexto_limite');
   });
 
   await test('diagnostico: helpers de rota preservam params atuais e aceitam aliases futuros', () => {
@@ -309,13 +307,11 @@ const run = async () => {
     });
 
     assert.deepEqual(buildPropriedadeContextRouteParams(propriedade), {
-      fazendaId: 'prop_rota',
-      produtorId: 'prop_rota',
       propriedadeId: 'prop_rota',
     });
   });
 
-  await test('diagnostico: resolver de rota nao promove propriedadeId sozinho no MVP', () => {
+  await test('v2: resolver de rota prioriza propriedadeId e ainda le aliases legados', () => {
     assert.deepEqual(resolvePropriedadeRouteContext({
       fazendaId: 'faz_rota',
       produtorId: 'produtor_legado_rota',
@@ -327,8 +323,9 @@ const run = async () => {
       id: 'id_legado_rota',
       propriedadeId: 'prop_futura_rota',
       propriedadeIdAlias: 'prop_futura_rota',
-      effectiveFazendaId: 'faz_rota',
-      source: 'fazendaId',
+      effectivePropriedadeId: 'prop_futura_rota',
+      effectiveFazendaId: 'prop_futura_rota',
+      source: 'propriedadeId',
     });
 
     assert.deepEqual(resolvePropriedadeRouteContext({
@@ -340,8 +337,9 @@ const run = async () => {
       id: undefined,
       propriedadeId: 'prop_futura_rota',
       propriedadeIdAlias: 'prop_futura_rota',
-      effectiveFazendaId: 'faz_produtor_alias',
-      source: 'produtorId',
+      effectivePropriedadeId: 'prop_futura_rota',
+      effectiveFazendaId: 'prop_futura_rota',
+      source: 'propriedadeId',
     });
 
     assert.deepEqual(resolvePropriedadeRouteContext({
@@ -353,8 +351,9 @@ const run = async () => {
       id: 'faz_id_legado',
       propriedadeId: 'prop_futura_rota',
       propriedadeIdAlias: 'prop_futura_rota',
-      effectiveFazendaId: 'faz_id_legado',
-      source: 'id',
+      effectivePropriedadeId: 'prop_futura_rota',
+      effectiveFazendaId: 'prop_futura_rota',
+      source: 'propriedadeId',
     });
 
     assert.deepEqual(resolvePropriedadeRouteContext({
@@ -365,8 +364,9 @@ const run = async () => {
       id: undefined,
       propriedadeId: 'prop_sozinha',
       propriedadeIdAlias: 'prop_sozinha',
-      effectiveFazendaId: undefined,
-      source: undefined,
+      effectivePropriedadeId: 'prop_sozinha',
+      effectiveFazendaId: 'prop_sozinha',
+      source: 'propriedadeId',
     });
   });
 

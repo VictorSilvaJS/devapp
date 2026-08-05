@@ -145,9 +145,9 @@ const run = async () => {
     assert.equal(dataCompleta.getMinutes(), 45);
   });
 
-  await test('buildVisitaPayload gera contrato canônico com fazenda_id e mantém campos atuais', () => {
+  await test('buildVisitaPayload gera contrato canônico com propriedade_id', () => {
     const payload = buildVisitaPayload({
-      fazendaId: 'faz_payload',
+      propriedadeId: 'faz_payload',
       dataVisita: new Date('2026-04-20T00:00:00.000Z'),
       horaVisita: new Date('2026-04-20T13:30:00.000Z'),
       objetivo: 'consultoria',
@@ -160,36 +160,36 @@ const run = async () => {
       tecnicoResponsavel: 'Ana Silva',
     });
 
-    assert.equal(payload.fazenda_id, 'faz_payload');
+    assert.equal(payload.propriedade_id, 'faz_payload');
     assert.equal(payload.tecnico_responsavel, 'Ana Silva');
     assert.equal(payload.objetivo, 'consultoria');
     assert.equal(payload.proximaVisita, '2026-05-02');
     assert.deepEqual(payload.fotos, [{ id: 'foto1' }]);
   });
 
-  await test('buildVisitaPayload preserva status realizada com fazenda_id canônico', () => {
+  await test('buildVisitaPayload preserva status realizada com propriedade_id', () => {
     const payload = buildVisitaPayload({
-      fazendaId: 'faz_realizada',
+      propriedadeId: 'faz_realizada',
       dataVisita: new Date('2026-04-20T00:00:00.000Z'),
       horaVisita: new Date('2026-04-20T10:00:00.000Z'),
       objetivo: 'avaliacao_cultivo',
       status: 'realizada',
     });
 
-    assert.equal(payload.fazenda_id, 'faz_realizada');
+    assert.equal(payload.propriedade_id, 'faz_realizada');
     assert.equal(payload.status, 'realizada');
   });
 
   await test('Nova Visita sem fotos gera payload válido com array vazio', () => {
     const payload = buildVisitaPayload({
-      fazendaId: 'faz_sem_foto',
+      propriedadeId: 'faz_sem_foto',
       dataVisita: new Date('2026-07-21T00:00:00.000Z'),
       horaVisita: new Date('2026-07-21T10:30:00.000Z'),
       objetivo: 'consultoria',
       tecnicoResponsavel: 'Colaborador Teste',
     });
 
-    assert.equal(payload.fazenda_id, 'faz_sem_foto');
+    assert.equal(payload.propriedade_id, 'faz_sem_foto');
     assert.deepEqual(payload.fotos, []);
     assert.equal(JSON.stringify(payload).includes('picsum.photos'), false);
   });
@@ -200,7 +200,7 @@ const run = async () => {
       { id: 'foto_legada', uri: 'https://exemplo.invalid/demonstrativa.jpg' },
     ];
     const payload = buildVisitaPayload({
-      fazendaId: 'faz_edicao',
+      propriedadeId: 'faz_edicao',
       dataVisita: new Date('2026-07-21T00:00:00.000Z'),
       horaVisita: new Date('2026-07-21T11:00:00.000Z'),
       objetivo: 'consultoria',
@@ -227,7 +227,7 @@ const run = async () => {
 
   await test('registro sem fotos continua compatível', () => {
     const payload = buildVisitaPayload({
-      fazendaId: 'faz_vazio',
+      propriedadeId: 'faz_vazio',
       dataVisita: new Date('2026-07-21T00:00:00.000Z'),
       horaVisita: new Date('2026-07-21T12:00:00.000Z'),
       objetivo: 'outro',
@@ -247,14 +247,14 @@ const run = async () => {
 
   await test('payload não cria coordenada, geotag, EXIF ou alias novo de propriedade', () => {
     const payload = buildVisitaPayload({
-      fazendaId: 'faz_contexto',
+      propriedadeId: 'faz_contexto',
       dataVisita: new Date('2026-07-21T00:00:00.000Z'),
       horaVisita: new Date('2026-07-21T13:00:00.000Z'),
       objetivo: 'consultoria',
     });
-    const forbiddenKeys = ['latitude', 'longitude', 'accuracy', 'geotag', 'exif', 'fazendaId'];
+    const forbiddenKeys = ['latitude', 'longitude', 'accuracy', 'geotag', 'exif', 'fazendaId', 'fazenda_id'];
 
-    assert.equal(payload.fazenda_id, 'faz_contexto');
+    assert.equal(payload.propriedade_id, 'faz_contexto');
     assert.equal(forbiddenKeys.some((key) => Object.hasOwn(payload, key)), false);
     assert.equal(getVisitaFormFazendaId({ fazendaId: 'faz_alias_existente' }), 'faz_alias_existente');
   });

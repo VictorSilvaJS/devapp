@@ -60,8 +60,7 @@ export interface PngMapPropertyImportContext {
   user: any;
   propriedade: any;
   propriedade_id?: string;
-  fazenda_id?: string;
-  produtor_id?: string;
+  titular_id?: string;
   nome_propriedade?: string;
 }
 
@@ -69,8 +68,7 @@ export interface PngMapPropertyImportResolvedContext {
   user: any;
   propriedade: any;
   propriedade_id: string;
-  fazenda_id: string;
-  produtor_id: string;
+  titular_id: string;
   nome_propriedade?: string;
   importado_por_usuario_id?: string;
   importado_por_nome?: string;
@@ -156,7 +154,6 @@ export interface PngMapPropertyImportWorkflowDeps {
   copyPngToInternalStorage?: (
     input: {
       propriedade_id: string;
-      fazenda_id?: string;
       sourceUri: string;
       originalName: string;
       importId?: string;
@@ -289,28 +286,19 @@ const resolveIds = (input: PngMapPropertyImportContext) => {
     propriedade?.fazenda_id,
     propriedade?.fazendaId
   );
-  const fazendaId = firstNonEmptyString(
-    input.fazenda_id,
-    propriedade?.fazenda_id,
-    propriedade?.fazendaId,
-    compatFazendaId,
-    propriedadeId
-  );
   const titularId = firstNonEmptyString(
-    input.produtor_id,
+    input.titular_id,
+    propriedade?.titular_id,
     propriedade?.produtor_id,
     propriedade?.proprietario_id,
-    propriedade?.titular_id,
     propriedade?.titularId,
     getTitularIdFazenda(propriedade),
-    fazendaId,
     propriedadeId
   );
 
   return {
     propriedade_id: propriedadeId,
-    fazenda_id: fazendaId,
-    produtor_id: titularId,
+    titular_id: titularId,
   };
 };
 
@@ -318,14 +306,13 @@ const resolveContext = (
   input: PngMapPropertyImportContext
 ): PngMapPropertyImportResolvedContext | null => {
   const ids = resolveIds(input);
-  if (!ids.propriedade_id || !ids.fazenda_id) return null;
+  if (!ids.propriedade_id) return null;
 
   return {
     user: input.user,
     propriedade: input.propriedade,
     propriedade_id: ids.propriedade_id,
-    fazenda_id: ids.fazenda_id,
-    produtor_id: ids.produtor_id,
+    titular_id: ids.titular_id,
     nome_propriedade: resolveNomePropriedade(input),
     importado_por_usuario_id: buildUsuarioId(input.user),
     importado_por_nome: buildUsuarioNome(input.user),
@@ -502,7 +489,6 @@ const buildMetadataInput = (
   return {
     id: preview.importId,
     propriedade_id: preview.resolvedContext.propriedade_id,
-    fazenda_id: preview.resolvedContext.fazenda_id,
     nome_propriedade: preview.resolvedContext.nome_propriedade,
     titulo: form.titulo,
     descricao: form.descricao,
@@ -545,7 +531,6 @@ export const confirmPngMapPropertyImport = async (
   const copy = deps.copyPngToInternalStorage ?? copyPngToInternalStorage;
   const copied = await copy({
     propriedade_id: preview.resolvedContext.propriedade_id,
-    fazenda_id: preview.resolvedContext.fazenda_id,
     sourceUri: preview.file.uri,
     originalName: preview.file.name,
     importId: preview.importId,

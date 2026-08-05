@@ -13,8 +13,6 @@ export interface GeoJsonValidationIssue {
 
 export interface GeoJsonNormalizeOptions {
   propriedade_id: string;
-  fazenda_id?: string;
-  produtor_id?: string;
   ano?: number;
   safra?: string;
   corPadrao?: string;
@@ -397,8 +395,6 @@ export const validateAndNormalizeGeoJson = (
 
   const context: NormalizationContext = { addError, addWarning };
   const propriedadeId = firstNonEmptyString(options?.propriedade_id);
-  const fazendaId = firstNonEmptyString(options?.fazenda_id, propriedadeId);
-  const produtorId = firstNonEmptyString(options?.produtor_id, fazendaId);
 
   if (!propriedadeId) {
     addError({
@@ -542,9 +538,10 @@ export const validateAndNormalizeGeoJson = (
     }
 
     const normalizedTalhao: GeoJsonNormalizedTalhao = {
-      id: buildStableTalhaoId(propriedadeId || fazendaId || 'propriedade', featureIndex, talhao),
-      fazenda_id: fazendaId,
-      produtor_id: produtorId,
+      id: buildStableTalhaoId(propriedadeId || 'propriedade', featureIndex, talhao),
+      propriedade_id: propriedadeId,
+      talhao_id: buildStableTalhaoId(propriedadeId || 'propriedade', featureIndex, talhao),
+      talhao_nome: talhao,
       talhao,
       nome: talhao,
       ano: normalizeAno(options?.ano, properties.ano),

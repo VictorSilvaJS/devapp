@@ -498,7 +498,6 @@ export default function MapasScreen({ route, navigation }) {
         fazendaId && idsPermitidos.length === 1
           ? loadGeoJsonTalhoesLayer({
               propriedade_id: idsPermitidos[0],
-              fazenda_id: idsPermitidos[0],
             })
           : Promise.resolve(null),
         periodosPromise,
@@ -679,10 +678,7 @@ export default function MapasScreen({ route, navigation }) {
     const propriedadeId = fazendaContextoInfo?.id || '';
     const options = periodosProdutivos
       .filter((periodo: any) => {
-        const periodoPropriedadeId = periodo?.propriedade_id
-          || periodo?.propriedadeId
-          || periodo?.fazenda_id
-          || periodo?.fazendaId;
+        const periodoPropriedadeId = periodo?.propriedade_id;
         return propriedadeId && periodoPropriedadeId === propriedadeId;
       })
       .map((periodo: any) => ({
@@ -875,15 +871,11 @@ export default function MapasScreen({ route, navigation }) {
 
   const recarregarGeoJsonLocal = useCallback(async (contexto: {
     propriedade_id: string;
-    fazenda_id?: string;
-    produtor_id?: string;
   }) => {
     const [importsAtualizados, talhoesLayerAtualizada] = await Promise.all([
       listGeoJsonImportsForPropriedade(contexto.propriedade_id),
       loadGeoJsonTalhoesLayer({
         propriedade_id: contexto.propriedade_id,
-        fazenda_id: contexto.fazenda_id || contexto.propriedade_id,
-        produtor_id: contexto.produtor_id,
       }),
     ]);
 
@@ -1200,8 +1192,6 @@ export default function MapasScreen({ route, navigation }) {
       try {
         const recarregamento = await recarregarGeoJsonLocal({
           propriedade_id: resolvedContext.propriedade_id,
-          fazenda_id: resolvedContext.fazenda_id,
-          produtor_id: resolvedContext.produtor_id,
         });
         talhoesLayerAtualizada = recarregamento.layer;
         recarregouCamada = true;
@@ -1291,7 +1281,6 @@ export default function MapasScreen({ route, navigation }) {
       if (metadataContexto) {
         await recarregarGeoJsonLocal({
           propriedade_id: metadataContexto.propriedade_id,
-          fazenda_id: metadataContexto.fazenda_id,
         });
       } else {
         await loadDados();
