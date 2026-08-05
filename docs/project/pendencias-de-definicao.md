@@ -560,10 +560,6 @@ Pendencias P1 antes de declarar APK apto a campo:
 
 Pendencias P2/futuras:
 
-- revalidar o login em paisagem com um IME/aparelho que respeite
-  `IME_FLAG_NO_FULLSCREEN`; os acessos rápidos já foram corrigidos e passaram
-  em três colunas, mas o Gboard do aparelho de MP-07 abriu editor de extração
-  em tela cheia e impediu o aceite visual do teclado inline;
 - definir fonte, metodo, unidade e confiabilidade do perimetro processado;
 - confirmar a relacao entre 6200 ha informados e 1888,6 ha mapeados na Sela de
   Prata I, sem alterar os valores por inferencia;
@@ -572,6 +568,21 @@ Pendencias P2/futuras:
   accuracy, privacidade e sincronizacao;
 - implementar pipeline produtivo de mapas, publicacao, download e sync no
   backend.
+
+Decisao em 2026-08-05 (`MP-07`): o editor de extracao do Gboard em paisagem
+foi aceito como ressalva do aparelho para o corte demonstrativo. O teclado
+inline nao foi declarado aprovado, mas a repeticao com outro IME deixou de ser
+pendencia do plano atual.
+
+Pendencia externa de release: antes de distribuir uma APK de producao, fornecer
+keystore oficial e as quatro credenciais `TCHE_RELEASE_*`. Sem elas, o comando
+oficial gera e identifica somente APK demonstrativo assinado com chave debug.
+As deprecacoes Gradle devem ser tratadas junto da proxima atualizacao
+coordenada de Expo/React Native, sem upgrade isolado neste fechamento. O
+`npm audit` permanece com 11 alertas moderados concentrados no toolchain
+Expo/ngrok; o alerta alto de `shell-quote` foi removido com `1.10.0`, e o
+downgrade automatico sugerido para Expo 46 foi recusado por incompatibilidade
+com o SDK 56 ativo.
 
 Status em 2026-08-04 (`MP-30`): as fotos demonstrativas ja existentes em
 Caderno e Visita ganharam ampliacao e copia local autorizada, sem criar ou

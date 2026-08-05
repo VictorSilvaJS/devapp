@@ -1274,11 +1274,16 @@ Dispositivo da rodada: Android físico `8483A` / `Lugh_10_WiFi`, display
 | MP07-04 | P1 | Teclado aberto e atalhos expandidos | Rolar formulário | Rolagem estável sem fechar o teclado no Android | Passou | `mInputShown=true` |
 | MP07-05 | P1 | Atalhos expandidos em retrato | Girar para paisagem | Três atalhos permanecem íntegros e alcançáveis | Passou | `60-final-paisagem-fechado-pos-rotacao.png` |
 | MP07-06 | P1 | Login em paisagem, teclado fechado | Inspecionar e rolar | Conteúdo não conserva dimensões inválidas | Passou | Marca, campos, ação e atalhos íntegros |
-| MP07-07 | P1 | Login em paisagem | Focar e-mail e senha | Formulário permanece visível com teclado inline | Bloqueado no aparelho | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração; evidência `61-final-paisagem-teclado-email-gboard-extract.png` |
+| MP07-07 | P1 | Login em paisagem | Focar e-mail e senha | Formulário permanece visível com teclado inline | Aceito com ressalva | Gboard ignorou `IME_FLAG_NO_FULLSCREEN` e abriu editor de extração; limitação aceita em 2026-08-05 sem alegar aprovação do modo inline |
 | MP07-08 | P1 | Teclado aberto após paisagem | Girar para retrato | Formulário recompõe dimensões e foco | Passou | `62-final-retrato-teclado-email-pos-rotacao.png` |
 
 Evidências completas:
 `dist/qa-session-2026-07-30/mp-07-login-responsivo/`.
+
+Fechamento em 2026-08-05: `MP-07` foi encerrada para o corte demonstrativo por
+decisão explícita de aceitar o editor de extração do Gboard em paisagem. Os
+demais sete casos continuam aprovados; não há promessa de teclado inline nesse
+IME.
 
 ## MP-08 - Semântica Do X Nos Filtros
 

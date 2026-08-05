@@ -82,8 +82,9 @@ test('mapa de limites mantém retorno próprio em todos os estados', () => {
   const backCalls = source.match(/navigation\.goBack\(\)/g) || [];
 
   assert.ok(backCalls.length >= 5);
-  assert.match(source, /style=\{styles\.btnVoltar\}/);
+  assert.match(source, /style=\{styles\.mapControlButton\}/);
   assert.match(source, /style=\{styles\.voltarLoading\}/);
+  assert.match(source, /accessibilityLabel="Voltar"/);
   assert.match(source, /name="arrow-back"/);
 });
 

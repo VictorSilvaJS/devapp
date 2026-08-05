@@ -823,3 +823,27 @@ Visita e a copia local demonstrativa autorizada.
 - a copia interna nao e download produtivo nem promessa offline;
 - camera, galeria, consentimento, metadados da foto, georreferenciamento,
   backend, URL assinada e sincronizacao permanecem para fase propria.
+
+---
+
+## 30. Gboard em paisagem pode usar editor de extracao no corte demonstrativo
+
+### Decisao
+
+O corte demonstrativo aceita que o Gboard do Android fisico `8483A` abra seu
+editor de extracao ao focar o login em paisagem. O app continua enviando
+`disableFullscreenUI`, preservando `adjustResize`, rolagem, foco e recomposicao
+de orientacao, mas nao adiciona patch nativo especifico para contrariar o IME.
+
+### Alcance
+
+Afeta somente o aceite visual de `MP-07` nesse IME e aparelho. Retrato,
+teclado fechado, rolagem, acessos rapidos e mudanca de orientacao continuam
+com os criterios ja aprovados.
+
+### Impacto
+
+- `MP-07` pode ser encerrada com ressalva documentada;
+- teclado inline em paisagem nao e declarado como comportamento aprovado;
+- outro IME ou patch nativo so deve ser reavaliado se surgir requisito novo;
+- autenticacao, sessao, credenciais e regras de acesso permanecem inalteradas.

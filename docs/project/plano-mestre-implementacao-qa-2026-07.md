@@ -5,9 +5,9 @@
 > Criado em: 2026-07-30
 >
 > Próxima tarefa da fila: `MP-33 — Autenticação e sessão reais`, bloqueada por
-> backend; `MP-08` a `MP-32` foram concluídas. A revalidação de `MP-07 — Login
-> responsivo` continua parcial até haver IME que respeite o modo inline em
-> paisagem
+> backend; `MP-00` a `MP-32` foram concluídas. Em `MP-07 — Login responsivo`,
+> o editor de extração do Gboard em paisagem foi aceito explicitamente como
+> ressalva do aparelho, sem alegar que o teclado inline passou
 
 ## 1. Objetivo
 
@@ -165,7 +165,7 @@ nova registrada neste documento.
 
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
-| 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `PARCIAL` |
+| 8 | `MP-07` Login responsivo | `QA-P1-03` | Corrigir teclado, rolagem e mudança de orientação | `MP-00` | `CONCLUIDO` |
 | 9 | `MP-08` Semântica do X nos filtros | `QA-P1-09` | Fazer X cancelar rascunho ou adotar aplicação imediata explícita | `MP-00` | `CONCLUIDO` |
 | 10 | `MP-09` Componente padrão de filtros | `QA-P2-04` | Criar bottom sheet comum e migrar telas gradualmente | `MP-08` | `CONCLUIDO` |
 | 11 | `MP-10` Cabeçalhos e retorno | `QA-P2-05` | Padronizar seta, botão Android e preservação de contexto | `MP-00` | `CONCLUIDO` |
@@ -396,6 +396,7 @@ Adicionar uma linha por entrega concluída ou bloqueio material.
 | 2026-08-04 | `MP-30` | `CONCLUIDO` | árvore de trabalho sobre `2e28dd5` | 10 cenários focados, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou Caderno/Visita, modal, 200%, arraste, paisagem e download com confirmação visível | `dist/qa-session-2026-08-04/mp-30-fotos-ampliacao/` | pinça teve contrato automatizado porque ADB não injeta dois ponteiros; a suíte global parou em referência preexistente a teste ZIP ausente; foto real permanece futura; `MP-31` não foi iniciada |
 | 2026-08-04 | `MP-31` | `CONCLUIDO` | árvore de trabalho sobre `298de87` | 10 cenários focados, contratos de rota/entrada/localização, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou três snap points, lista e busca completas, seleção sem recentralização, mapa manipulável com detalhe aberto, expansão real e painel lateral em paisagem | `dist/qa-session-2026-08-04/mp-31-redesign-mapa-talhoes/` | a suíte global parou na referência preexistente ao teste ZIP ausente; rede, ciclo de vida e fallback offline permanecem exclusivamente em `MP-32` |
 | 2026-08-04 | `MP-32` | `CONCLUIDO` | árvore de trabalho sobre `516af8d` | 9 cenários focados, contratos de mapa/rota, typecheck, diff-check e `packageRelease` passaram; smoke Android físico confirmou cache oportunista, estado controlado sem mapa-base, nova tentativa e cinco ciclos de abrir/voltar sem aviso de destruição anexada nem exceção fatal | `dist/qa-session-2026-08-04/mp-32-webview-rede-offline/` | SSL `-202` ficou coberto pelo classificador automatizado, sem reprodução física; a suíte global parou na referência preexistente ao teste ZIP ausente; localização offline real permanece em `MP-38`; `MP-33` não foi iniciada |
+| 2026-08-05 | `MP-07` e resíduos até `MP-32` | `CONCLUIDO` | `appQA` / árvore de trabalho sobre `c36443c` | typecheck e suíte global passaram; teste ZIP ausente foi recomposto com 14 cenários; Expo SDK 56 foi alinhado; vulnerabilidade alta transitiva foi removida; `packageRelease`, instalação `-r`, abertura e restauração da sessão Admin passaram | `dist/qa-session-2026-08-04/mp-32-webview-rede-offline/` | Gboard em paisagem permanece com editor de extração por decisão aceita; assinatura produtiva ainda exige keystore real; depreciações Gradle e 11 alertas moderados de toolchain permanecem para atualização coordenada |
 
 ## 12. Próxima ação
 
@@ -408,10 +409,11 @@ Typecheck, suíte `domain-compat`, build release e instalação física passaram
 O smoke passou em retrato com teclado aberto/fechado, em paisagem com teclado
 fechado, na rolagem e nas mudanças retrato -> paisagem -> retrato.
 
-A tarefa permanece `PARCIAL`: o Gboard do aparelho físico ignorou
-`IME_FLAG_NO_FULLSCREEN`, embora os dois campos tenham enviado a flag, e abriu
-o editor de extração em tela cheia na paisagem. Repetir somente esse cenário
-com outro IME/aparelho que permita teclado inline.
+A tarefa foi encerrada em 2026-08-05 com ressalva aceita explicitamente: o
+Gboard do aparelho físico ignora `IME_FLAG_NO_FULLSCREEN` e abre o editor de
+extração em tela cheia na paisagem. O comportamento permanece documentado e
+não é apresentado como teclado inline aprovado, mas deixou de exigir outra
+revalidação para o corte demonstrativo atual.
 
 `MP-08` foi concluída em 2026-07-30. Propriedades e Visitas agora mantêm
 separados os filtros aplicados e o rascunho do modal. Abrir copia o estado
@@ -948,6 +950,28 @@ indevidamente ao aplicativo ou ao certificado; sua classificação e o fallback
 foram cobertos automaticamente. Cache de mosaicos não é pacote offline. O
 teste real de localização offline continua em `MP-38`.
 
+A referência ausente `tests/prescriptionZipPropertyManageWorkflow.test.js`
+foi recomposta em 2026-08-05 com 14 cenários, e a expectativa legada do botão
+de retorno do mapa foi alinhada ao contrato acessível atual. Typecheck e a
+suíte global passaram integralmente. O comando `npm run build:android:release`
+agora define `NODE_ENV=production` e reaplica uma configuração de assinatura
+versionada: usa credenciais `TCHE_RELEASE_*` quando presentes e identifica o
+fallback debug como APK exclusivamente demonstrativo.
+
+`npx expo install --check` passou depois do alinhamento de `expo` para
+`56.0.18`, `expo-location` para `56.0.22` e `react-native-screens` para
+`4.26.2`. `shell-quote` foi elevado a `1.10.0`, removendo o unico alerta alto
+do `npm audit`; os 11 moderados remanescentes pertencem ao toolchain
+Expo/ngrok e nao possuem correcao compativel sem downgrade indevido do SDK.
+O build oficial tambem reaplica 2 GiB de heap, 1 GiB de Metaspace e limita o
+paralelismo para evitar esgotamento durante a compilacao Kotlin/CMake.
+
+O APK final de 93.077.024 bytes, SHA-256
+`59E9C62404D33B701ABB532C08423E93635C3907F400E31DD60D8620EB3A79DD`, foi
+reinstalado; a sessão Admin e a rotação automática foram restauradas. A
+referência remota corrompida `origin/appQA` foi removida sem alterar a branch
+local, e `git fsck --no-dangling` voltou a passar.
+
 A próxima tarefa da fila é `MP-33`, que permanece bloqueada por backend e não
-foi iniciada. A revalidação pendente de `MP-07` permanece registrada
-separadamente.
+foi iniciada. A assinatura de produção depende de keystore real; localização
+em campo e offline continua em `MP-38`.

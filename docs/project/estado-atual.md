@@ -4225,7 +4225,7 @@ area, divisao, fusao e restauracao permanece em `MP-39`.
 
 ## MP-07 - Login Responsivo
 
-Status em 2026-07-30: `PARCIAL`.
+Status em 2026-08-05: `CONCLUIDO` com ressalva aceita para o IME do aparelho.
 
 `LoginScreen` passou a usar safe area e uma unica `ScrollView`. No Android, o
 layout depende somente do `adjustResize` nativo, sem uma segunda reducao de
@@ -4244,9 +4244,12 @@ aberto/fechado, em paisagem com teclado fechado, na rolagem e na sequencia
 retrato -> paisagem -> retrato.
 
 O Gboard testado ignorou `IME_FLAG_NO_FULLSCREEN`, enviado pelos dois campos,
-e abriu editor de extracao em tela cheia na paisagem. Falta repetir somente o
-aceite visual com um IME/aparelho que permita teclado inline. Evidencias:
-`dist/qa-session-2026-07-30/mp-07-login-responsivo/`.
+e abriu editor de extracao em tela cheia na paisagem. Em 2026-08-05, essa
+limitacao foi aceita explicitamente para o corte demonstrativo: ela continua
+documentada e nao e descrita como teclado inline aprovado, mas nao exige nova
+revalidacao para encerrar `MP-07`. Evidencias:
+`dist/qa-session-2026-07-30/mp-07-login-responsivo/` e
+`dist/qa-session-2026-08-04/mp-32-webview-rede-offline/`.
 
 ## MP-08 - Semantica Do X Nos Filtros
 
@@ -5060,3 +5063,37 @@ certificado. Cache de mosaicos nao representa pacote offline. Localizacao
 offline real permanece em `MP-38`; autenticacao real permanece bloqueada em
 `MP-33`, que nao foi iniciada. Evidencias:
 `dist/qa-session-2026-08-04/mp-32-webview-rede-offline/`.
+
+## Fechamento De Residuos Ate MP-32
+
+Status em 2026-08-05: `CONCLUIDO` no corte local demonstrativo.
+
+O teste ausente `tests/prescriptionZipPropertyManageWorkflow.test.js` foi
+restaurado com 14 cenarios de permissao, escopo, substituicao, rollback,
+isolamento por Propriedade e seguranca de arquivo. A expectativa legada de
+navegacao do mapa foi atualizada para o controle acessivel entregue em
+`MP-31`. `npm run typecheck` e `npm run test:domain-compat` passaram
+integralmente.
+
+O build oficial passou a ser `npm run build:android:release`, que define
+`NODE_ENV=production` e aplica de forma idempotente a configuracao de
+assinatura na pasta Android gerada. Credenciais `TCHE_RELEASE_*` selecionam a
+assinatura produtiva; na ausencia delas, o log identifica explicitamente o
+APK como demonstrativo assinado com chave debug. A emissao produtiva continua
+dependente do keystore real, que nao foi inventado nem gravado no repositorio.
+
+`npx expo install --check` passou depois de alinhar `expo@56.0.18`,
+`expo-location@56.0.22` e `react-native-screens@4.26.2`. A dependencia
+transitiva `shell-quote` foi atualizada para `1.10.0`, removendo o unico alerta
+alto do `npm audit`. Permanecem 11 alertas moderados no toolchain Expo/ngrok,
+sem correcao compativel no SDK atual; a sugestao automatica de Expo 46 nao foi
+aplicada.
+
+O comando de build tambem reaplica 2 GiB de heap, 1 GiB de Metaspace e limita
+o paralelismo do Gradle. O APK final de 93.077.024 bytes, SHA-256
+`59E9C62404D33B701ABB532C08423E93635C3907F400E31DD60D8620EB3A79DD`, foi
+instalado por cima e aberto no Android fisico `8483A`. A sessao Admin e a
+rotacao automatica foram restauradas. O build nao repetiu o aviso de
+`NODE_ENV`; as deprecacoes gerais do Gradle permanecem para uma atualizacao
+coordenada das dependencias. A referencia remota corrompida `origin/appQA`
+foi removida, a branch local foi preservada e `git fsck --no-dangling` passou.
