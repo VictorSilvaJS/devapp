@@ -66,6 +66,17 @@ Titular, vinculos e contexto de Talhao. O acesso efetivo do Colaborador e o cada
 administrativo ja usam vinculo direto. Permanecem a migracao das entidades
 operacionais/storages e a carga do novo conjunto demonstrativo aprovado.
 
+Status de auditoria em 2026-08-06: o inventário dos identificadores legados
+foi concluído em
+`auditoria-compatibilidade-fazenda-id-2026-08.md`, sem remover campos. A
+leitura dupla ainda é necessária em adaptadores, acesso, rotas, Visitas,
+Caderno e, principalmente, mapas/offline. O snapshot v2 permanece proibido de
+gravar aliases. A auditoria identificou `src/domain/contractsV2.ts` vazio; o
+contrato foi restaurado em tarefa posterior autorizada e `npm run typecheck`
+e `npm run test:domain-compat` passaram. Esse bloqueio P0 está resolvido, sem
+iniciar a remoção dos aliases. O componente territorial de `PRE-06` não foi
+abrangido por esta auditoria.
+
 ### 2. Contratos centrais do dominio
 
 Ainda falta fechar a forma final de alguns contratos que hoje aparecem com variacoes no repositorio e na documentacao, como:

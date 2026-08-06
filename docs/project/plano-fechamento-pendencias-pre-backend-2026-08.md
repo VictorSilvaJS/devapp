@@ -115,6 +115,14 @@ Um item só muda para concluído quando existir:
 | `PRE-17` | `P1-R` | Release | Fechar assinatura, segurança, plataformas e observabilidade | Release | Keystore oficial, segredos, política de logs, auditoria de dependências e plataforma-alvo aprovados |
 | `PRE-18` | `P2` | Manutenção | Reduzir pontos críticos de acoplamento e documentação obsoleta | Evolução segura | Telas críticas modularizadas na área tocada, README atualizado e CI mínima ativa |
 
+Atualização parcial de `PRE-06` em 2026-08-06: os identificadores legados,
+especialmente `fazenda_id`, foram inventariados e classificados em
+`auditoria-compatibilidade-fazenda-id-2026-08.md`. Nenhuma remoção foi feita.
+O item continua aberto porque ainda faltam o mapeamento dos valores
+territoriais e a fixture/planilha de migração revisada. O contrato TypeScript
+v2, encontrado vazio durante a auditoria, foi restaurado posteriormente em
+2026-08-06; `npm run typecheck` e `npm run test:domain-compat` passaram.
+
 ## 6. Agenda de Decisões Humanas
 
 As recomendações originais abaixo devem ser lidas com o fechamento de

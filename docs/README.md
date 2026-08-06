@@ -73,6 +73,9 @@ Depois da trilha principal:
 5. [Contrato do mock v2](project/modelo-dados-mock-v2.md) e
    [dataset demonstrativo v2](project/dataset-demonstrativo-v2.md) quando a
    tarefa envolver dados locais, seed, geometrias ou bootstrap
+6. [Auditoria de compatibilidade de fazenda_id](project/auditoria-compatibilidade-fazenda-id-2026-08.md)
+   quando a tarefa envolver aliases legados, mapas/offline, rotas ou a futura
+   remoção da leitura dupla
 
 ## Regra Pratica
 

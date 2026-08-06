@@ -5381,3 +5381,21 @@ a sessão César/Admin. O smoke confirmou os três formulários canônicos, perf
 bloqueado na edição, titularidade somente para leitura e a mensagem correta do
 login local. Nenhum registro foi salvo e não houve fatal, erro React Native
 fatal ou ANR no log final.
+
+## Auditoria de Compatibilidade de Identificadores — 2026-08-06
+
+Foi concluída a auditoria documental e técnica de `fazenda_id` e aliases
+relacionados, sem executar remoções. O relatório completo está em
+`auditoria-compatibilidade-fazenda-id-2026-08.md`.
+
+O snapshot v2 e as novas gravações operacionais devem continuar usando
+`propriedade_id`. A leitura legada ainda é necessária nas bordas de contrato,
+controle de acesso, rotas, Visitas, Caderno e, com maior impacto, mapas,
+cache, backups, índices e sincronização offline. A retirada deve ser gradual e
+validada por fluxo; substituição textual em massa não é segura.
+
+A auditoria também encontrou `src/domain/contractsV2.ts` vazio na base então
+auditada. Em tarefa posterior autorizada, o arquivo foi restaurado conforme o
+histórico imediatamente anterior e o modelo canônico aprovado, sem restaurar
+mock antigo ou alterar registros instalados. `npm run typecheck` e
+`npm run test:domain-compat` passaram; o bloqueio P0 está resolvido.
