@@ -396,22 +396,6 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
             notebook["talhao_id"] = first_talhao_id
         notebooks.append(notebook)
 
-        materials.append({
-            "id": stable_id("material", property_id),
-            "organizacao_id": ORGANIZATION_ID,
-            "propriedade_id": property_id,
-            "titulo": "Limites de Talhões",
-            "categoria": "panorama",
-            "tipo_material": "mapa_talhoes",
-            "formato_arquivo": "geojson",
-            "data_criacao": GENERATED_AT,
-            "disponivel_download": False,
-            "disponivel_offline": True,
-            "visivel_para_produtor": True,
-            "status": "ativo",
-            "observacoes": "Geometrias provenientes do KML autorizado; sem análise agronômica associada.",
-        })
-
     kml_hash = hashlib.sha256(args.kml.read_bytes()).hexdigest()
     seed = {
         "dataset": {

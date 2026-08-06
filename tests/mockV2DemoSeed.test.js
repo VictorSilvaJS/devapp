@@ -44,7 +44,7 @@ const testMockV2DemoSeed = async () => {
   assert.equal(seed.talhoes.length, 470);
   assert.equal(seed.visitas.length, 70);
   assert.equal(seed.cadernos.length, 70);
-  assert.equal(seed.materiais.length, 70);
+  assert.equal(seed.materiais.length, 0);
 
   const usersById = new Map(seed.usuarios.map((user) => [user.id, user]));
   const producersById = new Map(seed.produtores.map((producer) => [producer.id, producer]));
@@ -124,4 +124,3 @@ const testMockV2DemoSeed = async () => {
 };
 
 module.exports = { testMockV2DemoSeed };
-

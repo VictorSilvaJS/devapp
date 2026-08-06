@@ -26,6 +26,7 @@
     "src/api/mock.ts",
     "src/api/mockV2Seed.ts",
     "src/api/mockV2DemoSeed.ts",
+    "src/api/mockV2DemoBootstrap.ts",
     "src/api/mockV2TalhaoGeometry.ts",
     "src/api/mockV2LocalPersistence.ts",
     "src/api/mockV2RuntimeCompat.ts",

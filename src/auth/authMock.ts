@@ -20,6 +20,7 @@
  *    - Várias pessoas (pai, mãe) podem ter login vinculado ao mesmo produtor
  */
 import { normalizeUsuario } from '../domain';
+import { MockLocalData, User } from '../api/mock';
 
 const toCanonicalAuthUser = (user) => {
   const { senha: _senha, ...userData } = user;
@@ -180,6 +181,35 @@ export const authLogin = async (email, senha) => {
  * Acesso rápido por perfil para demonstração/testes locais
  */
 export const authLoginByProfile = async (profileKey) => {
+  if ((await MockLocalData.readStorageVersion()) === 2) {
+    const profileByKey = {
+      admin: 'admin',
+      admin2: 'admin',
+      colaborador: 'colaborador',
+      colaborador2: 'colaborador',
+      produtor: 'produtor',
+      produtor2: 'produtor',
+    };
+    const preferredIdByKey = {
+      admin: 'usr_admin_cesar',
+      admin2: 'usr_admin_bruna',
+      colaborador: 'usr_colaborador_victor',
+      colaborador2: 'usr_colaborador_bruna_brito',
+    };
+    const perfil = profileByKey[profileKey];
+    if (!perfil) throw new Error('Perfil não encontrado');
+
+    const runtimeUsers = await User.list();
+    const candidates = runtimeUsers.filter((user) => user.perfil === perfil);
+    const preferredId = preferredIdByKey[profileKey];
+    const candidateIndex = profileKey.endsWith('2') ? 1 : 0;
+    const user = candidates.find((item) => item.id === preferredId)
+      || candidates[candidateIndex]
+      || candidates[0];
+    if (!user) throw new Error('Perfil não encontrado');
+    return toCanonicalAuthUser(user);
+  }
+
   return new Promise((res, rej) => {
     setTimeout(() => {
       const profileMap = {

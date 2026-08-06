@@ -5183,8 +5183,8 @@ foi removida, a branch local foi preservada e `git fsck --no-dangling` passou.
 
 ## Dataset Demonstrativo Mock V2
 
-Status em 2026-08-05: `CONCLUIDO` na geração e validação; instalação automática
-na primeira execução ainda não ativada.
+Status em 2026-08-05: `CONCLUIDO` na geração, validação e instalação automática
+local. Smoke no novo APK ainda não executado.
 
 O arquivo autorizado `Clientes_26.1.kml` foi convertido em um conjunto v2 com
 IDs canônicos e estáveis. O conjunto possui uma única organização, 2 Admins,
@@ -5205,11 +5205,12 @@ um mesmo Talhão com partes separadas foram preservados como uma única geometri
 `MultiPolygon`. Área cadastral e cultura principal não foram inferidas. A área
 presente nas geometrias é identificada somente como área mapeada aproximada.
 
-Foram criados 70 registros sintéticos de cada recurso operacional — Visita,
-Caderno e Material — exclusivamente para exercitar telas e permissões. Eles
-estão identificados como demonstrativos e não representam fatos reais do KML.
-As 40 credenciais de teste ficam em artefato separado; nenhuma senha integra
-`UsuarioV2`.
+Foram criados 70 registros sintéticos de Visita e 70 de Caderno exclusivamente
+para exercitar telas e permissões. Eles estão identificados como demonstrativos
+e não representam fatos reais do KML. Nenhum Material técnico foi inventado:
+as geometrias pertencem à camada de Talhões, não ao catálogo de Fertilidade,
+Correção ou Prescrição. As 40 credenciais de teste ficam em artefato separado;
+nenhuma senha integra `UsuarioV2`.
 
 Artefatos principais:
 
@@ -5220,7 +5221,45 @@ Artefatos principais:
 - `scripts/generateMockV2DemoData.py`;
 - `docs/project/dataset-demonstrativo-v2.md`.
 
-A próxima execução correta é implementar o bootstrap único: remover snapshots,
-índices, sessão, credenciais e arquivos demonstrativos v1; instalar o seed e as
-credenciais v2 de forma atômica; depois gerar o APK e validar Admin,
-Colaborador e Produtor no Android físico.
+O bootstrap único agora roda antes dos providers e da restauração da sessão.
+Na ausência de v2, instala snapshot e credenciais demonstrativas com rollback
+de escrita; depois remove snapshot, índices, sessão, cache e diretórios do v1.
+Ele não sobrescreve outro v2 existente, bloqueia substituição de snapshot v2
+corrompido e registra separadamente a limpeza de chaves e arquivos para retomar
+somente a parcela pendente. O acesso rápido também resolve usuários do runtime
+v2, preservando o comportamento v1 apenas quando esse armazenamento ainda está
+ativo.
+
+Testes cobriram instalação nova, repetição idempotente, preservação de v2
+preexistente, rollback, retomada de limpeza parcial, credenciais sem senha em
+texto e Admin/Colaborador/Produtor. `npm run typecheck` e os testes focados do
+contrato/bootstrap passaram. A próxima execução correta é gerar o APK, instalar
+e realizar o smoke dos três perfis no Android físico.
+
+Atualização do smoke físico em 2026-08-05: `CONCLUIDO`. O primeiro APK foi
+instalado por cima do anterior e confirmou a troca real do v1 para o v2 e a
+invalidação da sessão antiga. Durante o smoke, o card de Materiais exibiu zero;
+a revisão confirmou que isso estava correto para o catálogo, pois o KML contém
+demarcações e não arquivos de Fertilidade, Correção ou Prescrição. Os 70
+registros artificiais de `material` foram então removidos do gerador/seed para
+não tratar limites de Talhão como Material técnico.
+
+O APK final corrigido possui 95.817.812 bytes e SHA-256
+`E170CBC163D6118AB5A65F1265627ECE67AE67369DB0D303034224F62367F685`. Ele
+foi instalado no Android físico `8483A`; os dados demonstrativos do app foram
+limpos antes da validação final para garantir uma instalação v2 nova. O smoke
+confirmou:
+
+- César/Admin: 70 Propriedades, 36 Produtores, 2 Colaboradores, 70 Visitas,
+  70 Cadernos e 0 Materiais técnicos;
+- Victor/Colaborador: 35 Propriedades, 18 Produtores, 35 Visitas e 35 Cadernos,
+  todos por vínculo direto;
+- Altair/Produtor: somente a Fazenda_Backes, sua Visita e um Talhão com área
+  mapeada de 80,28 ha;
+- lista e desenho vetorial do Talhão carregados no detalhe da Propriedade;
+- nenhum erro fatal de Android, React Native ou WebView no log filtrado.
+
+Os rótulos visuais `Região`/`Microrregião` ainda aparecem nos filtros do
+Dashboard Admin. Eles não concedem acesso no v2, mas permanecem como resíduo
+visual a substituir por Município/UF em uma tarefa específica de frontend.
+Evidências: `dist/qa-session-2026-08-05/mock-v2-bootstrap/`.

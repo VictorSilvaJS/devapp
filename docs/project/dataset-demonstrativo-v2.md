@@ -2,9 +2,9 @@
 
 ## Estado
 
-Gerado e validado em 2026-08-05. O dataset ainda não é instalado
-automaticamente pelo aplicativo; essa ativação pertence à próxima etapa de
-bootstrap e limpeza do v1.
+Gerado, validado e conectado ao bootstrap do aplicativo em 2026-08-05. Na
+primeira abertura da nova versão, o app instala automaticamente o dataset v2,
+as credenciais demonstrativas e remove o pacote local v1.
 
 Identificador: `demo_clientes_26_1_mt_2026_08`.
 
@@ -37,7 +37,7 @@ concedem acesso.
 | Geometrias de Talhão | 470 |
 | Visitas demonstrativas | 70 |
 | Cadernos demonstrativos | 70 |
-| Materiais demonstrativos | 70 |
+| Materiais técnicos | 0 |
 
 Cada Propriedade tem um Titular principal e um Colaborador vinculados
 diretamente. Um Produtor pode titularizar várias Propriedades.
@@ -86,10 +86,15 @@ contrato `UsuarioV2`.
 
 ## Dados Sintéticos
 
-O KML não contém Visitas, Cadernos ou Materiais. Para validar o comportamento
-atual do app, foi criado um registro demonstrativo de cada tipo por
-Propriedade. Esses registros são sintéticos, rotulados como demonstração e não
-devem ser interpretados como fatos reais.
+O KML não contém Visitas, Cadernos ou Materiais. Para validar os fluxos
+operacionais solicitados, foi criado um registro demonstrativo de Visita e de
+Caderno por Propriedade. Esses registros são sintéticos, rotulados como
+demonstração e não devem ser interpretados como fatos reais.
+
+Nenhum Material técnico foi inventado. As geometrias do KML alimentam a camada
+de Talhões do mapa, mas não são tratadas como arquivo técnico de Fertilidade,
+Correção ou Prescrição. O card de Materiais permanece corretamente em zero até
+existirem arquivos próprios e autorizados.
 
 ## Artefatos E Regeneração
 
@@ -103,9 +108,9 @@ O gerador exige Python com Shapely, a fonte KML e os dois arquivos oficiais do
 IBGE usados como entrada. A geração é determinística para a mesma fonte e
 mantém IDs independentes da ordem dos registros.
 
-## Próxima Etapa
+## Bootstrap Implementado
 
-Implementar e testar a rotina única de bootstrap que:
+A rotina `src/api/mockV2DemoBootstrap.ts`:
 
 1. identifica se o dataset v2 já foi instalado;
 2. remove apenas o pacote demonstrativo v1 e seus artefatos locais;
@@ -113,5 +118,25 @@ Implementar e testar a rotina única de bootstrap que:
 4. invalida sessão vinculada a IDs antigos;
 5. não reinstala o seed sobre dados v2 já existentes.
 
-Somente depois disso deve ser gerado e instalado um novo APK para smoke dos
-perfis Admin, Colaborador e Produtor.
+A preparação é executada antes da montagem dos providers e da restauração da
+sessão. Snapshot v2 inválido bloqueia substituição automática e apresenta uma
+tentativa controlada, preservando o conteúdo existente. Credenciais são
+gravadas com hash e salt; as senhas demonstrativas em texto não entram no
+AsyncStorage.
+
+O progresso da limpeza de chaves e arquivos é registrado separadamente. Se a
+remoção de algum diretório falhar, a abertura seguinte repete apenas a parcela
+pendente e não apaga dados novos já criados no v2.
+
+Cobertura automática: instalação nova, atualização do v1, repetição
+idempotente, preservação de v2 preexistente, bloqueio de snapshot corrompido,
+rollback de escrita, retomada de limpeza parcial e acesso rápido dos três
+perfis.
+
+## Próxima Etapa
+
+O APK corrigido foi gerado e instalado no Android físico `8483A`. O smoke de
+Admin, Colaborador e Produtor passou, inclusive vínculos diretos e Talhão
+vetorial. A próxima tarefa específica de frontend é substituir os rótulos
+visuais legados de Região/Microrregião por filtros de Município/UF, sem alterar
+a regra de acesso por vínculo direto.

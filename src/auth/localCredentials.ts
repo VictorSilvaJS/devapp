@@ -43,6 +43,12 @@ export interface LocalCredentialVerification {
   usuario_id?: string;
 }
 
+export interface LocalCredentialSeedInput {
+  usuario_id: string;
+  email: string;
+  senha: string;
+}
+
 interface LocalCredentialServiceDeps {
   storage?: LocalCredentialStorageAdapter;
   hasher?: LocalCredentialHasher;
@@ -165,6 +171,51 @@ export const createLocalCredentialService = ({
   };
 
   return {
+    async replaceAllCredentials(records: LocalCredentialSeedInput[]): Promise<LocalCredentialMetadata[]> {
+      return mutate(async () => {
+        const normalized = records.map((record) => ({
+          usuario_id: normalizeUsuarioId(record?.usuario_id),
+          email_normalizado: normalizeEmail(record?.email),
+          senha: typeof record?.senha === 'string' ? record.senha : '',
+        }));
+        const usuarioIds = new Set<string>();
+        const emails = new Set<string>();
+
+        for (const record of normalized) {
+          if (!record.usuario_id) throw new Error('LocalCredential.usuario_id: obrigatório');
+          if (!record.email_normalizado) throw new Error('LocalCredential.email: obrigatório');
+          if (!record.senha) throw new Error('LocalCredential.senha: obrigatória');
+          if (usuarioIds.has(record.usuario_id)) {
+            throw new Error(`LocalCredential.usuario_id: duplicado ${record.usuario_id}`);
+          }
+          if (emails.has(record.email_normalizado)) {
+            throw new Error(`LocalCredential.email: duplicado ${record.email_normalizado}`);
+          }
+          usuarioIds.add(record.usuario_id);
+          emails.add(record.email_normalizado);
+        }
+
+        const timestamp = now();
+        const credentials: LocalCredential[] = [];
+        for (const record of normalized) {
+          const salt = await hasher.generateSalt();
+          const senhaHash = await hasher.hashPassword({ senha: record.senha, salt });
+          credentials.push({
+            usuario_id: record.usuario_id,
+            email_normalizado: record.email_normalizado,
+            senha_hash: senhaHash,
+            salt,
+            versao: LOCAL_CREDENTIAL_VERSION,
+            criado_em: timestamp,
+            atualizado_em: timestamp,
+          });
+        }
+
+        await saveCredentials(credentials);
+        return credentials.map(toMetadata);
+      });
+    },
+
     async listCredentialMetadata(): Promise<LocalCredentialMetadata[]> {
       const snapshot = await loadSnapshot();
       return snapshot.credentials.map(toMetadata);

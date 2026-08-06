@@ -715,6 +715,10 @@ Colaborador acessa somente por vínculo direto ativo em
 `usuario_propriedade`; Município/UF não concedem acesso. Permanece pendente a
 implementação no mock v2 e, futuramente, no backend.
 
+Status em 2026-08-05: a implementação no mock v2 foi concluída com vínculos
+diretos e testes positivos/negativos. Permanece pendente a autorização real no
+backend.
+
 Status em 2026-06-02 (Fase 12C): os arquivos/componentes de telas de
 Propriedade foram renomeados para `PropriedadesScreen`,
 `NovaPropriedadeScreen` e `EditarPropriedadeScreen`.
@@ -779,8 +783,8 @@ Ainda precisam ser definidos:
 
 Status em 2026-08-05: a regra combinada acima foi substituida pela decisao 33.
 Colaborador usara somente `usuario_propriedade` direto e ativo; Municipio/UF
-nao concedem acesso. Permanecem pendentes a implementacao no mock v2, a matriz
-por acao e a autorizacao server-side.
+nao concedem acesso. A implementação no mock v2 foi concluída em 2026-08-05.
+Permanecem pendentes a matriz produtiva por ação e a autorização server-side.
 
 Status em 2026-06-03 (Fase 14F): foi criada
 `docs/project/matriz-rbac-backend.md` com matriz tecnica de permissoes por
