@@ -7,6 +7,7 @@ const {
   listarMunicipios,
   listarPropriedadesParaFiltro,
   listarUfs,
+  listarUfsParaCadastro,
 } = require('../.tmp-domain-compat/src/utils/filtroTerritorial');
 
 let failed = 0;
@@ -47,6 +48,14 @@ const run = async () => {
       ],
     );
     assert.equal(getMunicipioIdPropriedade(propriedades[2]), 'local:go:jatai');
+  });
+
+  await test('cadastro lista somente UFs que possuem código oficial disponível', () => {
+    const comCodigos = propriedades.map((propriedade) => ({
+      ...propriedade,
+      uf_id: propriedade.uf_sigla === 'MT' ? '51' : undefined,
+    }));
+    assert.deepEqual(listarUfsParaCadastro(comCodigos), [{ id: '51', sigla: 'MT' }]);
   });
 
   await test('cascata UF e Município limita as opções de Propriedade', () => {

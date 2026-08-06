@@ -69,7 +69,7 @@ export const validateUser = (data) => {
 export const validateProdutor = (data) => {
   const normalized = normalizeMockFazendaInput(data);
 
-  validateRequired(normalized, ['nome', 'area_total'], 'Produtor');
+  validateRequired(normalized, ['nome'], 'Produtor');
 
   if (!normalized.produtor_nome) {
     console.warn('Produtor/Fazenda: nome do produtor titular não informado de forma explícita');

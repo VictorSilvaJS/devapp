@@ -1037,6 +1037,11 @@ não é mais uma pendência. A autorização produtiva continua dependente do
 backend/RBAC, que deverá validar os vínculos diretos `usuario_propriedade` no
 servidor; filtros de localização não podem ser usados para conceder acesso.
 
+Atualização em 2026-08-06: o cadastro local v2 usa os códigos oficiais de UF e
+Município já presentes no dataset instalado. Uma fonte mestra produtiva de
+localidades, atualização da tabela IBGE e suporte a Municípios ainda ausentes
+do conjunto local permanecem dependentes do backend/dados de referência.
+
 Uma pendencia deve sair deste documento quando ocorrer uma destas situacoes:
 
 - foi consolidada como decisao do projeto

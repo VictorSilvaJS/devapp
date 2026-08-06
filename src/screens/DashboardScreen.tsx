@@ -25,6 +25,7 @@ import {
 import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import {
   buildDashboardScopeData,
+  buildDashboardLocationSummary,
   buildDashboardSummary,
 } from '../utils/dashboardCompat';
 import {
@@ -160,6 +161,11 @@ export default function DashboardScreen() {
     [data.usuarios, scopeData]
   );
 
+  const locationSummary = useMemo(
+    () => buildDashboardLocationSummary(scopeData.propriedades),
+    [scopeData.propriedades],
+  );
+
   const cards = useMemo(() => {
     if (user?.perfil === 'admin') {
       return [
@@ -243,6 +249,27 @@ export default function DashboardScreen() {
 
           {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
         </View>
+
+        {user?.perfil === 'colaborador' ? (
+          <SectionCard
+            title="Localização das Propriedades vinculadas"
+            subtitle="Resumo informativo do seu escopo por vínculo direto."
+            icon="location-outline"
+          >
+            <View style={styles.locationSummary}>
+              <Ionicons name="map-outline" size={20} color={colors.primary} />
+              <View style={styles.locationText}>
+                <Text style={styles.locationHeadline}>{locationSummary.headline}</Text>
+                {locationSummary.detail ? (
+                  <Text style={styles.locationDetail}>{locationSummary.detail}</Text>
+                ) : null}
+              </View>
+            </View>
+            <Text style={styles.locationNote}>
+              Município e UF apenas identificam onde ficam as Propriedades; o acesso continua definido pelos vínculos diretos.
+            </Text>
+          </SectionCard>
+        ) : null}
 
         <View style={styles.statsGrid}>
           {cards.map((card) => (
@@ -387,6 +414,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginHorizontal: -6,
     marginBottom: spacing.sm,
+  },
+  locationSummary: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  locationText: { flex: 1 },
+  locationHeadline: {
+    color: colors.text,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+  },
+  locationDetail: {
+    color: colors.textLight,
+    fontSize: typography.fontCaption + 1,
+    marginTop: spacing.xs,
+    lineHeight: 20,
+  },
+  locationNote: {
+    color: colors.muted,
+    fontSize: typography.fontCaption,
+    marginTop: spacing.md,
   },
   statCardWrapper: {
     marginBottom: spacing.md,

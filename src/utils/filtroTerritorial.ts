@@ -17,6 +17,9 @@ const chaveTexto = (valor: unknown): string =>
 export const getUfPropriedade = (propriedade: Registro): string =>
   texto(propriedade?.uf_sigla, propriedade?.estado).toUpperCase();
 
+export const getUfIdPropriedade = (propriedade: Registro): string =>
+  texto(propriedade?.uf_id);
+
 export const getMunicipioNomePropriedade = (propriedade: Registro): string =>
   texto(propriedade?.municipio_nome, propriedade?.cidade);
 
@@ -33,6 +36,12 @@ export type MunicipioFiltroOption = {
   id: string;
   nome: string;
   uf: string;
+  ufId: string;
+};
+
+export type UfFiltroOption = {
+  id: string;
+  sigla: string;
 };
 
 export type PropriedadeFiltroOption = {
@@ -48,6 +57,16 @@ export const listarUfs = (propriedades: Registro[] = []): string[] =>
   [...new Set(propriedades.map(getUfPropriedade).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
+export const listarUfsParaCadastro = (propriedades: Registro[] = []): UfFiltroOption[] => {
+  const opcoes = new Map<string, UfFiltroOption>();
+  propriedades.forEach((propriedade) => {
+    const sigla = getUfPropriedade(propriedade);
+    const id = getUfIdPropriedade(propriedade);
+    if (sigla && id && !opcoes.has(sigla)) opcoes.set(sigla, { id, sigla });
+  });
+  return [...opcoes.values()].sort((a, b) => a.sigla.localeCompare(b.sigla, 'pt-BR'));
+};
+
 export const listarMunicipios = (
   propriedades: Registro[] = [],
   uf = FILTRO_TODOS,
@@ -61,7 +80,7 @@ export const listarMunicipios = (
     const id = getMunicipioIdPropriedade(propriedade);
     const nome = getMunicipioNomePropriedade(propriedade);
     if (id && nome && !opcoes.has(id)) {
-      opcoes.set(id, { id, nome, uf: propriedadeUf });
+      opcoes.set(id, { id, nome, uf: propriedadeUf, ufId: getUfIdPropriedade(propriedade) });
     }
   });
 

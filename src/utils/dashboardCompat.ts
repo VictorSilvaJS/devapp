@@ -7,6 +7,11 @@ import {
 } from './acessoControle';
 import { getTitularId } from './propriedadeCompat';
 import { formatAreaHa } from './talhaoMedidasCompat';
+import {
+  getMunicipioIdPropriedade,
+  getMunicipioNomePropriedade,
+  getUfPropriedade,
+} from './filtroTerritorial';
 
 export const formatDashboardArea = (area: number) => {
   const normalizedArea = Number.isFinite(area) ? area : 0;
@@ -40,6 +45,46 @@ export const getPropriedadesPorStatus = (propriedades: any[] = []) =>
 
 export const contarTitularesUnicos = (propriedades: any[] = []) =>
   new Set(propriedades.map((propriedade) => getTitularId(propriedade)).filter(Boolean)).size;
+
+export const buildDashboardLocationSummary = (propriedades: any[] = []) => {
+  const municipios = new Map<string, { id: string; nome: string; uf: string; propriedades: number }>();
+  const ufs = new Map<string, number>();
+
+  propriedades.forEach((propriedade) => {
+    const uf = getUfPropriedade(propriedade);
+    const municipioId = getMunicipioIdPropriedade(propriedade);
+    const municipioNome = getMunicipioNomePropriedade(propriedade);
+    if (uf) ufs.set(uf, (ufs.get(uf) || 0) + 1);
+    if (!municipioId || !municipioNome) return;
+    const atual = municipios.get(municipioId);
+    municipios.set(municipioId, {
+      id: municipioId,
+      nome: municipioNome,
+      uf,
+      propriedades: (atual?.propriedades || 0) + 1,
+    });
+  });
+
+  const municipiosOrdenados = [...municipios.values()].sort((a, b) =>
+    b.propriedades - a.propriedades || a.nome.localeCompare(b.nome, 'pt-BR')
+  );
+  const ufsOrdenadas = [...ufs.keys()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const ufLabel = ufsOrdenadas.length <= 2
+    ? ufsOrdenadas.join(' e ')
+    : `${ufsOrdenadas.length} UFs`;
+  const municipiosLabel = `${municipiosOrdenados.length} município${municipiosOrdenados.length === 1 ? '' : 's'}`;
+  const destaques = municipiosOrdenados.slice(0, 3).map((municipio) =>
+    `${municipio.nome}: ${municipio.propriedades}`
+  );
+  if (municipiosOrdenados.length > 3) destaques.push(`+${municipiosOrdenados.length - 3} outros`);
+
+  return {
+    ufs: ufsOrdenadas,
+    municipios: municipiosOrdenados,
+    headline: ufLabel ? `${ufLabel} • ${municipiosLabel}` : 'Localização não informada',
+    detail: destaques.join(' · '),
+  };
+};
 
 export const buildDashboardScopeData = ({
   user,

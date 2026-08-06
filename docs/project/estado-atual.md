@@ -5290,3 +5290,32 @@ Build, instalação e inicialização do processo passaram sem erro fatal no log
 A inspeção visual automatizada da tela ficou pendente porque o dispositivo
 estava bloqueado por PIN no momento do smoke; nenhuma tentativa de contornar
 o bloqueio foi realizada.
+
+Atualização em 2026-08-06: o cadastro de Propriedade foi migrado para o fluxo
+local v2. Somente Admin visualiza e executa a ação. A tela exige nome, Produtor
+Titular ativo, UF e Município com códigos já disponíveis no conjunto local;
+área e cultura principal são opcionais e o status cadastral aceita Ativa ou
+Inativa. Região, Microrregião, sugestão territorial de Colaborador, documento
+da Propriedade e status Pendente foram removidos desse fluxo.
+
+O salvamento usa `Produtor.createWithLinks`: a Propriedade, o vínculo ativo do
+Titular e os vínculos ativos dos Colaboradores selecionados são persistidos em
+uma única mutação local com rollback completo. O snapshot v2 resultante grava
+`titular_id`, `municipio_id`, `municipio_nome`, `uf_id` e `uf_sigla`, sem
+promover aliases territoriais legados. Um Colaborador não selecionado continua
+sem acesso mesmo que possua outra Propriedade no mesmo Município.
+
+O Dashboard do Colaborador agora exibe um resumo estritamente informativo da
+localização das Propriedades já autorizadas. No dataset atual, Victor visualiza
+`MT • 14 municípios` para suas 35 Propriedades, seguido das maiores contagens
+por Município. Esse resumo não é filtro nem fonte de autorização.
+
+O APK release desse lote foi gerado e instalado por atualização no Android
+físico `8483A`, preservando o armazenamento v2. O arquivo possui 95.818.300
+bytes e SHA-256
+`8938DFD899B57DD600339117176BF215797B50860C3507921483651F803B95E5`.
+O smoke físico confirmou o resumo territorial no Dashboard de Victor e, no
+perfil César/Admin, o novo formulário com nome, área/cultura opcionais,
+Produtor Titular, UF, Município, vínculos diretos para Bruna Brito e Victor e
+status Ativa/Inativa. Nenhum registro de teste foi salvo. O log filtrado não
+apresentou erro fatal de Android ou React Native.

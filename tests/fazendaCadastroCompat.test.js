@@ -1,4 +1,6 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   buildCadastroFazendaPayload,
   buildCadastroTitularOptions,
@@ -125,16 +127,19 @@ const run = async () => {
       titularId: 'u_pendente',
       fazendaNome: 'Propriedade Produtor Pendente',
       areaTotal: 100,
-      regiao: 'Sul',
-      microregiao: 'Sul 1',
-      status: 'pendente',
+      municipioId: '5107925',
+      municipioNome: 'Sorriso',
+      ufId: '51',
+      ufSigla: 'MT',
+      status: 'inativo',
       titulares,
     });
 
+    assert.equal(payload.titular_id, 'u_pendente');
     assert.equal(payload.produtor_id, 'u_pendente');
     assert.equal(payload.proprietario_id, 'u_pendente');
     assert.equal(payload.nome, 'Produtor Pendente');
-    assert.equal(payload.status, 'pendente');
+    assert.equal(payload.status, 'inativo');
   });
 
   await test('buildCadastroFazendaPayload vincula nova fazenda a titular existente', () => {
@@ -145,17 +150,16 @@ const run = async () => {
       fazendaNome: 'Fazenda Nova',
       areaTotal: '315,5',
       culturaAtual: 'Soja',
-      cidade: 'Cruz Alta',
-      estado: 'rs',
-      regiao: 'Sul',
-      microregiao: 'Sul 1',
-      documento: 'IE-123',
-      colaboradorResponsavelId: 'u_colab',
-      colaboradorResponsavelNome: 'Carlos Campo',
-      status: 'pendente',
+      municipioId: '5107925',
+      municipioNome: 'Sorriso',
+      ufId: '51',
+      ufSigla: 'mt',
+      status: 'ativo',
       titulares,
     });
 
+    assert.equal(payload.propriedade_nome, 'Fazenda Nova');
+    assert.equal(payload.titular_id, 'prop1');
     assert.equal(payload.produtor_id, 'prop1');
     assert.equal(payload.proprietario_id, 'prop1');
     assert.equal(payload.nome, 'Ana Souza');
@@ -163,13 +167,14 @@ const run = async () => {
     assert.equal(payload.fazenda, 'Fazenda Nova');
     assert.equal(payload.fazenda_nome, 'Fazenda Nova');
     assert.equal(payload.area_total, 315.5);
-    assert.equal(payload.estado, 'RS');
-    assert.equal(payload.regiao, 'Sul');
-    assert.equal(payload.microregiao, 'Sul 1');
-    assert.equal(payload.documento, 'IE-123');
-    assert.equal(payload.colaborador_responsavel_id, 'u_colab');
-    assert.equal(payload.colaborador_responsavel, 'Carlos Campo');
-    assert.equal(payload.status, 'pendente');
+    assert.equal(payload.municipio_id, '5107925');
+    assert.equal(payload.municipio_nome, 'Sorriso');
+    assert.equal(payload.uf_id, '51');
+    assert.equal(payload.uf_sigla, 'MT');
+    assert.equal(payload.cultura_principal, 'Soja');
+    assert.equal(payload.regiao, undefined);
+    assert.equal(payload.microregiao, undefined);
+    assert.equal(payload.status, 'ativo');
   });
 
   await test('buildCadastroFazendaPayload cria titular minimo quando nao ha titular existente', () => {
@@ -179,8 +184,10 @@ const run = async () => {
       produtorNome: 'Carla Mendes',
       fazendaNome: 'Fazenda Campo Alto',
       areaTotal: 90,
-      regiao: 'Sul',
-      microregiao: 'Sul 1',
+      municipioId: '5107909',
+      municipioNome: 'Sinop',
+      ufId: '51',
+      ufSigla: 'MT',
       titulares,
     });
 
@@ -196,41 +203,23 @@ const run = async () => {
     assert.equal(buildNovoTitularId('Ana Souza', ['prop_ana_souza']), 'prop_ana_souza_2');
   });
 
-  await test('validateCadastroFazendaScope bloqueia colaborador mesmo com texto regional', () => {
+  await test('validateCadastroFazendaScope bloqueia colaborador independentemente da localização', () => {
     const result = validateCadastroFazendaScope(
-      { perfil: 'colaborador', regiao: 'Sul', sub_regioes: ['Sul 1'] },
-      { regiao: 'Sul', microregiao: 'Sul 1' }
+      { perfil: 'colaborador' }
     );
 
     assert.deepEqual(result, { ok: false, reason: 'perfil_sem_permissao' });
   });
 
-  await test('validateCadastroFazendaScope nao usa regiao ou microregiao como permissao', () => {
-    const foraRegiao = validateCadastroFazendaScope(
-      { perfil: 'colaborador', regiao: 'Sul', sub_regioes: ['Sul 1'] },
-      { regiao: 'Norte', microregiao: 'Norte 1' }
-    );
-    const foraMicroregiao = validateCadastroFazendaScope(
-      { perfil: 'colaborador', regiao: 'Sul', sub_regioes: ['Sul 1'] },
-      { regiao: 'Sul', microregiao: 'Sul 2' }
-    );
-
-    assert.deepEqual(foraRegiao, { ok: false, reason: 'perfil_sem_permissao' });
-    assert.deepEqual(foraMicroregiao, { ok: false, reason: 'perfil_sem_permissao' });
-  });
-
-  await test('validateCadastroFazendaScope permite admin sem restricao regional', () => {
-    const result = validateCadastroFazendaScope(
-      { perfil: 'admin' },
-      { regiao: 'Norte', microregiao: 'Norte 1' }
-    );
+  await test('validateCadastroFazendaScope permite somente Admin', () => {
+    const result = validateCadastroFazendaScope({ perfil: 'admin' });
 
     assert.equal(result.ok, true);
   });
 
   await test('Propriedade criada pelo admin exige vinculo direto para o colaborador', async () => {
     const admin = { perfil: 'admin' };
-    const titulares = buildCadastroTitularOptions(await Produtor.list());
+    const titulares = buildCadastroTitularOptionsFromUsers(await User.list(), await Produtor.list());
     const titularProp1 = titulares.find((titular) => titular.id === 'prop1');
     assert.ok(titularProp1);
     const payload = buildCadastroFazendaPayload({
@@ -239,33 +228,77 @@ const run = async () => {
       fazendaNome: 'Fazenda Teste Cadastro',
       areaTotal: '210',
       culturaAtual: 'Soja',
-      cidade: 'Cruz Alta',
-      estado: 'RS',
-      regiao: 'Sul',
-      microregiao: 'RS - Norte',
+      municipioId: '5107925',
+      municipioNome: 'Sorriso',
+      ufId: '51',
+      ufSigla: 'MT',
       titulares,
     });
 
     const scope = validateCadastroFazendaScope(admin, payload);
     assert.equal(scope.ok, true);
 
-    const criado = await Produtor.create(payload);
+    const colaboradorSelecionado = (await User.list()).find((usuario) => usuario.perfil === 'colaborador');
+    assert.ok(colaboradorSelecionado);
+    const criado = await Produtor.createWithLinks(payload, {
+      titularUsuarioId: titularProp1.usuario_id,
+      colaboradorIds: [colaboradorSelecionado.id],
+    });
     assert.equal(criado.produtor_id, 'prop1');
     assert.equal(criado.proprietario_id, 'prop1');
     assert.equal(criado.produtor_nome, titularProp1.nome);
     assert.equal(criado.fazenda_nome, 'Fazenda Teste Cadastro');
-    assert.equal(criado.regiao, 'Sul');
-    assert.equal(criado.microregiao, 'RS - Norte');
+    assert.equal(criado.municipio_id, '5107925');
+    assert.equal(criado.municipio_nome, 'Sorriso');
+    assert.equal(criado.uf_sigla, 'MT');
 
     const listaAtualizada = await Produtor.list();
-    const user = {
-      perfil: 'colaborador',
-      vinculos_propriedades: [
-        { propriedade_id: criado.id, tipo_vinculo: 'colaborador', status: 'ativo' },
-      ],
-    };
-    const visiveis = filtrarProdutoresPorAcesso(listaAtualizada, user);
+    const colaboradorAtualizado = await User.get(colaboradorSelecionado.id);
+    const titularAtualizado = await User.get(titularProp1.usuario_id);
+    const visiveis = filtrarProdutoresPorAcesso(listaAtualizada, colaboradorAtualizado);
     assert.ok(visiveis.some((fazenda) => fazenda.id === criado.id));
+    assert.ok(titularAtualizado.vinculos_propriedades.some((vinculo) => (
+      vinculo.propriedade_id === criado.id && vinculo.tipo_vinculo === 'titular'
+    )));
+    assert.ok(colaboradorAtualizado.vinculos_propriedades.some((vinculo) => (
+      vinculo.propriedade_id === criado.id && vinculo.tipo_vinculo === 'colaborador'
+    )));
+
+    const outroColaborador = (await User.list()).find((usuario) => (
+      usuario.perfil === 'colaborador' && usuario.id !== colaboradorSelecionado.id
+    ));
+    assert.ok(outroColaborador);
+    assert.equal(
+      filtrarProdutoresPorAcesso(listaAtualizada, outroColaborador).some((fazenda) => fazenda.id === criado.id),
+      false,
+    );
+  });
+
+  await test('createWithLinks desfaz a Propriedade quando um vínculo é inválido', async () => {
+    const antes = await Produtor.list();
+    const titulares = buildCadastroTitularOptionsFromUsers(await User.list(), antes);
+    const titular = titulares.find((item) => item.status === 'ativo' && item.usuario_id);
+    assert.ok(titular);
+
+    await assert.rejects(
+      () => Produtor.createWithLinks(buildCadastroFazendaPayload({
+        mode: 'existente',
+        titularId: titular.id,
+        fazendaNome: 'Propriedade que deve ser desfeita',
+        municipioId: '5107925',
+        municipioNome: 'Sorriso',
+        ufId: '51',
+        ufSigla: 'MT',
+        titulares,
+      }), {
+        titularUsuarioId: titular.usuario_id,
+        colaboradorIds: ['colaborador_inexistente'],
+      }),
+      /Colaborador ativo inexistente/,
+    );
+
+    const depois = await Produtor.list();
+    assert.equal(depois.some((item) => item.fazenda_nome === 'Propriedade que deve ser desfeita'), false);
   });
 
   await test('User.create salva produtor pendente/inativo com produtor_id estavel', async () => {
@@ -288,6 +321,18 @@ const run = async () => {
     assert.equal(pendente.status, 'pendente');
     assert.equal(inativo.produtor_id, inativo.id);
     assert.equal(inativo.status, 'inativo');
+  });
+
+  await test('tela de cadastro usa Município/UF e vínculos diretos sem Região/Microrregião', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/screens/NovaPropriedadeScreen.tsx'),
+      'utf8',
+    );
+    assert.match(source, /Produtor\.createWithLinks/);
+    assert.match(source, /municipioId/);
+    assert.match(source, /colaboradorIds/);
+    assert.match(source, /Somente Administradores/);
+    assert.doesNotMatch(source, /Região|Microrregião|territorioCompat/);
   });
 
   if (failed > 0) {

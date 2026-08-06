@@ -580,12 +580,11 @@ export const podeEditarProdutor = (user, produtor) => {
 export const podeExcluirProdutor = (user, produtor) => podeEditarProdutor(user, produtor);
 
 /**
- * Verifica se usuário pode criar novo produtor/fazenda
- * Produtor (proprietário) NÃO pode criar
+ * Cadastro estrutural de Propriedade é administrativo no contrato v2.
  */
 export const podeCriarProdutor = (user) => {
   if (!user) return false;
-  return podeGerenciar(user); // admin ou colaborador
+  return isAdmin(user);
 };
 
 /**

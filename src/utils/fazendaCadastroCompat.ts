@@ -14,22 +14,24 @@ export type CadastroTitularOption = {
 };
 
 export type CadastroFazendaPayload = {
+  propriedade_nome: string;
+  titular_id: string;
+  municipio_id: string;
+  municipio_nome: string;
+  uf_id: string;
+  uf_sigla: string;
   nome: string;
   produtor_nome: string;
   produtor_id: string;
   proprietario_id: string;
   fazenda: string;
   fazenda_nome: string;
-  area_total: number;
+  area_total?: number;
+  cultura_principal?: string;
   cultura_atual?: string;
   cidade?: string;
   estado?: string;
-  regiao?: string;
-  microregiao?: string;
   status?: string;
-  documento?: string;
-  colaborador_responsavel_id?: string;
-  colaborador_responsavel?: string;
 };
 
 type BuildCadastroFazendaPayloadInput = {
@@ -39,14 +41,11 @@ type BuildCadastroFazendaPayloadInput = {
   fazendaNome?: string | null;
   areaTotal?: string | number | null;
   culturaAtual?: string | null;
-  cidade?: string | null;
-  estado?: string | null;
-  regiao?: string | null;
-  microregiao?: string | null;
+  municipioId?: string | null;
+  municipioNome?: string | null;
+  ufId?: string | null;
+  ufSigla?: string | null;
   status?: string | null;
-  documento?: string | null;
-  colaboradorResponsavelId?: string | null;
-  colaboradorResponsavelNome?: string | null;
   titulares?: CadastroTitularOption[];
 };
 
@@ -88,17 +87,6 @@ const toSlug = (value: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
-
-const setOptionalString = (
-  target: Record<string, unknown>,
-  key: string,
-  value: unknown
-) => {
-  const normalized = trimString(value);
-  if (normalized) {
-    target[key] = normalized;
-  }
-};
 
 export const buildCadastroTitularOptions = (fazendas: any[] = []): CadastroTitularOption[] =>
   listMockProdutoresTitulares(fazendas)
@@ -166,14 +154,11 @@ export const buildCadastroFazendaPayload = ({
   fazendaNome,
   areaTotal,
   culturaAtual,
-  cidade,
-  estado,
-  regiao,
-  microregiao,
+  municipioId,
+  municipioNome,
+  ufId,
+  ufSigla,
   status,
-  documento,
-  colaboradorResponsavelId,
-  colaboradorResponsavelNome,
   titulares = [],
 }: BuildCadastroFazendaPayloadInput): CadastroFazendaPayload => {
   const titularSelecionado = titulares.find((titular) => titular.id === titularId);
@@ -187,32 +172,39 @@ export const buildCadastroFazendaPayload = ({
       ? firstNonEmptyString(titularSelecionado?.id, titularId)
       : buildNovoTitularId(titularNomeFinal, existingIds);
   const fazendaNomeFinal = trimString(fazendaNome);
+  const areaNormalizada = normalizeArea(areaTotal);
+  const statusNormalizado = trimString(status) === 'inativo' ? 'inativo' : 'ativo';
   const payload: CadastroFazendaPayload = {
+    propriedade_nome: fazendaNomeFinal,
+    titular_id: titularIdFinal,
+    municipio_id: trimString(municipioId),
+    municipio_nome: trimString(municipioNome),
+    uf_id: trimString(ufId),
+    uf_sigla: trimString(ufSigla).toUpperCase(),
     nome: titularNomeFinal,
     produtor_nome: titularNomeFinal,
     produtor_id: titularIdFinal,
     proprietario_id: titularIdFinal,
     fazenda: fazendaNomeFinal,
     fazenda_nome: fazendaNomeFinal,
-    area_total: normalizeArea(areaTotal),
-    status: trimString(status) || 'ativo',
+    status: statusNormalizado,
   };
 
-  setOptionalString(payload, 'cultura_atual', culturaAtual);
-  setOptionalString(payload, 'cidade', cidade);
-  setOptionalString(payload, 'estado', trimString(estado).toUpperCase());
-  setOptionalString(payload, 'regiao', regiao);
-  setOptionalString(payload, 'microregiao', microregiao);
-  setOptionalString(payload, 'documento', documento);
-  setOptionalString(payload, 'colaborador_responsavel_id', colaboradorResponsavelId);
-  setOptionalString(payload, 'colaborador_responsavel', colaboradorResponsavelNome);
+  if (Number.isFinite(areaNormalizada) && areaNormalizada > 0) payload.area_total = areaNormalizada;
+  const cultura = trimString(culturaAtual);
+  if (cultura) {
+    payload.cultura_principal = cultura;
+    payload.cultura_atual = cultura;
+  }
+  payload.cidade = payload.municipio_nome;
+  payload.estado = payload.uf_sigla;
 
   return payload;
 };
 
 export const validateCadastroFazendaScope = (
   user: UserScope | null | undefined,
-  payload: Pick<CadastroFazendaPayload, 'regiao' | 'microregiao'>
+  _payload?: Partial<CadastroFazendaPayload>
 ): CadastroFazendaScopeResult => {
   if (!user) {
     return { ok: false, reason: 'sem_usuario' };

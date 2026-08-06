@@ -10,6 +10,7 @@ const {
   filtrarVisitasPorAcesso,
   getFazendaIdsPorAcesso,
   podeBaixarMapa,
+  podeCriarProdutor,
   podeCriarVisita,
   podeCriarVisitaEmFazenda,
   podeEditarProdutor,
@@ -342,6 +343,12 @@ const run = async () => {
     assert.equal(podeExcluirProdutor(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeEditarProdutor(adminUser, fazendaForaEscopo), true);
     assert.equal(podeExcluirProdutor(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('cadastro estrutural de Propriedade fica restrito ao Admin', () => {
+    assert.equal(podeCriarProdutor(adminUser), true);
+    assert.equal(podeCriarProdutor(colaboradorUser), false);
+    assert.equal(podeCriarProdutor(produtorUser), false);
   });
 
   if (failed > 0) {

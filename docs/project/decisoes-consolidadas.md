@@ -226,6 +226,9 @@ Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacio
 
 ## 12. Regiao -> Microregiao -> Propriedade e compatibilidade territorial legada do mock
 
+Status atual: `SUPERADA PARA NOVAS ESCRITAS` pela decisao 33. Permanece apenas
+como registro historico e fronteira de leitura do mock v1.
+
 ### Decisao
 
 No MVP visual/mockado existente, a sincronizacao territorial continua
@@ -260,6 +263,10 @@ Ficam fora desta decisao nesta fase: backend, banco, migrations, API real, auten
 ---
 
 ## 13. Cadastro rapido de propriedade no cadastro de usuario produtor
+
+Status atual: `SUPERADA PARA O MOCK V2`. O fluxo atual exige Produtor ativo
+previamente cadastrado e realiza a criacao atomica da Propriedade com os
+vinculos diretos definidos pelo Admin.
 
 ### Decisao
 

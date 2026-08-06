@@ -24,10 +24,17 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
 - No mock administrativo, o vinculo entre usuario produtor e propriedade deve ser representado visualmente por uma relacao explicita `usuario_propriedade`, preservando compatibilidade com `produtor_id`/titular enquanto a base legada existir.
 - No mock administrativo, produtor pode ter multiplas propriedades vinculadas e deve receber alerta visual quando uma propriedade selecionada ja tiver outro produtor principal no mock.
-- No cadastro visual/mockado de usuario produtor, o admin pode selecionar propriedade existente ou cadastrar uma propriedade rapida quando ela ainda nao existir.
-- O cadastro rapido deve criar a propriedade no mock e vincula-la ao usuario produtor via `usuario_propriedade`, preservando `produtor_id`, `proprietario_id`, `regiao`, `microregiao` e `fazenda_id` quando aplicavel.
-- O fluxo de cadastro rapido e preparacao para uma criacao combinada futura de `usuario` + `propriedade` + `usuario_propriedade`.
-- Enquanto a camada for apenas mockada, o fluxo nao e transacional; no backend futuro, a criacao combinada deve ser transacional para evitar propriedade criada sem usuario/vinculo.
+- O cadastro estrutural de Propriedade e exclusivo de Admin; Colaborador e
+  Produtor nao criam Propriedades.
+- O Produtor deve existir e estar ativo antes de ser escolhido como Titular.
+- O cadastro grava `titular_id`, `municipio_id`, `municipio_nome`, `uf_id`,
+  `uf_sigla` e cria o vinculo ativo de Titular em `usuario_propriedade`.
+- Colaboradores opcionais sao selecionados nominalmente e recebem um vinculo
+  direto ativo por Propriedade; localizacao nao cria vinculo automatico.
+- No mock v2, a criacao da Propriedade e de todos os seus vinculos e atomica:
+  qualquer falha desfaz o conjunto completo.
+- A criacao combinada produtiva futura deve preservar a mesma atomicidade no
+  backend.
 
 ### Modelo territorial canonico
 
@@ -47,21 +54,13 @@ O contrato canonico esta em `modelo-territorial.md`.
 
 ### Territorio e vinculos visuais no mock
 
-- Esta secao descreve somente o comportamento ainda existente no mock v1. Ela
-  nao orienta o mock v2 e deve ser removida quando a migracao tecnica terminar.
-- A leitura territorial do MVP visual/mockado deve favorecer a cadeia Regiao -> Microregiao -> Propriedade.
-- Enquanto nao houver backend/banco real para territorio, `territorioCompat` deriva regioes e microregioes a partir das propriedades mockadas.
-- Os campos textuais legados `regiao` e `microregiao` continuam validos e devem ser preservados para compatibilidade.
-- O cadastro de propriedade pode usar selecao visual de Regiao e Microregiao derivada do mock, mas deve continuar salvando os campos textuais legados.
-- O cadastro rapido de propriedade dentro do cadastro de produtor tambem pode usar `territorioCompat`, mantendo fallback textual.
-- Ao selecionar uma microregiao no cadastro de propriedade, a interface pode sugerir colaboradores compativeis pelo territorio.
-- Colaboradores sugeridos por microregiao sao apenas indicacao visual nesta fase.
-- No detalhe da propriedade, a administracao pode ver vinculos visuais mockados de usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio.
-- O escopo regional efetivo do colaborador usa `sub_regioes`; se
-  `sub_regioes` estiver ausente ou vazio, usa `vinculos_microregioes` como
-  fallback.
-- `propriedades_atribuidas` representa vinculo direto visual/admin
-  preparatorio e nao deve ser tratado como permissao efetiva no MVP mockado.
+- Esta secao registra apenas a fronteira de compatibilidade do mock v1; ela nao
+  orienta novas telas nem novas escritas v2.
+- `territorioCompat`, `regiao`, `microregiao`, `sub_regioes` e
+  `vinculos_microregioes` podem ser lidos somente durante migracao do v1.
+- Novos cadastros, filtros, resumos e vinculos nao usam esses campos.
+- `propriedades_atribuidas` e alias legado de leitura; o acesso v2 usa vinculo
+  direto ativo `usuario_propriedade`.
 - O Perfil do Colaborador nao deve editar `regiao`, `sub_regioes`,
   `vinculos_microregioes` ou `propriedades_atribuidas`; a consulta local deve
   orientar solicitacao de correcao ao Admin.

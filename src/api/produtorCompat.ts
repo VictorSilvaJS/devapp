@@ -36,6 +36,10 @@ interface FazendaBoundaryInput {
   endereco?: string;
   cidade?: string;
   estado?: string;
+  municipio_id?: string;
+  municipio_nome?: string;
+  uf_id?: string;
+  uf_sigla?: string;
   regiao?: string;
   microregiao?: string;
   cep?: string;
@@ -290,7 +294,7 @@ const buildCanonicalFazendaFromBoundary = (
     data_cadastro: data.data_cadastro !== undefined ? data.data_cadastro : current?.data_cadastro,
   });
 
-  return normalizeFazenda({
+  const normalized = normalizeFazenda({
     ...canonical,
     ...buildFazendaFutureAliases(
       {
@@ -301,6 +305,14 @@ const buildCanonicalFazendaFromBoundary = (
     ),
     titular_id: canonical.titular_id,
   });
+
+  return {
+    ...normalized,
+    municipio_id: normalizeStringField(data.municipio_id, current?.municipio_id),
+    municipio_nome: normalizeStringField(data.municipio_nome, current?.municipio_nome ?? normalized.cidade),
+    uf_id: normalizeStringField(data.uf_id, current?.uf_id),
+    uf_sigla: normalizeStringField(data.uf_sigla, current?.uf_sigla ?? normalized.estado)?.toUpperCase(),
+  };
 };
 
 export const normalizeMockFazendaInput = (data: FazendaBoundaryInput, existing?: FazendaBoundaryInput) =>
@@ -314,6 +326,10 @@ export const readMockFazenda = (record: FazendaBoundaryInput) => {
   return {
     ...legacy,
     ...futureAliases,
+    municipio_id: normalizeStringField(record.municipio_id),
+    municipio_nome: normalizeStringField(record.municipio_nome, legacy.cidade),
+    uf_id: normalizeStringField(record.uf_id),
+    uf_sigla: normalizeStringField(record.uf_sigla, legacy.estado)?.toUpperCase(),
     fazenda_id: canonical.id,
     fazenda_nome: canonical.nome,
     produtor_nome: canonical.produtor_nome ?? legacy.nome,

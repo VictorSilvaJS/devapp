@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const {
   buildDashboardScopeData,
+  buildDashboardLocationSummary,
   buildDashboardSummary,
   formatDashboardArea,
   getPropriedadesPorStatus,
@@ -27,8 +28,10 @@ const propriedades = [
     proprietario_id: 'titular_sul',
     titular_id: 'titular_sul',
     area_total: 750,
-    regiao: 'Sul',
-    microregiao: 'RS - Norte',
+    municipio_id: '4310207',
+    municipio_nome: 'Ijuí',
+    uf_id: '43',
+    uf_sigla: 'RS',
     status: 'ativo',
   },
   {
@@ -37,8 +40,10 @@ const propriedades = [
     proprietario_id: 'titular_mt',
     titular_id: 'titular_mt',
     area_total: 1500,
-    regiao: 'Mato Grosso',
-    microregiao: 'Sorriso',
+    municipio_id: '5107925',
+    municipio_nome: 'Sorriso',
+    uf_id: '51',
+    uf_sigla: 'MT',
     status: 'pendente',
   },
   {
@@ -47,8 +52,10 @@ const propriedades = [
     proprietario_id: 'titular_mt',
     titular_id: 'titular_mt',
     area_total: 250,
-    regiao: 'Mato Grosso',
-    microregiao: 'Sorriso',
+    municipio_id: '5107925',
+    municipio_nome: 'Sorriso',
+    uf_id: '51',
+    uf_sigla: 'MT',
     ativo: false,
   },
 ];
@@ -140,6 +147,15 @@ const run = async () => {
     assert.deepEqual(getPropriedadesPorStatus(propriedades), resumo.status);
     assert.equal(getPropriedadeStatusLabel(propriedades[1]), 'Pendente');
     assert.equal(formatDashboardArea(750), '750 ha');
+  });
+
+  await test('resumo de localização usa somente as Propriedades recebidas no escopo', () => {
+    const resumo = buildDashboardLocationSummary([propriedades[1], propriedades[2]]);
+
+    assert.equal(resumo.headline, 'MT • 1 município');
+    assert.equal(resumo.detail, 'Sorriso: 2');
+    assert.deepEqual(resumo.ufs, ['MT']);
+    assert.deepEqual(resumo.municipios.map((item) => item.id), ['5107925']);
   });
 
   if (failed > 0) {

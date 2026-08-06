@@ -2434,6 +2434,75 @@ export const Produtor: any = {
       produtores.unshift(novo);
       return readMockProdutor(novo);
     }),
+  createWithLinks: async (
+    data,
+    {
+      titularUsuarioId,
+      colaboradorIds = [],
+    }: { titularUsuarioId?: string; colaboradorIds?: string[] } = {}
+  ) =>
+    mutateHydratedMock(200, () => {
+      validateProdutor(data);
+      const titularId = String(data?.titular_id || data?.produtor_id || '').trim();
+      const titularUsuario = users.find((usuario) => usuario.id === titularUsuarioId);
+      if (
+        !titularUsuario
+        || titularUsuario.perfil !== 'produtor'
+        || resolveUsuarioStatus(titularUsuario) !== 'ativo'
+        || resolveUsuarioProdutorId(titularUsuario, titularUsuario.id) !== titularId
+      ) {
+        throw new Error('Propriedade.titular: Produtor ativo incompatível com o titular informado');
+      }
+
+      const colaboradoresUnicos = [...new Set(
+        (Array.isArray(colaboradorIds) ? colaboradorIds : [])
+          .map((id) => String(id || '').trim())
+          .filter(Boolean)
+      )];
+      const colaboradoresSelecionados = colaboradoresUnicos.map((usuarioId) => {
+        const colaborador = users.find((usuario) => usuario.id === usuarioId);
+        if (
+          !colaborador
+          || colaborador.perfil !== 'colaborador'
+          || resolveUsuarioStatus(colaborador) !== 'ativo'
+        ) {
+          throw new Error(`Propriedade.colaborador: Colaborador ativo inexistente ${usuarioId}`);
+        }
+        return colaborador;
+      });
+
+      const id = `p${Date.now()}`;
+      const novo = persistMockProdutor({ id, data });
+      produtores.unshift(novo);
+
+      const adicionarVinculo = (usuario: any, tipoVinculo: 'titular' | 'colaborador') => {
+        const existentes = usuarioPropriedade
+          .filter((link) => link.usuario_id === usuario.id)
+          .map((link) => ({ ...link }));
+        const novosVinculos = ensurePrincipalUsuarioPropriedade([
+          ...existentes,
+          normalizeUsuarioPropriedadeLink({
+            propriedade_id: id,
+            tipo_vinculo: tipoVinculo,
+            status: 'ativo',
+          }, usuario.id),
+        ].filter(Boolean));
+
+        validateUsuarioMock(
+          { ...usuario, status: resolveUsuarioStatus(usuario) },
+          {
+            ignoreId: usuario.id,
+            vinculosPropriedades: novosVinculos,
+            vinculosMicroregioes: usuarioMicroregiao.filter((link) => link.usuario_id === usuario.id),
+          }
+        );
+        replaceUsuarioPropriedadeLinks(usuario.id, novosVinculos);
+      };
+
+      adicionarVinculo(titularUsuario, 'titular');
+      colaboradoresSelecionados.forEach((colaborador) => adicionarVinculo(colaborador, 'colaborador'));
+      return readMockProdutor(novo);
+    }),
   update: async (id, data) =>
     mutateHydratedMock(300, () => {
       const index = produtores.findIndex(p => p.id === id);
