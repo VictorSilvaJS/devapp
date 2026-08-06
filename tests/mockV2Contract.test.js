@@ -136,7 +136,7 @@ const run = async () => {
   await Visita.createScheduled({
     propriedade_id: 'propriedade_1',
     tecnico_responsavel: 'Técnico V2',
-    data_visita: '2026-08-06T12:00:00.000Z',
+    data_visita: new Date(Date.now() + 86400000).toISOString(),
     objetivo: 'consultoria',
   }, {
     usuarioId: 'usr_produtor_1',

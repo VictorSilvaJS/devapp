@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const {
   normalizeFiltrosState,
   resolveFiltroFazendaId,
+  resolveFiltroPropriedadeId,
   toFiltrosCompativeis,
 } = require('../.tmp-domain-compat/src/contexts/filtroCompat');
 
@@ -19,18 +20,30 @@ const test = async (name, fn) => {
 };
 
 const run = async () => {
-  await test('normalizeFiltrosState usa fazendaId canônico e aceita alias legado produtorId', () => {
+  await test('normalizeFiltrosState usa UF, Município e Propriedade canônicos', () => {
     const filtros = normalizeFiltrosState({
-      regiao: 'Sul',
+      uf: 'MT',
+      municipio: '5106240',
+      propriedade: 'Fazenda Backes',
       produtorId: 'faz_01',
     });
 
     assert.deepEqual(filtros, {
-      regiao: 'Sul',
-      microregiao: 'todas',
-      fazenda: 'todas',
-      fazendaId: 'faz_01',
-      cidade: 'todas',
+      uf: 'MT',
+      municipio: '5106240',
+      propriedade: 'Fazenda Backes',
+      propriedadeId: 'faz_01',
+    });
+  });
+
+  await test('normalizeFiltrosState não promove Região ou Microrregião para o contrato atual', () => {
+    const filtros = normalizeFiltrosState({ regiao: 'Norte', microregiao: 'Sinop' });
+
+    assert.deepEqual(filtros, {
+      uf: 'todas',
+      municipio: 'todas',
+      propriedade: 'todas',
+      propriedadeId: null,
     });
   });
 
@@ -41,6 +54,7 @@ const run = async () => {
     });
 
     assert.equal(fazendaId, 'faz_canonica');
+    assert.equal(resolveFiltroPropriedadeId({ propriedadeId: 'prop_01' }), 'prop_01');
   });
 
   await test('toFiltrosCompativeis reexpõe produtorId apenas como alias temporário', () => {
@@ -52,6 +66,8 @@ const run = async () => {
     assert.equal(filtros.fazendaId, 'faz_77');
     assert.equal(filtros.produtorId, 'faz_77');
     assert.equal(filtros.fazenda, 'Sede');
+    assert.equal(filtros.propriedadeId, 'faz_77');
+    assert.equal(filtros.propriedade, 'Sede');
   });
 
   if (failed > 0) {

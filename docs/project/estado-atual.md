@@ -5263,3 +5263,30 @@ Os rótulos visuais `Região`/`Microrregião` ainda aparecem nos filtros do
 Dashboard Admin. Eles não concedem acesso no v2, mas permanecem como resíduo
 visual a substituir por Município/UF em uma tarefa específica de frontend.
 Evidências: `dist/qa-session-2026-08-05/mock-v2-bootstrap/`.
+
+Atualização em 2026-08-06: o resíduo visual acima foi removido. O estado dos
+filtros territoriais do frontend agora usa `uf`, `municipio`, `propriedade` e
+`propriedadeId`; o Dashboard Admin apresenta a cascata UF -> Município ->
+Propriedade e a listagem de Propriedades usa UF/Município. As opções são
+sempre derivadas do conjunto previamente autorizado ao usuário. Assim,
+localização apenas reduz a visualização e não cria acesso. O Perfil do
+Colaborador também deixou de exibir o aviso legado de Regional/Área
+operacional e reafirma que a alteração de escopo ocorre por vínculo direto
+administrado.
+
+Os aliases `fazenda`, `fazendaId`, `cidade` e `produtorId` permanecem somente
+na saída de compatibilidade do contexto para consumidores internos ainda não
+migrados. `Região` e `Microrregião` não fazem parte do novo estado canônico
+dos filtros. A implementação está concentrada em
+`src/utils/filtroTerritorial.ts`, `src/contexts/FiltroContext.tsx` e
+`src/components/FiltroTerritorial.tsx`, com cobertura dedicada em
+`tests/filtroCompat.test.js` e `tests/filtroTerritorial.test.js`.
+
+O APK release desse lote foi gerado e instalado por atualização no Android
+físico `8483A`, preservando o armazenamento v2. O arquivo possui 95.811.492
+bytes e SHA-256
+`167F1DA7984AA054035A3DA5F0EF5D7DCB77C21B5DA4EFD1E7E86385C84ED946`.
+Build, instalação e inicialização do processo passaram sem erro fatal no log.
+A inspeção visual automatizada da tela ficou pendente porque o dispositivo
+estava bloqueado por PIN no momento do smoke; nenhuma tentativa de contornar
+o bloqueio foi realizada.

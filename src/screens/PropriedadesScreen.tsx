@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, RefreshControl, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyState from '../components/EmptyState';
@@ -18,29 +18,37 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing, shadows } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../auth/AuthContext';
-import { filtrarProdutoresPorAcesso, podeCriarProdutor, getRegioesDisponiveis } from '../utils/acessoControle';
+import { filtrarProdutoresPorAcesso, podeCriarProdutor } from '../utils/acessoControle';
 import { useFiltros } from '../contexts/FiltroContext';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { buildFazendaListMetrics, getFazendaUiInfo, matchesFazendaUiBusca } from '../utils/fazendaUiCompat';
 import { formatAreaHa } from '../utils/talhaoMedidasCompat';
+import {
+  FILTRO_TODOS,
+  filtrarPropriedadesPorLocalizacao,
+  listarMunicipios,
+  listarUfs,
+} from '../utils/filtroTerritorial';
 
 export default function PropriedadesScreen() {
   const [produtores, setProdutores] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
-  const [regiaoSelecionada, setRegiaoSelecionada] = useState('todas');
+  const [ufSelecionada, setUfSelecionada] = useState(FILTRO_TODOS);
+  const [municipioSelecionado, setMunicipioSelecionado] = useState(FILTRO_TODOS);
   const [ordenacao, setOrdenacao] = useState('nome'); // nome, area, recente
   const [mostrarBusca, setMostrarBusca] = useState(false);
   const [modalFiltrosVisivel, setModalFiltrosVisivel] = useState(false);
   const [filtrosRascunho, setFiltrosRascunho] = useState({
     status: 'todos',
-    regiao: 'todas',
+    uf: FILTRO_TODOS,
+    municipio: FILTRO_TODOS,
     ordenacao: 'nome',
   });
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { filtrarProdutores: filtrarProdutoresPorRegiao, filtros } = useFiltros();
+  const { filtrarProdutores: filtrarPropriedadesPorFiltroGlobal, filtros } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
 
   useEffect(() => { load(); }, [user, filtros]);
@@ -58,9 +66,9 @@ export default function PropriedadesScreen() {
     // Filtrar por acesso do usuário
     let produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
     
-    // Para admin e colaborador, aplicar filtros regionais globais
+    // Os filtros globais são aplicados somente depois da autorização.
     if (user?.perfil === 'admin' || user?.perfil === 'colaborador') {
-      produtoresFiltrados = filtrarProdutoresPorRegiao(produtoresFiltrados);
+      produtoresFiltrados = filtrarPropriedadesPorFiltroGlobal(produtoresFiltrados);
     }
     
     setProdutores(produtoresFiltrados);
@@ -72,21 +80,23 @@ export default function PropriedadesScreen() {
     setRefreshing(false);
   };
 
-  // Obter regiões disponíveis para o usuário
-  const regioes = getRegioesDisponiveis(user, produtores);
-  const mostrarFiltroRegiao = user?.perfil === 'admin' && regioes.length > 0;
+  const ufs = useMemo(() => listarUfs(produtores), [produtores]);
+  const municipios = useMemo(
+    () => listarMunicipios(produtores, ufSelecionada),
+    [produtores, ufSelecionada],
+  );
+  const mostrarFiltrosLocalizacao = ufs.length > 0;
 
-  // Filtrar fazendas por busca, status e região
-  const produtoresFiltrados = produtores.filter(produtor => {
+  // Localização organiza somente o conjunto já autorizado e filtrado globalmente.
+  const produtoresFiltrados = filtrarPropriedadesPorLocalizacao(produtores, {
+    uf: ufSelecionada,
+    municipio: municipioSelecionado,
+  }).filter(produtor => {
     const matchBusca = matchesFazendaUiBusca(produtor, busca);
     
     const matchStatus = filtroStatus === 'todos' || produtor.status === filtroStatus;
     
-    const matchRegiao = !mostrarFiltroRegiao || 
-      regiaoSelecionada === 'todas' || 
-      produtor.regiao === regiaoSelecionada;
-    
-    return matchBusca && matchStatus && matchRegiao;
+    return matchBusca && matchStatus;
   }).sort((a, b) => {
     // Aplicar ordenação
     if (ordenacao === 'nome') {
@@ -106,7 +116,8 @@ export default function PropriedadesScreen() {
   const contarFiltrosAtivos = () => {
     let count = 0;
     if (filtroStatus !== 'todos') count++;
-    if (regiaoSelecionada !== 'todas') count++;
+    if (ufSelecionada !== FILTRO_TODOS) count++;
+    if (municipioSelecionado !== FILTRO_TODOS) count++;
     if (ordenacao !== 'nome') count++;
     return count;
   };
@@ -118,8 +129,15 @@ export default function PropriedadesScreen() {
       const statusLabels = { ativo: 'Ativo', inativo: 'Inativo', pendente: 'Pendente' };
       filtros.push({ tipo: 'status', label: statusLabels[filtroStatus], icon: 'checkmark-circle', color: colors.success, remover: () => setFiltroStatus('todos') });
     }
-    if (regiaoSelecionada !== 'todas') {
-      filtros.push({ tipo: 'regiao', label: regiaoSelecionada, icon: 'location', color: colors.coral, remover: () => setRegiaoSelecionada('todas') });
+    if (ufSelecionada !== FILTRO_TODOS) {
+      filtros.push({ tipo: 'uf', label: ufSelecionada, icon: 'location', color: colors.coral, remover: () => {
+        setUfSelecionada(FILTRO_TODOS);
+        setMunicipioSelecionado(FILTRO_TODOS);
+      } });
+    }
+    if (municipioSelecionado !== FILTRO_TODOS) {
+      const municipio = municipios.find((item) => item.id === municipioSelecionado);
+      filtros.push({ tipo: 'municipio', label: municipio?.nome || 'Município', icon: 'map', color: colors.coral, remover: () => setMunicipioSelecionado(FILTRO_TODOS) });
     }
     if (ordenacao !== 'nome') {
       const ordenacaoLabels = { area: 'Por Área', recente: 'Mais Recente' };
@@ -131,7 +149,10 @@ export default function PropriedadesScreen() {
   const filtrosAtivos = getFiltrosAtivos();
   const numFiltrosAtivos = contarFiltrosAtivos();
   const listaSemResultadoPorFiltro =
-    busca.trim().length > 0 || filtroStatus !== 'todos' || regiaoSelecionada !== 'todas';
+    busca.trim().length > 0
+    || filtroStatus !== 'todos'
+    || ufSelecionada !== FILTRO_TODOS
+    || municipioSelecionado !== FILTRO_TODOS;
   const statusOptions = [
     { value: 'todos', label: 'Todos' },
     { value: 'ativo', label: 'Ativo' },
@@ -143,14 +164,22 @@ export default function PropriedadesScreen() {
     { value: 'area', label: 'Área' },
     { value: 'recente', label: 'Mais Recente' },
   ];
-  const regiaoOptions = [
-    { value: 'todas', label: 'Todas' },
-    ...regioes.map((regiao) => ({ value: regiao, label: regiao })),
+  const ufOptions = [
+    { value: FILTRO_TODOS, label: 'Todas' },
+    ...ufs.map((uf) => ({ value: uf, label: uf })),
+  ];
+  const municipioOptions = [
+    { value: FILTRO_TODOS, label: 'Todos' },
+    ...listarMunicipios(produtores, filtrosRascunho.uf).map((municipio) => ({
+      value: municipio.id,
+      label: municipio.nome,
+    })),
   ];
 
   const getFiltrosAplicados = () => ({
     status: filtroStatus,
-    regiao: regiaoSelecionada,
+    uf: ufSelecionada,
+    municipio: municipioSelecionado,
     ordenacao,
   });
 
@@ -167,14 +196,16 @@ export default function PropriedadesScreen() {
   const limparFiltrosRascunho = () => {
     setFiltrosRascunho({
       status: 'todos',
-      regiao: 'todas',
+      uf: FILTRO_TODOS,
+      municipio: FILTRO_TODOS,
       ordenacao: 'nome',
     });
   };
 
   const aplicarFiltros = () => {
     setFiltroStatus(filtrosRascunho.status);
-    setRegiaoSelecionada(filtrosRascunho.regiao);
+    setUfSelecionada(filtrosRascunho.uf);
+    setMunicipioSelecionado(filtrosRascunho.municipio);
     setOrdenacao(filtrosRascunho.ordenacao);
     setModalFiltrosVisivel(false);
   };
@@ -197,7 +228,7 @@ export default function PropriedadesScreen() {
                 setBusca('');
                 setMostrarBusca(false);
               }}
-              placeholder="Buscar por propriedade, titular, cidade, região ou microregião..."
+              placeholder="Buscar por propriedade, titular, município ou UF..."
               containerStyle={styles.searchBarExpanded}
               autoFocus
             />
@@ -256,7 +287,8 @@ export default function PropriedadesScreen() {
           }))}
           onClear={() => {
             setFiltroStatus('todos');
-            setRegiaoSelecionada('todas');
+            setUfSelecionada(FILTRO_TODOS);
+            setMunicipioSelecionado(FILTRO_TODOS);
             setOrdenacao('nome');
           }}
         />
@@ -362,7 +394,7 @@ export default function PropriedadesScreen() {
         onRequestClose={cancelarFiltros}
         onClear={limparFiltrosRascunho}
         onApply={aplicarFiltros}
-        subtitle="Filtre Propriedades por status, Região e ordenação"
+        subtitle="Filtre Propriedades por status, UF, município e ordenação"
       >
         <FilterSection title="Status">
           <SegmentedChips
@@ -382,12 +414,26 @@ export default function PropriedadesScreen() {
             contentStyle={styles.chipsContainer}
           />
         </FilterSection>
-        {mostrarFiltroRegiao ? (
-          <FilterSection title="Região">
+        {mostrarFiltrosLocalizacao ? (
+          <FilterSection title="UF">
             <SegmentedChips
-              options={regiaoOptions}
-              value={filtrosRascunho.regiao}
-              onChange={(regiao) => setFiltrosRascunho((atual) => ({ ...atual, regiao }))}
+              options={ufOptions}
+              value={filtrosRascunho.uf}
+              onChange={(uf) => setFiltrosRascunho((atual) => ({
+                ...atual,
+                uf,
+                municipio: FILTRO_TODOS,
+              }))}
+              contentStyle={styles.chipsContainer}
+            />
+          </FilterSection>
+        ) : null}
+        {mostrarFiltrosLocalizacao ? (
+          <FilterSection title="Município">
+            <SegmentedChips
+              options={municipioOptions}
+              value={filtrosRascunho.municipio}
+              onChange={(municipio) => setFiltrosRascunho((atual) => ({ ...atual, municipio }))}
               contentStyle={styles.chipsContainer}
             />
           </FilterSection>

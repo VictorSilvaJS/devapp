@@ -1031,6 +1031,12 @@ Permanece pendente definir e implementar:
 
 ## Regra de Governanca
 
+Atualização em 2026-08-06: a troca dos filtros visuais de
+Região/Microrregião por UF/Município/Propriedade foi concluída no frontend e
+não é mais uma pendência. A autorização produtiva continua dependente do
+backend/RBAC, que deverá validar os vínculos diretos `usuario_propriedade` no
+servidor; filtros de localização não podem ser usados para conceder acesso.
+
 Uma pendencia deve sair deste documento quando ocorrer uma destas situacoes:
 
 - foi consolidada como decisao do projeto

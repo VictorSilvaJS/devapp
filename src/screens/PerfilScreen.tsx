@@ -386,8 +386,7 @@ export default function PerfilScreen({ navigation }) {
               )}
 
               <InfoBox
-                variant="warning"
-                message="O cadastro local ainda mistura Regional/Área operacional e Município/UF. Estes vínculos são somente leitura. Solicite correção ao administrador responsável."
+                message="A inclusão ou remoção de uma Propriedade neste escopo deve ser feita pelo administrador por vínculo direto."
                 style={styles.infoBoxInline}
               />
             </SectionCard>

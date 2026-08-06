@@ -89,12 +89,13 @@ const run = async () => {
     assert.match(source, /solicite correção ao administrador/i);
   });
 
-  await test('Perfil apresenta escopo legado como somente leitura', () => {
+  await test('Perfil apresenta escopo do colaborador somente por vínculo direto', () => {
     const source = readSource('src/screens/PerfilScreen.tsx');
     assert.match(source, /Escopo operacional/);
-    assert.match(source, /somente leitura/i);
-    assert.match(source, /Regional\/Área operacional e Município\/UF/);
-    assert.match(source, /solicite correção ao administrador/i);
+    assert.match(source, /Acesso definido somente pelas Propriedades vinculadas diretamente/i);
+    assert.match(source, /Município e UF servem para localização e filtros; não concedem acesso/i);
+    assert.match(source, /administrador por vínculo direto/i);
+    assert.doesNotMatch(source, /Regional\/Área operacional e Município\/UF/);
   });
 
   if (failed > 0) {

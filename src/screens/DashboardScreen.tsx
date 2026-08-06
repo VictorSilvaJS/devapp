@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import Header from '../components/Header';
-import FiltroRegional from '../components/FiltroRegional';
+import FiltroTerritorial from '../components/FiltroTerritorial';
 import SectionCard from '../components/SectionCard';
 import StatCard from '../components/StatCard';
 import { CadernoCampo, Produtor, User, Visita } from '../api/mock';
@@ -80,7 +80,6 @@ export default function DashboardScreen() {
     filtros,
     filtrarProdutores,
     getFiltroAtivo,
-    setRegiao,
   } = useFiltros();
   const loadedRef = useRef(false);
   const [data, setData] = useState(emptyData);
@@ -131,12 +130,6 @@ export default function DashboardScreen() {
       loadData(!loadedRef.current);
     }, [loadData])
   );
-
-  useEffect(() => {
-    if (user?.perfil === 'colaborador' && user?.regiao) {
-      setRegiao(user.regiao);
-    }
-  }, [user?.perfil, user?.regiao]);
 
   const propriedadesFiltradas = useMemo(() => {
     const propriedadesComAcesso = filtrarProdutoresPorAcesso(data.propriedades, user);
@@ -236,7 +229,7 @@ export default function DashboardScreen() {
 
           {isAdmin ? (
             <View style={styles.filtrosContainer}>
-              <FiltroRegional />
+              <FiltroTerritorial />
             </View>
           ) : null}
 
