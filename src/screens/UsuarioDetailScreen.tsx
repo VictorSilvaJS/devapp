@@ -202,7 +202,7 @@ export default function UsuarioDetailScreen() {
 
         <InfoBox
           title="Cadastro administrativo demonstrativo"
-          message="Este usuário e seus vínculos ficam salvos localmente. A credencial local é preparatória e ainda não integra sessão, backend ou RBAC."
+          message="Este usuário, sua credencial e seus vínculos ficam salvos localmente e permitem o login demonstrativo neste aparelho. Não há sincronização, backend ou RBAC de produção."
         />
 
         <SectionCard title="Acesso local" subtitle="Indicador administrativo seguro da credencial neste aparelho.">

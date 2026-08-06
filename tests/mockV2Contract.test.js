@@ -236,6 +236,52 @@ const run = async () => {
 
   assert.equal(validateMockV2State(persistedV2), true);
 
+  const produtorPendente = await User.create({
+    nome: 'Produtor Pendente V2',
+    email: 'produtor.pendente.v2@example.com',
+    perfil: 'produtor',
+    status: 'pendente',
+    vinculos_propriedades: [],
+  });
+  let snapshotComPendente = JSON.parse(values.get(MOCK_V2_LOCAL_STORAGE_KEY));
+  const cadastroProdutorPendente = snapshotComPendente.produtores.find(
+    (produtor) => produtor.usuario_id === produtorPendente.id,
+  );
+  assert.ok(cadastroProdutorPendente);
+  assert.equal(cadastroProdutorPendente.id, produtorPendente.produtor_id);
+  assert.equal(cadastroProdutorPendente.status, 'inativo');
+
+  const primeiraPropriedade = await Produtor.createWithLinks({
+    propriedade_nome: 'Primeira Propriedade do Pendente',
+    titular_id: produtorPendente.produtor_id,
+    municipio_id: '5107909',
+    municipio_nome: 'Sinop',
+    uf_id: '51',
+    uf_sigla: 'MT',
+    nome: produtorPendente.nome,
+    produtor_nome: produtorPendente.nome,
+    produtor_id: produtorPendente.produtor_id,
+    proprietario_id: produtorPendente.produtor_id,
+    fazenda: 'Primeira Propriedade do Pendente',
+    fazenda_nome: 'Primeira Propriedade do Pendente',
+    status: 'ativo',
+  }, {
+    titularUsuarioId: produtorPendente.id,
+  });
+  const produtorAtivado = await User.get(produtorPendente.id);
+  assert.equal(produtorAtivado.status, 'ativo');
+  assert.ok(produtorAtivado.vinculos_propriedades.some((vinculo) => (
+    vinculo.propriedade_id === primeiraPropriedade.id
+    && vinculo.tipo_vinculo === 'titular'
+    && vinculo.status === 'ativo'
+  )));
+  snapshotComPendente = JSON.parse(values.get(MOCK_V2_LOCAL_STORAGE_KEY));
+  assert.equal(
+    snapshotComPendente.produtores.find((produtor) => produtor.usuario_id === produtorPendente.id).status,
+    'ativo',
+  );
+  assert.equal(validateMockV2State(snapshotComPendente), true);
+
   values.set(MOCK_V2_LOCAL_STORAGE_KEY, '{"version":2,"corrompido":true}');
   MockLocalData.__setStorageForTests(storage);
   await assert.rejects(

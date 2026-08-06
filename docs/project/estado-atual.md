@@ -305,17 +305,21 @@ O fluxo principal gira em torno de produtores, propriedades, visitas tecnicas, c
 - login mock com persistencia local
 - CRUD local persistente para usuarios, propriedades, visitas, caderno e
   metadados de mapas; limites/talhoes continuam no seed/assets
-- filtros regionais via `FiltroContext`
+- filtros canonicos UF, Municipio e Propriedade via `FiltroContext`
 - fluxo principal de visitas com listagem, criacao, edicao e detalhe
 - frente funcional de `Produtor` / `Propriedade` concluida no nivel necessario para o MVP atual, embora codigo e rotas ainda usem nomes tecnicos legados de fazenda
 - frente funcional de visitas tecnicas por propriedade e caderno de campo por propriedade validada no nivel necessario para o MVP atual
 - fluxo completo do produtor validado no MVP visual/mockado apos a padronizacao da nomenclatura visivel para `Propriedade`
 - fluxo do colaborador pronto para teste manual interno no MVP visual/mockado, com acesso a Home, Propriedades, Visitas, Caderno e Perfil
 - modulo administrativo `Admin -> Usuarios` em MVP visual/mockado, com cadastro e edicao de usuarios separados de propriedades
-- mock de usuarios mais proximo do backend futuro, com campos comuns completos, status explicito e relacoes visuais `usuario_propriedade` e `usuario_microregiao`
-- sincronizacao territorial visual/mockada entre `Admin -> Usuarios`, propriedades, regioes e microregioes, usando `territorioCompat` para derivar Regiao -> Microregiao -> Propriedade a partir das propriedades mockadas
-- cadastro rapido de propriedade dentro do cadastro de usuario produtor, permitindo criar propriedade mockada e vincular via `usuario_propriedade` quando a propriedade ainda nao existe
-- criacao de visita pelo colaborador validada tecnicamente pelo fluxo global e pelo contexto da propriedade, respeitando escopo regional/sub-regional
+- mock v2 de Usuarios com campos comuns, status explicito e vinculos diretos
+  `usuario_propriedade`, sem novas escritas territoriais legadas
+- cadastro de Produtor em duas etapas: Usuario pendente primeiro e primeira
+  Propriedade depois, com ativacao atomica do Usuario/Produtor/Titular
+- cadastro de Colaborador com selecao direta de Propriedades; Admin permanece
+  global e sem vinculos
+- criacao de visita pelo Colaborador validada pelo contexto da Propriedade e
+  por seu vinculo direto ativo
 - visualizacao de panorama/mapas e detalhe de propriedade
 - mapa base dos talhoes da propriedade Sela de Prata I a partir de `LimiteArea`/GeoJSON normalizado
 - clique/toque em talhao no mapa base, com exibicao do nome/codigo e detalhes do talhao
@@ -2414,6 +2418,11 @@ Colaborador/Admin. Android fisico continua pendente para validacao final de
 campo.
 
 ## Microfase De Cadastro Rapido De Propriedade No Cadastro De Produtor
+
+Status em 2026-08-06: esta microfase e historica e foi substituida pela
+Decisao 34. O cadastro rapido descrito abaixo foi removido. O fluxo atual
+cadastra o Produtor pendente em `Admin -> Usuarios` e cria cada Propriedade em
+seu formulario proprio, com ativacao atomica na primeira titularidade.
 
 Status em 2026-05-29: o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` continua 100% visual/mockado, mas agora permite criar uma propriedade rapida quando ela ainda nao existe.
 
@@ -5342,3 +5351,33 @@ v2. No smoke, César abriu a edição completa e Victor abriu a mesma Propriedad
 sem receber o botão de editar. Nenhuma alteração demonstrativa foi salva e o
 log filtrado não apresentou erro fatal. A sessão final foi restaurada para
 César/Admin.
+
+Atualização em 2026-08-06: o cadastro administrativo de Usuários foi migrado
+para o contrato local v2. O payload novo contém somente dados comuns de
+Usuario, perfil, status, observações e vínculos diretos compatíveis; não grava
+senha, nível administrativo, Região, Microregião, `sub_regioes`,
+`propriedades_atribuidas` ou `vinculos_microregioes`.
+
+O fluxo de Produtor agora ocorre em duas etapas. Sem Propriedade, ele nasce
+Pendente em `Admin -> Usuarios`. A primeira Propriedade aceita esse Produtor
+como Titular e ativa Usuario, cadastro de Produtor e vínculo na mesma mutação
+atômica. Produtores ativos persistidos passam a possuir um `ProdutorV2`; um
+mesmo Produtor continua podendo ser Titular de várias Propriedades. Na edição
+comum, perfil e titularidade são estruturais e somente leitura.
+
+Colaborador ativo exige vínculo direto ativo com ao menos uma Propriedade e
+Admin permanece global, sem vínculo operacional. A atualização administrativa
+de Usuario e credencial local ganhou compensação: se a credencial falhar,
+Usuario e vínculos retornam ao estado anterior. A credencial permite login
+demonstrativo apenas no aparelho e não representa backend ou RBAC produtivo.
+
+`npm run typecheck`, `npm run test:domain-compat`,
+`npm run test:filtros-territoriais`, os testes focados de Usuario/credencial e
+mock v2, `git diff --check` e o build release passaram. O APK final possui
+95.822.440 bytes e SHA-256
+`A33E5BB60CF53B5EE070A8C0413E703D2269BB8F4E9E495999DC347705A4720C`.
+Foi instalado por atualização no Android físico `8483A`, preservando o v2 e
+a sessão César/Admin. O smoke confirmou os três formulários canônicos, perfil
+bloqueado na edição, titularidade somente para leitura e a mensagem correta do
+login local. Nenhum registro foi salvo e não houve fatal, erro React Native
+fatal ou ANR no log final.

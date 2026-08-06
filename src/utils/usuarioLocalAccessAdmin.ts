@@ -12,6 +12,7 @@ export interface SenhaLocalAdminValidation {
 
 export interface UsuarioAdminApi {
   create: (payload: any) => Promise<any>;
+  get: (usuarioId: string) => Promise<any>;
   update: (usuarioId: string, payload: any) => Promise<any>;
   delete: (usuarioId: string) => Promise<any>;
 }
@@ -108,7 +109,7 @@ export const updateUsuarioAdminAndSyncLocalCredential = async ({
   novaSenha,
   shouldUpdatePassword,
 }: {
-  userApi: Pick<UsuarioAdminApi, 'update'>;
+  userApi: Pick<UsuarioAdminApi, 'get' | 'update'>;
   credentialService: Pick<
     UsuarioAdminCredentialService,
     | 'findCredentialByUserId'
@@ -123,7 +124,10 @@ export const updateUsuarioAdminAndSyncLocalCredential = async ({
   novaSenha?: string;
   shouldUpdatePassword?: boolean;
 }) => {
-  const currentCredential = await credentialService.findCredentialByUserId(usuarioId);
+  const [currentCredential, previousUser] = await Promise.all([
+    credentialService.findCredentialByUserId(usuarioId),
+    userApi.get(usuarioId),
+  ]);
   const emailNormalizado = normalizeEmail(email);
   const emailChangedInCredential =
     Boolean(currentCredential) && currentCredential?.email_normalizado !== emailNormalizado;
@@ -138,14 +142,24 @@ export const updateUsuarioAdminAndSyncLocalCredential = async ({
 
   const saved = await userApi.update(usuarioId, payload);
 
-  if (shouldUpdatePassword) {
-    if (currentCredential) {
-      await credentialService.updateCredential(usuarioId, email, novaSenha || '');
-    } else {
-      await credentialService.createCredential(usuarioId, email, novaSenha || '');
+  try {
+    if (shouldUpdatePassword) {
+      if (currentCredential) {
+        await credentialService.updateCredential(usuarioId, email, novaSenha || '');
+      } else {
+        await credentialService.createCredential(usuarioId, email, novaSenha || '');
+      }
+    } else if (emailChangedInCredential) {
+      await credentialService.updateCredentialEmail(usuarioId, email);
     }
-  } else if (emailChangedInCredential) {
-    await credentialService.updateCredentialEmail(usuarioId, email);
+  } catch (error) {
+    try {
+      await userApi.update(usuarioId, previousUser);
+    } catch (rollbackError) {
+      (error as any).rollbackFailed = true;
+      (error as any).rollbackError = rollbackError;
+    }
+    throw error;
   }
 
   return saved;

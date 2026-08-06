@@ -25,6 +25,28 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
     acesso local; Município/UF não podem conceder acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada V2-04 - Cadastro Canônico De Usuários**
+
+Status geral em 2026-08-06: `PASSOU_NO_CORTE_LOCAL`.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|
+| V2U-01 | P0 | Admin | Novo Usuário | Cadastrar Produtor sem Propriedade | Nasce Pendente; não há cadastro rápido nem seletor de Propriedade | Passou | APK físico exibiu Produtor e Pendente por padrão, com orientação para criar a primeira Propriedade |
+| V2U-02 | P0 | Admin | Nova Propriedade | Selecionar Produtor pendente como Titular | Propriedade, vínculo e ativação de Usuario/Produtor são atômicos | Passou | Coberto por teste de contrato sem alterar o dataset instalado |
+| V2U-03 | P0 | Admin | Editar Usuário | Abrir Produtor existente | Perfil fica bloqueado e Propriedades/Titularidade aparecem somente para leitura | Passou | APK físico mostrou perfis alternativos desabilitados e Fazenda_Backes preservada para leitura |
+| V2U-04 | P0 | Admin | Colaborador | Tentar status Ativo sem Propriedade e depois selecionar vínculos diretos | Sem vínculo, bloqueia; com vínculo direto válido, permite salvar | Passou | APK exibiu seleção direta e Município/UF apenas para localizar; bloqueio coberto por teste |
+| V2U-05 | P0 | Admin | Administrador | Conferir formulário | Admin é global, sem Propriedade ou nível administrativo legado | Passou | APK exibiu visão global na Tchê Fertilidade; payload v2 coberto por teste |
+| V2U-06 | P0 | Colaborador/Produtor | Permissão | Tentar abrir criação/edição de Usuário | Fluxo administrativo permanece inacessível | Passou | Guardas de rota e interface cobertas pela suíte automatizada |
+| V2U-07 | P0 | Admin | Credencial local | Simular falha após alteração de Usuário | Usuário, vínculos e credencial voltam ao estado anterior | Passou | Compensação coberta por teste automatizado |
+
+APK: 95.822.440 bytes; SHA-256
+`A33E5BB60CF53B5EE070A8C0413E703D2269BB8F4E9E495999DC347705A4720C`.
+Instalado por atualização no Android físico `8483A`, preservando o snapshot v2
+e a sessão César/Admin. Nenhum registro foi salvo durante o smoke. O detalhe
+do Produtor confirmou que a credencial permite login demonstrativo somente no
+aparelho, sem backend/RBAC, e o log final não apresentou fatal, erro React
+Native fatal ou ANR.
+
 **Rodada V2-03 - Edição Canônica Da Propriedade**
 
 Status geral em 2026-08-06: `PASSOU_NO_CORTE_LOCAL`.

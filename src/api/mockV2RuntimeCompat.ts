@@ -130,6 +130,28 @@ const toV2Users = (records: any[]): MockV2State['usuarios'] => records.map((reco
   ...(record?.observacoes !== undefined ? { observacoes: String(record.observacoes) } : {}),
 }));
 
+const toV2Producers = (
+  records: any[],
+  baseProducers: MockV2State['produtores']
+): MockV2State['produtores'] => records
+  .filter((record) => record?.perfil === 'produtor')
+  .map((record) => {
+    const usuarioId = String(record?.id || '').trim();
+    const produtorIdInformado = String(record?.produtor_id || '').trim();
+    const existing = baseProducers.find((produtor) => (
+      produtor.usuario_id === usuarioId
+      || (produtorIdInformado && produtor.id === produtorIdInformado)
+    ));
+
+    return {
+      id: produtorIdInformado || existing?.id || usuarioId,
+      organizacao_id: ORGANIZACAO_TCHE_ID,
+      usuario_id: usuarioId,
+      nome: String(record?.nome || record?.full_name || '').trim(),
+      status: toStatusUsuario(record) === 'ativo' ? 'ativo' : 'inativo',
+    };
+  });
+
 const toV2Properties = (
   records: any[],
   baseProperties: MockV2State['propriedades']
@@ -187,7 +209,7 @@ export const mergeRuntimeIntoMockV2 = (
   ...(base.dataset ? { dataset: clone(base.dataset) } : {}),
   organizacao: clone(base.organizacao),
   usuarios: toV2Users(runtime.users),
-  produtores: clone(base.produtores),
+  produtores: toV2Producers(runtime.users, base.produtores),
   propriedades: toV2Properties(runtime.produtores, base.propriedades),
   usuarios_propriedades: toV2Links(runtime.usuarioPropriedade),
   talhoes: clone(base.talhoes),

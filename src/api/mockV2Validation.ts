@@ -149,7 +149,8 @@ export const validateMockV2State = (state: MockV2State): true => {
 
   const activeLinkKeys = new Set<string>();
   for (const link of state.usuarios_propriedades) {
-    if (!usuarioIds.has(link.usuario_id)) {
+    const usuario = state.usuarios.find((item) => item.id === link.usuario_id);
+    if (!usuarioIds.has(link.usuario_id) || !usuario) {
       throw new Error(`usuarios_propriedades.usuario_id: usuário inexistente ${link.usuario_id}`);
     }
     if (!propriedadeIds.has(link.propriedade_id)) {
@@ -161,6 +162,13 @@ export const validateMockV2State = (state: MockV2State): true => {
     if (!['ativo', 'inativo'].includes(link.status)) {
       throw new Error(`usuarios_propriedades.status: status inválido ${link.status}`);
     }
+    if (
+      (usuario.perfil === 'admin')
+      || (usuario.perfil === 'colaborador' && link.tipo_vinculo !== 'colaborador')
+      || (usuario.perfil === 'produtor' && !['titular', 'usuario_autorizado'].includes(link.tipo_vinculo))
+    ) {
+      throw new Error(`usuarios_propriedades.tipo_vinculo: incompatível com perfil ${usuario.perfil}`);
+    }
     if (link.status === 'ativo') {
       const key = `${link.usuario_id}:${link.propriedade_id}:${link.tipo_vinculo}`;
       if (activeLinkKeys.has(key)) throw new Error(`usuarios_propriedades: vínculo ativo duplicado ${key}`);
@@ -168,8 +176,24 @@ export const validateMockV2State = (state: MockV2State): true => {
     }
   }
 
+  for (const usuario of state.usuarios) {
+    if (
+      usuario.status === 'ativo'
+      && ['produtor', 'colaborador'].includes(usuario.perfil)
+      && !state.usuarios_propriedades.some((link) => (
+        link.usuario_id === usuario.id && link.status === 'ativo'
+      ))
+    ) {
+      throw new Error(`usuarios_propriedades: usuário ${usuario.perfil} ativo sem vínculo`);
+    }
+  }
+
   for (const propriedade of state.propriedades) {
     const titular = state.produtores.find((item) => item.id === propriedade.titular_id)!;
+    const usuarioTitular = state.usuarios.find((item) => item.id === titular.usuario_id);
+    if (titular.status !== 'ativo' || usuarioTitular?.status !== 'ativo') {
+      throw new Error(`propriedades.titular_id: Produtor Titular precisa estar ativo em ${propriedade.id}`);
+    }
     const titularLinks = state.usuarios_propriedades.filter((link) =>
       link.propriedade_id === propriedade.id
       && link.usuario_id === titular.usuario_id

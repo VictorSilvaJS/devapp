@@ -23,16 +23,11 @@ import { useToast } from '../components/Toast';
 import { colors, spacing, typography } from '../theme';
 import { getFazendaId } from '../utils/acessoControle';
 import {
-  NIVEIS_ADMIN_USUARIO,
   STATUS_USUARIO_ADMIN,
-  TIPOS_VINCULO_PROPRIEDADE_USUARIO,
   buildUsuarioAdminPayload,
   buildUsuarioFormFromMock,
   getFazendaOptionLabel,
-  getUsuarioNome,
   getUsuarioPerfilLabel,
-  getVinculoPropriedadeLabel,
-  getVinculosPropriedadeUsuario,
   normalizeFormVinculosPropriedade,
 } from '../utils/usuarioAdminCompat';
 import {
@@ -60,24 +55,15 @@ const PERFIS_FORM = [
   { key: 'admin', label: getUsuarioPerfilLabel('admin'), icon: 'shield-checkmark-outline' },
 ];
 
-const TIPOS_VINCULO_PRODUTOR = TIPOS_VINCULO_PROPRIEDADE_USUARIO.filter((tipo) =>
-  ['titular', 'usuario_autorizado'].includes(tipo.key)
-);
-
 const emptyForm = {
   nome: '',
   email: '',
   telefone: '',
   documento: '',
   perfil: 'produtor',
-  status: 'ativo',
+  status: 'pendente',
   observacoes: '',
-  produtor_id: '',
   vinculosPropriedades: [] as any[],
-  regiao: '',
-  cargo: '',
-  subRegioesText: '',
-  nivelAdministrativo: 'global',
 };
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -172,11 +158,7 @@ export default function NovoUsuarioScreen() {
   const getVinculoPropriedade = (id: string) =>
     vinculosPropriedades.find((vinculo) => vinculo.propriedade_id === id);
 
-  const updateVinculosPropriedades = (vinculos: any[]) => {
-    updateField('vinculosPropriedades', normalizeFormVinculosPropriedade(vinculos));
-  };
-
-  const toggleVinculoPropriedade = (id: string, tipoPadrao = 'titular') => {
+  const toggleVinculoPropriedade = (id: string) => {
     setForm((prev) => {
       const current = normalizeFormVinculosPropriedade(prev.vinculosPropriedades);
       const exists = current.some((vinculo) => vinculo.propriedade_id === id);
@@ -186,8 +168,8 @@ export default function NovoUsuarioScreen() {
             ...current,
             {
               propriedade_id: id,
-              tipo_vinculo: tipoPadrao,
-              principal: current.length === 0,
+              tipo_vinculo: 'colaborador',
+              status: 'ativo',
             },
           ];
 
@@ -200,23 +182,6 @@ export default function NovoUsuarioScreen() {
     if (errors.vinculosPropriedades || errors.escopoColaborador) {
       setErrors((prev) => ({ ...prev, vinculosPropriedades: null, escopoColaborador: null }));
     }
-  };
-
-  const updateTipoVinculoPropriedade = (id: string, tipo: string) => {
-    updateVinculosPropriedades(
-      vinculosPropriedades.map((vinculo) =>
-        vinculo.propriedade_id === id ? { ...vinculo, tipo_vinculo: tipo } : vinculo
-      )
-    );
-  };
-
-  const setVinculoPrincipal = (id: string) => {
-    updateVinculosPropriedades(
-      vinculosPropriedades.map((vinculo) => ({
-        ...vinculo,
-        principal: vinculo.propriedade_id === id,
-      }))
-    );
   };
 
   const propriedadesSelecionadas = useMemo(() => {
@@ -257,34 +222,16 @@ export default function NovoUsuarioScreen() {
     return 'Não foi possível salvar o usuário no mock.';
   };
 
-  const renderPropriedadeOption = ({
-    propriedade,
-    tipoPadrao,
-    showTipo = false,
-    showPrincipal = false,
-  }: {
-    propriedade: any;
-    tipoPadrao: string;
-    showTipo?: boolean;
-    showPrincipal?: boolean;
-  }) => {
+  const renderPropriedadeOption = (propriedade: any) => {
     const option = getFazendaOptionLabel(propriedade);
     const vinculo = getVinculoPropriedade(option.id);
     const active = Boolean(vinculo);
-    const outroProdutorPrincipal = showPrincipal
-      ? usuarios.find((usuario) => {
-          if (usuario?.id === usuarioAtual?.id || usuario?.perfil !== 'produtor') return false;
-          return getVinculosPropriedadeUsuario(usuario, propriedades).some(
-            (item) => item.propriedade_id === option.id && item.principal
-          );
-        })
-      : null;
 
     return (
       <View key={option.id} style={[styles.optionGroup, active && styles.optionRowActive]}>
         <TouchableOpacity
           style={styles.optionRow}
-          onPress={() => toggleVinculoPropriedade(option.id, tipoPadrao)}
+          onPress={() => toggleVinculoPropriedade(option.id)}
           activeOpacity={0.78}
         >
           <Ionicons
@@ -297,47 +244,6 @@ export default function NovoUsuarioScreen() {
             <Text style={styles.optionSubtitle} numberOfLines={1}>{option.subtitle}</Text>
           </View>
         </TouchableOpacity>
-
-        {active && (showTipo || showPrincipal) && (
-          <View style={styles.linkControls}>
-            {showTipo && (
-              <SegmentedChips
-                options={TIPOS_VINCULO_PRODUTOR.map((tipo) => ({
-                  value: tipo.key,
-                  label: tipo.label,
-                }))}
-                value={vinculo.tipo_vinculo}
-                onChange={(value) => updateTipoVinculoPropriedade(option.id, value)}
-              />
-            )}
-
-            {showPrincipal && (
-              <TouchableOpacity
-                style={[styles.miniChip, vinculo.principal && styles.miniChipActive]}
-                onPress={() => setVinculoPrincipal(option.id)}
-                activeOpacity={0.78}
-              >
-                <Ionicons
-                  name={vinculo.principal ? 'star' : 'star-outline'}
-                  size={14}
-                  color={vinculo.principal ? colors.white : colors.primary}
-                />
-                <Text style={[styles.miniChipText, vinculo.principal && styles.miniChipTextActive]}>
-                  Principal
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {showPrincipal && outroProdutorPrincipal && (
-              <View style={styles.inlineWarning}>
-                <Ionicons name="alert-circle-outline" size={16} color={colors.warning} />
-                <Text style={styles.inlineWarningText}>
-                  Já existe produtor principal vinculado no mock: {getUsuarioNome(outroProdutorPrincipal)}. Este vínculo visual não altera automaticamente o titular cadastral.
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
       </View>
     );
   };
@@ -368,13 +274,26 @@ export default function NovoUsuarioScreen() {
     if (
       form.perfil === 'produtor'
       && form.status === 'ativo'
-      && vinculosPropriedades.length === 0
+      && !vinculosPropriedades.some((vinculo) => vinculo.status !== 'inativo')
     ) {
-      nextErrors.vinculosPropriedades = 'Produtor ativo é perfil de usuário e precisa ter ao menos uma Propriedade vinculada no mock.';
+      nextErrors.vinculosPropriedades = 'Cadastre o Produtor como Pendente. A primeira Propriedade ativará o usuário e criará o vínculo de Titular na mesma operação.';
+    }
+
+    if (
+      form.perfil === 'produtor'
+      && form.status !== 'ativo'
+      && vinculosPropriedades.some((vinculo) => (
+        vinculo.status !== 'inativo' && vinculo.tipo_vinculo === 'titular'
+      ))
+    ) {
+      nextErrors.status = 'Um Produtor que já é Titular precisa permanecer Ativo. A transferência de titularidade exige fluxo próprio.';
     }
 
     if (form.perfil === 'colaborador') {
-      if (form.status === 'ativo' && vinculosPropriedades.length === 0) {
+      if (
+        form.status === 'ativo'
+        && !vinculosPropriedades.some((vinculo) => vinculo.status !== 'inativo')
+      ) {
         nextErrors.escopoColaborador = 'Colaborador ativo precisa ter ao menos uma Propriedade vinculada diretamente.';
       }
     }
@@ -481,8 +400,8 @@ export default function NovoUsuarioScreen() {
         scrollEventThrottle={16}
       >
         <InfoBox
-          title="Cadastro administrativo demonstrativo"
-          message="Este registro fica salvo somente neste aparelho. A senha local prepara acesso demonstrativo futuro, mas ainda não cria sessão, backend, convite ou sincronização."
+          title="Cadastro administrativo local v2"
+          message="O usuário, sua credencial e os vínculos diretos ficam somente neste aparelho. Este fluxo permite acesso local demonstrativo, mas não cria conta, convite, sincronização ou autorização em backend."
         />
 
         <SectionCard
@@ -512,7 +431,7 @@ export default function NovoUsuarioScreen() {
               autoCapitalize="none"
               keyboardType="email-address"
               error={errors.email}
-              helperText="Obrigatório para identificar o cadastro mockado; não funciona como credencial de login."
+              helperText="Identifica o cadastro e a credencial de acesso local neste aparelho."
             />
           </View>
 
@@ -583,7 +502,7 @@ export default function NovoUsuarioScreen() {
 
         <SectionCard
           title="Perfil demonstrativo"
-          subtitle="Produtor, Colaborador e Administrador organizam a demonstração local. Este cadastro não concede acesso ou RBAC real."
+          subtitle="O perfil define as capacidades locais; vínculos diretos definem as Propriedades acessíveis. Não representa RBAC de produção."
         >
           <View ref={formValidation.registerField('perfil')} collapsable={false}>
           <Text style={styles.label}>
@@ -594,12 +513,30 @@ export default function NovoUsuarioScreen() {
               value: perfil.key,
               label: perfil.label,
               icon: perfil.icon as any,
+              disabled: isEdit && perfil.key !== form.perfil,
             }))}
             value={form.perfil}
-            onChange={(value) => updateField('perfil', value)}
+            onChange={(value) => {
+              setForm((prev) => ({
+                ...prev,
+                perfil: value,
+                vinculosPropriedades: value === prev.perfil ? prev.vinculosPropriedades : [],
+              }));
+              setErrors((prev) => ({
+                ...prev,
+                perfil: null,
+                vinculosPropriedades: null,
+                escopoColaborador: null,
+              }));
+            }}
             style={styles.segmentedField}
           />
           {errors.perfil && <Text style={styles.errorText}>{errors.perfil}</Text>}
+          {isEdit ? (
+            <Text style={styles.helperText}>
+              O perfil é estrutural e não pode ser trocado nesta edição comum.
+            </Text>
+          ) : null}
           </View>
 
           <View ref={formValidation.registerField('status')} collapsable={false}>
@@ -634,34 +571,25 @@ export default function NovoUsuarioScreen() {
         <View ref={formValidation.registerField('vinculosPropriedades')} collapsable={false}>
         {form.perfil === 'produtor' && (
           <SectionCard
-            title="Vínculos do Produtor"
-            subtitle="Vínculos demonstrativos organizam o registro local. Produtor ativo deve ter ao menos uma Propriedade vinculada no mock."
+            title="Propriedades do Produtor"
+            subtitle="A titularidade é definida no cadastro da Propriedade e não pode ser alterada por esta tela."
           >
-            <Text style={styles.label}>Propriedades vinculadas</Text>
             {errors.vinculosPropriedades && <Text style={styles.errorText}>{errors.vinculosPropriedades}</Text>}
-            <View style={styles.optionList}>
-              {propriedadesOrdenadas.map((propriedade) =>
-                renderPropriedadeOption({
-                  propriedade,
-                  tipoPadrao: 'titular',
-                  showTipo: true,
-                  showPrincipal: true,
-                })
-              )}
-            </View>
-
-            {propriedadesSelecionadas.length > 0 && (
+            {propriedadesSelecionadas.length > 0 ? (
               <View style={styles.linkedBox}>
-                <Text style={styles.linkedTitle}>Resumo dos vínculos</Text>
+                <Text style={styles.linkedTitle}>Vínculos preservados</Text>
                 <Text style={styles.linkedText}>
-                  {propriedadesSelecionadas.length} propriedade{propriedadesSelecionadas.length === 1 ? '' : 's'} selecionada{propriedadesSelecionadas.length === 1 ? '' : 's'} para este usuário produtor.
+                  {propriedadesSelecionadas.length} Propriedade{propriedadesSelecionadas.length === 1 ? '' : 's'} vinculada{propriedadesSelecionadas.length === 1 ? '' : 's'}.
                 </Text>
-                {vinculosPropriedades.map((vinculo) => (
-                  <Text key={vinculo.propriedade_id} style={styles.linkedItemText}>
-                    {vinculo.principal ? 'Principal' : 'Vínculo'} • {getVinculoPropriedadeLabel(vinculo.tipo_vinculo)}
-                  </Text>
-                ))}
+                {propriedadesSelecionadas.map((propriedade) => {
+                  const option = getFazendaOptionLabel(propriedade);
+                  return <Text key={option.id} style={styles.linkedItemText}>{option.title}</Text>;
+                })}
               </View>
+            ) : (
+              <InfoBox
+                message="Cadastre este Produtor como Pendente. Depois crie a primeira Propriedade e selecione-o como Titular; usuário, Produtor e vínculo serão ativados juntos."
+              />
             )}
           </SectionCard>
         )}
@@ -672,22 +600,10 @@ export default function NovoUsuarioScreen() {
             title="Escopo do Colaborador"
             subtitle="Selecione diretamente as Propriedades que este Colaborador poderá acessar no mock local. Município e UF servem apenas para localizar e filtrar."
           >
-            <FormField
-              label="Função/cargo"
-              value={form.cargo}
-              onChangeText={(value) => updateField('cargo', value)}
-              placeholder="Ex: Consultor de campo"
-            />
-
             <Text style={styles.label}>Propriedades vinculadas</Text>
             <View style={styles.optionList}>
               {propriedadesOrdenadas.map((propriedade) =>
-                renderPropriedadeOption({
-                  propriedade,
-                  tipoPadrao: 'colaborador',
-                  showTipo: false,
-                  showPrincipal: false,
-                })
+                renderPropriedadeOption(propriedade)
               )}
             </View>
 
@@ -717,23 +633,13 @@ export default function NovoUsuarioScreen() {
         {form.perfil === 'admin' && (
           <SectionCard
             title="Dados administrativos"
-            subtitle="Administrador é um perfil demonstrativo do MVP local; não concede acesso administrativo real."
+            subtitle="Admin possui visão global dentro da organização local e não precisa de vínculo com Propriedade."
           >
-            <Text style={styles.label}>Nível administrativo</Text>
-            <SegmentedChips
-              options={NIVEIS_ADMIN_USUARIO.map((nivel) => ({
-                value: nivel.key,
-                label: nivel.label,
-              }))}
-              value={form.nivelAdministrativo}
-              onChange={(value) => updateField('nivelAdministrativo', value)}
-              style={styles.segmentedField}
-            />
             <View style={styles.adminBox}>
               <Ionicons name="earth-outline" size={22} color={colors.primary} />
               <View style={styles.adminBoxText}>
                 <Text style={styles.adminBoxTitle}>Administrador</Text>
-                <Text style={styles.adminBoxSubtitle}>Perfil demonstrativo com visão ampla no MVP local, sem RBAC ou autenticação real.</Text>
+                <Text style={styles.adminBoxSubtitle}>Visão global na Tchê Fertilidade deste aparelho, sem vínculo operacional individual.</Text>
               </View>
             </View>
           </SectionCard>
@@ -780,6 +686,11 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: typography.fontCaption + 1,
     marginTop: spacing.xs,
+  },
+  helperText: {
+    color: colors.textLight,
+    fontSize: typography.fontCaption + 1,
+    lineHeight: 18,
   },
   segmentedField: {
     marginBottom: spacing.md,

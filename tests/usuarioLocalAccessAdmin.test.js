@@ -415,6 +415,53 @@ const run = async () => {
     assert.equal((await User.get(saved.id)).email, 'email.usuario.original@example.com');
   });
 
+  await test('falha ao atualizar credencial desfaz a edicao cadastral e os vinculos', async () => {
+    await setupMock();
+    const { service } = createService();
+    const payload = adminPayload({ email: 'rollback.update.original@example.com' });
+    const saved = await createUsuarioAdminWithLocalCredential({
+      userApi: User,
+      credentialService: service,
+      payload,
+      email: payload.email,
+      senha: 'SenhaOriginal123',
+    });
+    const failingCredentialService = {
+      findCredentialByUserId: service.findCredentialByUserId,
+      findCredentialByEmail: service.findCredentialByEmail,
+      createCredential: service.createCredential,
+      updateCredential: async () => {
+        throw new Error('LocalCredential: falha simulada na atualização');
+      },
+      updateCredentialEmail: service.updateCredentialEmail,
+    };
+    const changedPayload = adminPayload({
+      nome: 'Nome que deve ser desfeito',
+      email: 'rollback.update.novo@example.com',
+    });
+
+    await assert.rejects(
+      () => updateUsuarioAdminAndSyncLocalCredential({
+        userApi: User,
+        credentialService: failingCredentialService,
+        usuarioId: saved.id,
+        payload: changedPayload,
+        email: changedPayload.email,
+        novaSenha: 'SenhaNova123',
+        shouldUpdatePassword: true,
+      }),
+      /falha simulada na atualização/,
+    );
+
+    const restored = await User.get(saved.id);
+    assert.equal(restored.nome, payload.nome);
+    assert.equal(restored.email, payload.email);
+    assert.deepEqual(await service.verifyCredential(payload.email, 'SenhaOriginal123'), {
+      ok: true,
+      usuario_id: saved.id,
+    });
+  });
+
   await test('falha na criacao da credencial remove usuario recem-criado', async () => {
     await setupMock();
     const payload = adminPayload({ email: 'rollback.cred@example.com' });

@@ -70,13 +70,15 @@ export default function NovaPropriedadeScreen({ navigation }) {
     status: 'ativo',
   });
 
-  const titularesAtivos = useMemo(
-    () => titulares.filter((titular) => titular.status === 'ativo' && titular.usuario_id),
+  const titularesElegiveis = useMemo(
+    () => titulares.filter((titular) => (
+      ['ativo', 'pendente'].includes(titular.status) && titular.usuario_id
+    )),
     [titulares],
   );
   const titularSelecionado = useMemo(
-    () => titularesAtivos.find((titular) => titular.id === titularSelecionadoId),
-    [titularSelecionadoId, titularesAtivos],
+    () => titularesElegiveis.find((titular) => titular.id === titularSelecionadoId),
+    [titularSelecionadoId, titularesElegiveis],
   );
   const colaboradores = useMemo(
     () => usuarios
@@ -163,14 +165,14 @@ export default function NovaPropriedadeScreen({ navigation }) {
     ufId: ufSelecionada?.id || municipioSelecionado?.ufId,
     ufSigla: form.uf_sigla,
     status: form.status,
-    titulares: titularesAtivos,
+    titulares: titularesElegiveis,
   });
 
   const validateForm = () => {
     const nextErrors: any = {};
     if (!podeCriarProdutor(user)) nextErrors.escopo = 'Somente Administradores podem cadastrar Propriedades.';
     if (!validarObrigatorio(form.propriedade_nome)) nextErrors.propriedade = 'Informe o nome da Propriedade.';
-    if (!titularSelecionado) nextErrors.titular = 'Selecione um Produtor ativo como Titular.';
+    if (!titularSelecionado) nextErrors.titular = 'Selecione um Produtor ativo ou pendente como Titular.';
     if (!ufSelecionada) nextErrors.uf = 'Selecione uma UF válida.';
     if (!municipioSelecionado) nextErrors.municipio = 'Selecione um município válido.';
     if (form.area_total.trim() && !validarArea(form.area_total)) {
@@ -302,20 +304,22 @@ export default function NovaPropriedadeScreen({ navigation }) {
                 label="Produtor Titular"
                 required
                 value={titularSelecionadoId}
-                options={titularesAtivos.map((titular) => ({
+                options={titularesElegiveis.map((titular) => ({
                   value: titular.id,
                   label: titular.nome,
                   description: titular.fazendas_nomes?.length
                     ? `${titular.fazendas_nomes.length} Propriedade(s) já cadastrada(s)`
-                    : 'Produtor ativo sem Propriedade',
+                    : titular.status === 'pendente'
+                      ? 'Pendente • será ativado ao criar a primeira Propriedade'
+                      : 'Produtor ativo sem Propriedade',
                 }))}
                 onChange={(value) => {
                   setTitularSelecionadoId(value);
                   setErrors((atual) => ({ ...atual, titular: null }));
                 }}
-                placeholder="Selecione um Produtor ativo"
+                placeholder="Selecione um Produtor"
                 error={errors.titular}
-                helperText="Se o Produtor não estiver disponível, cadastre ou ative seu usuário antes de continuar."
+                helperText="Cadastre primeiro o Produtor como Pendente. Ao criar sua primeira Propriedade, ele será ativado na mesma operação."
               />
             )}
           </View>

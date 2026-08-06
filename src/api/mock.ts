@@ -2293,14 +2293,42 @@ const validateUsuarioMock = (
 
   ensureUsuarioEmailUnico(usuario.email, ignoreId);
 
-  if (usuario.perfil === 'produtor' && usuario.status === 'ativo' && vinculosPropriedades.length === 0) {
+  const vinculosAtivos = vinculosPropriedades.filter((vinculo) => vinculo.status !== 'inativo');
+
+  if (activeMockStorageVersion === 2) {
+    const tiposPermitidos = usuario.perfil === 'produtor'
+      ? new Set(['titular', 'usuario_autorizado'])
+      : usuario.perfil === 'colaborador'
+        ? new Set(['colaborador'])
+        : new Set<string>();
+
+    if (vinculosPropriedades.some((vinculo) => !tiposPermitidos.has(vinculo.tipo_vinculo))) {
+      throw new Error(`User.${usuario.perfil}: tipo de vínculo incompatível com o perfil`);
+    }
+
+    if (usuario.perfil === 'produtor') {
+      const produtorId = resolveUsuarioProdutorId(usuario, usuario.id);
+      const titularIncompativel = vinculosAtivos.some((vinculo) => {
+        if (vinculo.tipo_vinculo !== 'titular') return false;
+        const propriedade = produtores.find((item) => item.id === vinculo.propriedade_id);
+        return !propriedade || String(
+          propriedade.titular_id || propriedade.produtor_id || propriedade.proprietario_id || ''
+        ).trim() !== produtorId;
+      });
+      if (titularIncompativel) {
+        throw new Error('User.produtor: vínculo Titular não corresponde ao titular_id da Propriedade');
+      }
+    }
+  }
+
+  if (usuario.perfil === 'produtor' && usuario.status === 'ativo' && vinculosAtivos.length === 0) {
     throw new Error('User.produtor: Produtor ativo precisa ter ao menos uma propriedade vinculada');
   }
 
   if (
     usuario.perfil === 'colaborador'
     && usuario.status === 'ativo'
-    && vinculosPropriedades.length === 0
+    && vinculosAtivos.length === 0
   ) {
     throw new Error('User.colaborador: Colaborador ativo precisa ter ao menos uma Propriedade vinculada diretamente');
   }
@@ -2352,17 +2380,20 @@ export const User: any = {
   create: async (data) =>
     mutateHydratedMock(200, () => {
       const id = `u${Date.now()}`;
-      const status = resolveUsuarioStatus(data);
+      const boundaryData = activeMockStorageVersion === 1 && !data?.senha
+        ? { ...data, senha: 'mock123' }
+        : data;
+      const status = resolveUsuarioStatus(boundaryData);
       const novo = {
         id,
-        ...data,
+        ...boundaryData,
         status,
         ativo: status === 'ativo',
         data_cadastro: new Date().toISOString()
       };
       novo.produtor_id = novo.perfil === 'produtor' ? resolveUsuarioProdutorId(novo, id) : '';
-      const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, novo, data, true);
-      const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, novo, data, true);
+      const vinculosPropriedades = resolveUsuarioPropriedadeLinks(id, novo, boundaryData, true);
+      const vinculosMicroregioes = resolveUsuarioMicroregiaoLinks(id, novo, boundaryData, true);
 
       validateUsuarioMock(novo, { ignoreId: id, vinculosPropriedades, vinculosMicroregioes });
       users.unshift(stripUsuarioRelations(novo));
@@ -2444,14 +2475,16 @@ export const Produtor: any = {
     mutateHydratedMock(200, () => {
       validateProdutor(data);
       const titularId = String(data?.titular_id || data?.produtor_id || '').trim();
-      const titularUsuario = users.find((usuario) => usuario.id === titularUsuarioId);
+      const titularUsuarioIndex = users.findIndex((usuario) => usuario.id === titularUsuarioId);
+      const titularUsuario = users[titularUsuarioIndex];
+      const titularStatus = resolveUsuarioStatus(titularUsuario);
       if (
         !titularUsuario
         || titularUsuario.perfil !== 'produtor'
-        || resolveUsuarioStatus(titularUsuario) !== 'ativo'
+        || !['ativo', 'pendente'].includes(titularStatus)
         || resolveUsuarioProdutorId(titularUsuario, titularUsuario.id) !== titularId
       ) {
-        throw new Error('Propriedade.titular: Produtor ativo incompatível com o titular informado');
+        throw new Error('Propriedade.titular: Produtor ativo ou pendente incompatível com o titular informado');
       }
 
       const colaboradoresUnicos = [...new Set(
@@ -2474,6 +2507,13 @@ export const Produtor: any = {
       const id = `p${Date.now()}`;
       const novo = persistMockProdutor({ id, data });
       produtores.unshift(novo);
+
+      if (titularStatus === 'pendente') {
+        Object.assign(users[titularUsuarioIndex] as any, {
+          status: 'ativo',
+          ativo: true,
+        });
+      }
 
       const adicionarVinculo = (usuario: any, tipoVinculo: 'titular' | 'colaborador') => {
         const existentes = usuarioPropriedade
@@ -2499,7 +2539,7 @@ export const Produtor: any = {
         replaceUsuarioPropriedadeLinks(usuario.id, novosVinculos);
       };
 
-      adicionarVinculo(titularUsuario, 'titular');
+      adicionarVinculo(users[titularUsuarioIndex], 'titular');
       colaboradoresSelecionados.forEach((colaborador) => adicionarVinculo(colaborador, 'colaborador'));
       return readMockProdutor(novo);
     }),

@@ -675,7 +675,20 @@ nao aprovado.
 
 ### 6. Revisao do fluxo de cadastro de Propriedade e Produtor
 
-Ainda falta avaliar se a tela de Nova Propriedade deve permitir criar novo titular/produtor dentro do proprio cadastro.
+Status em 2026-08-06: a decisao funcional local foi concluida pela Decisao 34.
+O Admin cadastra primeiro o Usuario Produtor como pendente e cria sua primeira
+Propriedade no fluxo proprio. Esse segundo salvamento ativa Usuario, Produtor
+e vinculo de Titular atomicamente. Nao existe mais cadastro rapido de
+Propriedade dentro de Usuario, e titularidade/perfil nao mudam na edicao
+comum.
+
+Permanecem pendentes somente a implementacao equivalente no backend real,
+transacao de banco, autenticacao produtiva, auditoria e o fluxo administrativo
+de transferencia de Titular ou mudanca estrutural de perfil.
+
+O conteudo abaixo registra a evolucao historica ate essa decisao.
+
+Ainda faltava avaliar se a tela de Nova Propriedade deveria permitir criar novo titular/produtor dentro do proprio cadastro.
 
 A tendencia para o MVP e centralizar o cadastro de novos usuarios/produtores em `NovoUsuarioScreen` e deixar `NovaPropriedadeScreen` apenas para selecionar um produtor/titular ja existente.
 

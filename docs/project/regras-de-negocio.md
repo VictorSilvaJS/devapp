@@ -26,7 +26,10 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - No mock administrativo, produtor pode ter multiplas propriedades vinculadas e deve receber alerta visual quando uma propriedade selecionada ja tiver outro produtor principal no mock.
 - O cadastro estrutural de Propriedade e exclusivo de Admin; Colaborador e
   Produtor nao criam Propriedades.
-- O Produtor deve existir e estar ativo antes de ser escolhido como Titular.
+- O Produtor deve existir antes de ser escolhido como Titular. Um Produtor
+  pendente pode ser escolhido na criacao de sua primeira Propriedade; nesse
+  caso, Usuario, cadastro de Produtor e vinculo de Titular sao ativados na
+  mesma operacao atomica que cria a Propriedade.
 - O cadastro grava `titular_id`, `municipio_id`, `municipio_nome`, `uf_id`,
   `uf_sigla` e cria o vinculo ativo de Titular em `usuario_propriedade`.
 - Colaboradores opcionais sao selecionados nominalmente e recebem um vinculo
@@ -80,8 +83,25 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Campos comuns de usuario no mock administrativo: nome, e-mail, telefone, documento, perfil, status e observacoes.
 - Status de usuario no mock administrativo deve ser explicito: `ativo`, `inativo` ou `pendente`.
 - O booleano `ativo` e apenas compatibilidade temporaria quando necessario.
-- Admin pode ter nivel administrativo simples: Global, Operacional ou Suporte.
-- O cadastro ou edicao de usuario no MVP visual/mockado nao cria login real, senha real, convite, reset de acesso ou sessao.
+- Somente Admin cria ou edita Usuarios no fluxo administrativo local.
+- Perfil e um dado estrutural: a edicao comum nao transforma Admin,
+  Colaborador e Produtor entre si.
+- O cadastro de Produtor nasce `pendente` quando ainda nao possui
+  Propriedade. A primeira Propriedade e criada no fluxo proprio, selecionando
+  esse Produtor como Titular; o salvamento o ativa atomicamente.
+- As Propriedades de um Produtor sao apresentadas como leitura no cadastro de
+  Usuario. Titularidade e novos vinculos sao definidos no fluxo de
+  Propriedade, permitindo que o mesmo Produtor seja Titular de varias delas.
+- Colaborador ativo exige ao menos um vinculo direto ativo do tipo
+  `colaborador`; Admin nao recebe vinculo com Propriedade.
+- Novas escritas de Usuario nao gravam nivel administrativo, Regiao,
+  Microregiao, `sub_regioes`, `propriedades_atribuidas`,
+  `vinculos_microregioes`, `senha` ou aliases equivalentes do v1.
+- O MVP pode criar ou atualizar uma credencial local demonstrativa, sem senha
+  em texto no Usuario. Falha na credencial deve desfazer a alteracao do
+  Usuario e de seus vinculos.
+- Credencial local nao representa backend, convite, reset, token, sessao ou
+  autenticacao produtiva.
 
 ### Dados ligados ao contexto da propriedade
 
@@ -95,9 +115,10 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Possui visao ampla do sistema.
 - Pode navegar entre regioes, produtores e propriedades.
 - Seu fluxo deve privilegiar leitura consolidada e administracao dos dados autorizados.
-- No MVP mockado, pode gerenciar visualmente usuarios, vinculos com propriedades e vinculos com microregioes sem criar autenticacao real.
-- No MVP mockado, Admin ve todas as Propriedades; edicoes visuais de
-  `propriedades_atribuidas` nao alteram acesso efetivo do colaborador.
+- No MVP local, pode gerenciar Usuarios e vinculos diretos com Propriedades;
+  nao gerencia vinculos por Regiao ou Microregiao.
+- No MVP local, Admin ve todas as Propriedades. O acesso do Colaborador muda
+  somente pela persistencia de `usuario_propriedade` direto e ativo.
 
 ### Colaborador
 
@@ -116,8 +137,10 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Acessa os dados da sua propria realidade operacional.
 - Deve conseguir consultar materiais e historicos autorizados.
 - Nao deve ser tratado como responsavel por gerenciar a estrutura geral do sistema.
-- No mock administrativo, produtor ativo deve ter ao menos uma propriedade vinculada.
-- Produtor pendente pode existir sem propriedade vinculada.
+- No mock administrativo, Produtor ativo deve ter ao menos uma Propriedade
+  vinculada; Produtor pendente pode existir sem Propriedade.
+- Produtor com vinculo ativo de Titular nao pode ser colocado como pendente ou
+  inativo na edicao comum; transferencia de titularidade exige fluxo proprio.
 - No MVP mockado, o acesso efetivo do Produtor a Propriedades ocorre por
   vinculo de titular/produtor compativel.
 
@@ -400,12 +423,17 @@ Enquanto `Admin -> Usuarios` estiver em MVP visual/mockado, as validacoes minima
 - e-mail unico ao editar usuario, ignorando o proprio usuario
 - perfil obrigatorio
 - status obrigatorio
-- produtor ativo com pelo menos uma propriedade vinculada
-- produtor ativo com propriedade existente vinculada ou cadastro rapido de propriedade valido
-- produtor pendente podendo ficar sem propriedade vinculada
-- cadastro rapido de propriedade ativo com campos minimos validos, evitando criacao vazia
+- perfil imutavel na edicao comum
+- produtor ativo com pelo menos uma Propriedade vinculada
+- produtor pendente podendo ficar sem Propriedade vinculada
+- primeiro cadastro de Propriedade aceitando Produtor pendente e ativando
+  Usuario, Produtor e vinculo de Titular na mesma operacao
+- vinculo de Titular correspondendo ao `titular_id` real da Propriedade
+- produtor Titular ativo nao podendo ser inativado sem fluxo de transferencia
 - colaborador ativo com ao menos uma Propriedade vinculada diretamente
-- admin sem obrigatoriedade de propriedade ou microregiao
+- colaborador usando somente vinculos do tipo `colaborador`
+- admin sem vinculo de Propriedade ou Microregiao
+- payload v2 sem campos territoriais, senha ou aliases administrativos do v1
 - `User.update` validando o registro mesclado de forma equivalente ao `User.create`
 
 Essas validacoes continuam sendo regras do mock administrativo e nao substituem validacoes finais de backend, banco, autenticacao ou permissoes futuras.

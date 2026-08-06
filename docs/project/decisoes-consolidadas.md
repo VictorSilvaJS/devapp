@@ -941,3 +941,39 @@ mock, persistencia local, testes e futuro backend/RBAC.
   Propriedade no servidor;
 - o contrato detalhado fica em `modelo-dados-mock-v2.md` e
   `modelo-territorial.md`.
+
+---
+
+## 34. Cadastro de Produtor e primeira Propriedade ocorrem em duas etapas
+
+### Decisao
+
+O Admin cadastra primeiro o Usuario com perfil Produtor. Se ele ainda nao
+possui Propriedade, permanece `pendente`. Depois, no fluxo de Nova
+Propriedade, o Admin seleciona esse Produtor como Titular. O salvamento cria a
+Propriedade, o vinculo ativo de Titular e ativa Usuario/Produtor em uma unica
+operacao local atomica.
+
+O cadastro de Usuario nao cria uma Propriedade rapida. Perfil, titularidade e
+vinculos de Produtor sao estruturais e nao sao alterados pela edicao cadastral
+comum do Usuario.
+
+### Alcance
+
+Afeta `Admin -> Usuarios`, Nova Propriedade, persistencia local v2, validacao
+do snapshot, credencial local, testes e o futuro contrato transacional do
+backend.
+
+### Impacto
+
+- um Produtor pendente pode existir sem Propriedade e sem acesso operacional;
+- a primeira Propriedade ativa atomicamente o Produtor escolhido;
+- o mesmo Produtor pode ser Titular de varias Propriedades pelo mesmo fluxo;
+- a tela de Usuario apenas informa os vinculos do Produtor;
+- Colaborador continua recebendo vinculos diretos no cadastro de Usuario;
+- Admin continua global e sem vinculos de Propriedade;
+- troca de perfil ou Titular exige fluxo estrutural proprio;
+- falha ao atualizar a credencial local desfaz a alteracao administrativa
+  correspondente;
+- backend, autenticacao, auditoria e transacao produtivos permanecem fora do
+  mock local.

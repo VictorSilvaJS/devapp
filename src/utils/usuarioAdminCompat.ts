@@ -255,9 +255,6 @@ export const usuarioMatchesBusca = (usuario: any, busca?: string) => {
     usuario?.telefone,
     usuario?.documento,
     usuario?.perfil,
-    usuario?.regiao,
-    usuario?.nivel_administrativo,
-    ...(getSubRegioesUsuario(usuario) || []),
   ]
     .filter(Boolean)
     .join(' ')
@@ -277,7 +274,6 @@ export const buildUsuarioAdminPayload = ({
 }) => {
   const perfil = form.perfil || existing?.perfil || 'produtor';
   const status = form.status || existing?.status || 'ativo';
-  const ativo = status === 'ativo';
   const base: Record<string, any> = {
     nome: form.nome?.trim() || '',
     email: form.email?.trim() || '',
@@ -285,37 +281,26 @@ export const buildUsuarioAdminPayload = ({
     documento: form.documento?.trim() || '',
     perfil,
     status,
-    ativo,
     observacoes: form.observacoes?.trim() || '',
-    senha: existing?.senha || 'mock123',
   };
 
-  const vinculosPropriedades = normalizeFormVinculosPropriedade(form.vinculosPropriedades);
+  const vinculosPropriedades = normalizeFormVinculosPropriedade(form.vinculosPropriedades)
+    .filter((vinculo) => (propriedades || []).some(
+      (propriedade) => resolvePropriedadeId(propriedade) === vinculo.propriedade_id
+    ));
+  const toCanonicalLink = (vinculo: any, tipoVinculo: string) => ({
+    propriedade_id: vinculo.propriedade_id,
+    tipo_vinculo: tipoVinculo,
+    status: vinculo.status === 'inativo' ? 'inativo' : 'ativo',
+  });
 
   if (perfil === 'produtor') {
-    const vinculoPrincipal = vinculosPropriedades.find((vinculo) => vinculo.principal) || vinculosPropriedades[0];
-    const propriedadePrincipal = (propriedades || []).find(
-      (propriedade) => resolvePropriedadeId(propriedade) === vinculoPrincipal?.propriedade_id
-    );
-    const produtorId =
-      resolveTitularId(propriedadePrincipal)
-      || form.produtor_id?.trim()
-      || existing?.produtor_id
-      || '';
-
     return {
       ...base,
-      produtor_id: produtorId,
-      tipo_vinculo_produtor: vinculoPrincipal?.tipo_vinculo || 'titular',
-      vinculos_propriedades: vinculosPropriedades,
-      vinculos_microregioes: [],
-      regiao: '',
-      cargo: '',
-      sub_regioes: [],
-      propriedades_atribuidas: [],
-      regioes_acesso: [],
-      nivel_administrativo: '',
-      acesso_global: false,
+      vinculos_propriedades: vinculosPropriedades.map((vinculo) => toCanonicalLink(
+        vinculo,
+        vinculo.tipo_vinculo === 'usuario_autorizado' ? 'usuario_autorizado' : 'titular',
+      )),
     };
   }
 
@@ -328,33 +313,15 @@ export const buildUsuarioAdminPayload = ({
 
     return {
       ...base,
-      produtor_id: '',
-      tipo_vinculo_produtor: '',
-      regiao: '',
-      cargo: form.cargo?.trim() || '',
-      sub_regioes: [],
-      propriedades_atribuidas: vinculosColaborador.map((vinculo) => vinculo.propriedade_id),
-      vinculos_propriedades: vinculosColaborador,
-      vinculos_microregioes: [],
-      regioes_acesso: [],
-      nivel_administrativo: '',
-      acesso_global: false,
+      vinculos_propriedades: vinculosColaborador.map((vinculo) => (
+        toCanonicalLink(vinculo, 'colaborador')
+      )),
     };
   }
 
   return {
     ...base,
-    produtor_id: '',
-    tipo_vinculo_produtor: '',
-    regiao: '',
-    cargo: '',
-    sub_regioes: [],
-    propriedades_atribuidas: [],
     vinculos_propriedades: [],
-    vinculos_microregioes: [],
-    regioes_acesso: ['Brasil'],
-    nivel_administrativo: form.nivelAdministrativo || existing?.nivel_administrativo || 'global',
-    acesso_global: true,
   };
 };
 
@@ -391,11 +358,6 @@ export const buildUsuarioFormFromMock = (usuario: any, propriedades: any[] = [])
     status: getUsuarioStatusKey(usuario),
     observacoes: usuario?.observacoes || '',
     vinculosPropriedades,
-    produtor_id: usuario?.produtor_id || '',
-    regiao: '',
-    cargo: usuario?.cargo || '',
-    subRegioesText: '',
-    nivelAdministrativo: usuario?.nivel_administrativo || 'global',
   };
 };
 

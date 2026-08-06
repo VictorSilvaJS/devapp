@@ -1,4 +1,6 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   buildUsuarioAdminPayload,
   buildVinculosPropriedadesPorMicroregioes,
@@ -54,7 +56,7 @@ const baseForm = {
 };
 
 const run = async () => {
-  await test('produtor salva somente vinculos com propriedades existentes', () => {
+  await test('produtor emite somente cadastro e vinculos canonicos com propriedades existentes', () => {
     const payload = buildUsuarioAdminPayload({
       form: {
         ...baseForm,
@@ -70,12 +72,16 @@ const run = async () => {
       propriedades,
     });
 
-    assert.equal(payload.produtor_id, 'titular_sul');
+    assert.equal(payload.produtor_id, undefined);
     assert.equal(payload.vinculos_propriedades.length, 1);
     assert.equal(payload.vinculos_propriedades[0].propriedade_id, 'prop_sul_1');
     assert.equal(payload.vinculos_propriedades[0].tipo_vinculo, 'titular');
     assert.equal(payload.vinculos_propriedades[0].status, 'ativo');
-    assert.deepEqual(payload.propriedades_atribuidas, []);
+    assert.equal(payload.propriedades_atribuidas, undefined);
+    assert.equal(payload.vinculos_microregioes, undefined);
+    assert.equal(payload.regiao, undefined);
+    assert.equal(payload.senha, undefined);
+    assert.equal(payload.ativo, undefined);
   });
 
   await test('colaborador recebe somente propriedades selecionadas diretamente', () => {
@@ -95,15 +101,15 @@ const run = async () => {
       propriedades,
     });
 
-    assert.deepEqual(payload.sub_regioes, []);
-    assert.deepEqual(payload.propriedades_atribuidas, ['prop_centro']);
+    assert.equal(payload.sub_regioes, undefined);
+    assert.equal(payload.propriedades_atribuidas, undefined);
     assert.deepEqual(
       payload.vinculos_propriedades.map((vinculo) => vinculo.tipo_vinculo),
       ['colaborador']
     );
-    assert.equal(payload.vinculos_propriedades[0].principal, true);
+    assert.equal(payload.vinculos_propriedades[0].principal, undefined);
     assert.equal(payload.vinculos_propriedades[0].status, 'ativo');
-    assert.deepEqual(payload.vinculos_microregioes, []);
+    assert.equal(payload.vinculos_microregioes, undefined);
   });
 
   await test('helper territorial legado permanece isolado da montagem do payload v2', () => {
@@ -152,9 +158,23 @@ const run = async () => {
     });
 
     assert.deepEqual(payload.vinculos_propriedades, []);
-    assert.deepEqual(payload.vinculos_microregioes, []);
-    assert.deepEqual(payload.propriedades_atribuidas, []);
-    assert.equal(payload.acesso_global, true);
+    assert.equal(payload.vinculos_microregioes, undefined);
+    assert.equal(payload.propriedades_atribuidas, undefined);
+    assert.equal(payload.acesso_global, undefined);
+    assert.equal(payload.nivel_administrativo, undefined);
+  });
+
+  await test('tela administrativa separa Produtor pendente, Titularidade e escopo direto', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/screens/NovoUsuarioScreen.tsx'),
+      'utf8',
+    );
+
+    assert.match(source, /Cadastre este Produtor como Pendente/);
+    assert.match(source, /titularidade é definida no cadastro da Propriedade/);
+    assert.match(source, /Selecione diretamente as Propriedades/);
+    assert.match(source, /Admin possui visão global/);
+    assert.doesNotMatch(source, /Função\/cargo|Nível administrativo|Região|Microrregião|cadastro rápido/i);
   });
 
   if (failed > 0) {
