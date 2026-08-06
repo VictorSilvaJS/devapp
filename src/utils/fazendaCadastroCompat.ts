@@ -34,6 +34,23 @@ export type CadastroFazendaPayload = {
   status?: string;
 };
 
+export type EdicaoFazendaPayload = {
+  propriedade_nome: string;
+  titular_id: string;
+  municipio_id: string;
+  municipio_nome: string;
+  uf_id: string;
+  uf_sigla: string;
+  area_total?: number;
+  cultura_principal?: string;
+  status: 'ativo' | 'inativo';
+  // Aliases mantidos somente na borda do runtime enquanto os consumidores
+  // antigos ainda leem cidade/estado/cultura_atual.
+  cidade: string;
+  estado: string;
+  cultura_atual?: string;
+};
+
 type BuildCadastroFazendaPayloadInput = {
   mode: CadastroTitularMode;
   titularId?: string | null;
@@ -47,6 +64,18 @@ type BuildCadastroFazendaPayloadInput = {
   ufSigla?: string | null;
   status?: string | null;
   titulares?: CadastroTitularOption[];
+};
+
+type BuildEdicaoFazendaPayloadInput = {
+  propriedadeAtual: Record<string, any>;
+  propriedadeNome?: string | null;
+  areaTotal?: string | number | null;
+  culturaPrincipal?: string | null;
+  municipioId?: string | null;
+  municipioNome?: string | null;
+  ufId?: string | null;
+  ufSigla?: string | null;
+  status?: string | null;
 };
 
 type UserScope = {
@@ -198,6 +227,63 @@ export const buildCadastroFazendaPayload = ({
   }
   payload.cidade = payload.municipio_nome;
   payload.estado = payload.uf_sigla;
+
+  return payload;
+};
+
+export const buildEdicaoFazendaPayload = ({
+  propriedadeAtual,
+  propriedadeNome,
+  areaTotal,
+  culturaPrincipal,
+  municipioId,
+  municipioNome,
+  ufId,
+  ufSigla,
+  status,
+}: BuildEdicaoFazendaPayloadInput): EdicaoFazendaPayload => {
+  const titularId = firstNonEmptyString(
+    propriedadeAtual?.titular_id,
+    propriedadeAtual?.produtor_id,
+    propriedadeAtual?.proprietario_id,
+  );
+  const nome = firstNonEmptyString(
+    propriedadeNome,
+    propriedadeAtual?.propriedade_nome,
+    propriedadeAtual?.fazenda_nome,
+    propriedadeAtual?.fazenda,
+  );
+  const municipioIdFinal = firstNonEmptyString(municipioId, propriedadeAtual?.municipio_id);
+  const municipioNomeFinal = firstNonEmptyString(
+    municipioNome,
+    propriedadeAtual?.municipio_nome,
+    propriedadeAtual?.cidade,
+  );
+  const ufIdFinal = firstNonEmptyString(ufId, propriedadeAtual?.uf_id);
+  const ufSiglaFinal = firstNonEmptyString(
+    ufSigla,
+    propriedadeAtual?.uf_sigla,
+    propriedadeAtual?.estado,
+  ).toUpperCase();
+  const areaNormalizada = normalizeArea(areaTotal);
+  const cultura = trimString(culturaPrincipal);
+  const payload: EdicaoFazendaPayload = {
+    propriedade_nome: nome,
+    titular_id: titularId,
+    municipio_id: municipioIdFinal,
+    municipio_nome: municipioNomeFinal,
+    uf_id: ufIdFinal,
+    uf_sigla: ufSiglaFinal,
+    cidade: municipioNomeFinal,
+    estado: ufSiglaFinal,
+    status: trimString(status) === 'inativo' ? 'inativo' : 'ativo',
+  };
+
+  if (Number.isFinite(areaNormalizada) && areaNormalizada > 0) payload.area_total = areaNormalizada;
+  if (cultura) {
+    payload.cultura_principal = cultura;
+    payload.cultura_atual = cultura;
+  }
 
   return payload;
 };

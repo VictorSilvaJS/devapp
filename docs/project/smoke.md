@@ -25,6 +25,18 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
     acesso local; Município/UF não podem conceder acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada V2-03 - Edição Canônica Da Propriedade**
+
+Status geral em 2026-08-06: `PASSOU_NO_CORTE_LOCAL`.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| V2E-01 | P0 | Admin | Propriedade | Abrir edição de uma Propriedade existente | Titular aparece bloqueado; UF/Município codificados e vínculos diretos ficam disponíveis | Passou | APK físico exibiu Gilceo Rigon bloqueado, Nova Mutum/MT, Bruna Brito e Victor; sem campos territoriais legados |
+| V2E-02 | P0 | Admin | Salvamento | Alterar cadastro e seleção de Colaboradores | Propriedade e vínculos são salvos juntos; falha não deixa alteração parcial | Passou | Persistência e rollback v2 passaram nos testes; nenhum dado demonstrativo foi alterado no aparelho |
+| V2E-03 | P0 | Colaborador/Produtor | Permissão | Abrir detalhe e tentar acessar edição por interface ou rota direta | Botão não aparece e rota direta não expõe o formulário | Passou | Victor não recebeu o botão; proteção da tela e perfis coberta por teste automatizado |
+| V2E-04 | P0 | Admin | Titular | Conferir ou tentar alterar o Titular na edição comum | Titular é preservado e não pode ser trocado neste fluxo | Passou | Campo desabilitado no APK e tentativa de troca rejeitada com rollback em teste |
+| V2E-05 | P1 | Colaborador | Não regressão | Abrir visitas, caderno e demais ações operacionais em Propriedade vinculada | Permissões operacionais continuam funcionando sem liberar edição cadastral | Passou | Suíte completa preservou capacidades operacionais separadas da edição cadastral |
+
 **Rodada V2-01 - Vínculo Direto Do Colaborador**
 
 Status geral em 2026-08-05: `PASSOU_AUTOMATIZADO_PENDENTE_SMOKE_ANDROID`.

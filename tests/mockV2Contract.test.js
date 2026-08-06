@@ -163,6 +163,40 @@ const run = async () => {
     titularUsuarioId: 'usr_produtor_1',
     colaboradorIds: ['usr_colaborador_1'],
   });
+  const propriedadeAtualizada = await Produtor.updateWithLinks(propriedadeCriada.id, {
+    propriedade_nome: 'Propriedade Atualizada V2',
+    titular_id: 'prod_1',
+    municipio_id: '5107909',
+    municipio_nome: 'Sinop',
+    uf_id: '51',
+    uf_sigla: 'MT',
+    cidade: 'Sinop',
+    estado: 'MT',
+    status: 'ativo',
+  }, {
+    colaboradorIds: ['usr_colaborador_1'],
+  });
+  assert.equal(propriedadeAtualizada.fazenda_nome, 'Propriedade Atualizada V2');
+  assert.equal(propriedadeAtualizada.titular_id, 'prod_1');
+  assert.equal(propriedadeAtualizada.municipio_id, '5107909');
+
+  const snapshotAntesDaFalha = values.get(MOCK_V2_LOCAL_STORAGE_KEY);
+  await assert.rejects(
+    () => Produtor.updateWithLinks(propriedadeCriada.id, {
+      propriedade_nome: 'Alteração que deve ser desfeita',
+      titular_id: 'prod_1',
+    }, { colaboradorIds: ['colaborador_inexistente'] }),
+    /Colaborador ativo inexistente/,
+  );
+  assert.equal(values.get(MOCK_V2_LOCAL_STORAGE_KEY), snapshotAntesDaFalha);
+  await assert.rejects(
+    () => Produtor.updateWithLinks(propriedadeCriada.id, {
+      propriedade_nome: 'Troca proibida',
+      titular_id: 'outro_produtor',
+    }, { colaboradorIds: ['usr_colaborador_1'] }),
+    /Titular não pode ser trocado/,
+  );
+  assert.equal(values.get(MOCK_V2_LOCAL_STORAGE_KEY), snapshotAntesDaFalha);
   await Visita.createScheduled({
     propriedade_id: 'propriedade_1',
     tecnico_responsavel: 'Técnico V2',
@@ -181,7 +215,8 @@ const run = async () => {
   assert.equal(persistedV2.propriedades[0].fazenda_id, undefined);
   const propriedadeNovaPersistida = persistedV2.propriedades.find((item) => item.id === propriedadeCriada.id);
   assert.equal(propriedadeNovaPersistida.titular_id, 'prod_1');
-  assert.equal(propriedadeNovaPersistida.municipio_id, '5107925');
+  assert.equal(propriedadeNovaPersistida.nome, 'Propriedade Atualizada V2');
+  assert.equal(propriedadeNovaPersistida.municipio_id, '5107909');
   assert.equal(propriedadeNovaPersistida.uf_sigla, 'MT');
   assert.ok(persistedV2.usuarios_propriedades.some((vinculo) => (
     vinculo.usuario_id === 'usr_produtor_1'

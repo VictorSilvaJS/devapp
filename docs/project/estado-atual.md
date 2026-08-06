@@ -5319,3 +5319,26 @@ perfil César/Admin, o novo formulário com nome, área/cultura opcionais,
 Produtor Titular, UF, Município, vínculos diretos para Bruna Brito e Victor e
 status Ativa/Inativa. Nenhum registro de teste foi salvo. O log filtrado não
 apresentou erro fatal de Android ou React Native.
+
+Atualização em 2026-08-06: a edição cadastral de Propriedade também foi
+migrada para o contrato local v2. Ela é exclusiva de Admin, mantém o Titular
+visível e bloqueado, usa UF/Município codificados, status Ativa/Inativa e
+seleção direta de Colaboradores. Região, Microrregião, documento, status
+Pendente e Colaborador responsável legado não são mais exibidos nem emitidos
+por esse fluxo.
+
+`Produtor.updateWithLinks` atualiza Propriedade e vínculos diretos em uma única
+mutação com rollback completo. A tentativa de trocar `titular_id`, selecionar
+Colaborador inválido ou deixar um Colaborador ativo sem qualquer Propriedade é
+rejeitada sem persistência parcial. O botão de edição cadastral foi separado
+das capacidades operacionais e aparece apenas para Admin.
+
+`npm run typecheck`, `npm run test:domain-compat`,
+`npm run test:filtros-territoriais`, `git diff --check` e o build release
+passaram. O APK possui 95.820.892 bytes e SHA-256
+`B35167E584F041C85FC41842FC038D7B098154DE7C507B5F5C28A22B958C531D`.
+Ele foi instalado por atualização no Android físico `8483A`, preservando o
+v2. No smoke, César abriu a edição completa e Victor abriu a mesma Propriedade
+sem receber o botão de editar. Nenhuma alteração demonstrativa foi salva e o
+log filtrado não apresentou erro fatal. A sessão final foi restaurada para
+César/Admin.

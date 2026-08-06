@@ -5,6 +5,7 @@ const {
   buildCadastroFazendaPayload,
   buildCadastroTitularOptions,
   buildCadastroTitularOptionsFromUsers,
+  buildEdicaoFazendaPayload,
   buildNovoTitularId,
   validateCadastroFazendaScope,
 } = require('../.tmp-domain-compat/src/utils/fazendaCadastroCompat');
@@ -203,6 +204,44 @@ const run = async () => {
     assert.equal(buildNovoTitularId('Ana Souza', ['prop_ana_souza']), 'prop_ana_souza_2');
   });
 
+  await test('buildEdicaoFazendaPayload preserva titular e elimina campos cadastrais legados', () => {
+    const payload = buildEdicaoFazendaPayload({
+      propriedadeAtual: {
+        propriedade_nome: 'Propriedade Antiga',
+        titular_id: 'prod_titular_1',
+        municipio_id: '5107925',
+        municipio_nome: 'Sorriso',
+        uf_id: '51',
+        uf_sigla: 'MT',
+        regiao: 'Norte',
+        microregiao: 'Legado',
+        documento: '123',
+        colaborador_responsavel_id: 'usr_legado',
+      },
+      propriedadeNome: 'Propriedade Atualizada',
+      areaTotal: '321,5',
+      culturaPrincipal: 'Milho',
+      municipioId: '5107909',
+      municipioNome: 'Sinop',
+      ufId: '51',
+      ufSigla: 'mt',
+      status: 'inativo',
+    });
+
+    assert.equal(payload.propriedade_nome, 'Propriedade Atualizada');
+    assert.equal(payload.titular_id, 'prod_titular_1');
+    assert.equal(payload.municipio_id, '5107909');
+    assert.equal(payload.municipio_nome, 'Sinop');
+    assert.equal(payload.uf_sigla, 'MT');
+    assert.equal(payload.area_total, 321.5);
+    assert.equal(payload.cultura_principal, 'Milho');
+    assert.equal(payload.status, 'inativo');
+    assert.equal(payload.regiao, undefined);
+    assert.equal(payload.microregiao, undefined);
+    assert.equal(payload.documento, undefined);
+    assert.equal(payload.colaborador_responsavel_id, undefined);
+  });
+
   await test('validateCadastroFazendaScope bloqueia colaborador independentemente da localização', () => {
     const result = validateCadastroFazendaScope(
       { perfil: 'colaborador' }
@@ -333,6 +372,20 @@ const run = async () => {
     assert.match(source, /colaboradorIds/);
     assert.match(source, /Somente Administradores/);
     assert.doesNotMatch(source, /Região|Microrregião|territorioCompat/);
+  });
+
+  await test('tela de edição usa contrato v2, preserva Titular e salva vínculos em conjunto', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/screens/EditarPropriedadeScreen.tsx'),
+      'utf8',
+    );
+    assert.match(source, /Produtor\.updateWithLinks/);
+    assert.match(source, /buildEdicaoFazendaPayload/);
+    assert.match(source, /podeEditarCadastroPropriedade/);
+    assert.match(source, /A troca de Titular exige um fluxo transacional e auditado próprio/);
+    assert.match(source, /municipioId/);
+    assert.match(source, /colaboradorIds/);
+    assert.doesNotMatch(source, /buildFazendaUpdatePayload|Região|Microrregião|documento|pendente/);
   });
 
   if (failed > 0) {

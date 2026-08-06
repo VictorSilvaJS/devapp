@@ -588,6 +588,15 @@ export const podeCriarProdutor = (user) => {
 };
 
 /**
+ * Edição cadastral estrutural da Propriedade e de seus vínculos diretos.
+ * Operações técnicas do Colaborador continuam usando podeEditarProdutor.
+ */
+export const podeEditarCadastroPropriedade = (user, propriedade) => {
+  if (!user || !propriedade) return false;
+  return isAdmin(user);
+};
+
+/**
  * Verifica se usuário pode criar visitas
  * Produtor NÃO pode criar visitas
  */

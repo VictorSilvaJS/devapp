@@ -32,8 +32,8 @@ import {
   filtrarProdutoresPorAcesso,
   getFazendaId,
   podeCriarVisitaEmFazenda,
+  podeEditarCadastroPropriedade,
   podeIncluirCadernoEmFazenda,
-  podeEditarProdutor,
   podeExcluirProdutor,
   podeGerenciarPeriodoProdutivoEmFazenda,
   temAcessoProdutor,
@@ -209,7 +209,7 @@ export default function ProdutorScreen({ route, navigation }) {
   }, [navigation, route?.params?.id, user]);
 
   const handleEdit = () => {
-    if (!podeEditarProdutor(user, produtor)) {
+    if (!podeEditarCadastroPropriedade(user, produtor)) {
       toast.showWarning('Você não tem permissão para editar esta propriedade.');
       return;
     }
@@ -299,7 +299,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const mapasRouteParams = buildMapasRouteParams({
     fazendaId: fazendaAtualId,
   });
-  const podeEditar = podeEditarProdutor(user, produtor);
+  const podeEditar = podeEditarCadastroPropriedade(user, produtor);
   const podeExcluir = podeExcluirProdutor(user, produtor);
   const integridadeExclusao = deleteIntegrity || getCurrentDeleteIntegrity();
   const exclusaoBloqueadaPorIntegridade = podeExcluir && !integridadeExclusao.canDelete;

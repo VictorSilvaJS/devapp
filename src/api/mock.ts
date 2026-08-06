@@ -2513,6 +2513,93 @@ export const Produtor: any = {
       produtores[index] = atualizado;
       return readMockProdutor(produtores[index]);
     }),
+  updateWithLinks: async (
+    id,
+    data,
+    { colaboradorIds = [] }: { colaboradorIds?: string[] } = {}
+  ) =>
+    mutateHydratedMock(300, () => {
+      const index = produtores.findIndex((propriedade) => propriedade.id === id);
+      if (index === -1) throw new Error('Propriedade não encontrada');
+
+      const atual = readMockProdutor(produtores[index]);
+      const titularAtualId = String(
+        atual?.titular_id || atual?.produtor_id || atual?.proprietario_id || ''
+      ).trim();
+      const titularSolicitadoId = String(
+        data?.titular_id || data?.produtor_id || data?.proprietario_id || titularAtualId
+      ).trim();
+      if (!titularAtualId || titularSolicitadoId !== titularAtualId) {
+        throw new Error('Propriedade.titular: o Titular não pode ser trocado na edição cadastral');
+      }
+
+      const colaboradoresUnicos = [...new Set(
+        (Array.isArray(colaboradorIds) ? colaboradorIds : [])
+          .map((usuarioId) => String(usuarioId || '').trim())
+          .filter(Boolean)
+      )];
+      const colaboradoresSelecionados = new Set(colaboradoresUnicos);
+      colaboradoresUnicos.forEach((usuarioId) => {
+        const colaborador = users.find((usuario) => usuario.id === usuarioId);
+        if (
+          !colaborador
+          || colaborador.perfil !== 'colaborador'
+          || resolveUsuarioStatus(colaborador) !== 'ativo'
+        ) {
+          throw new Error(`Propriedade.colaborador: Colaborador ativo inexistente ${usuarioId}`);
+        }
+      });
+
+      const atualizado = persistMockProdutor({
+        id,
+        data: { ...data, titular_id: titularAtualId },
+        existing: produtores[index],
+      });
+      validateProdutor(atualizado);
+      produtores[index] = atualizado;
+
+      const tiposColaborador = new Set(['colaborador', 'responsavel', 'colaborador_atribuido']);
+      users
+        .filter((usuario) => usuario.perfil === 'colaborador')
+        .forEach((colaborador) => {
+          const existentes = usuarioPropriedade
+            .filter((link) => link.usuario_id === colaborador.id)
+            .map((link) => ({ ...link }));
+          const tinhaVinculo = existentes.some((link) => (
+            link.propriedade_id === id && tiposColaborador.has(link.tipo_vinculo)
+          ));
+          const selecionado = colaboradoresSelecionados.has(colaborador.id);
+          if (!tinhaVinculo && !selecionado) return;
+
+          const preservados = existentes.filter((link) => !(
+            link.propriedade_id === id && tiposColaborador.has(link.tipo_vinculo)
+          ));
+          const proximos = ensurePrincipalUsuarioPropriedade([
+            ...preservados,
+            ...(selecionado
+              ? [normalizeUsuarioPropriedadeLink({
+                  propriedade_id: id,
+                  tipo_vinculo: 'colaborador',
+                  status: 'ativo',
+                }, colaborador.id)]
+              : []),
+          ].filter(Boolean));
+
+          validateUsuarioMock(
+            { ...colaborador, status: resolveUsuarioStatus(colaborador) },
+            {
+              ignoreId: colaborador.id,
+              vinculosPropriedades: proximos,
+              vinculosMicroregioes: usuarioMicroregiao.filter(
+                (link) => link.usuario_id === colaborador.id
+              ),
+            }
+          );
+          replaceUsuarioPropriedadeLinks(colaborador.id, proximos);
+        });
+
+      return readMockProdutor(produtores[index]);
+    }),
   delete: async (id) =>
     mutateHydratedMock(200, () => {
       const index = produtores.findIndex(p => p.id === id);

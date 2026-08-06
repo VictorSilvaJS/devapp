@@ -13,6 +13,7 @@ const {
   podeCriarProdutor,
   podeCriarVisita,
   podeCriarVisitaEmFazenda,
+  podeEditarCadastroPropriedade,
   podeEditarProdutor,
   podeEditarCaderno,
   podeEditarCadernoEmFazenda,
@@ -343,6 +344,13 @@ const run = async () => {
     assert.equal(podeExcluirProdutor(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeEditarProdutor(adminUser, fazendaForaEscopo), true);
     assert.equal(podeExcluirProdutor(adminUser, fazendaForaEscopo), true);
+  });
+
+  await test('edição cadastral da Propriedade é exclusiva do Admin', () => {
+    assert.equal(podeEditarCadastroPropriedade(adminUser, fazendasBase[0]), true);
+    assert.equal(podeEditarCadastroPropriedade(colaboradorUser, fazendasBase[0]), false);
+    assert.equal(podeEditarCadastroPropriedade(produtorUser, fazendasBase[0]), false);
+    assert.equal(podeEditarCadastroPropriedade(adminUser, null), false);
   });
 
   await test('cadastro estrutural de Propriedade fica restrito ao Admin', () => {

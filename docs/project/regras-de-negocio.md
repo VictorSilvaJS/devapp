@@ -33,6 +33,14 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
   direto ativo por Propriedade; localizacao nao cria vinculo automatico.
 - No mock v2, a criacao da Propriedade e de todos os seus vinculos e atomica:
   qualquer falha desfaz o conjunto completo.
+- A edicao cadastral comum da Propriedade tambem e exclusiva de Admin e deve
+  atualizar os dados canonicos e os vinculos diretos de Colaboradores em uma
+  unica operacao atomica.
+- O `titular_id` e somente leitura na edicao cadastral comum. Uma futura troca
+  de Titular exige fluxo administrativo proprio, transacional e auditado.
+- A edicao v2 nao grava Regiao, Microrregiao, documento da Propriedade nem um
+  campo legado de Colaborador responsavel; acesso continua representado por
+  `usuario_propriedade`.
 - A criacao combinada produtiva futura deve preservar a mesma atomicidade no
   backend.
 

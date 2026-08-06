@@ -1042,6 +1042,11 @@ Município já presentes no dataset instalado. Uma fonte mestra produtiva de
 localidades, atualização da tabela IBGE e suporte a Municípios ainda ausentes
 do conjunto local permanecem dependentes do backend/dados de referência.
 
+Atualização em 2026-08-06: a edição cadastral local preserva `titular_id` e não
+oferece troca de Titular. Permanece pendente para o backend produtivo definir o
+fluxo administrativo transacional, motivo obrigatório, histórico/auditoria e
+efeitos nos vínculos ao transferir a titularidade de uma Propriedade.
+
 Uma pendencia deve sair deste documento quando ocorrer uma destas situacoes:
 
 - foi consolidada como decisao do projeto
