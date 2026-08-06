@@ -8,6 +8,7 @@ const {
   filtrarMapasPorAcesso,
   filtrarProdutoresPorAcesso,
   filtrarVisitasPorAcesso,
+  getFazendaId,
   getFazendaIdsPorAcesso,
   podeBaixarMapa,
   podeCriarProdutor,
@@ -98,7 +99,75 @@ const run = async () => {
     assert.deepEqual(ids, ['fz1', 'fz3']);
   });
 
-  await test('filtrarMapasPorAcesso usa fazenda_id explicitamente e respeita download para produtor', () => {
+  await test('propriedade_id prevalece sobre id e aliases legados no controle de acesso', () => {
+    const propriedadeComConflito = {
+      id: 'fz_id_intermediario',
+      propriedade_id: 'fz_canonica',
+      propriedadeId: 'fz_camel',
+      fazenda_id: 'fz_legada',
+      fazendaId: 'fz_legada_camel',
+      produtor_id: 'titular_1',
+      nome: 'Propriedade canônica',
+    };
+    const colaboradorCanonico = {
+      id: 'colaborador_canonico',
+      perfil: 'colaborador',
+      vinculos_propriedades: [{
+        propriedade_id: 'fz_canonica', tipo_vinculo: 'colaborador', status: 'ativo',
+      }],
+    };
+    const colaboradorLegado = {
+      ...colaboradorCanonico,
+      id: 'colaborador_legado',
+      vinculos_propriedades: [{
+        propriedade_id: 'fz_legada', tipo_vinculo: 'colaborador', status: 'ativo',
+      }],
+    };
+
+    assert.equal(getFazendaId(propriedadeComConflito), 'fz_canonica');
+    assert.equal(getFazendaId({ propriedadeId: 'fz_camel', fazenda_id: 'fz_legada' }), 'fz_camel');
+    assert.equal(getFazendaId({ id: 'fz_id', fazenda_id: 'fz_legada' }), 'fz_id');
+    assert.equal(getFazendaId({ fazenda_id: 'fz_legada' }), 'fz_legada');
+    assert.equal(temAcessoProdutor(colaboradorCanonico, propriedadeComConflito), true);
+    assert.equal(temAcessoProdutor(colaboradorLegado, propriedadeComConflito), false);
+  });
+
+  await test('recursos com IDs conflitantes são autorizados somente por propriedade_id', () => {
+    const propriedade = {
+      id: 'fz_canonica', propriedade_id: 'fz_canonica', fazenda_id: 'fz_legada',
+      produtor_id: 'titular_1', nome: 'Propriedade canônica',
+    };
+    const colaborador = {
+      id: 'colaborador_canonico', perfil: 'colaborador',
+      vinculos_propriedades: [{
+        propriedade_id: 'fz_canonica', tipo_vinculo: 'colaborador', status: 'ativo',
+      }],
+    };
+    const conflito = { propriedade_id: 'fz_canonica', fazenda_id: 'fz_legada' };
+
+    assert.deepEqual(
+      filtrarVisitasPorAcesso([{
+        id: 'v_conflito', ...conflito, tecnico_responsavel: 'Ana',
+        data_visita: '2026-08-06', objetivo: 'consultoria',
+      }], colaborador, [propriedade]).map((item) => item.id),
+      ['v_conflito']
+    );
+    assert.deepEqual(
+      filtrarCadernosPorAcesso([{
+        id: 'c_conflito', ...conflito, colaborador_responsavel: 'Ana',
+        data_atividade: '2026-08-06', tipo_atividade: 'observacao',
+      }], colaborador, [propriedade]).map((item) => item.id),
+      ['c_conflito']
+    );
+    assert.deepEqual(
+      filtrarMapasPorAcesso([{
+        id: 'm_conflito', ...conflito, produtor_id: 'fz_legada', disponivel_download: true,
+      }], colaborador, [propriedade]).map((item) => item.id),
+      ['m_conflito']
+    );
+  });
+
+  await test('filtrarMapasPorAcesso mantém fallback de fazenda_id e respeita download para produtor', () => {
     const mapas = [
       { id: 'm1', fazenda_id: 'fz1', produtor_id: 'fz1', disponivel_download: true },
       { id: 'm2', fazenda_id: 'fz1', produtor_id: 'fz1', disponivel_download: false },
@@ -110,7 +179,7 @@ const run = async () => {
     assert.deepEqual(resultado.map((mapa) => mapa.id), ['m1']);
   });
 
-  await test('filtrarVisitasPorAcesso usa fazenda_id canônico para colaborador', () => {
+  await test('filtrarVisitasPorAcesso mantém fallback de fazenda_id para colaborador', () => {
     const visitas = [
       { id: 'v1', fazenda_id: 'fz1', tecnico_responsavel: 'Ana', data_visita: '2026-04-16', objetivo: 'consultoria' },
       { id: 'v2', fazenda_id: 'fz2', tecnico_responsavel: 'Ana', data_visita: '2026-04-16', objetivo: 'consultoria' },

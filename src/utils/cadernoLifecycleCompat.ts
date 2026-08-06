@@ -49,8 +49,7 @@ export type CadernoCommand =
 export type CadernoValidationErrors = Record<string, string>;
 
 const ORIGINAL_FIELDS = [
-  'fazenda_id',
-  'fazendaId',
+  'propriedade_id',
   'responsavel_usuario_id',
   'colaborador_responsavel',
   'data_atividade',
@@ -124,8 +123,36 @@ const getFazendaId = (record: any): string =>
 const getCreatorId = (record: any): string =>
   normalizeText(record?.criado_por_user_id || record?.criado_por);
 
+const normalizeCadernoLifecycleEvent = (event: unknown, recordPropertyId: string): any => {
+  const cloned = cloneValue(event);
+  if (!cloned || typeof cloned !== 'object' || Array.isArray(cloned)) return cloned;
+
+  const {
+    propriedadeId,
+    fazenda_id,
+    fazendaId,
+    produtor_id,
+    ...canonicalEvent
+  } = cloned as Record<string, unknown>;
+  const propriedadeIdCanonico = normalizeText(
+    canonicalEvent.propriedade_id
+    || propriedadeId
+    || fazenda_id
+    || fazendaId
+    || produtor_id
+    || recordPropertyId
+  );
+
+  return {
+    ...canonicalEvent,
+    ...(propriedadeIdCanonico ? { propriedade_id: propriedadeIdCanonico } : {}),
+  };
+};
+
 const getEvents = (record: any): any[] =>
-  Array.isArray(record?.eventos_caderno) ? cloneValue(record.eventos_caderno) : [];
+  Array.isArray(record?.eventos_caderno)
+    ? record.eventos_caderno.map((event) => normalizeCadernoLifecycleEvent(event, getFazendaId(record)))
+    : [];
 
 const getComplements = (record: any): any[] =>
   Array.isArray(record?.complementos_caderno) ? cloneValue(record.complementos_caderno) : [];
@@ -156,7 +183,6 @@ const buildEvent = ({
     registro_id: normalizeText(record?.id) || undefined,
     tipo: type,
     sequencia: sequence,
-    fazenda_id: getFazendaId(record),
     autor_usuario_id: normalizeText(actor.usuarioId),
     autor_nome: normalizeText(actor.nome) || undefined,
     autor_perfil: normalizeText(actor.perfil),
@@ -164,6 +190,7 @@ const buildEvent = ({
     ...(versionBase !== undefined ? { versao_base: versionBase } : {}),
     ...(versionResult !== undefined ? { versao_resultante: versionResult } : {}),
     ...cloneValue(details),
+    propriedade_id: getFazendaId(record),
   };
 };
 
@@ -238,13 +265,17 @@ export const isCadernoOperational = (record: any): boolean => {
   return state === 'registrado' || state === 'registrado_legado' || state === 'anulado';
 };
 
-export const buildCadernoOriginalSnapshot = (record: any): Record<string, unknown> =>
-  ORIGINAL_FIELDS.reduce<Record<string, unknown>>((snapshot, key) => {
+export const buildCadernoOriginalSnapshot = (record: any): Record<string, unknown> => {
+  const snapshot = ORIGINAL_FIELDS.reduce<Record<string, unknown>>((result, key) => {
     if (hasOwn(record, key) && record[key] !== undefined) {
-      snapshot[key] = cloneValue(record[key]);
+      result[key] = cloneValue(record[key]);
     }
-    return snapshot;
+    return result;
   }, {});
+  const propriedadeId = getFazendaId(record);
+  if (propriedadeId) snapshot.propriedade_id = propriedadeId;
+  return snapshot;
+};
 
 export const withCadernoLifecycleReadCompat = (record: any): any => {
   const state = getCadernoEstado(record);

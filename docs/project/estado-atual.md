@@ -5399,3 +5399,16 @@ auditada. Em tarefa posterior autorizada, o arquivo foi restaurado conforme o
 histórico imediatamente anterior e o modelo canônico aprovado, sem restaurar
 mock antigo ou alterar registros instalados. `npm run typecheck` e
 `npm run test:domain-compat` passaram; o bloqueio P0 está resolvido.
+
+Na etapa seguinte de 2026-08-06, o controle de acesso passou a resolver IDs de
+Propriedade em ordem canônica: `propriedade_id`, `propriedadeId`, ID da
+entidade e, somente depois, `fazenda_id`/`fazendaId`. Testes com valores
+conflitantes confirmam que um alias antigo não concede nem remove acesso
+quando o identificador canônico existe.
+
+Os eventos novos de Visitas e Caderno passaram a gravar `propriedade_id`.
+Eventos históricos com aliases são normalizados na leitura antes de nova
+persistência, preservando o vínculo próprio do evento e usando o contexto do
+registro apenas como fallback. O snapshot original do Caderno também conserva
+`propriedade_id`. A compatibilidade externa dos registros não foi removida;
+rotas e mapas/offline continuam como próximas superfícies de migração.

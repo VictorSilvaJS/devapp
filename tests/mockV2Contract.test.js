@@ -8,7 +8,7 @@ const {
   isMockV2Snapshot,
 } = require('../.tmp-domain-compat/src/api/mockV2LocalPersistence');
 const { validateMockV2State } = require('../.tmp-domain-compat/src/api/mockV2Validation');
-const { LimiteArea, MockLocalData, Produtor, User, Visita } = require('../.tmp-domain-compat/src/api/mock');
+const { CadernoCampo, LimiteArea, MockLocalData, Produtor, User, Visita } = require('../.tmp-domain-compat/src/api/mock');
 const {
   authenticateWithEmailAndPassword,
   AUTH_INVALID_CREDENTIALS_MESSAGE,
@@ -208,6 +208,20 @@ const run = async () => {
     perfil: 'colaborador',
     propriedadeIds: ['propriedade_1'],
   }, 'teste-escrita-v2');
+  await CadernoCampo.submit({
+    propriedade_id: 'propriedade_1',
+    responsavel_usuario_id: 'usr_colaborador_1',
+    colaborador_responsavel: 'Colaborador Teste',
+    data_atividade: '2026-08-06T12:00:00.000Z',
+    tipo_atividade: 'observacao',
+    observacoes: 'Registro canônico para validar o histórico v2.',
+    visivel_para_produtor: true,
+  }, {
+    usuarioId: 'usr_colaborador_1',
+    nome: 'Colaborador Teste',
+    perfil: 'colaborador',
+    propriedadeIds: ['propriedade_1'],
+  });
 
   const persistedV2 = JSON.parse(values.get(MOCK_V2_LOCAL_STORAGE_KEY));
   assert.equal(persistedV2.usuarios[0].nome, 'Produtor Atualizado V2');
@@ -230,8 +244,17 @@ const run = async () => {
   )));
   const createdVisita = persistedV2.visitas.find((visita) => visita.id !== 'visita_v2_1');
   assert.equal(createdVisita.propriedade_id, 'propriedade_1');
+  assert.equal(createdVisita.eventos_visita[0].propriedade_id, 'propriedade_1');
+  assert.equal(createdVisita.eventos_visita[0].fazenda_id, undefined);
   assert.equal(JSON.stringify(createdVisita).includes('fazenda_id'), false);
   assert.equal(JSON.stringify(createdVisita).includes('produtor_id'), false);
+  const createdCaderno = persistedV2.cadernos.find((caderno) => (
+    caderno.observacoes === 'Registro canônico para validar o histórico v2.'
+  ));
+  assert.equal(createdCaderno.propriedade_id, 'propriedade_1');
+  assert.equal(createdCaderno.eventos_caderno[0].propriedade_id, 'propriedade_1');
+  assert.equal(createdCaderno.conteudo_original.propriedade_id, 'propriedade_1');
+  assert.equal(JSON.stringify(createdCaderno).includes('fazenda_id'), false);
   assert.equal(values.get('@tche:mock-mvp:v1'), '{"version":1,"sentinela":"nao_usar"}');
 
   assert.equal(validateMockV2State(persistedV2), true);

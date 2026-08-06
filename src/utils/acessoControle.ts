@@ -125,12 +125,13 @@ export const getTitularIdUsuario = (user) => firstNonEmptyString(user?.produtor_
 export const getFazendaId = (fazenda) => {
   if (!fazenda) return '';
 
-  const explicitId = firstNonEmptyString(fazenda.fazenda_id);
-  if (explicitId) {
-    return explicitId;
-  }
-
-  return normalizeFazenda(fazenda).id;
+  return firstNonEmptyString(
+    fazenda.propriedade_id,
+    fazenda.propriedadeId,
+    normalizeFazenda(fazenda).id,
+    fazenda.fazenda_id,
+    fazenda.fazendaId
+  );
 };
 
 export const getTitularIdFazenda = (fazenda) => {

@@ -65,6 +65,28 @@ const run = async () => {
     assert.equal(access.podeEditarCaderno({ id: team.usuarioId, perfil: 'colaborador' }, record), true);
     assert.equal(access.podeEditarCaderno({ id: otherTeam.usuarioId, perfil: 'colaborador' }, record), false);
     assert.throws(() => lifecycle.updateCadernoDraft({ record, data: { observacoes: 'Tentativa' }, actor: otherTeam }), /Somente o criador/);
+    assert.equal(record.eventos_caderno[0].propriedade_id, 'faz_mp25');
+    assert.equal('fazenda_id' in record.eventos_caderno[0], false);
+  });
+
+  await test('histórico legado do Caderno é lido com propriedade_id sem perder o vínculo', () => {
+    const record = lifecycle.withCadernoLifecycleReadCompat(base({
+      id: 'legacy-events',
+      propriedade_id: 'faz_registro',
+      estado_caderno: 'registrado',
+      versao_atual: 3,
+      eventos_caderno: [
+        { evento_id: 'e1', propriedade_id: 'faz_canonica', fazenda_id: 'faz_incorreta', tipo: 'canonico' },
+        { evento_id: 'e2', fazenda_id: 'faz_legada', tipo: 'legado' },
+        { evento_id: 'e3', tipo: 'sem_contexto' },
+      ],
+    }));
+
+    assert.deepEqual(
+      record.eventos_caderno.map((event) => event.propriedade_id),
+      ['faz_canonica', 'faz_legada', 'faz_registro']
+    );
+    assert.equal(record.eventos_caderno.some((event) => 'fazenda_id' in event || 'fazendaId' in event), false);
   });
 
   await test('envio preserva corpo e localização originais e bloqueia sobrescrita', () => {
@@ -77,6 +99,8 @@ const run = async () => {
     assert.equal(record.estado_caderno, 'registrado');
     assert.equal(record.versao_atual, 1);
     assert.equal(record.conteudo_original.observacoes, 'Corpo original do registro.');
+    assert.equal(record.conteudo_original.propriedade_id, 'faz_mp25');
+    assert.equal('fazenda_id' in record.conteudo_original, false);
     assert.equal(record.conteudo_original.localizacao_latitude, -27.123);
     assert.equal(record.eventos_caderno.at(-1).tipo, 'registro_enviado');
     assert.throws(() => lifecycle.updateCadernoDraft({ record, data: { observacoes: 'Sobrescrita' }, actor: team }), /não aceita edição destrutiva/);
@@ -99,10 +123,12 @@ const run = async () => {
     assert.equal(event.motivo, 'Ajuste confirmado');
     assert.equal(event.antes.observacoes, 'Corpo original do registro.');
     assert.equal(event.depois.observacoes, 'Corpo vigente corrigido.');
-    assert.throws(() => lifecycle.applyCadernoCommand({
-      record: corrected, actor: team,
-      command: { tipo: 'corrigir', versaoBase: 3, motivo: 'Tentativa', alteracoes: { fazenda_id: 'outra' } },
-    }), /Campos não permitidos/);
+    for (const field of ['propriedade_id', 'fazenda_id']) {
+      assert.throws(() => lifecycle.applyCadernoCommand({
+        record: corrected, actor: team,
+        command: { tipo: 'corrigir', versaoBase: 3, motivo: 'Tentativa', alteracoes: { [field]: 'outra' } },
+      }), /Campos não permitidos/);
+    }
   });
 
   await test('correção de localização exige o grupo integral', () => {

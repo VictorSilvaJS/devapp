@@ -25,6 +25,18 @@ Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.
     acesso local; Município/UF não podem conceder acesso.
 11. APK demonstrável: não entregar build em modo `__DEV__`; o acesso rápido deve aparecer como demonstrativo/local e usuários administrativos, fotos, anexos, uploads, downloads, autenticação e RBAC continuam mockados/preparatórios.
 
+**Rodada V2-05 - Precedência Canônica E Eventos Por Propriedade**
+
+Status geral em 2026-08-06: `PASSOU_AUTOMATIZADO`; reexecutar no próximo APK
+físico junto com o smoke dos três perfis.
+
+| ID | Criticidade | Perfil | Área | Ação | Resultado esperado | Status | Observação |
+|---|---|---|---|---|---|---|---|
+| V2-05-01 | P0 | Colaborador | Acesso | Avaliar registro com `propriedade_id` e `fazenda_id` divergentes | Somente `propriedade_id` define o escopo | Passou | Coberto por conflito direto e por Mapas, Visitas e Caderno |
+| V2-05-02 | P0 | Admin/Colaborador | Visitas | Criar evento e reler histórico legado | Evento novo usa `propriedade_id`; legado preserva o vínculo após normalização | Passou | Teste de ciclo de vida e persistência v2 passaram |
+| V2-05-03 | P0 | Admin/Colaborador | Caderno | Criar evento, enviar registro e reler histórico legado | Evento e conteúdo original usam `propriedade_id`; legado preserva o vínculo | Passou | Teste de ciclo de vida e persistência v2 passaram |
+| V2-05-04 | P0 | Todos | APK físico | Reabrir Propriedades, Visitas e Caderno nos três perfis | Nenhuma regressão de lista, detalhe, rota direta ou visibilidade | Reexecutar | Executar quando o próximo APK for gerado; esta mudança não alterou UI |
+
 **Rodada V2-04 - Cadastro Canônico De Usuários**
 
 Status geral em 2026-08-06: `PASSOU_NO_CORTE_LOCAL`.

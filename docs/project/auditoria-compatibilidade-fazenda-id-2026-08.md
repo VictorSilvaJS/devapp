@@ -45,9 +45,9 @@ escopo e, portanto, `PRE-06` não está concluído integralmente.
 |---|---|---|---|
 | Snapshot e validação v2 | O seed demonstrativo usa `propriedade_id`; o validador rejeita aliases e a persistência remove aliases antes da gravação | Não admitir `fazenda_id` no v2 | Manter os testes de ausência de aliases e restaurar primeiro o contrato TypeScript v2 |
 | Contratos e adaptadores de borda | `contracts.ts`, `domainCompat.ts`, `propriedadeCompat.ts`, `mockCompat.ts` e `produtorCompat.ts` fazem leitura dupla e projetam o v2 para consumidores antigos | Manter temporariamente | Todos os consumidores precisam ler o contrato canônico e os dados locais antigos precisam estar migrados ou descartados de forma controlada |
-| Controle de acesso | O acesso normaliza registros para Propriedade, mas helpers e entradas ainda aceitam `fazenda_id`/`fazendaId` | Manter; risco funcional alto | Validar Admin, Colaborador e Produtor, inclusive rotas diretas e registros com aliases conflitantes |
-| Visitas | Novos payloads usam `propriedade_id`; rotas, variáveis e eventos de ciclo de vida ainda leem ou nomeiam aliases antigos | Manter leitura de borda | Migrar rotas e eventos, depois executar testes de criação, edição, conclusão, correção e acesso |
-| Caderno | Novos payloads usam `propriedade_id`; rotas e eventos de ciclo de vida ainda preservam aliases | Manter leitura de borda | Migrar rotas e eventos, depois executar testes de criação, edição, confirmação, complemento, correção e acesso |
+| Controle de acesso | `propriedade_id`, `propriedadeId` e o ID canônico da entidade prevalecem; `fazenda_id`/`fazendaId` permanecem somente como fallback | Precedência corrigida; manter fallback temporário | Validar Admin, Colaborador e Produtor antes de retirar a leitura antiga |
+| Visitas | Novos payloads e eventos usam `propriedade_id`; eventos antigos são normalizados na leitura; rotas e variáveis ainda aceitam aliases | Evento concluído; manter leitura de borda | Migrar rotas e demais consumidores, depois executar o smoke completo |
+| Caderno | Novos payloads, eventos e snapshot original usam `propriedade_id`; eventos antigos são normalizados na leitura | Evento concluído; manter leitura de borda | Migrar rotas e demais consumidores, depois executar o smoke completo |
 | Navegação, filtros e interface | Builders novos já priorizam `propriedadeId`, mas parâmetros antigos, nomes de tela e propriedades de contexto continuam aceitos | Candidato a migração posterior | Todos os chamadores e links diretos precisam emitir o nome canônico antes de retirar a leitura antiga |
 | Mapas, cache, offline e sincronização | Modelos, chaves, metadados, backups, importação e endpoints simulados ainda usam amplamente `fazenda_id` | Manter; maior migração pendente | Criar versão de storage/chaves, migrar índices e backups, manter importação compatível e validar rollback/cache |
 | Índices locais de materiais e importações | GeoJSON, PNG, ZIP, material técnico e período produtivo aceitam `fazenda_id` na leitura, normalizam e gravam `propriedade_id` nas operações novas | Manter apenas a leitura temporária | Confirmar migração ou limpeza dos índices v1 já instalados e encerrar uma janela explícita de compatibilidade |
@@ -69,13 +69,13 @@ imediatamente anterior e conferido com `modelo-dados-mock-v2.md`. Nenhum mock,
 snapshot ou registro instalado foi revertido. O typecheck e os testes de
 compatibilidade voltaram a passar.
 
-### P1 — precedência ambígua no acesso
+### P1 — precedência ambígua no acesso — resolvido em 2026-08-06
 
-`src/utils/acessoControle.ts` ainda possui resolução que pode priorizar
-`fazenda_id` sobre o identificador canônico quando ambos aparecem. Um registro
-com IDs divergentes pode ser incluído ou excluído do escopo incorretamente.
-A migração futura precisa definir `propriedade_id` como fonte autoritativa e
-testar explicitamente o conflito antes de retirar o fallback.
+`src/utils/acessoControle.ts` passou a priorizar `propriedade_id`,
+`propriedadeId` e o ID canônico da entidade antes dos aliases legados. Testes
+com IDs divergentes confirmam que `fazenda_id` não amplia nem reduz o escopo
+quando o identificador canônico está presente. O alias continua apenas como
+fallback para registros antigos.
 
 ### P1 — mapas e armazenamento offline
 
@@ -84,13 +84,15 @@ de contratos, chaves de cache, arquivos, metadados, backups, importação e
 sincronização simulada. Uma troca textual apagaria a capacidade de ler dados
 instalados. Essa área exige migração versionada própria.
 
-### P1 — eventos internos de Visitas e Caderno
+### P1 — eventos internos de Visitas e Caderno — resolvido em 2026-08-06
 
-Eventos de ciclo de vida ainda registram contexto como `fazenda_id`, enquanto
-a sanitização do snapshot v2 remove aliases recursivamente. Antes de considerar
-o histórico canônico, os schemas desses eventos devem passar a usar
-`propriedade_id`; apenas remover o campo antigo pode eliminar contexto do
-evento.
+Novos eventos de ciclo de vida passaram a registrar `propriedade_id`.
+Históricos que possuam `fazenda_id`, `fazendaId`, `propriedadeId` ou o alias
+operacional antigo em `produtor_id` são convertidos na leitura, dando
+precedência ao campo canônico já existente e usando o contexto do registro
+apenas quando o evento não contém vínculo. O snapshot original do Caderno
+também preserva `propriedade_id`. Testes de persistência confirmam que a
+sanitização v2 não perde mais o contexto dos eventos.
 
 ## 5. Ordem segura para uma implementação futura
 
@@ -98,7 +100,8 @@ evento.
    Concluído em 2026-08-06.
 2. Tornar nomes internos, builders e saídas de rota canônicos, preservando a
    leitura dos aliases na borda.
-3. Migrar os eventos de Visitas e Caderno para `propriedade_id`.
+3. Migrar os eventos de Visitas e Caderno para `propriedade_id`. Concluído em
+   2026-08-06.
 4. Criar migração versionada para mapas, cache, backups, índices e arquivos
    offline.
 5. Validar os três perfis e todos os fluxos do `smoke.md`.
@@ -126,3 +129,16 @@ Validações executadas:
   arquivo `src/domain/contractsV2.ts` vazio;
 - após o reparo autorizado, `npm run typecheck` passou;
 - após o reparo autorizado, `npm run test:domain-compat` passou integralmente.
+
+## 7. Implementação posterior da precedência e dos eventos
+
+Em 2026-08-06, os dois riscos P1 de acesso e eventos foram corrigidos sem
+remover a compatibilidade de leitura. Foram adicionados testes para:
+
+- conflito entre `propriedade_id`, ID da entidade e aliases `fazenda*`;
+- autorização de Mapas, Visitas e Caderno somente pelo identificador
+  canônico quando houver conflito;
+- normalização de eventos históricos de Visitas e Caderno;
+- geração de eventos novos sem `fazenda_id`;
+- preservação de `propriedade_id` nos eventos e no conteúdo original do
+  Caderno gravados no snapshot v2.

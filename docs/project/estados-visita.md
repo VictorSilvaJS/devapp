@@ -349,6 +349,11 @@ Na migracao:
 - `fazenda_id` permanece alias temporario de `propriedade_id`;
 - responsavel textual permanece snapshot legivel ate existir ID estavel.
 
+Atualizacao em 2026-08-06: eventos novos usam somente `propriedade_id` como
+contexto da Propriedade. Eventos locais antigos com aliases sao normalizados
+na leitura antes de nova persistencia; o campo canonico do proprio evento tem
+prioridade e o contexto do registro e usado apenas como fallback.
+
 Estado desconhecido bloqueia mutacoes e exige reconciliacao. O mock atual
 continua aceitando transicoes incoerentes ate `MP-27`; isso e compatibilidade,
 nao regra aprovada.

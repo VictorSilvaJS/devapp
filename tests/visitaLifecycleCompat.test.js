@@ -57,6 +57,25 @@ const run = async () => {
     assert.deepEqual(legacy.eventos_visita, []);
   });
 
+  await test('histórico legado de Visita é lido com propriedade_id sem perder o vínculo', () => {
+    const record = lifecycle.withVisitaLifecycleReadCompat(base({
+      id: 'legacy-events',
+      propriedade_id: 'faz_registro',
+      versao_atual: 3,
+      eventos_visita: [
+        { evento_id: 'e1', propriedade_id: 'faz_canonica', fazenda_id: 'faz_incorreta', tipo: 'canonico' },
+        { evento_id: 'e2', fazenda_id: 'faz_legada', tipo: 'legado' },
+        { evento_id: 'e3', tipo: 'sem_contexto' },
+      ],
+    }));
+
+    assert.deepEqual(
+      record.eventos_visita.map((event) => event.propriedade_id),
+      ['faz_canonica', 'faz_legada', 'faz_registro']
+    );
+    assert.equal(record.eventos_visita.some((event) => 'fazenda_id' in event || 'fazendaId' in event), false);
+  });
+
   await test('estado desconhecido exige reconciliação e bloqueia comando', () => {
     const unknown = lifecycle.withVisitaLifecycleReadCompat(base({ status: 'em_campo' }));
     assert.equal(lifecycle.getVisitaEstado(unknown), null);
@@ -75,6 +94,8 @@ const run = async () => {
     assert.equal(record.versao_atual, 1);
     assert.equal(record.eventos_visita[0].tipo, 'visita_agendada');
     assert.equal(record.eventos_visita[0].estado_novo, 'agendada');
+    assert.equal(record.eventos_visita[0].propriedade_id, 'faz_mp27');
+    assert.equal('fazenda_id' in record.eventos_visita[0], false);
   });
 
   await test('registro direto realizado usa o contrato de conclusão', () => {
@@ -149,7 +170,7 @@ const run = async () => {
   });
 
   await test('alteração de agenda não aceita status, Propriedade nem campos administrativos', () => {
-    for (const field of ['status', 'fazenda_id', 'versao_atual', 'eventos_visita']) {
+    for (const field of ['status', 'propriedade_id', 'fazenda_id', 'versao_atual', 'eventos_visita']) {
       assert.throws(() => command(scheduled(), {
         tipo: 'alterar_agendamento', versaoBase: 1, chaveIdempotencia: `forbidden-${field}`,
         alteracoes: { [field]: field === 'status' ? 'realizada' : 'tentativa' },
@@ -248,7 +269,7 @@ const run = async () => {
       tipo: 'concluir', versaoBase: 1, chaveIdempotencia: 'complete-for-forbidden-correction',
       inicioRealEm: '2026-08-04T14:30:00.000Z', resumo: 'Resumo.',
     });
-    for (const field of ['id', 'fazenda_id', 'status', 'concluida_em', 'concluida_por_usuario_id']) {
+    for (const field of ['id', 'propriedade_id', 'fazenda_id', 'status', 'concluida_em', 'concluida_por_usuario_id']) {
       assert.throws(() => command(completed, {
         tipo: 'corrigir', versaoBase: 2, chaveIdempotencia: `correction-forbidden-${field}`,
         motivo: 'Tentativa', alteracoes: { [field]: 'outro' },

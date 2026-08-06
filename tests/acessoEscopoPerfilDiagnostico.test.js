@@ -254,7 +254,7 @@ const run = async () => {
     assert.equal(getPropriedadeId(somenteAliasesFuturos), 'prop_alias_id');
     assert.equal(getTitularId(somenteAliasesFuturos), 'titular_alias');
     assert.deepEqual(ids(filtrarProdutoresPorAcesso([somenteAliasesFuturos], produtor)), [
-      'faz_alias',
+      'prop_alias_id',
     ]);
 
     const comLegadoTitular = {
@@ -264,7 +264,7 @@ const run = async () => {
     };
 
     assert.deepEqual(ids(filtrarProdutoresPorAcesso([comLegadoTitular], produtor)), [
-      'faz_alias',
+      'prop_alias_id',
     ]);
   });
 

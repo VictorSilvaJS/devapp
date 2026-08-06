@@ -333,6 +333,11 @@ Na migracao:
 - Talhao e responsavel textuais permanecem snapshots ate `MP-24`;
 - a migracao recebe evento tecnico identificando origem legada.
 
+Atualizacao em 2026-08-06: eventos novos e o snapshot de conteudo original
+usam `propriedade_id`. Eventos locais antigos com aliases sao normalizados na
+leitura antes de nova persistencia, preservando o vinculo existente sem
+regravar `fazenda_id` no historico v2.
+
 O mock atual continua aceitando update destrutivo ate `MP-25`. Essa
 compatibilidade e estado atual, nao regra aprovada.
 

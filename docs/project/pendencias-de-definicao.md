@@ -77,6 +77,12 @@ e `npm run test:domain-compat` passaram. Esse bloqueio P0 está resolvido, sem
 iniciar a remoção dos aliases. O componente territorial de `PRE-06` não foi
 abrangido por esta auditoria.
 
+Atualização em 2026-08-06: a precedência do controle de acesso foi corrigida
+para favorecer `propriedade_id` e o ID canônico antes de `fazenda_id`. Eventos
+novos de Visitas e Caderno usam `propriedade_id`, enquanto eventos antigos são
+normalizados na leitura sem perder o vínculo. A leitura legada permanece nas
+bordas; mapas/offline, rotas e demais consumidores continuam pendentes.
+
 ### 2. Contratos centrais do dominio
 
 Ainda falta fechar a forma final de alguns contratos que hoje aparecem com variacoes no repositorio e na documentacao, como:

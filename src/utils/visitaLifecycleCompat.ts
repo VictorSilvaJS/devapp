@@ -109,8 +109,36 @@ const normalizeText = (value: unknown): string => String(value ?? '').trim();
 const getFazendaId = (record: any): string =>
   normalizeText(record?.propriedade_id || record?.fazenda_id || record?.fazendaId || record?.produtor_id);
 
+const normalizeVisitaLifecycleEvent = (event: unknown, recordPropertyId: string): any => {
+  const cloned = cloneValue(event);
+  if (!cloned || typeof cloned !== 'object' || Array.isArray(cloned)) return cloned;
+
+  const {
+    propriedadeId,
+    fazenda_id,
+    fazendaId,
+    produtor_id,
+    ...canonicalEvent
+  } = cloned as Record<string, unknown>;
+  const propriedadeIdCanonico = normalizeText(
+    canonicalEvent.propriedade_id
+    || propriedadeId
+    || fazenda_id
+    || fazendaId
+    || produtor_id
+    || recordPropertyId
+  );
+
+  return {
+    ...canonicalEvent,
+    ...(propriedadeIdCanonico ? { propriedade_id: propriedadeIdCanonico } : {}),
+  };
+};
+
 const getEvents = (record: any): any[] =>
-  Array.isArray(record?.eventos_visita) ? cloneValue(record.eventos_visita) : [];
+  Array.isArray(record?.eventos_visita)
+    ? record.eventos_visita.map((event) => normalizeVisitaLifecycleEvent(event, getFazendaId(record)))
+    : [];
 
 const getComplements = (record: any): any[] =>
   Array.isArray(record?.complementos_visita) ? cloneValue(record.complementos_visita) : [];
@@ -153,7 +181,6 @@ const buildEvent = ({
     visita_id: normalizeText(record?.id) || undefined,
     tipo: type,
     sequencia: sequence,
-    fazenda_id: getFazendaId(record),
     estado_anterior: details.estado_anterior,
     estado_novo: details.estado_novo,
     autor_usuario_id: normalizeText(actor.usuarioId),
@@ -164,6 +191,7 @@ const buildEvent = ({
     versao_resultante: versionResult,
     ...(normalizeText(idempotencyKey) ? { chave_idempotencia: normalizeText(idempotencyKey) } : {}),
     ...cloneValue(details),
+    propriedade_id: getFazendaId(record),
   };
 };
 
