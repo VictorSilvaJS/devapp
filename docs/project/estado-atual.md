@@ -5494,7 +5494,7 @@ reabrem o portão pré-backend, que continua liberado.
 
 ## Complementação Do Mock Para A Rodada Final - 2026-08-07
 
-Status: `IMPLEMENTADO_VALIDADO_AUTOMATIZADO`.
+Status: `IMPLEMENTADO_VALIDADO_COM_SMOKE_PARCIAL`.
 
 O dataset `demo_clientes_26_1_mt_2026_08` foi complementado dentro do mesmo
 contrato v2, sem novo modelo e sem alterar o JSON autorizado gerado do KML. A
@@ -5503,7 +5503,7 @@ dirigidos, dois Talhões sem geometria, cinco Visitas modernas, seis registros
 do Caderno, quatro Períodos Produtivos e oito Materiais Técnicos. Nomes e
 observações identificam os casos como `[QA]`.
 
-O bootstrap passou à versão lógica 2 e migra instalações anteriores do mesmo
+O bootstrap passou à versão lógica 3 e migra instalações anteriores do mesmo
 dataset acrescentando somente IDs ausentes. Registros operacionais, períodos e
 credenciais adicionais já criados no aparelho são preservados; snapshots de
 outro dataset continuam intocados. O seed autorizado base permanece com 70
@@ -5513,5 +5513,22 @@ Propriedades e 472 Talhões lógicos.
 `npm run typecheck` e `npm run test:domain-compat` passaram. A suíte cobre as
 quantidades, a integridade referencial, os estados operacionais, a ausência
 controlada de geometria/arquivo e uma migração que preserva Visita, Período e
-credencial locais. A nova massa ainda precisa de validação visual no próximo
-APK conforme a rodada `QA-FINAL` de `smoke.md`.
+credencial locais.
+
+O APK foi instalado duas vezes por atualização no Android físico `8483A`, sem
+limpar dados. O segundo artefato possui 96.263.258 bytes e SHA-256
+`CC2A39D4D53CC3DC7CB9370925F0FBAC0B9C96432E65A00D7B3AA416C09E244C`.
+A sessão César, duas Visitas extras e um registro local do Caderno foram
+preservados. Os quatro logins QA, os cinco estados de Visita, visibilidade do
+Caderno, Períodos, PNG embarcado e ponto sem classificação espacial foram
+confirmados. O nome legível do Talhão foi acrescentado aos snapshots
+operacionais e retestado no segundo APK.
+O Dashboard permaneceu utilizável em paisagem, e a rotação automática original
+do aparelho foi restaurada depois da validação.
+
+A rodada encontrou `BUG-QA-01` (Talhão lógico sem geometria desaparece porque
+a tela usa apenas `LimiteArea`) e `BUG-QA-02` (PDF local ausente não produz
+feedback ao tocar em abrir), além dos ajustes P2 `UX-QA-01` e `UX-QA-02`.
+Detalhes e pendências físicas restantes estão na matriz `QA-FINAL` de
+`smoke.md`. A sessão César/Admin foi restaurada e o log final não apresentou
+fatal ou ANR.

@@ -145,7 +145,7 @@ const testMockV2DemoBootstrap = async () => {
   assert.equal(credentialRaw.includes('colab123'), false);
   assert.equal(credentialRaw.includes('prod123'), false);
   const installedMarker = JSON.parse(storage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY));
-  assert.equal(installedMarker.version, 2);
+  assert.equal(installedMarker.version, 3);
   assert.equal(installedMarker.cleanup_complete, true);
   const installedPeriodos = JSON.parse(storage.values.get(PERIODO_PRODUTIVO_STORAGE_KEY));
   assert.equal(installedPeriodos.items.length, MOCK_V2_DEMO_QA_PERIODOS.length);
@@ -306,8 +306,47 @@ const testMockV2DemoBootstrap = async () => {
   const migratedPeriodos = JSON.parse(migrationStorage.values.get(PERIODO_PRODUTIVO_STORAGE_KEY));
   assert.equal(migratedPeriodos.items.some((item) => item.id === migrationPeriodo.id), true);
   assert.equal(migratedPeriodos.items.length, MOCK_V2_DEMO_QA_PERIODOS.length + 1);
-  assert.equal(JSON.parse(migrationStorage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY)).version, 2);
+  assert.equal(JSON.parse(migrationStorage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY)).version, 3);
   assert.equal(migrationFs.deleted.length, 0);
+
+  const logicalNameUpgradeState = JSON.parse(JSON.stringify(snapshot));
+  for (const collection of ['visitas', 'cadernos', 'materiais']) {
+    logicalNameUpgradeState[collection].forEach((record) => {
+      if (record.id.includes('_qa_')) delete record.talhao_nome;
+    });
+  }
+  const logicalNameUpgradeStorage = createMemoryStorage({
+    [MOCK_V2_LOCAL_STORAGE_KEY]: JSON.stringify(logicalNameUpgradeState),
+    [LOCAL_CREDENTIAL_STORAGE_KEY]: credentialRaw,
+    [PERIODO_PRODUTIVO_STORAGE_KEY]: JSON.stringify(installedPeriodos),
+    [MOCK_V2_DEMO_BOOTSTRAP_KEY]: JSON.stringify({
+      version: 2,
+      dataset_id: MOCK_V2_DEMO_DATASET_ID,
+      installed_at: '2026-08-06T12:00:00.000Z',
+      cleanup_complete: true,
+      storage_cleanup_complete: true,
+      file_cleanup_complete: true,
+    }),
+  });
+  await runMockV2DemoBootstrap(bootstrapDeps(logicalNameUpgradeStorage, createFileSystem()));
+  const upgradedLogicalNames = JSON.parse(
+    logicalNameUpgradeStorage.values.get(MOCK_V2_LOCAL_STORAGE_KEY)
+  );
+  for (const collection of ['visitas', 'cadernos', 'materiais']) {
+    assert.equal(
+      upgradedLogicalNames[collection].filter((record) => (
+        record.id.includes('_qa_') && record.talhao_id
+      )).every(
+        (record) => record.talhao_nome === '[QA] Talhão sem geometria'
+      ),
+      true,
+      collection
+    );
+  }
+  assert.equal(
+    JSON.parse(logicalNameUpgradeStorage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY)).version,
+    3
+  );
 
   console.log('Bootstrap do dataset demonstrativo mock v2 validado.');
 };

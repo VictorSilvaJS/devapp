@@ -169,8 +169,9 @@ dos três perfis.
 
 ## Próxima Etapa
 
-Gerar/instalar o próximo APK sem limpar os dados, confirmar que a migração
-aditiva preservou o estado local e executar a matriz final registrada em
-`smoke.md`. A rodada deve separar defeito de produto, limitação intencional do
-mock e ausência de evidência física. PDF/ZIP ausentes e Talhão de QA sem
-geometria têm falha controlada como resultado esperado.
+A instalação aditiva e o recorte principal da matriz final passaram no Android
+físico. Corrigir e retestar `BUG-QA-01` e `BUG-QA-02`, decidir os ajustes P2
+`UX-QA-01`/`UX-QA-02` e concluir os recortes pendentes de `QA-FINAL-09`,
+`QA-FINAL-10`, `ATUAL-06` e `ATUAL-07`. O PDF/ZIP ausente e o Talhão de QA sem geometria continuam sendo
+casos intencionais; o defeito está na ausência de feedback e no acoplamento da
+lista lógica à geometria, não na existência desses cenários.

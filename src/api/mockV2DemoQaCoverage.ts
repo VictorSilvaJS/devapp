@@ -50,6 +50,21 @@ const appendMissingById = <T extends { id: string }>(current: T[], additions: T[
   ];
 };
 
+const mergeOperationalQaRecords = <T extends { id: string; talhao_nome?: unknown }>(
+  current: T[],
+  additions: T[]
+): T[] => {
+  const additionsById = new Map(additions.map((record) => [record.id, record]));
+  return appendMissingById(
+    current.map((record) => {
+      const addition = additionsById.get(record.id);
+      if (!addition || record.talhao_nome || !addition.talhao_nome) return record;
+      return { ...record, talhao_nome: addition.talhao_nome };
+    }),
+    additions
+  );
+};
+
 const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'organizacao'> => {
   const referenceProperty = base.propriedades[0];
   if (!referenceProperty) {
@@ -256,6 +271,7 @@ const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'orga
       organizacao_id: ORGANIZACAO_TCHE_ID,
       propriedade_id: propertyId,
       talhao_id: talhaoId,
+      talhao_nome: '[QA] Talhão sem geometria',
       tecnico_responsavel: actor.nome,
       responsavel_usuario_id: actor.id,
       data_visita: '2026-08-18T13:00:00.000Z',
@@ -297,6 +313,7 @@ const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'orga
       organizacao_id: ORGANIZACAO_TCHE_ID,
       propriedade_id: propertyId,
       talhao_id: talhaoId,
+      talhao_nome: '[QA] Talhão sem geometria',
       tecnico_responsavel: actor.nome,
       responsavel_usuario_id: actor.id,
       responsavel_executante_usuario_id: actor.id,
@@ -417,6 +434,7 @@ const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'orga
       ...cadernoBase,
       id: 'caderno_qa_plantio_registrado',
       talhao_id: talhaoId,
+      talhao_nome: '[QA] Talhão sem geometria',
       data_atividade: '2026-07-10T13:00:00.000Z',
       data_criacao: '2026-07-10T13:00:00.000Z',
       tipo_atividade: 'plantio',
@@ -442,6 +460,7 @@ const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'orga
       ...cadernoBase,
       id: 'caderno_qa_aplicacao_localizacao',
       talhao_id: talhaoId,
+      talhao_nome: '[QA] Talhão sem geometria',
       data_atividade: '2026-07-25T13:00:00.000Z',
       data_criacao: '2026-07-25T13:00:00.000Z',
       tipo_atividade: 'aplicacao',
@@ -481,6 +500,7 @@ const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'orga
       ...cadernoBase,
       id: 'caderno_qa_colheita_arquivada',
       talhao_id: talhaoId,
+      talhao_nome: '[QA] Talhão sem geometria',
       data_atividade: '2026-06-20T13:00:00.000Z',
       data_criacao: '2026-06-20T13:00:00.000Z',
       tipo_atividade: 'colheita',
@@ -605,6 +625,7 @@ const buildQaCoverage = (base: MockV2State): Omit<MockV2State, 'dataset' | 'orga
       organizacao_id: ORGANIZACAO_TCHE_ID,
       propriedade_id: propertyId,
       talhao_id: talhaoId,
+      talhao_nome: '[QA] Talhão sem geometria',
       titulo: '[QA] Prescrição ZIP — arquivo indisponível',
       categoria: 'prescricao',
       categoria_label: 'Prescrição',
@@ -669,9 +690,9 @@ export const mergeMockV2DemoQaCoverage = (state: MockV2State): MockV2State => {
       qa.usuarios_propriedades
     ),
     talhoes: appendMissingById(state.talhoes, qa.talhoes),
-    visitas: appendMissingById(state.visitas, qa.visitas),
-    cadernos: appendMissingById(state.cadernos, qa.cadernos),
-    materiais: appendMissingById(state.materiais, qa.materiais),
+    visitas: mergeOperationalQaRecords(state.visitas, qa.visitas),
+    cadernos: mergeOperationalQaRecords(state.cadernos, qa.cadernos),
+    materiais: mergeOperationalQaRecords(state.materiais, qa.materiais),
   };
 };
 

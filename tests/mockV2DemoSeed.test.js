@@ -145,6 +145,9 @@ const testMockV2DemoSeed = async () => {
       {},
       `Campos condicionais incompletos em ${record.id}`
     );
+    if (record.talhao_id) {
+      assert.equal(record.talhao_nome, '[QA] Talhão sem geometria');
+    }
   }
 
   const materialCatalog = createMaterialCatalogService({

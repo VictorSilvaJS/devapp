@@ -81,7 +81,7 @@ export interface MockV2DemoBootstrapResult {
 }
 
 interface BootstrapMarker {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   dataset_id: string;
   installed_at: string;
   cleanup_complete: boolean;
@@ -257,7 +257,7 @@ const saveMarker = async (
   fileCleanupComplete: boolean
 ): Promise<void> => {
   const marker: BootstrapMarker = {
-    version: 2,
+    version: 3,
     dataset_id: MOCK_V2_DEMO_DATASET_ID,
     installed_at: now(),
     cleanup_complete: storageCleanupComplete && fileCleanupComplete,
@@ -299,7 +299,7 @@ export const runMockV2DemoBootstrap = async (
   }
 
   const marker = parseJson(await storage.getItem(MOCK_V2_DEMO_BOOTSTRAP_KEY)) as BootstrapMarker | null;
-  const markerComplete = marker?.version === 2
+  const markerComplete = marker?.version === 3
     && marker.dataset_id === MOCK_V2_DEMO_DATASET_ID
     && marker.cleanup_complete === true;
   const rawCredentials = await storage.getItem(LOCAL_CREDENTIAL_STORAGE_KEY);
@@ -335,7 +335,7 @@ export const runMockV2DemoBootstrap = async (
     throw error;
   }
 
-  const markerBelongsToDataset = [1, 2].includes(marker?.version as number)
+  const markerBelongsToDataset = [1, 2, 3].includes(marker?.version as number)
     && marker?.dataset_id === MOCK_V2_DEMO_DATASET_ID;
   const storageWasAlreadyClean = markerBelongsToDataset
     && (marker.storage_cleanup_complete === true || marker.cleanup_complete === true);
