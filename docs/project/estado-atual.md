@@ -5491,3 +5491,27 @@ Artefato final: 96.242.830 bytes; SHA-256
 `CE99714141A11F1BDCACF875A08001C15B84827AF0848F7398C015796282353E`.
 `ATUAL-06` e `ATUAL-07` permanecem nos portões de `MP-38` e release; não
 reabrem o portão pré-backend, que continua liberado.
+
+## Complementação Do Mock Para A Rodada Final - 2026-08-07
+
+Status: `IMPLEMENTADO_VALIDADO_AUTOMATIZADO`.
+
+O dataset `demo_clientes_26_1_mt_2026_08` foi complementado dentro do mesmo
+contrato v2, sem novo modelo e sem alterar o JSON autorizado gerado do KML. A
+camada aditiva cria três Propriedades sintéticas, quatro usuários de estados
+dirigidos, dois Talhões sem geometria, cinco Visitas modernas, seis registros
+do Caderno, quatro Períodos Produtivos e oito Materiais Técnicos. Nomes e
+observações identificam os casos como `[QA]`.
+
+O bootstrap passou à versão lógica 2 e migra instalações anteriores do mesmo
+dataset acrescentando somente IDs ausentes. Registros operacionais, períodos e
+credenciais adicionais já criados no aparelho são preservados; snapshots de
+outro dataset continuam intocados. O seed autorizado base permanece com 70
+Propriedades e 470 geometrias, enquanto o estado instalado passa a ter 73
+Propriedades e 472 Talhões lógicos.
+
+`npm run typecheck` e `npm run test:domain-compat` passaram. A suíte cobre as
+quantidades, a integridade referencial, os estados operacionais, a ausência
+controlada de geometria/arquivo e uma migração que preserva Visita, Período e
+credencial locais. A nova massa ainda precisa de validação visual no próximo
+APK conforme a rodada `QA-FINAL` de `smoke.md`.

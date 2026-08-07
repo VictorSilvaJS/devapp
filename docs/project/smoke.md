@@ -20,6 +20,31 @@ nesta matriz.
 ausência de backend não impede estes smokes locais; testes de API começam em
 `MP-33`/`MP-35`.
 
+### Rodada QA-FINAL — Mock V2 Complementado
+
+Status geral: `PRONTA_PARA_EXECUCAO_FISICA`.
+
+Executar por atualização do APK, sem limpar armazenamento. Registrar cada
+falha como `BUG`, `LIMITACAO_MOCK` ou `EVIDENCIA_PENDENTE`; não corrigir a massa
+para mascarar comportamento incorreto.
+
+| ID | Prioridade | Perfil | Cenário | Resultado esperado | Status |
+|---|---|---|---|---|---|
+| QA-FINAL-01 | P0 | Admin | Atualizar e reabrir instalação que já possui dados locais | Cenários `[QA]` aparecem uma vez; registros, períodos, credenciais e sessão anteriores permanecem | Pendente físico |
+| QA-FINAL-02 | P0 | Admin | Abrir usuários QA ativo, pendente, inativo e Colaborador inativo; tentar login nas quatro contas | Somente Produtor QA ativo autentica; demais exibem bloqueio coerente com o status | Pendente físico |
+| QA-FINAL-03 | P0 | Admin/Colaborador/Produtor | Comparar Propriedade operacional, sem Talhões e inativa; testar vínculo autorizado e vínculo inativo | Listas, detalhes e rotas respeitam status e vínculo direto, sem autorização por Município/UF | Pendente físico |
+| QA-FINAL-04 | P0 | Admin/Colaborador | Listar e abrir Visita futura, vencida, realizada, cancelada e anulada | Estado, objetivo, motivo, foto e histórico são coerentes; terminais não oferecem transição inválida | Pendente físico |
+| QA-FINAL-05 | P0 | Admin/Colaborador/Produtor | Conferir os seis tipos de Caderno, rascunho próprio, estados terminais, complemento e visibilidade | Campos condicionais aparecem corretamente; Produtor não vê conteúdo restrito nem auditoria interna | Pendente físico |
+| QA-FINAL-06 | P0 | Admin/Colaborador | Abrir Períodos planejado, em andamento, encerrado e removido; cruzar Plantio/Colheita | Somente registros ativos aparecem nas seleções; vínculos e snapshots permanecem legíveis | Pendente físico |
+| QA-FINAL-07 | P0 | Todos autorizados | Abrir cinco PNGs, PDF/ZIP ausentes e material em rascunho/restrito | PNG abre; arquivo ausente falha de forma honesta; rascunho não é publicado; Produtor não vê restrito | Pendente físico |
+| QA-FINAL-08 | P1 | Todos autorizados | Abrir Propriedade sem Talhões e Talhão QA sem geometria; usar ponto do Caderno | Tela vazia é útil; ausência de demarcação é explícita; não há polígono ou classificação espacial inventada | Pendente físico |
+| QA-FINAL-09 | P0 | Admin/Colaborador/Produtor | Reexecutar ATUAL-01 a ATUAL-05 e rotas diretas críticas | Nenhuma regressão de mídia, exportação, mapa, sessão, acesso ou navegação | Pendente físico |
+| QA-FINAL-10 | P1 | Todos | Retrato, paisagem, teclado, leitor de tela e reinício offline nos fluxos acima | Interface continua utilizável; dados locais reabrem; dependência remota é informada sem travamento | Pendente físico |
+
+`ATUAL-06` continua sendo o único bloco que exige execução em campo real. A
+Propriedade QA sem geometria serve para testar ausência controlada, não para
+substituir dentro/fora/próximo de `MP-38`.
+
 ### Fechamento Físico Pré-MP-33 — 2026-08-07
 
 Status: `ATUAL-01_A_ATUAL-05_PASSARAM` no Android físico `8483A`.

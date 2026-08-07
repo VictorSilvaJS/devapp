@@ -9,9 +9,17 @@ import {
 import { MOCK_V2_DEMO_CREDENTIALS } from '../auth/mockV2DemoCredentials';
 import { GEOJSON_IMPORT_STORAGE_KEY } from '../services/GeoJsonImportService';
 import { MATERIAL_TECNICO_IMPORT_STORAGE_KEY } from '../types/materialTecnicoLocal';
-import { PERIODO_PRODUTIVO_STORAGE_KEY } from '../types/periodoProdutivo';
+import {
+  PERIODO_PRODUTIVO_STORAGE_KEY,
+  PERIODO_PRODUTIVO_VERSION,
+  type PeriodoProdutivoMetadata,
+} from '../types/periodoProdutivo';
 import { PNG_MAP_IMPORT_STORAGE_KEY } from '../types/anexoPngLocal';
 import { PRESCRIPTION_ZIP_IMPORT_STORAGE_KEY } from '../types/anexoPrescricaoZipLocal';
+import {
+  MOCK_V2_DEMO_QA_PERIODOS,
+  mergeMockV2DemoQaCoverage,
+} from './mockV2DemoQaCoverage';
 import { MOCK_V2_DEMO_DATASET_ID, MOCK_V2_DEMO_SEED } from './mockV2DemoSeed';
 import {
   MOCK_V1_LEGACY_STORAGE_KEYS,
@@ -73,7 +81,7 @@ export interface MockV2DemoBootstrapResult {
 }
 
 interface BootstrapMarker {
-  version: 1;
+  version: 1 | 2;
   dataset_id: string;
   installed_at: string;
   cleanup_complete: boolean;
@@ -104,23 +112,59 @@ const restoreStorageValue = async (
   else await storage.setItem(key, previous);
 };
 
-const isDemoCredentialSnapshot = (raw: string | null): boolean => {
+const hasDemoCredentialCoverage = (raw: string | null): boolean => {
   const parsed = parseJson(raw);
   if (!Array.isArray(parsed?.credentials)) return false;
 
-  const expected = new Map(
-    MOCK_V2_DEMO_CREDENTIALS.credentials.map((record) => [
-      record.usuario_id,
-      record.email.trim().toLowerCase(),
-    ])
+  const validUserIds = new Set(
+    parsed.credentials
+      .filter((record: any) => (
+        typeof record?.usuario_id === 'string'
+        && typeof record?.email_normalizado === 'string'
+        && typeof record?.senha_hash === 'string'
+        && typeof record?.salt === 'string'
+      ))
+      .map((record: any) => record.usuario_id)
   );
-  if (parsed.credentials.length !== expected.size) return false;
+  return MOCK_V2_DEMO_CREDENTIALS.credentials.every(
+    (record) => validUserIds.has(record.usuario_id)
+  );
+};
 
-  return parsed.credentials.every((record: any) =>
-    expected.get(record?.usuario_id) === record?.email_normalizado
-    && typeof record?.senha_hash === 'string'
-    && typeof record?.salt === 'string'
-  );
+const ensureDemoCredentialCoverage = async (
+  credentialService: ReturnType<typeof createLocalCredentialService>
+): Promise<void> => {
+  const current = await credentialService.listCredentialMetadata();
+  const existingUserIds = new Set(current.map((record) => record.usuario_id));
+  for (const credential of MOCK_V2_DEMO_CREDENTIALS.credentials) {
+    if (!existingUserIds.has(credential.usuario_id)) {
+      await credentialService.createCredential(
+        credential.usuario_id,
+        credential.email,
+        credential.senha
+      );
+      existingUserIds.add(credential.usuario_id);
+    }
+  }
+};
+
+const mergeDemoQaPeriodos = (raw: string | null, savedAt: string): string => {
+  const parsed = parseJson(raw);
+  const currentItems: PeriodoProdutivoMetadata[] = (
+    parsed?.version === PERIODO_PRODUTIVO_VERSION
+    && typeof parsed?.savedAt === 'string'
+    && Array.isArray(parsed?.items)
+  ) ? parsed.items : [];
+  const existingIds = new Set(currentItems.map((record) => record?.id));
+  const items = [
+    ...currentItems,
+    ...MOCK_V2_DEMO_QA_PERIODOS.filter((record) => !existingIds.has(record.id)),
+  ];
+  return JSON.stringify({
+    version: PERIODO_PRODUTIVO_VERSION,
+    savedAt,
+    items,
+  });
 };
 
 const validateDemoPackage = () => {
@@ -213,7 +257,7 @@ const saveMarker = async (
   fileCleanupComplete: boolean
 ): Promise<void> => {
   const marker: BootstrapMarker = {
-    version: 1,
+    version: 2,
     dataset_id: MOCK_V2_DEMO_DATASET_ID,
     installed_at: now(),
     cleanup_complete: storageCleanupComplete && fileCleanupComplete,
@@ -255,12 +299,12 @@ export const runMockV2DemoBootstrap = async (
   }
 
   const marker = parseJson(await storage.getItem(MOCK_V2_DEMO_BOOTSTRAP_KEY)) as BootstrapMarker | null;
-  const markerComplete = marker?.version === 1
+  const markerComplete = marker?.version === 2
     && marker.dataset_id === MOCK_V2_DEMO_DATASET_ID
     && marker.cleanup_complete === true;
   const rawCredentials = await storage.getItem(LOCAL_CREDENTIAL_STORAGE_KEY);
 
-  if (existingV2 && markerComplete && isDemoCredentialSnapshot(rawCredentials)) {
+  if (existingV2 && markerComplete && hasDemoCredentialCoverage(rawCredentials)) {
     return {
       status: 'already_installed',
       dataset_id: MOCK_V2_DEMO_DATASET_ID,
@@ -272,16 +316,17 @@ export const runMockV2DemoBootstrap = async (
   const previousV2 = rawV2;
   const previousCredentials = rawCredentials;
   const previousMarker = await storage.getItem(MOCK_V2_DEMO_BOOTSTRAP_KEY);
+  const previousPeriodos = await storage.getItem(PERIODO_PRODUTIVO_STORAGE_KEY);
   await storage.setItem(MOCK_V2_DEMO_BOOTSTRAP_STAGING_KEY, JSON.stringify({
     dataset_id: MOCK_V2_DEMO_DATASET_ID,
     started_at: now(),
   }));
 
   try {
-    if (!isDemoCredentialSnapshot(rawCredentials)) {
-      await credentialService.replaceAllCredentials(MOCK_V2_DEMO_CREDENTIALS.credentials);
-    }
-    if (!existingV2) await persistence.save(MOCK_V2_DEMO_SEED);
+    await ensureDemoCredentialCoverage(credentialService);
+    await persistence.save(
+      existingV2 ? mergeMockV2DemoQaCoverage(existingV2) : MOCK_V2_DEMO_SEED
+    );
   } catch (error) {
     await restoreStorageValue(storage, LOCAL_CREDENTIAL_STORAGE_KEY, previousCredentials);
     await restoreStorageValue(storage, MOCK_V2_LOCAL_STORAGE_KEY, previousV2);
@@ -290,8 +335,8 @@ export const runMockV2DemoBootstrap = async (
     throw error;
   }
 
-  const markerBelongsToDataset = marker?.version === 1
-    && marker.dataset_id === MOCK_V2_DEMO_DATASET_ID;
+  const markerBelongsToDataset = [1, 2].includes(marker?.version as number)
+    && marker?.dataset_id === MOCK_V2_DEMO_DATASET_ID;
   const storageWasAlreadyClean = markerBelongsToDataset
     && (marker.storage_cleanup_complete === true || marker.cleanup_complete === true);
   const filesWereAlreadyClean = markerBelongsToDataset
@@ -300,7 +345,18 @@ export const runMockV2DemoBootstrap = async (
     || await cleanupLegacyStorage(storage, warnings);
   const fileCleanupComplete = filesWereAlreadyClean
     || await cleanupLegacyFiles(fileSystem, warnings);
-  await saveMarker(storage, now, storageCleanupComplete, fileCleanupComplete);
+  try {
+    const currentPeriodos = await storage.getItem(PERIODO_PRODUTIVO_STORAGE_KEY);
+    await storage.setItem(
+      PERIODO_PRODUTIVO_STORAGE_KEY,
+      mergeDemoQaPeriodos(currentPeriodos, now())
+    );
+    await saveMarker(storage, now, storageCleanupComplete, fileCleanupComplete);
+  } catch (error) {
+    await restoreStorageValue(storage, PERIODO_PRODUTIVO_STORAGE_KEY, previousPeriodos);
+    await restoreStorageValue(storage, MOCK_V2_DEMO_BOOTSTRAP_KEY, previousMarker);
+    throw error;
+  }
   await storage.removeItem(MOCK_V2_DEMO_BOOTSTRAP_STAGING_KEY).catch(() => undefined);
 
   return {

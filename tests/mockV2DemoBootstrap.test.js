@@ -12,8 +12,14 @@ const {
   createMockV2LocalPersistence,
 } = require('../.tmp-domain-compat/src/api/mockV2LocalPersistence');
 const { MOCK_V2_EMPTY_SEED } = require('../.tmp-domain-compat/src/api/mockV2Seed');
-const { MOCK_V2_DEMO_DATASET_ID } = require('../.tmp-domain-compat/src/api/mockV2DemoSeed');
+const {
+  MOCK_V2_DEMO_DATASET_ID,
+} = require('../.tmp-domain-compat/src/api/mockV2DemoSeed');
+const {
+  MOCK_V2_DEMO_QA_PERIODOS,
+} = require('../.tmp-domain-compat/src/api/mockV2DemoQaCoverage');
 const { LOCAL_CREDENTIAL_STORAGE_KEY } = require('../.tmp-domain-compat/src/auth/localCredentials');
+const { PERIODO_PRODUTIVO_STORAGE_KEY } = require('../.tmp-domain-compat/src/types/periodoProdutivo');
 const { authLoginByProfile } = require('../.tmp-domain-compat/src/auth/authMock');
 const { MockLocalData } = require('../.tmp-domain-compat/src/api/mock');
 
@@ -117,7 +123,10 @@ const testMockV2DemoBootstrap = async () => {
   assert.deepEqual(installed.warnings, []);
   assert.equal(storage.values.has(MOCK_V2_DEMO_BOOTSTRAP_STAGING_KEY), false);
   assert.equal(storage.values.get('@app:nao-relacionado'), 'preservar');
-  for (const key of ['@tche:mock-mvp:v1', ...MOCK_V1_AUXILIARY_STORAGE_KEYS]) {
+  for (const key of [
+    '@tche:mock-mvp:v1',
+    ...MOCK_V1_AUXILIARY_STORAGE_KEYS.filter((item) => item !== PERIODO_PRODUTIVO_STORAGE_KEY),
+  ]) {
     assert.equal(storage.values.has(key), false, key);
   }
   assert.equal([...storage.values.keys()].some((key) =>
@@ -127,15 +136,19 @@ const testMockV2DemoBootstrap = async () => {
 
   const snapshot = JSON.parse(storage.values.get(MOCK_V2_LOCAL_STORAGE_KEY));
   assert.equal(snapshot.dataset.id, MOCK_V2_DEMO_DATASET_ID);
-  assert.equal(snapshot.usuarios.length, 40);
-  assert.equal(snapshot.propriedades.length, 70);
+  assert.equal(snapshot.usuarios.length, 44);
+  assert.equal(snapshot.propriedades.length, 73);
   const credentialRaw = storage.values.get(LOCAL_CREDENTIAL_STORAGE_KEY);
   const credentialSnapshot = JSON.parse(credentialRaw);
-  assert.equal(credentialSnapshot.credentials.length, 40);
+  assert.equal(credentialSnapshot.credentials.length, 44);
   assert.equal(credentialRaw.includes('admin123'), false);
   assert.equal(credentialRaw.includes('colab123'), false);
   assert.equal(credentialRaw.includes('prod123'), false);
-  assert.equal(JSON.parse(storage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY)).cleanup_complete, true);
+  const installedMarker = JSON.parse(storage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY));
+  assert.equal(installedMarker.version, 2);
+  assert.equal(installedMarker.cleanup_complete, true);
+  const installedPeriodos = JSON.parse(storage.values.get(PERIODO_PRODUTIVO_STORAGE_KEY));
+  assert.equal(installedPeriodos.items.length, MOCK_V2_DEMO_QA_PERIODOS.length);
 
   const writesBeforeRepeat = storage.calls.set.length;
   const repeated = await runMockV2DemoBootstrap(bootstrapDeps(storage, fileSystem));
@@ -150,7 +163,7 @@ const testMockV2DemoBootstrap = async () => {
   const quickProducer = await authLoginByProfile('produtor');
   assert.equal(quickAdmin.id, 'usr_admin_cesar');
   assert.equal(quickCollaborator.id, 'usr_colaborador_victor');
-  assert.equal(quickCollaborator.vinculos_propriedades.length, 35);
+  assert.equal(quickCollaborator.vinculos_propriedades.length, 37);
   assert.equal(quickProducer.perfil, 'produtor');
   assert.ok(quickProducer.vinculos_propriedades.length >= 1);
 
@@ -198,13 +211,103 @@ const testMockV2DemoBootstrap = async () => {
   const partialMarker = JSON.parse(retryStorage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY));
   assert.equal(partialMarker.storage_cleanup_complete, true);
   assert.equal(partialMarker.file_cleanup_complete, false);
-  retryStorage.values.set('@tche:periodos-produtivos:v1', '{"dados":"novos-v2"}');
+  const customPeriodo = {
+    ...MOCK_V2_DEMO_QA_PERIODOS[0],
+    id: 'periodo_custom_preservado_retry',
+    label: 'Período customizado preservado no retry',
+  };
+  retryStorage.values.set(PERIODO_PRODUTIVO_STORAGE_KEY, JSON.stringify({
+    version: 1,
+    savedAt: '2026-08-05T12:30:00.000Z',
+    items: [customPeriodo],
+  }));
   const retryCredentialRaw = retryStorage.values.get(LOCAL_CREDENTIAL_STORAGE_KEY);
   const completed = await runMockV2DemoBootstrap(bootstrapDeps(retryStorage, retryFs));
   assert.equal(completed.status, 'already_installed');
   assert.equal(completed.cleanup_complete, true);
   assert.equal(retryStorage.values.get(LOCAL_CREDENTIAL_STORAGE_KEY), retryCredentialRaw);
-  assert.equal(retryStorage.values.get('@tche:periodos-produtivos:v1'), '{"dados":"novos-v2"}');
+  const retryPeriodos = JSON.parse(retryStorage.values.get(PERIODO_PRODUTIVO_STORAGE_KEY));
+  assert.equal(retryPeriodos.items.some((item) => item.id === customPeriodo.id), true);
+  assert.equal(retryPeriodos.items.length, MOCK_V2_DEMO_QA_PERIODOS.length + 1);
+
+  const baseSnapshot = {
+    ...snapshot,
+    usuarios: snapshot.usuarios.filter((item) => !item.id.includes('_qa_')),
+    produtores: snapshot.produtores.filter((item) => !item.id.includes('_qa_')),
+    propriedades: snapshot.propriedades.filter((item) => !item.id.includes('_qa_')),
+    usuarios_propriedades: snapshot.usuarios_propriedades.filter((item) => !item.id.includes('_qa_')),
+    talhoes: snapshot.talhoes.filter((item) => !item.id.includes('_qa_')),
+    visitas: snapshot.visitas.filter((item) => !item.id.includes('_qa_')),
+    cadernos: snapshot.cadernos.filter((item) => !item.id.includes('_qa_')),
+    materiais: snapshot.materiais.filter((item) => !item.id.includes('_qa_')),
+  };
+  const customVisit = {
+    id: 'visita_custom_preservada',
+    organizacao_id: 'org_tche_fertilidade',
+    propriedade_id: baseSnapshot.propriedades[0].id,
+    tecnico_responsavel: 'Registro do usuário',
+    data_visita: '2026-08-20T12:00:00.000Z',
+    objetivo: 'outro',
+    status: 'agendada',
+  };
+  baseSnapshot.visitas.push(customVisit);
+  const customCredential = {
+    usuario_id: 'usuario_custom_credencial',
+    email_normalizado: 'custom@example.com',
+    senha_hash: 'hash-preservado',
+    salt: 'salt-preservado',
+    versao: 1,
+    criado_em: '2026-08-04T12:00:00.000Z',
+    atualizado_em: '2026-08-04T12:00:00.000Z',
+  };
+  const oldCredentialSnapshot = {
+    ...credentialSnapshot,
+    credentials: [
+      ...credentialSnapshot.credentials.filter((item) => !item.usuario_id.includes('_qa_')),
+      customCredential,
+    ],
+  };
+  const migrationPeriodo = {
+    ...MOCK_V2_DEMO_QA_PERIODOS[0],
+    id: 'periodo_custom_preservado_migracao',
+    propriedade_id: baseSnapshot.propriedades[0].id,
+    nome_propriedade: baseSnapshot.propriedades[0].nome,
+    label: 'Período customizado anterior à complementação',
+  };
+  const migrationStorage = createMemoryStorage({
+    [MOCK_V2_LOCAL_STORAGE_KEY]: JSON.stringify(baseSnapshot),
+    [LOCAL_CREDENTIAL_STORAGE_KEY]: JSON.stringify(oldCredentialSnapshot),
+    [PERIODO_PRODUTIVO_STORAGE_KEY]: JSON.stringify({
+      version: 1,
+      savedAt: '2026-08-04T12:00:00.000Z',
+      items: [migrationPeriodo],
+    }),
+    [MOCK_V2_DEMO_BOOTSTRAP_KEY]: JSON.stringify({
+      version: 1,
+      dataset_id: MOCK_V2_DEMO_DATASET_ID,
+      installed_at: '2026-08-04T12:00:00.000Z',
+      cleanup_complete: true,
+      storage_cleanup_complete: true,
+      file_cleanup_complete: true,
+    }),
+  });
+  const migrationFs = createFileSystem();
+  const migrated = await runMockV2DemoBootstrap(bootstrapDeps(migrationStorage, migrationFs));
+  assert.equal(migrated.status, 'already_installed');
+  const migratedSnapshot = JSON.parse(migrationStorage.values.get(MOCK_V2_LOCAL_STORAGE_KEY));
+  assert.equal(migratedSnapshot.usuarios.length, 44);
+  assert.equal(migratedSnapshot.visitas.some((item) => item.id === customVisit.id), true);
+  const migratedCredentials = JSON.parse(migrationStorage.values.get(LOCAL_CREDENTIAL_STORAGE_KEY));
+  assert.equal(migratedCredentials.credentials.length, 45);
+  assert.equal(
+    migratedCredentials.credentials.some((item) => item.usuario_id === customCredential.usuario_id),
+    true
+  );
+  const migratedPeriodos = JSON.parse(migrationStorage.values.get(PERIODO_PRODUTIVO_STORAGE_KEY));
+  assert.equal(migratedPeriodos.items.some((item) => item.id === migrationPeriodo.id), true);
+  assert.equal(migratedPeriodos.items.length, MOCK_V2_DEMO_QA_PERIODOS.length + 1);
+  assert.equal(JSON.parse(migrationStorage.values.get(MOCK_V2_DEMO_BOOTSTRAP_KEY)).version, 2);
+  assert.equal(migrationFs.deleted.length, 0);
 
   console.log('Bootstrap do dataset demonstrativo mock v2 validado.');
 };

@@ -2,9 +2,15 @@
 
 ## Estado
 
-Gerado, validado e conectado ao bootstrap do aplicativo em 2026-08-05. Na
-primeira abertura da nova versão, o app instala automaticamente o dataset v2,
-as credenciais demonstrativas e remove o pacote local v1.
+Gerado, validado e conectado ao bootstrap do aplicativo em 2026-08-05. Em
+2026-08-07, o mesmo dataset v2 recebeu uma complementação sintética e
+explicitamente rotulada para a rodada final de QA. Não foi criado um segundo
+modelo nem um segundo snapshot.
+
+Na primeira abertura, o app instala o dataset v2, as credenciais
+demonstrativas, os períodos sintéticos e remove o pacote local v1. Em uma
+instalação anterior do mesmo dataset, o bootstrap acrescenta somente os IDs de
+QA ausentes e preserva registros locais existentes.
 
 Identificador: `demo_clientes_26_1_mt_2026_08`.
 
@@ -29,23 +35,30 @@ concedem acesso.
 | --- | ---: |
 | Organização | 1 |
 | Admins | 2 |
-| Colaboradores | 2 |
-| Produtores | 36 |
-| Propriedades | 70 |
-| Vínculos usuário–Propriedade | 140 |
-| Talhões lógicos | 470 |
+| Colaboradores | 3, sendo 1 inativo de QA |
+| Usuários Produtores | 39, sendo 3 de QA |
+| Cadastros de Produtor | 39, sendo 3 de QA |
+| Propriedades | 73, sendo 3 de QA |
+| Vínculos usuário–Propriedade | 148 |
+| Talhões lógicos | 472, sendo 2 de QA sem geometria |
 | Geometrias de Talhão | 470 |
-| Visitas demonstrativas | 70 |
-| Cadernos demonstrativos | 70 |
-| Materiais técnicos | 0 |
+| Visitas demonstrativas | 75, sendo 5 cenários dirigidos de QA |
+| Cadernos demonstrativos | 76, sendo 6 cenários dirigidos de QA |
+| Períodos produtivos locais | 4 cenários dirigidos de QA |
+| Materiais técnicos | 8 cenários dirigidos de QA |
 
-Cada Propriedade tem um Titular principal e um Colaborador vinculados
-diretamente. Um Produtor pode titularizar várias Propriedades.
+As 70 Propriedades vindas da fonte autorizada mantêm um Titular principal e um
+Colaborador vinculados diretamente. Um Produtor pode titularizar várias
+Propriedades. As três Propriedades sintéticas exercitam vínculo autorizado,
+vínculo inativo, Propriedade inativa, Propriedade sem Talhões e Talhão sem
+geometria.
 
 ## Divisão Dos Colaboradores
 
-- Victor: 18 Produtores e 35 Propriedades.
-- Bruna Brito: 18 Produtores e 35 Propriedades.
+- Base autorizada — Victor: 18 Produtores e 35 Propriedades.
+- Base autorizada — Bruna Brito: 18 Produtores e 35 Propriedades.
+- Com a cobertura de QA — Victor: 37 vínculos ativos de Propriedade.
+- Com a cobertura de QA — Bruna Brito: 36 vínculos ativos de Propriedade.
 
 Todas as Propriedades de um mesmo Produtor permanecem com o mesmo
 Colaborador. A lista nominal de cada grupo está em
@@ -66,9 +79,11 @@ Dezoito contornos geometricamente inválidos foram normalizados durante a
 geração. Nomes de Talhão repetidos dentro da mesma Propriedade e com partes
 separadas formam um único `MultiPolygon`.
 
-`area_total` e `cultura_principal` permanecem ausentes porque o KML não fornece
-esses valores cadastrais. `area_mapeada_ha` pertence apenas ao artefato de
-geometria e não substitui área cadastrada.
+Nas 70 Propriedades autorizadas, `area_total` e `cultura_principal` permanecem
+ausentes porque o KML não fornece esses valores cadastrais.
+`area_mapeada_ha` pertence apenas ao artefato de geometria e não substitui área
+cadastrada. Duas Propriedades sintéticas possuem área e cultura preenchidas
+somente para validar a apresentação dos campos opcionais.
 
 ## Contas Demonstrativas
 
@@ -79,22 +94,38 @@ As contas abaixo não são credenciais reais:
 - Victor: `colaborador.victor@example.com` / `colab123`;
 - Bruna Brito: `colaborador.bruna.brito@example.com` / `colab123`;
 - Produtores: e-mails técnicos `@example.com` e senha comum `prod123`.
+- Produtor QA ativo: `qa.produtor.ativo@example.com` / `qaAtivo123`;
+- Produtor QA pendente: `qa.produtor.pendente@example.com` / `qaPendente123`;
+- Produtor QA inativo: `qa.produtor.inativo@example.com` / `qaInativo123`;
+- Colaborador QA inativo: `qa.colaborador.inativo@example.com` /
+  `qaColabInativo123`.
 
-A relação completa fica separada em
-`src/auth/generated/mockV2DemoCredentials.json`. Senhas não pertencem ao
-contrato `UsuarioV2`.
+A relação base fica em `src/auth/generated/mockV2DemoCredentials.json`; as
+quatro contas dirigidas ficam na complementação de QA. Senhas não pertencem ao
+contrato `UsuarioV2` e só são transformadas em hash e salt na instalação.
 
 ## Dados Sintéticos
 
-O KML não contém Visitas, Cadernos ou Materiais. Para validar os fluxos
-operacionais solicitados, foi criado um registro demonstrativo de Visita e de
-Caderno por Propriedade. Esses registros são sintéticos, rotulados como
-demonstração e não devem ser interpretados como fatos reais.
+O KML não contém Visitas, Cadernos, Períodos Produtivos ou Materiais. Os 70
+registros base de Visita e Caderno continuam sintéticos. A complementação
+acrescenta uma matriz pequena e dirigida:
 
-Nenhum Material técnico foi inventado. As geometrias do KML alimentam a camada
-de Talhões do mapa, mas não são tratadas como arquivo técnico de Fertilidade,
-Correção ou Prescrição. O card de Materiais permanece corretamente em zero até
-existirem arquivos próprios e autorizados.
+- Visitas agendadas futura e vencida, realizada com histórico, cancelada com
+  motivo e anulada;
+- os seis tipos atuais do Caderno: observação, plantio, aplicação, colheita,
+  ocorrência e outro;
+- rascunho, registrado, arquivado e anulado, conteúdo visível e restrito ao
+  Produtor, complemento e localização explícita;
+- Safra e Safrinha planejada, em andamento e encerrada, além de um registro
+  removido;
+- cinco mapas PNG que reutilizam assets demonstrativos já embarcados, um PDF e
+  um ZIP propositalmente indisponíveis e um material em rascunho fora do
+  catálogo publicado.
+
+Tudo que foi acrescentado possui `[QA]` no conteúdo visual ou observação
+equivalente e não deve ser interpretado como fato, recomendação agronômica ou
+arquivo real de cliente. Os 470 limites autorizados continuam sendo as únicas
+geometrias; os Talhões de QA sem geometria exercitam o estado de ausência.
 
 ## Artefatos E Regeneração
 
@@ -103,6 +134,7 @@ existirem arquivos próprios e autorizados.
 - credenciais: `src/auth/generated/mockV2DemoCredentials.json`;
 - divisão: `docs/project/generated/mock-v2-colaboradores.json`;
 - gerador: `scripts/generateMockV2DemoData.py`.
+- complementação aditiva de QA: `src/api/mockV2DemoQaCoverage.ts`.
 
 O gerador exige Python com Shapely, a fonte KML e os dois arquivos oficiais do
 IBGE usados como entrada. A geração é determinística para a mesma fonte e
@@ -114,9 +146,10 @@ A rotina `src/api/mockV2DemoBootstrap.ts`:
 
 1. identifica se o dataset v2 já foi instalado;
 2. remove apenas o pacote demonstrativo v1 e seus artefatos locais;
-3. instala snapshot e credenciais v2 de forma atômica;
+3. instala o snapshot, as credenciais e os períodos locais dirigidos;
 4. invalida sessão vinculada a IDs antigos;
-5. não reinstala o seed sobre dados v2 já existentes.
+5. em snapshot do mesmo dataset, acrescenta somente IDs de QA ausentes;
+6. preserva registros, períodos e credenciais adicionais criados localmente.
 
 A preparação é executada antes da montagem dos providers e da restauração da
 sessão. Snapshot v2 inválido bloqueia substituição automática e apresenta uma
@@ -128,15 +161,16 @@ O progresso da limpeza de chaves e arquivos é registrado separadamente. Se a
 remoção de algum diretório falhar, a abertura seguinte repete apenas a parcela
 pendente e não apaga dados novos já criados no v2.
 
-Cobertura automática: instalação nova, atualização do v1, repetição
-idempotente, preservação de v2 preexistente, bloqueio de snapshot corrompido,
-rollback de escrita, retomada de limpeza parcial e acesso rápido dos três
-perfis.
+Cobertura automática: instalação nova, atualização do v1, migração da versão
+anterior do mesmo dataset, repetição idempotente, preservação de registro,
+período e credencial locais, preservação de outro v2, bloqueio de snapshot
+corrompido, rollback de escrita, retomada de limpeza parcial e acesso rápido
+dos três perfis.
 
 ## Próxima Etapa
 
-O APK corrigido foi gerado e instalado no Android físico `8483A`. O smoke de
-Admin, Colaborador e Produtor passou, inclusive vínculos diretos e Talhão
-vetorial. A próxima tarefa específica de frontend é substituir os rótulos
-visuais legados de Região/Microrregião por filtros de Município/UF, sem alterar
-a regra de acesso por vínculo direto.
+Gerar/instalar o próximo APK sem limpar os dados, confirmar que a migração
+aditiva preservou o estado local e executar a matriz final registrada em
+`smoke.md`. A rodada deve separar defeito de produto, limitação intencional do
+mock e ausência de evidência física. PDF/ZIP ausentes e Talhão de QA sem
+geometria têm falha controlada como resultado esperado.
