@@ -22,7 +22,7 @@ ausência de backend não impede estes smokes locais; testes de API começam em
 
 ### Rodada QA-FINAL — Mock V2 Complementado
 
-Status geral: `EXECUTADA_PARCIAL_COM_2_BUGS` no Android físico `8483A`.
+Status geral: `EXECUTADA_PARCIAL_SEM_BUG_ABERTO` no Android físico `8483A`.
 
 Executar por atualização do APK, sem limpar armazenamento. Registrar cada
 falha como `BUG`, `LIMITACAO_MOCK` ou `EVIDENCIA_PENDENTE`; não corrigir a massa
@@ -34,33 +34,29 @@ para mascarar comportamento incorreto.
 | QA-FINAL-02 | P0 | Admin | Abrir usuários QA ativo, pendente, inativo e Colaborador inativo; tentar login nas quatro contas | Somente Produtor QA ativo autentica; demais exibem bloqueio coerente com o status | Passou físico nas quatro contas |
 | QA-FINAL-03 | P0 | Admin/Colaborador/Produtor | Comparar Propriedade operacional, sem Talhões e inativa; testar vínculo autorizado e vínculo inativo | Listas, detalhes e rotas respeitam status e vínculo direto, sem autorização por Município/UF | Passou no recorte físico e no contrato automatizado |
 | QA-FINAL-04 | P0 | Admin/Colaborador | Listar e abrir Visita futura, vencida, realizada, cancelada e anulada | Estado, objetivo, motivo, foto e histórico são coerentes; terminais não oferecem transição inválida | Passou em consulta física; comandos terminais cobertos automaticamente |
-| QA-FINAL-05 | P0 | Admin/Colaborador/Produtor | Conferir os seis tipos de Caderno, rascunho próprio, estados terminais, complemento e visibilidade | Campos condicionais aparecem corretamente; Produtor não vê conteúdo restrito nem auditoria interna | Passou com `UX-QA-01`; snapshot de nome do Talhão corrigido e retestado |
+| QA-FINAL-05 | P0 | Admin/Colaborador/Produtor | Conferir os seis tipos de Caderno, rascunho próprio, estados terminais, complemento e visibilidade | Campos condicionais aparecem corretamente; Produtor não vê conteúdo restrito nem auditoria interna | Passou após correção e reteste físico de `UX-QA-01` |
 | QA-FINAL-06 | P0 | Admin/Colaborador | Abrir Períodos planejado, em andamento, encerrado e removido; cruzar Plantio/Colheita | Somente registros ativos aparecem nas seleções; vínculos e snapshots permanecem legíveis | Passou físico e automatizado |
-| QA-FINAL-07 | P0 | Todos autorizados | Abrir cinco PNGs, PDF/ZIP ausentes e material em rascunho/restrito | PNG abre; arquivo ausente falha de forma honesta; rascunho não é publicado; Produtor não vê restrito | Falhou parcialmente em `BUG-QA-02`; demais recortes passaram |
-| QA-FINAL-08 | P1 | Todos autorizados | Abrir Propriedade sem Talhões e Talhão QA sem geometria; usar ponto do Caderno | Tela vazia é útil; ausência de demarcação é explícita; não há polígono ou classificação espacial inventada | Falhou parcialmente em `BUG-QA-01`; ponto e ausência de classificação passaram |
+| QA-FINAL-07 | P0 | Todos autorizados | Abrir cinco PNGs, PDF/ZIP ausentes e material em rascunho/restrito | PNG abre; arquivo ausente falha de forma honesta; rascunho não é publicado; Produtor não vê restrito | Passou após correção e reteste físico de `BUG-QA-02` |
+| QA-FINAL-08 | P1 | Todos autorizados | Abrir Propriedade sem Talhões e Talhão QA sem geometria; usar ponto do Caderno | Tela vazia é útil; ausência de demarcação é explícita; não há polígono ou classificação espacial inventada | Passou após correção e reteste físico de `BUG-QA-01` |
 | QA-FINAL-09 | P0 | Admin/Colaborador/Produtor | Reexecutar ATUAL-01 a ATUAL-05 e rotas diretas críticas | Nenhuma regressão de mídia, exportação, mapa, sessão, acesso ou navegação | Recorte principal passou; mídia/exportação integral não foi repetida |
 | QA-FINAL-10 | P1 | Todos | Retrato, paisagem, teclado, leitor de tela e reinício offline nos fluxos acima | Interface continua utilizável; dados locais reabrem; dependência remota é informada sem travamento | Parcial: retrato, paisagem, teclado e reinício passaram; leitor de tela e offline permanecem pendentes |
 
-Achados confirmados:
+Achados corrigidos e ajustes restantes:
 
-- `BUG-QA-01` — prioridade P1: a Propriedade operacional possui um Talhão
-  lógico ativo sem geometria, usado por Caderno, Visita e Período, mas as abas
-  Talhões e mapa exibem `0 Talhões`. A projeção v2 mantém `state.talhoes`, porém
-  o runtime e `ProdutorScreen` alimentam a lista somente com `LimiteArea`;
-  cadastro lógico e demarcação ficaram indevidamente acoplados. O esperado é
-  listar o Talhão ativo e informar separadamente que ele não possui geometria;
-- `BUG-QA-02` — prioridade P1: no PDF local propositalmente ausente, tocar em
-  `Abrir documento` não abre visualizador nem mostra erro. O fluxo usa
-  `Linking.canOpenURL`/`openURL`; neste Android o URI `file://` inexistente é
-  aceito sem produzir ação ou rejeição. O esperado é verificar existência do
-  arquivo local e sempre emitir retorno controlado;
-- `UX-QA-01` — prioridade P2: o cartão compacto do Caderno no detalhe da
-  Propriedade não mostra o estado `Anulado`, embora o detalhe e a lista global
-  mostrem o estado corretamente. O texto do registro não pode ser a única pista;
-- `UX-QA-02` — prioridade P2: no detalhe acessível ao Colaborador, a ação
-  estrutural indisponível aparece como um botão largo `Bloqueada`. O acesso de
-  consulta funciona, mas o rótulo pode ser confundido com bloqueio da própria
-  Propriedade.
+- `BUG-QA-01` — prioridade P1, `CORRIGIDO`: o runtime passou a expor os Talhões
+  lógicos ativos separadamente de `LimiteArea`, anexando a geometria somente
+  quando existente. A Propriedade QA mostra `1 talhão disponível`, o nome
+  lógico e `Sem demarcação disponível`; o Talhão inativo continua oculto;
+- `BUG-QA-02` — prioridade P1, `CORRIGIDO`: URI local de PDF agora tem existência
+  física verificada antes de `Linking.openURL`. O arquivo QA ausente permanece
+  na tela e mostra `Este PDF não está mais disponível neste aparelho.`;
+- `UX-QA-01` — prioridade P2, `CORRIGIDO`: o cartão compacto do Caderno agora
+  mostra o estado de ciclo; o caso terminal foi retestado com `Anulado` em
+  destaque vermelho no detalhe da Propriedade;
+- `UX-QA-02` — prioridade P2, `CORRIGIDO`: exclusão estrutural de Propriedade
+  ficou restrita ao Admin. No reteste com Victor/Colaborador, o detalhe manteve
+  a consulta e não exibiu editar, excluir ou `Bloqueada`; para Admin com
+  dependências, o rótulo passou a ser `Exclusão indisponível`.
 
 Evidência adicional: o Dashboard após a migração mostrou 73 Propriedades, 39
 Produtores, 3 Colaboradores, 77 Visitas, 76 Cadernos e 8 Materiais. As 77
@@ -70,6 +66,11 @@ César/Admin foi restaurada ao final e o log não apresentou fatal ou ANR.
 O Dashboard também foi validado em paisagem, com filtros, conteúdo e navegação
 inferior utilizáveis e sem corte estrutural; a rotação automática original do
 aparelho foi restaurada após o teste.
+O APK consolidado foi novamente instalado por atualização, possui 96.263.830
+bytes e SHA-256
+`FA6DA07C1474087BF9E86FA75744DCE717724E6F176C0816298B8FC007F92712`.
+Após reinício, a sessão César/Admin e o snapshot local permaneceram disponíveis;
+o log filtrado não apresentou fatal ou ANR.
 
 `ATUAL-06` continua sendo o único bloco que exige execução em campo real. A
 Propriedade QA sem geometria serve para testar ausência controlada, não para

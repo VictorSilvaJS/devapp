@@ -11,7 +11,7 @@ import OperationalCard from '../components/OperationalCard';
 import PropriedadeTalhoesEntry from '../components/PropriedadeTalhoesEntry';
 import { CadernoLocalizacaoBadge } from '../components/CadernoLocalizacaoSection';
 import { useToast } from '../components/Toast';
-import { Produtor, Visita, CadernoCampo, LimiteArea, User } from '../api/mock';
+import { Produtor, Visita, CadernoCampo, LimiteArea, Talhao, User } from '../api/mock';
 import { buildFazendaDeleteIntegrity } from '../api/produtorCompat';
 import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
@@ -52,6 +52,7 @@ import {
   isCadernoVisivelParaProdutor,
   ordenarCadernosPorDataRecente,
 } from '../utils/cadernoFormCompat';
+import { getCadernoEstado, getCadernoEstadoLabel } from '../utils/cadernoLifecycleCompat';
 import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
 import { resolveOperationalSummary } from '../utils/operationalCardCompat';
 import {
@@ -89,6 +90,7 @@ export default function ProdutorScreen({ route, navigation }) {
   const [mapas, setMapas] = useState([]);
   const [cadernos, setCadernos] = useState([]);
   const [periodosProdutivos, setPeriodosProdutivos] = useState([]);
+  const [talhoes, setTalhoes] = useState([]);
   const [limites, setLimites] = useState([]);
   const [deleteIntegrity, setDeleteIntegrity] = useState(null);
   const [outrasFazendasTitular, setOutrasFazendasTitular] = useState([]);
@@ -109,6 +111,7 @@ export default function ProdutorScreen({ route, navigation }) {
       setMapas([]);
       setCadernos([]);
       setPeriodosProdutivos([]);
+      setTalhoes([]);
       setLimites([]);
       setDeleteIntegrity(null);
       setOutrasFazendasTitular([]);
@@ -130,6 +133,7 @@ export default function ProdutorScreen({ route, navigation }) {
         setMapas([]);
         setCadernos([]);
         setPeriodosProdutivos([]);
+        setTalhoes([]);
         setLimites([]);
         setDeleteIntegrity(null);
         setOutrasFazendasTitular([]);
@@ -140,7 +144,7 @@ export default function ProdutorScreen({ route, navigation }) {
       }
 
       const fazendaAtualId = getFazendaId(p) || id;
-      const [v, catalogoMateriais, todosCadernos, periodos, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
+      const [v, catalogoMateriais, todosCadernos, periodos, talhoesDaPropriedade, todosLimites, todasFazendas, todosUsuarios] = await Promise.all([
         Visita.filter({ fazenda_id: fazendaAtualId }),
         MaterialCatalogService.consultarMateriais({
           propriedadeIds: [fazendaAtualId],
@@ -148,6 +152,7 @@ export default function ProdutorScreen({ route, navigation }) {
         }),
         CadernoCampo.list(),
         PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(fazendaAtualId),
+        Talhao.getByFazenda(fazendaAtualId),
         LimiteArea.list(),
         Produtor.list(),
         User.list(),
@@ -175,6 +180,7 @@ export default function ProdutorScreen({ route, navigation }) {
       setMapas(m);
       setCadernos(c);
       setPeriodosProdutivos(periodos);
+      setTalhoes(talhoesDaPropriedade);
       setLimites(l);
       setDeleteIntegrity(integridadeExclusao);
       setOutrasFazendasTitular(detalheContexto.outrasFazendasTitular);
@@ -319,7 +325,7 @@ export default function ProdutorScreen({ route, navigation }) {
       produtor,
       talhao
         ? {
-            talhaoId: talhao.id,
+            talhaoId: talhao.geometria_id || talhao.id,
             talhaoNome: talhao.talhao || talhao.nome,
             talhao: talhao.talhao || talhao.nome,
             talhaoAno: talhao.ano ? String(talhao.ano) : undefined,
@@ -571,7 +577,7 @@ export default function ProdutorScreen({ route, navigation }) {
                     color={colors.white}
                   />
                   <Text style={styles.deleteButtonText}>
-                    {exclusaoBloqueadaPorIntegridade ? 'Bloqueada' : 'Excluir'}
+                    {exclusaoBloqueadaPorIntegridade ? 'Exclusão indisponível' : 'Excluir'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -930,7 +936,7 @@ export default function ProdutorScreen({ route, navigation }) {
               icon="git-network-outline"
             >
               <PropriedadeTalhoesEntry
-                talhoes={limites}
+                talhoes={talhoes}
                 onOpenMapa={handleAbrirTalhaoNoMapa}
               />
             </SectionCard>
@@ -1237,6 +1243,12 @@ export default function ProdutorScreen({ route, navigation }) {
                     : [];
                   const visivelParaProdutor = isCadernoVisivelParaProdutor(registro);
                   const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(registro);
+                  const estadoCaderno = getCadernoEstado(registro);
+                  const estadoCadernoColor = estadoCaderno === 'anulado'
+                    ? colors.error
+                    : estadoCaderno === 'rascunho'
+                      ? colors.warning
+                      : colors.success;
 
                   return (
                     <TouchableOpacity
@@ -1261,6 +1273,16 @@ export default function ProdutorScreen({ route, navigation }) {
                       </View>
 
                       <View style={styles.cadernoMeta}>
+                        <View style={styles.cadernoMetaItem}>
+                          <Ionicons
+                            name={estadoCaderno === 'rascunho' ? 'document-outline' : 'shield-checkmark-outline'}
+                            size={15}
+                            color={estadoCadernoColor}
+                          />
+                          <Text style={[styles.cadernoMetaText, { color: estadoCadernoColor }]}>
+                            {getCadernoEstadoLabel(registro)}
+                          </Text>
+                        </View>
                         <View style={styles.cadernoMetaItem}>
                           <Ionicons name="calendar-outline" size={15} color={colors.textLight} />
                           <Text style={styles.cadernoMetaText}>{formatarDataCaderno(registro.data_atividade)}</Text>

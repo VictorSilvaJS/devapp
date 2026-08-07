@@ -61,7 +61,7 @@ import type { MockLocalState, MockLocalStorageAdapter } from './mockLocalPersist
 import { createMockV2LocalPersistence } from './mockV2LocalPersistence';
 import type { MockV2State } from '../domain/contractsV2';
 import { mergeRuntimeIntoMockV2, projectMockV2ToRuntime } from './mockV2RuntimeCompat';
-import { buildMockV2LimitesArea } from './mockV2TalhaoGeometry';
+import { buildMockV2LimitesArea, buildMockV2TalhaoEntries } from './mockV2TalhaoGeometry';
 
 const SELA_DEPRATA_1_PRODUTOR_ID = SELA_DE_PRATA_1_SHAPE_FAZENDA_ID;
 const SELA_DEPRATA_1_FERTILIDADE_ASSET_BASE_URL =
@@ -3169,4 +3169,23 @@ export const LimiteArea: any = {
     readHydratedMock(100, () =>
       [...new Set(limitesArea.map(l => l.ano))].sort((a, b) => b - a)
     )
+};
+
+// API para o cadastro lógico de Talhão. A geometria é opcional e permanece em LimiteArea.
+export const Talhao: any = {
+  list: async () =>
+    readHydratedMock(200, () => activeMockV2State
+      ? buildMockV2TalhaoEntries(activeMockV2State, limitesArea)
+      : listMockLimitesArea(limitesArea)),
+  getByFazenda: async (fazendaId) =>
+    readHydratedMock(200, () => {
+      const talhoes = activeMockV2State
+        ? buildMockV2TalhaoEntries(activeMockV2State, limitesArea)
+        : listMockLimitesArea(limitesArea);
+      return talhoes.filter((talhao) => (
+        talhao?.propriedade_id === fazendaId
+        || talhao?.fazenda_id === fazendaId
+        || talhao?.produtor_id === fazendaId
+      ));
+    }),
 };

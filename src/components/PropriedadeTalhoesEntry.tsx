@@ -76,6 +76,7 @@ export default function PropriedadeTalhoesEntry({
         <View style={styles.list} accessibilityLabel="Lista de Talhões">
           {talhoes.map((talhao, index) => {
             const nome = getTalhaoNome(talhao, index);
+            const possuiGeometria = temGeometria(talhao);
             const nomeSecundario = talhao?.talhao && talhao?.nome && talhao.nome !== talhao.talhao
               ? talhao.nome
               : null;
@@ -89,7 +90,9 @@ export default function PropriedadeTalhoesEntry({
                 onPress={() => onOpenMapa(talhao)}
                 activeOpacity={0.78}
                 accessibilityRole="button"
-                accessibilityLabel={`Abrir ${nome} no mapa`}
+                accessibilityLabel={possuiGeometria
+                  ? `Abrir ${nome} no mapa`
+                  : `${nome}, sem demarcação disponível`}
               >
                 <View style={styles.talhaoIcon}>
                   <Ionicons name="git-network-outline" size={22} color={colors.primary} />
@@ -102,6 +105,12 @@ export default function PropriedadeTalhoesEntry({
                   </Text>
                   {metadados.length > 0 ? (
                     <Text style={styles.talhaoMetadata}>{metadados.join(' • ')}</Text>
+                  ) : null}
+                  {!possuiGeometria ? (
+                    <View style={styles.geometryStatus}>
+                      <Ionicons name="map-outline" size={15} color={semanticColors.warning.text} />
+                      <Text style={styles.geometryStatusText}>Sem demarcação disponível</Text>
+                    </View>
                   ) : null}
                 </View>
                 <Ionicons name="chevron-forward-outline" size={22} color={colors.muted} />
@@ -226,6 +235,17 @@ const styles = StyleSheet.create({
   talhaoMetadata: {
     color: colors.textSecondary,
     fontSize: typography.sizes.sm,
+  },
+  geometryStatus: {
+    marginTop: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  geometryStatusText: {
+    color: semanticColors.warning.text,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weightSemibold,
   },
   mapContent: {
     gap: spacing.md,

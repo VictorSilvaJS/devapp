@@ -37,6 +37,8 @@ test('Lista apresenta Talhoes individualmente e trata a ausencia de dados', () =
   assert.match(componentSource, /formatAreaHa\(talhao\?\.area_hectares\)/);
   assert.match(componentSource, /title="Nenhum Talhão disponível"/);
   assert.match(componentSource, /onPress=\{\(\) => onOpenMapa\(talhao\)\}/);
+  assert.match(componentSource, /Sem demarcação disponível/);
+  assert.match(componentSource, /const possuiGeometria = temGeometria\(talhao\)/);
 });
 
 test('Mapa reutiliza a demarcacao existente e oferece acesso ao mapa interativo', () => {
@@ -50,7 +52,9 @@ test('navegacao de um Talhao preserva Propriedade e selecao no FazendaMapa', () 
   assert.match(screenSource, /const handleAbrirTalhaoNoMapa = \(talhao\?\) => navigation\.navigate\(/);
   assert.match(screenSource, /'FazendaMapa'/);
   assert.match(screenSource, /buildFazendaMapaRouteParamsFromPropriedade\(/);
-  assert.match(screenSource, /talhaoId: talhao\.id/);
+  assert.match(screenSource, /talhaoId: talhao\.geometria_id \|\| talhao\.id/);
+  assert.match(screenSource, /Talhao\.getByFazenda\(fazendaAtualId\)/);
+  assert.match(screenSource, /talhoes=\{talhoes\}/);
   assert.match(screenSource, /onOpenMapa=\{handleAbrirTalhaoNoMapa\}/);
   assert.doesNotMatch(screenSource, /subtitle="Abra um Talhão/);
   assert.doesNotMatch(screenSource, /actionLabel="Abrir detalhes"/);

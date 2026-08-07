@@ -702,6 +702,16 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
         return;
       }
 
+      if (/^file:\/\//i.test(descriptor.sourceUri)) {
+        const localFile = await MaterialTecnicoStorageService.getStoredMaterialTecnicoInfo(
+          descriptor.sourceUri
+        );
+        if (!localFile.ok || !localFile.info?.exists || localFile.info.isDirectory === true) {
+          toast.showError('Este PDF não está mais disponível neste aparelho.');
+          return;
+        }
+      }
+
       const supported = await Linking.canOpenURL(descriptor.sourceUri);
       if (!supported) throw new Error('viewer_unavailable');
       await Linking.openURL(descriptor.sourceUri);

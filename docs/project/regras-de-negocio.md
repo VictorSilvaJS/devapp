@@ -26,6 +26,8 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - No mock administrativo, produtor pode ter multiplas propriedades vinculadas e deve receber alerta visual quando uma propriedade selecionada ja tiver outro produtor principal no mock.
 - O cadastro estrutural de Propriedade e exclusivo de Admin; Colaborador e
   Produtor nao criam Propriedades.
+- A exclusao estrutural de Propriedade tambem e exclusiva de Admin e permanece
+  bloqueada quando existem dependencias operacionais vinculadas.
 - O Produtor deve existir antes de ser escolhido como Titular. Um Produtor
   pendente pode ser escolhido na criacao de sua primeira Propriedade; nesse
   caso, Usuario, cadastro de Produtor e vinculo de Titular sao ativados na

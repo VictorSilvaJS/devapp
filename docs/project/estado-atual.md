@@ -5526,9 +5526,20 @@ operacionais e retestado no segundo APK.
 O Dashboard permaneceu utilizável em paisagem, e a rotação automática original
 do aparelho foi restaurada depois da validação.
 
-A rodada encontrou `BUG-QA-01` (Talhão lógico sem geometria desaparece porque
-a tela usa apenas `LimiteArea`) e `BUG-QA-02` (PDF local ausente não produz
-feedback ao tocar em abrir), além dos ajustes P2 `UX-QA-01` e `UX-QA-02`.
-Detalhes e pendências físicas restantes estão na matriz `QA-FINAL` de
-`smoke.md`. A sessão César/Admin foi restaurada e o log final não apresentou
-fatal ou ANR.
+A rodada encontrou e a sequência seguinte corrigiu `BUG-QA-01` e `BUG-QA-02`.
+A nova API local de Talhão projeta os cadastros lógicos ativos do snapshot v2 e
+anexa `LimiteArea` apenas quando há geometria; a tela da Propriedade não usa mais
+a demarcação como condição para listar o Talhão. O visualizador de PDF passou a
+verificar a existência do arquivo local antes de acionar o Android.
+
+As duas correções passaram em `npm run typecheck`, em toda a suíte
+`npm run test:domain-compat` e no reteste físico. Na mesma sequência,
+`UX-QA-01` foi corrigido mostrando o estado do Caderno no cartão compacto, e
+`UX-QA-02` foi corrigido restringindo a exclusão estrutural ao Admin e removendo
+ações estruturais do detalhe consultivo do Colaborador.
+
+O APK consolidado possui 96.263.830 bytes e SHA-256
+`FA6DA07C1474087BF9E86FA75744DCE717724E6F176C0816298B8FC007F92712`.
+A sessão César/Admin e os dados locais permaneceram após atualização e reinício;
+o log não apresentou fatal ou ANR. Permanecem somente os portões físicos
+indicados em `smoke.md`.

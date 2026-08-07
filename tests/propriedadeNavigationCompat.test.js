@@ -67,6 +67,13 @@ test('Resumo nao repete atalhos e Safras oferece uma unica acao de criacao', () 
   assert.doesNotMatch(source, /actionLabel=\{podeGerenciarPeriodosNaFazenda \? 'Nova Safra\/Safrinha'/);
 });
 
+test('detalhe evita bloqueio ambiguo e mostra estado do Caderno compacto', () => {
+  assert.doesNotMatch(source, />Bloqueada</);
+  assert.match(source, /Exclusão indisponível/);
+  assert.match(source, /getCadernoEstadoLabel\(registro\)/);
+  assert.match(source, /estadoCaderno === 'anulado'/);
+});
+
 if (failed > 0) {
   process.exitCode = 1;
   console.error(`\n${failed} teste(s) falharam.`);

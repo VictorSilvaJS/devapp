@@ -64,6 +64,8 @@ const run = async () => {
   await test('acao de arquivo verifica autorizacao e nao produz sucesso falso ao abrir', () => {
     assert.match(viewer, /podeBaixarMapa\(user, material, fazendasPermitidas\)/);
     assert.match(viewer, /downloadStatus\.podeAbrir/);
+    assert.match(viewer, /MaterialTecnicoStorageService\.getStoredMaterialTecnicoInfo/);
+    assert.match(viewer, /Este PDF não está mais disponível neste aparelho/);
     assert.match(viewer, /Linking\.canOpenURL/);
     assert.match(viewer, /exportFileToPhone/);
     assert.match(viewer, /Arquivo salvo na pasta escolhida como/);

@@ -401,14 +401,14 @@ const run = async () => {
     assert.equal(fazendaInexistente.fazenda, null);
   });
 
-  await test('podeEditarProdutor e podeExcluirProdutor bloqueiam produtor e colaborador fora do escopo', () => {
+  await test('edição técnica respeita escopo e exclusão estrutural fica restrita ao Admin', () => {
     const fazendaNoEscopo = fazendasBase[0];
     const fazendaForaEscopo = fazendasBase[1];
 
     assert.equal(podeEditarProdutor(produtorUser, fazendaNoEscopo), false);
     assert.equal(podeExcluirProdutor(produtorUser, fazendaNoEscopo), false);
     assert.equal(podeEditarProdutor(colaboradorUser, fazendaNoEscopo), true);
-    assert.equal(podeExcluirProdutor(colaboradorUser, fazendaNoEscopo), true);
+    assert.equal(podeExcluirProdutor(colaboradorUser, fazendaNoEscopo), false);
     assert.equal(podeEditarProdutor(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeExcluirProdutor(colaboradorUser, fazendaForaEscopo), false);
     assert.equal(podeEditarProdutor(adminUser, fazendaForaEscopo), true);

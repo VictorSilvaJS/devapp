@@ -574,11 +574,9 @@ export const podeEditarProdutor = (user, produtor) => {
 };
 
 /**
- * Verifica se usuário pode excluir um produtor/fazenda.
- * Por enquanto segue a mesma regra defensiva de edição estrutural:
- * admin pode, colaborador apenas dentro do seu escopo, produtor não pode.
+ * Exclusão é uma manutenção estrutural de Propriedade e fica restrita ao Admin.
  */
-export const podeExcluirProdutor = (user, produtor) => podeEditarProdutor(user, produtor);
+export const podeExcluirProdutor = (user, produtor) => Boolean(user && produtor && isAdmin(user));
 
 /**
  * Cadastro estrutural de Propriedade é administrativo no contrato v2.

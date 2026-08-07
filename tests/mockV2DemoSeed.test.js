@@ -6,6 +6,7 @@ const {
 const {
   MOCK_V2_TALHAO_GEOMETRY_COUNT,
   buildMockV2LimitesArea,
+  buildMockV2TalhaoEntries,
 } = require('../.tmp-domain-compat/src/api/mockV2TalhaoGeometry');
 const {
   MOCK_V2_DEMO_CREDENTIALS,
@@ -189,6 +190,20 @@ const testMockV2DemoSeed = async () => {
   assert.equal(limites.length, MOCK_V2_TALHAO_GEOMETRY_COUNT);
   assert.equal(new Set(limites.map((limite) => limite.talhao_id)).size, MOCK_V2_TALHAO_GEOMETRY_COUNT);
   assert.equal(limites.some((limite) => limite.talhao_id === MOCK_V2_DEMO_QA_IDS.talhaoAtivo), false);
+  const talhaoEntries = buildMockV2TalhaoEntries(seed, limites);
+  assert.equal(talhaoEntries.length, seed.talhoes.filter((talhao) => talhao.status === 'ativo').length);
+  assert.equal(talhaoEntries.some((talhao) => talhao.id === MOCK_V2_DEMO_QA_IDS.talhaoInativo), false);
+  const talhaoQaSemGeometria = talhaoEntries.find(
+    (talhao) => talhao.id === MOCK_V2_DEMO_QA_IDS.talhaoAtivo
+  );
+  assert.ok(talhaoQaSemGeometria);
+  assert.equal(talhaoQaSemGeometria.talhao, '[QA] Talhão sem geometria');
+  assert.equal(talhaoQaSemGeometria.poligono, undefined);
+  assert.equal(talhaoQaSemGeometria.geometria_id, undefined);
+  assert.equal(
+    talhaoEntries.filter((talhao) => talhao.geometria_id).length,
+    MOCK_V2_TALHAO_GEOMETRY_COUNT
+  );
   for (const limite of limites) {
     assert.ok(propertiesById.has(limite.propriedade_id));
     assert.ok(seed.talhoes.some((talhao) =>

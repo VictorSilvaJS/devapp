@@ -8,7 +8,7 @@ const {
   isMockV2Snapshot,
 } = require('../.tmp-domain-compat/src/api/mockV2LocalPersistence');
 const { validateMockV2State } = require('../.tmp-domain-compat/src/api/mockV2Validation');
-const { CadernoCampo, LimiteArea, MockLocalData, Produtor, User, Visita } = require('../.tmp-domain-compat/src/api/mock');
+const { CadernoCampo, LimiteArea, MockLocalData, Produtor, Talhao, User, Visita } = require('../.tmp-domain-compat/src/api/mock');
 const {
   authenticateWithEmailAndPassword,
   AUTH_INVALID_CREDENTIALS_MESSAGE,
@@ -81,6 +81,10 @@ const run = async () => {
         propriedade_id: 'propriedade_1', tipo_vinculo: 'colaborador', status: 'ativo',
       },
     ],
+    talhoes: [{
+      id: 'talhao_logico_1', organizacao_id: 'org_tche_fertilidade',
+      propriedade_id: 'propriedade_1', nome: 'Talhão lógico sem geometria', status: 'ativo',
+    }],
   };
   assert.equal(validateMockV2State(validState), true);
   assert.throws(
@@ -127,6 +131,11 @@ const run = async () => {
   assert.equal(runtimeVisitas.length, 1);
   assert.equal(runtimeVisitas[0].propriedade_id, 'propriedade_1');
   assert.deepEqual(await LimiteArea.list(), []);
+  const runtimeTalhoes = await Talhao.getByFazenda('propriedade_1');
+  assert.equal(runtimeTalhoes.length, 1);
+  assert.equal(runtimeTalhoes[0].id, 'talhao_logico_1');
+  assert.equal(runtimeTalhoes[0].talhao, 'Talhão lógico sem geometria');
+  assert.equal(runtimeTalhoes[0].poligono, undefined);
 
   let legacyFallbackCalls = 0;
   await assert.rejects(

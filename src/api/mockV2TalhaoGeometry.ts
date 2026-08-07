@@ -71,5 +71,37 @@ export const buildMockV2LimitesArea = (state: MockV2State): any[] => {
   });
 };
 
-export const MOCK_V2_TALHAO_GEOMETRY_COUNT = geometryCollection.features.length;
+export const buildMockV2TalhaoEntries = (
+  state: MockV2State,
+  limites: any[] = buildMockV2LimitesArea(state)
+): any[] => {
+  const limiteByTalhaoId = new Map(
+    limites
+      .filter((limite) => typeof limite?.talhao_id === 'string' && limite.talhao_id.trim())
+      .map((limite) => [limite.talhao_id, limite])
+  );
 
+  return state.talhoes
+    .filter((talhao) => talhao.status === 'ativo')
+    .map((talhao) => {
+      const limite = limiteByTalhaoId.get(talhao.id);
+      const geometriaId = limite?.id;
+
+      return {
+        ...(limite || {}),
+        id: talhao.id,
+        ...(geometriaId ? { geometria_id: geometriaId } : {}),
+        propriedade_id: talhao.propriedade_id,
+        fazenda_id: talhao.propriedade_id,
+        produtor_id: talhao.propriedade_id,
+        talhao_id: talhao.id,
+        talhao_nome: talhao.nome,
+        talhao: talhao.nome,
+        nome: talhao.nome,
+        ...(talhao.codigo ? { codigo: talhao.codigo } : {}),
+        status: talhao.status,
+      };
+    });
+};
+
+export const MOCK_V2_TALHAO_GEOMETRY_COUNT = geometryCollection.features.length;
