@@ -153,7 +153,7 @@ explicita. Payloads de visita, caderno e cadastro ainda podem continuar usando
 
 ## Semantica Atual De Acesso Por Perfil
 
-Status do codigo v1: a implementacao ainda segue temporariamente:
+Status histórico do código v1:
 
 - Administrador ve todas as Propriedades.
 - Produtor ve Propriedades por vinculo de titular/produtor compativel.
@@ -161,20 +161,20 @@ Status do codigo v1: a implementacao ainda segue temporariamente:
 - Colaborador sem `sub_regioes` usa `vinculos_microregioes` como fallback.
 - `propriedades_atribuidas` nao restringe nem amplia acesso efetivo.
 
-Esse comportamento foi substituido como decisao de produto em 2026-08-05. O
-contrato v2 usa vinculo direto; a lista acima serve apenas para orientar a
-refatoracao e a regressao.
+Esse comportamento foi substituido como decisão e implementação local. O
+runtime v2 usa vínculo direto; a lista acima serve apenas para leitura das
+bordas de compatibilidade e não descreve mais o acesso ativo.
 
-## Contrato Futuro De RBAC/Backend
+## Contrato Aprovado De RBAC/Backend
 
 Status em 2026-08-05: a direcao futura de backend foi revisada para vinculo
 direto por Propriedade.
 
-Matriz futura de escopo:
+Matriz aprovada de escopo:
 
-| Perfil | Fonte de acesso futura | Regra recomendada |
+| Perfil | Fonte de acesso | Regra aprovada |
 |---|---|---|
-| Administrador | Papel administrativo | Acesso global, limitado apenas por politica organizacional futura |
+| Administrador | Perfil `admin` | Acesso global dentro da única organização |
 | Produtor | `usuario_propriedade` e titularidade | Acesso as Propriedades vinculadas ao usuario/produtor/titular |
 | Colaborador | `usuario_propriedade` | Acesso somente a Propriedade atribuida diretamente |
 
@@ -183,12 +183,12 @@ Entidades minimas esperadas no backend:
 - `usuarios`
 - `propriedades`
 - `usuario_propriedade`
-- `perfis`/`papeis`
+- perfil fixo em `usuarios`; papéis customizáveis ficam fora do primeiro corte
 
 No backend, a Propriedade atribuida diretamente ao Colaborador e a fonte do
 escopo. Municipio/UF nao substituem esse vinculo.
 
-Leitura futura recomendada:
+Leitura aprovada:
 
 - listar e abrir detalhe de Propriedades usando os vinculos permitidos para o
   perfil;
@@ -210,14 +210,13 @@ Leitura futura recomendada:
 - inferir permissao por Municipio/UF
 - backend ignorar vinculo direto e manter o Admin visual sem efeito operacional
 
-## Ordem Futura Recomendada
+## Ordem Atual De Implementacao
 
-1. Padronizar rotulos e secoes visiveis.
-2. Revisar validacoes visuais.
-3. Revisar cadastro rapido de propriedade.
-4. Migrar vinculos do colaborador para `usuario_propriedade`.
-5. Implementar o contrato real de backend/RBAC para `usuario_propriedade`.
-6. So depois planejar migracao tecnica dos nomes legados.
+1. Criar o backend e banco pela baseline v1.
+2. Implementar autenticação/sessão de `MP-33`.
+3. Implementar `usuario_propriedade` e autorização de `MP-35`.
+4. Integrar o app por repositórios/adaptadores HTTP.
+5. Remover aliases legados por fluxo depois da regressão.
 
 ## Leitura Do Estado Atual Das Telas
 

@@ -22,153 +22,6 @@ import {
   getUsuarioStatusInfo,
 } from '../utils/usuarioAdminCompat';
 
-const smokeRoutes = [
-  {
-    id: 'S-01',
-    label: 'NovaVisita',
-    description: 'Teste de criação de visita por rota direta',
-    route: 'NovaVisita',
-  },
-  {
-    id: 'S-02',
-    label: 'EditarVisita v1',
-    description: 'Teste de edição de visita por rota direta',
-    route: 'EditarVisita',
-    params: { visitaId: 'v1' },
-  },
-  {
-    id: 'S-03',
-    label: 'CadernoDetail c3',
-    description: 'Teste de abertura de caderno restrito',
-    route: 'CadernoDetail',
-    params: { cadernoId: 'c3' },
-  },
-  {
-    id: 'S-04',
-    label: 'EditarCaderno c1',
-    description: 'Teste de edição de registro de outro autor',
-    route: 'EditarCaderno',
-    params: { cadernoId: 'c1' },
-  },
-  {
-    id: 'S-05',
-    label: 'VisitaDetail v8',
-    description: 'Teste de abertura de visita fora do escopo',
-    route: 'VisitaDetail',
-    params: { visitaId: 'v8' },
-  },
-  {
-    id: 'S-06',
-    label: 'EditarVisita v8',
-    description: 'Teste de edição de visita fora do escopo',
-    route: 'EditarVisita',
-    params: { visitaId: 'v8' },
-  },
-  {
-    id: 'S-07',
-    label: 'CadernoDetail c9',
-    description: 'Teste de abertura de caderno fora do escopo',
-    route: 'CadernoDetail',
-    params: { cadernoId: 'c9' },
-  },
-  {
-    id: 'S-08',
-    label: 'CadernoDetail c6',
-    description: 'Teste de abertura de caderno de outra propriedade',
-    route: 'CadernoDetail',
-    params: { cadernoId: 'c6' },
-  },
-  {
-    id: 'S-09',
-    label: 'CadernoDetail c3',
-    description: 'Teste de abertura de caderno restrito',
-    route: 'CadernoDetail',
-    params: { cadernoId: 'c3' },
-  },
-  {
-    id: 'S-10',
-    label: 'CadernoDetail c7',
-    description: 'Teste de abertura de caderno dentro do escopo',
-    route: 'CadernoDetail',
-    params: { cadernoId: 'c7' },
-  },
-  {
-    id: 'S-11',
-    label: 'EditarVisita v1',
-    description: 'Teste de edição de visita com propriedade travada',
-    route: 'EditarVisita',
-    params: { visitaId: 'v1' },
-  },
-  {
-    id: 'S-12',
-    label: 'EditarCaderno c1',
-    description: 'Teste de edição de caderno com propriedade travada',
-    route: 'EditarCaderno',
-    params: { cadernoId: 'c1' },
-  },
-  {
-    id: 'S-13',
-    label: 'EditarCaderno c7',
-    description: 'Teste de edição de caderno dentro do escopo',
-    route: 'EditarCaderno',
-    params: { cadernoId: 'c7' },
-  },
-  {
-    id: 'S-15/S-16',
-    label: 'NovaVisita',
-    description: 'Teste de criação de visita em propriedade autorizada',
-    route: 'NovaVisita',
-  },
-  {
-    id: 'S-17',
-    label: 'NovoCaderno',
-    description: 'Teste de criação de caderno pela listagem',
-    route: 'NovoCaderno',
-  },
-  {
-    id: 'S-18',
-    label: 'NovoCaderno p1',
-    description: 'Teste de criação de caderno na propriedade vinculada',
-    route: 'NovoCaderno',
-    params: { fazendaId: 'p1' },
-  },
-  {
-    id: 'S-19',
-    label: 'NovoCaderno p3',
-    description: 'Teste de criação de caderno em propriedade de outro titular',
-    route: 'NovoCaderno',
-    params: { fazendaId: 'p3' },
-  },
-  {
-    id: 'S-20/S-22',
-    label: 'Propriedade p1',
-    description: 'Teste de detalhe da propriedade com aba Caderno e novo registro',
-    route: 'ProdutorDetail',
-    params: { id: 'p1' },
-  },
-  {
-    id: 'S-21/S-23',
-    label: 'Propriedade p4',
-    description: 'Teste de propriedade do escopo com aba Caderno e novo registro',
-    route: 'ProdutorDetail',
-    params: { id: 'p4' },
-  },
-  {
-    id: 'S-24',
-    label: 'Propriedade p1',
-    description: 'Teste de propriedade vinculada com aba Caderno visível',
-    route: 'ProdutorDetail',
-    params: { id: 'p1' },
-  },
-  {
-    id: 'S-30',
-    label: 'VisitaDetail v1',
-    description: 'Teste de abertura de detalhe de visita vinculada',
-    route: 'VisitaDetail',
-    params: { visitaId: 'v1' },
-  },
-];
-
 export default function PerfilScreen({ navigation }) {
   const { user } = useAuthState();
   const { logout } = useAuthActions();
@@ -179,11 +32,6 @@ export default function PerfilScreen({ navigation }) {
   const [usuarioDetalhado, setUsuarioDetalhado] = useState<any>(null);
   const [propriedades, setPropriedades] = useState<any[]>([]);
   const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    console.log('[PerfilScreen] mounted');
-    return () => console.log('[PerfilScreen] unmounted');
-  }, []);
 
   const loadProfileData = useCallback(async () => {
     if (!user) return;
@@ -393,32 +241,6 @@ export default function PerfilScreen({ navigation }) {
           )}
 
           <View style={styles.actionsSection}>
-            {__DEV__ && (
-              <SectionCard
-                title="Smoke Dev"
-                icon="construct-outline"
-                contentStyle={styles.devSmokeContent}
-              >
-                <InfoBox
-                  message="Atalhos temporários para testar rotas diretas."
-                  style={styles.infoBox}
-                />
-                {smokeRoutes.map((item) => (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.devSmokeBtn}
-                    onPress={() => navigation.navigate(item.route, item.params)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.devSmokeTextGroup}>
-                      <Text style={styles.devSmokeBtnText}>{item.id} - {item.label}</Text>
-                      <Text style={styles.devSmokeDescription}>{item.description}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </SectionCard>
-            )}
-
             <SectionCard title="Ações" icon="settings-outline" contentStyle={styles.actionsCardContent}>
               {usuarioPerfil.perfil !== 'produtor' ? (
                 <TouchableOpacity
@@ -596,28 +418,6 @@ const styles = StyleSheet.create({
   },
   infoBox: {
     marginBottom: spacing.md
-  },
-  devSmokeContent: {
-    gap: spacing.sm,
-  },
-  devSmokeBtn: {
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: spacing.radiusSm,
-    padding: spacing.md
-  },
-  devSmokeTextGroup: {
-    gap: 3
-  },
-  devSmokeBtnText: {
-    color: colors.text,
-    fontSize: typography.fontBody,
-    fontWeight: typography.weightBold
-  },
-  devSmokeDescription: {
-    color: colors.muted,
-    fontSize: typography.fontSmall
   },
   actionBtn: {
     flexDirection: 'row',

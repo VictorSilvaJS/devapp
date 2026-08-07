@@ -1,13 +1,13 @@
 # Matriz Tecnica De RBAC/Backend
 
-Status revisado em 2026-08-05: este documento transforma o contrato futuro de
-RBAC/backend em matriz tecnica de testes e criterios de aceite. A regra alvo
-segue as decisoes 31 a 33 de `decisoes-consolidadas.md`. O runtime mockado v1
-ainda pode apresentar campos regionais ate a migracao para o mock v2.
+Status revisado em 2026-08-07: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
+transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
+de aceite. A regra segue as decisoes 31 a 38 de
+`decisoes-consolidadas.md` e `baseline-backend-v1-2026-08.md`.
 
 ## Separacao De Escopo
 
-### Legado ainda presente no MVP mockado v1
+### Legado preservado somente nas bordas do mock v1
 
 - Admin ve todas as Propriedades.
 - Produtor ve Propriedades por vinculo titular/produtor compativel.
@@ -16,8 +16,8 @@ ainda pode apresentar campos regionais ate a migracao para o mock v2.
 - `propriedades_atribuidas` e visual/admin preparatorio e nao restringe nem
   amplia acesso efetivo.
 
-Esse comportamento e diagnosticado por
-`tests/acessoEscopoPerfilDiagnostico.test.js`.
+Esse comportamento e apenas evidencia historica de compatibilidade. O runtime
+v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 
 ### Regra aprovada para o mock v2 e para o backend
 
@@ -28,14 +28,12 @@ Esse comportamento e diagnosticado por
 - Nao existe entidade de Regiao Operacional, Area Operacional ou Microregiao
   no modelo aprovado.
 
-### Fora do escopo desta fase
+### Fora do escopo deste documento
 
 - Implementar backend.
-- Implementar RBAC.
-- Alterar `src/utils/acessoControle.ts`.
-- Alterar mocks principais.
-- Alterar telas, rotas ou fluxo de login.
-- Inventar registros definitivos sem a base de dados fornecida pela Tche.
+- Implementar o backend e o RBAC; essa execucao pertence a `MP-33`/`MP-35`.
+- Inventar registros produtivos sem carga autorizada.
+- Criar novos perfis administrativos ou autorizacao por Municipio/UF.
 
 ## Entidades Minimas Futuras
 
@@ -43,7 +41,7 @@ Esse comportamento e diagnosticado por
 |---|---|---|
 | `usuarios` | Pessoa/acesso e perfil principal | id canonico, perfil, status, autenticacao, dados cadastrais |
 | `produtores` | Perfil final que pode ser titular | id canonico, usuario_id quando houver acesso, dados cadastrais, status |
-| `propriedades` | Unidade operacional protegida | id canonico, titular_produtor_id, municipio, UF, status |
+| `propriedades` | Unidade operacional protegida | id canonico, `titular_id`, `municipio_id`, `uf_id`, status |
 | `usuario_propriedade` | Vinculo direto usuario-Propriedade | usuario_id, propriedade_id, tipo, status, origem, auditoria |
 | `perfis`/`papeis` | Capacidades por perfil e papel | permissoes por acao e, quando necessario, nivel administrativo |
 
@@ -62,12 +60,13 @@ Esse comportamento e diagnosticado por
 | Listar Propriedades | Sim, global | Sim, apenas vinculadas | Sim, apenas por vinculo direto ativo |
 | Abrir detalhe da Propriedade | Sim, global | Sim, se vinculada | Sim, se possuir vinculo direto ativo |
 | Visualizar mapas/anexos | Sim, se material existir/liberado por politica | Sim, se Propriedade vinculada e material liberado ao produtor | Sim, se Propriedade no escopo e material liberado a equipe |
-| Criar visita | Sim, conforme papel | Nao por padrao | Sim, se Propriedade no escopo e permissao de acao ativa |
+| Criar visita | Sim | Nao | Sim, se Propriedade vinculada |
 | Visualizar visitas | Sim, global | Sim, das Propriedades vinculadas quando liberadas | Sim, das Propriedades no escopo |
-| Criar registro no caderno | Sim, conforme papel | Sim, na propria Propriedade quando permitido | Sim, se Propriedade no escopo e permissao de acao ativa |
+| Criar registro no caderno | Sim | Sim, na propria Propriedade | Sim, se Propriedade vinculada |
 | Visualizar caderno | Sim, global | Sim, da propria Propriedade conforme visibilidade | Sim, das Propriedades no escopo |
-| Editar cadastro de Propriedade | Sim, conforme papel administrativo | Nao por padrao | Somente com permissao explicita por acao |
-| Editar usuarios/vinculos | Sim, conforme papel administrativo | Nao | Nao por padrao |
+| Editar cadastro de Propriedade | Sim | Nao | Nao |
+| Editar usuarios/vinculos | Sim | Nao | Nao |
+| Publicar Material ou GeoJSON | Sim | Nao | Nao |
 
 ## Casos Positivos De Aceite
 
@@ -102,12 +101,12 @@ Esse comportamento e diagnosticado por
   `propriedade_id` devem ter migracao planejada com leitura dupla enquanto
   houver compatibilidade.
 - Vinculos `usuario_propriedade` devem ser persistentes.
-- Vinculos devem ter status ativo/inativo e, quando necessario, validade
-  temporal.
+- Vinculos têm status ativo/inativo e não expiram automaticamente no primeiro
+  backend.
 - Criacao, alteracao e remocao de vinculos devem ter auditoria minima.
 - Usuarios inativos ou pendentes nao devem acessar areas protegidas do backend.
-- Acesso negado deve retornar resposta segura e consistente, sem vazar dados da
-  Propriedade ou do material solicitado.
+- Recurso por ID fora do escopo retorna `404`; acao negada sobre recurso
+  conhecido e dentro do escopo retorna `403`.
 - Mapas/anexos, visitas e caderno devem validar permissao por Propriedade em
   cada operacao.
 - Testes automatizados devem cobrir casos positivos e negativos por perfil,
@@ -126,10 +125,10 @@ Esse comportamento e diagnosticado por
 - Mapas/anexos serem liberados por Propriedade, mas acessados por URL direta
   sem checagem de permissao.
 
-## Evidencias Do Legado V1
+## Evidencias Historicas Do Legado V1
 
-`tests/acessoEscopoPerfilDiagnostico.test.js` registra o comportamento atual do
-mock:
+`tests/acessoEscopoPerfilDiagnostico.test.js` preserva cenarios de
+compatibilidade e migracao do mock antigo:
 
 - Admin ve todas as Propriedades.
 - Produtor ve Propriedades onde e titular/produtor compativel.

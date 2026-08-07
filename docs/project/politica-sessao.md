@@ -199,6 +199,10 @@ retencao, criptografia e sincronizacao do cache devem ser definidas por fluxo.
 
 ## Dependencias E Bloqueios
 
+Status em 2026-08-07: as decisões de organização, RBAC e cache por fluxo foram
+fechadas em `baseline-backend-v1-2026-08.md`. Os itens abaixo são entregas de
+`MP-33`, não decisões anteriores que mantenham a fase bloqueada.
+
 O fechamento produtivo depende de:
 
 - backend de autenticacao e autorizacao;

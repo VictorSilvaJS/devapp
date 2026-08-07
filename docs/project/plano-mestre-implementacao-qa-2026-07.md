@@ -4,8 +4,10 @@
 >
 > Criado em: 2026-07-30
 >
-> Próxima tarefa da fila: `MP-33 — Autenticação e sessão reais`, bloqueada por
-> backend; `MP-00` a `MP-32` foram concluídas. Em `MP-07 — Login responsivo`,
+> Próxima tarefa da fila: `MP-33 — Autenticação e sessão reais`, com status
+> `PRONTO` após o fechamento da fundação em
+> `baseline-backend-v1-2026-08.md`; `MP-00` a `MP-32` foram concluídas. Em
+> `MP-07 — Login responsivo`,
 > o editor de extração do Gboard em paisagem foi aceito explicitamente como
 > ressalva do aparelho, sem alegar que o teclado inline passou
 
@@ -267,11 +269,11 @@ Cada migração pode virar uma conversa e branch própria se o diff crescer.
 
 | Ordem | Tarefa | QA relacionado | Objetivo | Dependência | Estado |
 |---:|---|---|---|---|---|
-| 34 | `MP-33` Autenticação e sessão reais | `QA-P0-04` | Implementar tokens, refresh, revogação, inatividade e offline controlado | `MP-01`, backend | `BLOQUEADO` |
-| 35 | `MP-34` Notificações reais e isoladas | `QA-P0-01` | Consultar por destinatário/escopo, persistir leitura e reautorizar a rota | `MP-03`, backend | `BLOQUEADO` |
-| 36 | `MP-35` Escopo territorial no backend | `QA-P0-02` | Administrar vínculos e impedir ampliação de acesso pelo cliente | `MP-02`, backend | `BLOQUEADO` |
-| 37 | `MP-36` Auditoria produtiva do Caderno | `QA-P0-03` | Persistir histórico imutável, concorrência e autorização no servidor | `MP-25`, backend | `BLOQUEADO` |
-| 38 | `MP-37` Versionamento produtivo do GeoJSON | `QA-P1-06` | Persistir importações, publicação, reconciliação, linhagem e consulta histórica | `MP-06`, `MP-24`, backend/storage | `BLOQUEADO` |
+| 34 | `MP-33` Autenticação e sessão reais | `QA-P0-04` | Criar fundação do backend, tokens, refresh, revogação, inatividade e offline controlado | `MP-01`, baseline backend v1 | `PRONTO` |
+| 35 | `MP-34` Notificações reais e isoladas | `QA-P0-01` | Consultar por destinatário/escopo, persistir leitura e reautorizar a rota | `MP-03`, `MP-33` | `BACKLOG` |
+| 36 | `MP-35` Escopo por Propriedade no backend | `QA-P0-02` | Administrar vínculos diretos e impedir ampliação de acesso pelo cliente | `MP-02`, `MP-33` | `BACKLOG` |
+| 37 | `MP-36` Auditoria produtiva do Caderno | `QA-P0-03` | Persistir histórico imutável, concorrência e autorização no servidor | `MP-25`, `MP-33`, `MP-35` | `BACKLOG` |
+| 38 | `MP-37` Versionamento produtivo do GeoJSON | `QA-P1-06` | Persistir importações, publicação, reconciliação, linhagem e consulta histórica | `MP-06`, `MP-24`, `MP-35`, storage | `BACKLOG` |
 
 Nenhuma dessas tarefas deve ser simulada como segurança completa apenas no
 front-end.
@@ -972,6 +974,6 @@ reinstalado; a sessão Admin e a rotação automática foram restauradas. A
 referência remota corrompida `origin/appQA` foi removida sem alterar a branch
 local, e `git fsck --no-dangling` voltou a passar.
 
-A próxima tarefa da fila é `MP-33`, que permanece bloqueada por backend e não
-foi iniciada. A assinatura de produção depende de keystore real; localização
+A próxima tarefa da fila é `MP-33`, liberada para criar a fundação do backend e
+ainda não iniciada. A assinatura de produção depende de keystore real; localização
 em campo e offline continua em `MP-38`.

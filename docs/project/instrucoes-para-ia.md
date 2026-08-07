@@ -31,9 +31,11 @@ Dentro de `docs/project/`, use esta ordem de leitura:
 4. `regras-de-negocio.md`
 5. `decisoes-consolidadas.md`
 6. `pendencias-de-definicao.md`
-7. `plano-mestre-implementacao-qa-2026-07.md`
-8. `plano-reorganizacao.md`
-9. `roadmap-futuro.md`
+7. `plano-fechamento-pendencias-pre-backend-2026-08.md`
+8. `baseline-backend-v1-2026-08.md`
+9. `plano-mestre-implementacao-qa-2026-07.md`
+10. `plano-reorganizacao.md`
+11. `roadmap-futuro.md`
 
 ---
 
@@ -50,6 +52,8 @@ Papéis dos documentos ativos:
 - `regras-de-negocio.md`: regras de domínio e acesso
 - `decisoes-consolidadas.md`: decisões já assumidas pelo projeto
 - `pendencias-de-definicao.md`: pontos reais ainda em aberto
+- `baseline-backend-v1-2026-08.md`: decisões de fundação que liberam o início
+  do backend e do banco
 - `plano-mestre-implementacao-qa-2026-07.md`: fila ativa de correcoes,
   dependencias, validacoes e evidencias originadas da revisao de QA
 - `plano-reorganizacao.md`: ordem técnica de reorganização

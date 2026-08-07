@@ -164,8 +164,10 @@ Marcar como lida, marcar todas como lidas e descartar devem ser operacoes
 idempotentes, persistidas por destinatario e registradas com horario do
 servidor. Descartar nao apaga o evento nem a trilha administrativa.
 
-O tempo exato de retencao permanece configuracao produtiva a fechar em
-`MP-34`. A retencao nunca pode fazer uma entrega reaparecer como nao lida.
+A retenção padrão do primeiro backend é de 90 dias desde `criada_em`, salvo
+`expira_em` anterior definido pelo evento. O evento de auditoria segue a
+retenção do domínio de origem. A retenção nunca pode fazer uma entrega
+reaparecer como não lida.
 
 ## Navegacao Segura
 
@@ -268,7 +270,7 @@ O fechamento produtivo depende de:
 - allowlist de destinos e guards nas telas;
 - cache segregado e cifrado;
 - testes negativos de API, troca de usuario, deep link e rota direta;
-- integracao push, caso seja adicionada.
+- integração push fica fora do primeiro corte de `MP-34`.
 
 Essas dependencias pertencem a `MP-34 — Notificacoes reais e isoladas`. Ate
 essa tarefa ser concluida, `QA-P0-01` permanece resolvida somente em nivel de

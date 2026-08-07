@@ -1,8 +1,8 @@
 # Plano de Fechamento das Pendências Pré-Backend
 
-> Status: ATIVO
+> Status: `FECHADO_PARA_INICIO_DO_BACKEND`
 >
-> Auditoria-base: 2026-08-05
+> Auditoria-base: 2026-08-05; revisão de fechamento: 2026-08-07
 >
 > Escopo: decisões, contratos, implementações preparatórias, testes e evidências
 > que precisam ser fechados antes ou durante a entrada no backend e no banco.
@@ -28,6 +28,13 @@ automática para promover hipóteses históricas ao produto.
 
 ## 2. Resultado Executivo
 
+Atualização de 2026-08-07: as decisões de fundação foram encerradas em
+`baseline-backend-v1-2026-08.md`. Organização, modelo v2, escopo direto,
+cadastros, RBAC, vínculos, respostas HTTP, offline e primeira plataforma não
+estão mais em aberto. O backend ainda não existe, mas já pode ser iniciado por
+`MP-33`; as lacunas restantes são entregas da implementação ou portões de
+verticais posteriores.
+
 O corte local demonstrativo está consistente e as fases `MP-00` a `MP-32`
 estão registradas como concluídas. Nesta auditoria:
 
@@ -37,18 +44,18 @@ estão registradas como concluídas. Nesta auditoria:
 - autenticação, notificações, materiais, GeoJSON, Safra/Safrinha, Visitas e
   Caderno ainda dependem total ou parcialmente de memória, mock, arquivos
   locais ou `AsyncStorage`;
-- 27 módulos de execução importam `src/api/mock.ts` diretamente;
+- 30 módulos de execução ainda referenciam `src/api/mock.ts` diretamente;
 - `src/api/index.ts` ainda é uma fachada da API mock;
 - a sincronização de mapas contém endpoint de exemplo e métodos simulados;
 - não foi encontrado workflow de integração contínua em `.github/`;
-- há divergência entre o contrato antigo baseado em `microregiao` e o modelo
-  territorial ativo baseado em Regional e Área Operacional;
+- a divergência territorial foi encerrada: o v2 não usa Regional,
+  Microregião ou Área Operacional e autoriza Colaborador por vínculo direto;
 - os documentos `pendencias-de-definicao.md`, `plano-reorganizacao.md` e o
   `README.md` da raiz misturam ou exibem estados anteriores ao corte atual.
 
-Conclusão: o projeto está pronto para uma fase curta de fechamento de decisões
-e preparação arquitetural. Ainda não está pronto para modelar o banco ou
-implementar endpoints produtivos sem risco de cristalizar contratos legados.
+Conclusão atual: o projeto está pronto para iniciar o scaffold, o banco e
+`MP-33`. A camada de repositórios do app deve começar junto da integração, não
+ser usada como justificativa para adiar a construção do servidor.
 
 ## 3. Como Usar Este Plano
 
@@ -90,45 +97,44 @@ Um item só muda para concluído quando existir:
 | GeoJSON | Talhões publicados formam uma trilha versionada própria e não devem ser confundidos com o catálogo comum de materiais |
 | Mapas no celular | O app consulta e exibe; não desenha Talhões nem executa processamento geoespacial pesado |
 | Área e perímetro | Área total informada e área mapeada são grandezas distintas; perímetro só pode ser exibido com fonte, método e unidade conhecidos |
-| Fotos atuais | São demonstrativas; foto real e georreferenciada não deve ser apresentada como capacidade pronta |
+| Fotos atuais | Visita aceita foto real local sem EXIF/geotag/upload; fotos de Caderno continuam demonstrativas; nenhuma delas representa mídia produtiva sincronizada |
 
 ## 5. Matriz Mestra de Pendências
 
-| ID | Prioridade | Natureza | Pendência | Bloqueia | Evidência de fechamento |
+| ID | Estado/prioridade | Natureza | Pendência | Bloqueia | Evidência de fechamento |
 |---|---|---|---|---|---|
-| `PRE-01` | `P0-A` | Governança | Reconciliar documentos ativos conflitantes ou desatualizados | Schema e API | Trilha ativa sem contratos territoriais concorrentes e sem pendências já encerradas marcadas como abertas |
-| `PRE-02` | `P0-A` | Decisão/implementação | Organização única e IDs centrais definidos; completar IDs das demais verticais | Schema | `modelo-dados-mock-v2.md` implementado e contratos das verticais reconciliados |
-| `PRE-03` | `P0-A` | Implementação | Migrar escopo territorial legado para vínculo direto por Propriedade | Schema, `MP-35` | Mock v2, API e testes sem autorização por texto territorial |
-| `PRE-04` | `P0-A` | Implementação | Aplicar cadastro de Usuário, Produtor, Titular e Propriedade aprovado no v2 | Schema, `MP-33`, cadastros | Fluxo, integridade e transações implementados/testados |
-| `PRE-05` | `P0-A` | Decisão | Fechar RBAC por ação e ciclo dos vínculos | API, `MP-35` | Matriz allowlist aprovada e casos 2xx/401/403/404/409 definidos |
-| `PRE-06` | `P0-A` | Dados | Inventariar e mapear aliases e valores territoriais legados | Migrações | Planilha/fixture de migração revisada, sem inferência silenciosa |
-| `PRE-07` | `P0-A` | Contrato | Produzir contrato API e modelo de dados v1 coerentes | Todas as verticais | OpenAPI ou contrato equivalente, diagrama, migrations e regras de integridade revisados |
-| `PRE-08` | `P0-B` | Implementação | Separar telas/casos de uso do mock por interfaces de repositório | Troca para API | Fluxos prioritários usam interfaces; mock e HTTP são adaptadores substituíveis |
-| `PRE-09` | `P0-B` | Segurança | Implementar fronteira de autenticação e armazenamento seguro | `MP-33` | Tokens fora de `AsyncStorage`, rotação, revogação, lock, logout e redução de escopo testados |
-| `PRE-10` | `P0-B` | Decisão | Completar matriz offline por fluxo | `MP-33` e sincronização | Cada fluxo classificado como leitura cacheada, rascunho local ou mutação online |
+| `PRE-01` | `CONCLUIDO` | Governança | Fonte ativa reconciliada pelo resumo atual e pela baseline v1 | — | Baseline e decisões 36 a 38 prevalecem sobre o histórico |
+| `PRE-02` | `CONCLUIDO` | Decisão | Organização única e regra de IDs aprovadas | — | `modelo-dados-mock-v2.md` e baseline v1 |
+| `PRE-03` | `CONCLUIDO_CONTRATO_LOCAL` | Implementação | Vínculo direto já é a regra v2; aliases restantes são migração incremental | `MP-35` | Município/UF não autorizam; vínculo direto coberto no mock v2 |
+| `PRE-04` | `CONCLUIDO_CONTRATO_LOCAL` | Implementação | Cadastro em duas etapas e mutações atômicas locais concluídos | Backend | Decisão 34 e testes do mock v2 |
+| `PRE-05` | `CONCLUIDO` | Decisão | RBAC por ação, ciclo dos vínculos e respostas HTTP aprovados | `MP-35` | Baseline v1 e matriz RBAC |
+| `PRE-06` | `CONCLUIDO` | Dados | Mock v1 será descartado; não haverá migração territorial registro a registro | — | Auditoria de aliases e bootstrap v2 |
+| `PRE-07` | `INICIA_COM_BACKEND` | Contrato | Produzir OpenAPI e migrations | Primeira entrega real | Não é pré-condição; é resultado do scaffold |
+| `PRE-08` | `INICIA_COM_BACKEND` | Implementação | Separar telas/casos de uso por repositórios | Integração do app | Deve avançar junto do primeiro adaptador HTTP |
+| `PRE-09` | `MP-33` | Segurança | Implementar autenticação e storage seguro | Uso produtivo | Contrato já fechado; implementação é a própria fase |
+| `PRE-10` | `CONCLUIDO` | Decisão | Matriz offline conservadora aprovada | — | Baseline v1 |
 | `PRE-11` | `P1-V` | Produto/técnica | Fechar pipeline produtivo de materiais e arquivos | Backend de Materiais | Versionamento, storage, MIME, tamanho, auditoria, retenção e autorização aprovados |
 | `PRE-12` | `P1-V` | Produto/técnica | Fechar parâmetros produtivos do GeoJSON | `MP-37` | Limiares, retenção, publicação, rollback, cache e conflitos aprovados |
-| `PRE-13` | `P1-V` | Produto | Fechar retenção de notificações e escopo de push | `MP-34` | Retenção aprovada; push incluído ou explicitamente adiado |
-| `PRE-14` | `P1-V` | Técnica | Definir eventos auditáveis, idempotência e concorrência | `MP-36` e backend de Visitas | Schemas de evento, versionamento e testes concorrentes aprovados |
+| `PRE-13` | `CONCLUIDO` | Produto | Notificações in-app, sem push, retenção padrão de 90 dias | `MP-34` | Decisão 38 e baseline v1 |
+| `PRE-14` | `CONCLUIDO_CONTRATO` | Técnica | Eventos, idempotência e concorrência definidos | `MP-36` e backend de Visitas | Implementação produtiva permanece na vertical |
 | `PRE-15` | `P1-R` | Evidência | Fechar smokes físicos ainda relevantes | `MP-38`/release | Matriz canônica executada em aparelho e evidências anexadas |
-| `PRE-16` | `P1-R` | Dados/negócio | Validar autorização e consistência dos dados da Sela de Prata I | Demo de campo/release | Fonte, autorização, medidas e limitações registradas |
+| `PRE-16` | `NAO_BLOQUEIA_BACKEND` | Dados/negócio | Sela de Prata I não é fonte do dataset v2 | Demo pública/release | Uso externo ainda exige autorização própria |
 | `PRE-17` | `P1-R` | Release | Fechar assinatura, segurança, plataformas e observabilidade | Release | Keystore oficial, segredos, política de logs, auditoria de dependências e plataforma-alvo aprovados |
 | `PRE-18` | `P2` | Manutenção | Reduzir pontos críticos de acoplamento e documentação obsoleta | Evolução segura | Telas críticas modularizadas na área tocada, README atualizado e CI mínima ativa |
 
-Atualização parcial de `PRE-06` em 2026-08-06: os identificadores legados,
-especialmente `fazenda_id`, foram inventariados e classificados em
-`auditoria-compatibilidade-fazenda-id-2026-08.md`. Nenhuma remoção foi feita.
-O item continua aberto porque ainda faltam o mapeamento dos valores
-territoriais e a fixture/planilha de migração revisada. O contrato TypeScript
-v2, encontrado vazio durante a auditoria, foi restaurado posteriormente em
-2026-08-06; `npm run typecheck` e `npm run test:domain-compat` passaram.
+Fechamento de `PRE-06` em 2026-08-07: os identificadores legados foram
+inventariados em `auditoria-compatibilidade-fazenda-id-2026-08.md`. Como o v1 é
+exclusivamente demonstrativo, ele será descartado em vez de migrado. Não existe
+mapeamento territorial a produzir: Região/Microregião não fazem parte do v2.
+As bordas de leitura permanecem como dívida de implementação incremental.
 
 ## 6. Agenda de Decisões Humanas
 
 As recomendações originais abaixo devem ser lidas com o fechamento de
-2026-08-05. `DEC-01`, o núcleo de identidade de `DEC-02`, `DEC-03` e a regra
-de Titular de `DEC-05` foram aprovados em `modelo-dados-mock-v2.md` e nas
-decisões 31 a 33. Os demais pontos continuam exigindo decisão própria.
+2026-08-07. `DEC-01` a `DEC-07`, `DEC-10` e o recorte de plataforma de
+`DEC-12` foram encerrados. `DEC-08` e `DEC-09` possuem portões próprios antes
+das verticais de Materiais e GeoJSON. `DEC-11` não bloqueia o backend porque a
+Sela de Prata I não é a fonte do dataset v2.
 
 ### `DEC-01` — Organização e isolamento de dados
 
@@ -147,6 +153,10 @@ Saída obrigatória: decisão, diagrama de ownership e testes de isolamento.
 
 ### `DEC-02` — IDs canônicos e identidade
 
+Status: `CONCLUIDA_PARA_FUNDACAO`. Todas as entidades novas usam ID técnico
+opaco e relações por ID; Município/UF usam códigos oficiais. IDs específicos
+das verticais seguem a mesma regra ao serem materializados.
+
 Fechar IDs estáveis para:
 
 - organização;
@@ -155,8 +165,6 @@ Fechar IDs estáveis para:
 - Propriedade;
 - Titular e vínculo com Propriedade;
 - Talhão;
-- Regional;
-- Área Operacional;
 - município/UF, preferencialmente com referência IBGE;
 - Safra/Safrinha, Visita, Caderno, Material, arquivo e versão GeoJSON.
 
@@ -166,14 +174,9 @@ Propriedade.
 
 ### `DEC-03` — Modelo territorial definitivo
 
-Há uma divergência real a resolver:
-
-- `modelo-territorial.md` define Regional e Área Operacional opcional, com
-  `usuario_regional` e `usuario_area_operacional`;
-- `contrato-api-rbac.md` e `matriz-rbac-backend.md` ainda usam principalmente
-  `microregiao` e `usuario_microregiao`;
-- o código atual usa `sub_regioes`, com `vinculos_microregioes` como fallback;
-- `propriedades_atribuidas` é apenas visual/preparatório no mock.
+A divergência histórica foi resolvida. O contrato antigo usava Microregião e
+houve uma proposta intermediária de Regional/Área Operacional. Nenhum dos dois
+faz parte do v2; o código novo usa vínculo direto por Propriedade.
 
 Decisão: não adotar Regional ou Área Operacional no primeiro contrato.
 Município/UF representam localização; Colaborador acessa somente por vínculo
@@ -185,20 +188,20 @@ valores legados.
 
 ### `DEC-04` — Cadastro e ativação de usuários
 
-Decidir:
+Status: `CONCLUIDA` pela baseline v1. Usuário Produtor nasce pendente, primeira
+Titularidade o ativa atomicamente, credenciais reais usam convite de uso único
+e redução de status/escopo revoga refresh tokens.
 
-- Admin cria usuário já ativo ou envia convite para ativação;
-- estados canônicos: pendente, ativo, inativo, bloqueado e removido, ou outro
-  conjunto explicitamente menor;
-- fluxo de senha inicial, convite, expiração, recuperação e redefinição;
-- se troca de e-mail exige nova verificação;
-- o que ocorre com sessões e cache quando o status ou escopo diminui.
-
-Recomendação: usuário nasce pendente, ativa por convite de uso único, e qualquer
-redução de status/escopo revoga refresh tokens e invalida dados protegidos no
-próximo contato com o servidor.
+Definição: estados canônicos são pendente, ativo e inativo. Senha não integra o
+cadastro. Convite e recuperação usam token de uso único armazenado como hash;
+troca de e-mail exige verificação; redução de status/escopo revoga refresh
+tokens e invalida cache não autorizado.
 
 ### `DEC-05` — Cadastro de Propriedade e Titular
+
+Status: `CONCLUIDA` pelas decisões 32 e 34. Vínculo usa ativo/inativo, origem e
+auditoria; não expira automaticamente no primeiro backend. Troca de Titular
+fica fora da edição comum e exige fluxo transacional futuro.
 
 O código local suporta selecionar Titular existente e também criar um Titular
 mínimo durante o cadastro. A regra de domínio foi fechada:
@@ -213,36 +216,34 @@ vínculo sem se tornarem Titulares. O fluxo administrativo padrão deve
 selecionar Produtor existente. Eventual criação combinada futura precisa ser
 transacional e idempotente.
 
-Ainda decidir:
-
-- validade temporal e origem do vínculo;
-- procedimento de troca de titularidade;
-- impacto da desativação do Titular sobre o acesso do Produtor.
+Definição: vínculo não expira automaticamente no primeiro backend, registra
+origem e auditoria e nunca é apagado fisicamente. Titular ativo não pode ser
+inativado pela edição comum; transferência exige fluxo transacional próprio.
 
 ### `DEC-06` — Perfis administrativos e RBAC por ação
 
-Fechar capacidades exatas de Admin Global, Admin Operacional e Apoio, caso os
-três continuem no produto. Para cada recurso, decidir quem pode listar, abrir,
-criar, editar, desativar, publicar, corrigir e excluir.
+Status: `CONCLUIDA` pela decisão 37. O primeiro backend possui apenas Admin
+global, Colaborador por vínculo direto e Produtor. A allowlist completa e a
+estratégia de respostas estão em `baseline-backend-v1-2026-08.md`.
+
+O primeiro backend não terá Admin Operacional ou Apoio. A matriz fixa de Admin,
+Colaborador e Produtor está aprovada na baseline v1.
 
 Regras mínimas já fixadas:
 
 - autorização do backend é obrigatória; esconder botão não é segurança;
 - Produtor permanece consultivo para estrutura e materiais;
-- Colaborador só opera dentro do território ou vínculo direto autorizado;
-- vínculo direto de Propriedade é aditivo;
+- Colaborador só opera em Propriedade vinculada diretamente;
 - vínculos inativos não concedem acesso.
 
-Ainda precisa ser decidido:
-
-- quando um recurso fora do escopo retorna `403` ou `404` para reduzir
-  vazamento de existência;
-- envelope canônico de erro;
-- paginação, filtros e ordenação;
-- política de exclusão lógica, bloqueio por dependência e restauração;
-- validade, origem, criador e auditoria dos vínculos de acesso.
+Recursos por ID fora do escopo retornam `404`; ação negada sobre recurso
+conhecido e autorizado retorna `403`. Envelope, paginação, idempotência,
+concorrência, exclusão lógica e auditoria estão definidos na baseline v1.
 
 ### `DEC-07` — Capacidade offline por fluxo
+
+Status: `CONCLUIDA` pela decisão 38. A tabela abaixo é substituída pela matriz
+aprovada em `baseline-backend-v1-2026-08.md`.
 
 Preencher e aprovar esta matriz antes de implementar cache produtivo:
 
@@ -250,15 +251,15 @@ Preencher e aprovar esta matriz antes de implementar cache produtivo:
 |---|---:|---:|---:|---|
 | Login/troca de usuário | Não | Não | Não | Sempre online |
 | Sessão já revalidada | Sim | N/A | Não | Consulta por até 24 horas, respeitando lock e validade |
-| Usuários e vínculos | A decidir | Não | Não | Administração online |
-| Propriedades e Talhões | Sim | A decidir | Não | Cache por escopo; mudança estrutural online |
+| Usuários e vínculos | Não | Não | Não | Administração online |
+| Propriedades e Talhões | Sim | Não | Não | Cache por escopo; mudança estrutural online |
 | Caderno | Sim | Sim | Não | Rascunho local; confirmar/complementar/corrigir com rede |
-| Visitas | Sim | A decidir | Não | Agenda cacheada; transições com rede |
+| Visitas | Sim | Não | Não | Agenda cacheada; transições com rede |
 | Materiais publicados | Sim, se baixados | Não | Não | Arquivo cifrado e associado à versão publicada |
 | Importação/publicação de arquivos | Não | N/A | Não | Sempre online no produto; importação local atual é demonstração |
 | GeoJSON publicado | Sim, se baixado | Não | Não | Importar, reconciliar, publicar e reverter com rede |
 | Notificações | Sim | Não | Não | Cache de leitura; estado remoto reconciliado online |
-| Fotos futuras | A decidir | A decidir | A decidir | Exige política de fila, consentimento, quota e conflito |
+| Foto nova de Visita | Prévia local | Sim, no formulário | Não | Upload/envio com rede; sem fila em background |
 
 Para cada linha aprovada, definir:
 
@@ -307,14 +308,18 @@ inferidos a partir de um único arquivo demonstrativo.
 
 ### `DEC-10` — Notificações
 
-O contrato funcional está majoritariamente fechado. Restam:
+Status: `CONCLUIDA` para o primeiro corte. Notificações são in-app, sem push, e
+entregas possuem retenção padrão de 90 dias.
 
-- tempo exato de retenção;
-- inclusão de push no primeiro corte ou adiamento explícito;
-- política de preferência por usuário e dispositivo;
-- reconciliação de lida/não lida em múltiplos aparelhos.
+O contrato funcional está fechado para o primeiro corte: retenção padrão de 90
+dias, somente in-app e sem push. Estado lida/descartada pertence à entrega do
+usuário e deve reconciliar entre aparelhos pelo servidor.
 
 ### `DEC-11` — Dados demonstrativos e evidência agronômica
+
+Status: `NAO_BLOQUEIA_BACKEND`. O dataset v2 usa a carga autorizada descrita em
+`dataset-demonstrativo-v2.md`; a Sela de Prata I permanece legado e só exige
+nova validação se voltar a ser usada em demonstração externa ou produção.
 
 Confirmar antes de demonstração de campo ou publicação:
 
@@ -330,15 +335,14 @@ Não corrigir números ou geometrias por inferência.
 
 ### `DEC-12` — Plataforma e release
 
-Decidir:
+Status de escopo: `CONCLUIDA`. Android é a primeira plataforma produtiva;
+iOS fica fora do primeiro release. Keystore, privacidade, telemetria e destino
+de distribuição continuam como portão de release, não de backend.
 
-- se iOS faz parte do MVP aceito ou fica explicitamente fora do primeiro
-  release;
-- matriz mínima de Android, tamanho de tela, orientação e versão do sistema;
-- destino de distribuição e política de atualização;
-- serviço de crash/telemetria e política de privacidade;
-- tratamento dos 11 alertas moderados conhecidos da cadeia Expo/ngrok;
-- janela para atualização coordenada do Expo SDK e avisos de Gradle.
+Android é o alvo inicial e iOS fica fora do primeiro release. Ainda precisam
+ser executados, como preparação de release: matriz mínima Android, destino de
+distribuição, telemetria/privacidade, revisão das dependências e atualização
+coordenada do Expo/Gradle.
 
 ## 7. Implementações Que Faltam Antes ou Junto do Backend
 
@@ -454,9 +458,8 @@ idempotência, marcação de leitura, destino autorizado e retenção definida.
 Antes do APK de campo formal:
 
 - fornecer keystore oficial e as quatro credenciais `TCHE_RELEASE_*`;
-- remover ou desabilitar de forma comprovável o painel `Smoke Dev` fora de
-  desenvolvimento;
-- remover logs de autenticação, perfil e dados sensíveis;
+- manter removidos o painel `Smoke Dev` e os logs de autenticação/perfil que
+  imprimiam objetos de usuário;
 - reexecutar verificação de pacotes Expo e auditoria de dependências;
 - decidir atualização do SDK sem aplicar correções incompatíveis isoladas;
 - criar CI mínima para typecheck, domínio, contrato e build de release;
@@ -510,6 +513,9 @@ Não mapear área operacional ou Titular apenas por semelhança de texto.
 |---|---|---|
 | 2026-08-05 | `npm run typecheck` | Passou |
 | 2026-08-05 | `npm run test:domain-compat` | Passou integralmente |
+| 2026-08-07 | `npm run typecheck` | Passou após o fechamento documental e remoção das superfícies de debug |
+| 2026-08-07 | `npm run test:domain-compat` | Passou integralmente |
+| 2026-08-07 | `npm run build:android:release` | Passou; APK de 96.242.378 bytes, SHA-256 `F6C0930716081398A89FC29C283553D53A98B9BA912C1B129FDD0A524316CE15` |
 
 Essa baseline comprova compatibilidade local. Ela não comprova backend,
 segurança, sincronização, autorização de servidor ou comportamento em todos os
@@ -593,7 +599,7 @@ os cenários espaciais e offline de `MP-38`.
 
 - matriz completa por perfil, ação e recurso;
 - organização diferente;
-- Regional, Área Operacional e vínculo direto aditivo;
+- vínculo direto ativo e ausência de autorização por Município/UF;
 - vínculo inativo/expirado;
 - rota direta por ID;
 - ausência de vazamento entre `403` e `404` conforme decisão;
@@ -641,11 +647,15 @@ os cenários espaciais e offline de `MP-38`.
 
 ### `DOC-01` — `pendencias-de-definicao.md`
 
+Status: `CONCLUIDO` com resumo ativo e histórico explicitamente subordinado.
+
 Separar pendências realmente abertas de histórico. Caderno, Visitas,
 localização e várias decisões funcionais possuem cortes locais já concluídos,
 mas ainda aparecem misturados com perguntas antigas.
 
 ### `DOC-02` — Contratos territoriais
+
+Status: `CONCLUIDO` para o v2 por vínculo direto.
 
 Depois de `DEC-03`, atualizar conjuntamente:
 
@@ -658,22 +668,30 @@ Depois de `DEC-03`, atualizar conjuntamente:
 
 ### `DOC-03` — `smoke.md`
 
+Status: `CONCLUIDO`; a matriz ativa foi criada no topo em 2026-08-07.
+
 Preservar como evidência histórica, mas criar no topo uma matriz ativa curta
 para evitar reexecutar casos já superseded ou deixar lacunas antigas parecerem
 pendências atuais.
 
 ### `DOC-04` — `plano-reorganizacao.md`
 
+Status: `CONCLUIDO` em 2026-08-07.
+
 Atualizar a próxima ação. A antiga limpeza visual de nomenclatura não representa
 mais a fila atual; a lacuna relevante é a camada de dados/repositórios.
 
 ### `DOC-05` — `README.md` da raiz
+
+Status: `CONCLUIDO` em 2026-08-07.
 
 Corrigir informações antigas, entre elas Expo 48, Node 16 e a observação de que
 `Produtor` seria termo provisório até a Fase 2. O código atual usa Expo SDK 56 e
 a documentação ativa já fixou os termos de produto.
 
 ### `DOC-06` — Registro de decisões
+
+Status: `CONCLUIDO` pelas decisões 36 a 38.
 
 Cada `DEC-*` aprovado deve ser resumido em `decisoes-consolidadas.md`, com link
 para o contrato detalhado. Questões conscientemente adiadas permanecem em
@@ -682,6 +700,8 @@ para o contrato detalhado. Questões conscientemente adiadas permanecem em
 ## 11. Sequência Recomendada
 
 ### Onda 0 — Fonte de verdade e decisões
+
+Status: `CONCLUIDA` em 2026-08-07.
 
 1. fechar `DEC-01` a `DEC-06`;
 2. reconciliar o modelo territorial e RBAC;
@@ -692,6 +712,8 @@ para o contrato detalhado. Questões conscientemente adiadas permanecem em
 Saída: base suficiente para desenhar banco e API sem promover legado ambíguo.
 
 ### Onda 1 — Contrato e preparação arquitetural
+
+Status: `PROXIMA`, incorporada à primeira entrega de `MP-33`.
 
 1. inventariar dados/aliases;
 2. desenhar modelo relacional e contrato API;
@@ -706,12 +728,12 @@ Saída: frontend desacoplado do transporte e contrato produtivo revisável.
 
 | Fase | Pré-requisitos deste plano |
 |---|---|
-| `MP-33` Autenticação e sessão | `PRE-02`, `PRE-04`, `PRE-07`, `PRE-08`, `PRE-09`, `PRE-10` |
-| `MP-34` Notificações | `PRE-07`, `PRE-10`, `PRE-13` |
-| `MP-35` Território e RBAC | `PRE-02`, `PRE-03`, `PRE-05`, `PRE-06`, `PRE-07` |
-| `MP-36` Caderno produtivo | `PRE-07`, `PRE-10`, `PRE-14` |
-| `MP-37` GeoJSON produtivo | `PRE-06`, `PRE-07`, `PRE-10`, `PRE-12` |
-| Backend de Materiais | `PRE-07`, `PRE-10`, `PRE-11` |
+| `MP-33` Autenticação e sessão | Baseline v1; `PRE-07`, `PRE-08` e `PRE-09` são entregas da própria fase |
+| `MP-34` Notificações | `MP-33`, `PRE-10`, `PRE-13` |
+| `MP-35` Escopo por Propriedade e RBAC | `MP-33`, `PRE-03`, `PRE-05` |
+| `MP-36` Caderno produtivo | `MP-33`, `MP-35`, `PRE-14` |
+| `MP-37` GeoJSON produtivo | `MP-35`, `PRE-12` |
+| Backend de Materiais | `MP-35`, `PRE-11` |
 
 ### Onda 3 — Campo e release
 
@@ -742,24 +764,24 @@ materiais, cache e GeoJSON não devem aumentar o acoplamento existente.
 
 ## 13. Portão de Prontidão Para Iniciar o Backend
 
-Não iniciar migrations produtivas ou endpoints definitivos até marcar todos os
-itens abaixo:
+Status em 2026-08-07: `LIBERADO`.
 
-- [ ] organização/tenant e isolamento aprovados;
-- [ ] IDs canônicos aprovados;
-- [ ] modelo Regional/Área Operacional reconciliado com o legado;
-- [ ] fluxo Usuário/Produtor/Titular/Propriedade aprovado;
-- [ ] perfis e RBAC por ação aprovados;
-- [ ] estados e validade dos vínculos aprovados;
-- [ ] estratégia `403`/`404`, erro, paginação e idempotência aprovada;
-- [ ] inventário de aliases e dados legados concluído;
-- [ ] modelo de banco e contrato API revisados em conjunto;
-- [ ] plano de migração e rollback documentado;
-- [ ] primeira fronteira de repositórios implementada no frontend;
-- [ ] matriz offline aprovada;
-- [ ] política de sessão mapeada para implementação segura;
-- [ ] baseline automatizada verde;
-- [ ] documentos ativos afetados atualizados.
+- [x] organização/tenant e isolamento aprovados;
+- [x] IDs canônicos aprovados;
+- [x] Regional/Área Operacional removidos do primeiro contrato;
+- [x] fluxo Usuário/Produtor/Titular/Propriedade aprovado;
+- [x] perfis e RBAC por ação aprovados;
+- [x] estados e ciclo dos vínculos aprovados;
+- [x] estratégia `403`/`404`, erro, paginação e idempotência aprovada;
+- [x] aliases legados inventariados e descarte do mock v1 aprovado;
+- [x] modelo canônico de fundação revisado;
+- [x] política de sessão mapeada;
+- [x] matriz offline aprovada;
+- [x] baseline automatizada verde;
+- [x] documentação de fundação atualizada.
+
+OpenAPI, migrations e a primeira fronteira de repositórios são resultados da
+primeira entrega do backend, não pré-condições para iniciá-la.
 
 ## 14. Portão de Prontidão Para Campo ou Release
 
@@ -768,7 +790,8 @@ itens abaixo:
 - [ ] acessibilidade e matriz de aparelhos executadas;
 - [ ] dados da Sela de Prata I autorizados e semanticamente revisados;
 - [ ] nenhuma capacidade demonstrativa apresentada como produtiva;
-- [ ] `Smoke Dev` e logs sensíveis ausentes do artefato;
+- [x] fonte do `Smoke Dev` e logs de sessão/perfil removidos;
+- [ ] ausência dessas superfícies confirmada no próximo artefato de release;
 - [ ] keystore e segredos oficiais configurados;
 - [ ] auditoria de dependências revisada e risco aceito ou corrigido;
 - [ ] CI e build de release reproduzível passando;
@@ -781,18 +804,18 @@ Preencher durante a reunião de fechamento:
 
 | Decisão | Responsável | Prazo | Estado | Documento de destino |
 |---|---|---|---|---|
-| `DEC-01` Organização | A definir | A definir | Aberta | `decisoes-consolidadas.md` + modelo de dados |
-| `DEC-02` IDs | A definir | A definir | Aberta | modelo de dados |
-| `DEC-03` Território | A definir | A definir | Aberta | `modelo-territorial.md` + contratos RBAC |
-| `DEC-04` Ativação | A definir | A definir | Aberta | `politica-sessao.md` + contrato de usuários |
-| `DEC-05` Propriedade/Titular | A definir | A definir | Aberta | regras de negócio + contrato de cadastro |
-| `DEC-06` RBAC | A definir | A definir | Aberta | matriz e contrato RBAC |
-| `DEC-07` Offline | A definir | A definir | Aberta | matriz offline por fluxo |
-| `DEC-08` Materiais | A definir | A definir | Aberta | `modelo-material-tecnico.md` |
-| `DEC-09` GeoJSON | A definir | A definir | Aberta | `versionamento-geojson-talhoes.md` |
-| `DEC-10` Notificações | A definir | A definir | Aberta | `contrato-notificacoes.md` |
-| `DEC-11` Dados demonstrativos | A definir | A definir | Aberta | estado atual/termo de evidência |
-| `DEC-12` Plataforma/release | A definir | A definir | Aberta | guia de release/estado atual |
+| `DEC-01` Organização | Projeto | 2026-08-05 | Concluída | `decisoes-consolidadas.md` + modelo v2 |
+| `DEC-02` IDs | Projeto | 2026-08-07 | Concluída para fundação | modelo v2 + baseline v1 |
+| `DEC-03` Território | Projeto | 2026-08-05 | Concluída | `modelo-territorial.md` + contratos RBAC |
+| `DEC-04` Ativação | Projeto | 2026-08-07 | Concluída | política de sessão + baseline v1 |
+| `DEC-05` Propriedade/Titular | Projeto | 2026-08-06 | Concluída | decisões 32 e 34 |
+| `DEC-06` RBAC | Projeto | 2026-08-07 | Concluída | decisão 37 + baseline v1 |
+| `DEC-07` Offline | Projeto | 2026-08-07 | Concluída | decisão 38 + baseline v1 |
+| `DEC-08` Materiais | Vertical de Materiais | Antes da vertical | Portão próprio | `modelo-material-tecnico.md` |
+| `DEC-09` GeoJSON | `MP-37` | Antes da implementação | Portão próprio | `versionamento-geojson-talhoes.md` |
+| `DEC-10` Notificações | Projeto | 2026-08-07 | Concluída | decisão 38 + contrato de notificações |
+| `DEC-11` Dados demonstrativos | Release | Antes de uso externo | Não bloqueia backend | dataset v2 + evidência de autorização |
+| `DEC-12` Plataforma/release | Projeto | 2026-08-07 | Android definido | baseline v1; demais itens no portão de release |
 
 ## 16. Fontes Ativas Cruzadas
 

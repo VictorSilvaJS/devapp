@@ -23,7 +23,9 @@ Antes de propor ou executar mudancas relevantes, leia nesta ordem:
 6. `docs/project/regras-de-negocio.md`
 7. `docs/project/decisoes-consolidadas.md`
 8. `docs/project/pendencias-de-definicao.md`
-9. `docs/project/plano-mestre-implementacao-qa-2026-07.md`
+9. `docs/project/plano-fechamento-pendencias-pre-backend-2026-08.md`
+10. `docs/project/baseline-backend-v1-2026-08.md`
+11. `docs/project/plano-mestre-implementacao-qa-2026-07.md`
 
 Use `docs/architecture/`, `docs/guides/` e `docs/testing/` apenas como apoio
 subordinado ao nucleo ativo em `docs/project/`.

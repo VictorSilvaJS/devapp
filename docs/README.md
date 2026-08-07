@@ -58,9 +58,10 @@ Para humanos e IA/agentes de codigo, a trilha recomendada comeca por:
 6. [Decisoes consolidadas](project/decisoes-consolidadas.md)
 7. [Pendencias de definicao](project/pendencias-de-definicao.md)
 8. [Plano de fechamento das pendencias pre-backend](project/plano-fechamento-pendencias-pre-backend-2026-08.md)
-9. [Plano mestre de implementacao da revisao de QA](project/plano-mestre-implementacao-qa-2026-07.md)
-10. [Plano de reorganizacao](project/plano-reorganizacao.md)
-11. [Backlog futuro de evolucao](project/roadmap-futuro.md)
+9. [Baseline aprovada para o backend v1](project/baseline-backend-v1-2026-08.md)
+10. [Plano mestre de implementacao da revisao de QA](project/plano-mestre-implementacao-qa-2026-07.md)
+11. [Plano de reorganizacao](project/plano-reorganizacao.md)
+12. [Backlog futuro de evolucao](project/roadmap-futuro.md)
 
 ## Leitura Complementar
 

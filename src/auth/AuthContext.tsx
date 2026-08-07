@@ -55,7 +55,6 @@ export function AuthProvider({ children }) {
       try {
         const restored = await restoreAuthSessionUser(AsyncStorage);
         if (restored) {
-          console.log('[AuthContext] loaded user from storage', restored);
           setUser(restored as CanonicalAuthUser);
         }
       } catch (err) {
@@ -73,7 +72,6 @@ export function AuthProvider({ children }) {
     try {
       const rawUser = await authenticateWithEmailAndPassword(email, senha);
       const nextUser = normalizeAuthUser(rawUser);
-      console.log('[AuthContext] login -> setUser', nextUser);
       setUser(nextUser);
       await persistCanonicalUser(nextUser);
       return nextUser ? toUsuarioCompativelBorda(nextUser) : null;
@@ -89,7 +87,6 @@ export function AuthProvider({ children }) {
       const rawUser = await authLoginByProfile(profileKey);
       const nextUser = normalizeAuthUser(rawUser);
       assertUsuarioPodeEntrar(nextUser);
-      console.log('[AuthContext] loginRapido -> setUser', nextUser);
       setUser(nextUser);
       await persistCanonicalUser(nextUser);
       return nextUser ? toUsuarioCompativelBorda(nextUser) : null;
@@ -102,7 +99,6 @@ export function AuthProvider({ children }) {
     setLoading(true);
     try {
       await authLogout();
-      console.log('[AuthContext] logout -> clear user');
       setUser(null);
       await clearAuthSessionUser(AsyncStorage);
     } finally {
@@ -116,7 +112,6 @@ export function AuthProvider({ children }) {
     try {
       const safeUpdates = sanitizeSelfProfileUpdate(updates);
       const nextUser = normalizeAuthUser({ ...(user || {}), ...safeUpdates });
-      console.log('[AuthContext] updateProfile -> setUser', nextUser);
       // aqui você chamaria API real
       setUser(nextUser);
       await persistCanonicalUser(nextUser);

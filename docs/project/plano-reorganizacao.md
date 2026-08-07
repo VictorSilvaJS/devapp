@@ -1,6 +1,8 @@
 # Plano de Reorganizacao Tecnica
 
-> Status: Fase 1 encerrada no escopo documental e de organizacao do repositorio. A Fase 2 foi encerrada com a consolidacao do dominio e dos contratos centrais; permanecem apenas limpezas nominais residuais de baixo risco na superficie.
+> Status em 2026-08-07: Fases 1 e 2 encerradas. A Fase 4 possui contrato e
+> motor local v2, mas a garantia produtiva pertence ao backend. A próxima ação
+> combina a Fase 3 com o início controlado da Fase 6 por `MP-33`.
 
 Este documento define a ordem recomendada para reorganizar o projeto sem misturar refatoracao estrutural com entrega de funcionalidade.
 
@@ -131,4 +133,11 @@ src/
 
 ## Proxima Acao Recomendada
 
-Depois do encerramento da Fase 2, o melhor proximo passo e um lote curto de limpeza nominal controlada na superficie de mapas/propriedade, sem reabrir refatoracao estrutural ampla.
+Iniciar `MP-33` pela fundação definida em
+`baseline-backend-v1-2026-08.md`: scaffold, PostgreSQL/PostGIS, migrations,
+OpenAPI e autenticação. Em paralelo ao primeiro endpoint integrado, executar a
+Fase 3 somente nos fluxos tocados, introduzindo repositórios e adaptadores sem
+refatorar todas as telas de uma vez.
+
+Limpeza nominal ampla, componentização integral e remoção de aliases não devem
+anteceder essa entrega real; avançam incrementalmente com testes de regressão.

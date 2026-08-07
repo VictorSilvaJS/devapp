@@ -8,6 +8,61 @@ Este documento lista pontos reais ainda abertos no projeto. Seu papel e registra
 - Se um ponto ja estiver decidido, ele deve ir para `decisoes-consolidadas.md`, nao permanecer aqui.
 - Se um ponto for apenas possibilidade futura sem necessidade atual, ele deve permanecer fora deste documento.
 
+## Resumo Ativo Em 2026-08-07
+
+Não existe decisão de domínio pendente que impeça o início do backend. A
+fundação aprovada está em `baseline-backend-v1-2026-08.md` e foi consolidada
+nas decisões 31 a 38 de `decisoes-consolidadas.md`.
+
+Foram encerrados como decisão:
+
+- organização única no primeiro contrato;
+- IDs canônicos e uso de `propriedade_id` em contratos novos;
+- um Produtor Titular principal por Propriedade;
+- cadastro de Produtor e primeira Propriedade em duas etapas;
+- Colaborador exclusivamente por vínculo direto ativo;
+- Município/UF apenas como localização e filtro;
+- três perfis e matriz fixa de ações do RBAC v1;
+- ciclo e auditoria de `usuario_propriedade`;
+- regra de respostas `401`/`403`/`404`/`409`/`422`;
+- política offline conservadora por fluxo;
+- notificações in-app sem push, com retenção padrão de 90 dias;
+- Android como primeira plataforma produtiva;
+- descarte integral do mock demonstrativo v1, sem migração territorial.
+
+### Pendências reais que começam com a implementação do backend
+
+Estas não são decisões bloqueadoras anteriores ao backend:
+
+- scaffold, OpenAPI, migrations e CI;
+- interfaces de repositório/adaptadores HTTP no aplicativo;
+- autenticação e sessão reais de `MP-33`;
+- autorização no servidor de `MP-35`;
+- observabilidade, backup, restauração e gestão de segredos;
+- remoção incremental das bordas de leitura de `fazenda_id`.
+
+### Pendências com portão próprio
+
+- Materiais: limites, retenção e operação do storage antes da vertical
+  produtiva de arquivos;
+- GeoJSON: limiares de reconciliação, retenção de rascunhos/rejeitados e quota
+  de cache antes de `MP-37`;
+- campo: cenários físicos de localização e mídia ainda não executados;
+- release: keystore oficial, privacidade, telemetria e aprovação dos dados
+  produtivos;
+- manutenção: patches gerais do Expo e deprecações do Gradle em tarefa
+  separada.
+
+Nenhum desses pontos deve recolocar `MP-33` como `BLOQUEADO`. O que depende de
+uma vertical deve ser fechado na entrada da própria vertical.
+
+## Histórico Detalhado E Rastreabilidade
+
+As seções abaixo preservam a evolução das antigas pendências. Quando um trecho
+antigo disser que uma decisão ainda está aberta, prevalecem este resumo, a
+baseline do backend e `decisoes-consolidadas.md`. Os itens históricos não devem
+ser usados para impedir o início de `MP-33`.
+
 ## Pendencias de Dominio
 
 ### 1. Limpeza tecnica futura da nomenclatura interna
@@ -85,6 +140,10 @@ bordas; mapas/offline, rotas e demais consumidores continuam pendentes.
 
 ### 2. Contratos centrais do dominio
 
+Status de fundação em 2026-08-07: `CONCLUIDO_PARA_INICIO_DO_BACKEND`.
+Contratos de sessão, território, RBAC, Caderno, Visita e notificações estão
+fechados. Parâmetros de Materiais e GeoJSON possuem portões próprios.
+
 Ainda falta fechar a forma final de alguns contratos que hoje aparecem com variacoes no repositorio e na documentacao, como:
 
 - nomes de campos pessoais e cadastrais
@@ -135,6 +194,10 @@ banco, storage, migracao e fluxo produtivo em `MP-37`, alem da regressao em
 ## Pendencias Funcionais
 
 ### 3. Escopo final do caderno de campo
+
+Status de decisão: `CONCLUIDO`. O contrato ativo está em
+`ciclo-vida-caderno.md`; persistência append-only e autorização produtiva são
+implementação de `MP-36`.
 
 O caderno ja esta definido como modulo enxuto e operacional, mas ainda faltam definicoes sobre:
 
@@ -230,6 +293,9 @@ implementacao local do app foram concluidos em `MP-25`. Auditoria produtiva no
 backend permanece pendente em `MP-36`.
 
 ### 4. Taxonomia final de mapas
+
+Status para o backend inicial: `NAO_BLOQUEIA`. As três categorias do MVP estão
+aprovadas; expansão agronômica ocorre por configuração futura.
 
 Mapas e arquivos sao parte central do produto, mas a classificacao final ainda precisa de consolidacao adicional, especialmente em temas como:
 
@@ -667,6 +733,10 @@ Classificacao atual relevante:
 
 ### 5. Experiencia detalhada do produtor
 
+Status para o primeiro backend: `CONCLUIDO`. Produtor consulta Propriedades
+vinculadas, Materiais publicados, Visitas liberadas e Caderno conforme
+visibilidade, podendo enviar apenas o próprio rascunho de Caderno.
+
 O papel do produtor esta claro em nivel alto, mas ainda faltam definicoes mais finas sobre:
 
 - como navegar entre uma ou mais propriedades
@@ -789,6 +859,10 @@ Essa decisao deve ser tratada em uma fase separada de Revisao de Fluxos e Regras
 
 ### 7. Fechamento completo das regras de permissao por acao
 
+Status de decisão em 2026-08-07: `CONCLUIDO`. A allowlist do primeiro backend,
+o ciclo dos vínculos e a estratégia `403`/`404` estão em
+`baseline-backend-v1-2026-08.md`. Falta implementar e testar no servidor.
+
 As diretrizes principais de acesso ja estao claras, mas ainda falta consolidar o detalhamento de permissao por acao em todo o dominio, especialmente quando houver diferenca entre:
 
 - visualizacao
@@ -889,6 +963,9 @@ cliente; RBAC e reautorizacao server-side continuam pendentes com o backend.
 
 ### 8. Relacao final entre regra de negocio e comportamento efetivo da implementacao atual
 
+Status: auditoria contínua de implementação, não decisão bloqueadora. O mock v2
+é a referência local; divergências devem virar teste ou tarefa da integração.
+
 Ainda e necessario revisar e fechar, de forma mais precisa, onde a implementacao atual:
 
 - ja segue a regra consolidada
@@ -905,10 +982,11 @@ Durante o fechamento da frente de visitas tecnicas por propriedade e caderno de 
 
 **Status atual**
 
-- manter enquanto a estabilizacao do MVP estiver em andamento
-- remover antes de uma entrega formal, build de demonstracao externa ou publicacao
+- `CONCLUIDO` em 2026-08-07;
+- a constante, o bloco visual e os estilos exclusivos foram removidos;
+- logs de sessão que imprimiam objetos de usuário também foram removidos.
 
-**O que remover**
+**O que foi removido**
 
 - constante `smokeRoutes`
 - bloco visual `Smoke Dev`
@@ -916,9 +994,15 @@ Durante o fechamento da frente de visitas tecnicas por propriedade e caderno de 
 
 **Por que importa**
 
-O painel esta protegido por `__DEV__`, mas ainda e uma ferramenta interna de teste manual. Ele nao deve ser confundido com funcionalidade do produto.
+Os testes de rota direta continuam nas suítes automatizadas e no roteiro de
+smoke; não dependem de uma superfície interna no Perfil.
 
 ### 10. Capacidade offline declarada por fluxo
+
+Status de decisão em 2026-08-07: `CONCLUIDO`. A matriz aprovada está em
+`baseline-backend-v1-2026-08.md`. Permanecem implementação, criptografia,
+quota, limpeza e testes dentro das respectivas fases; os parágrafos abaixo
+preservam a evolução histórica.
 
 Ja existe a diretriz de priorizar uso em contexto de internet ruim, mas ainda falta declarar com clareza:
 
@@ -977,6 +1061,10 @@ publicacao otimista nem fila offline. Limites e retencao do cache permanecem
 em `MP-37`.
 
 ### 11. Estrategia funcional para ingestao e disponibilizacao de mapas e arquivos
+
+Status: não bloqueia `MP-33`. Object storage privado, URLs temporárias e
+processamento externo estão aprovados na baseline; limites e retenção devem ser
+fechados antes da vertical produtiva de arquivos/GeoJSON.
 
 O produto ja depende de mapas e arquivos no contexto da propriedade. Para a primeira versao de testes, ficou definido que a biblioteca deve priorizar arquivos tecnicos acessiveis por produtor/equipe, anexados por campo/talhao e elemento/camada quando aplicavel.
 

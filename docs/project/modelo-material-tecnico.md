@@ -184,6 +184,10 @@ autorizacao por backend/RBAC real.
 
 ## 9. Evolucao Produtiva Futura
 
+Status de fundação em 2026-08-07: object storage privado, URLs temporárias,
+autorização por Propriedade e publicação por Admin estão aprovados em
+`baseline-backend-v1-2026-08.md`.
+
 Backend, banco e object storage deverao receber os arquivos e metadados,
 validar permissao por Propriedade e servir acesso autorizado. Permanecem
 futuros:

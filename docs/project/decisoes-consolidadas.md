@@ -8,7 +8,7 @@ Este documento registra decisoes ja assumidas pelo projeto e que devem orientar 
 - Se um ponto ainda depender de validacao ou detalhamento, ele deve ir para `pendencias-de-definicao.md`.
 - Quando houver conflito entre historico e este documento, priorize este documento e os demais arquivos ativos de `docs/project/`.
 
-As decisoes 31 a 33, aprovadas em 2026-08-05, substituem especificamente a
+As decisoes 31 a 38, aprovadas entre 2026-08-05 e 2026-08-07, substituem especificamente a
 classificacao do Colaborador como regional nas decisoes 1 e 7, a compatibilidade
 territorial da decisao 12 e o modelo Regional/Area operacional da decisao 23.
 Essas secoes anteriores permanecem como registro do contrato que ainda existe
@@ -1010,3 +1010,93 @@ materiais nao PDF e as permissoes declaradas para camera/galeria.
 - Caderno continua sem fluxo novo de captura de foto;
 - backend, storage remoto, criptografia, retencao, consentimento produtivo,
   sincronizacao e conflito continuam pendentes.
+
+---
+
+## 36. A fundacao do backend v1 usa arquitetura modular e contrato canonico
+
+### Decisao
+
+O primeiro backend sera um servico modular unico em Node.js/TypeScript, com API
+REST JSON versionada, OpenAPI, PostgreSQL/PostGIS, migrations SQL e object
+storage privado compativel com S3. Microservicos e multiempresa ficam fora do
+primeiro corte.
+
+Os IDs produtivos sao opacos e gerados no servidor. API e banco novos usam
+`propriedade_id`; aliases de Fazenda permanecem somente na borda temporaria do
+aplicativo.
+
+### Alcance
+
+Afeta o scaffold do backend, banco, arquivos, geometrias, integracao do app e
+as fases `MP-33` a `MP-37`.
+
+### Impacto
+
+- o backend pode ser iniciado sem nova decisao de dominio;
+- framework HTTP e provedor podem ser escolhidos no scaffold, desde que
+  preservem o contrato;
+- telas nao devem trocar o mock diretamente por HTTP; adaptadores/repositories
+  formam a fronteira de integracao;
+- dados demonstrativos v1 nao sao migrados registro a registro;
+- o contrato completo esta em `baseline-backend-v1-2026-08.md`.
+
+---
+
+## 37. O RBAC do primeiro backend possui tres perfis e allowlist fixa
+
+### Decisao
+
+O primeiro backend possui apenas Admin global da organizacao, Colaborador por
+vinculo direto ativo e Produtor por Titularidade/vinculo. Nao existem Admin
+Operacional, Apoio ou papeis customizaveis no primeiro corte.
+
+Admin administra estrutura e publicacao. Colaborador opera Visitas, Caderno,
+rascunhos de Material e rascunhos GeoJSON somente nas Propriedades vinculadas.
+Produtor consulta a propria realidade, envia o proprio rascunho de Caderno e
+nao altera estrutura, Visita, Material ou GeoJSON.
+
+### Alcance
+
+Afeta autorizacao, navegacao, endpoints, testes, vinculos e projecoes de dados.
+
+### Impacto
+
+- recurso por ID fora do escopo responde `404`;
+- recurso conhecido e dentro do escopo, mas com acao negada, responde `403`;
+- vinculo usa status ativo/inativo e nao tem expiracao automatica no primeiro
+  backend;
+- vinculo nunca e apagado fisicamente e toda inativacao exige motivo/auditoria;
+- criacoes e comandos sensiveis usam idempotencia; conflitos de versao usam
+  `409`;
+- a matriz completa fica em `baseline-backend-v1-2026-08.md` e
+  `matriz-rbac-backend.md`.
+
+---
+
+## 38. O primeiro corte offline e conservador e a primeira plataforma e Android
+
+### Decisao
+
+O primeiro backend nao oferece fila geral de mutacoes offline. Consulta
+previamente autorizada pode usar cache dentro da janela de sessao. Caderno
+permite apenas rascunho local do proprio usuario. Transicoes de Visita,
+publicacao, importacao produtiva, leitura/descarte de Notificacao e envio de
+foto exigem conexao.
+
+Notificacoes iniciais sao in-app, sem push, e suas entregas expiram por padrao
+em 90 dias. A primeira entrega produtiva e Android; iOS nao bloqueia backend ou
+release Android inicial.
+
+### Alcance
+
+Afeta `MP-33`, `MP-34`, cache, sincronizacao, UX de rede e planejamento de
+release.
+
+### Impacto
+
+- tokens usam storage seguro nativo e nunca `AsyncStorage`;
+- cache e segregado por organizacao e usuario;
+- logout e reducao de escopo invalidam dados nao autorizados;
+- push e iOS so entram por nova decisao de escopo;
+- a matriz completa fica em `baseline-backend-v1-2026-08.md`.

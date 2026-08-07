@@ -5451,3 +5451,22 @@ selecionar foto, persistir/reabrir a Visita, escolher/cancelar pasta de destino,
 confirmar o nome fisico do arquivo, abrir o ponto do Caderno e operar arraste e
 seta do painel. Nao foram criados upload, storage remoto, localizacao de foto,
 background ou mudanca nas regras de acesso.
+
+## Fechamento Da Fundação Pré-Backend - 2026-08-07
+
+Status: `APROVADO_PARA_INICIO`.
+
+As decisões necessárias para iniciar API e banco foram consolidadas em
+`baseline-backend-v1-2026-08.md`. `MP-33` deixou de depender de decisões
+anteriores e passou a `PRONTO`; backend, banco, migrations e OpenAPI ainda não
+existem e serão resultados da própria fase.
+
+Como preparação de superfície, o painel temporário `Smoke Dev` foi removido do
+Perfil e os logs de autenticação/perfil que imprimiam objetos de usuário foram
+retirados. Testes de rota direta permanecem nas suítes e no roteiro de smoke.
+
+`npm run typecheck`, `npm run test:domain-compat`, `git diff --check` e o build
+Android release passaram. O APK gerado possui 96.242.378 bytes e SHA-256
+`F6C0930716081398A89FC29C283553D53A98B9BA912C1B129FDD0A524316CE15`.
+A ausência visual do painel e os fluxos novos de mídia ainda devem ser
+confirmados interativamente no aparelho conforme a matriz ativa de `smoke.md`.

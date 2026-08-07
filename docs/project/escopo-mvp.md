@@ -116,17 +116,20 @@ Os itens abaixo nao devem ser assumidos como parte obrigatoria do MVP sem decisa
 - recursos de IA ou automacoes dependentes de dados e infraestrutura ainda nao consolidados
 - versao web completa como desdobramento imediato do app atual
 
-## Depende de Definicao Adicional
+## Detalhamentos Com Portao Proprio
 
-Alguns temas fazem parte do contexto do produto, mas ainda nao devem ser tratados como escopo fechado do MVP sem definicao adicional:
+O escopo necessário para iniciar o backend está fechado em
+`baseline-backend-v1-2026-08.md`. Caderno, Visitas, acesso do Produtor e matriz
+offline não permanecem como decisões abertas.
 
-- taxonomia final de categorias de mapas
-- detalhamento final do caderno de campo
-- nivel exato de capacidade offline por fluxo
-- experiencia final do produtor ao navegar entre propriedades, historico e materiais
-- fronteira entre consulta simples e operacoes de manutencao mais avancadas
+Antes das respectivas verticais produtivas, ainda devem ser definidos:
 
-Esses pontos devem ser aprofundados em `pendencias-de-definicao.md`, e nao promovidos automaticamente a requisito fechado.
+- limites e retenção de arquivos de Material;
+- limiares de reconciliação e retenção do GeoJSON;
+- parâmetros operacionais de infraestrutura, observabilidade e release.
+
+A taxonomia agronômica além das três categorias do MVP pode evoluir depois e
+não bloqueia o primeiro backend.
 
 ## Criterio de Prioridade Dentro do MVP
 

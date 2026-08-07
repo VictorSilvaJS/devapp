@@ -113,7 +113,7 @@ O contrato canonico esta em `modelo-territorial.md`.
 ### Administracao geral
 
 - Possui visao ampla do sistema.
-- Pode navegar entre regioes, produtores e propriedades.
+- Pode navegar entre UF, Municipio, Produtores e Propriedades.
 - Seu fluxo deve privilegiar leitura consolidada e administracao dos dados autorizados.
 - No MVP local, pode gerenciar Usuarios e vinculos diretos com Propriedades;
   nao gerencia vinculos por Regiao ou Microregiao.
@@ -129,8 +129,8 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Municipio e UF podem filtrar a interface administrativa, mas nao concedem
   acesso.
 - Somente Admin autorizado atribui ou encerra vinculos.
-- O motor v1 ainda usa `sub_regioes` e `vinculos_microregioes`; esse
-  comportamento e legado em migracao e nao deve aparecer nos novos dados.
+- Adaptadores de compatibilidade ainda podem ler `sub_regioes` e
+  `vinculos_microregioes`; o runtime v2 ativo não autoriza por esses campos.
 
 ### Produtor
 
@@ -141,8 +141,8 @@ O contrato canonico esta em `modelo-territorial.md`.
   vinculada; Produtor pendente pode existir sem Propriedade.
 - Produtor com vinculo ativo de Titular nao pode ser colocado como pendente ou
   inativo na edicao comum; transferencia de titularidade exige fluxo proprio.
-- No MVP mockado, o acesso efetivo do Produtor a Propriedades ocorre por
-  vinculo de titular/produtor compativel.
+- No runtime v2, o acesso efetivo do Produtor ocorre por vínculo ativo de
+  Titular ou usuário autorizado; aliases antigos permanecem apenas na borda.
 
 ## Regra de Visibilidade
 
@@ -170,18 +170,18 @@ O contrato canonico esta em `contrato-notificacoes.md`.
 - O contexto local atual permanece mock global e efemero. Ele nao deve ser
   descrito como isolamento ou persistencia produtiva.
 
-## Contrato Futuro De Backend/RBAC
+## Contrato Aprovado De Backend/RBAC
 
-Status em 2026-08-05: a decisao 33 substituiu a recomendacao regional anterior.
-O motor v1 continua territorial apenas ate a migracao tecnica; o contrato v2 e
-o backend futuro usam vinculo direto por Propriedade para Colaborador.
+Status em 2026-08-07: as decisões 33 e 37 substituíram a recomendação regional
+anterior. O runtime v2 e o backend usam vínculo direto por Propriedade para
+Colaborador. O contrato está aprovado para implementação.
 
 Status em 2026-06-03 (Fase 14F): a matriz tecnica de testes e criterios de
 aceite deste contrato foi registrada em `matriz-rbac-backend.md`. Ela deve
 orientar a futura implementacao de backend/RBAC, mas nao implementa permissao
 nova no MVP mockado.
 
-### Matriz futura por perfil
+### Matriz aprovada por perfil
 
 | Perfil | Escopo de Propriedades | Leitura | Operacao |
 |---|---|---|---|
@@ -199,7 +199,7 @@ nova no MVP mockado.
 - `perfis`/`papeis`: definicao de capacidades por perfil e, se necessario,
   papeis administrativos mais granulares.
 
-### Regras futuras de leitura e acao
+### Regras aprovadas de leitura e acao
 
 - Listar Propriedades: Admin lista tudo; Produtor lista por
   `usuario_propriedade`/titularidade; Colaborador lista por
@@ -214,7 +214,7 @@ nova no MVP mockado.
   Colaborador so deve editar se houver permissao explicita por acao e escopo;
   Produtor nao deve editar estrutura cadastral da Propriedade por padrao.
 
-### Precedencia futura recomendada
+### Precedencia aprovada
 
 1. Admin tem acesso global.
 2. Produtor tem acesso por titularidade/vinculo direto com a Propriedade.

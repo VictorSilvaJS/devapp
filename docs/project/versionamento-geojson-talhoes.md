@@ -475,12 +475,13 @@ O plano de migracao executavel pertence a `MP-24` e `MP-37`.
 
 Esta tarefa define contrato, nao implementacao. Permanecem:
 
-- `MP-24`: IDs estaveis e selecao produtiva de responsavel/Talhao;
-- `MP-26`: validacao espacial do ponto do Caderno e versao usada;
 - `MP-37`: banco, storage, APIs, importacao, reconciliacao, publicacao,
   historico, cache e migracao;
 - `MP-39`: regressao com renome, area, divisao, fusao, rollback e multiplas
   versoes.
+
+`MP-24` e `MP-26` estão concluídas no corte local. Elas são predecessoras já
+satisfeitas, não pendências atuais.
 
 Limiares de similaridade, politica de retencao de rascunhos/rejeitados,
 capacidade do cache e UX detalhada de comparacao devem ser definidos na

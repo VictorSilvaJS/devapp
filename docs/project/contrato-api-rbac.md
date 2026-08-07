@@ -10,9 +10,10 @@ derivada deste contrato foi registrada em `testes-contrato-api-rbac.md`. Ela
 deve orientar testes automatizados futuros de backend/API, mas tambem nao
 implementa backend nem altera o MVP mockado.
 
-Revisao em 2026-08-05: o contrato de escopo foi alinhado a
+Revisao em 2026-08-07: `APROVADO_PARA_IMPLEMENTACAO`. O contrato de escopo foi alinhado a
 `modelo-dados-mock-v2.md`. Regional/Microregiao deixaram de ser fonte futura de
-acesso; Colaborador usa somente vinculo direto ativo com Propriedade.
+acesso; Colaborador usa somente vinculo direto ativo com Propriedade. As
+convencoes finais de fundacao estao em `baseline-backend-v1-2026-08.md`.
 
 ## Decisoes De Base
 
@@ -34,11 +35,12 @@ acesso; Colaborador usa somente vinculo direto ativo com Propriedade.
 |---|---|
 | `200 OK` | Leitura ou atualizacao permitida |
 | `201 Created` | Criacao bem-sucedida |
-| `400 Bad Request` | Payload invalido, campo obrigatorio ausente ou formato invalido |
+| `400 Bad Request` | Requisicao malformada ou parametro estrutural invalido |
 | `401 Unauthorized` | Usuario nao autenticado ou sessao invalida |
 | `403 Forbidden` | Usuario autenticado, mas sem permissao para a acao/recurso |
 | `404 Not Found` | Recurso nao existe ou nao deve ser revelado ao usuario |
 | `409 Conflict` | Vinculo duplicado, regra conflitante ou estado incompativel |
+| `422 Unprocessable Entity` | Payload bem formado com campo semanticamente invalido |
 
 Formato minimo recomendado para erro:
 
@@ -53,8 +55,15 @@ Formato minimo recomendado para erro:
 }
 ```
 
-Quando houver risco de revelar existencia de recurso fora do escopo, o backend
-pode responder `404 Not Found` em vez de `403 Forbidden`.
+Regra obrigatoria: recurso individual fora do escopo retorna `404 Not Found`.
+Recurso conhecido e dentro do escopo, mas com acao nao permitida, retorna `403
+Forbidden`. Colecao administrativa sem capacidade retorna `403`. Essa regra
+evita escolhas diferentes entre endpoints.
+
+Todas as colecoes usam cursor estavel, limite padrao 50 e maximo 100, com ID
+como desempate. Criacoes e comandos de transicao exigem `Idempotency-Key`;
+comandos concorrentes exigem a versao-base do recurso. Erros incluem
+`request_id` e nao retornam detalhes sensiveis.
 
 ## Autenticacao E Sessao
 
@@ -220,7 +229,10 @@ Resposta minima:
   conflitante.
 - Regra de permissao: Admin/papel autorizado; Colaborador somente se politica
   futura explicita permitir.
-- Compatibilidade: cadastro rapido mockado nao e contrato transacional final.
+- Compatibilidade: o backend deve repetir a transacao v2 já aprovada: criar a
+  Propriedade, criar o vínculo de Titular e ativar Produtor pendente quando for
+  a primeira Titularidade. Não existe cadastro rápido de Propriedade dentro de
+  Novo Usuário.
 
 ### `PATCH /propriedades/:id`
 
@@ -416,16 +428,14 @@ Resposta minima:
 - Compatibilidade: payload mockado atual pode usar `fazenda_id`; contrato final
   deve usar `propriedade_id`.
 
-## Pendencias Para Backend
+## Implementacao Pendente
 
-- Definir esquema real de autenticacao, sessao, refresh e revogacao.
-- Definir paginacao, ordenacao e filtros padrao para listagens.
-- Definir envelope final de resposta e codigos de erro canonicos.
-- Definir quando usar `403 Forbidden` ou `404 Not Found` para recursos fora do
-  escopo.
-- Definir ids canonicos e estrategia de migracao de campos legados.
-- Definir auditoria de vinculos, status, validade temporal e origem da
-  alteracao.
-- Definir permissoes por acao para mapas/anexos, visitas, caderno e cadastros.
-- Transformar este contrato em testes automatizados de API antes da
-  implementacao produtiva.
+As decisões de fundação estão encerradas na baseline v1. Durante `MP-33` e
+`MP-35`, ainda é necessário:
+
+- materializar autenticação, refresh, revogação e sessão;
+- gerar OpenAPI e migrations a partir deste contrato;
+- aplicar cursor, limites e envelope definidos na baseline;
+- aplicar `404` fora do escopo e `403` para ação negada dentro do escopo;
+- persistir auditoria dos vínculos ativos/inativos, sem expiração automática;
+- transformar a matriz de `testes-contrato-api-rbac.md` em testes executáveis.

@@ -1,3 +1,27 @@
+# Smoke Funcional
+
+## Matriz Ativa Em 2026-08-07
+
+Esta é a fila canônica de reexecução. As rodadas abaixo permanecem como
+histórico/evidência e não devem ser tratadas como pendência atual sem aparecer
+nesta matriz.
+
+| ID | Portão | Perfil | Cenário | Resultado esperado | Status |
+|---|---|---|---|---|---|
+| ATUAL-01 | Próximo release | Todos | Abrir Perfil e observar log filtrado | Sem `Smoke Dev`, objeto de sessão ou dado pessoal em log | Build passou; reexecutar visualmente |
+| ATUAL-02 | Mídia local | Admin/Colaborador | Conceder e negar câmera; capturar e selecionar foto; salvar e reabrir Visita | Até 8 fotos de 20 MB, erro/cancelamento controlado e persistência local | Reexecutar |
+| ATUAL-03 | Exportação | Todos autorizados | Escolher pasta, cancelar e confirmar nome físico de foto/material | Sucesso somente após gravação; cancelamento sem sucesso falso | Reexecutar |
+| ATUAL-04 | Mapa/Caderno | Todos autorizados | Abrir ponto salvo no mapa e testar painel por arraste e seta | Centralização preservada e três estados do painel sem salto | Reexecutar |
+| ATUAL-05 | Regressão v2 | Admin/Colaborador/Produtor | Listas, detalhes e rotas diretas de Propriedade, Visita e Caderno | Escopo por vínculo direto, sem autorização por Município/UF | Reexecutar no próximo APK |
+| ATUAL-06 | `MP-38` | Perfis aplicáveis | Dentro/fora/próximo de Talhão, precisão, permissão, serviço desligado, offline e cancelamento | Classificação e mensagens coerentes sem rastreamento em background | Bloqueado por execução em campo |
+| ATUAL-07 | Release | Todos | Retrato, paisagem, teclado, leitor de tela e matriz Android aprovada | Fluxos críticos utilizáveis e sem regressão de acesso | Reexecutar antes do release |
+
+`npm run typecheck` e `npm run test:domain-compat` passaram em 2026-08-07. A
+ausência de backend não impede estes smokes locais; testes de API começam em
+`MP-33`/`MP-35`.
+
+## Histórico De Rodadas
+
 22-04-2026 - 10:14
 
 Abaixo está o smoke funcional pronto para execução, sem abrir feature nova.

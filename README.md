@@ -1,6 +1,6 @@
 # Tche Agro Mobile
 
-Aplicativo mobile em React Native + Expo para operacao de consultoria agricola com foco em produtores, visitas tecnicas, caderno de campo e mapas de fazenda.
+Aplicativo mobile em React Native + Expo para operacao de consultoria agricola com foco em Produtores, Visitas tecnicas, Caderno de campo e mapas no contexto de Propriedades.
 
 ## Estado Atual
 
@@ -11,9 +11,10 @@ Hoje o projeto tem:
 - navegacao por perfil (`admin`, `colaborador`, `produtor`)
 - dashboards e fluxos principais de produtores, visitas, caderno e mapas
 - autenticacao mock com persistencia local
-- dados mockados em memoria
+- dataset demonstrativo v2 persistido localmente
 - notificacoes in-app em memoria
-- trilha experimental de mapas nativos e offline-first ainda incompleta
+- visualizacao de Talhoes/GeoJSON e cache local demonstrativo
+- contratos aprovados para iniciar backend, banco, sessao e RBAC reais
 
 Hoje o projeto ainda nao tem:
 
@@ -23,12 +24,12 @@ Hoje o projeto ainda nao tem:
 - download real de mapas
 - notificacoes push reais
 - sincronizacao offline completa
-- suite de testes automatizados completa cobrindo todos os fluxos de produto
+- suite end-to-end produtiva cobrindo API, banco e todos os fluxos
 
 ## Stack Atual
 
-- Expo 48
-- React Native 0.71
+- Expo SDK 56
+- React Native 0.85
 - React Navigation
 - Context API
 - AsyncStorage
@@ -40,8 +41,8 @@ Hoje o projeto ainda nao tem:
 
 ### Requisitos
 
-- Node.js 16+
-- npm 8+
+- Node.js compativel com Expo SDK 56
+- npm
 - Expo CLI ou `npx expo`
 
 ### Comandos
@@ -87,7 +88,7 @@ Para humanos e leitura completa, o ponto de entrada recomendado e [docs/README.m
 
 ## Observacoes Importantes
 
-- Na documentacao ativa, usamos `produtor` como termo provisório para o perfil final ligado a fazendas ate a consolidacao da Fase 2.
+- `Propriedade`, `Produtor`, `Titular` e `Talhao` sao os termos oficiais de produto. Nomes com `fazenda*` permanecem somente por compatibilidade tecnica temporaria.
 - Parte da documentacao antiga foi preservada em `docs/reviews` e `docs/archive`.
 - Alguns documentos historicos ainda podem refletir decisoes antigas ou mais otimistas do que o codigo atual.
 - Se houver conflito entre materiais historicos e a documentacao ativa, priorize `docs/project/` e o estado real do codigo.
