@@ -5470,3 +5470,24 @@ Android release passaram. O APK gerado possui 96.242.378 bytes e SHA-256
 `F6C0930716081398A89FC29C283553D53A98B9BA912C1B129FDD0A524316CE15`.
 A ausência visual do painel e os fluxos novos de mídia ainda devem ser
 confirmados interativamente no aparelho conforme a matriz ativa de `smoke.md`.
+
+## Checkpoint Físico Pré-MP-33 - 2026-08-07
+
+Status: `ATUAL-01_A_ATUAL-05_PASSARAM`.
+
+O APK de fechamento foi instalado por atualização no Android físico `8483A`,
+preservando snapshot e sessão. A ausência de `Smoke Dev` e dos logs removidos,
+câmera/galeria com cancelamento, negativa e persistência, exportação, ponto no
+mapa, três estados do painel e os escopos de Admin, Colaborador e Produtor foram
+confirmados. A sessão César/Admin foi restaurada ao final.
+
+O smoke encontrou uma divergência real em colisão de nomes: o Android havia
+criado `1013 (1).png`, enquanto a interface informava `1013.png`. O serviço
+passou a resolver o nome físico a partir da URI criada pelo provedor, com
+fallback para provedores de ID opaco. O teste de regressão passou e o APK
+reinstalado informou e criou `1013 (2).png`.
+
+Artefato final: 96.242.830 bytes; SHA-256
+`CE99714141A11F1BDCACF875A08001C15B84827AF0848F7398C015796282353E`.
+`ATUAL-06` e `ATUAL-07` permanecem nos portões de `MP-38` e release; não
+reabrem o portão pré-backend, que continua liberado.

@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  resolvePhoneExportCreatedFileName,
   resolvePhoneExportMimeType,
   sanitizePhoneExportFileName,
   splitPhoneExportFileName,
@@ -42,6 +43,23 @@ test('separa base e extensao para criacao via seletor Android', () => {
     baseName: 'Mapa final',
     extension: 'pdf',
   });
+});
+
+test('usa o nome fisico devolvido pelo Android quando o provedor resolve colisao', () => {
+  assert.equal(
+    resolvePhoneExportCreatedFileName(
+      'content://com.android.externalstorage.documents/tree/primary%3ADownload%2FTeste/document/primary%3ADownload%2FTeste%2F1013%20(1).png',
+      '1013.png'
+    ),
+    '1013 (1).png'
+  );
+});
+
+test('mantem o nome solicitado quando o provedor usa um identificador opaco', () => {
+  assert.equal(
+    resolvePhoneExportCreatedFileName('content://example.test/document/opaque-id', '1013.png'),
+    '1013.png'
+  );
 });
 
 if (failed > 0) {

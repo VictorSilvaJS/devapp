@@ -8,17 +8,49 @@ nesta matriz.
 
 | ID | Portão | Perfil | Cenário | Resultado esperado | Status |
 |---|---|---|---|---|---|
-| ATUAL-01 | Próximo release | Todos | Abrir Perfil e observar log filtrado | Sem `Smoke Dev`, objeto de sessão ou dado pessoal em log | Build passou; reexecutar visualmente |
-| ATUAL-02 | Mídia local | Admin/Colaborador | Conceder e negar câmera; capturar e selecionar foto; salvar e reabrir Visita | Até 8 fotos de 20 MB, erro/cancelamento controlado e persistência local | Reexecutar |
-| ATUAL-03 | Exportação | Todos autorizados | Escolher pasta, cancelar e confirmar nome físico de foto/material | Sucesso somente após gravação; cancelamento sem sucesso falso | Reexecutar |
-| ATUAL-04 | Mapa/Caderno | Todos autorizados | Abrir ponto salvo no mapa e testar painel por arraste e seta | Centralização preservada e três estados do painel sem salto | Reexecutar |
-| ATUAL-05 | Regressão v2 | Admin/Colaborador/Produtor | Listas, detalhes e rotas diretas de Propriedade, Visita e Caderno | Escopo por vínculo direto, sem autorização por Município/UF | Reexecutar no próximo APK |
+| ATUAL-01 | Próximo release | Todos | Abrir Perfil e observar log filtrado | Sem `Smoke Dev`, objeto de sessão ou dado pessoal em log | Passou no APK físico em 2026-08-07 |
+| ATUAL-02 | Mídia local | Admin/Colaborador | Conceder e negar câmera; capturar e selecionar foto; salvar e reabrir Visita | Até 8 fotos de 20 MB, erro/cancelamento controlado e persistência local | Passou no APK físico em 2026-08-07 |
+| ATUAL-03 | Exportação | Todos autorizados | Escolher pasta, cancelar e confirmar nome físico de foto/material | Sucesso somente após gravação; cancelamento sem sucesso falso | Passou após correção e reteste em 2026-08-07 |
+| ATUAL-04 | Mapa/Caderno | Todos autorizados | Abrir ponto salvo no mapa e testar painel por arraste e seta | Centralização preservada e três estados do painel sem salto | Passou no APK físico em 2026-08-07 |
+| ATUAL-05 | Regressão v2 | Admin/Colaborador/Produtor | Listas, detalhes e rotas diretas de Propriedade, Visita e Caderno | Escopo por vínculo direto, sem autorização por Município/UF | Passou por smoke físico e contrato automatizado em 2026-08-07 |
 | ATUAL-06 | `MP-38` | Perfis aplicáveis | Dentro/fora/próximo de Talhão, precisão, permissão, serviço desligado, offline e cancelamento | Classificação e mensagens coerentes sem rastreamento em background | Bloqueado por execução em campo |
 | ATUAL-07 | Release | Todos | Retrato, paisagem, teclado, leitor de tela e matriz Android aprovada | Fluxos críticos utilizáveis e sem regressão de acesso | Reexecutar antes do release |
 
 `npm run typecheck` e `npm run test:domain-compat` passaram em 2026-08-07. A
 ausência de backend não impede estes smokes locais; testes de API começam em
 `MP-33`/`MP-35`.
+
+### Fechamento Físico Pré-MP-33 — 2026-08-07
+
+Status: `ATUAL-01_A_ATUAL-05_PASSARAM` no Android físico `8483A`.
+
+- o APK release foi instalado duas vezes por atualização, sem desinstalação ou
+  limpeza. A sessão César/Admin e o snapshot local foram preservados;
+- `ATUAL-01`: Perfil abriu sem `Smoke Dev`; o log filtrado do processo não
+  apresentou os padrões removidos de `AuthContext` ou `PerfilScreen`;
+- `ATUAL-02`: cancelamento de câmera e galeria não mudou a contagem; captura e
+  seleção levaram a Visita de duas para quatro fotos; salvamento e reabertura
+  preservaram `Imagens do registro (4)`. A negativa de câmera mostrou a mensagem
+  controlada e a permissão original foi restaurada;
+- `ATUAL-03`: cancelar o seletor mostrou `Nenhum arquivo foi criado`. O primeiro
+  teste revelou que uma colisão era salva fisicamente como `1013 (1).png`, mas
+  a interface ainda informava `1013.png`. O serviço foi corrigido, recebeu teste
+  de regressão e, no novo APK, informou e criou `1013 (2).png`. Fotos e materiais
+  não PDF usam esse mesmo serviço de exportação;
+- `ATUAL-04`: o ponto salvo no Caderno abriu com precisão de 14 m; a posição do
+  marcador foi preservada nos estados `medium`, `expanded` e `collapsed`. A seta
+  percorreu os três estados e o arraste retornou de `collapsed` para `medium`;
+- `ATUAL-05`: Admin abriu a lista global com 70 Propriedades e recebeu edição
+  estrutural; Victor/Colaborador recebeu 35 vínculos diretos e nenhuma edição;
+  Altair/Produtor recebeu somente `Fazenda_Backes`, abriu o próprio Caderno e
+  não recebeu edição. Município e UF permaneceram apenas informativos. Guardas
+  de rota direta continuam cobertas pela suíte de contrato automatizada;
+- ao final, a sessão César/Admin foi restaurada.
+
+O APK final desta rodada possui 96.242.830 bytes e SHA-256
+`CE99714141A11F1BDCACF875A08001C15B84827AF0848F7398C015796282353E`.
+`ATUAL-06` e `ATUAL-07` continuam como portões próprios de `MP-38`/release e não
+bloqueiam `MP-33`.
 
 ## Histórico De Rodadas
 
@@ -59,7 +91,7 @@ físico junto com o smoke dos três perfis.
 | V2-05-01 | P0 | Colaborador | Acesso | Avaliar registro com `propriedade_id` e `fazenda_id` divergentes | Somente `propriedade_id` define o escopo | Passou | Coberto por conflito direto e por Mapas, Visitas e Caderno |
 | V2-05-02 | P0 | Admin/Colaborador | Visitas | Criar evento e reler histórico legado | Evento novo usa `propriedade_id`; legado preserva o vínculo após normalização | Passou | Teste de ciclo de vida e persistência v2 passaram |
 | V2-05-03 | P0 | Admin/Colaborador | Caderno | Criar evento, enviar registro e reler histórico legado | Evento e conteúdo original usam `propriedade_id`; legado preserva o vínculo | Passou | Teste de ciclo de vida e persistência v2 passaram |
-| V2-05-04 | P0 | Todos | APK físico | Reabrir Propriedades, Visitas e Caderno nos três perfis | Nenhuma regressão de lista, detalhe, rota direta ou visibilidade | Reexecutar | Executar quando o próximo APK for gerado; esta mudança não alterou UI |
+| V2-05-04 | P0 | Todos | APK físico | Reabrir Propriedades, Visitas e Caderno nos três perfis | Nenhuma regressão de lista, detalhe, rota direta ou visibilidade | Passou | Reexecutado no fechamento físico pré-MP-33 de 2026-08-07 |
 
 **Rodada V2-04 - Cadastro Canônico De Usuários**
 

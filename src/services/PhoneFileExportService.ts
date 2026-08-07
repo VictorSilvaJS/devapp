@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
+  resolvePhoneExportCreatedFileName,
   resolvePhoneExportMimeType,
   sanitizePhoneExportFileName,
   splitPhoneExportFileName,
@@ -69,7 +70,7 @@ const exportToAndroidDirectory = async (
 
   return {
     status: 'saved',
-    fileName,
+    fileName: resolvePhoneExportCreatedFileName(destinationUri, fileName),
     destinationUri,
     userSelectedDirectory: true,
   };
@@ -128,4 +129,3 @@ export const exportFileToPhone = async ({
     }
   }
 };
-

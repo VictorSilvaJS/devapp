@@ -516,6 +516,8 @@ Não mapear área operacional ou Titular apenas por semelhança de texto.
 | 2026-08-07 | `npm run typecheck` | Passou após o fechamento documental e remoção das superfícies de debug |
 | 2026-08-07 | `npm run test:domain-compat` | Passou integralmente |
 | 2026-08-07 | `npm run build:android:release` | Passou; APK de 96.242.378 bytes, SHA-256 `F6C0930716081398A89FC29C283553D53A98B9BA912C1B129FDD0A524316CE15` |
+| 2026-08-07 | Smoke físico `ATUAL-01` a `ATUAL-05` | Passou; uma divergência de nome físico na exportação foi corrigida e reexecutada |
+| 2026-08-07 | `npm run build:android:release` após o smoke | Passou; APK instalado por atualização com 96.242.830 bytes, SHA-256 `CE99714141A11F1BDCACF875A08001C15B84827AF0848F7398C015796282353E` |
 
 Essa baseline comprova compatibilidade local. Ela não comprova backend,
 segurança, sincronização, autorização de servidor ou comportamento em todos os
@@ -791,7 +793,7 @@ primeira entrega do backend, não pré-condições para iniciá-la.
 - [ ] dados da Sela de Prata I autorizados e semanticamente revisados;
 - [ ] nenhuma capacidade demonstrativa apresentada como produtiva;
 - [x] fonte do `Smoke Dev` e logs de sessão/perfil removidos;
-- [ ] ausência dessas superfícies confirmada no próximo artefato de release;
+- [x] ausência dessas superfícies confirmada no próximo artefato de release;
 - [ ] keystore e segredos oficiais configurados;
 - [ ] auditoria de dependências revisada e risco aceito ou corrigido;
 - [ ] CI e build de release reproduzível passando;

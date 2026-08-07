@@ -93,3 +93,35 @@ export const splitPhoneExportFileName = (fileName: string): {
   };
 };
 
+export const resolvePhoneExportCreatedFileName = (
+  destinationUri: unknown,
+  requestedFileName: string
+): string => {
+  const fallback = String(requestedFileName || '').trim();
+  const normalizedUri = stripQueryAndFragment(String(destinationUri ?? '').trim());
+  if (!normalizedUri) return fallback;
+
+  let decodedUri = normalizedUri;
+  try {
+    decodedUri = decodeURIComponent(normalizedUri);
+  } catch {
+    // Mantém a URI original quando o provedor devolve percent-encoding inválido.
+  }
+
+  const createdName = getPathFileName(decodedUri);
+  const requestedExtension = getExtension(fallback);
+  const createdExtension = getExtension(createdName);
+
+  // Alguns provedores usam IDs opacos no lugar do nome no content URI. Nesses
+  // casos, é mais seguro manter o nome solicitado do que exibir o ID ao usuário.
+  if (!createdName || (requestedExtension && createdExtension !== requestedExtension)) {
+    return fallback;
+  }
+
+  return sanitizePhoneExportFileName(
+    createdName,
+    destinationUri,
+    resolvePhoneExportMimeType('', fallback),
+    splitPhoneExportFileName(fallback).baseName || 'arquivo'
+  );
+};
