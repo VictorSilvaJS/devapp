@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   buildRegistroFotoDownloadName,
+  getRegistroFotoNomeOriginal,
   getRegistroFotoUri,
   isRegistroFotoUriBaixavel,
   podeBaixarFotoRegistro,
@@ -68,6 +69,11 @@ const run = async () => {
   await test('nome local e deterministico e preserva extensao suportada', () => {
     assert.equal(buildRegistroFotoDownloadName('https://example.test/foto.webp?token=1', 'visita', 1), 'foto-visita-2.webp');
     assert.equal(buildRegistroFotoDownloadName('https://picsum.photos/400/300?random=1', 'caderno', 0), 'foto-caderno-1.jpg');
+    assert.equal(
+      buildRegistroFotoDownloadName('file:///registro/sem-nome', 'visita', 0, 'Diagnóstico folha 01.PNG'),
+      'Diagnóstico folha 01.png'
+    );
+    assert.equal(getRegistroFotoNomeOriginal({ nome_original: 'Foto lavoura.jpg' }), 'Foto lavoura.jpg');
   });
 
   await test('Caderno e Visita abrem a mesma experiencia de ampliacao', () => {
@@ -83,14 +89,19 @@ const run = async () => {
     assert.match(modal, /O arraste fica contido na imagem/);
   });
 
-  await test('download autorizado confirma somente depois do arquivo existir', () => {
+  await test('salvamento autorizado usa exportacao para pasta escolhida sem sucesso falso', () => {
+    const exportService = read('src/services/PhoneFileExportService.ts');
     assert.match(modal, /downloadAuthorized/);
-    assert.match(modal, /FileSystem\.downloadAsync/);
-    assert.match(modal, /FileSystem\.copyAsync/);
-    assert.match(modal, /FileSystem\.getInfoAsync/);
-    assert.match(modal, /if \(!info\.exists\) throw/);
-    assert.match(modal, /Foto baixada para o armazenamento local do aplicativo/);
-    assert.match(modal, /Não foi possível baixar esta foto/);
+    assert.match(modal, /exportFileToPhone/);
+    assert.match(modal, /preferredFileName/);
+    assert.match(modal, /Nenhum arquivo foi criado/);
+    assert.match(modal, /Foto salva na pasta escolhida como/);
+    assert.match(modal, /Não foi possível salvar esta foto/);
+    assert.match(exportService, /StorageAccessFramework/);
+    assert.match(exportService, /requestDirectoryPermissionsAsync/);
+    assert.match(exportService, /createFileAsync/);
+    assert.match(exportService, /EncodingType\.Base64/);
+    assert.match(exportService, /if \(!info\.exists\) throw/);
     assert.doesNotMatch(modal, /launchCamera|launchImageLibrary|ImagePicker|CameraView/);
   });
 

@@ -247,6 +247,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   const mapaRef = useRef<MapaFazendaViewRef>(null);
   const sheetTranslateY = useRef(new Animated.Value(0)).current;
   const sheetGestureStartRef = useRef(0);
+  const sheetGestureCurrentRef = useRef(0);
   const locationRequestIdRef = useRef(0);
   const locationRequestInFlightRef = useRef(false);
   const locationScreenFocusedRef = useRef(true);
@@ -261,7 +262,6 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
     [insets.bottom, windowHeight]
   );
   const sheetExpandedHeight = sheetSnapPoints.expanded;
-  const sheetTargetTranslate = sheetExpandedHeight - sheetSnapPoints[sheetSnap];
 
   useFocusEffect(
     useCallback(() => {
@@ -426,6 +426,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   // ── Painel responsivo e orientacao ────────────────────────────
   const animateSheetTo = useCallback((snap: FazendaMapaSheetSnap) => {
     setSheetSnap(snap);
+    sheetTranslateY.stopAnimation();
     Animated.spring(sheetTranslateY, {
       toValue: sheetExpandedHeight - sheetSnapPoints[snap],
       useNativeDriver: true,
@@ -436,19 +437,28 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
   }, [sheetExpandedHeight, sheetSnapPoints, sheetTranslateY]);
 
   useEffect(() => {
-    sheetTranslateY.setValue(sheetTargetTranslate);
+    sheetTranslateY.stopAnimation();
+    sheetTranslateY.setValue(sheetExpandedHeight - sheetSnapPoints[sheetSnap]);
     const timeout = setTimeout(() => mapaRef.current?.recalcularDimensoes(), 120);
     return () => clearTimeout(timeout);
-  }, [isSidePanel, sheetTargetTranslate, sheetTranslateY, windowHeight, windowWidth]);
+  }, [isSidePanel, insets.bottom, sheetExpandedHeight, sheetSnapPoints, sheetTranslateY, windowHeight, windowWidth]);
 
   const sheetPanResponder = useMemo(
     () => PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gesture) => (
-        Math.abs(gesture.dy) > 5 && Math.abs(gesture.dy) > Math.abs(gesture.dx)
+        Math.abs(gesture.dy) > 8 && Math.abs(gesture.dy) > Math.abs(gesture.dx) * 1.2
       ),
       onPanResponderGrant: () => {
-        sheetGestureStartRef.current = sheetExpandedHeight - sheetSnapPoints[sheetSnap];
+        Keyboard.dismiss();
+        const target = sheetExpandedHeight - sheetSnapPoints[sheetSnap];
+        sheetGestureStartRef.current = target;
+        sheetGestureCurrentRef.current = target;
+        sheetTranslateY.stopAnimation((value) => {
+          const current = typeof value === 'number' ? value : target;
+          sheetGestureStartRef.current = current;
+          sheetGestureCurrentRef.current = current;
+        });
       },
       onPanResponderMove: (_, gesture) => {
         const minTranslate = 0;
@@ -457,14 +467,12 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
           Math.max(sheetGestureStartRef.current + gesture.dy, minTranslate),
           maxTranslate
         );
+        sheetGestureCurrentRef.current = nextTranslate;
         sheetTranslateY.setValue(nextTranslate);
       },
       onPanResponderRelease: (_, gesture) => {
         const currentTranslate = Math.min(
-          Math.max(
-            sheetGestureStartRef.current + gesture.dy,
-            0
-          ),
+          Math.max(sheetGestureCurrentRef.current, 0),
           sheetExpandedHeight - sheetSnapPoints.collapsed
         );
         const visibleHeight = sheetExpandedHeight - currentTranslate;
@@ -673,7 +681,13 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
       onFecharDetalhe={handleFecharDetalhe}
       onCentralizarTalhao={handleCentralizarTalhao}
       onExpandirMapa={handleExpandirMapa}
-      onToggleSnap={() => animateSheetTo(sheetSnap === 'expanded' ? 'collapsed' : 'expanded')}
+      onToggleSnap={() => animateSheetTo(
+        sheetSnap === 'collapsed'
+          ? 'medium'
+          : sheetSnap === 'medium'
+            ? 'expanded'
+            : 'collapsed'
+      )}
       resumoArea={`${resumoAreaMapeada.label}: ${resumoAreaMapeada.valorFormatado}`}
       emptyLabel={buscaTalhao.trim()
         ? 'Nenhum Talhão corresponde à busca.'
@@ -689,6 +703,7 @@ export default function FazendaMapaScreen({ route, navigation }: any) {
         talhoes={talhoesExibidos}
         talhaoSelecionadoId={talhaoSelecionadoId}
         userLocation={userLocation}
+        centerUserLocationOnReady={Boolean(cadernoLocationParam)}
         onTalhaoPress={handleTalhaoPress}
         noticeTopInset={
           insets.top
@@ -913,7 +928,12 @@ function TalhoesPanel({
               style={styles.snapToggleButton}
               onPress={onToggleSnap}
               accessibilityRole="button"
-              accessibilityLabel={snap === 'expanded' ? 'Recolher painel de Talhões' : 'Expandir painel de Talhões'}
+              accessibilityState={{ expanded: snap !== 'collapsed' }}
+              accessibilityLabel={snap === 'expanded'
+                ? 'Recolher painel de Talhões'
+                : snap === 'medium'
+                  ? 'Expandir painel de Talhões'
+                  : 'Mostrar mais Talhões'}
             >
               <Ionicons
                 name={snap === 'expanded' ? 'chevron-down' : 'chevron-up'}

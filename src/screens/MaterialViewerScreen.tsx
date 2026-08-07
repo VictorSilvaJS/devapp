@@ -13,7 +13,6 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system/legacy';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { G, Polygon, Text as SvgText } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
@@ -32,6 +31,7 @@ import {
 } from '../navigation/materialRouteCompat';
 import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import { MaterialTecnicoStorageService } from '../services/MaterialTecnicoStorageService';
+import { exportFileToPhone } from '../services/PhoneFileExportService';
 import { PngStorageService } from '../services/PngStorageService';
 import {
   filtrarProdutoresPorAcesso,
@@ -675,16 +675,30 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
 
     setFileActionLoading(true);
     try {
-      const isRemote = /^https?:/i.test(descriptor.sourceUri);
-      const shouldDownload = isRemote && descriptor.kind !== 'pdf';
-
-      if (shouldDownload) {
-        const baseDir = `${FileSystem.documentDirectory ?? ''}materiais-download/`;
-        if (!FileSystem.documentDirectory) throw new Error('storage_unavailable');
-        await FileSystem.makeDirectoryAsync(baseDir, { intermediates: true });
-        const destination = `${baseDir}${sanitizeDownloadName(material, descriptor)}`;
-        await FileSystem.downloadAsync(descriptor.sourceUri, destination);
-        toast.showSuccess('Arquivo baixado para o armazenamento local do aplicativo.');
+      if (descriptor.kind !== 'pdf') {
+        const result = await exportFileToPhone({
+          sourceUri: descriptor.sourceUri,
+          preferredFileName: sanitizeDownloadName(material, descriptor),
+          mimeType: descriptor.format === 'png'
+            ? 'image/png'
+            : descriptor.format === 'jpg' || descriptor.format === 'jpeg'
+              ? 'image/jpeg'
+              : descriptor.format === 'zip'
+                ? 'application/zip'
+                : descriptor.format === 'geojson'
+                  ? 'application/geo+json'
+                  : undefined,
+          fallbackBaseName: `material-${firstNonEmptyString(material?.id, 'tecnico')}`,
+        });
+        if (result.status === 'cancelled') {
+          toast.showInfo('Salvamento cancelado. Nenhum arquivo foi criado.');
+          return;
+        }
+        toast.showSuccess(
+          result.userSelectedDirectory
+            ? `Arquivo salvo na pasta escolhida como ${result.fileName}.`
+            : `Arquivo salvo como ${result.fileName} no armazenamento do aplicativo.`
+        );
         return;
       }
 

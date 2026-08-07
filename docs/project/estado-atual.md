@@ -5412,3 +5412,42 @@ persistência, preservando o vínculo próprio do evento e usando o contexto do
 registro apenas como fallback. O snapshot original do Caderno também conserva
 `propriedade_id`. A compatibilidade externa dos registros não foi removida;
 rotas e mapas/offline continuam como próximas superfícies de migração.
+
+## Correcao De Midia, Ponto E Painel Do Mapa - 2026-08-07
+
+Status: `IMPLEMENTADO_VALIDADO_ANDROID_PARCIAL`. A validacao automatizada, o
+build e a inicializacao fisica passaram; os gestos e seletores do sistema ainda
+exigem smoke interativo.
+
+- fotos e materiais nao PDF agora usam uma exportacao comum. No Android, o
+  usuario escolhe a pasta pelo seletor do sistema; o arquivo recebe nome
+  legivel e extensao coerente, e cancelamento nao produz confirmacao falsa;
+- Nova/Editar Visita aceitam camera e galeria, ate oito imagens de 20 MB. As
+  copias persistem em `visita-fotos/` no storage interno, preservando nome,
+  MIME, dimensoes quando disponiveis, origem e data. Nao ha EXIF, geotag,
+  backend ou sincronizacao;
+- `Ver no mapa` vindo do Caderno mantem a centralizacao pendente ate a WebView
+  estar pronta, evitando que o enquadramento inicial dos Talhoes substitua o
+  ponto salvo;
+- os nomes dos Talhoes aparecem no enquadramento inicial por limiar calculado
+  a partir dos limites atuais. O fallback vetorial nao oculta mais rotulos por
+  quantidade de Talhoes;
+- o bottom sheet passou a iniciar o arraste na posicao animada real, aceitar
+  apenas gesto vertical intencional e resolver recolher/intermediario/expandir
+  sem saltos. A seta percorre os tres estados.
+
+`expo-image-picker` foi adicionado com mensagens explicitas de camera e fotos.
+Os contratos focados de Visita, material, foto e mapa, `npm run typecheck`, a
+suite global e `git diff --check` passaram. O release final de 96.246.242 bytes
+e SHA-256 `D5951A99C06B36275C8F0D50659EF83EFB649DCA651C845737CC2711BB972365`
+foi instalado por atualizacao no Android fisico `8483A`; o Dashboard abriu com
+a sessao preservada, a permissao de camera apareceu no pacote e o log nao
+registrou excecao fatal. O check online do Expo aceitou `expo-image-picker`, mas
+recomendou os patches gerais `expo ~56.0.19`, `expo-file-system ~56.0.9` e
+`expo-location ~56.0.23`; eles nao foram misturados a esta correcao funcional.
+
+Permanecem para smoke interativo no aparelho: conceder/negar camera, capturar e
+selecionar foto, persistir/reabrir a Visita, escolher/cancelar pasta de destino,
+confirmar o nome fisico do arquivo, abrir o ponto do Caderno e operar arraste e
+seta do painel. Nao foram criados upload, storage remoto, localizacao de foto,
+background ou mudanca nas regras de acesso.

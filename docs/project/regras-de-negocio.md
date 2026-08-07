@@ -346,16 +346,24 @@ motivos, antes/depois, compatibilidade legada e projecao consultiva do Produtor.
 Autorizacao server-side, armazenamento append-only, conflito distribuido,
 sincronizacao e exigencia real de conexao permanecem fora desse corte local.
 
-### Fotos existentes de Visita e Caderno
+### Fotos de Visita e Caderno
 
 - Foto so pode ser ampliada ou baixada dentro de um detalhe de registro ao qual
   o perfil tenha acesso pela Propriedade e pelas regras do proprio dominio.
 - Download exige referencia acionavel e disponibilidade real; falha de
   rede/storage nao pode gerar confirmacao de sucesso.
-- A copia local demonstrativa fica no storage interno do aplicativo e nao
-  representa download produtivo, publicacao, URL assinada ou sincronizacao.
-- Fotos demonstrativas legadas permanecem legiveis. `MP-30` nao autoriza criar
-  foto simulada nova nem implementa camera, galeria ou georreferenciamento.
+- No Android, a acao de salvar midia deve abrir o seletor de pasta do sistema,
+  preservar um nome legivel e confirmar sucesso somente depois da gravacao.
+  Cancelamento nao pode ser apresentado como sucesso.
+- Nova/Editar Visita podem receber fotos reais por acao explicita de camera ou
+  galeria. O arquivo e copiado para o storage interno do aplicativo e o
+  registro preserva URI local, nome original, MIME, dimensoes quando
+  disponiveis, origem e data de inclusao.
+- A selecao/captura local nao coleta EXIF, coordenadas ou geotag e nao cria
+  acompanhamento em segundo plano. O corte nao representa upload, backend,
+  publicacao, URL assinada nem sincronizacao.
+- Fotos demonstrativas legadas permanecem legiveis e nao devem ser geradas por
+  novos formularios.
 
 ## Regra sobre Caderno de Campo
 

@@ -51,7 +51,11 @@ import {
   getCadernoEstadoLabel,
   toCadernoProducerProjection,
 } from '../utils/cadernoLifecycleCompat';
-import { getRegistroFotoUri, podeBaixarFotoRegistro } from '../utils/registroFotoCompat';
+import {
+  getRegistroFotoNomeOriginal,
+  getRegistroFotoUri,
+  podeBaixarFotoRegistro,
+} from '../utils/registroFotoCompat';
 
 const { width } = Dimensions.get('window');
 
@@ -220,6 +224,7 @@ export default function CadernoDetailScreen() {
   const isProdutorView = user?.perfil === 'produtor';
   const selectedPhoto = selectedPhotoIndex == null ? null : fotos[selectedPhotoIndex];
   const selectedPhotoUri = getRegistroFotoUri(selectedPhoto);
+  const selectedPhotoFileName = getRegistroFotoNomeOriginal(selectedPhoto);
   const canDownloadSelectedPhoto = selectedPhotoIndex != null && podeBaixarFotoRegistro({
     user,
     registro,
@@ -721,6 +726,7 @@ export default function CadernoDetailScreen() {
         index={selectedPhotoIndex ?? 0}
         total={fotos.length}
         downloadAuthorized={canDownloadSelectedPhoto}
+        preferredFileName={selectedPhotoFileName}
         onClose={() => setSelectedPhotoIndex(null)}
       />
     </View>

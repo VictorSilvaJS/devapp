@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
+  ActivityIndicator,
+  Image,
   View,
   Text,
   ScrollView,
@@ -41,6 +43,13 @@ import {
   getVisitaFormFazendaLabel,
 } from '../utils/visitaFormCompat';
 import { buildVisitaIdempotencyKey, type VisitaActor } from '../utils/visitaLifecycleCompat';
+import {
+  MAX_VISITA_PHOTOS,
+  VisitaPhotoLocal,
+  captureVisitaPhoto,
+  deleteVisitaPhotoLocal,
+  selectVisitaPhotos,
+} from '../services/VisitaPhotoService';
 
 const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo', 'observacoes'] as const;
 
@@ -62,6 +71,8 @@ export default function NovaVisitaScreen() {
   const [recomendacoes, setRecomendacoes] = useState('');
   const [clima, setClima] = useState('');
   const [proximaVisita, setProximaVisita] = useState(null);
+  const [fotos, setFotos] = useState<VisitaPhotoLocal[]>([]);
+  const [photoAction, setPhotoAction] = useState<'camera' | 'galeria' | null>(null);
   // Estados de controle
   const [loading, setLoading] = useState(false);
   const [fazendas, setFazendas] = useState([]);
@@ -69,6 +80,8 @@ export default function NovaVisitaScreen() {
   const [errors, setErrors] = useState<any>({});
   const [contextAccessDenied, setContextAccessDenied] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const photoUrisRef = useRef<string[]>([]);
+  const photosCommittedRef = useRef(false);
   const formValidation = useFormValidationFocus(VISITA_FORM_ERROR_ORDER);
 
   // Dropdown de fazendas
@@ -85,6 +98,14 @@ export default function NovaVisitaScreen() {
   useEffect(() => {
     loadFazendas();
   }, [user, routeFazendaId]);
+
+  useEffect(() => () => {
+    if (!photosCommittedRef.current) {
+      photoUrisRef.current.forEach((uri) => {
+        void deleteVisitaPhotoLocal(uri).catch(() => undefined);
+      });
+    }
+  }, []);
 
   const loadFazendas = async () => {
     setLoadingFazendas(true);
@@ -191,6 +212,42 @@ export default function NovaVisitaScreen() {
     setShowConfirmDialog(true);
   };
 
+  const appendPhotos = (items: VisitaPhotoLocal[]) => {
+    if (items.length === 0) return;
+    photoUrisRef.current = [...photoUrisRef.current, ...items.map((item) => item.uri)];
+    setFotos((current) => [...current, ...items].slice(0, MAX_VISITA_PHOTOS));
+  };
+
+  const handleCapturePhoto = async () => {
+    setPhotoAction('camera');
+    try {
+      appendPhotos(await captureVisitaPhoto(fotos.length));
+    } catch (error: any) {
+      toast.showError(error?.message || 'Não foi possível registrar a foto pela câmera.');
+    } finally {
+      setPhotoAction(null);
+    }
+  };
+
+  const handleSelectPhotos = async () => {
+    setPhotoAction('galeria');
+    try {
+      appendPhotos(await selectVisitaPhotos(fotos.length));
+    } catch (error: any) {
+      toast.showError(error?.message || 'Não foi possível selecionar as fotos.');
+    } finally {
+      setPhotoAction(null);
+    }
+  };
+
+  const handleRemovePhoto = async (index: number) => {
+    const photo = fotos[index];
+    if (!photo) return;
+    setFotos((current) => current.filter((_, itemIndex) => itemIndex !== index));
+    photoUrisRef.current = photoUrisRef.current.filter((uri) => uri !== photo.uri);
+    await deleteVisitaPhotoLocal(photo.uri).catch(() => undefined);
+  };
+
   const confirmSave = async () => {
     const fazendaSelecionadaData = findFazendaById(fazendas, fazendaId);
     if (!podeCriarVisitaEmFazenda(user, fazendaSelecionadaData)) {
@@ -211,7 +268,7 @@ export default function NovaVisitaScreen() {
         clima,
         proximaVisita,
         status,
-        fotos: [],
+        fotos,
         tecnicoResponsavel: user?.nome || user?.full_name || 'Sistema',
         visitaOrigemId,
       });
@@ -236,6 +293,7 @@ export default function NovaVisitaScreen() {
         await Visita.createScheduled(novaVisita, actor, idempotencyKey);
       }
 
+      photosCommittedRef.current = true;
       toast.showSuccess(fluxoInfo.successMessage);
       setShowConfirmDialog(false);
       
@@ -477,6 +535,60 @@ export default function NovaVisitaScreen() {
             message={VISITA_FOTOS_MVP_INFO.message}
             style={styles.photoInfoBox}
           />
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={[
+                styles.photoActionButton,
+                (Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS) && styles.photoActionDisabled,
+              ]}
+              onPress={handleCapturePhoto}
+              disabled={Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS}
+              accessibilityRole="button"
+              accessibilityLabel="Tirar foto para a Visita"
+            >
+              {photoAction === 'camera'
+                ? <ActivityIndicator size="small" color={colors.white} />
+                : <Ionicons name="camera-outline" size={20} color={colors.white} />}
+              <Text style={styles.photoActionText}>Câmera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.photoActionButton,
+                styles.photoActionSecondary,
+                (Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS) && styles.photoActionDisabled,
+              ]}
+              onPress={handleSelectPhotos}
+              disabled={Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS}
+              accessibilityRole="button"
+              accessibilityLabel="Selecionar fotos da galeria"
+            >
+              {photoAction === 'galeria'
+                ? <ActivityIndicator size="small" color={colors.primary} />
+                : <Ionicons name="images-outline" size={20} color={colors.primary} />}
+              <Text style={[styles.photoActionText, styles.photoActionSecondaryText]}>Galeria</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.photoCounter}>
+            {fotos.length} de {MAX_VISITA_PHOTOS} fotos · arquivos locais, sem geolocalização automática
+          </Text>
+          {fotos.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.photoPreviewList}>
+              {fotos.map((foto, index) => (
+                <View key={foto.uri} style={styles.photoPreviewItem}>
+                  <Image source={{ uri: foto.uri }} style={styles.photoPreview} resizeMode="cover" />
+                  <TouchableOpacity
+                    style={styles.photoRemoveButton}
+                    onPress={() => handleRemovePhoto(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remover foto ${index + 1}`}
+                  >
+                    <Ionicons name="close" size={18} color={colors.white} />
+                  </TouchableOpacity>
+                  <Text style={styles.photoName} numberOfLines={1}>{foto.nome_original}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          ) : null}
         </SectionCard>
 
         <InfoBox message={fluxoInfo.infoText} />
@@ -678,7 +790,73 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   photoInfoBox: {
-    marginBottom: 0,
+    marginBottom: spacing.md,
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  photoActionButton: {
+    flex: 1,
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.primary,
+  },
+  photoActionSecondary: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+  },
+  photoActionDisabled: {
+    opacity: 0.55,
+  },
+  photoActionText: {
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: '700',
+  },
+  photoActionSecondaryText: {
+    color: colors.primary,
+  },
+  photoCounter: {
+    marginTop: spacing.sm,
+    color: colors.muted,
+    fontSize: typography.fontSmall,
+    lineHeight: 17,
+  },
+  photoPreviewList: {
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  photoPreviewItem: {
+    width: 116,
+  },
+  photoPreview: {
+    width: 116,
+    height: 88,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.backgroundAlt,
+  },
+  photoRemoveButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+  },
+  photoName: {
+    marginTop: spacing.xs,
+    color: colors.textLight,
+    fontSize: typography.fontSmall,
   },
   footer: {
     flexDirection: 'row',

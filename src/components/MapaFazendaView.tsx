@@ -73,6 +73,7 @@ interface Props {
   userLocation?: ForegroundUserLocation | null;
   onTalhaoPress?: (id: string) => void;
   onMapaReady?: () => void;
+  centerUserLocationOnReady?: boolean;
   noticeTopInset?: number;
 }
 
@@ -259,6 +260,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
       var baseMapConsecutiveFailures = 0;
       var baseMapTimeout = null;
       var baseMapStatus = 'idle';
+      var labelMinZoom = 15.5;
 
       function post(tipo, payload) {
         try {
@@ -293,7 +295,11 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
           map.setView([-15.0, -52.0], 4);
           return;
         }
-        map.fitBounds(geojsonLayer.getBounds(), {
+        var bounds = geojsonLayer.getBounds();
+        try {
+          labelMinZoom = Math.min(15.5, Math.max(10, map.getBoundsZoom(bounds, false, [68, 68]) - 0.25));
+        } catch (err) {}
+        map.fitBounds(bounds, {
           padding: [34, 34],
           maxZoom: 16,
           animate: true
@@ -326,7 +332,7 @@ function gerarHTMLLeaflet(talhoes: TalhaoMapa[]): string {
       }
 
       function atualizarVisibilidadeRotulos() {
-        var mostrarTodos = map && map.getZoom() >= 15.5;
+        var mostrarTodos = map && map.getZoom() >= labelMinZoom;
         Object.keys(labelsById).forEach(function (id) {
           labelsById[id].setOpacity(mostrarTodos || SELECTED_ID === id ? 1 : 0);
         });
@@ -666,20 +672,18 @@ function FallbackShapeMap({
                     strokeLinejoin="round"
                   />
                 ))}
-                {(selected || projection.talhoes.length <= 8) ? (
-                  <SvgText
-                    x={talhao.center.x}
-                    y={talhao.center.y}
-                    fill={colors.white}
-                    fontSize={11}
-                    fontWeight="700"
-                    textAnchor="middle"
-                    stroke="rgba(0,0,0,0.9)"
-                    strokeWidth={0.8}
-                  >
-                    {shortenTalhaoLabel(talhao.talhao)}
-                  </SvgText>
-                ) : null}
+                <SvgText
+                  x={talhao.center.x}
+                  y={talhao.center.y}
+                  fill={colors.white}
+                  fontSize={11}
+                  fontWeight="700"
+                  textAnchor="middle"
+                  stroke="rgba(0,0,0,0.9)"
+                  strokeWidth={0.8}
+                >
+                  {shortenTalhaoLabel(talhao.talhao)}
+                </SvgText>
               </G>
             );
           })}
@@ -733,6 +737,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
     userLocation,
     onTalhaoPress,
     onMapaReady,
+    centerUserLocationOnReady = false,
     noticeTopInset = spacing.md,
   }, ref) => {
     const webViewRef = useRef<WebView>(null);
@@ -741,6 +746,8 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
     const userLocationRef = useRef<ForegroundUserLocation | null | undefined>(userLocation);
     const onMapaReadyRef = useRef(onMapaReady);
     const mapaReadyNotificadoRef = useRef(false);
+    const mapaProntoRef = useRef(false);
+    const pendingLocationCenterRef = useRef<ForegroundUserLocation | null>(null);
     const ultimoDiagnosticoRef = useRef<string | null>(null);
     const [mapaPronto, setMapaPronto] = useState(false);
     const [fallbackAtivo, setFallbackAtivo] = useState(false);
@@ -789,6 +796,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       if (nextDiagnostic.fallbackMode === 'vector') {
         clearReadyTimeout();
         setMapaPronto(false);
+        mapaProntoRef.current = false;
         setFallbackAtivo(true);
         notifyMapaReady();
       }
@@ -806,6 +814,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
 
     useEffect(() => {
       setMapaPronto(false);
+      mapaProntoRef.current = false;
       setFallbackAtivo(false);
       setDiagnostico(null);
       ultimoDiagnosticoRef.current = null;
@@ -840,6 +849,18 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
 
       webViewRef.current?.injectJavaScript(
         `window.atualizarLocalizacaoUsuario && window.atualizarLocalizacaoUsuario(${JSON.stringify(payload)}); true;`
+      );
+    }, []);
+
+    const centerLocationInWebView = useCallback((location: ForegroundUserLocation) => {
+      const payload = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+        capturedAt: location.capturedAt,
+      };
+      webViewRef.current?.injectJavaScript(
+        `window.centralizarLocalizacaoUsuario && window.centralizarLocalizacaoUsuario(${JSON.stringify(payload)}); true;`
       );
     }, []);
 
@@ -887,15 +908,12 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
         );
       },
       centralizarLocalizacao(location: ForegroundUserLocation) {
-        const payload = {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          accuracy: location.accuracy,
-          capturedAt: location.capturedAt,
-        };
-        webViewRef.current?.injectJavaScript(
-          `window.centralizarLocalizacaoUsuario && window.centralizarLocalizacaoUsuario(${JSON.stringify(payload)}); true;`
-        );
+        if (!mapaProntoRef.current || fallbackAtivo) {
+          pendingLocationCenterRef.current = location;
+          return;
+        }
+        pendingLocationCenterRef.current = null;
+        centerLocationInWebView(location);
       },
       ajustarLimites() {
         webViewRef.current?.injectJavaScript(
@@ -916,12 +934,19 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           if (data.tipo === 'ready') {
             clearReadyTimeout();
             setMapaPronto(true);
+            mapaProntoRef.current = true;
             setFallbackAtivo(false);
             setDiagnostico((current) => (
               current?.fallbackMode === 'vector' ? null : current
             ));
             notifyMapaReady();
             syncUserLocationToWebView();
+            const locationToCenter = pendingLocationCenterRef.current
+              ?? (centerUserLocationOnReady ? userLocationRef.current : null);
+            if (locationToCenter) {
+              pendingLocationCenterRef.current = null;
+              centerLocationInWebView(locationToCenter);
+            }
             return;
           }
           if (data.tipo === 'erro_mapa') {
@@ -953,7 +978,15 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
           }
         } catch (_) {}
       },
-      [clearReadyTimeout, notifyMapaReady, onTalhaoPress, reportFailure, syncUserLocationToWebView]
+      [
+        centerLocationInWebView,
+        centerUserLocationOnReady,
+        clearReadyTimeout,
+        notifyMapaReady,
+        onTalhaoPress,
+        reportFailure,
+        syncUserLocationToWebView,
+      ]
     );
 
     const handleWebViewError = useCallback((event: WebViewErrorEvent) => {

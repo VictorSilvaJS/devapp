@@ -25,7 +25,11 @@ import {
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
 import { getVisitaFotoUri, getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
-import { getRegistroFotoUri, podeBaixarFotoRegistro } from '../utils/registroFotoCompat';
+import {
+  getRegistroFotoNomeOriginal,
+  getRegistroFotoUri,
+  podeBaixarFotoRegistro,
+} from '../utils/registroFotoCompat';
 import {
   getVisitaStatusPresentation,
   VisitaStatusTone,
@@ -176,6 +180,7 @@ export default function VisitaDetailScreen() {
     && ['agendada', 'realizada', 'cancelada'].includes(estado);
   const selectedPhoto = selectedPhotoIndex == null ? null : visita.fotos?.[selectedPhotoIndex];
   const selectedPhotoUri = getRegistroFotoUri(selectedPhoto);
+  const selectedPhotoFileName = getRegistroFotoNomeOriginal(selectedPhoto);
   const canDownloadSelectedPhoto = selectedPhotoIndex != null && podeBaixarFotoRegistro({
     user,
     registro: visita,
@@ -440,7 +445,11 @@ export default function VisitaDetailScreen() {
               <Ionicons name="images-outline" size={24} color={colors.primary} />
               <Text style={styles.cardTitle}>Imagens do registro ({visita.fotos.length})</Text>
             </View>
-            <Text style={styles.photoNotice}>Imagem demonstrativa</Text>
+            <Text style={styles.photoNotice}>
+              {visita.fotos.some((foto) => getRegistroFotoNomeOriginal(foto))
+                ? 'Fotos salvas localmente neste aparelho'
+                : 'Imagens demonstrativas do registro'}
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -477,7 +486,9 @@ export default function VisitaDetailScreen() {
                         </View>
                       </TouchableOpacity>
                     )}
-                    <Text style={styles.photoCaption}>Exemplo visual do registro</Text>
+                    <Text style={styles.photoCaption} numberOfLines={1}>
+                      {getRegistroFotoNomeOriginal(foto) || 'Exemplo visual do registro'}
+                    </Text>
                   </View>
                 );
               })}
@@ -503,6 +514,7 @@ export default function VisitaDetailScreen() {
         index={selectedPhotoIndex ?? 0}
         total={visita.fotos?.length ?? 0}
         downloadAuthorized={canDownloadSelectedPhoto}
+        preferredFileName={selectedPhotoFileName}
         onClose={() => setSelectedPhotoIndex(null)}
       />
     </View>

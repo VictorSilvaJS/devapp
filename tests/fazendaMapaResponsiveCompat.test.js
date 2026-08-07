@@ -91,6 +91,9 @@ test('selecao, marcador e centralizacao sao comandos independentes', () => {
 test('painel de retrato tem gesto funcional e nao bloqueia a area exposta do mapa', () => {
   assert.match(screenSource, /PanResponder\.create/);
   assert.match(screenSource, /resolveClosestFazendaMapaSheetSnap/);
+  assert.match(screenSource, /onStartShouldSetPanResponder: \(\) => false/);
+  assert.match(screenSource, /sheetTranslateY\.stopAnimation/);
+  assert.match(screenSource, /sheetGestureCurrentRef\.current/);
   assert.match(screenSource, /pointerEvents="box-none"/);
   assert.doesNotMatch(screenSource, /style=\{styles\.backdrop\}/);
   assert.doesNotMatch(screenSource, /<Modal/);
@@ -123,7 +126,15 @@ test('dimensoes e rotulos respondem ao layout atual sem constantes de tela', () 
   assert.match(screenSource, /useWindowDimensions\(\)/);
   assert.doesNotMatch(screenSource, /Dimensions\.get\('window'\)/);
   assert.match(mapSource, /map\.on\('zoomend', atualizarVisibilidadeRotulos\)/);
-  assert.match(mapSource, /projection\.talhoes\.length <= 8/);
+  assert.match(mapSource, /map\.getBoundsZoom\(bounds, false, \[68, 68\]\)/);
+  assert.match(mapSource, /labelMinZoom/);
+  assert.doesNotMatch(mapSource, /projection\.talhoes\.length <= 8/);
+});
+
+test('ponto vindo do Caderno e centralizado assim que o mapa fica pronto', () => {
+  assert.match(screenSource, /centerUserLocationOnReady=\{Boolean\(cadernoLocationParam\)\}/);
+  assert.match(mapSource, /pendingLocationCenterRef/);
+  assert.match(mapSource, /centerUserLocationOnReady \? userLocationRef\.current : null/);
 });
 
 if (failed > 0) {

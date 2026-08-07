@@ -23,6 +23,7 @@ const run = async () => {
   const produtor = read('src/screens/ProdutorScreen.tsx');
   const navigation = read('src/navigation/index.tsx');
   const app = read('App.tsx');
+  const exportService = read('src/services/PhoneFileExportService.ts');
 
   await test('rota dedicada esta registrada e resolve catalogo no escopo do perfil', () => {
     assert.match(navigation, /name="MaterialViewer"/);
@@ -64,7 +65,11 @@ const run = async () => {
     assert.match(viewer, /podeBaixarMapa\(user, material, fazendasPermitidas\)/);
     assert.match(viewer, /downloadStatus\.podeAbrir/);
     assert.match(viewer, /Linking\.canOpenURL/);
-    assert.match(viewer, /FileSystem\.downloadAsync/);
+    assert.match(viewer, /exportFileToPhone/);
+    assert.match(viewer, /Arquivo salvo na pasta escolhida como/);
+    assert.match(viewer, /Nenhum arquivo foi criado/);
+    assert.match(exportService, /requestDirectoryPermissionsAsync/);
+    assert.match(exportService, /createFileAsync/);
     assert.match(viewer, /Nenhum visualizador compatível conseguiu abrir este PDF/);
   });
 

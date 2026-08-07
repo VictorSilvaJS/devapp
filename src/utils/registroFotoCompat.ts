@@ -1,4 +1,5 @@
 import { temAcessoCaderno, temAcessoVisita } from './acessoControle';
+import { sanitizePhoneExportFileName } from './phoneFileExportCompat';
 
 export type RegistroFotoOrigem = 'caderno' | 'visita';
 
@@ -22,6 +23,13 @@ export const getRegistroFotoUri = (foto: unknown): string | null => {
   }
 
   return null;
+};
+
+export const getRegistroFotoNomeOriginal = (foto: unknown): string | null => {
+  if (!foto || typeof foto !== 'object') return null;
+  const record = foto as Record<string, unknown>;
+  const value = record.nome_original ?? record.fileName ?? record.name;
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
 };
 
 export const isRegistroFotoUriBaixavel = (uri: unknown): uri is string =>
@@ -54,8 +62,12 @@ const extensionFromUri = (uri: string): string => {
 export const buildRegistroFotoDownloadName = (
   uri: string,
   origem: RegistroFotoOrigem,
-  index = 0
+  index = 0,
+  preferredName?: string | null
 ): string => {
   const position = Number.isInteger(index) && index >= 0 ? index + 1 : 1;
-  return `foto-${origem}-${position}.${extensionFromUri(uri)}`;
+  const fallbackName = `foto-${origem}-${position}.${extensionFromUri(uri)}`;
+  return preferredName
+    ? sanitizePhoneExportFileName(preferredName, uri, undefined, `foto-${origem}-${position}`)
+    : fallbackName;
 };

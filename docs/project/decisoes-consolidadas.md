@@ -977,3 +977,36 @@ backend.
   correspondente;
 - backend, autenticacao, auditoria e transacao produtivos permanecem fora do
   mock local.
+
+---
+
+## 35. Visita admite foto real local e midia salva usa destino explicito
+
+### Decisao
+
+Nova e Editar Visita admitem, por acao explicita do usuario, captura pela
+camera e selecao pela galeria. A foto e copiada para o storage interno do
+aplicativo e vinculada ao array compativel `fotos`, sem EXIF, coordenadas,
+geotag, upload ou sincronizacao.
+
+Ao salvar uma midia consultada no Android, o aplicativo abre o seletor de
+pasta do sistema e cria o arquivo com nome legivel e extensao coerente. A
+interface so confirma depois da gravacao e trata cancelamento sem sucesso
+falso. Esta decisao supera apenas a parte das decisoes anteriores que mantinha
+camera/galeria integralmente futura; o limite produtivo continua inalterado.
+
+### Alcance
+
+Afeta Nova/Editar Visita, a consulta e exportacao de fotos, a exportacao de
+materiais nao PDF e as permissoes declaradas para camera/galeria.
+
+### Impacto
+
+- cada Visita aceita ate oito fotos locais de no maximo 20 MB por arquivo;
+- nome original, MIME, dimensoes quando disponiveis, origem e data de inclusao
+  acompanham a referencia local;
+- rascunho abandonado limpa as novas copias conhecidas pela sessao do
+  formulario; fotos ja persistidas nao sao apagadas implicitamente;
+- Caderno continua sem fluxo novo de captura de foto;
+- backend, storage remoto, criptografia, retencao, consentimento produtivo,
+  sincronizacao e conflito continuam pendentes.

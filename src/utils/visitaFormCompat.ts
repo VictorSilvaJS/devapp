@@ -38,9 +38,9 @@ export const getVisitaObjetivoLabel = (objetivo?: string | null): string => {
 };
 
 export const VISITA_FOTOS_MVP_INFO = {
-  title: 'Fotos no MVP local',
+  title: 'Fotos locais da Visita',
   message:
-    'A captura e a seleção de fotos ainda não estão disponíveis neste MVP. As imagens existentes em alguns registros são apenas exemplos demonstrativos.',
+    'Use a câmera ou a galeria. As imagens ficam no armazenamento interno deste aparelho e não são sincronizadas nem georreferenciadas automaticamente.',
 } as const;
 
 export const VISITA_FLUXOS_OPERACIONAIS = [

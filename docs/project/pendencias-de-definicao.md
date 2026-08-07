@@ -598,9 +598,12 @@ Pendencias P2/futuras:
 - definir fonte, metodo, unidade e confiabilidade do perimetro processado;
 - confirmar a relacao entre 6200 ha informados e 1888,6 ha mapeados na Sela de
   Prata I, sem alterar os valores por inferencia;
-- criar eventual fluxo real de fotos somente em fase propria, com decisao de
-  camera/arquivo, storage, consentimento, data/hora, latitude/longitude,
-  accuracy, privacidade e sincronizacao;
+- validar em Android fisico o fluxo local de camera/galeria da Visita, inclusive
+  permissao negada, cancelamento, limite, persistencia e escolha da pasta ao
+  salvar uma copia;
+- definir para producao storage remoto, retencao, criptografia, consentimento,
+  privacidade, upload, sincronizacao e eventual uso explicitamente autorizado
+  de latitude/longitude e accuracy; o fluxo local atual nao coleta geotag;
 - implementar pipeline produtivo de mapas, publicacao, download e sync no
   backend.
 
@@ -624,11 +627,19 @@ Caderno e Visita ganharam ampliacao e copia local autorizada, sem criar ou
 alterar imagens. A pendencia acima continua integral para o fluxo real de
 camera/galeria, metadados, privacidade, backend e sincronizacao.
 
+Status em 2026-08-07: Nova/Editar Visita passaram a aceitar camera e galeria
+no corte estritamente local, conforme decisao 35. A copia fica no storage
+interno, sem EXIF, geotag, backend ou sync; ao exportar midia no Android, o
+usuario escolhe a pasta e o nome/extensao sao normalizados. Deixam de ser
+pendencia a decisao e a implementacao local de foto real. Permanecem pendentes
+o smoke em Android fisico e toda a estrategia produtiva de privacidade,
+retencao, criptografia, storage remoto, upload e sincronizacao.
+
 Implementacoes/evidencias mantidas como pendentes, sem ambiguidade decisoria:
 
 - concluir a validacao fisica do ponto opcional em condicao adequada para o
   provider;
-- implementar foto real apenas em fase propria;
+- validar fisicamente a foto real local e definir sua evolucao produtiva;
 - implementar backend/processamento externo quando essa trilha for aberta.
 
 Classificacao atual relevante:

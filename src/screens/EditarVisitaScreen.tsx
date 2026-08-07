@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,13 @@ import {
   getVisitaEstado,
   type VisitaActor,
 } from '../utils/visitaLifecycleCompat';
+import {
+  MAX_VISITA_PHOTOS,
+  VisitaPhotoLocal,
+  captureVisitaPhoto,
+  deleteVisitaPhotoLocal,
+  selectVisitaPhotos,
+} from '../services/VisitaPhotoService';
 
 const VISITA_FORM_ERROR_ORDER = ['fazendaId', 'dataVisita', 'horaVisita', 'objetivo', 'motivoReagendamento'] as const;
 
@@ -72,6 +79,7 @@ export default function EditarVisitaScreen() {
   const [proximaVisita, setProximaVisita] = useState(null);
   const [motivoReagendamento, setMotivoReagendamento] = useState('');
   const [fotos, setFotos] = useState<any[]>([]);
+  const [photoAction, setPhotoAction] = useState<'camera' | 'galeria' | null>(null);
   const [removePhotoDialog, setRemovePhotoDialog] = useState<{
     visible: boolean;
     fotoIndex: number | null;
@@ -86,6 +94,8 @@ export default function EditarVisitaScreen() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [notEditableReason, setNotEditableReason] = useState('');
   const [errors, setErrors] = useState<any>({});
+  const newPhotoUrisRef = useRef<string[]>([]);
+  const photosCommittedRef = useRef(false);
 
   const fazendaOptions = useMemo(() => buildVisitaFazendaOptions(fazendas), [fazendas]);
   const fluxoInfo = getVisitaFluxoUi(VISITA_STATUS_AGENDADA);
@@ -93,6 +103,14 @@ export default function EditarVisitaScreen() {
   useEffect(() => {
     loadData();
   }, [visitaRouteId, user]);
+
+  useEffect(() => () => {
+    if (!photosCommittedRef.current) {
+      newPhotoUrisRef.current.forEach((uri) => {
+        void deleteVisitaPhotoLocal(uri).catch(() => undefined);
+      });
+    }
+  }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -259,6 +277,7 @@ export default function EditarVisitaScreen() {
         buildVisitaIdempotencyKey(visitaRouteId, 'alterar_agendamento')
       );
 
+      photosCommittedRef.current = true;
       toast.showSuccess('Visita atualizada com sucesso!');
       
       // Voltar para tela de detalhes
@@ -277,6 +296,34 @@ export default function EditarVisitaScreen() {
     setRemovePhotoDialog({ visible: true, fotoIndex });
   };
 
+  const appendPhotos = (items: VisitaPhotoLocal[]) => {
+    if (items.length === 0) return;
+    newPhotoUrisRef.current = [...newPhotoUrisRef.current, ...items.map((item) => item.uri)];
+    setFotos((current) => [...current, ...items].slice(0, MAX_VISITA_PHOTOS));
+  };
+
+  const handleCapturePhoto = async () => {
+    setPhotoAction('camera');
+    try {
+      appendPhotos(await captureVisitaPhoto(fotos.length));
+    } catch (error: any) {
+      toast.showError(error?.message || 'Não foi possível registrar a foto pela câmera.');
+    } finally {
+      setPhotoAction(null);
+    }
+  };
+
+  const handleSelectPhotos = async () => {
+    setPhotoAction('galeria');
+    try {
+      appendPhotos(await selectVisitaPhotos(fotos.length));
+    } catch (error: any) {
+      toast.showError(error?.message || 'Não foi possível selecionar as fotos.');
+    } finally {
+      setPhotoAction(null);
+    }
+  };
+
   const confirmRemoverFoto = () => {
     const fotoIndex = removePhotoDialog.fotoIndex;
 
@@ -285,9 +332,14 @@ export default function EditarVisitaScreen() {
       return;
     }
 
+    const photoUri = getVisitaFotoUri(fotos[fotoIndex]);
     setFotos(prev => removeVisitaFotoAtIndex(prev, fotoIndex));
+    if (photoUri && newPhotoUrisRef.current.includes(photoUri)) {
+      newPhotoUrisRef.current = newPhotoUrisRef.current.filter((uri) => uri !== photoUri);
+      void deleteVisitaPhotoLocal(photoUri).catch(() => undefined);
+    }
     setRemovePhotoDialog({ visible: false, fotoIndex: null });
-    toast.showSuccess('Imagem demonstrativa removida');
+    toast.showSuccess('Foto removida do registro');
   };
 
   if (loading) {
@@ -452,12 +504,45 @@ export default function EditarVisitaScreen() {
           />
         </SectionCard>
 
-        <SectionCard title="Fotos" subtitle="As imagens demonstrativas existentes podem ser consultadas ou removidas explicitamente.">
+        <SectionCard title="Fotos" subtitle="Adicione imagens do aparelho ou preserve as já registradas.">
           <InfoBox
             title={VISITA_FOTOS_MVP_INFO.title}
             message={VISITA_FOTOS_MVP_INFO.message}
             style={styles.photoInfoBox}
           />
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={[
+                styles.photoActionButton,
+                (Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS) && styles.photoActionDisabled,
+              ]}
+              onPress={handleCapturePhoto}
+              disabled={Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS}
+              accessibilityRole="button"
+              accessibilityLabel="Tirar foto para a Visita"
+            >
+              {photoAction === 'camera'
+                ? <ActivityIndicator size="small" color={colors.white} />
+                : <Ionicons name="camera-outline" size={20} color={colors.white} />}
+              <Text style={styles.photoActionText}>Câmera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.photoActionButton,
+                styles.photoActionSecondary,
+                (Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS) && styles.photoActionDisabled,
+              ]}
+              onPress={handleSelectPhotos}
+              disabled={Boolean(photoAction) || fotos.length >= MAX_VISITA_PHOTOS}
+              accessibilityRole="button"
+              accessibilityLabel="Selecionar fotos da galeria"
+            >
+              {photoAction === 'galeria'
+                ? <ActivityIndicator size="small" color={colors.primary} />
+                : <Ionicons name="images-outline" size={20} color={colors.primary} />}
+              <Text style={[styles.photoActionText, styles.photoActionSecondaryText]}>Galeria</Text>
+            </TouchableOpacity>
+          </View>
           {fotos.length > 0 && (
             <View style={styles.fotosGrid}>
               {fotos.map((foto, index) => {
@@ -475,7 +560,7 @@ export default function EditarVisitaScreen() {
                     <TouchableOpacity
                       style={styles.fotoRemover}
                       onPress={() => removerFoto(index)}
-                      accessibilityLabel={`Remover imagem demonstrativa ${index + 1}`}
+                      accessibilityLabel={`Remover foto ${index + 1}`}
                     >
                       <Ionicons name="close-circle" size={22} color={colors.error} />
                     </TouchableOpacity>
@@ -486,7 +571,7 @@ export default function EditarVisitaScreen() {
           )}
           {fotos.length > 0 && (
             <Text style={styles.fotosCount}>
-              {fotos.length} {fotos.length === 1 ? 'imagem demonstrativa' : 'imagens demonstrativas'} no registro
+              {fotos.length} de {MAX_VISITA_PHOTOS} {fotos.length === 1 ? 'foto' : 'fotos'} no registro
             </Text>
           )}
         </SectionCard>
@@ -504,7 +589,7 @@ export default function EditarVisitaScreen() {
       <ConfirmDialog
         visible={removePhotoDialog.visible}
         title="Remover imagem"
-        message="Deseja remover esta imagem demonstrativa do registro?"
+        message="Deseja remover esta foto do registro?"
         type="danger"
         confirmText="Remover"
         cancelText="Cancelar"
@@ -692,7 +777,38 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   photoInfoBox: {
+    marginBottom: spacing.md,
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
     marginBottom: spacing.sm,
+  },
+  photoActionButton: {
+    flex: 1,
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: colors.primary,
+  },
+  photoActionSecondary: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+  },
+  photoActionDisabled: {
+    opacity: 0.55,
+  },
+  photoActionText: {
+    color: colors.white,
+    fontSize: typography.fontCaption,
+    fontWeight: '700',
+  },
+  photoActionSecondaryText: {
+    color: colors.primary,
   },
   fotosGrid: {
     flexDirection: 'row',

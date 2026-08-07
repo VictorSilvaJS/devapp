@@ -12,8 +12,8 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system/legacy';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { exportFileToPhone } from '../services/PhoneFileExportService';
 import {
   MATERIAL_IMAGE_DOUBLE_TAP_ZOOM,
   MATERIAL_IMAGE_MAX_ZOOM,
@@ -38,6 +38,7 @@ type RegistroFotoViewerModalProps = {
   index: number;
   total: number;
   downloadAuthorized: boolean;
+  preferredFileName?: string | null;
   onClose: () => void;
 };
 
@@ -49,6 +50,7 @@ export default function RegistroFotoViewerModal({
   index,
   total,
   downloadAuthorized,
+  preferredFileName,
   onClose,
 }: RegistroFotoViewerModalProps) {
   const { width, height } = useWindowDimensions();
@@ -175,28 +177,29 @@ export default function RegistroFotoViewerModal({
     setDownloadLoading(true);
     setDownloadFeedback(null);
     try {
-      if (!FileSystem.documentDirectory) throw new Error('storage_unavailable');
-      const baseDir = `${FileSystem.documentDirectory}fotos-download/`;
-      await FileSystem.makeDirectoryAsync(baseDir, { intermediates: true });
-      const fileName = buildRegistroFotoDownloadName(uri, origem, index);
-      const destination = `${baseDir}${Date.now()}-${fileName}`;
-
-      if (/^https?:\/\//i.test(uri)) {
-        await FileSystem.downloadAsync(uri, destination);
-      } else {
-        await FileSystem.copyAsync({ from: uri, to: destination });
+      const fileName = buildRegistroFotoDownloadName(uri, origem, index, preferredFileName);
+      const result = await exportFileToPhone({
+        sourceUri: uri,
+        preferredFileName: fileName,
+        fallbackBaseName: `foto-${origem}-${index + 1}`,
+      });
+      if (result.status === 'cancelled') {
+        setDownloadFeedback({
+          tone: 'info',
+          message: 'Salvamento cancelado. Nenhum arquivo foi criado.',
+        });
+        return;
       }
-
-      const info = await FileSystem.getInfoAsync(destination);
-      if (!info.exists) throw new Error('download_missing');
       setDownloadFeedback({
         tone: 'success',
-        message: 'Foto baixada para o armazenamento local do aplicativo.',
+        message: result.userSelectedDirectory
+          ? `Foto salva na pasta escolhida como ${result.fileName}.`
+          : `Foto salva como ${result.fileName} no armazenamento do aplicativo.`,
       });
     } catch {
       setDownloadFeedback({
         tone: 'error',
-        message: 'Não foi possível baixar esta foto. Verifique a conexão e tente novamente.',
+        message: 'Não foi possível salvar esta foto. Verifique a conexão, a pasta escolhida e tente novamente.',
       });
     } finally {
       setDownloadLoading(false);
@@ -287,12 +290,12 @@ export default function RegistroFotoViewerModal({
                 onPress={handleDownload}
                 disabled={downloadLoading}
                 accessibilityRole="button"
-                accessibilityLabel="Baixar foto"
+                accessibilityLabel="Salvar foto no telefone"
               >
                 {downloadLoading
                   ? <ActivityIndicator size="small" color={colors.white} />
                   : <Ionicons name="download-outline" size={20} color={colors.white} />}
-                <Text style={styles.downloadText}>{downloadLoading ? 'Baixando...' : 'Baixar foto'}</Text>
+                <Text style={styles.downloadText}>{downloadLoading ? 'Salvando...' : 'Salvar foto'}</Text>
               </TouchableOpacity>
             ) : null}
           </View>

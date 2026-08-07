@@ -259,7 +259,7 @@ const run = async () => {
     assert.equal(getVisitaFormFazendaId({ fazendaId: 'faz_alias_existente' }), 'faz_alias_existente');
   });
 
-  await test('formulários não geram foto simulada nem integram câmera ou storage', () => {
+  await test('formulários registram fotos locais reais sem geotag ou base64 no payload', () => {
     const formSources = [
       'src/screens/NovaVisitaScreen.tsx',
       'src/screens/EditarVisitaScreen.tsx',
@@ -268,12 +268,24 @@ const run = async () => {
       path.join(__dirname, '..', 'src/utils/visitaFormCompat.ts'),
       'utf8'
     );
+    const photoService = fs.readFileSync(
+      path.join(__dirname, '..', 'src/services/VisitaPhotoService.ts'),
+      'utf8'
+    );
 
     assert.equal(/picsum\.photos|adicionarFotoSimulada|fotoSimulada/.test(formSources), false);
-    assert.equal(/launchCamera|launchImageLibrary|ImagePicker|CameraView/.test(formSources), false);
+    assert.match(formSources, /captureVisitaPhoto/);
+    assert.match(formSources, /selectVisitaPhotos/);
+    assert.match(formSources, /fotos,/);
+    assert.match(photoService, /ImagePicker\.launchCameraAsync/);
+    assert.match(photoService, /ImagePicker\.launchImageLibraryAsync/);
+    assert.match(photoService, /VISITA_PHOTO_DIRECTORY = 'visita-fotos\/'/);
+    assert.match(photoService, /info\.size > MAX_VISITA_PHOTO_SIZE_BYTES/);
+    assert.match(photoService, /exif: false/);
+    assert.match(photoService, /base64: false/);
     assert.equal(/latitude|longitude|accuracy|geotag|exif/i.test(formSources), false);
     assert.equal(/AsyncStorage|@tche:|base64|bytes|blob|buffer/i.test(`${formSources}\n${helperSource}`), false);
-    assert.equal(VISITA_FOTOS_MVP_INFO.title, 'Fotos no MVP local');
+    assert.equal(VISITA_FOTOS_MVP_INFO.title, 'Fotos locais da Visita');
   });
 
   if (failed > 0) {
