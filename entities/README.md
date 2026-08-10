@@ -1,62 +1,18 @@
-# Entidades do Sistema
+# Schemas Legados de Entidades
 
-Este diretório contém as definições das entidades do sistema em formato JSON Schema.
+Os arquivos JSON desta pasta são referências históricas da primeira API mock.
+Eles não são a fonte canônica do runtime v2 nem o modelo aprovado para o
+backend.
 
-## Entidades Disponíveis
+Alguns schemas ainda usam termos e relações antigas, como cliente, produtor_id
+ou Fazenda. Não copie esses campos para contrato novo.
 
-### User
-Representa um usuário do sistema com diferentes perfis de acesso.
+Fontes vigentes:
 
-**Perfis:**
-- `admin`: Administrador do sistema
-- `colaborador`: Colaborador/técnico da empresa
-- `cliente`: Produtor cliente
+- [Modelo de dados v2](../docs/project/modelo-dados-mock-v2.md)
+- [Baseline do backend v1](../docs/project/baseline-backend-v1-2026-08.md)
+- [Contrato de API e RBAC](../docs/project/contrato-api-rbac.md)
 
-### Produtor
-Representa um produtor rural e suas informações cadastrais.
-
-**Status:**
-- `ativo`: Produtor ativo no sistema
-- `inativo`: Produtor inativo
-- `pendente`: Cadastro em análise
-
-### Mapa
-Representa mapas técnicos de talhões e propriedades.
-
-**Categorias:**
-- `fertilidade`: Mapas de fertilidade do solo
-- `correcao`: Mapas de correção do solo
-- `indice_vegetacao`: Mapas de índice de vegetação
-- `colheita`: Mapas de colheita
-- `plantio`: Mapas de plantio
-
-### Visita
-Representa visitas técnicas realizadas aos produtores.
-
-**Objetivos:**
-- `consultoria`: Consultoria técnica
-- `coleta_solo`: Coleta de amostras de solo
-- `avaliacao_cultivo`: Avaliação de cultivo
-- `entrega_material`: Entrega de material
-- `outro`: Outros objetivos
-
-### CadernoCampo
-Representa registros de atividades de campo.
-
-**Tipos de Atividade:**
-- `plantio`: Atividade de plantio
-- `adubacao`: Adubação
-- `aplicacao`: Aplicação de defensivos
-- `colheita`: Colheita
-- `analise_solo`: Análise de solo
-- `vistoria`: Vistoria técnica
-- `outro`: Outras atividades
-
-## Uso
-
-Essas definições servem como documentação e podem ser utilizadas para:
-- Validação de dados
-- Geração de documentação de API
-- Criação de formulários dinâmicos
-- Testes automatizados
-- Integração com banco de dados
+Mantenha esta pasta somente enquanto houver uso verificável ou necessidade de
+compatibilidade. Uma remoção futura deve confirmar primeiro que código, scripts
+e testes não consomem os schemas.

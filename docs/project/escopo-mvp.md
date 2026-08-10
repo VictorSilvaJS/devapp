@@ -150,4 +150,6 @@ Este documento define o que pertence ao nucleo do produto nesta etapa. Ele nao a
 - que todo item do MVP ja esteja fechado em detalhe
 - que backlog futuro passe automaticamente a fazer parte da entrega principal
 
-Para entender o que ja existe hoje, consulte `estado-atual.md`. Para evolucao futura, consulte `roadmap-futuro.md`.
+Para entender o que ja existe hoje, consulte `estado-atual.md`. Para a fila
+aprovada, consulte `proximos-passos.md`; para pontos ainda abertos, consulte
+`pendencias-de-definicao.md`.

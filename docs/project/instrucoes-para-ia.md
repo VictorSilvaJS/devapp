@@ -1,239 +1,145 @@
 # Instruções para IA e Agentes de Código
 
 ## Objetivo
-Este arquivo define como assistentes de IA, agentes de código e ferramentas como Codex devem interpretar a documentação deste projeto.
 
-O objetivo é evitar que materiais históricos, ideias antigas, protótipos ou hipóteses técnicas sejam tratados como estado atual do sistema.
-
-Para agentes de código, o ponto de entrada rápido do repositório é `AGENTS.md`.
-Este arquivo detalha as regras de interpretação, governança e comportamento.
-
----
+Estas instruções impedem que histórico, mock, proposta ou hipótese sejam
+tratados como estado atual ou segurança produtiva.
 
 ## Hierarquia de fontes
 
-Ao analisar este projeto, siga esta ordem de prioridade:
+Use esta ordem:
 
-1. `docs/project/`
-2. `docs/architecture/`
-3. `docs/guides/`
-4. `docs/testing/`
-5. `docs/reviews/`
-6. `docs/archive/` apenas como histórico
+1. código e testes relacionados à tarefa;
+2. docs/project/estado-atual.md;
+3. contexto, escopo, regras e decisões em docs/project;
+4. contrato técnico vigente relacionado à tarefa;
+5. pendências e próximos passos;
+6. docs/archive somente como histórico ou evidência.
 
-Se houver conflito entre documentos, priorize sempre os documentos em `docs/project/`.
+Em caso de conflito entre documento ativo e código, não invente uma síntese:
+registre a divergência e trate o código como evidência do comportamento
+existente. Decisões de produto continuam exigindo atualização documental.
 
-Dentro de `docs/project/`, use esta ordem de leitura:
+## Leitura por tarefa
 
-1. `estado-atual.md`
-2. `contexto-consolidado.md`
-3. `escopo-mvp.md`
-4. `regras-de-negocio.md`
-5. `decisoes-consolidadas.md`
-6. `pendencias-de-definicao.md`
-7. `plano-fechamento-pendencias-pre-backend-2026-08.md`
-8. `baseline-backend-v1-2026-08.md`
-9. `plano-mestre-implementacao-qa-2026-07.md`
-10. `plano-reorganizacao.md`
-11. `roadmap-futuro.md`
+Leitura base:
 
----
+1. docs/project/README.md
+2. docs/project/estado-atual.md
+3. docs/project/contexto-consolidado.md
+4. docs/project/escopo-mvp.md
+5. docs/project/regras-de-negocio.md
+6. docs/project/decisoes-consolidadas.md
+7. docs/project/pendencias-de-definicao.md
+8. docs/project/proximos-passos.md
 
-## Regra de interpretação por pasta
+Abra somente os contratos técnicos relacionados à tarefa. Evite carregar o
+arquivo histórico inteiro sem uma razão verificável.
 
-### `docs/project/`
-Contém o núcleo documental ativo e prioritário do projeto.
+## Regras de interpretação
 
-Papéis dos documentos ativos:
+### Estado atual
 
-- `estado-atual.md`: retrato do repositório e do que existe hoje
-- `contexto-consolidado.md`: problema, propósito, usuários e contexto do domínio
-- `escopo-mvp.md`: limite do MVP atual
-- `regras-de-negocio.md`: regras de domínio e acesso
-- `decisoes-consolidadas.md`: decisões já assumidas pelo projeto
-- `pendencias-de-definicao.md`: pontos reais ainda em aberto
-- `baseline-backend-v1-2026-08.md`: decisões de fundação que liberam o início
-  do backend e do banco
-- `plano-mestre-implementacao-qa-2026-07.md`: fila ativa de correcoes,
-  dependencias, validacoes e evidencias originadas da revisao de QA
-- `plano-reorganizacao.md`: ordem técnica de reorganização
-- `roadmap-futuro.md`: backlog de evolução, subordinado ao escopo e às decisões ativas
+Uma capacidade só existe quando está comprovada no código e, quando aplicável,
+em teste ou smoke. Contrato aprovado descreve o comportamento alvo e deve ser
+apresentado como ainda não implementado quando esse for o caso.
 
-**Esta é a fonte principal de verdade do projeto.**
+### Mock
 
-### `docs/architecture/`
-Contém visão técnica, decisões arquiteturais, integrações, estratégias técnicas e estrutura do sistema.
+Proteção visual, login local, AsyncStorage, arquivo local e regra executada no
+cliente não representam autenticação, autorização, auditoria, storage ou
+sincronização produtivos.
 
-Usar como apoio técnico, sempre subordinado ao estado atual definido em `docs/project/`.
+### Arquivo
 
-### `docs/guides/`
-Contém guias operacionais, padrões de uso e instruções práticas.
+Documentos em docs/archive preservam contexto. Não podem autorizar feature,
+reabrir escopo ou contradizer o núcleo ativo por conta própria.
 
-### `docs/testing/`
-Contém guias e critérios relacionados a testes.
+## Domínio obrigatório
 
-### `docs/reviews/`
-Contém análises, auditorias, revisões e verificações.
-Podem ser úteis para contexto, mas não substituem o estado atual.
+- Propriedade é a unidade operacional e o termo oficial de interface.
+- Produtor é o perfil final.
+- Titular é o responsável principal da Propriedade.
+- Talhão é a subdivisão interna.
+- Um Produtor pode titularizar várias Propriedades.
+- Administrador é global dentro da organização.
+- Colaborador depende de vínculo direto e ativo com cada Propriedade.
+- Município e UF não concedem acesso.
+- Regional, Área Operacional, Região e Microrregião não pertencem ao contrato
+  canônico v2.
+- Novos contratos e escritas usam propriedade_id.
+- fazenda_id pode ser lido apenas onde a compatibilidade legada já exige.
+- Produtor não administra estrutura geral.
+- O primeiro produto é Android e o offline produtivo é conservador por fluxo.
 
-### `docs/archive/`
-Contém histórico do projeto: propostas antigas, reuniões, protótipos, reorganizações anteriores, resumos históricos e materiais que ajudaram na evolução do projeto.
+## Protocolo de trabalho
 
-**Não tratar como verdade atual sem confirmação explícita em documentos ativos.**
+### Planejar
 
-Ideias, hipóteses e explorações futuras não pertencem à fonte principal de verdade a menos que sejam promovidas explicitamente para documentos ativos em `docs/project/`.
+Defina:
 
----
+- contexto;
+- objetivo;
+- comportamento esperado;
+- critérios de aceite;
+- fora de escopo;
+- arquivos e superfícies;
+- decisões e contratos;
+- pendências e riscos;
+- validações.
 
-## Regras obrigatórias
+### Executar
 
-### 1. Não assumir implementação a partir de histórico
-Não considerar como implementado algo que apareça apenas em:
-- histórico
-- proposta antiga
-- mockup
-- transcrição de reunião
-- protótipo
-- ideia técnica
+- Faça a menor mudança que cumpra o aceite.
+- Preserve alterações do usuário e evite refatoração paralela sem necessidade.
+- Não amplie escopo a partir de documento arquivado.
+- Não grave alias legado em contrato novo.
+- Não declare segurança produtiva com base em comportamento do cliente.
 
-### 2. Não assumir escopo atual a partir de ideias antigas
-Módulos futuros, hipóteses e explorações técnicas não devem ser tratados como parte obrigatória do escopo atual.
+### Revisar
 
-### 3. Apontar inconsistências em vez de inventar
-Quando houver conflito entre histórico e documentos ativos:
-- priorize os documentos ativos
-- registre a inconsistência
-- não invente uma síntese não documentada
+Procure:
 
-### 4. Respeitar o domínio do projeto
-As seguintes regras de domínio devem ser preservadas:
+- acesso ampliado;
+- vazamento entre Propriedades;
+- rota direta sem guarda;
+- Município ou UF usados como permissão;
+- Produtor recebendo ação estrutural;
+- mock apresentado como backend;
+- documentação e teste desatualizados.
 
-- `Produtor` é o termo oficial de produto para o perfil final; `cliente` e `proprietário` são aliases históricos, salvo decisão ativa em contrário
-- um produtor pode estar vinculado a várias propriedades
-- colaboradores possuem escopo regional
-- administradores possuem visão global
-- produtor visualiza e baixa dados da sua propriedade, mas não gerencia dados estruturais do sistema
-- mapas devem ser tratados no contexto da propriedade; `fazenda_id` permanece como chave técnica interna enquanto houver compatibilidade legada
-- o MVP prioriza consulta simples, mapas, arquivos e operação offline ao menos para visualização
+### Validar
 
-### 5. Antes de sugerir código
-Sempre validar se a proposta:
-- respeita o escopo atual do MVP
-- respeita os perfis de acesso
-- respeita a modelagem de produtor e propriedade, preservando `fazenda_id` quando for o contrato técnico existente
-- está sustentada por documentação ativa
-- não depende apenas de conteúdo histórico
+Mudança de código:
 
----
+- npm run typecheck
+- npm run test:domain-compat
+- testes focados
+- smoke proporcional ao risco
 
-## Protocolo de trabalho para agentes
+Mudança documental:
 
-### 1. Trabalhar por tarefa delimitada
+- git diff --check
+- validação de links
+- consistência contra código e contratos
 
-Cada conversa ou sessão de agente deve tratar uma tarefa pequena e verificável sempre que possível.
+## Atualização documental
 
-Antes de executar, delimite:
+- estado-atual.md recebe mudanças na fotografia.
+- proximos-passos.md recebe mudanças na fila.
+- decisoes-consolidadas.md recebe decisões fechadas.
+- pendencias-de-definicao.md recebe somente itens realmente abertos.
+- smoke.md recebe cenários ainda úteis e resultados atuais.
+- relatórios concluídos vão para docs/archive.
 
-- objetivo da tarefa
-- arquivos ou áreas provavelmente afetadas
-- documentos ativos que sustentam a mudança
-- pendências de definição que podem limitar a implementação
-- validações necessárias
+Evite criar um novo documento quando uma seção curta no arquivo ativo for
+suficiente.
 
-Essa delimitação funciona como uma spec curta da tarefa. Ela deve deixar claro:
+## Fechamento esperado
 
-- contexto
-- comportamento esperado
-- critérios de aceite
-- fora de escopo
-- validação final
+Informe:
 
-Se a tarefa crescer demais, quebre em etapas menores antes de continuar.
-
-### 2. Controlar a janela de contexto
-
-Evite carregar histórico, revisões antigas ou documentos longos sem necessidade.
-
-Priorize:
-
-1. documentos ativos em `docs/project/`
-2. código real relacionado à tarefa
-3. documentos técnicos complementares apenas quando forem necessários
-
-Quando a conversa ficar extensa, produza um resumo operacional antes de seguir:
-
-- objetivo
-- decisões tomadas
-- arquivos alterados
-- validações executadas
-- pendências restantes
-
-### 3. Separar planejamento, execução e revisão
-
-Quando houver mais de um agente ou mais de uma etapa de IA:
-
-- use o agente mais forte para planejamento, leitura de domínio e revisão
-- use agentes executores para mudanças bem delimitadas
-- use revisão independente para procurar regressões, inconsistências e testes ausentes
-
-Mesmo quando houver apenas um agente, mantenha essas fases mentalmente separadas:
-
-1. entender e planejar
-2. implementar o menor conjunto necessário
-3. revisar o resultado antes de finalizar
-
-### 4. Transformar falhas em insumo
-
-Quando uma implementação, teste ou smoke falhar:
-
-- registre a falha específica
-- corrija o menor ponto responsável
-- reexecute a validação afetada
-- documente a descoberta se ela revelar regra, pendência ou risco novo
-
-Falhas recorrentes não devem ficar apenas na conversa. Elas devem virar documentação, teste ou pendência conforme o caso.
-
-### 5. Validar antes de encerrar
-
-Use os comandos disponíveis no projeto quando a mudança tocar código:
-
-```powershell
-npm run typecheck
-npm run test:domain-compat
-```
-
-Use `docs/project/smoke.md` quando a mudança tocar fluxo funcional, permissão, rota direta, visitas, caderno, propriedade ou preservação de `fazenda_id`.
-
-Se a validação não for executada, explique o motivo no fechamento da tarefa.
-
----
-
-## Comportamento esperado do agente
-
-Antes de propor mudanças relevantes:
-1. citar quais documentos ativos sustentam a proposta
-2. apontar lacunas ou conflitos relevantes
-3. classificar o que é:
-   - estado atual
-   - histórico
-   - hipótese
-4. só então propor alteração de código ou documentação
-
-Ao executar mudanças já solicitadas pelo usuário, o agente deve aplicar o mesmo raciocínio antes de editar, ainda que não precise transformar tudo em uma resposta longa.
-
-Antes de encerrar, o agente deve informar:
-
-- o que mudou
-- onde mudou
-- quais validações foram executadas
-- se restou alguma pendência ou risco
-
----
-
-## Objetivo final
-O projeto deve evoluir com documentação consistente, sem misturar:
-- estado atual
-- histórico
-- roadmap antigo
-- protótipos
-- hipóteses técnicas
+- o que mudou;
+- onde mudou;
+- como foi validado;
+- quais riscos ou pendências permanecem.

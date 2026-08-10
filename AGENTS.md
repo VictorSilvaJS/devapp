@@ -1,138 +1,107 @@
 # AGENTS.md
 
-Guia operacional para agentes de codigo neste repositorio.
+Guia operacional para agentes de código neste repositório.
 
-Este arquivo e o ponto de entrada rapido. As regras completas ficam em
-`docs/project/instrucoes-para-ia.md`.
+As regras completas estão em
+[instruções para IA](docs/project/instrucoes-para-ia.md).
 
-## Objetivo
+## Leitura obrigatória
 
-Manter o projeto evoluindo com contexto controlado, escopo claro,
-implementacao verificavel e separacao entre estado atual, historico,
-hipoteses e pendencias.
+Antes de uma mudança relevante, leia nesta ordem:
 
-## Primeira Leitura Obrigatoria
+1. docs/project/instrucoes-para-ia.md
+2. docs/README.md
+3. docs/project/README.md
+4. docs/project/estado-atual.md
+5. docs/project/contexto-consolidado.md
+6. docs/project/escopo-mvp.md
+7. docs/project/regras-de-negocio.md
+8. docs/project/decisoes-consolidadas.md
+9. docs/project/pendencias-de-definicao.md
+10. docs/project/proximos-passos.md
 
-Antes de propor ou executar mudancas relevantes, leia nesta ordem:
+Quando a tarefa tocar backend, banco, sessão, API ou RBAC, leia também:
 
-1. `docs/project/instrucoes-para-ia.md`
-2. `docs/README.md`
-3. `docs/project/estado-atual.md`
-4. `docs/project/contexto-consolidado.md`
-5. `docs/project/escopo-mvp.md`
-6. `docs/project/regras-de-negocio.md`
-7. `docs/project/decisoes-consolidadas.md`
-8. `docs/project/pendencias-de-definicao.md`
-9. `docs/project/plano-fechamento-pendencias-pre-backend-2026-08.md`
-10. `docs/project/baseline-backend-v1-2026-08.md`
-11. `docs/project/plano-mestre-implementacao-qa-2026-07.md`
+- docs/project/baseline-backend-v1-2026-08.md
+- o contrato técnico específico listado em docs/project/README.md
 
-Use `docs/architecture/`, `docs/guides/` e `docs/testing/` apenas como apoio
-subordinado ao nucleo ativo em `docs/project/`.
+Use docs/archive apenas como histórico ou evidência. Um documento arquivado
+nunca prevalece sobre o código e o núcleo ativo.
 
-Use `docs/reviews/` e `docs/archive/` somente como contexto historico ou
-evidencia auxiliar. Eles nao definem estado atual sem confirmacao nos
-documentos ativos ou no codigo.
+## Planejamento mínimo
 
-## Protocolo De Trabalho
+Antes de editar, delimite:
 
-### 1. Planejar
+- contexto e objetivo;
+- comportamento esperado;
+- critérios de aceite;
+- fora de escopo;
+- arquivos prováveis;
+- decisões e contratos aplicáveis;
+- pendências que limitam a tarefa;
+- validação final.
 
-Para cada tarefa, delimite:
+Se houver ambiguidade, prefira uma proposta pequena e reversível.
 
-- objetivo da mudanca
-- arquivos provaveis
-- documentos ativos que sustentam a decisao
-- pendencias que bloqueiam ou limitam a implementacao
-- comandos de validacao aplicaveis
+## Regras que devem ser preservadas
 
-O planejamento deve funcionar como uma spec minima da tarefa:
+- Propriedade é a unidade operacional e o termo oficial de produto.
+- Produtor é o perfil final.
+- Titular é o responsável principal da Propriedade.
+- Talhão é a subdivisão interna da Propriedade.
+- Novos contratos usam propriedade_id.
+- fazenda_id permanece somente em bordas de compatibilidade já existentes.
+- Administrador é global dentro da única organização.
+- Colaborador acessa por vínculo direto e ativo com Propriedade.
+- Município e UF são localização e filtro; não concedem acesso.
+- Produtor consulta sua própria realidade e não administra estrutura geral.
+- O MVP local não comprova segurança, persistência ou auditoria produtivas.
 
-- contexto
-- comportamento esperado
-- criterios de aceite
-- fora de escopo
-- validacao final
+Não promova ideia arquivada para código sem uma decisão explícita no núcleo
+ativo.
 
-Se a tarefa estiver ambigua, prefira uma proposta pequena e reversivel.
+## Execução e revisão
 
-### 2. Executar
+Implemente somente o necessário para a tarefa atual. Antes de encerrar, procure:
 
-Implemente apenas o necessario para a tarefa atual.
+- regressão de acesso;
+- quebra de contexto de Propriedade;
+- ampliação indevida de escopo;
+- mock apresentado como produto real;
+- compatibilidade legada introduzida em escrita nova;
+- documentação ativa desatualizada;
+- teste ou smoke ausente.
 
-Preserve:
+## Validação
 
-- `Propriedade` como termo oficial de produto para a unidade operacional vista pelo usuario
-- `Produtor` como usuario/perfil final
-- `Titular` como responsavel cadastral ou vinculo principal da propriedade
-- `Talhao` como subdivisao interna da propriedade
-- `fazenda_id` como contexto operacional interno temporario quando o dado pertence a uma propriedade
-- escopo regional do colaborador
-- produtor como perfil de consulta da propria realidade operacional
-- MVP focado em consulta organizada, mapas, visitas, caderno e uso em campo
+Para mudanças de código:
 
-Nao promova ideias de `docs/archive/`, `docs/reviews/` ou `docs/ideas/` para
-codigo sem uma decisao explicita em `docs/project/`.
+- npm run typecheck
+- npm run test:domain-compat
 
-### 3. Revisar
+Execute testes focados adicionais e use docs/project/smoke.md quando a mudança
+tocar fluxo funcional, acesso, rotas diretas, Visitas, Caderno, Propriedade,
+mapas, mídia ou compatibilidade.
 
-Antes de encerrar uma tarefa, revise o diff procurando:
+Para mudanças somente documentais:
 
-- regressao de regra de acesso
-- quebra de contexto de propriedade
-- ampliacao indevida de escopo
-- dependencia em comportamento mock tratado como se fosse produto final
-- documentacao ativa desatualizada
-- teste ou smoke necessario que ficou sem cobertura
-
-Quando houver agentes paralelos, use preferencialmente:
-
-- agente mais forte para planejamento e revisao
-- agente executor para mudancas bem delimitadas
-- uma revisao final independente antes de considerar a tarefa pronta
-
-### 4. Validar
-
-Comandos disponiveis:
-
-```powershell
-npm run typecheck
-npm run test:domain-compat
-```
-
-Use `docs/project/smoke.md` para validacao manual de fluxos funcionais quando
-a mudanca tocar visitas, caderno, propriedade, permissao, rotas diretas ou
-contexto de `fazenda_id`.
+- git diff --check
+- validação de links locais
+- revisão de consistência com o código e os contratos
 
 Se um teste falhar:
 
-1. registre a falha especifica
-2. corrija o menor ponto responsavel
-3. reexecute a mesma validacao
-4. documente a descoberta se ela representar regra, pendencia ou risco novo
+1. registre a falha específica;
+2. corrija o menor ponto responsável;
+3. reexecute a mesma validação;
+4. registre regra, risco ou pendência nova quando necessário.
 
-## Controle De Contexto
+## Critério de pronto
 
-Trabalhe com uma tarefa por conversa ou sessao de agente sempre que possivel.
+Uma tarefa está pronta quando:
 
-Se o contexto ficar grande, produza um resumo operacional antes de continuar:
-
-- objetivo
-- decisoes tomadas
-- arquivos alterados
-- testes executados
-- pendencias restantes
-
-Evite carregar documentos historicos extensos sem necessidade. Priorize a
-trilha ativa e abra documentos complementares apenas quando eles forem
-relevantes para a tarefa.
-
-## Criterio De Pronto
-
-Uma tarefa so deve ser considerada pronta quando:
-
-- a mudanca respeita os documentos ativos
-- o codigo ou documento alterado esta consistente com o estado atual
-- as pendencias reais continuam registradas em `pendencias-de-definicao.md`
-- as validacoes aplicaveis foram executadas ou a impossibilidade foi explicada
-- o resultado final informa o que mudou, onde mudou e como foi verificado
+- respeita o núcleo ativo;
+- código e documentação estão coerentes;
+- pendências reais continuam registradas;
+- validações aplicáveis foram executadas ou justificadas;
+- o fechamento informa o que mudou, onde e como foi verificado.

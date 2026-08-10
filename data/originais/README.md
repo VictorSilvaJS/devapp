@@ -1,21 +1,19 @@
-# Originais geoespaciais
+# Originais Geoespaciais
 
-Esta pasta reserva o padrao para arquivos brutos recebidos antes da conversao.
+Esta pasta recebe arquivos brutos antes da conversão. O aplicativo não deve
+consumir diretamente SHP, DBF, SHX, PRJ, KML, KMZ ou pacotes auxiliares.
 
-Padrao:
+Para novas importações, use a organização:
 
-```text
-data/originais/{fazenda_id}/{ano}/{importacao_id}/
-```
+    data/originais/{propriedade_id}/{ano}/{importacao_id}/
 
-Exemplo para a amostra atual:
+Saídas normalizadas devem ir para:
 
-```text
-data/originais/p_sela1/2025/p_sela1-2025-limites-talhoes-shp/
-```
+    data/processados/{propriedade_id}/{ano}/
 
-Os pacotes brutos (`.shp`, `.dbf`, `.shx`, `.prj`, `.kml`, `.kmz` e
-auxiliares) nao devem ser consumidos pelo app. Eles tambem ficam ignorados pelo
-Git por padrao. O app consome apenas saidas finais normalizadas em
-`data/processados/{fazenda_id}/{ano}/` ou assets equivalentes gerados para o
-mock.
+Diretórios antigos podem continuar com identificadores legados enquanto forem
+apenas evidência ou insumo. Não renomeie nem remova um conjunto existente sem
+validar scripts, assets e o mock que o referenciam.
+
+O contrato produtivo de identidade e versionamento está em
+[Versionamento de GeoJSON e Talhões](../../docs/project/versionamento-geojson-talhoes.md).

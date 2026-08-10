@@ -1,94 +1,72 @@
-# Tche Agro Mobile
+# Tchê Agro Mobile
 
-Aplicativo mobile em React Native + Expo para operacao de consultoria agricola com foco em Produtores, Visitas tecnicas, Caderno de campo e mapas no contexto de Propriedades.
+Aplicativo Android em React Native e Expo para consultoria agrícola, com foco
+em Produtores, Propriedades, Talhões, Visitas, Caderno de Campo, Materiais
+técnicos e mapas.
 
-## Estado Atual
+## Situação atual
 
-O repositorio esta funcional como base de front-end e demonstracao, mas ainda nao representa um produto pronto para entrega.
+O frontend local está funcional e demonstrável com dataset v2, persistência no
+aparelho e três perfis. A última rodada física do mock não deixou bug aberto no
+recorte executado.
 
-Hoje o projeto tem:
+O projeto ainda não possui backend, banco, autenticação real, storage remoto,
+sincronização produtiva ou RBAC no servidor. A fundação está aprovada e o
+próximo passo é MP-33 — autenticação e sessão reais.
 
-- navegacao por perfil (`admin`, `colaborador`, `produtor`)
-- dashboards e fluxos principais de produtores, visitas, caderno e mapas
-- autenticacao mock com persistencia local
-- dataset demonstrativo v2 persistido localmente
-- notificacoes in-app em memoria
-- visualizacao de Talhoes/GeoJSON e cache local demonstrativo
-- contratos aprovados para iniciar backend, banco, sessao e RBAC reais
+Leia a fotografia completa em
+[Estado atual](docs/project/estado-atual.md) e a fila em
+[Próximos passos](docs/project/proximos-passos.md).
 
-Hoje o projeto ainda nao tem:
+## Como executar
 
-- backend real
-- autenticacao real
-- upload real de arquivos
-- download real de mapas
-- notificacoes push reais
-- sincronizacao offline completa
-- suite end-to-end produtiva cobrindo API, banco e todos os fluxos
+Requisitos:
 
-## Stack Atual
+- Node.js compatível com Expo SDK 56;
+- npm;
+- Android Studio, emulador ou aparelho autorizado quando houver teste Android.
 
-- Expo SDK 56
-- React Native 0.85
-- React Navigation
-- Context API
-- AsyncStorage
-- react-native-maps
-- react-native-webview
-- TypeScript
+Comandos principais:
 
-## Como Rodar
+- npm install
+- npm start
+- npm run android
+- npm run typecheck
+- npm run test:domain-compat
 
-### Requisitos
+Os demais scripts ficam em [package.json](package.json).
 
-- Node.js compativel com Expo SDK 56
-- npm
-- Expo CLI ou `npx expo`
+## Pastas importantes
 
-### Comandos
+| Pasta | Quando olhar |
+|---|---|
+| src/screens | Telas, formulários e fluxos visuais |
+| src/components e src/layout | Componentes e padrões reutilizáveis |
+| src/navigation | Rotas, pilhas e navegação por perfil |
+| src/domain, src/types e src/utils | Contratos, regras e compatibilidade |
+| src/api e src/services | Mock, persistência, arquivos e integrações |
+| src/auth e src/contexts | Login, sessão e estado compartilhado |
+| src/assets | Imagens e recursos empacotados |
+| tests e scripts | Testes de domínio e verificações |
+| android | Configuração e build Android nativo |
+| docs/project | Estado e contratos vigentes |
+| docs/archive | Histórico, fases e revisões antigas |
+| dist | Evidências geradas; não é fonte de verdade |
 
-```powershell
-npm install
-npm start
-```
+Pastas de dados agronômicos e amostras na raiz devem ser tratadas como insumo
+ou evidência, não como documentação atual ou contrato executável.
 
-Comandos disponiveis em [package.json](package.json):
+## Documentação
 
-- `npm start`
-- `npm run android`
-- `npm run ios`
-- `npm run web`
-- `npm run typecheck`
-- `npm run test:domain-compat`
+O ponto de entrada para leitura humana é [docs/README.md](docs/README.md).
 
-## Estrutura Atual
+Para agentes de código, comece em [AGENTS.md](AGENTS.md).
 
-```text
-devapp/
-  docs/        # documentacao organizada por categoria
-  entities/    # schemas e referencias de entidades
-  scripts/     # scripts auxiliares
-  src/         # codigo da aplicacao
-  android/     # projeto nativo Android
-  README.md
-```
+Regras importantes:
 
-## Documentacao
-
-A documentacao oficial do projeto esta em [docs/](docs/).
-
-Para agentes de codigo, o ponto de entrada rapido e [AGENTS.md](AGENTS.md).
-
-Para humanos e leitura completa, o ponto de entrada recomendado e [docs/README.md](docs/README.md), que organiza:
-
-- a hierarquia de leitura
-- o nucleo documental ativo em `docs/project/`
-- o papel das pastas complementares
-- a trilha recomendada para humanos e IA/agentes de codigo
-
-## Observacoes Importantes
-
-- `Propriedade`, `Produtor`, `Titular` e `Talhao` sao os termos oficiais de produto. Nomes com `fazenda*` permanecem somente por compatibilidade tecnica temporaria.
-- Parte da documentacao antiga foi preservada em `docs/reviews` e `docs/archive`.
-- Alguns documentos historicos ainda podem refletir decisoes antigas ou mais otimistas do que o codigo atual.
-- Se houver conflito entre materiais historicos e a documentacao ativa, priorize `docs/project/` e o estado real do codigo.
+- Propriedade, Produtor, Titular e Talhão são os termos oficiais.
+- Novos contratos usam propriedade_id.
+- fazenda_id existe apenas por compatibilidade temporária.
+- Colaborador acessa somente Propriedades com vínculo direto e ativo.
+- Município e UF não concedem permissão.
+- Conteúdo de docs/archive não representa o estado atual sem confirmação.

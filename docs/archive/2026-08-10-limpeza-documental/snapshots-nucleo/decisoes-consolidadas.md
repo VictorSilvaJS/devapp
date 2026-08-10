@@ -1,0 +1,1102 @@
+# Decisoes Consolidadas
+
+Este documento registra decisoes ja assumidas pelo projeto e que devem orientar leitura do dominio, UX, modelagem e evolucao tecnica. Nao deve receber hipoteses, backlog ou temas ainda em aberto.
+
+## Como Usar Este Documento
+
+- Use este arquivo para identificar o que o projeto ja trata como direcao consolidada.
+- Se um ponto ainda depender de validacao ou detalhamento, ele deve ir para `pendencias-de-definicao.md`.
+- Quando houver conflito entre historico e este documento, priorize este documento e os demais arquivos ativos de `docs/project/`.
+
+As decisoes 31 a 38, aprovadas entre 2026-08-05 e 2026-08-07, substituem especificamente a
+classificacao do Colaborador como regional nas decisoes 1 e 7, a compatibilidade
+territorial da decisao 12 e o modelo Regional/Area operacional da decisao 23.
+Essas secoes anteriores permanecem como registro do contrato que ainda existe
+no codigo v1 ate a migracao tecnica terminar; elas nao orientam novos dados v2.
+
+## 1. O projeto trabalha com tres perfis principais
+
+### Decisao
+
+O projeto considera tres perfis principais de uso:
+
+- administracao geral
+- colaborador regional
+- produtor
+
+### Alcance
+
+Afeta leitura funcional do produto, navegacao, acesso aos dados e organizacao do dominio.
+
+### Impacto
+
+Qualquer proposta de interface, permissao ou modelagem deve partir dessa estrutura base, e nao de papeis extras herdados de historico ou de ideias antigas.
+
+---
+
+## 2. Nomenclatura oficial de produto
+
+### Decisao
+
+Na interface, na documentacao de produto e em textos visiveis para o usuario, o termo oficial para a unidade operacional do produtor e `Propriedade`.
+
+Tambem ficam consolidados como termos de produto:
+
+- `Produtor`: usuario/perfil final que consulta sua realidade operacional.
+- `Titular`: responsavel cadastral ou vinculo principal da propriedade.
+- `Talhao`: subdivisao interna da propriedade.
+
+No codigo legado e em documentos tecnicos, permanecem temporariamente `fazenda`, `fazenda_id`, `getFazendaId`, nomes de rotas, arquivos, contratos e campos internos quando isso evitar refatoracao arriscada.
+
+### Alcance
+
+Afeta interface, textos visiveis, documentacao de produto, leitura funcional e interpretacao do dominio.
+
+### Impacto
+
+Novos textos de produto devem usar `Propriedade`, `Produtor`, `Titular` e `Talhao`. A limpeza tecnica interna de `fazenda` para `propriedade`, se acontecer, deve ser uma fase futura separada e planejada.
+
+---
+
+## 3. Um produtor pode estar ligado a uma ou mais propriedades
+
+### Decisao
+
+O dominio do projeto deve considerar a possibilidade de um mesmo produtor estar vinculado a mais de uma propriedade.
+
+### Alcance
+
+Afeta modelagem, navegacao, filtros, visibilidade e regras de acesso.
+
+### Impacto
+
+Fluxos de consulta, permissao e organizacao de dados nao devem assumir relacao simples de um produtor para uma unica propriedade.
+
+---
+
+## 4. A propriedade e a unidade central de contexto dos dados
+
+### Decisao
+
+Mapas, arquivos, visitas e registros devem ser lidos no contexto da propriedade a que pertencem.
+
+### Alcance
+
+Afeta UX, organizacao das telas, estrutura de dados e regras de visibilidade.
+
+### Impacto
+
+O sistema nao deve tratar mapas e materiais tecnicos como elementos soltos, desconectados do produtor e da propriedade. Na implementacao atual, `fazenda_id` continua sendo a chave operacional interna desse contexto.
+
+---
+
+## 5. O MVP prioriza consulta organizada e operacao principal
+
+### Decisao
+
+O MVP atual prioriza o nucleo operacional do produto:
+
+- acesso por perfil
+- consulta por produtor e propriedade
+- mapas e arquivos
+- visitas tecnicas
+- caderno de campo enxuto
+- uso em contexto de operacao rural
+
+### Alcance
+
+Afeta priorizacao funcional e criterio de corte de escopo.
+
+### Impacto
+
+Expansoes fora desse nucleo nao devem ser tratadas como compromisso automatico do produto nesta etapa.
+
+---
+
+## 6. O produtor consulta dados autorizados, mas nao gerencia a estrutura geral
+
+### Decisao
+
+O produtor deve ser tratado como perfil de consulta da propria realidade operacional, com acesso aos materiais e historicos autorizados, sem assumir responsabilidade principal por gerenciar a estrutura do sistema.
+
+### Alcance
+
+Afeta permissoes, experiencia do usuario e divisao de responsabilidade entre perfis.
+
+### Impacto
+
+Fluxos de manutencao estrutural, ingestao e administracao de dados devem continuar associados a perfis autorizados da equipe.
+
+---
+
+## 7. O colaborador opera dentro de escopo geografico restrito
+
+### Decisao
+
+O colaborador deve atuar dentro de um escopo regional ou sub-regional, sem acesso irrestrito ao conjunto total de dados.
+
+### Alcance
+
+Afeta filtros, regras de acesso, navegacao e visibilidade.
+
+### Impacto
+
+Qualquer proposta que amplie o alcance do colaborador fora do escopo geografico precisa ser tratada como excecao explicitamente definida, nao como comportamento padrao.
+
+---
+
+## 8. Internet instavel e premissa real de uso
+
+### Decisao
+
+O projeto deve considerar operacao em campo com conectividade limitada como premissa real do produto.
+
+### Alcance
+
+Afeta UX, desenho dos fluxos, comunicacao de capacidades e evolucao tecnica.
+
+### Impacto
+
+Capacidades offline devem ser descritas com cautela e em termos reais, priorizando consulta e visualizacao antes de prometer fluxos complexos.
+
+---
+
+## 9. Admin separa Usuarios de Propriedades
+
+### Decisao
+
+O fluxo administrativo deve separar conceitualmente `Usuarios` de `Propriedades`.
+
+`Propriedade` representa a unidade operacional. `Usuario` representa a pessoa que acessa ou sera preparada para acessar o sistema. Produtor, colaborador e admin sao perfis/tipos de usuario.
+
+No MVP atual, essa separacao existe em nivel visual/mockado no modulo `Admin -> Usuarios`. Ela nao cria autenticacao real, senha real, convite, reset de acesso ou sessao.
+
+### Alcance
+
+Afeta a organizacao visual do admin, os mocks de dados e a preparacao para backend/banco futuro.
+
+### Impacto
+
+- dados cadastrais de pessoa devem ficar no cadastro de usuario, nao duplicados dentro da propriedade
+- propriedades continuam exibindo `Produtor titular` como vinculo visual/cadastral
+- produtor pode estar vinculado a uma ou mais propriedades por relacao mock explicita `usuario_propriedade`
+- colaborador pode ter microregioes/sub-regioes e propriedades atribuidas visualmente por relacoes mock
+- admin possui visao global e nivel administrativo simples no mock
+- campos internos legados como `produtor_id`, `fazenda_id` e nomes tecnicos permanecem quando necessarios para compatibilidade
+
+---
+
+## 10. Status explicito de usuario no mock administrativo
+
+### Decisao
+
+No modulo administrativo de usuarios, o status de usuario deve ser tratado explicitamente como:
+
+- `ativo`
+- `inativo`
+- `pendente`
+
+O booleano `ativo` permanece apenas como compatibilidade temporaria enquanto partes antigas do app ainda dependem desse shape.
+
+### Alcance
+
+Afeta o mock de usuarios, a listagem, o detalhe, o formulario e as validacoes administrativas.
+
+### Impacto
+
+Produtor pendente pode existir sem propriedade vinculada. Produtor ativo deve ter ao menos uma propriedade vinculada. Colaborador ativo deve ter microregiao/sub-regiao ou propriedade atribuida. Admin nao exige propriedade nem microregiao.
+
+---
+
+## 11. O caderno de campo deve nascer enxuto
+
+### Decisao
+
+O caderno de campo nao deve ser expandido de forma ampla e generica logo no inicio. Ele deve priorizar informacao realmente util ao contexto operacional.
+
+### Alcance
+
+Afeta formulários, escopo funcional e criterio de evolucao do modulo.
+
+### Impacto
+
+Novos campos e comportamentos do caderno devem ser avaliados pelo valor operacional real, e nao apenas por desejo de cobertura total do dominio.
+
+---
+
+## 12. Regiao -> Microregiao -> Propriedade e compatibilidade territorial legada do mock
+
+Status atual: `SUPERADA PARA NOVAS ESCRITAS` pela decisao 33. Permanece apenas
+como registro historico e fronteira de leitura do mock v1.
+
+### Decisao
+
+No MVP visual/mockado existente, a sincronizacao territorial continua
+preservando a leitura legada Regiao -> Microregiao -> Propriedade ate uma
+migracao controlada.
+
+Essa leitura e suportada pelo helper `territorioCompat`, que deriva regioes e microregioes a partir das propriedades mockadas e preserva compatibilidade com os campos textuais legados `regiao` e `microregiao`.
+
+Essa estrutura nao define mais o modelo territorial canonico. A decisao 23 e
+`modelo-territorial.md` separam Municipio/UF de Regional/Area operacional.
+
+### Alcance
+
+Afeta o cadastro administrativo de usuarios, o cadastro de propriedades e o detalhe administrativo da propriedade no MVP visual/mockado.
+
+### Impacto
+
+- Admin pode selecionar visualmente regioes e uma ou mais microregioes
+  legadas ao cadastrar/editar Colaborador no mock
+- a interface pode exibir previa das propriedades abrangidas pela microregiao
+- colaborador pode ter propriedades atribuidas diretamente no mock visual
+- produtor pode ter multiplas propriedades vinculadas e receber alerta quando a propriedade ja tiver outro produtor principal no mock
+- cadastro de propriedade pode usar selecao de Regiao e Microregiao derivada do mock
+- ao selecionar microregiao, a tela pode sugerir colaboradores compativeis
+- detalhe da propriedade pode mostrar usuario produtor vinculado e colaboradores sugeridos/relacionados ao territorio
+- vinculos visuais de colaborador nao alteram o motor efetivo de permissoes nesta fase
+- Colaborador nao pode autoeditar esses campos no proprio Perfil
+- `produtor_id`, `proprietario_id`, `sub_regioes`, `propriedades_atribuidas`, `regiao`, `microregiao`, `fazenda_id` e `acessoControle` permanecem preservados por compatibilidade
+
+Ficam fora desta decisao nesta fase: backend, banco, migrations, API real, autenticacao real, senha, convite, reset, RBAC completo, upload/storage, Drive, CRUD real de regioes/microregioes e migracao do `acessoControle`.
+
+---
+
+## 13. Cadastro rapido de propriedade no cadastro de usuario produtor
+
+Status atual: `SUPERADA PARA O MOCK V2`. O fluxo atual exige Produtor ativo
+previamente cadastrado e realiza a criacao atomica da Propriedade com os
+vinculos diretos definidos pelo Admin.
+
+### Decisao
+
+No MVP visual/mockado, o fluxo `Admin -> Usuarios -> Novo Usuario -> Perfil Produtor` pode criar uma propriedade rapida quando a propriedade do produtor ainda nao existir.
+
+O admin pode escolher entre:
+
+- vincular o usuario produtor a uma propriedade existente
+- cadastrar uma nova propriedade rapida no mesmo fluxo
+
+### Alcance
+
+Afeta o cadastro administrativo de usuario produtor, o mock de propriedades e a relacao visual `usuario_propriedade`.
+
+### Impacto
+
+- o cadastro rapido inclui nome da propriedade, municipio, UF/Estado, regiao, micro-regiao, area total, status, tipo de vinculo, vinculo principal e observacoes
+- Regiao e Microregiao usam `territorioCompat` quando houver dados disponiveis, com fallback textual
+- ao escolher micro-regiao, a interface pode sugerir colaboradores apenas visualmente
+- ao salvar, o mock cria a propriedade via `Produtor.create`
+- ao salvar, o mock vincula a propriedade criada ao usuario produtor via `usuario_propriedade`
+- campos legados como `produtor_id`, `proprietario_id`, `regiao`, `microregiao` e `fazenda_id` permanecem preservados
+- produtor ativo exige propriedade existente ou cadastro rapido valido
+- produtor pendente sem propriedade continua permitido
+- o fluxo prepara uma criacao combinada futura de `usuario` + `propriedade` + `usuario_propriedade`
+
+Risco assumido no mock:
+
+- como nao ha transacao no mock, pode haver inconsistencia se uma etapa do salvamento falhar depois da criacao da propriedade
+- no backend futuro, esse fluxo deve ser transacional
+
+Ficam fora desta decisao nesta fase: backend, banco real, API, migrations, autenticacao real, senha, convite, reset, RBAC completo, upload/storage, Drive, CRUD real de regioes/microregioes e migracao do `acessoControle`.
+
+---
+
+## 14. Mapas e limites formam uma experiencia unica de panorama no MVP
+
+### Decisao
+
+No MVP, o usuario nao deve navegar por duas experiencias concorrentes de `Mapas` e `Limite` quando o objetivo pratico for visualizar o panorama da propriedade. A interface deve apresentar uma experiencia unica de panorama/mapa da propriedade.
+
+### Alcance
+
+Afeta a UX de mapas, a leitura da entidade `LimiteArea` e a estrategia de ingestao de arquivos geoespaciais.
+
+### Impacto
+
+- `LimiteArea` permanece como camada tecnica de demarcacao dos talhoes, vinculada a `fazenda_id` enquanto essa for a chave interna do contexto de propriedade.
+- A tela de mapas deve tratar a demarcacao como base do panorama, e nao como uma aba funcional separada.
+- Materiais tecnicos, PDFs, imagens e arquivos associados continuam existindo como biblioteca de materiais no contexto da propriedade.
+- Para novos anexos do MVP local, materiais tecnicos devem ser organizados por
+  `Propriedade -> Ano -> Categoria`, preservando `fazenda_id` como alias
+  tecnico enquanto houver compatibilidade.
+- O foco inicial dos materiais liberaveis deve ser mapas de diagnostico, especialmente fertilidade por elemento/camada, como argila, fosforo, pH, potassio e materia organica.
+- A taxonomia operacional da biblioteca de mapas possui tres categorias
+  principais: Fertilidade, Correcao de solo e Prescricao. Os filtros principais
+  de materiais tecnicos devem ficar restritos a essas tres categorias.
+- O fluxo principal para novos anexos e unificado e aceita PNG, PDF ou ZIP. O
+  nome original e preservado, o titulo e gerado automaticamente e o ano e
+  obrigatorio. Safra/Safrinha e referencia opcional a periodo produtivo da
+  mesma Propriedade.
+- Fertilidade registra profundidade no escopo da Propriedade; Correcao registra
+  profundidade e escolhe Propriedade inteira ou Talhao; Prescricao nao exige
+  profundidade, camada ou Talhao no corte atual. `Nao informada` e uma opcao
+  explicita quando a profundidade nao estiver comprovada.
+- No MVP atual, o mapa interativo e apenas a base de talhoes/limites. Mapas de elementos, como PNGs de fertilidade, devem ser tratados como anexos visuais da biblioteca de materiais.
+- PNGs de elementos nao devem ser sobrepostos ao mapa interativo nesta etapa.
+  A experiencia esperada e abrir o PNG por `material_id` e versao, como
+  imagem/anexo em modal de tela cheia. A ampliacao combina pinca, toque duplo,
+  arraste e botoes acessiveis, sem remover a rota dedicada. O quadro captura
+  o toque e neutraliza a rolagem da pagina externa durante a interacao.
+- Uma camada de material so deve abrir como mapa quando houver GeoJSON
+  renderizavel real; extensao, titulo ou coordenada solta nao justificam uma
+  camada tematica inventada. Quando existir, a tela mostra legenda e
+  metadados.
+- PDF e ZIP continuam catalogados por metadados e nome original. PDF usa
+  visualizacao embutida apenas em plataforma compativel ou abertura por
+  visualizador real do sistema, com falha explicita. ZIP nao recebe preview,
+  unzip, leitura de bytes ou processamento.
+- A abertura revalida id, versao, Propriedade e perfil na fonte unica. A acao
+  de arquivo depende de autorizacao, disponibilidade e referencia abrivel;
+  voltar preserva filtros e posicao da lista.
+- O arquivo fisico local fica no storage interno do aplicativo e o
+  `AsyncStorage` guarda somente o indice de metadados. Registros PNG/ZIP
+  anteriores continuam legiveis, sem copia ou duplicacao automatica no indice
+  unificado.
+- A consulta local no mesmo aparelho pode funcionar sem conexao, mas nao
+  representa sync, download remoto, restauracao entre aparelhos ou offline
+  total.
+- Arquivos tecnicos operacionais disponiveis no acervo, como sementes ou linhas de plantio, podem ser anexados e liberados quando fizerem sentido para a propriedade, mas nao devem virar uma experiencia separada da biblioteca de materiais da propriedade.
+- O app deve consumir um arquivo final normalizado, preferencialmente GeoJSON ou JSON equivalente, em vez de carregar no celular o pacote bruto de arquivos `.shp`, `.shx`, `.dbf`, `.prj`, `.kml`, `.kmz` ou metadados auxiliares.
+- Para acelerar o MVP, a validacao local pode usar um conversor de desenvolvimento que gera o arquivo final a partir dos originais, mas a conversao produtiva futura deve acontecer fora do app, em backend ou processo operacional controlado.
+- Para SHP, nomes de talhoes devem ser obtidos dos campos do `.dbf`; para KML/KMZ, dos elementos `<name>`; para GeoJSON pronto, das `properties`.
+- Cada importacao real deve registrar manifesto com campos encontrados, campo de nome usado, quantidade de talhoes, quantidade de poligonos/partes e status de revisao.
+- O fluxo real deve ter pre-visualizacao e aprovacao por equipe autorizada antes de publicar o GeoJSON/JSON final no app ou backend.
+
+---
+
+## Marco Da Fase 17H.0.2
+
+As decisoes 15 a 21 abaixo consolidam o fechamento funcional do baseline
+anterior a novas evidencias e a qualquer implementacao de coordenadas,
+marcacoes ou fotos reais.
+
+- `DECISOES_CONSOLIDADAS_PARA_FECHAMENTO_DO_BASELINE`
+- `DESENVOLVIMENTO_EM_EMULADOR_AUTORIZADO`
+- `CAMPO_BLOQUEADO_ATE_ANDROID_FISICO`
+
+Esses marcadores nao aprovam Android fisico nem uso de campo. Eles separam
+explicitamente decisao, implementacao, validacao em emulador, validacao em
+Android fisico e aptidao para campo.
+
+---
+
+## 15. Desenvolvimento pode continuar em emulador, mas campo exige Android fisico
+
+### Decisao
+
+Desenvolvimento, testes automatizados e smoke tecnico podem continuar em
+emulador. A aprovacao para campo permanece bloqueada ate existir Android
+fisico autorizado e o roteiro aplicavel ter sido executado com evidencia.
+
+### Alcance
+
+Afeta planejamento de fases, linguagem de status, criterio de pronto e
+aprovacao de APK para uso operacional.
+
+### Impacto
+
+- `implementado` descreve existencia no codigo;
+- `validado em emulador` descreve evidencia tecnica no ambiente virtual;
+- `validado em Android fisico` exige aparelho autorizado e evidencia propria;
+- `apto para campo` exige Android fisico e fechamento dos bloqueios funcionais
+  aplicaveis;
+- nenhuma evidencia de emulador pode ser promovida automaticamente a aprovacao
+  de campo;
+- Android fisico continua pendente e nao aprovado na Fase 17H.0.2.
+
+---
+
+## 16. O primeiro ponto persistido sera metadado opcional do Caderno
+
+### Decisao
+
+No primeiro corte futuro, o ponto geografico persistido deve fazer parte do
+proprio registro do Caderno como metadado opcional. Nao sera criada a chave
+`@tche:field-markers:v1` nesse corte.
+
+A coordenada somente podera persistir depois de acao explicita do usuario e do
+submit bem-sucedido do Caderno. `Mostrar minha posicao`, abrir mapa, Talhao ou
+Caderno nunca salva coordenada. Cancelar o formulario nunca persiste. Remover
+a localizacao antes de salvar produz Caderno sem localizacao.
+
+### Alcance
+
+Afeta a futura implementacao do Caderno, consentimento, compatibilidade de
+registros e testes de persistencia. Nao altera o contrato atual nesta fase.
+
+### Impacto
+
+- registros antigos continuam validos sem localizacao;
+- criar Caderno sem localizacao continua sendo o fluxo normal;
+- os campos finais permanecem opcionais e devem ser especificados na fase de
+  implementacao sem quebrar registros antigos;
+- nao existe persistencia automatica ou implicita;
+- nao havera background, tracking, trilha, rota, historico de posicoes,
+  geofencing, watch continuo ou ultimo ponto separado;
+- PNG e ZIP permanecem sem marcador e sem georreferenciamento;
+- nenhuma coordenada foi salva e nenhuma chave foi criada na 17H.0.2.
+
+---
+
+## 17. A futura marcacao reutilizara as permissoes atuais do Caderno
+
+### Decisao
+
+A futura marcacao nao criara RBAC novo. Ela reutilizara a regra atual do
+Caderno e o contexto operacional de Propriedade/Talhao.
+
+### Alcance
+
+Afeta criacao, consulta e edicao futura de Caderno com ponto no MVP
+local/mockado.
+
+### Impacto
+
+- Produtor podera registrar ponto em Caderno da propria Propriedade/Talhao;
+- Produtor continuara sem editar ou remover registro;
+- Colaborador podera registrar e editar dentro do escopo atual;
+- Admin seguira com acesso global local/mockado;
+- nenhuma permissao desta decisao substitui validacao futura por acao,
+  Propriedade e perfil;
+- backend/RBAC real permanece fora do escopo desta fase.
+
+---
+
+## 18. Area total informada, area mapeada e perimetro sao conceitos distintos
+
+### Decisao
+
+`area_total` da Propriedade deve ser apresentada como `Area total informada`.
+A soma das areas disponiveis dos Talhoes deve ser apresentada como
+`Area mapeada`. Ausencia de area deve ser apresentada como `Nao informado`,
+sem conversao para zero e sem chamar area mapeada de area total.
+
+Perimetro somente pode aparecer quando houver valor e origem comprovados. Para
+a Sela de Prata I, nao se deve afirmar `Perimetro processado` no estado atual.
+
+### Alcance
+
+Afeta linguagem de UI, helpers de apresentacao, testes e futura proveniencia
+das medidas. Nao autoriza correcao funcional nesta fase.
+
+### Impacto
+
+- 6200 ha permanecem como area total informada da Propriedade;
+- 1888,6 ha permanecem como soma mapeada da amostra processada;
+- nenhum dos valores pode ser alterado ou equiparado por inferencia;
+- a relacao de cobertura entre os valores continua pendente de comprovacao;
+- a correcao da UI que hoje pode exibir `0 ha total` permanece em microfase
+  propria.
+
+---
+
+## 19. Fotos simuladas nao representam captura real
+
+### Decisao
+
+As acoes atuais de Camera/Galeria que geram URLs `picsum.photos` sao
+simulacoes e nao podem ser apresentadas como captura real. Em microfase
+posterior, essas acoes ativas devem ser removidas ou desativadas, preservando a
+leitura das fotos mockadas ja existentes.
+
+### Alcance
+
+Afeta linguagem de produto, preparacao do APK de campo e futura segregacao dos
+placeholders. Nao implementa camera nem foto nesta fase.
+
+### Impacto
+
+- foto real e foto georreferenciada continuam fora do escopo ate fase propria;
+- nenhuma permissao, dependencia, storage ou contrato de foto e criado agora;
+- os registros demonstrativos existentes continuam consultaveis;
+- a segregacao dos botoes simulados permanece trabalho funcional pendente.
+
+---
+
+## 20. O celular consome mapas preparados e nao executa processamento produtivo
+
+### Decisao
+
+O celular nao gera mapas. O MVP atual consome arquivos previamente preparados
+ou importados localmente. Nao existe servidor produtivo, publicacao, sync ou
+download real no produto atual.
+
+### Alcance
+
+Afeta comunicacao da capacidade atual, arquitetura futura e criterio de
+prontidao dos servicos/stubs existentes.
+
+### Impacto
+
+- GeoJSON, PNG e ZIP locais permanecem no corte demonstrativo atual;
+- stubs, endpoints simulados e helpers nao podem ser descritos como backend
+  funcional;
+- processamento externo, storage, revisao, publicacao, permissao, historico,
+  sync e download reais permanecem na trilha futura de backend.
+
+---
+
+## 21. Alinhamento Expo deve ocorrer em fase tecnica isolada
+
+### Decisao
+
+`expo` e `expo-location` devem ser alinhados somente em fase tecnica isolada,
+sem misturar atualizacao de dependencia com correcao funcional. Nao se deve
+usar `npm audit fix` para realizar esse alinhamento.
+
+### Alcance
+
+Afeta planejamento tecnico, validacao de build e rastreabilidade de regressao.
+
+### Impacto
+
+- a divergencia atual permanece registrada como pendencia tecnica;
+- nenhuma dependencia e alterada na Fase 17H.0.2;
+- a fase de alinhamento deve executar sua propria matriz de typecheck, testes,
+  build e smoke;
+- correcoes de area, fotos simuladas, Caderno ou marcacoes devem permanecer em
+  microfases separadas.
+
+---
+
+## 22. Sessao produtiva deve expirar, revalidar e bloquear retomada insegura
+
+### Decisao
+
+A politica canonica fica em `politica-sessao.md`.
+
+O primeiro corte produtivo deve usar access token de 15 minutos, refresh token
+rotativo com validade absoluta de 30 dias, bloqueio local depois de 15 minutos
+de inatividade/background e janela maxima de consulta offline de 24 horas
+desde a ultima revalidacao.
+
+Perfil, status, organizacao e escopo devem ser revalidados na renovacao, na
+reconexao e antes de liberar sessao restaurada quando houver rede. Logout deve
+bloquear e limpar a sessao local imediatamente e revogar a sessao remota
+quando possivel.
+
+### Alcance
+
+Afeta autenticacao futura, backend, storage seguro, ciclo de vida do app,
+reconexao, cache por usuario, logout, troca de usuario, rotas diretas e testes
+dos tres perfis.
+
+### Impacto
+
+- `@tche:user` continua sendo somente persistencia demonstrativa do mock;
+- token e segredo nao podem ficar em `AsyncStorage`;
+- consulta offline fica limitada ao ultimo escopo autorizado e, ate contrato
+  proprio por fluxo, e somente leitura;
+- PIN/biometria podem destravar sessao ainda valida, mas nao substituem
+  credencial, token ou revalidacao;
+- rota direta e notificacao continuam sujeitas a autorizacao no servidor;
+- a decisao nao implementa seguranca produtiva e depende de `MP-33`.
+
+---
+
+## 23. Localizacao oficial e escopo operacional sao dimensoes distintas
+
+### Decisao
+
+O contrato canonico fica em `modelo-territorial.md`.
+
+- UF e Municipio representam localizacao oficial, com codigos estaveis do
+  IBGE.
+- Regional e Area operacional representam o escopo de trabalho da
+  organizacao, com IDs proprios.
+- Municipio/UF nao concedem acesso.
+- Vinculos operacionais sao atribuidos administrativamente e nao podem ser
+  autoeditados pelo Colaborador.
+- Alteracao futura exige autorizacao, justificativa, auditoria e revalidacao
+  da sessao/escopo.
+
+### Alcance
+
+Afeta cadastro de Propriedade, administracao de usuarios, Perfil do
+Colaborador, motor futuro de acesso, filtros, sessao, auditoria e migracao dos
+campos territoriais legados.
+
+### Impacto
+
+- `regiao`, `microregiao`, `sub_regioes` e `vinculos_microregioes` continuam
+  legados temporarios e nao provam classificacao canonica;
+- `territorioCompat` continua apenas como compatibilidade visual do mock;
+- a edicao livre de `regiao` deve sair do Perfil do Colaborador;
+- payload de autoedicao territorial deve ser recusado localmente;
+- o motor efetivo atual nao muda nesta tarefa;
+- backend, vinculos reais, auditoria e migracao permanecem em `MP-35`.
+
+---
+
+## 24. Notificacao e entrega individual, escopada e reautorizada
+
+### Decisao
+
+O contrato canonico fica em `contrato-notificacoes.md`.
+
+- evento de dominio e entrega ao destinatario sao registros distintos;
+- cada entrega pertence a um usuario e organizacao;
+- recurso operacional referencia tipo, ID e Propriedade;
+- leitura, descarte e deduplicacao persistem por destinatario;
+- o cliente deriva a rota por allowlist e nao confia em rota recebida;
+- o servidor revalida sessao, destinatario, organizacao, escopo e recurso antes
+  da abertura;
+- troca de usuario limpa imediatamente o estado da identidade anterior.
+
+### Alcance
+
+Afeta backend futuro, contexto de notificacoes, contador, cache, logout, troca
+de usuario, deep links, push, navegacao e guards dos recursos.
+
+### Impacto
+
+- a lista global de `NotificacaoContext` continua somente demonstrativa;
+- marcar como lida nao autoriza nem abre um recurso;
+- notificacao de outro destinatario ou fora do escopo nao pode ser consultada;
+- o contrato nao cria persistencia ou seguranca no front-end;
+- implementacao, isolamento real e testes negativos permanecem em `MP-34`.
+
+---
+
+## 25. Caderno enviado e registro imutavel com evolucao por eventos
+
+### Decisao
+
+O contrato canonico fica em `ciclo-vida-caderno.md`.
+
+- rascunho e editavel somente pelo criador;
+- envio consolida o snapshot original e nao permite retorno ao rascunho;
+- complemento, correcao e visibilidade sao eventos append-only;
+- correcao exige permissao, motivo, antes/depois e versao base;
+- Propriedade, autoria, origem e datas do envio nunca sao reatribuidas;
+- arquivamento e anulacao preservam registro e historico;
+- concorrencia nao usa `last write wins`.
+
+### Alcance
+
+Afeta Novo Caderno, edicao, detalhe, listagens, autoria, localizacao,
+visibilidade, offline, sincronizacao, backend e auditoria dos tres perfis.
+
+### Impacto
+
+- `CadernoCampo.update` aceita apenas rascunho proprio na borda compativel e
+  recusa sobrescrita de registro consolidado;
+- registro legado e lido como consolidado protegido, sem inventar historico;
+- Produtor nao altera registro enviado;
+- Admin/Colaborador usam comandos excepcionais, nao edicao destrutiva;
+- campos obrigatorios por tipo e comandos locais foram implementados em
+  `MP-25`;
+- persistencia append-only, concorrencia, autorizacao e auditoria produtivas
+  permanecem em `MP-36`.
+
+---
+
+## 26. Visita usa maquina de estados e comandos auditados
+
+### Decisao
+
+O contrato canonico fica em `estados-visita.md`.
+
+- Visita pode nascer `agendada` ou ser registrada diretamente como
+  `realizada` pelo fluxo de conclusao;
+- `agendada` pode ser reagendada, concluida ou cancelada;
+- `realizada` nao regride e somente recebe complemento, correcao ou anulacao;
+- `cancelada` e terminal e pode originar nova Visita vinculada;
+- atraso e indicador derivado, nao estado persistido;
+- conclusao e cancelamento exigem formularios proprios;
+- toda transicao valida estado, versao, permissao e escopo.
+
+### Alcance
+
+Afeta Nova Visita, edicao, detalhe, listagem, historico, offline, notificacoes,
+backend e regras de acesso dos tres perfis.
+
+### Impacto
+
+- `MP-27` removeu o seletor livre de status e bloqueou update generico do
+  estado no mock local;
+- Visita realizada/cancelada nao abre edicao geral;
+- Admin nao exclui fisicamente Visita persistida;
+- registros legados sao preservados sem historico inventado;
+- comandos locais versionados e historico foram implementados em `MP-27`;
+- organizacao visual das listas foi concluida em `MP-22`;
+- autorizacao, append-only, concorrencia, idempotencia e sincronizacao
+  produtivas continuam dependentes do backend.
+
+---
+
+## 27. GeoJSON usa versoes imutaveis e Talhao possui identidade logica
+
+### Decisao
+
+O contrato canonico fica em `versionamento-geojson-talhoes.md`.
+
+- `talhao_id` e estavel e separado do nome, codigo e geometria;
+- cada GeoJSON recebido cria importacao imutavel e auditavel;
+- geometria possui versao e vigencia proprias;
+- rascunho e revisao nao substituem a camada publicada;
+- publicacao exige reconciliacao e permissao explicita;
+- versao publicada anterior e arquivada, nunca apagada automaticamente;
+- renome mantem identidade;
+- divisao e fusao criam sucessores e preservam linhagem;
+- modulos operacionais usam `talhao_id` e, quando necessario,
+  `talhao_geometria_versao_id`;
+- migracao textual preserva snapshots e nao inventa correspondencias.
+
+### Alcance
+
+Afeta Talhoes, mapas, importacao GeoJSON, Caderno, Visitas, Safra/Safrinha,
+Materiais, localizacao, backend, storage, cache offline, auditoria e migracao.
+
+### Impacto
+
+- o fluxo local de um GeoJSON `ativo` continua demonstrativo e incompativel
+  com o contrato produtivo;
+- IDs derivados de indice/nome nao podem ser tratados como identidade;
+- substituir/remover localmente ainda pode apagar arquivo ate `MP-37`;
+- Colaborador prepara e reconcilia; publicacao fica com Admin ou papel tecnico
+  explicito no primeiro contrato;
+- implementacao produtiva permanece em `MP-37`;
+- IDs selecionaveis dependem de `MP-24` e a regressao historica de `MP-39`.
+
+---
+
+## 28. Localizacao do Caderno usa apresentacao simples e avaliacao espacial versionada
+
+### Decisao
+
+Quando o Caderno possuir ponto valido e Talhao com geometria local resolvida,
+o app avalia e preserva no proprio registro a relacao `dentro`, `proximo` ou
+`fora`. Ponto interno ou sobre o limite e `dentro`; ponto externo e `proximo`
+quando sua distancia ao limite nao supera a soma da precisao informada com a
+tolerancia local de 15 m; os demais casos sao `fora`.
+
+A avaliacao preserva `talhao_geometria_versao_id`, fonte, ano quando
+disponivel, distancia calculada e tolerancia aplicada. Ela nao cria identidade
+por nome: sem `talhao_id` compativel ou geometria valida, o registro permanece
+sem avaliacao espacial e a interface informa essa ausencia.
+
+### Alcance
+
+Afeta criacao e envio de rascunho, detalhe do Caderno, mini mapa, rota `Ver no
+mapa`, projecao do Produtor, compatibilidade local e snapshot original do
+registro consolidado.
+
+### Impacto
+
+- o mini mapa prioriza marcador, limite do Talhao e circulo de precisao;
+- a captura explicita usa uma unica leitura atual com a maior precisao
+  solicitavel ao provider e nao substitui falha por uma posicao antiga;
+- a posicao capturada e seu circulo de precisao permanecem marcados tanto no
+  mapa interativo quanto no fallback vetorial;
+- falha em uma recaptura nao apaga o ultimo ponto valido; resposta de uma tela
+  que perdeu foco e ignorada e a reentrada sincroniza novamente o marcador
+  depois que o mapa fica pronto;
+- a captura do formulario so integra o Caderno quando o usuario salva o
+  registro; sair sem salvar descarta o ponto;
+- baixa precisao continua visivel no detalhe depois do salvamento;
+- Produtor ve o mapa, a precisao e a relacao operacional, mas nao recebe IDs,
+  distancia/tolerancia nem coordenadas brutas como bloco principal;
+- coordenadas, autoria da captura e metadados da geometria ficam recolhidos em
+  `Detalhes tecnicos` para equipe autorizada;
+- `Ver no mapa` reutiliza a rota protegida da Propriedade e nao amplia acesso;
+- registros antigos sem avaliacao continuam validos e nao recebem relacao
+  espacial inventada retroativamente;
+- captura unica nao cria acompanhamento continuo, background, trilha ou
+  historico de deslocamento;
+- validacao do provider e dos cenarios reais dentro/fora em campo permanece em
+  `MP-38`; versionamento produtivo da geometria permanece em `MP-37`.
+
+---
+
+## 29. Foto existente usa modal comum e acao revalidada pelo registro
+
+### Decisao
+
+Fotos demonstrativas preexistentes de Caderno e Visita usam um unico modal de
+tela cheia. A imagem admite pinca, toque duplo e botoes entre 100% e 400%, com
+arraste limitado ao quadro. O modal isola o gesto da rolagem do detalhe.
+
+O download depende, no momento da acao, de URI acionavel e do acesso do perfil
+ao registro e a Propriedade. A interface confirma somente depois de comprovar
+a copia no storage interno e exibe a falha dentro do proprio modal.
+
+### Alcance
+
+Afeta somente a consulta das fotos ja existentes nos detalhes de Caderno e
+Visita e a copia local demonstrativa autorizada.
+
+### Impacto
+
+- string legada e objeto com `uri` continuam legiveis;
+- referencia vazia/invalida ou falha de carregamento fica indisponivel;
+- Produtor segue titularidade e visibilidade; Colaborador segue escopo
+  regional; Admin segue acesso global local;
+- a copia interna nao e download produtivo nem promessa offline;
+- camera, galeria, consentimento, metadados da foto, georreferenciamento,
+  backend, URL assinada e sincronizacao permanecem para fase propria.
+
+---
+
+## 30. Gboard em paisagem pode usar editor de extracao no corte demonstrativo
+
+### Decisao
+
+O corte demonstrativo aceita que o Gboard do Android fisico `8483A` abra seu
+editor de extracao ao focar o login em paisagem. O app continua enviando
+`disableFullscreenUI`, preservando `adjustResize`, rolagem, foco e recomposicao
+de orientacao, mas nao adiciona patch nativo especifico para contrariar o IME.
+
+### Alcance
+
+Afeta somente o aceite visual de `MP-07` nesse IME e aparelho. Retrato,
+teclado fechado, rolagem, acessos rapidos e mudanca de orientacao continuam
+com os criterios ja aprovados.
+
+### Impacto
+
+- `MP-07` pode ser encerrada com ressalva documentada;
+- teclado inline em paisagem nao e declarado como comportamento aprovado;
+- outro IME ou patch nativo so deve ser reavaliado se surgir requisito novo;
+- autenticacao, sessao, credenciais e regras de acesso permanecem inalteradas.
+
+---
+
+## 31. A Tche Fertilidade e a unica organizacao do primeiro contrato
+
+### Decisao
+
+A Tche Fertilidade e a unica organizacao operadora e proprietaria do
+aplicativo no primeiro contrato. O modelo usa o identificador interno
+`org_tche_fertilidade`, sem seletor de organizacao ou administracao
+multiempresa na interface.
+
+### Alcance
+
+Afeta o mock v2, o futuro modelo de banco, isolamento de dados, sessao,
+auditoria e relacoes entre usuarios, Propriedades e recursos operacionais.
+
+### Impacto
+
+- registros v2 pertencem a organizacao Tche Fertilidade;
+- Admin possui visao global dentro dessa organizacao;
+- multiplas organizacoes ficam fora do primeiro backend;
+- o identificador interno nao precisa aparecer para o usuario;
+- dados de Produtores e Propriedades continuam sujeitos a autorizacao,
+  privacidade e escopo, embora pertençam a uma unica organizacao operadora.
+
+---
+
+## 32. Cada Propriedade possui um Produtor Titular principal
+
+### Decisao
+
+Cada Propriedade possui exatamente um Produtor como Titular principal ativo.
+Um mesmo Produtor pode ser Titular de uma ou mais Propriedades. Outros usuarios
+podem acessar a Propriedade por vinculo explicito sem se tornarem Titulares.
+
+### Alcance
+
+Afeta cadastro, identidade, navegacao, autorizacao, mock v2, banco, API e
+integridade dos vinculos.
+
+### Impacto
+
+- `titular_id` referencia o cadastro de Produtor;
+- `usuario_propriedade` registra Titular, usuario autorizado ou Colaborador;
+- perfil define a capacidade e vinculo ativo define a Propriedade;
+- troca de Titular nao ocorre em edicao cadastral comum;
+- troca futura deve ser transacional e auditada;
+- o modelo nao assume relacao de um Produtor para uma unica Propriedade.
+
+---
+
+## 33. Colaborador acessa por vinculo direto com Propriedade
+
+### Decisao
+
+No contrato v2, Colaborador acessa somente Propriedades atribuidas diretamente
+por um vinculo ativo `usuario_propriedade`. Municipio e UF representam
+localizacao oficial e servem para cadastro, busca, filtro e selecao
+administrativa em lote; nao concedem acesso.
+
+Regional, Area operacional, Regiao, Microregiao e aliases territoriais nao
+fazem parte do primeiro modelo canonico v2.
+
+### Alcance
+
+Afeta regras de acesso, filtros, Admin, Perfil do Colaborador, rotas diretas,
+mock, persistencia local, testes e futuro backend/RBAC.
+
+### Impacto
+
+- Admin pode filtrar Propriedades por Municipio/UF e atribuir varias de uma
+  vez, mas a permissao resultante continua explicita por Propriedade;
+- Propriedade nova no mesmo Municipio nao concede acesso automatico;
+- `sub_regioes`, `vinculos_microregioes`, `propriedades_atribuidas` e
+  `territorioCompat` ficam restritos a migracao do mock v1;
+- o motor local deve migrar de texto territorial para vinculos diretos;
+- o backend futuro deve revalidar perfil, organizacao, vinculo, acao e
+  Propriedade no servidor;
+- o contrato detalhado fica em `modelo-dados-mock-v2.md` e
+  `modelo-territorial.md`.
+
+---
+
+## 34. Cadastro de Produtor e primeira Propriedade ocorrem em duas etapas
+
+### Decisao
+
+O Admin cadastra primeiro o Usuario com perfil Produtor. Se ele ainda nao
+possui Propriedade, permanece `pendente`. Depois, no fluxo de Nova
+Propriedade, o Admin seleciona esse Produtor como Titular. O salvamento cria a
+Propriedade, o vinculo ativo de Titular e ativa Usuario/Produtor em uma unica
+operacao local atomica.
+
+O cadastro de Usuario nao cria uma Propriedade rapida. Perfil, titularidade e
+vinculos de Produtor sao estruturais e nao sao alterados pela edicao cadastral
+comum do Usuario.
+
+### Alcance
+
+Afeta `Admin -> Usuarios`, Nova Propriedade, persistencia local v2, validacao
+do snapshot, credencial local, testes e o futuro contrato transacional do
+backend.
+
+### Impacto
+
+- um Produtor pendente pode existir sem Propriedade e sem acesso operacional;
+- a primeira Propriedade ativa atomicamente o Produtor escolhido;
+- o mesmo Produtor pode ser Titular de varias Propriedades pelo mesmo fluxo;
+- a tela de Usuario apenas informa os vinculos do Produtor;
+- Colaborador continua recebendo vinculos diretos no cadastro de Usuario;
+- Admin continua global e sem vinculos de Propriedade;
+- troca de perfil ou Titular exige fluxo estrutural proprio;
+- falha ao atualizar a credencial local desfaz a alteracao administrativa
+  correspondente;
+- backend, autenticacao, auditoria e transacao produtivos permanecem fora do
+  mock local.
+
+---
+
+## 35. Visita admite foto real local e midia salva usa destino explicito
+
+### Decisao
+
+Nova e Editar Visita admitem, por acao explicita do usuario, captura pela
+camera e selecao pela galeria. A foto e copiada para o storage interno do
+aplicativo e vinculada ao array compativel `fotos`, sem EXIF, coordenadas,
+geotag, upload ou sincronizacao.
+
+Ao salvar uma midia consultada no Android, o aplicativo abre o seletor de
+pasta do sistema e cria o arquivo com nome legivel e extensao coerente. A
+interface so confirma depois da gravacao e trata cancelamento sem sucesso
+falso. Esta decisao supera apenas a parte das decisoes anteriores que mantinha
+camera/galeria integralmente futura; o limite produtivo continua inalterado.
+
+### Alcance
+
+Afeta Nova/Editar Visita, a consulta e exportacao de fotos, a exportacao de
+materiais nao PDF e as permissoes declaradas para camera/galeria.
+
+### Impacto
+
+- cada Visita aceita ate oito fotos locais de no maximo 20 MB por arquivo;
+- nome original, MIME, dimensoes quando disponiveis, origem e data de inclusao
+  acompanham a referencia local;
+- rascunho abandonado limpa as novas copias conhecidas pela sessao do
+  formulario; fotos ja persistidas nao sao apagadas implicitamente;
+- Caderno continua sem fluxo novo de captura de foto;
+- backend, storage remoto, criptografia, retencao, consentimento produtivo,
+  sincronizacao e conflito continuam pendentes.
+
+---
+
+## 36. A fundacao do backend v1 usa arquitetura modular e contrato canonico
+
+### Decisao
+
+O primeiro backend sera um servico modular unico em Node.js/TypeScript, com API
+REST JSON versionada, OpenAPI, PostgreSQL/PostGIS, migrations SQL e object
+storage privado compativel com S3. Microservicos e multiempresa ficam fora do
+primeiro corte.
+
+Os IDs produtivos sao opacos e gerados no servidor. API e banco novos usam
+`propriedade_id`; aliases de Fazenda permanecem somente na borda temporaria do
+aplicativo.
+
+### Alcance
+
+Afeta o scaffold do backend, banco, arquivos, geometrias, integracao do app e
+as fases `MP-33` a `MP-37`.
+
+### Impacto
+
+- o backend pode ser iniciado sem nova decisao de dominio;
+- framework HTTP e provedor podem ser escolhidos no scaffold, desde que
+  preservem o contrato;
+- telas nao devem trocar o mock diretamente por HTTP; adaptadores/repositories
+  formam a fronteira de integracao;
+- dados demonstrativos v1 nao sao migrados registro a registro;
+- o contrato completo esta em `baseline-backend-v1-2026-08.md`.
+
+---
+
+## 37. O RBAC do primeiro backend possui tres perfis e allowlist fixa
+
+### Decisao
+
+O primeiro backend possui apenas Admin global da organizacao, Colaborador por
+vinculo direto ativo e Produtor por Titularidade/vinculo. Nao existem Admin
+Operacional, Apoio ou papeis customizaveis no primeiro corte.
+
+Admin administra estrutura e publicacao. Colaborador opera Visitas, Caderno,
+rascunhos de Material e rascunhos GeoJSON somente nas Propriedades vinculadas.
+Produtor consulta a propria realidade, envia o proprio rascunho de Caderno e
+nao altera estrutura, Visita, Material ou GeoJSON.
+
+### Alcance
+
+Afeta autorizacao, navegacao, endpoints, testes, vinculos e projecoes de dados.
+
+### Impacto
+
+- recurso por ID fora do escopo responde `404`;
+- recurso conhecido e dentro do escopo, mas com acao negada, responde `403`;
+- vinculo usa status ativo/inativo e nao tem expiracao automatica no primeiro
+  backend;
+- vinculo nunca e apagado fisicamente e toda inativacao exige motivo/auditoria;
+- criacoes e comandos sensiveis usam idempotencia; conflitos de versao usam
+  `409`;
+- a matriz completa fica em `baseline-backend-v1-2026-08.md` e
+  `matriz-rbac-backend.md`.
+
+---
+
+## 38. O primeiro corte offline e conservador e a primeira plataforma e Android
+
+### Decisao
+
+O primeiro backend nao oferece fila geral de mutacoes offline. Consulta
+previamente autorizada pode usar cache dentro da janela de sessao. Caderno
+permite apenas rascunho local do proprio usuario. Transicoes de Visita,
+publicacao, importacao produtiva, leitura/descarte de Notificacao e envio de
+foto exigem conexao.
+
+Notificacoes iniciais sao in-app, sem push, e suas entregas expiram por padrao
+em 90 dias. A primeira entrega produtiva e Android; iOS nao bloqueia backend ou
+release Android inicial.
+
+### Alcance
+
+Afeta `MP-33`, `MP-34`, cache, sincronizacao, UX de rede e planejamento de
+release.
+
+### Impacto
+
+- tokens usam storage seguro nativo e nunca `AsyncStorage`;
+- cache e segregado por organizacao e usuario;
+- logout e reducao de escopo invalidam dados nao autorizados;
+- push e iOS so entram por nova decisao de escopo;
+- a matriz completa fica em `baseline-backend-v1-2026-08.md`.

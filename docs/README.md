@@ -1,86 +1,69 @@
-# Documentacao do Projeto
+# Documentação do Projeto
 
-Esta pasta concentra a documentacao oficial do projeto. O objetivo e separar com clareza:
+Esta documentação foi organizada para separar o presente do histórico.
 
-- o que representa estado atual e direcao ativa
-- o que serve como apoio tecnico e operacional
-- o que e apenas revisao ou historico
+## Por onde começar
 
-`docs/project/` e o nucleo documental ativo e prioritario. Em caso de conflito, ele deve prevalecer sobre as demais pastas de `docs/`.
+Se você quer saber rapidamente como o projeto está:
 
-Para agentes de codigo, o ponto de entrada rapido do repositorio e `../AGENTS.md`.
-Ele resume o protocolo operacional e aponta para as regras completas em
-`project/instrucoes-para-ia.md`.
+1. [Estado atual](project/estado-atual.md)
+2. [Próximos passos](project/proximos-passos.md)
+3. [Pendências reais](project/pendencias-de-definicao.md)
+4. [Smoke funcional](project/smoke.md)
 
-## Hierarquia de Leitura
+Para entender produto e regras:
 
-Ao interpretar a documentacao, use esta ordem:
+1. [Contexto consolidado](project/contexto-consolidado.md)
+2. [Escopo do MVP](project/escopo-mvp.md)
+3. [Regras de negócio](project/regras-de-negocio.md)
+4. [Decisões consolidadas](project/decisoes-consolidadas.md)
 
-1. `docs/project/`
-2. `docs/architecture/`
-3. `docs/guides/`
-4. `docs/testing/`
-5. `docs/reviews/`
-6. `docs/archive/` apenas como historico
+O índice completo dos contratos vigentes está em
+[docs/project/README.md](project/README.md).
 
-## Estrutura
+## Pastas documentais
 
-### `project/`
-- Nucleo documental ativo do projeto.
-- Reune estado atual, contexto, escopo, regras, decisoes, pendencias, plano tecnico e backlog futuro.
+### project
 
-### `architecture/`
-- Apoio tecnico e arquitetural.
-- Deve ser lida sempre em subordinacao ao que estiver definido em `project/`.
+Fonte de verdade atual. Contém estado, escopo, regras, decisões, pendências,
+próximos passos, smoke e contratos aprovados.
 
-### `guides/`
-- Guias operacionais, padroes e referencias de uso.
+### project/generated
 
-### `testing/`
-- Materiais de teste, validacao funcional e roteiros de verificacao.
+Evidência gerada do dataset demonstrativo. Não substitui o seed executável nem
+o código.
 
-### `reviews/`
-- Auditorias, revisoes e verificacoes que ajudam no contexto, mas nao substituem o nucleo ativo.
+### archive
 
-### `archive/`
-- Historico preservado do projeto.
-- Nao deve ser lido como estado atual sem confirmacao explicita em documentos ativos.
+Fases, auditorias, propostas, revisões, planos concluídos e versões integrais
+anteriores à síntese documental. Serve para rastreabilidade, não para definir o
+presente.
 
-## Trilha Principal de Leitura
+As antigas pastas architecture, guides, testing e reviews foram arquivadas
+porque misturavam propostas ou roteiros superados com a documentação atual.
 
-Para humanos e IA/agentes de codigo, a trilha recomendada comeca por:
+## Onde visualizar e revisar o aplicativo
 
-1. [AGENTS.md](../AGENTS.md), quando a leitura for para execucao por agente
-2. [Estado atual do projeto](project/estado-atual.md)
-3. [Contexto consolidado](project/contexto-consolidado.md)
-4. [Escopo do MVP](project/escopo-mvp.md)
-5. [Regras de negocio](project/regras-de-negocio.md)
-6. [Decisoes consolidadas](project/decisoes-consolidadas.md)
-7. [Pendencias de definicao](project/pendencias-de-definicao.md)
-8. [Plano de fechamento das pendencias pre-backend](project/plano-fechamento-pendencias-pre-backend-2026-08.md)
-9. [Baseline aprovada para o backend v1](project/baseline-backend-v1-2026-08.md)
-10. [Plano mestre de implementacao da revisao de QA](project/plano-mestre-implementacao-qa-2026-07.md)
-11. [Plano de reorganizacao](project/plano-reorganizacao.md)
-12. [Backlog futuro de evolucao](project/roadmap-futuro.md)
+| Objetivo | Pasta |
+|---|---|
+| Ver as telas | ../src/screens |
+| Rever componentes e padrão visual | ../src/components, ../src/layout e ../src/assets |
+| Entender navegação | ../src/navigation |
+| Entender regras e contratos | ../src/domain, ../src/types e ../src/utils |
+| Rever mock, storage e integrações | ../src/api e ../src/services |
+| Rever login e sessão | ../src/auth e ../src/contexts |
+| Rever testes | ../tests e ../scripts |
+| Rever configuração Android | ../android |
+| Consultar evidências geradas | ../dist |
 
-## Leitura Complementar
+Para execução por agente de código, comece em [AGENTS.md](../AGENTS.md).
 
-Depois da trilha principal:
+## Regra prática
 
-1. [README da raiz](../README.md)
-2. documentos de `architecture/` conforme a necessidade tecnica
-3. documentos de `guides/` conforme o fluxo em estudo
-4. documentos de `testing/` para validacao
-5. [Contrato do mock v2](project/modelo-dados-mock-v2.md) e
-   [dataset demonstrativo v2](project/dataset-demonstrativo-v2.md) quando a
-   tarefa envolver dados locais, seed, geometrias ou bootstrap
-6. [Auditoria de compatibilidade de fazenda_id](project/auditoria-compatibilidade-fazenda-id-2026-08.md)
-   quando a tarefa envolver aliases legados, mapas/offline, rotas ou a futura
-   remoção da leitura dupla
-
-## Regra Pratica
-
-- Documentacao viva deve ficar em `project/`, `architecture/`, `guides/` ou `testing/`.
-- Revisoes pontuais vao para `reviews/`.
-- Materiais obsoletos ou superseded vao para `archive/`.
-- Evite criar novos `.md` na raiz do repositorio, exceto pontos de entrada operacionais como `AGENTS.md`.
+- Mudou a fotografia do produto: atualize project/estado-atual.md.
+- Mudou a fila: atualize project/proximos-passos.md.
+- Surgiu uma decisão: atualize project/decisoes-consolidadas.md.
+- Surgiu uma pendência real: atualize project/pendencias-de-definicao.md.
+- Terminou uma fase ou revisão: mova o relatório para archive.
+- Não crie novos relatórios soltos quando uma atualização no documento ativo
+  resolver.
