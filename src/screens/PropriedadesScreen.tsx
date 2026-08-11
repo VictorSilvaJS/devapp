@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, RefreshControl, Animated } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, RefreshControl, Animated, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyState from '../components/EmptyState';
 import CreateActionButton from '../components/CreateActionButton';
@@ -29,8 +29,18 @@ import {
   listarMunicipios,
   listarUfs,
 } from '../utils/filtroTerritorial';
+import {
+  getPropriedadesListResponsiveLayout,
+  getPropriedadesWideMetricCardWidth,
+} from '../utils/propriedadesListResponsive';
 
 export default function PropriedadesScreen() {
+  const { width, height } = useWindowDimensions();
+  const responsiveLayout = getPropriedadesListResponsiveLayout(width, height);
+  const wideMetricCardWidth = getPropriedadesWideMetricCardWidth(width, 5, 12, spacing.screen);
+  const metricCardStyle = responsiveLayout.useWideMetrics
+    ? [styles.metricCard, styles.metricCardWide, { width: wideMetricCardWidth }]
+    : [styles.metricCard, styles.metricCardScrollable];
   const [produtores, setProdutores] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [busca, setBusca] = useState('');
@@ -295,13 +305,19 @@ export default function PropriedadesScreen() {
 
         {/* Métricas compactas no padrão do detalhe da Propriedade */}
         {produtores.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.metricsCarousel}
-            contentContainerStyle={styles.metricsContent}
-          >
-            <View style={styles.metricCard}>
+          <View style={styles.metricsSection}>
+            <ScrollView
+              horizontal
+              scrollEnabled={!responsiveLayout.useWideMetrics}
+              showsHorizontalScrollIndicator={!responsiveLayout.useWideMetrics}
+              persistentScrollbar={!responsiveLayout.useWideMetrics}
+              style={styles.metricsCarousel}
+              contentContainerStyle={[
+                styles.metricsContent,
+                responsiveLayout.useWideMetrics && styles.metricsContentWide,
+              ]}
+            >
+            <View style={metricCardStyle}>
               <View style={[styles.metricIcon, { backgroundColor: colors.borderLight }]}>
                 <Ionicons name="business-outline" size={20} color={colors.primary} />
               </View>
@@ -309,7 +325,7 @@ export default function PropriedadesScreen() {
               <Text style={styles.metricLabel}>Propriedades</Text>
             </View>
 
-            <View style={styles.metricCard}>
+            <View style={metricCardStyle}>
               <View style={[styles.metricIcon, { backgroundColor: colors.accent }]}>
                 <Ionicons name="people-outline" size={20} color={colors.primary} />
               </View>
@@ -317,7 +333,7 @@ export default function PropriedadesScreen() {
               <Text style={styles.metricLabel}>Titulares</Text>
             </View>
 
-            <View style={styles.metricCard}>
+            <View style={metricCardStyle}>
               <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
                 <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
               </View>
@@ -325,7 +341,7 @@ export default function PropriedadesScreen() {
               <Text style={styles.metricLabel}>Área total informada</Text>
             </View>
 
-            <View style={styles.metricCard}>
+            <View style={metricCardStyle}>
               <View style={[styles.metricIcon, { backgroundColor: colors.successBg }]}>
                 <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
               </View>
@@ -333,14 +349,23 @@ export default function PropriedadesScreen() {
               <Text style={styles.metricLabel}>Ativas</Text>
             </View>
 
-            <View style={styles.metricCard}>
+            <View style={metricCardStyle}>
               <View style={[styles.metricIcon, { backgroundColor: colors.amberLight }]}>
                 <Ionicons name="time-outline" size={20} color={colors.warning} />
               </View>
               <Text style={styles.metricValue}>{metricasFazendas.fazendasPendentes}</Text>
               <Text style={styles.metricLabel}>Pendentes</Text>
             </View>
-          </ScrollView>
+            </ScrollView>
+            {!responsiveLayout.useWideMetrics && (
+              <View style={styles.metricsScrollHint} accessibilityRole="text">
+                <Ionicons name="swap-horizontal-outline" size={16} color={colors.primary} />
+                <Text style={styles.metricsScrollHintText}>
+                  Deslize para ver todos os indicadores
+                </Text>
+              </View>
+            )}
+          </View>
         )}
 
         {/* Lista de Propriedades + Titular */}
@@ -612,16 +637,20 @@ const styles = StyleSheet.create({
   },
 
   // Métricas compactas no padrão do detalhe da Propriedade
-  metricsCarousel: {
+  metricsSection: {
     marginBottom: spacing.md,
+  },
+  metricsCarousel: {
     marginHorizontal: -spacing.screen,
   },
   metricsContent: {
     paddingHorizontal: spacing.screen,
     gap: 12,
   },
+  metricsContentWide: {
+    flexGrow: 1,
+  },
   metricCard: {
-    minWidth: 132,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.card,
@@ -630,6 +659,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
     ...shadows.sm,
+  },
+  metricCardScrollable: {
+    minWidth: 132,
+  },
+  metricCardWide: {
+    flexShrink: 0,
+    minWidth: 0,
   },
   metricIcon: {
     width: 40,
@@ -649,6 +685,19 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontWeight: typography.weightSemibold,
     marginTop: 2,
+    textAlign: 'center',
+  },
+  metricsScrollHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  metricsScrollHintText: {
+    color: colors.primary,
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weightSemibold,
     textAlign: 'center',
   },
 

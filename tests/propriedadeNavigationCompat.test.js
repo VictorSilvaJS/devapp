@@ -46,7 +46,7 @@ test('destinos ficam em navegacao horizontal acessivel e possuem conteudo propri
     /<ScrollView\s+horizontal[\s\S]*?showsHorizontalScrollIndicator=\{!responsiveLayout\.navigationFits\}[\s\S]*?PROPRIEDADE_NAVIGATION_ITEMS\.map/
   );
   assert.match(source, /persistentScrollbar=\{!responsiveLayout\.navigationFits\}/);
-  assert.match(source, /Deslize para ver todas as seções/);
+  assert.doesNotMatch(source, /Deslize para ver todas as seções/);
   assert.match(source, /accessibilityRole="tab"/);
   assert.match(source, /accessibilityState=\{\{ selected: isActive \}\}/);
 

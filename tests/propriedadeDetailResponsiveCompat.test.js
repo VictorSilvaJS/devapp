@@ -61,7 +61,8 @@ test('detalhe reage as dimensoes e mantem indicadores de rolagem acessiveis', ()
   assert.match(source, /getPropriedadeDetailResponsiveLayout\(width, height\)/);
   assert.match(source, /showsVerticalScrollIndicator/);
   assert.match(source, /persistentScrollbar/);
-  assert.match(source, /Deslize para ver todas as seções/);
+  assert.match(source, /Deslize para ver todos os indicadores/);
+  assert.doesNotMatch(source, /Deslize para ver todas as seções/);
   assert.match(source, /Role para ver todos os dados desta seção/);
   assert.match(source, /responsiveLayout\.summaryColumns === 2/);
   assert.match(source, /styles\.summaryGridWide/);

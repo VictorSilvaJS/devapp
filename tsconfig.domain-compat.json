@@ -56,6 +56,7 @@
     "src/utils/usuarioLocalAccessAdmin.ts",
     "src/utils/dashboardCompat.ts",
     "src/utils/dashboardResponsive.ts",
+    "src/utils/propriedadesListResponsive.ts",
     "src/utils/propriedadeDetailResponsive.ts",
     "src/utils/propriedadeResumoCompat.ts",
     "src/utils/perfilProdutorCompat.ts",

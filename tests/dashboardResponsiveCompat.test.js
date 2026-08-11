@@ -5,6 +5,10 @@ const {
   getDashboardColumnWidth,
   getDashboardResponsiveLayout,
 } = require('../.tmp-domain-compat/src/utils/dashboardResponsive');
+const {
+  getPropriedadesListResponsiveLayout,
+  getPropriedadesWideMetricCardWidth,
+} = require('../.tmp-domain-compat/src/utils/propriedadesListResponsive');
 
 let failed = 0;
 
@@ -62,15 +66,34 @@ test('Dashboard de Admin e Colaborador reage a orientacao sem largura fixa', () 
   assert.doesNotMatch(source, /statCardWrapper:\s*\{[\s\S]*?width: '50%'/);
 });
 
-test('Propriedades reutiliza o carrossel compacto e o FAB flutuante padrao', () => {
+test('Propriedades encaixa indicadores na paisagem ampla e preserva carrossel compacto', () => {
   const source = readSource('src/screens/PropriedadesScreen.tsx');
 
-  assert.match(source, /<ScrollView\s+horizontal[\s\S]*?style=\{styles\.metricsCarousel\}/);
-  assert.match(source, /contentContainerStyle=\{styles\.metricsContent\}/);
-  assert.match(source, /metricCard:\s*\{[\s\S]*?minWidth: 132/);
+  assert.deepEqual(getPropriedadesListResponsiveLayout(853, 533), {
+    isLandscape: true,
+    useWideMetrics: true,
+  });
+  assert.deepEqual(getPropriedadesListResponsiveLayout(533, 853), {
+    isLandscape: false,
+    useWideMetrics: false,
+  });
+  assert.deepEqual(getPropriedadesListResponsiveLayout(700, 480), {
+    isLandscape: true,
+    useWideMetrics: false,
+  });
+  assert.equal(getPropriedadesWideMetricCardWidth(853, 5, 12, 16), 154.6);
+  assert.match(source, /useWindowDimensions\(\)/);
+  assert.match(source, /getPropriedadesListResponsiveLayout\(width, height\)/);
+  assert.match(source, /getPropriedadesWideMetricCardWidth\(width, 5, 12, spacing\.screen\)/);
+  assert.match(source, /scrollEnabled=\{!responsiveLayout\.useWideMetrics\}/);
+  assert.match(source, /showsHorizontalScrollIndicator=\{!responsiveLayout\.useWideMetrics\}/);
+  assert.match(source, /persistentScrollbar=\{!responsiveLayout\.useWideMetrics\}/);
+  assert.match(source, /responsiveLayout\.useWideMetrics && styles\.metricsContentWide/);
+  assert.match(source, /responsiveLayout\.useWideMetrics[\s\S]*?styles\.metricCardWide[\s\S]*?width: wideMetricCardWidth/);
+  assert.match(source, /metricCardScrollable:\s*\{[\s\S]*?minWidth: 132/);
+  assert.match(source, /metricCardWide:\s*\{[\s\S]*?flexShrink: 0[\s\S]*?minWidth: 0/);
   assert.match(source, /metricCard:\s*\{[\s\S]*?borderWidth: 2/);
-  assert.doesNotMatch(source, /useWindowDimensions/);
-  assert.doesNotMatch(source, /styles\.metricsGrid/);
+  assert.match(source, /Deslize para ver todos os indicadores/);
   assert.doesNotMatch(source, /placement="docked"|safeActionArea/);
   assert.match(source, /paddingBottom: spacing\.screen \+ 80/);
 });

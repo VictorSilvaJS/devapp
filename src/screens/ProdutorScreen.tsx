@@ -778,14 +778,6 @@ export default function ProdutorScreen({ route, navigation }) {
               );
             })}
           </ScrollView>
-          {!responsiveLayout.navigationFits && (
-            <View style={styles.horizontalScrollHint} accessibilityRole="text">
-              <Ionicons name="arrow-forward-outline" size={16} color={colors.primary} />
-              <Text style={styles.horizontalScrollHintText}>
-                Deslize para ver todas as seções
-              </Text>
-            </View>
-          )}
         </View>
 
         <View style={styles.verticalScrollHint} accessibilityRole="text">
