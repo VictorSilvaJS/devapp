@@ -24,6 +24,7 @@ const run = async () => {
   const navigation = read('src/navigation/index.tsx');
   const app = read('App.tsx');
   const exportService = read('src/services/PhoneFileExportService.ts');
+  const pdfOpenService = read('src/services/PdfExternalOpenService.ts');
 
   await test('rota dedicada esta registrada e resolve catalogo no escopo do perfil', () => {
     assert.match(navigation, /name="MaterialViewer"/);
@@ -66,7 +67,7 @@ const run = async () => {
     assert.match(viewer, /downloadStatus\.podeAbrir/);
     assert.match(viewer, /MaterialTecnicoStorageService\.getStoredMaterialTecnicoInfo/);
     assert.match(viewer, /Este PDF não está mais disponível neste aparelho/);
-    assert.match(viewer, /Linking\.canOpenURL/);
+    assert.match(viewer, /openPdfExternally\(descriptor\.sourceUri\)/);
     assert.match(viewer, /exportFileToPhone/);
     assert.match(viewer, /descriptor\.kind === 'pdf'[\s\S]*?'application\/pdf'/);
     assert.doesNotMatch(viewer, /if \(descriptor\.kind !== 'pdf'\) \{/);
@@ -77,6 +78,11 @@ const run = async () => {
     assert.match(viewer, /Nenhum arquivo foi criado/);
     assert.match(exportService, /requestDirectoryPermissionsAsync/);
     assert.match(exportService, /createFileAsync/);
+    assert.match(pdfOpenService, /FileSystem\.getContentUriAsync/);
+    assert.match(pdfOpenService, /IntentLauncher\.startActivityAsync/);
+    assert.match(pdfOpenService, /android\.intent\.action\.VIEW/);
+    assert.match(pdfOpenService, /flags: FLAG_GRANT_READ_URI_PERMISSION/);
+    assert.match(pdfOpenService, /type: 'application\/pdf'/);
     assert.match(viewer, /Não foi possível baixar este PDF/);
     assert.match(viewer, /Nenhum visualizador compatível conseguiu abrir este PDF/);
   });

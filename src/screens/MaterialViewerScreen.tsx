@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Image,
   ImageSourcePropType,
-  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -32,6 +31,7 @@ import {
 import { MaterialCatalogService } from '../services/MaterialCatalogService';
 import { MaterialTecnicoStorageService } from '../services/MaterialTecnicoStorageService';
 import { exportFileToPhone } from '../services/PhoneFileExportService';
+import { openPdfExternally } from '../services/PdfExternalOpenService';
 import { PngStorageService } from '../services/PngStorageService';
 import {
   filtrarProdutoresPorAcesso,
@@ -738,9 +738,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
     setActiveFileAction('open');
     try {
       if (!(await ensureLocalPdfIsAvailable())) return;
-      const supported = await Linking.canOpenURL(descriptor.sourceUri);
-      if (!supported) throw new Error('viewer_unavailable');
-      await Linking.openURL(descriptor.sourceUri);
+      await openPdfExternally(descriptor.sourceUri);
     } catch {
       toast.showError('Nenhum visualizador compatível conseguiu abrir este PDF.');
     } finally {
