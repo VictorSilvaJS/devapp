@@ -514,7 +514,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
   const [imageSource, setImageSource] = useState<ImageSourcePropType | null>(null);
   const [imageError, setImageError] = useState('');
   const [imageTouchActive, setImageTouchActive] = useState(false);
-  const [fileActionLoading, setFileActionLoading] = useState(false);
+  const [activeFileAction, setActiveFileAction] = useState<'download' | 'open' | null>(null);
 
   const identity = useMemo(
     () => resolveMaterialViewerIdentity(route?.params),
@@ -667,19 +667,38 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
     && Platform.OS === 'ios'
     && Boolean(descriptor.sourceUri && /^(https?:|data:)/i.test(descriptor.sourceUri));
 
-  const handleFileAction = async () => {
+  const ensureLocalPdfIsAvailable = async (): Promise<boolean> => {
+    if (descriptor.kind !== 'pdf' || !descriptor.sourceUri || !/^file:\/\//i.test(descriptor.sourceUri)) {
+      return true;
+    }
+
+    const localFile = await MaterialTecnicoStorageService.getStoredMaterialTecnicoInfo(
+      descriptor.sourceUri
+    );
+    if (!localFile.ok || !localFile.info?.exists || localFile.info.isDirectory === true) {
+      toast.showError('Este PDF não está mais disponível neste aparelho.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleDownloadFile = async () => {
     if (!material || !descriptor.sourceUri || !canUseFileAction) {
       toast.showInfo('A ação do arquivo não está disponível para este material e perfil.');
       return;
     }
 
-    setFileActionLoading(true);
+    setActiveFileAction('download');
     try {
-      if (descriptor.kind !== 'pdf') {
-        const result = await exportFileToPhone({
-          sourceUri: descriptor.sourceUri,
-          preferredFileName: sanitizeDownloadName(material, descriptor),
-          mimeType: descriptor.format === 'png'
+      if (!(await ensureLocalPdfIsAvailable())) return;
+
+      const result = await exportFileToPhone({
+        sourceUri: descriptor.sourceUri,
+        preferredFileName: sanitizeDownloadName(material, descriptor),
+        mimeType: descriptor.kind === 'pdf'
+          ? 'application/pdf'
+          : descriptor.format === 'png'
             ? 'image/png'
             : descriptor.format === 'jpg' || descriptor.format === 'jpeg'
               ? 'image/jpeg'
@@ -688,41 +707,44 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
                 : descriptor.format === 'geojson'
                   ? 'application/geo+json'
                   : undefined,
-          fallbackBaseName: `material-${firstNonEmptyString(material?.id, 'tecnico')}`,
-        });
-        if (result.status === 'cancelled') {
-          toast.showInfo('Salvamento cancelado. Nenhum arquivo foi criado.');
-          return;
-        }
-        toast.showSuccess(
-          result.userSelectedDirectory
-            ? `Arquivo salvo na pasta escolhida como ${result.fileName}.`
-            : `Arquivo salvo como ${result.fileName} no armazenamento do aplicativo.`
-        );
+        fallbackBaseName: `material-${firstNonEmptyString(material?.id, 'tecnico')}`,
+      });
+      if (result.status === 'cancelled') {
+        toast.showInfo('Salvamento cancelado. Nenhum arquivo foi criado.');
         return;
       }
+      toast.showSuccess(
+        result.userSelectedDirectory
+          ? `Arquivo salvo na pasta escolhida como ${result.fileName}.`
+          : `Arquivo salvo como ${result.fileName} no armazenamento do aplicativo.`
+      );
+    } catch {
+      toast.showError(
+        descriptor.kind === 'pdf'
+          ? 'Não foi possível baixar este PDF.'
+          : 'Não foi possível abrir ou baixar este arquivo.'
+      );
+    } finally {
+      setActiveFileAction(null);
+    }
+  };
 
-      if (/^file:\/\//i.test(descriptor.sourceUri)) {
-        const localFile = await MaterialTecnicoStorageService.getStoredMaterialTecnicoInfo(
-          descriptor.sourceUri
-        );
-        if (!localFile.ok || !localFile.info?.exists || localFile.info.isDirectory === true) {
-          toast.showError('Este PDF não está mais disponível neste aparelho.');
-          return;
-        }
-      }
+  const handleOpenPdf = async () => {
+    if (!descriptor.sourceUri || descriptor.kind !== 'pdf' || !canUseFileAction) {
+      toast.showInfo('A visualização do PDF não está disponível para este material e perfil.');
+      return;
+    }
 
+    setActiveFileAction('open');
+    try {
+      if (!(await ensureLocalPdfIsAvailable())) return;
       const supported = await Linking.canOpenURL(descriptor.sourceUri);
       if (!supported) throw new Error('viewer_unavailable');
       await Linking.openURL(descriptor.sourceUri);
     } catch {
-      toast.showError(
-        descriptor.kind === 'pdf'
-          ? 'Nenhum visualizador compatível conseguiu abrir este PDF.'
-          : 'Não foi possível abrir ou baixar este arquivo.'
-      );
+      toast.showError('Nenhum visualizador compatível conseguiu abrir este PDF.');
     } finally {
-      setFileActionLoading(false);
+      setActiveFileAction(null);
     }
   };
 
@@ -839,7 +861,7 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
           ) : (
             <InfoBox
               title="Visualização pelo sistema"
-              message="Neste aparelho, o PDF será aberto somente por um visualizador compatível instalado. Nenhuma prévia é simulada."
+              message="Neste aparelho, você pode baixar o PDF para uma pasta escolhida ou abri-lo em um visualizador compatível. Nenhuma prévia é simulada."
             />
           )}
         </>
@@ -902,24 +924,39 @@ export default function MaterialViewerScreen({ route, navigation }: any) {
           </View>
 
           {canUseFileAction ? (
-            <TouchableOpacity
-              style={[styles.primaryButton, fileActionLoading && styles.buttonDisabled]}
-              onPress={handleFileAction}
-              disabled={fileActionLoading}
-              accessibilityRole="button"
-              accessibilityLabel={descriptor.primaryActionLabel}
-            >
-              {fileActionLoading ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Ionicons
-                  name={descriptor.kind === 'pdf' ? 'open-outline' : 'download-outline'}
-                  size={21}
-                  color={colors.white}
-                />
+            <View style={styles.fileActions}>
+              <TouchableOpacity
+                style={[styles.primaryButton, activeFileAction !== null && styles.buttonDisabled]}
+                onPress={handleDownloadFile}
+                disabled={activeFileAction !== null}
+                accessibilityRole="button"
+                accessibilityLabel={descriptor.primaryActionLabel}
+              >
+                {activeFileAction === 'download' ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="download-outline" size={21} color={colors.white} />
+                )}
+                <Text style={styles.primaryButtonText}>{descriptor.primaryActionLabel}</Text>
+              </TouchableOpacity>
+
+              {descriptor.kind === 'pdf' && (
+                <TouchableOpacity
+                  style={[styles.secondaryButton, activeFileAction !== null && styles.buttonDisabled]}
+                  onPress={handleOpenPdf}
+                  disabled={activeFileAction !== null}
+                  accessibilityRole="button"
+                  accessibilityLabel="Abrir documento"
+                >
+                  {activeFileAction === 'open' ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Ionicons name="open-outline" size={21} color={colors.primary} />
+                  )}
+                  <Text style={styles.secondaryButtonText}>Abrir documento</Text>
+                </TouchableOpacity>
               )}
-              <Text style={styles.primaryButtonText}>{descriptor.primaryActionLabel}</Text>
-            </TouchableOpacity>
+            </View>
           ) : descriptor.sourceUri?.startsWith('asset://') ? (
             <InfoBox
               variant="success"
@@ -1194,6 +1231,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.backgroundAlt,
   },
+  fileActions: {
+    gap: spacing.sm,
+  },
   primaryButton: {
     minHeight: 52,
     flexDirection: 'row',
@@ -1208,6 +1248,24 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: colors.white,
+    fontSize: typography.fontBody,
+    fontWeight: typography.weightBold,
+  },
+  secondaryButton: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: border.radius,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
+  },
+  secondaryButtonText: {
+    color: colors.primary,
     fontSize: typography.fontBody,
     fontWeight: typography.weightBold,
   },

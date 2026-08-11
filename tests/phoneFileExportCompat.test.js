@@ -36,6 +36,7 @@ test('remove caracteres proibidos e infere extensao pelo MIME', () => {
     'Diagnóstico- lote 1.jpg'
   );
   assert.equal(resolvePhoneExportMimeType('', 'arquivo.geojson'), 'application/geo+json');
+  assert.equal(resolvePhoneExportMimeType('', 'documento.pdf'), 'application/pdf');
 });
 
 test('separa base e extensao para criacao via seletor Android', () => {

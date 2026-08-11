@@ -299,7 +299,7 @@ export const resolveMaterialViewerDescriptor = (
       format,
       sourceUri,
       previewAvailable: Boolean(sourceUri),
-      primaryActionLabel: 'Abrir documento',
+      primaryActionLabel: 'Baixar documento',
       noPreviewMessage: sourceUri
         ? undefined
         : 'O PDF não possui um arquivo disponível neste aparelho.',

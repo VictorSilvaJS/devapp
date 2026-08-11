@@ -70,10 +70,12 @@ const run = async () => {
 
   await test('tipo real escolhe imagem, PDF e arquivo sem preview falso', () => {
     assert.equal(resolveMaterialViewerDescriptor(baseMaterial()).kind, 'image');
-    assert.equal(resolveMaterialViewerDescriptor(baseMaterial({
+    const pdf = resolveMaterialViewerDescriptor(baseMaterial({
       formato_arquivo: 'pdf',
       arquivo_uri_local: 'file:///app/documento.pdf',
-    })).kind, 'pdf');
+    }));
+    assert.equal(pdf.kind, 'pdf');
+    assert.equal(pdf.primaryActionLabel, 'Baixar documento');
 
     const zip = resolveMaterialViewerDescriptor(baseMaterial({
       formato_arquivo: 'zip',

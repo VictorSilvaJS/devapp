@@ -61,17 +61,23 @@ const run = async () => {
     assert.match(viewer, /Gestos iniciados no quadro não rolam a página/);
   });
 
-  await test('acao de arquivo verifica autorizacao e nao produz sucesso falso ao abrir', () => {
+  await test('PDF oferece download real e abertura separada sem produzir sucesso falso', () => {
     assert.match(viewer, /podeBaixarMapa\(user, material, fazendasPermitidas\)/);
     assert.match(viewer, /downloadStatus\.podeAbrir/);
     assert.match(viewer, /MaterialTecnicoStorageService\.getStoredMaterialTecnicoInfo/);
     assert.match(viewer, /Este PDF não está mais disponível neste aparelho/);
     assert.match(viewer, /Linking\.canOpenURL/);
     assert.match(viewer, /exportFileToPhone/);
+    assert.match(viewer, /descriptor\.kind === 'pdf'[\s\S]*?'application\/pdf'/);
+    assert.doesNotMatch(viewer, /if \(descriptor\.kind !== 'pdf'\) \{/);
+    assert.match(viewer, /handleDownloadFile/);
+    assert.match(viewer, /handleOpenPdf/);
+    assert.match(viewer, /Abrir documento/);
     assert.match(viewer, /Arquivo salvo na pasta escolhida como/);
     assert.match(viewer, /Nenhum arquivo foi criado/);
     assert.match(exportService, /requestDirectoryPermissionsAsync/);
     assert.match(exportService, /createFileAsync/);
+    assert.match(viewer, /Não foi possível baixar este PDF/);
     assert.match(viewer, /Nenhum visualizador compatível conseguiu abrir este PDF/);
   });
 
