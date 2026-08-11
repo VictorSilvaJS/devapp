@@ -5,7 +5,7 @@ const { configureAndroidGradleMemory } = require('./configureAndroidGradleMemory
 
 const projectRoot = path.resolve(__dirname, '..');
 const androidRoot = path.join(projectRoot, 'android');
-const gradleWrapper = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
+const gradleWrapper = process.platform === 'win32' ? '.\\gradlew.bat' : './gradlew';
 
 configureAndroidReleaseSigning();
 configureAndroidGradleMemory();

@@ -43,8 +43,10 @@ test('navegacao da Propriedade usa os seis destinos aprovados na ordem correta',
 test('destinos ficam em navegacao horizontal acessivel e possuem conteudo proprio', () => {
   assert.match(
     source,
-    /<ScrollView\s+horizontal\s+showsHorizontalScrollIndicator=\{false\}[\s\S]*?PROPRIEDADE_NAVIGATION_ITEMS\.map/
+    /<ScrollView\s+horizontal[\s\S]*?showsHorizontalScrollIndicator=\{!responsiveLayout\.navigationFits\}[\s\S]*?PROPRIEDADE_NAVIGATION_ITEMS\.map/
   );
+  assert.match(source, /persistentScrollbar=\{!responsiveLayout\.navigationFits\}/);
+  assert.match(source, /Deslize para ver todas as seções/);
   assert.match(source, /accessibilityRole="tab"/);
   assert.match(source, /accessibilityState=\{\{ selected: isActive \}\}/);
 

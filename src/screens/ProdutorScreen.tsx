@@ -1,7 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, LayoutAnimation, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  LayoutAnimation,
+  TouchableOpacity,
+  ActivityIndicator,
+  useWindowDimensions,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../components/Header';
 import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
@@ -61,6 +71,7 @@ import {
   VisitaStatusTone,
 } from '../utils/visitaListCompat';
 import { buildPropriedadeResumo } from '../utils/propriedadeResumoCompat';
+import { getPropriedadeDetailResponsiveLayout } from '../utils/propriedadeDetailResponsive';
 import {
   getUsuarioNome,
   getVinculoPropriedadeLabel,
@@ -85,6 +96,9 @@ type PropriedadeNavigationId = typeof PROPRIEDADE_NAVIGATION_ITEMS[number]['id']
 export default function ProdutorScreen({ route, navigation }) {
   const toast = useToast();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const responsiveLayout = getPropriedadeDetailResponsiveLayout(width, height);
   const [produtor, setProdutor] = useState(null);
   const [visitas, setVisitas] = useState([]);
   const [mapas, setMapas] = useState([]);
@@ -502,18 +516,32 @@ export default function ProdutorScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: insets.bottom }]}>
       <Header title={fazendaInfo.fazendaNome || 'Propriedade'} showBack />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          responsiveLayout.isLandscape && styles.contentLandscape,
+        ]}
+        showsVerticalScrollIndicator
+        persistentScrollbar
+      >
         {/* Cabeçalho com Avatar e Informações Básicas */}
-        <View style={styles.profileHeader}>
+        <View style={[
+          styles.profileLayout,
+          responsiveLayout.useWideOverview && styles.profileLayoutWide,
+        ]}>
+        <View style={[
+          styles.profileHeader,
+          responsiveLayout.useWideOverview && styles.profileHeaderWide,
+        ]}>
           <View style={styles.avatarContainer}>
             <Text style={styles.avatarText}>
               {(fazendaInfo.fazendaNome || 'F').charAt(0).toUpperCase()}
             </Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName} numberOfLines={1}>
+            <Text style={styles.profileName}>
               {fazendaInfo.fazendaNome || 'Propriedade sem nome'}
             </Text>
             <Text style={styles.profileSubtitle} numberOfLines={3}>
@@ -536,10 +564,17 @@ export default function ProdutorScreen({ route, navigation }) {
 
         {/* Botões de Ação */}
         {(podeEditar || podeExcluir) && (
-          <View style={styles.actionButtons}>
+          <View style={[
+            styles.actionButtons,
+            responsiveLayout.stackActions && styles.actionButtonsStacked,
+            responsiveLayout.useWideOverview && styles.actionButtonsWide,
+          ]}>
             {podeEditar && (
               <TouchableOpacity
-                style={styles.editButton}
+                style={[
+                  styles.editButton,
+                  responsiveLayout.stackActions && styles.actionButtonStacked,
+                ]}
                 onPress={handleEdit}
                 activeOpacity={0.8}
               >
@@ -557,7 +592,10 @@ export default function ProdutorScreen({ route, navigation }) {
 
             {podeExcluir && (
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={[
+                  styles.deleteButton,
+                  responsiveLayout.stackActions && styles.actionButtonStacked,
+                ]}
                 onPress={handleDelete}
                 activeOpacity={0.8}
               >
@@ -584,15 +622,26 @@ export default function ProdutorScreen({ route, navigation }) {
             )}
           </View>
         )}
+        </View>
 
         {/* Indicadores de acompanhamento da Propriedade */}
         <ScrollView 
           horizontal 
-          showsHorizontalScrollIndicator={false}
+          scrollEnabled={!responsiveLayout.useWideIndicators}
+          showsHorizontalScrollIndicator={!responsiveLayout.useWideIndicators}
+          persistentScrollbar={!responsiveLayout.useWideIndicators}
           style={styles.statsCarousel}
-          contentContainerStyle={styles.statsContent}
+          contentContainerStyle={[
+            styles.statsContent,
+            responsiveLayout.useWideIndicators && styles.statsContentWide,
+          ]}
         >
-          <View style={styles.statCardCompact}>
+          <View style={[
+            styles.statCardCompact,
+            responsiveLayout.useWideIndicators
+              ? styles.statCardCompactWide
+              : styles.statCardCompactScrollable,
+          ]}>
             <View style={[styles.statIconCompact, { backgroundColor: colors.infoLight }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.info} />
             </View>
@@ -602,14 +651,19 @@ export default function ProdutorScreen({ route, navigation }) {
                 : 'Sem agenda'}
             </Text>
             <Text style={styles.statLabelCompact}>Próxima Visita</Text>
-            <Text style={styles.statMetaCompact} numberOfLines={2}>
+            <Text style={styles.statMetaCompact}>
               {resumoPropriedade.proximaVisita
                 ? getVisitaObjetivoLabel(resumoPropriedade.proximaVisita.objetivo)
                 : 'Nenhuma Visita agendada'}
             </Text>
           </View>
 
-          <View style={styles.statCardCompact}>
+          <View style={[
+            styles.statCardCompact,
+            responsiveLayout.useWideIndicators
+              ? styles.statCardCompactWide
+              : styles.statCardCompactScrollable,
+          ]}>
             <View style={[styles.statIconCompact, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="pulse-outline" size={20} color={colors.primary} />
             </View>
@@ -619,12 +673,17 @@ export default function ProdutorScreen({ route, navigation }) {
                 : 'Sem registro'}
             </Text>
             <Text style={styles.statLabelCompact}>Última atividade</Text>
-            <Text style={styles.statMetaCompact} numberOfLines={2}>
+            <Text style={styles.statMetaCompact}>
               {ultimaAtividadeMeta}
             </Text>
           </View>
 
-          <View style={styles.statCardCompact}>
+          <View style={[
+            styles.statCardCompact,
+            responsiveLayout.useWideIndicators
+              ? styles.statCardCompactWide
+              : styles.statCardCompactScrollable,
+          ]}>
             <View style={[styles.statIconCompact, { backgroundColor: colors.amberLight }]}>
               <Ionicons name="map-outline" size={20} color={colors.amber} />
             </View>
@@ -634,12 +693,17 @@ export default function ProdutorScreen({ route, navigation }) {
                 : 'Nenhum'}
             </Text>
             <Text style={styles.statLabelCompact}>{materialIndicatorLabel}</Text>
-            <Text style={styles.statMetaCompact} numberOfLines={2}>
+            <Text style={styles.statMetaCompact}>
               {resumoPropriedade.materialMaisRecente?.titulo || 'Nenhum material disponível'}
             </Text>
           </View>
 
-          <View style={styles.statCardCompact}>
+          <View style={[
+            styles.statCardCompact,
+            responsiveLayout.useWideIndicators
+              ? styles.statCardCompactWide
+              : styles.statCardCompactScrollable,
+          ]}>
             <View style={[
               styles.statIconCompact,
               {
@@ -656,60 +720,104 @@ export default function ProdutorScreen({ route, navigation }) {
             </View>
             <Text style={styles.statValueCompact}>{resumoPropriedade.pontosAtencao.length}</Text>
             <Text style={styles.statLabelCompact}>Pontos de atenção</Text>
-            <Text style={styles.statMetaCompact} numberOfLines={2}>
+            <Text style={styles.statMetaCompact}>
               {resumoPropriedade.pontosAtencao.length > 0
                 ? 'Confira os itens no Resumo'
                 : 'Acompanhamento em dia'}
             </Text>
           </View>
         </ScrollView>
+        {!responsiveLayout.useWideIndicators && (
+          <View style={styles.horizontalScrollHint} accessibilityRole="text">
+            <Ionicons name="swap-horizontal-outline" size={16} color={colors.primary} />
+            <Text style={styles.horizontalScrollHintText}>
+              Deslize para ver todos os indicadores
+            </Text>
+          </View>
+        )}
 
         {/* Tabs de Navegação */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tabsContainer}
-          contentContainerStyle={styles.tabsContent}
-        >
-          {PROPRIEDADE_NAVIGATION_ITEMS.map((item) => {
-            const isActive = activeTab === item.id;
+        <View style={styles.tabsSection}>
+          <ScrollView
+            horizontal
+            scrollEnabled={!responsiveLayout.navigationFits}
+            showsHorizontalScrollIndicator={!responsiveLayout.navigationFits}
+            persistentScrollbar={!responsiveLayout.navigationFits}
+            style={styles.tabsContainer}
+            contentContainerStyle={[
+              styles.tabsContent,
+              responsiveLayout.navigationFits && styles.tabsContentWide,
+            ]}
+          >
+            {PROPRIEDADE_NAVIGATION_ITEMS.map((item) => {
+              const isActive = activeTab === item.id;
 
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.tab, isActive && styles.tabActive]}
-                onPress={() => setActiveTab(item.id)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: isActive }}
-                accessibilityLabel={item.label}
-              >
-                <Ionicons
-                  name={item.icon}
-                  size={18}
-                  color={isActive ? colors.primary : colors.muted}
-                  style={styles.tabIcon}
-                />
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.tab,
+                    responsiveLayout.navigationFits ? styles.tabWide : styles.tabScrollable,
+                    isActive && styles.tabActive,
+                  ]}
+                  onPress={() => setActiveTab(item.id)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={item.label}
+                >
+                  <Ionicons
+                    name={item.icon}
+                    size={18}
+                    color={isActive ? colors.primary : colors.muted}
+                    style={styles.tabIcon}
+                  />
+                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+          {!responsiveLayout.navigationFits && (
+            <View style={styles.horizontalScrollHint} accessibilityRole="text">
+              <Ionicons name="arrow-forward-outline" size={16} color={colors.primary} />
+              <Text style={styles.horizontalScrollHintText}>
+                Deslize para ver todas as seções
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.verticalScrollHint} accessibilityRole="text">
+          <Ionicons name="arrow-down-outline" size={16} color={colors.textLight} />
+          <Text style={styles.verticalScrollHintText}>
+            Role para ver todos os dados desta seção
+          </Text>
+        </View>
 
         {/* Conteúdo das Tabs */}
         {activeTab === 'resumo' && (
-          <View style={styles.tabContent}>
+          <View style={[
+            styles.tabContent,
+            responsiveLayout.summaryColumns === 2 && styles.summaryGridWide,
+          ]}>
             {isProdutorView && (
               <InfoBox
                 title="Modo acompanhamento"
                 message="Esta visão reúne a situação da Propriedade para consulta. Você pode registrar ocorrências no Caderno; ações técnicas e materiais ficam com a equipe autorizada."
-                style={styles.infoBox}
+                style={[
+                  styles.infoBox,
+                  responsiveLayout.summaryColumns === 2 && styles.summaryCardWide,
+                ]}
               />
             )}
 
             {resumoPropriedade.pontosAtencao.length > 0 && (
-              <SectionCard title="Pontos de atenção" icon="alert-circle-outline">
+              <SectionCard
+                title="Pontos de atenção"
+                icon="alert-circle-outline"
+                style={responsiveLayout.summaryColumns === 2 && styles.summaryCardWide}
+              >
                 <View style={styles.attentionList}>
                   {resumoPropriedade.pontosAtencao.map((ponto) => (
                     <View key={ponto.id} style={styles.attentionRow}>
@@ -721,7 +829,11 @@ export default function ProdutorScreen({ route, navigation }) {
               </SectionCard>
             )}
 
-            <SectionCard title="Dados complementares" icon="information-circle-outline">
+            <SectionCard
+              title="Dados complementares"
+              icon="information-circle-outline"
+              style={responsiveLayout.summaryColumns === 2 && styles.summaryCardWide}
+            >
               <View style={styles.infoRow}>
                 <View style={styles.infoLabelContainer}>
                   <Ionicons name="resize-outline" size={16} color={colors.primary} />
@@ -804,7 +916,11 @@ export default function ProdutorScreen({ route, navigation }) {
             </SectionCard>
 
             {user?.perfil === 'admin' && (
-              <SectionCard title="Vínculos visuais do mock" icon="link-outline">
+              <SectionCard
+                title="Vínculos visuais do mock"
+                icon="link-outline"
+                style={responsiveLayout.summaryColumns === 2 && styles.summaryCardWide}
+              >
                 <InfoBox
                   message="Preparação visual para backend/banco. Estes vínculos não alteram o motor efetivo de permissões nesta fase."
                   style={styles.infoBox}
@@ -875,7 +991,11 @@ export default function ProdutorScreen({ route, navigation }) {
             )}
 
             {outrasFazendasTitular.length > 0 && (
-              <SectionCard title="Outras Propriedades do Titular" icon="business-outline">
+              <SectionCard
+                title="Outras Propriedades do Titular"
+                icon="business-outline"
+                style={responsiveLayout.summaryColumns === 2 && styles.summaryCardWide}
+              >
                 <View style={styles.relatedFarmsSection}>
                   {outrasFazendasTitular.map((fazenda) => (
                     <TouchableOpacity
@@ -906,7 +1026,11 @@ export default function ProdutorScreen({ route, navigation }) {
             )}
 
             {podeExcluir && (
-              <SectionCard title="Integridade da Exclusão" icon="shield-checkmark-outline">
+              <SectionCard
+                title="Integridade da Exclusão"
+                icon="shield-checkmark-outline"
+                style={responsiveLayout.summaryColumns === 2 && styles.summaryCardWide}
+              >
                 <InfoBox
                   variant={integridadeExclusao.canDelete ? 'success' : 'warning'}
                   title={integridadeExclusao.canDelete ? 'Exclusão segura' : 'Exclusão bloqueada'}
@@ -921,7 +1045,11 @@ export default function ProdutorScreen({ route, navigation }) {
             )}
 
             {produtor.observacoes && (
-              <SectionCard title="Observações" icon="document-text-outline">
+              <SectionCard
+                title="Observações"
+                icon="document-text-outline"
+                style={responsiveLayout.summaryColumns === 2 && styles.summaryCardWide}
+              >
                 <InfoBox message={produtor.observacoes} style={styles.infoBox} />
               </SectionCard>
             )}
@@ -991,10 +1119,10 @@ export default function ProdutorScreen({ route, navigation }) {
                           />
                         </View>
                         <View style={styles.periodoInfo}>
-                          <Text style={styles.periodoTitle} numberOfLines={1}>
+                          <Text style={styles.periodoTitle} numberOfLines={2}>
                             {periodo.label}
                           </Text>
-                          <Text style={styles.periodoSubtitle} numberOfLines={1}>
+                          <Text style={styles.periodoSubtitle} numberOfLines={2}>
                             {[periodo.tipo_periodo_label, periodo.cultura, periodo.ano_agricola].filter(Boolean).join(' • ')}
                           </Text>
                         </View>
@@ -1262,10 +1390,10 @@ export default function ProdutorScreen({ route, navigation }) {
                           <Ionicons name="book-outline" size={22} color={tipoColor} />
                         </View>
                         <View style={styles.cadernoHeaderInfo}>
-                          <Text style={styles.cadernoTitle} numberOfLines={1}>
+                          <Text style={styles.cadernoTitle} numberOfLines={2}>
                             {getCadernoTipoLabel(registro.tipo_atividade)}
                           </Text>
-                          <Text style={styles.cadernoSubtitle} numberOfLines={1}>
+                          <Text style={styles.cadernoSubtitle} numberOfLines={2}>
                             {[getCadernoTalhaoLabel(registro), registro.colaborador_responsavel].filter(Boolean).join(' • ')}
                           </Text>
                         </View>
@@ -1356,7 +1484,13 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.screen,
-    paddingBottom: 32
+    paddingBottom: 32,
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
+  },
+  contentLandscape: {
+    paddingHorizontal: spacing.xl,
   },
   loadingContainer: {
     flex: 1,
@@ -1368,6 +1502,14 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.fontBody
   },
+  profileLayout: {
+    width: '100%',
+  },
+  profileLayoutWide: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.lg,
+  },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1377,6 +1519,10 @@ const styles = StyleSheet.create({
     borderRadius: spacing.radius,
     borderWidth: 2,
     borderColor: colors.border
+  },
+  profileHeaderWide: {
+    flex: 2,
+    minWidth: 0,
   },
   avatarContainer: {
     width: 60,
@@ -1424,6 +1570,17 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.lg
   },
+  actionButtonsStacked: {
+    flexDirection: 'column',
+  },
+  actionButtonsWide: {
+    flex: 1,
+    minWidth: 220,
+  },
+  actionButtonStacked: {
+    flex: 0,
+    width: '100%',
+  },
   editButton: {
     flex: 2,
     borderRadius: spacing.radius,
@@ -1469,16 +1626,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: 12,
   },
+  statsContentWide: {
+    flexGrow: 1,
+    width: '100%',
+    paddingHorizontal: 0,
+  },
   statCardCompact: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    width: 148,
     minHeight: 178,
     borderWidth: 2,
     borderColor: colors.border,
     ...shadows.sm,
+  },
+  statCardCompactScrollable: {
+    width: 148,
+  },
+  statCardCompactWide: {
+    flex: 1,
+    minWidth: 0,
   },
   statIconCompact: {
     width: 40,
@@ -1507,14 +1675,48 @@ const styles = StyleSheet.create({
     color: colors.muted,
     textAlign: 'center',
   },
+  horizontalScrollHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  horizontalScrollHintText: {
+    color: colors.primary,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    textAlign: 'center',
+  },
+  verticalScrollHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  verticalScrollHintText: {
+    color: colors.textLight,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    textAlign: 'center',
+  },
+  tabsSection: {
+    marginBottom: spacing.lg,
+  },
   tabsContainer: {
     backgroundColor: colors.accentDark,
     borderRadius: spacing.radius,
-    marginBottom: spacing.lg,
   },
   tabsContent: {
     padding: spacing.xs,
     gap: spacing.xs,
+  },
+  tabsContentWide: {
+    flexGrow: 1,
   },
   tab: {
     flexDirection: 'row',
@@ -1525,6 +1727,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  tabScrollable: {
+    minWidth: 124,
+  },
+  tabWide: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: spacing.sm,
+  },
   tabActive: {
     backgroundColor: colors.card
   },
@@ -1534,7 +1744,9 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: typography.fontBody - 1,
     fontWeight: typography.weightSemibold,
-    color: colors.muted
+    color: colors.muted,
+    flexShrink: 1,
+    textAlign: 'center',
   },
   tabTextActive: {
     color: colors.primary,
@@ -1543,8 +1755,19 @@ const styles = StyleSheet.create({
   tabContent: {
     gap: spacing.md
   },
+  summaryGridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
+  summaryCardWide: {
+    width: '48%',
+    minWidth: 320,
+    flexGrow: 1,
+  },
   detailSectionHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
@@ -1606,6 +1829,7 @@ const styles = StyleSheet.create({
   },
   sectionActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     flexShrink: 0,
     gap: spacing.sm,

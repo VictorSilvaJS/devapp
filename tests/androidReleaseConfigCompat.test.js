@@ -33,6 +33,7 @@ test('o comando oficial de release define NODE_ENV sem sobrescrever valor explí
   assert.match(buildScriptSource, /'--max-workers=2'/);
   assert.match(buildScriptSource, /configureAndroidReleaseSigning\(\)/);
   assert.match(buildScriptSource, /configureAndroidGradleMemory\(\)/);
+  assert.ok(buildScriptSource.includes("process.platform === 'win32' ? '.\\\\gradlew.bat'"));
   assert.match(memoryPatchSource, /org\.gradle\.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=1024m/);
 });
 
