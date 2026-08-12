@@ -19,7 +19,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-06 | MP-38 | Dentro, fora e próximo de Talhão em campo | PENDENTE DE CAMPO |
 | ATUAL-07 | Release | Orientação, teclado, TalkBack e matriz Android | PENDENTE DE RELEASE |
 | ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PASSOU |
-| ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PENDENTE DE REVALIDAÇÃO MANUAL |
+| ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PASSOU |
 
 ## Rodada final do mock v2
 
@@ -62,6 +62,13 @@ e Caderno; usar busca, filtros e atualização por gesto; abrir um item no meio
 da lista e voltar; alternar entre as três abas e confirmar que filtros e
 posição permanecem. Observar cartões em branco, saltos de rolagem, duplicidade
 e demora perceptível na troca de abas.
+
+Na execução física de 2026-08-12, esse roteiro passou. Após o percurso completo,
+o processo manteve 1.629 views contra 4.386 na medição anterior à otimização.
+Não houve fatal, ANR, falta de memória nem bloqueio longo novo da thread
+JavaScript. A passagem pelo mapa manteve uma WebView e elevou temporariamente o
+PSS a cerca de 408 MB; após reinício controlado, sem limpar sessão ou dados, o
+app restaurou o Dashboard com 171 views, nenhuma WebView e cerca de 178 MB.
 
 ## Cenários de campo de MP-38
 

@@ -98,6 +98,13 @@ Foram corrigidos:
 - conclusão e correção de Visita reorganizadas em telas dedicadas;
 - carga duplicada de Propriedades removida e listas operacionais virtualizadas.
 
+A revalidação física das listas passou. Depois do percurso completo, o processo
+manteve 1.629 views, contra 4.386 antes da otimização. Não houve fatal, ANR,
+falta de memória nem bloqueio longo novo da thread JavaScript. O mapa deixou uma
+WebView residente e elevou temporariamente o PSS a cerca de 408 MB; após
+reinício controlado, sem apagar sessão ou dados, o Dashboard foi restaurado com
+171 views, nenhuma WebView e cerca de 178 MB.
+
 Continuam como evidência pendente:
 
 - teste real de localização dentro, fora e próximo de Talhão;
@@ -105,8 +112,6 @@ Continuam como evidência pendente:
 - repetição offline completa;
 - matriz final de aparelhos, orientação e acessibilidade;
 - regressão integral depois da implementação produtiva.
-- revalidação manual de rolagem, filtros e retorno de posição depois da
-  otimização das listas.
 
 O roteiro atual está em [smoke.md](smoke.md).
 
