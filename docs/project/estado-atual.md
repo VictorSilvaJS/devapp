@@ -124,7 +124,10 @@ Continuam como evidência pendente:
 - repetição offline completa;
 - matriz final de aparelhos, orientação e acessibilidade;
 - regressão integral depois da implementação produtiva.
-- revalidação física do novo gerenciamento de Produtores autorizados.
+
+O gerenciamento de Produtores autorizados foi revalidado no Android físico:
+vínculo, desvínculo, sessão restaurada, Perfil e reativação passaram sem
+duplicidade ou ampliação indevida de escopo.
 
 O roteiro atual está em [smoke.md](smoke.md).
 

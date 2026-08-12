@@ -22,7 +22,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PASSOU |
 | ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PASSOU |
 | ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
-| ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PENDENTE DE REVALIDAÇÃO MANUAL |
+| ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
 
 ## Rodada final do mock v2
 
@@ -102,6 +102,11 @@ Fazenda_Backes deve permanecer. Reiniciar o app sem limpar os dados e repetir a
 consulta com a sessão restaurada. Voltar como Admin, marcar Altair novamente e
 salvar; uma nova sessão do Altair deve recuperar a Propriedade QA sem criar
 vínculo duplicado.
+
+Na execução física de 2026-08-12, o cenário passou após a correção das
+projeções de vínculo atual: o vínculo inativo deixou de aparecer no Perfil do
+Altair e nas telas administrativas, a Propriedade própria permaneceu acessível
+e a reativação recuperou a Propriedade autorizada sem duplicidade.
 
 ## Cenários de campo de MP-38
 
