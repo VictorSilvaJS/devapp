@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
-  ScrollView, 
+  FlatList,
   StyleSheet, 
   RefreshControl,
   ActivityIndicator
@@ -26,7 +26,6 @@ import { useFiltros } from '../contexts/FiltroContext';
 import {
   filtrarCadernosPorFazendaIds,
   filtrarProdutoresPorAcesso,
-  findFazendaById,
   getCadernoFazendaId,
   getFazendaId,
   getFazendaIds,
@@ -131,10 +130,16 @@ export default function CadernoCampoScreen() {
     }
   };
 
-  const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};
+  const fazendasById = useMemo(() => new Map(
+    fazendas.map((fazenda) => [getFazendaId(fazenda), fazenda])
+  ), [fazendas]);
+  const getFazenda = useCallback(
+    (fazendaId) => fazendasById.get(String(fazendaId || '').trim()) || {},
+    [fazendasById]
+  );
 
   // Filtro de busca
-  const registrosFiltrados = ordenarCadernosPorDataRecente(registros.filter(registro => {
+  const registrosFiltrados = useMemo(() => ordenarCadernosPorDataRecente(registros.filter(registro => {
     if (tipoFiltro !== 'todos' && registro.tipo_atividade !== tipoFiltro) return false;
     const fazenda = getFazenda(getCadernoFazendaId(registro));
     return matchesFazendaUiBusca(fazenda, busca, [
@@ -146,12 +151,12 @@ export default function CadernoCampoScreen() {
       registro.colaborador_responsavel,
       registro.observacoes,
     ]);
-  }));
-  const tiposDisponiveis = Array.from(new Set(
+  })), [busca, getFazenda, registros, tipoFiltro]);
+  const tiposDisponiveis = useMemo(() => Array.from(new Set(
     registros
       .map((registro) => registro.tipo_atividade)
       .filter(Boolean)
-  )).sort((a, b) => getCadernoTipoLabel(a).localeCompare(getCadernoTipoLabel(b)));
+  )).sort((a, b) => getCadernoTipoLabel(a).localeCompare(getCadernoTipoLabel(b))), [registros]);
   const tipoOptions = [
     { value: 'todos', label: 'Todos' },
     ...tiposDisponiveis.map((tipo) => ({ value: tipo, label: getCadernoTipoLabel(tipo) })),
@@ -205,7 +210,66 @@ export default function CadernoCampoScreen() {
         />
       </View>
 
-      <ScrollView 
+      <FlatList
+        data={loading ? [] : registrosFiltrados}
+        keyExtractor={(registro: any) => String(registro.id)}
+        renderItem={({ item: reg }) => {
+          const fazenda = getFazenda(getCadernoFazendaId(reg));
+          const fazendaInfo = getFazendaUiInfo(fazenda);
+          const tipoColor = getTipoColor(reg.tipo_atividade);
+          const tipoLabel = getCadernoTipoLabel(reg.tipo_atividade);
+          const talhaoLabel = getCadernoTalhaoLabel(reg);
+          const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(reg);
+          const visivelParaProdutor = isCadernoVisivelParaProdutor(reg);
+          const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
+          const estado = getCadernoEstado(reg);
+          const summary = resolveOperationalSummary([
+            reg.observacoes,
+            reg.produtos_utilizados?.length > 0
+              ? `Produtos: ${reg.produtos_utilizados.join(', ')}`
+              : '',
+            reg.condicoes_clima ? `Condições: ${reg.condicoes_clima}` : '',
+          ]);
+          const chips = [
+            {
+              label: getCadernoEstadoLabel(reg),
+              icon: estado === 'rascunho' ? 'document-outline' as const : 'shield-checkmark-outline' as const,
+              color: estado === 'anulado' ? colors.error : estado === 'rascunho' ? colors.warning : colors.success,
+            },
+            ...(hasCadernoLocalizacao(reg) ? [{
+              label: 'Com ponto geográfico',
+              icon: 'location-outline' as const,
+              color: colors.primary,
+            }] : []),
+            ...(!isProdutorView ? [{
+              label: getCadernoVisibilidadeLabel(reg),
+              icon: visivelParaProdutor ? 'eye-outline' as const : 'lock-closed-outline' as const,
+              color: visibilidadeColor,
+            }] : []),
+          ];
+
+          return (
+            <OperationalCard
+              title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
+              icon="book-outline"
+              accentColor={tipoColor}
+              date={reg.data_atividade}
+              tags={[{ label: tipoLabel, color: tipoColor }]}
+              metadata={[
+                { icon: 'grid-outline', label: `Talhão: ${talhaoLabel}` },
+                { icon: 'person-outline', label: `Responsável: ${reg.colaborador_responsavel || 'Não informado'}` },
+                ...(periodoProdutivoLabel ? [{
+                  icon: 'leaf-outline' as const,
+                  label: `Safra/Safrinha: ${periodoProdutivoLabel}`,
+                }] : []),
+              ]}
+              summary={summary}
+              chips={chips}
+              accessibilityLabel={`Abrir registro de Caderno, ${tipoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, ${talhaoLabel}`}
+              onPress={() => navigation.navigate('CadernoDetail', { cadernoId: reg.id })}
+            />
+          );
+        }}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl 
@@ -215,24 +279,30 @@ export default function CadernoCampoScreen() {
             tintColor={colors.primary}
           />
         }
-      >
-        <ActiveFilterBar
-          items={tipoFiltro === 'todos' ? [] : [{
-            key: 'tipo',
-            label: tipoFiltroLabel,
-            icon: 'book',
-            color: getTipoColor(tipoFiltro),
-            onRemove: () => setTipoFiltro('todos'),
-          }]}
-          onClear={() => setTipoFiltro('todos')}
-        />
-
-        {loading ? (
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={50}
+        windowSize={7}
+        ListHeaderComponent={(
+          <ActiveFilterBar
+            items={tipoFiltro === 'todos' ? [] : [{
+              key: 'tipo',
+              label: tipoFiltroLabel,
+              icon: 'book',
+              color: getTipoColor(tipoFiltro),
+              onRemove: () => setTipoFiltro('todos'),
+            }]}
+            onClear={() => setTipoFiltro('todos')}
+          />
+        )}
+        ListEmptyComponent={loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Carregando registros...</Text>
           </View>
-        ) : registrosFiltrados.length === 0 ? (
+        ) : (
           <EmptyState
             icon={busca ? 'search-outline' : 'document-text-outline'}
             title={busca ? 'Nenhum registro encontrado' : isProdutorView ? 'Nenhum registro liberado' : 'Ainda não há registros de caderno de campo'}
@@ -245,67 +315,8 @@ export default function CadernoCampoScreen() {
             }
             style={styles.emptyState}
           />
-        ) : (
-          registrosFiltrados.map(reg => {
-            const fazenda = getFazenda(getCadernoFazendaId(reg));
-            const fazendaInfo = getFazendaUiInfo(fazenda);
-            const tipoColor = getTipoColor(reg.tipo_atividade);
-            const tipoLabel = getCadernoTipoLabel(reg.tipo_atividade);
-            const talhaoLabel = getCadernoTalhaoLabel(reg);
-            const periodoProdutivoLabel = getCadernoPeriodoProdutivoLabel(reg);
-            const visivelParaProdutor = isCadernoVisivelParaProdutor(reg);
-            const visibilidadeColor = visivelParaProdutor ? colors.success : colors.warning;
-            const estado = getCadernoEstado(reg);
-            const summary = resolveOperationalSummary([
-              reg.observacoes,
-              reg.produtos_utilizados?.length > 0
-                ? `Produtos: ${reg.produtos_utilizados.join(', ')}`
-                : '',
-              reg.condicoes_clima ? `Condições: ${reg.condicoes_clima}` : '',
-            ]);
-            const chips = [
-              {
-                label: getCadernoEstadoLabel(reg),
-                icon: estado === 'rascunho' ? 'document-outline' as const : 'shield-checkmark-outline' as const,
-                color: estado === 'anulado' ? colors.error : estado === 'rascunho' ? colors.warning : colors.success,
-              },
-              ...(hasCadernoLocalizacao(reg) ? [{
-                label: 'Com ponto geográfico',
-                icon: 'location-outline' as const,
-                color: colors.primary,
-              }] : []),
-              ...(!isProdutorView ? [{
-                label: getCadernoVisibilidadeLabel(reg),
-                icon: visivelParaProdutor ? 'eye-outline' as const : 'lock-closed-outline' as const,
-                color: visibilidadeColor,
-              }] : []),
-            ];
-            
-            return (
-              <OperationalCard
-                key={reg.id}
-                title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
-                icon="book-outline"
-                accentColor={tipoColor}
-                date={reg.data_atividade}
-                tags={[{ label: tipoLabel, color: tipoColor }]}
-                metadata={[
-                  { icon: 'grid-outline', label: `Talhão: ${talhaoLabel}` },
-                  { icon: 'person-outline', label: `Responsável: ${reg.colaborador_responsavel || 'Não informado'}` },
-                  ...(periodoProdutivoLabel ? [{
-                    icon: 'leaf-outline' as const,
-                    label: `Safra/Safrinha: ${periodoProdutivoLabel}`,
-                  }] : []),
-                ]}
-                summary={summary}
-                chips={chips}
-                accessibilityLabel={`Abrir registro de Caderno, ${tipoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, ${talhaoLabel}`}
-                onPress={() => navigation.navigate('CadernoDetail', { cadernoId: reg.id })}
-              />
-            );
-          })
         )}
-      </ScrollView>
+      />
 
       {podeMostrarCriarCaderno && (
         <CreateActionButton

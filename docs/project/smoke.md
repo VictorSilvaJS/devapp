@@ -18,7 +18,8 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-05 | Acesso v2 | Três perfis, vínculos e rotas diretas | PASSOU |
 | ATUAL-06 | MP-38 | Dentro, fora e próximo de Talhão em campo | PENDENTE DE CAMPO |
 | ATUAL-07 | Release | Orientação, teclado, TalkBack e matriz Android | PENDENTE DE RELEASE |
-| ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PENDENTE DE REVALIDAÇÃO MANUAL |
+| ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PASSOU |
+| ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PENDENTE DE REVALIDAÇÃO MANUAL |
 
 ## Rodada final do mock v2
 
@@ -55,6 +56,12 @@ Na revalidação de Visitas, concluir uma agendada pela tela completa, voltar ao
 detalhe e conferir os dados; depois corrigir mais de um campo de uma realizada
 com um único motivo e confirmar o antes/depois no histórico. Complementar,
 cancelar e anular devem continuar como ações curtas.
+
+Na revalidação de desempenho, percorrer do início ao fim Propriedades, Visitas
+e Caderno; usar busca, filtros e atualização por gesto; abrir um item no meio
+da lista e voltar; alternar entre as três abas e confirmar que filtros e
+posição permanecem. Observar cartões em branco, saltos de rolagem, duplicidade
+e demora perceptível na troca de abas.
 
 ## Cenários de campo de MP-38
 

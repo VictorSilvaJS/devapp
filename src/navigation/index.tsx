@@ -40,6 +40,8 @@ const Tab = createBottomTabNavigator();
 function tabScreenOptions({ route }) {
   return {
     headerShown: false,
+    lazy: true,
+    freezeOnBlur: true,
     tabBarIcon: ({ color, size }) => {
       let name = 'home-outline';
       if (route.name === 'Propriedades' || route.name === 'PropriedadesColaborador' || route.name === 'Minhas Fazendas') name = 'business-outline';
@@ -73,7 +75,7 @@ function tabScreenOptions({ route }) {
 }
 const AdminTabs = React.memo(function AdminTabs() {
   return (
-    <Tab.Navigator screenOptions={tabScreenOptions}>
+    <Tab.Navigator screenOptions={tabScreenOptions} detachInactiveScreens>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="Propriedades" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Usuarios" component={UsuariosScreen} options={{ title: 'Usuários', tabBarLabel: 'Usuários' }} />
@@ -86,7 +88,7 @@ const AdminTabs = React.memo(function AdminTabs() {
 
 const ColaboradorTabs = React.memo(function ColaboradorTabs() {
   return (
-    <Tab.Navigator screenOptions={tabScreenOptions}>
+    <Tab.Navigator screenOptions={tabScreenOptions} detachInactiveScreens>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="PropriedadesColaborador" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Minhas Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
@@ -98,7 +100,7 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
 
 const ClienteTabs = React.memo(function ClienteTabs() {
   return (
-    <Tab.Navigator screenOptions={tabScreenOptions}>
+    <Tab.Navigator screenOptions={tabScreenOptions} detachInactiveScreens>
       <Tab.Screen name="Minhas Fazendas" component={ClienteDashboardScreen} options={{ title: 'Minhas Propriedades' }} />
       <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Caderno', tabBarLabel: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />
@@ -109,7 +111,6 @@ const ClienteTabs = React.memo(function ClienteTabs() {
 function MainTabsComponent() {
   const { user } = useAuthState();
   const perfil = user?.perfil;
-  console.log('[Navigation] MainTabsComponent render perfil=', perfil);
   if (perfil === 'admin') return <AdminTabs />;
   if (perfil === 'colaborador') return <ColaboradorTabs />;
   // produtor = cliente = proprietário

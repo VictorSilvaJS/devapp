@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-10
+> Revisão documental: 2026-08-12
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -65,6 +65,8 @@ evidência do dataset local, não volume produtivo.
 - Visitas com estados, fotos locais, exportação explícita e telas dedicadas para
   conclusão e correção auditada;
 - Caderno com tipos, ciclo local, ponto opcional e controle de visibilidade;
+- listas extensas de Propriedades, Visitas e Caderno com renderização
+  virtualizada e estado das abas preservado;
 - Períodos produtivos, Plantio e Colheita no recorte local;
 - Materiais técnicos PNG, PDF e ZIP com tratamento honesto de indisponibilidade;
 - GeoJSON local e mapa de Talhões com localização foreground;
@@ -93,6 +95,8 @@ Foram corrigidos:
 - estado terminal do Caderno destacado;
 - exclusão estrutural de Propriedade restrita ao Administrador;
 - nome físico de exportação alinhado ao nome informado pela interface.
+- conclusão e correção de Visita reorganizadas em telas dedicadas;
+- carga duplicada de Propriedades removida e listas operacionais virtualizadas.
 
 Continuam como evidência pendente:
 
@@ -101,6 +105,8 @@ Continuam como evidência pendente:
 - repetição offline completa;
 - matriz final de aparelhos, orientação e acessibilidade;
 - regressão integral depois da implementação produtiva.
+- revalidação manual de rolagem, filtros e retorno de posição depois da
+  otimização das listas.
 
 O roteiro atual está em [smoke.md](smoke.md).
 

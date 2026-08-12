@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
-  ScrollView, 
+  SectionList,
   StyleSheet, 
   RefreshControl,
   TouchableOpacity,
@@ -30,7 +30,6 @@ import { useFiltros } from '../contexts/FiltroContext';
 import {
   filtrarProdutoresPorAcesso,
   filtrarVisitasPorFazendaIds,
-  findFazendaById,
   getFazendaId,
   getFazendaIds,
   getVisitaFazendaId,
@@ -65,7 +64,8 @@ export default function VisitasScreen() {
   const { user } = useAuth();
   const { getFazendaIdsFiltrados, filtros, filtrarProdutores: filtrarFazendas } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
-  const referenceDate = new Date();
+  const referenceMinute = Math.floor(Date.now() / 60000);
+  const referenceDate = useMemo(() => new Date(referenceMinute * 60000), [referenceMinute]);
 
   const load = useCallback(async () => {
     try {
@@ -127,10 +127,16 @@ export default function VisitasScreen() {
     }
   };
 
-  const getFazenda = (fazendaId) => findFazendaById(fazendas, fazendaId) || {};
+  const fazendasById = useMemo(() => new Map(
+    fazendas.map((fazenda) => [getFazendaId(fazenda), fazenda])
+  ), [fazendas]);
+  const getFazenda = useCallback(
+    (fazendaId) => fazendasById.get(String(fazendaId || '').trim()) || {},
+    [fazendasById]
+  );
 
   // Função para filtrar por data
-  const filtrarPorData = (visita) => {
+  const filtrarPorData = useCallback((visita) => {
     if (filtroData === 'todos') return true;
     
     const dataVisita = new Date(visita.data_visita);
@@ -158,10 +164,10 @@ export default function VisitasScreen() {
     }
     
     return true;
-  };
+  }, [filtroData]);
 
   // Filtro de busca e filtros combinados
-  const visitasFiltradas = visitas.filter(visita => {
+  const visitasFiltradas = useMemo(() => visitas.filter(visita => {
     const fazenda = getFazenda(getVisitaFazendaId(visita));
 
     const matchBusca = matchesFazendaUiBusca(fazenda, busca, [
@@ -174,9 +180,9 @@ export default function VisitasScreen() {
     const matchData = filtrarPorData(visita);
     
     return matchBusca && matchStatus && matchData;
-  });
+  }), [busca, filtrarPorData, filtroStatus, getFazenda, referenceDate, visitas]);
 
-  const visitasAgrupadas = groupVisitasForList(visitasFiltradas, referenceDate).map((section) => {
+  const visitasAgrupadas = useMemo(() => groupVisitasForList(visitasFiltradas, referenceDate).map((section) => {
     if (ordenacao === 'data') return section;
 
     const items = [...section.items].sort((a, b) => {
@@ -197,7 +203,7 @@ export default function VisitasScreen() {
     });
 
     return { ...section, items };
-  });
+  }).map((section) => ({ ...section, data: section.items })), [getFazenda, ordenacao, referenceDate, visitasFiltradas]);
 
   // Cores para objetivos
   const getObjetivoColor = (objetivo) => {
@@ -369,7 +375,55 @@ export default function VisitasScreen() {
         )}
       </LinearGradient>
 
-      <ScrollView 
+      <SectionList
+        sections={loading ? [] : visitasAgrupadas}
+        keyExtractor={(visita: any) => String(visita.id)}
+        renderItem={({ item: visita }) => {
+          const fazenda = getFazenda(getVisitaFazendaId(visita));
+          const fazendaInfo = getFazendaUiInfo(fazenda);
+          const objetivoColor = getObjetivoColor(visita.objetivo);
+          const statusPresentation = getVisitaStatusPresentation(visita, referenceDate);
+          const statusColor = getStatusColor(statusPresentation.tone);
+          const objetivoIcon = getObjetivoIcon(visita.objetivo);
+          const objetivoLabel = getVisitaObjetivoLabel(visita.objetivo);
+          const summary = resolveOperationalSummary([
+            visita.observacoes,
+            visita.recomendacoes,
+          ]);
+
+          return (
+            <OperationalCard
+              title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
+              subtitle={fazendaInfo.titularNome || fazendaInfo.localizacao}
+              icon={objetivoIcon}
+              accentColor={objetivoColor}
+              date={visita.data_visita}
+              tags={[
+                { label: objetivoLabel, color: objetivoColor },
+                { label: statusPresentation.label, color: statusColor },
+              ]}
+              metadata={[
+                { icon: 'person-outline', label: `Responsável: ${visita.tecnico_responsavel || 'Não informado'}` },
+              ]}
+              summary={summary}
+              accessibilityLabel={`Abrir Visita, ${objetivoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, status ${statusPresentation.label}`}
+              onPress={() => navigation.navigate('VisitaDetail', { visitaId: visita.id })}
+            />
+          );
+        }}
+        renderSectionHeader={({ section }: any) => (
+          <View style={styles.visitSectionHeader}>
+            <View style={styles.visitSectionHeading}>
+              <Text style={styles.visitSectionTitle}>{section.title}</Text>
+              <Text style={styles.visitSectionDescription}>{section.description}</Text>
+            </View>
+            <View style={styles.visitSectionCount}>
+              <Text style={styles.visitSectionCountText}>{section.items.length}</Text>
+            </View>
+          </View>
+        )}
+        renderSectionFooter={() => <View style={styles.visitSectionSpacer} />}
+        stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl 
@@ -380,28 +434,33 @@ export default function VisitasScreen() {
           />
         }
         showsVerticalScrollIndicator={false}
-      >
-        <ActiveFilterBar
-          items={filtrosAtivos.map((filtro) => ({
-            key: filtro.tipo,
-            label: filtro.label,
-            icon: filtro.icon,
-            color: filtro.color,
-            onRemove: filtro.remover,
-          }))}
-          onClear={() => {
-            setFiltroStatus('todos');
-            setFiltroData('todos');
-            setOrdenacao('data');
-          }}
-        />
-
-        {loading ? (
+        removeClippedSubviews
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={50}
+        windowSize={7}
+        ListHeaderComponent={(
+          <ActiveFilterBar
+            items={filtrosAtivos.map((filtro) => ({
+              key: filtro.tipo,
+              label: filtro.label,
+              icon: filtro.icon,
+              color: filtro.color,
+              onRemove: filtro.remover,
+            }))}
+            onClear={() => {
+              setFiltroStatus('todos');
+              setFiltroData('todos');
+              setOrdenacao('data');
+            }}
+          />
+        )}
+        ListEmptyComponent={loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.loadingText}>Carregando visitas...</Text>
           </View>
-        ) : visitasFiltradas.length === 0 ? (
+        ) : (
           <View style={styles.emptyStateWrapper}>
             <EmptyState
               icon={busca ? 'search-outline' : 'calendar-outline'}
@@ -427,57 +486,8 @@ export default function VisitasScreen() {
               />
             )}
           </View>
-        ) : (
-          visitasAgrupadas.map((section) => (
-            <View key={section.id} style={styles.visitSection}>
-              <View style={styles.visitSectionHeader}>
-                <View style={styles.visitSectionHeading}>
-                  <Text style={styles.visitSectionTitle}>{section.title}</Text>
-                  <Text style={styles.visitSectionDescription}>{section.description}</Text>
-                </View>
-                <View style={styles.visitSectionCount}>
-                  <Text style={styles.visitSectionCountText}>{section.items.length}</Text>
-                </View>
-              </View>
-
-              {section.items.map((visita) => {
-                const fazenda = getFazenda(getVisitaFazendaId(visita));
-                const fazendaInfo = getFazendaUiInfo(fazenda);
-                const objetivoColor = getObjetivoColor(visita.objetivo);
-                const statusPresentation = getVisitaStatusPresentation(visita, referenceDate);
-                const statusColor = getStatusColor(statusPresentation.tone);
-                const objetivoIcon = getObjetivoIcon(visita.objetivo);
-                const objetivoLabel = getVisitaObjetivoLabel(visita.objetivo);
-                const summary = resolveOperationalSummary([
-                  visita.observacoes,
-                  visita.recomendacoes,
-                ]);
-
-                return (
-                  <OperationalCard
-                    key={visita.id}
-                    title={fazendaInfo.fazendaNome || 'Propriedade não encontrada'}
-                    subtitle={fazendaInfo.titularNome || fazendaInfo.localizacao}
-                    icon={objetivoIcon}
-                    accentColor={objetivoColor}
-                    date={visita.data_visita}
-                    tags={[
-                      { label: objetivoLabel, color: objetivoColor },
-                      { label: statusPresentation.label, color: statusColor },
-                    ]}
-                    metadata={[
-                      { icon: 'person-outline', label: `Responsável: ${visita.tecnico_responsavel || 'Não informado'}` },
-                    ]}
-                    summary={summary}
-                    accessibilityLabel={`Abrir Visita, ${objetivoLabel}, em ${fazendaInfo.fazendaNome || 'Propriedade não encontrada'}, status ${statusPresentation.label}`}
-                    onPress={() => navigation.navigate('VisitaDetail', { visitaId: visita.id })}
-                  />
-                );
-              })}
-            </View>
-          ))
         )}
-      </ScrollView>
+      />
 
       {podeCriarVisita(user) && (
         <CreateActionButton
@@ -665,8 +675,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screen * 2,
     minHeight: 400,
   },
-  visitSection: {
-    marginBottom: spacing.lg,
+  visitSectionSpacer: {
+    height: spacing.lg,
   },
   visitSectionHeader: {
     flexDirection: 'row',

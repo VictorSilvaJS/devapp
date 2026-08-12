@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, LayoutAnimation, RefreshControl, Animated, useWindowDimensions } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { FlatList, View, Text, ScrollView, StyleSheet, TouchableOpacity, RefreshControl, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import EmptyState from '../components/EmptyState';
 import CreateActionButton from '../components/CreateActionButton';
 import Header from '../components/Header';
 import ProdutorCard from '../components/ProdutorCard';
-import StatCard from '../components/StatCard';
 import SearchBar from '../components/SearchBar';
 import SegmentedChips from '../components/SegmentedChips';
 import FilterBottomSheet, {
@@ -14,7 +13,7 @@ import FilterBottomSheet, {
   FilterTrigger,
 } from '../components/FilterBottomSheet';
 import { Produtor } from '../api/mock';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors, typography, spacing, shadows } from '../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../auth/AuthContext';
@@ -61,17 +60,7 @@ export default function PropriedadesScreen() {
   const { filtrarProdutores: filtrarPropriedadesPorFiltroGlobal, filtros } = useFiltros();
   const isProdutorView = user?.perfil === 'produtor';
 
-  useEffect(() => { load(); }, [user, filtros]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      load();
-    });
-
-    return unsubscribe;
-  }, [navigation, user, filtros]);
-  
-  const load = async () => {
+  const load = useCallback(async () => {
     const data = await Produtor.list();
     // Filtrar por acesso do usuário
     let produtoresFiltrados = filtrarProdutoresPorAcesso(data, user);
@@ -82,7 +71,13 @@ export default function PropriedadesScreen() {
     }
     
     setProdutores(produtoresFiltrados);
-  };
+  }, [filtrarPropriedadesPorFiltroGlobal, filtros, user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -98,29 +93,28 @@ export default function PropriedadesScreen() {
   const mostrarFiltrosLocalizacao = ufs.length > 0;
 
   // Localização organiza somente o conjunto já autorizado e filtrado globalmente.
-  const produtoresFiltrados = filtrarPropriedadesPorLocalizacao(produtores, {
+  const produtoresFiltrados = useMemo(() => filtrarPropriedadesPorLocalizacao(produtores, {
     uf: ufSelecionada,
     municipio: municipioSelecionado,
   }).filter(produtor => {
     const matchBusca = matchesFazendaUiBusca(produtor, busca);
-    
     const matchStatus = filtroStatus === 'todos' || produtor.status === filtroStatus;
-    
     return matchBusca && matchStatus;
   }).sort((a, b) => {
-    // Aplicar ordenação
     if (ordenacao === 'nome') {
       return getFazendaUiInfo(a).fazendaNome.localeCompare(getFazendaUiInfo(b).fazendaNome);
-    } else if (ordenacao === 'area') {
+    }
+    if (ordenacao === 'area') {
       return (b.area_total || 0) - (a.area_total || 0);
-    } else if (ordenacao === 'recente') {
+    }
+    if (ordenacao === 'recente') {
       return new Date(b.data_cadastro || 0).getTime() - new Date(a.data_cadastro || 0).getTime();
     }
     return 0;
-  });
+  }), [busca, filtroStatus, municipioSelecionado, ordenacao, produtores, ufSelecionada]);
 
   // Calcular estatísticas da listagem Propriedade + Titular
-  const metricasFazendas = buildFazendaListMetrics(produtores);
+  const metricasFazendas = useMemo(() => buildFazendaListMetrics(produtores), [produtores]);
 
   // Contar filtros ativos
   const contarFiltrosAtivos = () => {
@@ -275,7 +269,18 @@ export default function PropriedadesScreen() {
         )}
       </LinearGradient>
 
-      <ScrollView 
+      <FlatList
+        data={produtoresFiltrados}
+        keyExtractor={(propriedade: any) => String(propriedade.id)}
+        renderItem={({ item: propriedade }) => (
+          <ProdutorCard
+            produtor={propriedade}
+            onPress={() => {
+              const params = buildPropriedadeDetailRouteParams(propriedade);
+              if (params) navigation.navigate('ProdutorDetail', params);
+            }}
+          />
+        )}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl 
@@ -286,90 +291,95 @@ export default function PropriedadesScreen() {
           />
         }
         showsVerticalScrollIndicator={false}
-      >
-        <ActiveFilterBar
-          items={filtrosAtivos.map((filtro) => ({
-            key: filtro.tipo,
-            label: filtro.label,
-            icon: filtro.icon,
-            color: filtro.color,
-            onRemove: filtro.remover,
-          }))}
-          onClear={() => {
-            setFiltroStatus('todos');
-            setUfSelecionada(FILTRO_TODOS);
-            setMunicipioSelecionado(FILTRO_TODOS);
-            setOrdenacao('nome');
-          }}
-        />
+        removeClippedSubviews
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        updateCellsBatchingPeriod={50}
+        windowSize={7}
+        ListHeaderComponent={(
+          <>
+            <ActiveFilterBar
+              items={filtrosAtivos.map((filtro) => ({
+                key: filtro.tipo,
+                label: filtro.label,
+                icon: filtro.icon,
+                color: filtro.color,
+                onRemove: filtro.remover,
+              }))}
+              onClear={() => {
+                setFiltroStatus('todos');
+                setUfSelecionada(FILTRO_TODOS);
+                setMunicipioSelecionado(FILTRO_TODOS);
+                setOrdenacao('nome');
+              }}
+            />
 
-        {/* Métricas compactas no padrão do detalhe da Propriedade */}
-        {produtores.length > 0 && (
-          <View style={styles.metricsSection}>
-            <ScrollView
-              horizontal
-              scrollEnabled={!responsiveLayout.useWideMetrics}
-              showsHorizontalScrollIndicator={!responsiveLayout.useWideMetrics}
-              persistentScrollbar={!responsiveLayout.useWideMetrics}
-              style={styles.metricsCarousel}
-              contentContainerStyle={[
-                styles.metricsContent,
-                responsiveLayout.useWideMetrics && styles.metricsContentWide,
-              ]}
-            >
-            <View style={metricCardStyle}>
-              <View style={[styles.metricIcon, { backgroundColor: colors.borderLight }]}>
-                <Ionicons name="business-outline" size={20} color={colors.primary} />
-              </View>
-              <Text style={styles.metricValue}>{metricasFazendas.totalFazendas}</Text>
-              <Text style={styles.metricLabel}>Propriedades</Text>
-            </View>
+            {produtores.length > 0 && (
+              <View style={styles.metricsSection}>
+                <ScrollView
+                  horizontal
+                  scrollEnabled={!responsiveLayout.useWideMetrics}
+                  showsHorizontalScrollIndicator={!responsiveLayout.useWideMetrics}
+                  persistentScrollbar={!responsiveLayout.useWideMetrics}
+                  style={styles.metricsCarousel}
+                  contentContainerStyle={[
+                    styles.metricsContent,
+                    responsiveLayout.useWideMetrics && styles.metricsContentWide,
+                  ]}
+                >
+                  <View style={metricCardStyle}>
+                    <View style={[styles.metricIcon, { backgroundColor: colors.borderLight }]}>
+                      <Ionicons name="business-outline" size={20} color={colors.primary} />
+                    </View>
+                    <Text style={styles.metricValue}>{metricasFazendas.totalFazendas}</Text>
+                    <Text style={styles.metricLabel}>Propriedades</Text>
+                  </View>
 
-            <View style={metricCardStyle}>
-              <View style={[styles.metricIcon, { backgroundColor: colors.accent }]}>
-                <Ionicons name="people-outline" size={20} color={colors.primary} />
-              </View>
-              <Text style={styles.metricValue}>{metricasFazendas.totalTitulares}</Text>
-              <Text style={styles.metricLabel}>Titulares</Text>
-            </View>
+                  <View style={metricCardStyle}>
+                    <View style={[styles.metricIcon, { backgroundColor: colors.accent }]}>
+                      <Ionicons name="people-outline" size={20} color={colors.primary} />
+                    </View>
+                    <Text style={styles.metricValue}>{metricasFazendas.totalTitulares}</Text>
+                    <Text style={styles.metricLabel}>Titulares</Text>
+                  </View>
 
-            <View style={metricCardStyle}>
-              <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
-                <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
-              </View>
-              <Text style={styles.metricValue}>{formatAreaHa(metricasFazendas.areaTotal)}</Text>
-              <Text style={styles.metricLabel}>Área total informada</Text>
-            </View>
+                  <View style={metricCardStyle}>
+                    <View style={[styles.metricIcon, { backgroundColor: colors.secondaryBg }]}>
+                      <Ionicons name="leaf-outline" size={20} color={colors.secondary} />
+                    </View>
+                    <Text style={styles.metricValue}>{formatAreaHa(metricasFazendas.areaTotal)}</Text>
+                    <Text style={styles.metricLabel}>Área total informada</Text>
+                  </View>
 
-            <View style={metricCardStyle}>
-              <View style={[styles.metricIcon, { backgroundColor: colors.successBg }]}>
-                <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
-              </View>
-              <Text style={styles.metricValue}>{metricasFazendas.fazendasAtivas}</Text>
-              <Text style={styles.metricLabel}>Ativas</Text>
-            </View>
+                  <View style={metricCardStyle}>
+                    <View style={[styles.metricIcon, { backgroundColor: colors.successBg }]}>
+                      <Ionicons name="checkmark-circle-outline" size={20} color={colors.success} />
+                    </View>
+                    <Text style={styles.metricValue}>{metricasFazendas.fazendasAtivas}</Text>
+                    <Text style={styles.metricLabel}>Ativas</Text>
+                  </View>
 
-            <View style={metricCardStyle}>
-              <View style={[styles.metricIcon, { backgroundColor: colors.amberLight }]}>
-                <Ionicons name="time-outline" size={20} color={colors.warning} />
-              </View>
-              <Text style={styles.metricValue}>{metricasFazendas.fazendasPendentes}</Text>
-              <Text style={styles.metricLabel}>Pendentes</Text>
-            </View>
-            </ScrollView>
-            {!responsiveLayout.useWideMetrics && (
-              <View style={styles.metricsScrollHint} accessibilityRole="text">
-                <Ionicons name="swap-horizontal-outline" size={16} color={colors.primary} />
-                <Text style={styles.metricsScrollHintText}>
-                  Deslize para ver todos os indicadores
-                </Text>
+                  <View style={metricCardStyle}>
+                    <View style={[styles.metricIcon, { backgroundColor: colors.amberLight }]}>
+                      <Ionicons name="time-outline" size={20} color={colors.warning} />
+                    </View>
+                    <Text style={styles.metricValue}>{metricasFazendas.fazendasPendentes}</Text>
+                    <Text style={styles.metricLabel}>Pendentes</Text>
+                  </View>
+                </ScrollView>
+                {!responsiveLayout.useWideMetrics && (
+                  <View style={styles.metricsScrollHint} accessibilityRole="text">
+                    <Ionicons name="swap-horizontal-outline" size={16} color={colors.primary} />
+                    <Text style={styles.metricsScrollHintText}>
+                      Deslize para ver todos os indicadores
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
-          </View>
+          </>
         )}
-
-        {/* Lista de Propriedades + Titular */}
-        {produtoresFiltrados.length === 0 ? (
+        ListEmptyComponent={(
           <EmptyState
             icon={listaSemResultadoPorFiltro ? 'search-outline' : 'person-add-outline'}
             title={
@@ -391,19 +401,8 @@ export default function PropriedadesScreen() {
             onActionPress={!listaSemResultadoPorFiltro && podeCriarProdutor(user) ? () => navigation.navigate('NovaPropriedade') : undefined}
             style={styles.emptyState}
           />
-        ) : (
-          produtoresFiltrados.map(p => (
-            <ProdutorCard
-              key={p.id}
-              produtor={p}
-              onPress={() => {
-                const params = buildPropriedadeDetailRouteParams(p);
-                if (params) navigation.navigate('ProdutorDetail', params);
-              }}
-            />
-          ))
         )}
-      </ScrollView>
+      />
 
       {podeCriarProdutor(user) && (
         <CreateActionButton
