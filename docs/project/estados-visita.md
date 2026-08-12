@@ -144,6 +144,10 @@ Observacoes, recomendacoes, clima, proxima Visita e anexos podem ser
 acrescentados conforme o formulario aprovado em `MP-27`. Marcar como realizada
 nao pode ser acao imediata sem revisar os dados.
 
+No cliente local, a conclusao abre uma tela dedicada, preenche o contexto do
+agendamento e registra os campos opcionais no mesmo comando versionado da
+transicao. A confirmacao final ocorre somente depois da revisao do formulario.
+
 Uma Visita criada diretamente como realizada usa o mesmo contrato de
 conclusao.
 
@@ -187,6 +191,10 @@ reescreve o relato anterior. Se incorreto, recebe correcao/inativacao auditada.
 
 Visita `realizada` nao abre formulario de edicao geral. Correcao exige comando
 tipado, permissao explicita, justificativa e `versao_base`.
+
+A interface de correcao pode apresentar em uma unica tela todos os campos da
+allowlist e enviar somente os que mudaram, sob uma justificativa comum. Isso
+nao libera campos protegidos e nao substitui a trilha antes/depois.
 
 O evento registra:
 

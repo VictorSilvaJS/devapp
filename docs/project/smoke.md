@@ -1,8 +1,8 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-10
+> Atualizado em: 2026-08-12
 >
-> Última execução física registrada: 2026-08-07
+> Última execução física registrada: 2026-08-12
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
@@ -18,6 +18,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-05 | Acesso v2 | Três perfis, vínculos e rotas diretas | PASSOU |
 | ATUAL-06 | MP-38 | Dentro, fora e próximo de Talhão em campo | PENDENTE DE CAMPO |
 | ATUAL-07 | Release | Orientação, teclado, TalkBack e matriz Android | PENDENTE DE RELEASE |
+| ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PENDENTE DE REVALIDAÇÃO MANUAL |
 
 ## Rodada final do mock v2
 
@@ -49,6 +50,11 @@ Status: EXECUTADA PARCIALMENTE, SEM BUG ABERTO.
 8. testar retrato, paisagem, teclado aberto, fonte ampliada e TalkBack;
 9. inspecionar logs para fatal, ANR, token, sessão ou dado pessoal;
 10. registrar cada falha como BUG, LIMITAÇÃO DO MOCK ou EVIDÊNCIA PENDENTE.
+
+Na revalidação de Visitas, concluir uma agendada pela tela completa, voltar ao
+detalhe e conferir os dados; depois corrigir mais de um campo de uma realizada
+com um único motivo e confirmar o antes/depois no histórico. Complementar,
+cancelar e anular devem continuar como ações curtas.
 
 ## Cenários de campo de MP-38
 

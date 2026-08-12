@@ -195,13 +195,34 @@ const run = async () => {
       tipo: 'concluir', versaoBase: 1, chaveIdempotencia: 'complete-ok',
       inicioRealEm: '2026-08-04T14:30:00.000Z', resumo: 'Acompanhamento concluído.',
       responsavelExecutanteNome: 'Técnica Responsável',
+      detalhes: {
+        observacoes: 'Observação confirmada em campo.',
+        recomendacoes: 'Monitorar novamente em sete dias.',
+        clima: 'Nublado',
+        proximaVisita: '2026-08-12T15:00:00.000Z',
+        fotos: [{ uri: 'file:///visita-concluida.jpg' }],
+      },
     });
     assert.equal(completed.status, 'realizada');
     assert.equal(completed.data_visita, record.data_visita);
     assert.equal(completed.inicio_real_em, '2026-08-04T14:30:00.000Z');
     assert.equal(completed.resumo_conclusao, 'Acompanhamento concluído.');
+    assert.equal(completed.observacoes, 'Observação confirmada em campo.');
+    assert.equal(completed.recomendacoes, 'Monitorar novamente em sete dias.');
+    assert.equal(completed.clima, 'Nublado');
+    assert.deepEqual(completed.fotos, [{ uri: 'file:///visita-concluida.jpg' }]);
     assert.equal(completed.versao_atual, 2);
     assert.equal(completed.eventos_visita.at(-1).tipo, 'visita_concluida');
+    assert.equal(completed.eventos_visita.at(-1).antes.observacoes, record.observacoes);
+    assert.equal(completed.eventos_visita.at(-1).depois.observacoes, 'Observação confirmada em campo.');
+  });
+
+  await test('conclusão não aceita detalhes fora do relatório técnico permitido', () => {
+    assert.throws(() => command(scheduled(), {
+      tipo: 'concluir', versaoBase: 1, chaveIdempotencia: 'complete-forbidden-detail',
+      inicioRealEm: '2026-08-04T14:30:00.000Z', resumo: 'Resumo.',
+      detalhes: { propriedade_id: 'outra_propriedade' },
+    }), /Campos não permitidos/);
   });
 
   await test('realizada não regride para agendada nem cancelada', () => {
@@ -411,13 +432,20 @@ const run = async () => {
     const edit = fs.readFileSync(path.join(root, 'src/screens/EditarVisitaScreen.tsx'), 'utf8');
     const create = fs.readFileSync(path.join(root, 'src/screens/NovaVisitaScreen.tsx'), 'utf8');
     const actions = fs.readFileSync(path.join(root, 'src/components/VisitaLifecycleActions.tsx'), 'utf8');
+    const conclude = fs.readFileSync(path.join(root, 'src/screens/ConcluirVisitaScreen.tsx'), 'utf8');
+    const correct = fs.readFileSync(path.join(root, 'src/screens/CorrigirVisitaScreen.tsx'), 'utf8');
     assert.match(detail, /VisitaLifecycleActions/);
+    assert.match(detail, /navigate\('ConcluirVisita'/);
+    assert.match(detail, /navigate\('CorrigirVisita'/);
     assert.doesNotMatch(detail, /Visita\.delete|Marcar Realizada|showDeleteDialog/);
     assert.match(detail, /\['agendada', 'realizada', 'cancelada'\]\.includes\(estado\)/);
     assert.doesNotMatch(edit, /statusOptions|onChange=\{setStatus\}|buildVisitaPayload/);
     assert.match(edit, /Visita\.updateAgenda/);
     assert.match(create, /Visita\.createScheduled|Visita\.registerCompleted|ConfirmDialog/);
-    assert.match(actions, /Resumo operacional|Motivo do cancelamento|Complementar|Corrigir|Anular/);
+    assert.match(actions, /Motivo do cancelamento|Complementar|Corrigir dados|Anular/);
+    assert.doesNotMatch(actions, /Resumo operacional|Campo a corrigir/);
+    assert.match(conclude, /buildVisitaConclusionDetails|tipo: 'concluir'|ConfirmDialog/);
+    assert.match(correct, /buildVisitaCorrectionChanges|tipo: 'corrigir'|Motivo da correção|ConfirmDialog/);
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

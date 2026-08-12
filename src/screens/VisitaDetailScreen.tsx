@@ -109,6 +109,22 @@ export default function VisitaDetailScreen() {
     navigation.navigate('EditarVisita', { visitaId: visitaRouteId });
   };
 
+  const handleConcluir = () => {
+    if (!canEdit()) {
+      toast.showWarning('Esta Visita não está disponível para conclusão.');
+      return;
+    }
+    navigation.navigate('ConcluirVisita', { visitaId: visitaRouteId });
+  };
+
+  const handleCorrigir = () => {
+    if (getVisitaEstado(visita) !== 'realizada' || !podeEditarVisita(user, visita, fazenda)) {
+      toast.showWarning('Esta Visita não está disponível para correção.');
+      return;
+    }
+    navigation.navigate('CorrigirVisita', { visitaId: visitaRouteId });
+  };
+
   const getStatusColor = (tone: VisitaStatusTone) => {
     switch (tone) {
       case 'success': return colors.success;
@@ -302,6 +318,15 @@ export default function VisitaDetailScreen() {
                 <Text style={styles.infoValue}>{formatDateTime(visita.concluida_em)}</Text>
               </View>
             </View>
+            {visita.responsavel_executante_nome ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="person-circle-outline" size={20} color={colors.muted} />
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Responsável executante</Text>
+                  <Text style={styles.infoValue}>{visita.responsavel_executante_nome}</Text>
+                </View>
+              </View>
+            ) : null}
             {visita.resumo_conclusao ? (
               <View style={styles.summaryBox}>
                 <Text style={styles.infoLabel}>Resumo operacional</Text>
@@ -427,12 +452,17 @@ export default function VisitaDetailScreen() {
               <Ionicons name="settings-outline" size={24} color={colors.primary} />
               <Text style={styles.cardTitle}>Ações da Visita</Text>
             </View>
+            <Text style={styles.actionHint}>
+              As ações principais abrem uma tela de revisão. Ações curtas pedem apenas a informação necessária.
+            </Text>
             <VisitaLifecycleActions
               visita={visita}
               user={user}
               fazendaId={String(fazendaInfo.id)}
               fazendaLabel={fazendaInfo.fazendaNome}
               onUpdated={setVisita}
+              onConclude={handleConcluir}
+              onCorrect={handleCorrigir}
               onScheduleFromCancelled={handleScheduleFromCancelled}
             />
           </View>
@@ -590,6 +620,12 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSubtitle,
     fontWeight: '700',
     color: colors.text,
+  },
+  actionHint: {
+    color: colors.muted,
+    fontSize: typography.fontSmall,
+    lineHeight: 19,
+    marginBottom: spacing.md,
   },
   fazendaInfo: {
     flexDirection: 'row',

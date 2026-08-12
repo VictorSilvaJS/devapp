@@ -24,6 +24,8 @@ declare global {
       NovaVisita: (FazendaIdRouteParams & { visitaOrigemId?: string }) | undefined;
       VisitaDetail: { id?: string; visitaId?: string } | undefined;
       EditarVisita: { id?: string; visitaId?: string } | undefined;
+      ConcluirVisita: { id?: string; visitaId?: string } | undefined;
+      CorrigirVisita: { id?: string; visitaId?: string } | undefined;
       CadernoDetail: { id?: string; cadernoId?: string; registroId?: string } | undefined;
       NovoCaderno: FazendaIdRouteParams | undefined;
       EditarCaderno: { id?: string; cadernoId?: string; registroId?: string } | undefined;

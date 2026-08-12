@@ -30,6 +30,7 @@ export type VisitaCommand =
     resumo: string;
     responsavelExecutanteUsuarioId?: string;
     responsavelExecutanteNome?: string;
+    detalhes?: Record<string, unknown>;
   }
   | {
     tipo: 'cancelar';
@@ -92,6 +93,14 @@ const CORRECTABLE_FIELDS = new Set([
   'tecnico_responsavel',
   'responsavel_executante_usuario_id',
   'responsavel_executante_nome',
+]);
+
+const CONCLUSION_DETAIL_FIELDS = new Set([
+  'observacoes',
+  'recomendacoes',
+  'clima',
+  'proximaVisita',
+  'fotos',
 ]);
 
 const cloneValue = <T>(value: T): T => {
@@ -251,7 +260,7 @@ const applyAllowedChanges = (
   record: any,
   changes: Record<string, unknown>,
   allowedFields: Set<string>,
-  context: 'agendamento' | 'correcao'
+  context: 'agendamento' | 'conclusao' | 'correcao'
 ): { next: any; before: Record<string, unknown>; after: Record<string, unknown> } => {
   const entries = Object.entries(changes || {});
   if (entries.length === 0) {
@@ -482,8 +491,21 @@ export const applyVisitaCommand = ({
     }
     const summary = normalizeText(command.resumo);
     if (!summary) throw new Error('Visita.conclusao: Informe o resumo operacional.');
+    const conclusionDetails = cloneValue(command.detalhes || {});
+    const forbiddenDetails = Object.keys(conclusionDetails).filter(
+      (field) => !CONCLUSION_DETAIL_FIELDS.has(field)
+    );
+    if (forbiddenDetails.length > 0) {
+      throw new Error(`Visita.conclusao: Campos não permitidos: ${forbiddenDetails.join(', ')}.`);
+    }
+    const actualDetails = Object.fromEntries(
+      Object.entries(conclusionDetails).filter(([field, value]) => hasChanged(record[field], value))
+    );
+    const detailChanges = Object.keys(actualDetails).length > 0
+      ? applyAllowedChanges(record, actualDetails, CONCLUSION_DETAIL_FIELDS, 'conclusao')
+      : { next: cloneValue(record), before: {}, after: {} };
     const next = {
-      ...record,
+      ...detailChanges.next,
       status: 'realizada',
       inicio_real_em: startedAt,
       concluida_em: now,
@@ -513,6 +535,9 @@ export const applyVisitaCommand = ({
             estado_novo: 'realizada',
             inicio_real_em: startedAt,
             resumo_conclusao: summary,
+            ...(Object.keys(detailChanges.after).length > 0
+              ? { antes: detailChanges.before, depois: detailChanges.after }
+              : {}),
           },
         }),
       ],

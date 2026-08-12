@@ -337,7 +337,11 @@ O contrato canonico de estados esta em `estados-visita.md`.
 - `cancelada` e somente leitura e pode originar nova Visita vinculada.
 - `atrasada` e indicador derivado de uma Visita ainda agendada com horario
   vencido.
-- Conclusao exige confirmacao e dados minimos; cancelamento exige motivo.
+- Conclusao usa tela de revisao completa, confirmacao e dados minimos;
+  cancelamento exige motivo.
+- Correcao de Visita realizada usa tela dedicada com os valores atuais e pode
+  reunir varios campos permitidos sob uma unica justificativa. Nao e edicao
+  geral nem reabertura da Visita.
 - Estado nao pode ser alterado por update generico, rota direta ou payload
   manipulado.
 - Nenhuma Visita persistida deve ser excluida fisicamente pelo fluxo comum.
@@ -345,6 +349,8 @@ O contrato canonico de estados esta em `estados-visita.md`.
 `MP-27` implementou essas regras na interface, no dominio e na persistencia
 local demonstrativa, com comandos versionados, idempotencia local, historico,
 motivos, antes/depois, compatibilidade legada e projecao consultiva do Produtor.
+Na interface, concluir e corrigir usam telas dedicadas; cancelamento,
+complemento e anulacao permanecem acoes curtas com confirmacao contextual.
 Autorizacao server-side, armazenamento append-only, conflito distribuido,
 sincronizacao e exigencia real de conexao permanecem fora desse corte local.
 

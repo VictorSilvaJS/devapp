@@ -54,6 +54,8 @@ test('formularios principais usam foco comum após validação inválida', () =>
     'EditarCadernoScreen.tsx',
     'NovaVisitaScreen.tsx',
     'EditarVisitaScreen.tsx',
+    'ConcluirVisitaScreen.tsx',
+    'CorrigirVisitaScreen.tsx',
     'PeriodoProdutivoFormScreen.tsx',
   ];
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -12,11 +12,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Visita } from '../api/mock';
 import { colors, semanticColors, shadows, spacing, typography } from '../theme';
-import DatePicker from './DatePicker';
 import FormField from './FormField';
 import RadioCardGroup from './RadioCardGroup';
 import { useToast } from './Toast';
-import { combineVisitaDateTime, getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
+import { getVisitaObjetivoLabel } from '../utils/visitaFormCompat';
 import {
   VISITA_CANCELAMENTO_MOTIVOS,
   buildVisitaIdempotencyKey,
@@ -26,21 +25,11 @@ import {
   type VisitaCommand,
 } from '../utils/visitaLifecycleCompat';
 
-type ActionMode = 'concluir' | 'cancelar' | 'complemento' | 'correcao' | 'anular';
-
-const CORRECTION_FIELDS = [
-  { value: 'resumo_conclusao', label: 'Resumo da conclusão' },
-  { value: 'observacoes', label: 'Observações' },
-  { value: 'recomendacoes', label: 'Recomendações' },
-  { value: 'clima', label: 'Condições climáticas' },
-  { value: 'tecnico_responsavel', label: 'Responsável executante' },
-] as const;
+type ActionMode = 'cancelar' | 'complemento' | 'anular';
 
 const ACTION_LABELS: Record<ActionMode, string> = {
-  concluir: 'Concluir Visita',
   cancelar: 'Cancelar Visita',
   complemento: 'Adicionar complemento',
-  correcao: 'Corrigir registro',
   anular: 'Anular Visita',
 };
 
@@ -62,6 +51,8 @@ export default function VisitaLifecycleActions({
   fazendaId,
   fazendaLabel,
   onUpdated,
+  onConclude,
+  onCorrect,
   onScheduleFromCancelled,
 }: {
   visita: any;
@@ -69,46 +60,29 @@ export default function VisitaLifecycleActions({
   fazendaId: string;
   fazendaLabel: string;
   onUpdated: (visita: any) => void;
+  onConclude: () => void;
+  onCorrect: () => void;
   onScheduleFromCancelled: () => void;
 }) {
   const toast = useToast();
   const [mode, setMode] = useState<ActionMode | null>(null);
   const [saving, setSaving] = useState(false);
-  const [inicioData, setInicioData] = useState<Date | null>(null);
-  const [inicioHora, setInicioHora] = useState<Date | null>(null);
-  const [resumo, setResumo] = useState('');
   const [motivoCodigo, setMotivoCodigo] = useState('');
   const [motivo, setMotivo] = useState('');
   const [complemento, setComplemento] = useState('');
   const [visibleToProducer, setVisibleToProducer] = useState(true);
-  const [correctionField, setCorrectionField] = useState('resumo_conclusao');
-  const [correctionValue, setCorrectionValue] = useState('');
   const estado = getVisitaEstado(visita);
-  const correctionLabel = useMemo(
-    () => CORRECTION_FIELDS.find((item) => item.value === correctionField)?.label || 'Campo',
-    [correctionField]
-  );
 
   const resetAndClose = () => {
     if (saving) return;
     setMode(null);
-    setInicioData(null);
-    setInicioHora(null);
-    setResumo('');
     setMotivoCodigo('');
     setMotivo('');
     setComplemento('');
     setVisibleToProducer(true);
-    setCorrectionField('resumo_conclusao');
-    setCorrectionValue('');
   };
 
   const open = (nextMode: ActionMode) => {
-    if (nextMode === 'concluir') {
-      const now = new Date();
-      setInicioData(now);
-      setInicioHora(now);
-    }
     setMode(nextMode);
   };
 
@@ -122,19 +96,6 @@ export default function VisitaLifecycleActions({
   const buildCommand = (): VisitaCommand => {
     const versaoBase = Number(visita?.versao_atual);
     const chaveIdempotencia = buildVisitaIdempotencyKey(visita?.id, String(mode));
-    if (mode === 'concluir') {
-      const inicioReal = combineVisitaDateTime(inicioData, inicioHora);
-      if (!inicioReal) throw new Error('Informe a data e o horário de início real.');
-      if (!resumo.trim()) throw new Error('Informe o resumo operacional da conclusão.');
-      return {
-        tipo: 'concluir',
-        versaoBase,
-        chaveIdempotencia,
-        inicioRealEm: inicioReal.toISOString(),
-        resumo: resumo.trim(),
-        responsavelExecutanteNome: visita?.tecnico_responsavel,
-      };
-    }
     if (mode === 'cancelar') {
       if (!motivoCodigo) throw new Error('Selecione o motivo do cancelamento.');
       if (motivoCodigo === 'outro' && !motivo.trim()) {
@@ -156,17 +117,6 @@ export default function VisitaLifecycleActions({
         chaveIdempotencia,
         texto: complemento.trim(),
         visivelParaProdutor: visibleToProducer,
-      };
-    }
-    if (mode === 'correcao') {
-      if (!correctionValue.trim()) throw new Error(`Informe o novo valor de ${correctionLabel}.`);
-      if (!motivo.trim()) throw new Error('Informe o motivo da correção.');
-      return {
-        tipo: 'corrigir',
-        versaoBase,
-        chaveIdempotencia,
-        motivo: motivo.trim(),
-        alteracoes: { [correctionField]: correctionValue.trim() },
       };
     }
     if (mode === 'anular') {
@@ -208,14 +158,14 @@ export default function VisitaLifecycleActions({
       <View style={styles.actions}>
         {estado === 'agendada' ? (
           <>
-            <ActionButton icon="checkmark-circle-outline" label="Concluir" onPress={() => open('concluir')} />
+            <ActionButton icon="checkmark-circle-outline" label="Concluir Visita" onPress={onConclude} />
             <ActionButton icon="close-circle-outline" label="Cancelar" danger onPress={() => open('cancelar')} />
           </>
         ) : null}
         {estado === 'realizada' ? (
           <>
             <ActionButton icon="add-circle-outline" label="Complementar" onPress={() => open('complemento')} />
-            <ActionButton icon="create-outline" label="Corrigir" onPress={() => open('correcao')} />
+            <ActionButton icon="create-outline" label="Corrigir dados" onPress={onCorrect} />
             <ActionButton icon="close-circle-outline" label="Anular" danger onPress={() => open('anular')} />
           </>
         ) : null}
@@ -233,40 +183,11 @@ export default function VisitaLifecycleActions({
                 Esta ação registra estado, autor, data e versão no histórico local da Visita.
               </Text>
 
-              {(mode === 'concluir' || mode === 'cancelar') ? (
+              {mode === 'cancelar' ? (
                 <View style={styles.contextBox}>
                   <Text style={styles.contextTitle}>Revise o contexto</Text>
                   <Text style={styles.contextText}>{contextSummary}</Text>
                 </View>
-              ) : null}
-
-              {mode === 'concluir' ? (
-                <>
-                  <DatePicker
-                    label="Data de início real"
-                    required
-                    value={inicioData}
-                    onChange={setInicioData}
-                    maximumDate={new Date()}
-                    mode="date"
-                  />
-                  <DatePicker
-                    label="Horário de início real"
-                    required
-                    value={inicioHora}
-                    onChange={setInicioHora}
-                    mode="time"
-                  />
-                  <FormField
-                    label="Resumo operacional"
-                    required
-                    value={resumo}
-                    onChangeText={setResumo}
-                    placeholder="Descreva o que foi realizado na Visita"
-                    textarea
-                    numberOfLines={4}
-                  />
-                </>
               ) : null}
 
               {mode === 'cancelar' ? (
@@ -312,22 +233,6 @@ export default function VisitaLifecycleActions({
                     value={visibleToProducer ? 'visivel' : 'interno'}
                     onChange={(value) => setVisibleToProducer(value === 'visivel')}
                   />
-                </>
-              ) : null}
-
-              {mode === 'correcao' ? (
-                <>
-                  <Text style={styles.label}>Campo a corrigir</Text>
-                  <RadioCardGroup
-                    options={CORRECTION_FIELDS.map((item) => ({ value: item.value, label: item.label }))}
-                    value={correctionField}
-                    onChange={(value) => {
-                      setCorrectionField(value);
-                      setCorrectionValue('');
-                    }}
-                  />
-                  <FormField label="Novo valor" required value={correctionValue} onChangeText={setCorrectionValue} textarea numberOfLines={3} />
-                  <FormField label="Motivo da correção" required value={motivo} onChangeText={setMotivo} textarea numberOfLines={3} />
                 </>
               ) : null}
 

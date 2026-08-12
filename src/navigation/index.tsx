@@ -16,6 +16,8 @@ import EditarPropriedadeScreen from '../screens/EditarPropriedadeScreen';
 import NovaVisitaScreen from '../screens/NovaVisitaScreen';
 import VisitaDetailScreen from '../screens/VisitaDetailScreen';
 import EditarVisitaScreen from '../screens/EditarVisitaScreen';
+import ConcluirVisitaScreen from '../screens/ConcluirVisitaScreen';
+import CorrigirVisitaScreen from '../screens/CorrigirVisitaScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 import UsuariosScreen from '../screens/UsuariosScreen';
@@ -143,6 +145,8 @@ export default function Navigation() {
           <Stack.Screen name="NovaVisita" component={NovaVisitaScreen} />
           <Stack.Screen name="VisitaDetail" component={VisitaDetailScreen} />
           <Stack.Screen name="EditarVisita" component={EditarVisitaScreen} />
+          <Stack.Screen name="ConcluirVisita" component={ConcluirVisitaScreen} />
+          <Stack.Screen name="CorrigirVisita" component={CorrigirVisitaScreen} />
           <Stack.Screen name="CadernoDetail" component={CadernoDetailScreen} />
           <Stack.Screen name="NovoCaderno" component={NovoCadernoScreen} />
           <Stack.Screen name="EditarCaderno" component={EditarCadernoScreen} />

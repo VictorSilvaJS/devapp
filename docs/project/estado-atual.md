@@ -62,7 +62,8 @@ evidência do dataset local, não volume produtivo.
 - dashboards e navegação para os três perfis;
 - consulta e administração mockada de Usuários e Propriedades;
 - Propriedades com Talhões, limites e estados vazios controlados;
-- Visitas com estados, fotos locais e exportação explícita;
+- Visitas com estados, fotos locais, exportação explícita e telas dedicadas para
+  conclusão e correção auditada;
 - Caderno com tipos, ciclo local, ponto opcional e controle de visibilidade;
 - Períodos produtivos, Plantio e Colheita no recorte local;
 - Materiais técnicos PNG, PDF e ZIP com tratamento honesto de indisponibilidade;
