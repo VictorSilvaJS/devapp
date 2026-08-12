@@ -221,6 +221,13 @@ export const fazendaPertenceAoTitular = (fazenda, titularIdOrUser) => {
   return getTitularIdFazenda(fazenda) === titularId;
 };
 
+const produtorTemAcessoFazenda = (user, fazenda) => {
+  if (!isProdutor(user) || !fazenda) return false;
+
+  return fazendaPertenceAoTitular(fazenda, user)
+    || getPropriedadeIdsVinculados(user).includes(getFazendaId(fazenda));
+};
+
 export const getFazendasDoTitular = (fazendas, titularIdOrUser) => {
   if (!fazendas) return [];
   return fazendas.filter((fazenda) => fazendaPertenceAoTitular(fazenda, titularIdOrUser));
@@ -271,10 +278,10 @@ export const getFazendasPorAcesso = (fazendas, user) => {
 
   if (isProdutor(user)) {
     const idsVinculados = buildAllowedIds(getPropriedadeIdsVinculados(user));
-    if (idsVinculados.size > 0) {
-      return fazendas.filter((fazenda) => idsVinculados.has(getFazendaId(fazenda)));
-    }
-    return getFazendasDoTitular(fazendas, user);
+    return fazendas.filter((fazenda) => (
+      idsVinculados.has(getFazendaId(fazenda))
+      || fazendaPertenceAoTitular(fazenda, user)
+    ));
   }
 
   if (isColaborador(user)) {
@@ -314,9 +321,9 @@ export const temAcessoProdutor = (user, produtor) => {
   // Admin: acesso total
   if (isAdmin(user)) return true;
 
-  // Produtor/Cliente: acessa apenas suas próprias fazendas (pelo produtor_id = proprietário)
+  // Produtor: acessa Propriedades onde é Titular ou possui vínculo direto ativo.
   if (isProdutor(user)) {
-    return fazendaPertenceAoTitular(produtor, user);
+    return produtorTemAcessoFazenda(user, produtor);
   }
 
   // Colaborador: acessa somente Propriedades vinculadas diretamente.
@@ -348,9 +355,9 @@ export const temAcessoMapa = (user, mapa, produtor) => {
 
   const mapaNormalizado = normalizeMapa(mapa);
 
-  // Produtor: acessa apenas mapas disponíveis para download das suas fazendas
+  // Produtor: acessa apenas mapas liberados das Propriedades vinculadas.
   if (isProdutor(user)) {
-    return fazendaPertenceAoTitular(produtor, user) && mapaNormalizado.disponivel_download;
+    return produtorTemAcessoFazenda(user, produtor) && mapaNormalizado.disponivel_download;
   }
 
   // Admin e colaborador: usam regra de acesso ao produtor
@@ -391,7 +398,7 @@ export const temAcessoCaderno = (user, registro, produtor) => {
   // Produtor: vê registros visíveis das suas fazendas
   if (isProdutor(user)) {
     return isCadernoOperational(registro)
-      && fazendaPertenceAoTitular(produtor, user)
+      && produtorTemAcessoFazenda(user, produtor)
       && cadernoVisivelParaProdutor(registro);
   }
 
@@ -458,7 +465,7 @@ export const temAcessoVisita = (user, visita, produtor) => {
 
   // Produtor: vê visitas das suas fazendas (apenas visualização)
   if (isProdutor(user)) {
-    return fazendaPertenceAoTitular(produtor, user);
+    return produtorTemAcessoFazenda(user, produtor);
   }
 
   if (isColaborador(user)) {
@@ -700,8 +707,10 @@ export const podeBaixarMapa = (user, mapa, produtores = []) => {
   }
   
   if (isProdutor(user)) {
-    const minhasFazendas = getFazendasDoTitular(produtores, user);
-    const minhasFazendaIds = getFazendaIds(minhasFazendas);
+    const minhasFazendaIds = [...new Set([
+      ...getPropriedadeIdsVinculados(user),
+      ...getFazendaIdsPorAcesso(user, produtores),
+    ])];
 
     if (minhasFazendaIds.length > 0) {
       return minhasFazendaIds.includes(mapaNormalizado.propriedade_id);

@@ -99,6 +99,56 @@ const run = async () => {
     assert.deepEqual(ids, ['fz1', 'fz3']);
   });
 
+  await test('Produtor com vínculo usuario_autorizado lista e abre a mesma Propriedade', () => {
+    const produtorAutorizado = {
+      ...produtorUser,
+      vinculos_propriedades: [{
+        propriedade_id: 'fz2', tipo_vinculo: 'usuario_autorizado', status: 'ativo',
+      }],
+    };
+    const produtorComVinculoInativo = {
+      ...produtorUser,
+      produtor_id: 'titular_sem_propriedade',
+      vinculos_propriedades: [{
+        propriedade_id: 'fz2', tipo_vinculo: 'usuario_autorizado', status: 'inativo',
+      }],
+    };
+    const produtorComTipoIncompativel = {
+      ...produtorUser,
+      produtor_id: 'titular_sem_propriedade',
+      vinculos_propriedades: [{
+        propriedade_id: 'fz2', tipo_vinculo: 'colaborador', status: 'ativo',
+      }],
+    };
+
+    assert.deepEqual(
+      filtrarProdutoresPorAcesso(fazendasBase, produtorAutorizado).map((fazenda) => fazenda.id),
+      ['fz1', 'fz2', 'fz3']
+    );
+    assert.equal(avaliarAcessoFazendaPorId(fazendasBase, produtorAutorizado, 'fz2').status, 'permitido');
+    assert.equal(
+      avaliarAcessoVisita(produtorAutorizado, {
+        id: 'visita_autorizada', propriedade_id: 'fz2', data_visita: '2026-08-12', objetivo: 'consultoria',
+      }, fazendasBase).status,
+      'permitido'
+    );
+    assert.equal(
+      avaliarAcessoCaderno(produtorAutorizado, {
+        id: 'caderno_autorizado', propriedade_id: 'fz2', data_atividade: '2026-08-12',
+        tipo_atividade: 'observacao', visivel_para_produtor: true,
+      }, fazendasBase).status,
+      'permitido'
+    );
+    assert.equal(podeBaixarMapa(produtorAutorizado, {
+      id: 'material_autorizado', propriedade_id: 'fz2', disponivel_download: true,
+    }, fazendasBase), true);
+    assert.equal(podeBaixarMapa(produtorAutorizado, {
+      id: 'material_restrito', propriedade_id: 'fz2', disponivel_download: false,
+    }, fazendasBase), false);
+    assert.equal(temAcessoProdutor(produtorComVinculoInativo, fazendasBase[1]), false);
+    assert.equal(temAcessoProdutor(produtorComTipoIncompativel, fazendasBase[1]), false);
+  });
+
   await test('propriedade_id prevalece sobre id e aliases legados no controle de acesso', () => {
     const propriedadeComConflito = {
       id: 'fz_id_intermediario',

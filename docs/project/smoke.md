@@ -21,6 +21,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PASSOU |
 | ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PASSOU |
 | ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PASSOU |
+| ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PENDENTE DE REVALIDAÇÃO MANUAL |
 
 ## Rodada final do mock v2
 
@@ -82,6 +83,13 @@ Na execução física de 2026-08-12, o cenário passou: a confirmação pôde se
 cancelada sem alteração; a exclusão removeu o Usuário temporário, sua credencial
 local e o vínculo direto; o login anterior foi recusado e as Propriedades foram
 preservadas.
+
+Na revalidação do Produtor autorizado, entrar como Altair, abrir `[QA]
+Propriedade Cenários Operacionais` e confirmar Talhão, Safra/Safrinha, Caderno
+visível e Materiais publicados. O ZIP restrito à equipe e o material em
+rascunho não podem aparecer. O PDF indisponível pode aparecer, mas deve informar
+honestamente que o arquivo não está disponível. A Fazenda_Backes deve continuar
+acessível e nenhuma ação estrutural deve ser exibida.
 
 ## Cenários de campo de MP-38
 

@@ -100,6 +100,8 @@ Foram corrigidos:
 - exclusão administrativa de outro Usuário exposta no detalhe com confirmação,
   remoção da credencial local e dos vínculos diretos, sem apagar Propriedades
   ou registros operacionais.
+- acesso do Produtor por vínculo ativo `usuario_autorizado` alinhado entre
+  listagem, detalhe da Propriedade, Visitas, Caderno e Materiais liberados.
 
 A revalidação física das listas passou. Depois do percurso completo, o processo
 manteve 1.629 views, contra 4.386 antes da otimização. Não houve fatal, ANR,
