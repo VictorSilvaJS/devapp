@@ -177,6 +177,19 @@ const run = async () => {
     assert.doesNotMatch(source, /Função\/cargo|Nível administrativo|Região|Microrregião|cadastro rápido/i);
   });
 
+  await test('detalhe administrativo permite excluir outro usuario com confirmacao segura', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/screens/UsuarioDetailScreen.tsx'),
+      'utf8',
+    );
+
+    assert.match(source, /deleteUsuarioAdminAndLocalCredential/);
+    assert.match(source, /usuario\.id !== user\?\.id/);
+    assert.match(source, /title="Excluir usuário"/);
+    assert.match(source, /credencial local e os vínculos diretos também serão removidos/);
+    assert.match(source, /navigation\.navigate\('Main', \{ screen: 'Usuarios' \}\)/);
+  });
+
   if (failed > 0) {
     process.exitCode = 1;
     console.error(`\n${failed} teste(s) falharam.`);

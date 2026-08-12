@@ -10,10 +10,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
+import ConfirmDialog from '../components/ConfirmDialog';
 import EmptyState from '../components/EmptyState';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
 import SectionCard from '../components/SectionCard';
+import { useToast } from '../components/Toast';
 import { Produtor, User } from '../api/mock';
 import { useAuthState } from '../auth/AuthContext';
 import { LocalCredentialService } from '../auth/localCredentials';
@@ -21,6 +23,7 @@ import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import { getFazendaId } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { buildPropriedadeDetailRouteParams } from '../navigation/propriedadeRouteCompat';
+import { deleteUsuarioAdminAndLocalCredential } from '../utils/usuarioLocalAccessAdmin';
 import {
   buildUsuarioVinculoPrincipal,
   getNivelAdminLabel,
@@ -88,10 +91,13 @@ export default function UsuarioDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { user } = useAuthState();
+  const toast = useToast();
   const [usuario, setUsuario] = useState<any>(null);
   const [propriedades, setPropriedades] = useState<any[]>([]);
   const [localAccessConfigured, setLocalAccessConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const userId = route.params?.userId || route.params?.id;
 
   const load = async () => {
@@ -171,6 +177,44 @@ export default function UsuarioDetailScreen() {
     const params = buildPropriedadeDetailRouteParams(propriedade);
     if (params) {
       navigation.navigate('ProdutorDetail', params);
+    }
+  };
+  const podeExcluirUsuario = Boolean(usuario.id && usuario.id !== user?.id);
+
+  const handleDelete = () => {
+    if (user?.perfil !== 'admin') {
+      toast.showWarning('Somente administradores podem excluir usuários.');
+      return;
+    }
+    if (!podeExcluirUsuario) {
+      toast.showWarning('Você não pode excluir o usuário da sessão atual.');
+      return;
+    }
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (user?.perfil !== 'admin' || !podeExcluirUsuario) {
+      setDeleteDialogVisible(false);
+      toast.showWarning('A exclusão deste usuário não está disponível.');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteUsuarioAdminAndLocalCredential({
+        userApi: User,
+        credentialService: LocalCredentialService,
+        usuarioId: usuario.id,
+      });
+      setDeleteDialogVisible(false);
+      toast.showSuccess('Usuário, credencial local e vínculos removidos.');
+      navigation.navigate('Main', { screen: 'Usuarios' });
+    } catch (error: any) {
+      setDeleteDialogVisible(false);
+      toast.showError(error?.message || 'Não foi possível excluir o usuário.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -329,6 +373,32 @@ export default function UsuarioDetailScreen() {
           <InfoBox message={usuario.observacoes || 'Nenhuma observação registrada.'} style={styles.inlineInfoBox} />
         </SectionCard>
 
+        <SectionCard title="Ações administrativas">
+          {podeExcluirUsuario ? (
+            <>
+              <InfoBox
+                message="A exclusão remove deste aparelho o usuário, a credencial local e seus vínculos diretos. Propriedades e registros operacionais não são excluídos."
+                style={styles.inlineInfoBox}
+              />
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleDelete}
+                activeOpacity={0.78}
+                accessibilityRole="button"
+                accessibilityLabel={`Excluir usuário ${nome}`}
+              >
+                <Ionicons name="trash-outline" size={20} color={colors.error} />
+                <Text style={styles.deleteButtonText}>Excluir usuário</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <InfoBox
+              message="O usuário da sessão atual não pode ser excluído. Entre com outro Administrador para realizar essa ação."
+              style={styles.inlineInfoBox}
+            />
+          )}
+        </SectionCard>
+
         <View style={{ height: spacing.xl * 3 }} />
       </ScrollView>
 
@@ -337,6 +407,19 @@ export default function UsuarioDetailScreen() {
         onSubmit={() => navigation.navigate('EditarUsuario', { userId: usuario.id })}
         submitLabel="Editar cadastro local"
         submitIcon="create-outline"
+        disabled={deleting}
+      />
+
+      <ConfirmDialog
+        visible={deleteDialogVisible}
+        title="Excluir usuário"
+        message={`Deseja excluir ${nome}? A credencial local e os vínculos diretos também serão removidos deste aparelho. Propriedades e registros operacionais serão preservados.`}
+        type="danger"
+        confirmText="Excluir usuário"
+        cancelText="Cancelar"
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteDialogVisible(false)}
+        loading={deleting}
       />
     </View>
   );
@@ -541,6 +624,25 @@ const styles = StyleSheet.create({
   localAccessButtonText: {
     color: colors.primary,
     fontSize: typography.fontBody - 1,
+    fontWeight: typography.weightBold,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    minHeight: 48,
+    borderWidth: 1.5,
+    borderColor: colors.error,
+    borderRadius: spacing.radiusSm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.md,
+    backgroundColor: semanticColors.error.surface,
+  },
+  deleteButtonText: {
+    color: semanticColors.error.text,
+    fontSize: typography.fontBody,
     fontWeight: typography.weightBold,
   },
   blockedContainer: {

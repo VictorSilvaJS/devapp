@@ -86,6 +86,11 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Status de usuario no mock administrativo deve ser explicito: `ativo`, `inativo` ou `pendente`.
 - O booleano `ativo` e apenas compatibilidade temporaria quando necessario.
 - Somente Admin cria ou edita Usuarios no fluxo administrativo local.
+- Somente Admin exclui Usuarios no fluxo administrativo local; o usuario da
+  sessao atual nao pode excluir a si proprio.
+- A exclusao administrativa local remove o Usuario, sua credencial local e os
+  vinculos diretos. Propriedades e registros operacionais nao sao excluidos por
+  essa acao.
 - Perfil e um dado estrutural: a edicao comum nao transforma Admin,
   Colaborador e Produtor entre si.
 - O cadastro de Produtor nasce `pendente` quando ainda nao possui

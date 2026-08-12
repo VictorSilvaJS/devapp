@@ -20,6 +20,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-07 | Release | Orientação, teclado, TalkBack e matriz Android | PENDENTE DE RELEASE |
 | ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PASSOU |
 | ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PASSOU |
+| ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PENDENTE DE REVALIDAÇÃO MANUAL |
 
 ## Rodada final do mock v2
 
@@ -69,6 +70,13 @@ Não houve fatal, ANR, falta de memória nem bloqueio longo novo da thread
 JavaScript. A passagem pelo mapa manteve uma WebView e elevou temporariamente o
 PSS a cerca de 408 MB; após reinício controlado, sem limpar sessão ou dados, o
 app restaurou o Dashboard com 171 views, nenhuma WebView e cerca de 178 MB.
+
+Na revalidação da exclusão administrativa, usar um Usuário temporário diferente
+da sessão atual; cancelar a primeira confirmação e conferir que nada mudou;
+confirmar na segunda tentativa; verificar a remoção da lista e a recusa do login
+com a credencial anterior. Propriedades e registros operacionais devem
+permanecer. No próprio Usuário administrador conectado, a exclusão deve estar
+bloqueada.
 
 ## Cenários de campo de MP-38
 
