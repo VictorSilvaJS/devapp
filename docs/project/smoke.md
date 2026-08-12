@@ -20,7 +20,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-07 | Release | Orientação, teclado, TalkBack e matriz Android | PENDENTE DE RELEASE |
 | ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PASSOU |
 | ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PASSOU |
-| ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PENDENTE DE REVALIDAÇÃO MANUAL |
+| ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PASSOU |
 
 ## Rodada final do mock v2
 
@@ -77,6 +77,11 @@ confirmar na segunda tentativa; verificar a remoção da lista e a recusa do log
 com a credencial anterior. Propriedades e registros operacionais devem
 permanecer. No próprio Usuário administrador conectado, a exclusão deve estar
 bloqueada.
+
+Na execução física de 2026-08-12, o cenário passou: a confirmação pôde ser
+cancelada sem alteração; a exclusão removeu o Usuário temporário, sua credencial
+local e o vínculo direto; o login anterior foi recusado e as Propriedades foram
+preservadas.
 
 ## Cenários de campo de MP-38
 
