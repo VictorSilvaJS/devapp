@@ -53,6 +53,7 @@
     "src/utils/materialTecnicoToMapaCompat.ts",
     "src/utils/materialPresentationCompat.ts",
     "src/utils/usuarioAdminCompat.ts",
+    "src/utils/territorioCompat.ts",
     "src/utils/usuarioLocalAccessAdmin.ts",
     "src/utils/dashboardCompat.ts",
     "src/utils/dashboardResponsive.ts",

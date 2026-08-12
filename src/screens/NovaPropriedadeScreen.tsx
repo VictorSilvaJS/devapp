@@ -12,6 +12,7 @@ import Header from '../components/Header';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
+import MultiSelectField from '../components/MultiSelectField';
 import SectionCard from '../components/SectionCard';
 import SelectField from '../components/SelectField';
 import SegmentedChips from '../components/SegmentedChips';
@@ -32,7 +33,11 @@ import {
   listarMunicipios,
   listarUfsParaCadastro,
 } from '../utils/filtroTerritorial';
-import { getUsuarioNome, getUsuarioStatusInfo } from '../utils/usuarioAdminCompat';
+import {
+  getUsuarioNome,
+  getUsuarioProdutorId,
+  getUsuarioStatusInfo,
+} from '../utils/usuarioAdminCompat';
 
 const PROPRIEDADE_FORM_ERROR_ORDER = [
   'escopo',
@@ -59,6 +64,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [propriedadesReferencia, setPropriedadesReferencia] = useState<any[]>([]);
   const [titularSelecionadoId, setTitularSelecionadoId] = useState('');
+  const [produtorAutorizadoIds, setProdutorAutorizadoIds] = useState<string[]>([]);
   const [colaboradorIds, setColaboradorIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<any>({});
   const [form, setForm] = useState({
@@ -87,6 +93,24 @@ export default function NovaPropriedadeScreen({ navigation }) {
       ))
       .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b), 'pt-BR')),
     [usuarios],
+  );
+  const produtoresAutorizaveis = useMemo(
+    () => usuarios
+      .filter((usuario) => (
+        usuario?.perfil === 'produtor'
+        && getUsuarioStatusInfo(usuario).key === 'ativo'
+        && getUsuarioProdutorId(usuario) !== titularSelecionadoId
+      ))
+      .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b), 'pt-BR')),
+    [titularSelecionadoId, usuarios],
+  );
+  const produtoresAutorizadosOptions = useMemo(
+    () => produtoresAutorizaveis.map((produtor) => ({
+      value: produtor.id,
+      label: getUsuarioNome(produtor),
+      description: produtor.email,
+    })),
+    [produtoresAutorizaveis],
   );
   const ufs = useMemo(
     () => listarUfsParaCadastro(propriedadesReferencia),
@@ -197,6 +221,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
       setSaving(true);
       await Produtor.createWithLinks(buildPayload(), {
         titularUsuarioId: titularSelecionado.usuario_id,
+        produtorAutorizadoIds,
         colaboradorIds,
       });
       await recarregarOpcoes();
@@ -244,7 +269,7 @@ export default function NovaPropriedadeScreen({ navigation }) {
       >
         <InfoBox
           title="Cadastro local v2"
-          message="A Propriedade, o vínculo do Titular e os vínculos dos Colaboradores serão salvos juntos neste aparelho. Município e UF identificam a localização, mas não concedem acesso."
+          message="A Propriedade e os vínculos do Titular, dos Produtores autorizados e dos Colaboradores serão salvos juntos neste aparelho. Município e UF identificam a localização, mas não concedem acesso."
         />
 
         <View ref={formValidation.registerField('escopo')} collapsable={false}>
@@ -315,6 +340,13 @@ export default function NovaPropriedadeScreen({ navigation }) {
                 }))}
                 onChange={(value) => {
                   setTitularSelecionadoId(value);
+                  setProdutorAutorizadoIds((atuais) => (
+                    atuais.filter((usuarioId) => (
+                      getUsuarioProdutorId(
+                        usuarios.find((usuario) => usuario.id === usuarioId),
+                      ) !== value
+                    ))
+                  ));
                   setErrors((atual) => ({ ...atual, titular: null }));
                 }}
                 placeholder="Selecione um Produtor"
@@ -323,6 +355,27 @@ export default function NovaPropriedadeScreen({ navigation }) {
               />
             )}
           </View>
+        </SectionCard>
+
+        <SectionCard
+          title="Produtores autorizados"
+          subtitle="Opcional. Conceda acesso a outros usuários Produtores sem alterar o Titular."
+        >
+          <MultiSelectField
+            label="Usuários Produtores com acesso"
+            values={produtorAutorizadoIds}
+            options={produtoresAutorizadosOptions}
+            onChange={setProdutorAutorizadoIds}
+            placeholder="Nenhum Produtor autorizado"
+            searchPlaceholder="Buscar Produtor por nome ou e-mail..."
+            emptyText="Nenhum outro Produtor ativo disponível."
+            helperText="O vínculo será criado como Usuário autorizado e dará acesso somente a esta Propriedade."
+            disabled={loading || produtoresAutorizadosOptions.length === 0}
+          />
+          <InfoBox
+            message="Usuário autorizado não se torna Titular e não recebe ações para administrar a estrutura da Propriedade."
+            style={styles.inlineInfo}
+          />
         </SectionCard>
 
         <SectionCard

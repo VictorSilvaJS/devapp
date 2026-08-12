@@ -161,9 +161,13 @@ export default function NovoUsuarioScreen() {
   const toggleVinculoPropriedade = (id: string) => {
     setForm((prev) => {
       const current = normalizeFormVinculosPropriedade(prev.vinculosPropriedades);
-      const exists = current.some((vinculo) => vinculo.propriedade_id === id);
-      const next = exists
-        ? current.filter((vinculo) => vinculo.propriedade_id !== id)
+      const existente = current.find((vinculo) => vinculo.propriedade_id === id);
+      const next = existente
+        ? current.map((vinculo) => (
+            vinculo.propriedade_id === id
+              ? { ...vinculo, status: vinculo.status === 'inativo' ? 'ativo' : 'inativo' }
+              : vinculo
+          ))
         : [
             ...current,
             {
@@ -185,7 +189,11 @@ export default function NovoUsuarioScreen() {
   };
 
   const propriedadesSelecionadas = useMemo(() => {
-    const ids = new Set(vinculosPropriedades.map((vinculo) => vinculo.propriedade_id));
+    const ids = new Set(
+      vinculosPropriedades
+        .filter((vinculo) => vinculo.status !== 'inativo')
+        .map((vinculo) => vinculo.propriedade_id)
+    );
     return propriedadesOrdenadas.filter((propriedade) => ids.has(getFazendaId(propriedade)));
   }, [propriedadesOrdenadas, vinculosPropriedades]);
 
@@ -225,7 +233,7 @@ export default function NovoUsuarioScreen() {
   const renderPropriedadeOption = (propriedade: any) => {
     const option = getFazendaOptionLabel(propriedade);
     const vinculo = getVinculoPropriedade(option.id);
-    const active = Boolean(vinculo);
+    const active = Boolean(vinculo && vinculo.status !== 'inativo');
 
     return (
       <View key={option.id} style={[styles.optionGroup, active && styles.optionRowActive]}>

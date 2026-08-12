@@ -39,8 +39,20 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - No mock v2, a criacao da Propriedade e de todos os seus vinculos e atomica:
   qualquer falha desfaz o conjunto completo.
 - A edicao cadastral comum da Propriedade tambem e exclusiva de Admin e deve
-  atualizar os dados canonicos e os vinculos diretos de Colaboradores em uma
-  unica operacao atomica.
+  atualizar os dados canonicos e os vinculos diretos de Colaboradores e
+  Produtores autorizados em uma unica operacao atomica.
+- Somente usuarios ativos com perfil Produtor podem receber vinculo
+  `usuario_autorizado`. O Titular atual nao integra essa selecao, e conceder ou
+  encerrar esse acesso nao altera o `titular_id` da Propriedade.
+- No mock local, desmarcar um Produtor autorizado inativa o vinculo existente
+  em vez de criar duplicidade ou apagar a relacao. A reducao de escopo
+  produtiva continua dependente de auditoria, revogacao/revalidacao de sessao e
+  limpeza de cache no backend.
+- Um vinculo inativo permanece somente como historico e possibilidade de
+  reativacao. Ele nao concede acesso, nao aparece como Propriedade atual do
+  usuario e nao entra em contadores, selecoes ou indicadores de vinculo ativo.
+- Ao compor o Perfil local, o cadastro persistido mais recente prevalece sobre
+  o snapshot restaurado da sessao para status e vinculos.
 - O `titular_id` e somente leitura na edicao cadastral comum. Uma futura troca
   de Titular exige fluxo administrativo proprio, transacional e auditado.
 - A edicao v2 nao grava Regiao, Microrregiao, documento da Propriedade nem um

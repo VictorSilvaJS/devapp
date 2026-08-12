@@ -102,6 +102,13 @@ Foram corrigidos:
   ou registros operacionais.
 - acesso do Produtor por vínculo ativo `usuario_autorizado` alinhado entre
   listagem, detalhe da Propriedade, Visitas, Caderno e Materiais liberados.
+- criação e edição administrativa de Propriedade com seleção pesquisável de
+  Produtores autorizados; vínculo, desvínculo por inativação e reativação são
+  salvos atomicamente sem alterar o Titular.
+- projeções de vínculo atual alinhadas no Perfil, detalhe de Usuário e detalhe
+  de Propriedade: vínculo inativo permanece no histórico local, mas não aparece
+  em listas ou contadores atuais. O Perfil também prioriza o cadastro persistido
+  mais recente sobre o snapshot restaurado da sessão.
 
 A revalidação física das listas passou. Depois do percurso completo, o processo
 manteve 1.629 views, contra 4.386 antes da otimização. Não houve fatal, ANR,
@@ -117,6 +124,7 @@ Continuam como evidência pendente:
 - repetição offline completa;
 - matriz final de aparelhos, orientação e acessibilidade;
 - regressão integral depois da implementação produtiva.
+- revalidação física do novo gerenciamento de Produtores autorizados.
 
 O roteiro atual está em [smoke.md](smoke.md).
 

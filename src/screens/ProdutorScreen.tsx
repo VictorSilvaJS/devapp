@@ -75,7 +75,7 @@ import { getPropriedadeDetailResponsiveLayout } from '../utils/propriedadeDetail
 import {
   getUsuarioNome,
   getVinculoPropriedadeLabel,
-  getVinculosPropriedadeUsuario,
+  getVinculosPropriedadeAtivosUsuario,
 } from '../utils/usuarioAdminCompat';
 import {
   getMaterialPublicDescription,
@@ -929,7 +929,7 @@ export default function ProdutorScreen({ route, navigation }) {
                     />
                   ) : (
                     produtoresVinculadosMock.map((usuarioProdutor) => {
-                      const vinculo = getVinculosPropriedadeUsuario(
+                      const vinculo = getVinculosPropriedadeAtivosUsuario(
                         usuarioProdutor,
                         todasFazendasMock
                       ).find((item) => item.propriedade_id === fazendaAtualId);
@@ -960,7 +960,7 @@ export default function ProdutorScreen({ route, navigation }) {
                     />
                   ) : (
                     colaboradoresRelacionadosMock.map((colaborador) => {
-                      const temVinculoDireto = getVinculosPropriedadeUsuario(
+                      const temVinculoDireto = getVinculosPropriedadeAtivosUsuario(
                         colaborador,
                         todasFazendasMock
                       ).some((item) => item.propriedade_id === fazendaAtualId);

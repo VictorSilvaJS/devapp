@@ -63,6 +63,13 @@ test('Perfil do Produtor abre Propriedade com affordance explícita', () => {
   assert.doesNotMatch(source, /Propriedades vinculadas ao seu cadastro local\./);
 });
 
+test('Perfil prioriza o cadastro persistido mais recente sobre a sessão restaurada', () => {
+  const source = readSource('src/screens/PerfilScreen.tsx');
+
+  assert.match(source, /usuarioData \? \{ \.\.\.user, \.\.\.usuarioData \} : user/);
+  assert.doesNotMatch(source, /usuarioData \? \{ \.\.\.usuarioData, \.\.\.user \} : user/);
+});
+
 test('Perfil prepara compartilhamento cadastral sem habilitar edição direta', () => {
   const profileSource = readSource('src/screens/PerfilScreen.tsx');
   const editSource = readSource('src/screens/EditProfileScreen.tsx');

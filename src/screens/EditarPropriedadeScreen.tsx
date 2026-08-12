@@ -12,6 +12,7 @@ import Header from '../components/Header';
 import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
+import MultiSelectField from '../components/MultiSelectField';
 import SectionCard from '../components/SectionCard';
 import SelectField from '../components/SelectField';
 import SegmentedChips from '../components/SegmentedChips';
@@ -34,7 +35,11 @@ import {
   listarMunicipios,
   listarUfsParaCadastro,
 } from '../utils/filtroTerritorial';
-import { getUsuarioNome, getUsuarioStatusInfo } from '../utils/usuarioAdminCompat';
+import {
+  getUsuarioNome,
+  getUsuarioProdutorId,
+  getUsuarioStatusInfo,
+} from '../utils/usuarioAdminCompat';
 
 const PROPRIEDADE_FORM_ERROR_ORDER = [
   'escopo',
@@ -55,6 +60,7 @@ const TIPOS_VINCULO_COLABORADOR = new Set([
   'responsavel',
   'colaborador_atribuido',
 ]);
+const TIPO_VINCULO_PRODUTOR_AUTORIZADO = 'usuario_autorizado';
 
 export default function EditarPropriedadeScreen({ route, navigation }) {
   const toast = useToast();
@@ -66,6 +72,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   const [propriedadeAtual, setPropriedadeAtual] = useState<any>(null);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [propriedadesReferencia, setPropriedadesReferencia] = useState<any[]>([]);
+  const [produtorAutorizadoIds, setProdutorAutorizadoIds] = useState<string[]>([]);
   const [colaboradorIds, setColaboradorIds] = useState<string[]>([]);
   const [accessDenied, setAccessDenied] = useState(false);
   const [errors, setErrors] = useState<any>({});
@@ -85,6 +92,24 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       ))
       .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b), 'pt-BR')),
     [usuarios],
+  );
+  const produtoresAutorizaveis = useMemo(
+    () => usuarios
+      .filter((usuario) => (
+        usuario?.perfil === 'produtor'
+        && getUsuarioStatusInfo(usuario).key === 'ativo'
+        && getUsuarioProdutorId(usuario) !== getTitularIdFazenda(propriedadeAtual)
+      ))
+      .sort((a, b) => getUsuarioNome(a).localeCompare(getUsuarioNome(b), 'pt-BR')),
+    [propriedadeAtual, usuarios],
+  );
+  const produtoresAutorizadosOptions = useMemo(
+    () => produtoresAutorizaveis.map((produtor) => ({
+      value: produtor.id,
+      label: getUsuarioNome(produtor),
+      description: produtor.email,
+    })),
+    [produtoresAutorizaveis],
   );
   const ufs = useMemo(
     () => listarUfsParaCadastro(propriedadesReferencia),
@@ -128,6 +153,20 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
         setPropriedadeAtual(propriedade);
         setPropriedadesReferencia(propriedades);
         setUsuarios(usuariosCadastrados);
+        setProdutorAutorizadoIds(
+          usuariosCadastrados
+            .filter((usuario) => (
+              usuario?.perfil === 'produtor'
+              && getUsuarioStatusInfo(usuario).key === 'ativo'
+              && getUsuarioProdutorId(usuario) !== getTitularIdFazenda(propriedade)
+            ))
+            .filter((usuario) => (usuario.vinculos_propriedades || []).some((vinculo) => (
+              vinculo?.propriedade_id === propriedadeId
+              && vinculo?.status !== 'inativo'
+              && vinculo?.tipo_vinculo === TIPO_VINCULO_PRODUTOR_AUTORIZADO
+            )))
+            .map((usuario) => usuario.id),
+        );
         setColaboradorIds(
           usuariosCadastrados
             .filter((usuario) => usuario?.perfil === 'colaborador')
@@ -219,7 +258,10 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
 
     try {
       setSaving(true);
-      await Produtor.updateWithLinks(route.params.id, buildPayload(), { colaboradorIds });
+      await Produtor.updateWithLinks(route.params.id, buildPayload(), {
+        produtorAutorizadoIds,
+        colaboradorIds,
+      });
       await recarregarOpcoes();
       toast.showSuccess('Propriedade e vínculos atualizados localmente!');
       navigation.goBack();
@@ -280,7 +322,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
       >
         <InfoBox
           title="Edição local v2"
-          message="Os dados canônicos e os vínculos dos Colaboradores serão atualizados juntos. Município e UF identificam a localização, mas não concedem acesso."
+          message="Os dados canônicos e os vínculos de Produtores autorizados e Colaboradores serão atualizados juntos. Município e UF identificam a localização, mas não concedem acesso."
         />
 
         <View ref={formValidation.registerField('escopo')} collapsable={false}>
@@ -304,6 +346,27 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
               helperText="A troca de Titular exige um fluxo transacional e auditado próprio."
             />
           </View>
+        </SectionCard>
+
+        <SectionCard
+          title="Produtores autorizados"
+          subtitle="Vincule ou desvincule usuários Produtores sem alterar o Titular atual."
+        >
+          <MultiSelectField
+            label="Usuários Produtores com acesso"
+            values={produtorAutorizadoIds}
+            options={produtoresAutorizadosOptions}
+            onChange={setProdutorAutorizadoIds}
+            placeholder="Nenhum Produtor autorizado"
+            searchPlaceholder="Buscar Produtor por nome ou e-mail..."
+            emptyText="Nenhum outro Produtor ativo disponível."
+            helperText="Desmarcar um usuário inativará o vínculo dele com esta Propriedade ao salvar."
+            disabled={produtoresAutorizadosOptions.length === 0}
+          />
+          <InfoBox
+            message="O Titular não aparece nesta seleção. Remover o último acesso de um Produtor ativo será bloqueado; vincule outra Propriedade ou inative o usuário antes."
+            style={styles.inlineInfo}
+          />
         </SectionCard>
 
         <SectionCard title="Propriedade" subtitle="Atualize a identificação cadastral da unidade operacional.">

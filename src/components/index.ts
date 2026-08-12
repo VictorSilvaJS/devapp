@@ -12,6 +12,7 @@ export {
 export { default as Header } from './Header';
 export { default as InfoBox } from './InfoBox';
 export { default as InputField } from './InputField';
+export { default as MultiSelectField } from './MultiSelectField';
 export { default as RadioCardGroup } from './RadioCardGroup';
 export { default as SearchBar } from './SearchBar';
 export { default as SectionCard } from './SectionCard';
@@ -20,5 +21,6 @@ export { default as SelectField } from './SelectField';
 
 export type { RadioCardOption } from './RadioCardGroup';
 export type { ActiveFilterItem } from './FilterBottomSheet';
+export type { MultiSelectFieldOption } from './MultiSelectField';
 export type { SegmentedChipOption } from './SegmentedChips';
 export type { SelectFieldOption } from './SelectField';

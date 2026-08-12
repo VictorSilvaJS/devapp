@@ -21,7 +21,8 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-08 | Visitas | Conclusão e correção em telas dedicadas | PASSOU |
 | ATUAL-09 | Desempenho | Listas virtualizadas e abas suspensas fora de foco | PASSOU |
 | ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PASSOU |
-| ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PENDENTE DE REVALIDAÇÃO MANUAL |
+| ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
+| ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PENDENTE DE REVALIDAÇÃO MANUAL |
 
 ## Rodada final do mock v2
 
@@ -90,6 +91,17 @@ visível e Materiais publicados. O ZIP restrito à equipe e o material em
 rascunho não podem aparecer. O PDF indisponível pode aparecer, mas deve informar
 honestamente que o arquivo não está disponível. A Fazenda_Backes deve continuar
 acessível e nenhuma ação estrutural deve ser exibida.
+
+Na revalidação administrativa dos vínculos, entrar como Admin, editar `[QA]
+Propriedade Cenários Operacionais` e abrir `Produtores autorizados`. Confirmar
+que o Titular não aparece, buscar Altair por nome ou e-mail, desmarcá-lo e
+salvar. No detalhe administrativo do Altair e no detalhe da Propriedade QA, ele
+não deve mais ser contado ou apresentado como vinculado. Na sessão do Altair,
+a Propriedade QA deve desaparecer também de `Perfil > Minhas Propriedades`, e
+Fazenda_Backes deve permanecer. Reiniciar o app sem limpar os dados e repetir a
+consulta com a sessão restaurada. Voltar como Admin, marcar Altair novamente e
+salvar; uma nova sessão do Altair deve recuperar a Propriedade QA sem criar
+vínculo duplicado.
 
 ## Cenários de campo de MP-38
 

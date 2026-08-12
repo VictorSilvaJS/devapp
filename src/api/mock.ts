@@ -2469,8 +2469,13 @@ export const Produtor: any = {
     data,
     {
       titularUsuarioId,
+      produtorAutorizadoIds = [],
       colaboradorIds = [],
-    }: { titularUsuarioId?: string; colaboradorIds?: string[] } = {}
+    }: {
+      titularUsuarioId?: string;
+      produtorAutorizadoIds?: string[];
+      colaboradorIds?: string[];
+    } = {}
   ) =>
     mutateHydratedMock(200, () => {
       validateProdutor(data);
@@ -2504,6 +2509,26 @@ export const Produtor: any = {
         return colaborador;
       });
 
+      const produtoresAutorizadosUnicos = [...new Set(
+        (Array.isArray(produtorAutorizadoIds) ? produtorAutorizadoIds : [])
+          .map((usuarioId) => String(usuarioId || '').trim())
+          .filter(Boolean)
+      )];
+      const produtoresAutorizadosSelecionados = produtoresAutorizadosUnicos.map((usuarioId) => {
+        const produtorAutorizado = users.find((usuario) => usuario.id === usuarioId);
+        if (
+          !produtorAutorizado
+          || produtorAutorizado.perfil !== 'produtor'
+          || resolveUsuarioStatus(produtorAutorizado) !== 'ativo'
+        ) {
+          throw new Error(`Propriedade.produtorAutorizado: Produtor ativo inexistente ${usuarioId}`);
+        }
+        if (resolveUsuarioProdutorId(produtorAutorizado, produtorAutorizado.id) === titularId) {
+          throw new Error('Propriedade.produtorAutorizado: o Titular não pode ser adicionado como Usuário autorizado');
+        }
+        return produtorAutorizado;
+      });
+
       const id = `p${Date.now()}`;
       const novo = persistMockProdutor({ id, data });
       produtores.unshift(novo);
@@ -2515,7 +2540,10 @@ export const Produtor: any = {
         });
       }
 
-      const adicionarVinculo = (usuario: any, tipoVinculo: 'titular' | 'colaborador') => {
+      const adicionarVinculo = (
+        usuario: any,
+        tipoVinculo: 'titular' | 'usuario_autorizado' | 'colaborador'
+      ) => {
         const existentes = usuarioPropriedade
           .filter((link) => link.usuario_id === usuario.id)
           .map((link) => ({ ...link }));
@@ -2540,6 +2568,9 @@ export const Produtor: any = {
       };
 
       adicionarVinculo(users[titularUsuarioIndex], 'titular');
+      produtoresAutorizadosSelecionados.forEach((produtorAutorizado) => (
+        adicionarVinculo(produtorAutorizado, 'usuario_autorizado')
+      ));
       colaboradoresSelecionados.forEach((colaborador) => adicionarVinculo(colaborador, 'colaborador'));
       return readMockProdutor(novo);
     }),
@@ -2556,7 +2587,10 @@ export const Produtor: any = {
   updateWithLinks: async (
     id,
     data,
-    { colaboradorIds = [] }: { colaboradorIds?: string[] } = {}
+    {
+      produtorAutorizadoIds,
+      colaboradorIds = [],
+    }: { produtorAutorizadoIds?: string[]; colaboradorIds?: string[] } = {}
   ) =>
     mutateHydratedMock(300, () => {
       const index = produtores.findIndex((propriedade) => propriedade.id === id);
@@ -2572,6 +2606,27 @@ export const Produtor: any = {
       if (!titularAtualId || titularSolicitadoId !== titularAtualId) {
         throw new Error('Propriedade.titular: o Titular não pode ser trocado na edição cadastral');
       }
+
+      const sincronizarProdutoresAutorizados = Array.isArray(produtorAutorizadoIds);
+      const produtoresAutorizadosUnicos = [...new Set(
+        (sincronizarProdutoresAutorizados ? produtorAutorizadoIds : [])
+          .map((usuarioId) => String(usuarioId || '').trim())
+          .filter(Boolean)
+      )];
+      const produtoresAutorizadosSelecionados = new Set(produtoresAutorizadosUnicos);
+      produtoresAutorizadosUnicos.forEach((usuarioId) => {
+        const produtorAutorizado = users.find((usuario) => usuario.id === usuarioId);
+        if (
+          !produtorAutorizado
+          || produtorAutorizado.perfil !== 'produtor'
+          || resolveUsuarioStatus(produtorAutorizado) !== 'ativo'
+        ) {
+          throw new Error(`Propriedade.produtorAutorizado: Produtor ativo inexistente ${usuarioId}`);
+        }
+        if (resolveUsuarioProdutorId(produtorAutorizado, produtorAutorizado.id) === titularAtualId) {
+          throw new Error('Propriedade.produtorAutorizado: o Titular não pode ser adicionado como Usuário autorizado');
+        }
+      });
 
       const colaboradoresUnicos = [...new Set(
         (Array.isArray(colaboradorIds) ? colaboradorIds : [])
@@ -2597,6 +2652,48 @@ export const Produtor: any = {
       });
       validateProdutor(atualizado);
       produtores[index] = atualizado;
+
+      if (sincronizarProdutoresAutorizados) {
+        users
+          .filter((usuario) => usuario.perfil === 'produtor')
+          .forEach((produtorAutorizado) => {
+            const existentes = usuarioPropriedade
+              .filter((link) => link.usuario_id === produtorAutorizado.id)
+              .map((link) => ({ ...link }));
+            const vinculoExistente = existentes.find((link) => (
+              link.propriedade_id === id && link.tipo_vinculo === 'usuario_autorizado'
+            ));
+            const selecionado = produtoresAutorizadosSelecionados.has(produtorAutorizado.id);
+            if (!vinculoExistente && !selecionado) return;
+
+            const preservados = existentes.filter((link) => !(
+              link.propriedade_id === id && link.tipo_vinculo === 'usuario_autorizado'
+            ));
+            const vinculoSincronizado = normalizeUsuarioPropriedadeLink({
+              ...vinculoExistente,
+              propriedade_id: id,
+              tipo_vinculo: 'usuario_autorizado',
+              status: selecionado ? 'ativo' : 'inativo',
+              principal: selecionado ? vinculoExistente?.principal === true : false,
+            }, produtorAutorizado.id);
+            const proximos = ensurePrincipalUsuarioPropriedade([
+              ...preservados,
+              vinculoSincronizado,
+            ].filter(Boolean));
+
+            validateUsuarioMock(
+              { ...produtorAutorizado, status: resolveUsuarioStatus(produtorAutorizado) },
+              {
+                ignoreId: produtorAutorizado.id,
+                vinculosPropriedades: proximos,
+                vinculosMicroregioes: usuarioMicroregiao.filter(
+                  (link) => link.usuario_id === produtorAutorizado.id
+                ),
+              }
+            );
+            replaceUsuarioPropriedadeLinks(produtorAutorizado.id, proximos);
+          });
+      }
 
       const tiposColaborador = new Set(['colaborador', 'responsavel', 'colaborador_atribuido']);
       users

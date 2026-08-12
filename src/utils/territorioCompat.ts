@@ -1,8 +1,9 @@
 import { getFazendaId } from './acessoControle';
 import {
   getSubRegioesUsuario,
+  getPropriedadesDoUsuarioProdutor,
   getVinculosMicroregiaoUsuario,
-  getVinculosPropriedadeUsuario,
+  getVinculosPropriedadeAtivosUsuario,
 } from './usuarioAdminCompat';
 
 const normalizarTexto = (valor: any): string => {
@@ -170,7 +171,7 @@ export const sugerirColaboradoresParaMicroregiao = (
     if (usuario?.perfil !== 'colaborador') return false;
     if (colaboradorAtendeMicroregiao(usuario, microregiao, regiao)) return true;
 
-    return getVinculosPropriedadeUsuario(usuario, propriedades).some((vinculo) =>
+    return getVinculosPropriedadeAtivosUsuario(usuario, propriedades).some((vinculo) =>
       idsPropriedades.has(vinculo.propriedade_id),
     );
   });
@@ -185,8 +186,8 @@ export const getUsuariosProdutoresDaPropriedade = (
 
   return usuarios.filter((usuario) => {
     if (usuario?.perfil !== 'produtor') return false;
-    return getVinculosPropriedadeUsuario(usuario, propriedades).some(
-      (vinculo) => vinculo.propriedade_id === propriedadeId,
+    return getPropriedadesDoUsuarioProdutor(usuario, propriedades).some(
+      (item) => getFazendaId(item) === propriedadeId,
     );
   });
 };
@@ -203,7 +204,7 @@ export const getColaboradoresRelacionadosAPropriedade = (
   return usuarios.filter((usuario) => {
     if (usuario?.perfil !== 'colaborador') return false;
 
-    const temVinculoDireto = getVinculosPropriedadeUsuario(usuario, propriedades).some(
+    const temVinculoDireto = getVinculosPropriedadeAtivosUsuario(usuario, propriedades).some(
       (vinculo) => vinculo.propriedade_id === propriedadeId,
     );
     if (temVinculoDireto) return true;

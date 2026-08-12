@@ -161,6 +161,30 @@ export const getVinculosPropriedadeUsuario = (usuario: any, propriedades: any[] 
   return [];
 };
 
+const TIPOS_VINCULO_ATIVOS_POR_PERFIL = {
+  produtor: new Set(['titular', 'usuario_autorizado', 'responsavel']),
+  colaborador: new Set(['colaborador', 'colaborador_atribuido']),
+};
+
+/**
+ * Projeção dos vínculos que representam escopo atual.
+ *
+ * O helper acima mantém também vínculos inativos porque eles compõem o
+ * histórico local e podem ser reativados. Telas, contadores e sugestões que
+ * descrevem acesso/vínculo atual devem consumir somente esta projeção.
+ */
+export const getVinculosPropriedadeAtivosUsuario = (
+  usuario: any,
+  propriedades: any[] = [],
+) => {
+  const tiposPermitidos = TIPOS_VINCULO_ATIVOS_POR_PERFIL[usuario?.perfil];
+  if (!tiposPermitidos) return [];
+
+  return getVinculosPropriedadeUsuario(usuario, propriedades)
+    .filter((vinculo) => vinculo.status !== 'inativo')
+    .filter((vinculo) => tiposPermitidos.has(vinculo.tipo_vinculo));
+};
+
 export const getVinculosMicroregiaoUsuario = (usuario: any) => {
   if (Array.isArray(usuario?.vinculos_microregioes)) {
     return usuario.vinculos_microregioes
@@ -189,22 +213,28 @@ export const getSubRegioesUsuario = (usuario: any): string[] =>
     : [];
 
 export const getPropriedadeIdsAtribuidas = (usuario: any): string[] =>
-  getVinculosPropriedadeUsuario(usuario)
-    .filter((vinculo) => vinculo.status !== 'inativo')
-    .filter((vinculo) => usuario?.perfil !== 'colaborador' || ['colaborador', 'colaborador_atribuido'].includes(vinculo.tipo_vinculo))
-    .map((vinculo) => vinculo.propriedade_id);
+  [...new Set<string>(
+    getVinculosPropriedadeAtivosUsuario(usuario)
+      .map((vinculo) => vinculo.propriedade_id)
+  )];
 
 export const getPropriedadesDoUsuarioProdutor = (usuario: any, propriedades: any[] = []) => {
-  const vinculos = getVinculosPropriedadeUsuario(usuario, propriedades);
-  if (vinculos.length > 0 || Array.isArray(usuario?.vinculos_propriedades)) {
-    const ids = new Set(vinculos.map((vinculo) => vinculo.propriedade_id));
-    return propriedades.filter((propriedade) => ids.has(resolvePropriedadeId(propriedade)));
-  }
+  if (usuario?.perfil !== 'produtor') return [];
 
+  const idsVinculadosAtivos = new Set(
+    getVinculosPropriedadeAtivosUsuario(usuario, propriedades)
+      .map((vinculo) => vinculo.propriedade_id)
+  );
   const produtorId = getUsuarioProdutorId(usuario);
-  if (!produtorId) return [];
 
-  return propriedades.filter((propriedade) => resolveTitularId(propriedade) === produtorId);
+  return propriedades.filter((propriedade) => {
+    const propriedadeId = resolvePropriedadeId(propriedade);
+    const pertenceAoTitular = Boolean(
+      produtorId && resolveTitularId(propriedade) === produtorId
+    );
+
+    return pertenceAoTitular || idsVinculadosAtivos.has(propriedadeId);
+  });
 };
 
 export const getPropriedadesDoColaborador = (usuario: any, propriedades: any[] = []) => {

@@ -11,6 +11,9 @@ const {
 } = require('../.tmp-domain-compat/src/utils/fazendaCadastroCompat');
 const { Produtor, User } = require('../.tmp-domain-compat/src/api/mock');
 const { filtrarProdutoresPorAcesso } = require('../.tmp-domain-compat/src/utils/acessoControle');
+const {
+  getPropriedadesDoUsuarioProdutor,
+} = require('../.tmp-domain-compat/src/utils/usuarioAdminCompat');
 
 let failed = 0;
 
@@ -279,8 +282,17 @@ const run = async () => {
 
     const colaboradorSelecionado = (await User.list()).find((usuario) => usuario.perfil === 'colaborador');
     assert.ok(colaboradorSelecionado);
+    const produtorAutorizado = (await User.list()).find((usuario) => (
+      usuario.perfil === 'produtor'
+      && usuario.id !== titularProp1.usuario_id
+      && usuario.produtor_id !== titularProp1.id
+      && usuario.status !== 'inativo'
+      && usuario.ativo !== false
+    ));
+    assert.ok(produtorAutorizado);
     const criado = await Produtor.createWithLinks(payload, {
       titularUsuarioId: titularProp1.usuario_id,
+      produtorAutorizadoIds: [produtorAutorizado.id],
       colaboradorIds: [colaboradorSelecionado.id],
     });
     assert.equal(criado.produtor_id, 'prop1');
@@ -294,6 +306,7 @@ const run = async () => {
     const listaAtualizada = await Produtor.list();
     const colaboradorAtualizado = await User.get(colaboradorSelecionado.id);
     const titularAtualizado = await User.get(titularProp1.usuario_id);
+    const produtorAutorizadoAtualizado = await User.get(produtorAutorizado.id);
     const visiveis = filtrarProdutoresPorAcesso(listaAtualizada, colaboradorAtualizado);
     assert.ok(visiveis.some((fazenda) => fazenda.id === criado.id));
     assert.ok(titularAtualizado.vinculos_propriedades.some((vinculo) => (
@@ -302,6 +315,63 @@ const run = async () => {
     assert.ok(colaboradorAtualizado.vinculos_propriedades.some((vinculo) => (
       vinculo.propriedade_id === criado.id && vinculo.tipo_vinculo === 'colaborador'
     )));
+    assert.ok(produtorAutorizadoAtualizado.vinculos_propriedades.some((vinculo) => (
+      vinculo.propriedade_id === criado.id
+      && vinculo.tipo_vinculo === 'usuario_autorizado'
+      && vinculo.status === 'ativo'
+    )));
+    assert.equal(
+      filtrarProdutoresPorAcesso(listaAtualizada, produtorAutorizadoAtualizado)
+        .some((fazenda) => fazenda.id === criado.id),
+      true,
+    );
+
+    await Produtor.updateWithLinks(criado.id, criado, {
+      produtorAutorizadoIds: [],
+      colaboradorIds: [colaboradorSelecionado.id],
+    });
+    const produtorDesvinculado = await User.get(produtorAutorizado.id);
+    const vinculoInativado = produtorDesvinculado.vinculos_propriedades.find((vinculo) => (
+      vinculo.propriedade_id === criado.id && vinculo.tipo_vinculo === 'usuario_autorizado'
+    ));
+    assert.equal(vinculoInativado.status, 'inativo');
+    assert.equal(
+      filtrarProdutoresPorAcesso(await Produtor.list(), produtorDesvinculado)
+        .some((fazenda) => fazenda.id === criado.id),
+      false,
+    );
+    assert.equal(
+      getPropriedadesDoUsuarioProdutor(produtorDesvinculado, await Produtor.list())
+        .some((fazenda) => fazenda.id === criado.id),
+      false,
+    );
+
+    await Produtor.updateWithLinks(criado.id, criado, {
+      produtorAutorizadoIds: [produtorAutorizado.id],
+      colaboradorIds: [colaboradorSelecionado.id],
+    });
+    const produtorRevinculado = await User.get(produtorAutorizado.id);
+    const vinculosAutorizados = produtorRevinculado.vinculos_propriedades.filter((vinculo) => (
+      vinculo.propriedade_id === criado.id && vinculo.tipo_vinculo === 'usuario_autorizado'
+    ));
+    assert.equal(vinculosAutorizados.length, 1);
+    assert.equal(vinculosAutorizados[0].status, 'ativo');
+    assert.equal((await Produtor.get(criado.id)).titular_id, titularProp1.id);
+
+    await assert.rejects(
+      () => Produtor.updateWithLinks(criado.id, criado, {
+        produtorAutorizadoIds: [titularProp1.usuario_id],
+        colaboradorIds: [colaboradorSelecionado.id],
+      }),
+      /Titular não pode ser adicionado como Usuário autorizado/,
+    );
+    const produtorAposFalha = await User.get(produtorAutorizado.id);
+    assert.equal(
+      produtorAposFalha.vinculos_propriedades.find((vinculo) => (
+        vinculo.propriedade_id === criado.id && vinculo.tipo_vinculo === 'usuario_autorizado'
+      )).status,
+      'ativo',
+    );
 
     const outroColaborador = (await User.list()).find((usuario) => (
       usuario.perfil === 'colaborador' && usuario.id !== colaboradorSelecionado.id
@@ -370,6 +440,8 @@ const run = async () => {
     assert.match(source, /Produtor\.createWithLinks/);
     assert.match(source, /municipioId/);
     assert.match(source, /colaboradorIds/);
+    assert.match(source, /produtorAutorizadoIds/);
+    assert.match(source, /Produtores autorizados/);
     assert.match(source, /Somente Administradores/);
     assert.doesNotMatch(source, /Região|Microrregião|territorioCompat/);
   });
@@ -385,6 +457,8 @@ const run = async () => {
     assert.match(source, /A troca de Titular exige um fluxo transacional e auditado próprio/);
     assert.match(source, /municipioId/);
     assert.match(source, /colaboradorIds/);
+    assert.match(source, /produtorAutorizadoIds/);
+    assert.match(source, /Desmarcar um usuário inativará o vínculo/);
     assert.doesNotMatch(source, /buildFazendaUpdatePayload|Região|Microrregião|documento|pendente/);
   });
 

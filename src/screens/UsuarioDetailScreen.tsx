@@ -33,7 +33,7 @@ import {
   getUsuarioPerfilLabel,
   getUsuarioStatusInfo,
   getVinculoPropriedadeLabel,
-  getVinculosPropriedadeUsuario,
+  getVinculosPropriedadeAtivosUsuario,
 } from '../utils/usuarioAdminCompat';
 
 const perfilIcon = (perfil?: string) => {
@@ -170,9 +170,9 @@ export default function UsuarioDetailScreen() {
   const vinculo = buildUsuarioVinculoPrincipal(usuario, propriedades);
   const propriedadesProdutor = getPropriedadesDoUsuarioProdutor(usuario, propriedades);
   const propriedadesColaborador = getPropriedadesDoColaborador(usuario, propriedades);
-  const vinculosPropriedades = getVinculosPropriedadeUsuario(usuario, propriedades);
+  const vinculosPropriedadesAtivos = getVinculosPropriedadeAtivosUsuario(usuario, propriedades);
   const getVinculoDaPropriedade = (id: string) =>
-    vinculosPropriedades.find((item) => item.propriedade_id === id);
+    vinculosPropriedadesAtivos.find((item) => item.propriedade_id === id);
   const abrirPropriedade = (propriedade: any) => {
     const params = buildPropriedadeDetailRouteParams(propriedade);
     if (params) {
@@ -300,8 +300,8 @@ export default function UsuarioDetailScreen() {
             />
             <InfoRow
               icon="link-outline"
-              label="Vínculos registrados"
-              value={`${vinculosPropriedades.length} propriedade${vinculosPropriedades.length === 1 ? '' : 's'}`}
+              label="Vínculos ativos"
+              value={`${propriedadesProdutor.length} propriedade${propriedadesProdutor.length === 1 ? '' : 's'}`}
             />
 
             <Text style={styles.subsectionTitle}>Propriedades vinculadas</Text>

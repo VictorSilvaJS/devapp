@@ -42,7 +42,9 @@ export default function PerfilScreen({ navigation }) {
         user.id ? User.get(user.id).catch(() => null) : Promise.resolve(null),
       ]);
       setPropriedades(propriedadesData as any[]);
-      setUsuarioDetalhado(usuarioData ? { ...usuarioData, ...user } : user);
+      // A consulta persistida é a fonte mais recente para vínculos e status.
+      // A sessão permanece como fallback para campos que não vierem no cadastro.
+      setUsuarioDetalhado(usuarioData ? { ...user, ...usuarioData } : user);
     } catch (error) {
       console.warn('Não foi possível carregar dados complementares do perfil:', error);
       setUsuarioDetalhado(user);
