@@ -197,6 +197,8 @@ export default function CorrigirVisitaScreen() {
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <View style={styles.formWidth}>
           <SectionCard title="Registro realizado" subtitle="A identidade, a Propriedade e a conclusão original permanecem protegidas." icon="shield-checkmark-outline">

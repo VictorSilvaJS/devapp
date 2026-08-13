@@ -406,6 +406,9 @@ export default function NovoUsuarioScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <InfoBox
           title="Cadastro administrativo local v2"

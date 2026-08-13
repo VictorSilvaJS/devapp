@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { CadernoCampo } from '../api/mock';
 import { colors, semanticColors, shadows, spacing, typography } from '../theme';
 import FormField from './FormField';
@@ -21,20 +22,10 @@ import {
   type CadernoCommand,
 } from '../utils/cadernoLifecycleCompat';
 
-type ActionMode = 'complemento' | 'correcao' | 'visibilidade' | 'arquivar' | 'reativar' | 'anular';
-
-const CORRECTION_FIELDS = [
-  { value: 'observacoes', label: 'Observações' },
-  { value: 'operacao', label: 'Operação' },
-  { value: 'dosagem', label: 'Dosagem' },
-  { value: 'area_aplicada', label: 'Área (ha)', numeric: true },
-  { value: 'produtividade', label: 'Produtividade', numeric: true },
-  { value: 'condicoes_clima', label: 'Condições climáticas' },
-];
+type ActionMode = 'complemento' | 'visibilidade' | 'arquivar' | 'reativar' | 'anular';
 
 const ACTION_LABELS: Record<ActionMode, string> = {
   complemento: 'Complementar',
-  correcao: 'Corrigir',
   visibilidade: 'Alterar visibilidade',
   arquivar: 'Arquivar',
   reativar: 'Reativar',
@@ -52,27 +43,20 @@ export default function CadernoAuditActions({
   fazendaId: string;
   onUpdated: (registro: any) => void;
 }) {
+  const navigation = useNavigation<any>();
   const toast = useToast();
   const [mode, setMode] = useState<ActionMode | null>(null);
   const [texto, setTexto] = useState('');
   const [motivo, setMotivo] = useState('');
-  const [correctionField, setCorrectionField] = useState('observacoes');
-  const [correctionValue, setCorrectionValue] = useState('');
   const [visibleToProducer, setVisibleToProducer] = useState(true);
   const [saving, setSaving] = useState(false);
   const estado = getCadernoEstado(registro);
-  const fieldConfig = useMemo(
-    () => CORRECTION_FIELDS.find((item) => item.value === correctionField) || CORRECTION_FIELDS[0],
-    [correctionField]
-  );
 
   const resetAndClose = () => {
     if (saving) return;
     setMode(null);
     setTexto('');
     setMotivo('');
-    setCorrectionField('observacoes');
-    setCorrectionValue('');
     setVisibleToProducer(true);
   };
 
@@ -93,19 +77,6 @@ export default function CadernoAuditActions({
         visivelParaProdutor: visibleToProducer,
       };
     }
-    if (mode === 'correcao') {
-      const normalized = correctionValue.trim().replace(',', '.');
-      const value = fieldConfig.numeric ? Number(normalized) : correctionValue.trim();
-      if (fieldConfig.numeric && (!Number.isFinite(value as number) || Number(value) <= 0)) {
-        throw new Error('Informe um valor numérico maior que zero.');
-      }
-      return {
-        tipo: 'corrigir',
-        versaoBase,
-        motivo,
-        alteracoes: { [correctionField]: value },
-      };
-    }
     if (mode === 'visibilidade') {
       return {
         tipo: 'alterar_visibilidade',
@@ -124,7 +95,7 @@ export default function CadernoAuditActions({
     try {
       const command = buildCommand();
       if (mode === 'complemento' && !texto.trim()) throw new Error('Informe o complemento técnico.');
-      if (['correcao', 'arquivar', 'reativar', 'anular'].includes(String(mode)) && !motivo.trim()) {
+      if (['arquivar', 'reativar', 'anular'].includes(String(mode)) && !motivo.trim()) {
         throw new Error('Informe o motivo da ação.');
       }
       const actor: CadernoActor = {
@@ -151,7 +122,7 @@ export default function CadernoAuditActions({
         {estado === 'registrado' ? (
           <>
             <ActionButton icon="add-circle-outline" label="Complementar" onPress={() => open('complemento')} />
-            <ActionButton icon="create-outline" label="Corrigir" onPress={() => open('correcao')} />
+            <ActionButton icon="create-outline" label="Corrigir" onPress={() => navigation.navigate('CorrigirCaderno', { cadernoId: registro.id })} />
             <ActionButton icon="eye-outline" label="Visibilidade" onPress={() => open('visibilidade')} />
             <ActionButton icon="archive-outline" label="Arquivar" onPress={() => open('arquivar')} />
             <ActionButton icon="close-circle-outline" label="Anular" danger onPress={() => open('anular')} />
@@ -183,28 +154,6 @@ export default function CadernoAuditActions({
                     value={visibleToProducer ? 'visivel' : 'interno'}
                     onChange={(value) => setVisibleToProducer(value === 'visivel')}
                   />
-                </>
-              ) : null}
-
-              {mode === 'correcao' ? (
-                <>
-                  <Text style={styles.label}>Campo a corrigir</Text>
-                  <RadioCardGroup
-                    options={CORRECTION_FIELDS.map(({ value, label }) => ({ value, label }))}
-                    value={correctionField}
-                    onChange={(value) => {
-                      setCorrectionField(value);
-                      setCorrectionValue('');
-                    }}
-                  />
-                  <FormField
-                    label="Novo valor"
-                    required
-                    value={correctionValue}
-                    onChangeText={setCorrectionValue}
-                    keyboardType={fieldConfig.numeric ? 'decimal-pad' : 'default'}
-                  />
-                  <FormField label="Motivo da correção" required value={motivo} onChangeText={setMotivo} textarea numberOfLines={3} />
                 </>
               ) : null}
 

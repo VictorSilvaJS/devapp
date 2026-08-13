@@ -33,6 +33,7 @@ import { buildMaterialViewerRouteParams } from '../navigation/materialRouteCompa
 import {
   buildPropriedadeContextRouteParams,
   buildPropriedadeDetailRouteParams,
+  resolvePropriedadeRouteContext,
 } from '../navigation/propriedadeRouteCompat';
 import { colors, semanticColors, typography, spacing, border, shadows } from '../theme';
 import { useAuth } from '../auth/AuthContext';
@@ -116,6 +117,10 @@ export default function ProdutorScreen({ route, navigation }) {
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const skipNextMaterialFocusReloadRef = useRef(false);
+  const routePropriedadeId = resolvePropriedadeRouteContext(
+    route?.params,
+    { allowIdAsFazendaId: true }
+  ).effectivePropriedadeId;
 
   const loadData = async (id) => {
     if (!id) {
@@ -175,6 +180,8 @@ export default function ProdutorScreen({ route, navigation }) {
       const c = ordenarCadernosPorDataRecente(
         filtrarCadernosPorFazendaIds(todosCadernos, [fazendaAtualId], {
           somenteVisivelParaProdutor: user?.perfil === 'produtor',
+          incluirRascunhosDoUsuario: true,
+          usuarioId: user?.id,
         })
       );
       const l = filtrarLimitesPorFazendaIds(todosLimites, [fazendaAtualId]);
@@ -209,9 +216,8 @@ export default function ProdutorScreen({ route, navigation }) {
   };
 
   useEffect(() => {
-    const id = route?.params?.id;
-    loadData(id);
-  }, [route?.params?.id, user]);
+    loadData(routePropriedadeId);
+  }, [routePropriedadeId, user]);
 
   // Recarregar dados quando voltar da tela de edição
   useEffect(() => {
@@ -220,13 +226,12 @@ export default function ProdutorScreen({ route, navigation }) {
         skipNextMaterialFocusReloadRef.current = false;
         return;
       }
-      const id = route?.params?.id;
-      if (id) {
-        loadData(id);
+      if (routePropriedadeId) {
+        loadData(routePropriedadeId);
       }
     });
     return unsubscribe;
-  }, [navigation, route?.params?.id, user]);
+  }, [navigation, routePropriedadeId, user]);
 
   const handleEdit = () => {
     if (!podeEditarCadastroPropriedade(user, produtor)) {
@@ -441,7 +446,8 @@ export default function ProdutorScreen({ route, navigation }) {
       return;
     }
 
-    navigation.navigate('NovoPeriodoProdutivo', { fazendaId: fazendaAtualId });
+    const params = buildPropriedadeContextRouteParams(produtor);
+    if (params) navigation.navigate('NovoPeriodoProdutivo', params);
   };
 
   const handleEditarPeriodoProdutivo = (periodo) => {

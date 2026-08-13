@@ -61,6 +61,7 @@ import {
   shouldDiscardCadernoLocalizacaoDraftForPropertyChange,
 } from '../utils/cadernoLocalizacaoUiCompat';
 import { appendCadernoLocalizacaoSpatialAssessment } from '../utils/cadernoLocalizacaoSpatialCompat';
+import { resolvePropriedadeRouteContext } from '../navigation/propriedadeRouteCompat';
 
 const CADERNO_FORM_ERROR_ORDER = [
   'fazendaId', 'dataAtividade', 'tipoAtividade', 'responsavel', 'periodoProdutivoId',
@@ -74,11 +75,7 @@ export default function NovoCadernoScreen() {
   const { user } = useAuth();
   const formValidation = useFormValidationFocus(CADERNO_FORM_ERROR_ORDER);
 
-  const routeFazendaId =
-    route.params?.fazendaId
-    || route.params?.produtorId
-    || route.params?.propriedadeId
-    || route.params?.fazenda_id;
+  const routeFazendaId = resolvePropriedadeRouteContext(route.params).effectivePropriedadeId;
   const routeTalhaoId = route.params?.talhaoId || route.params?.talhao_id || '';
   const routeTalhao = route.params?.talhaoNome || route.params?.talhao || '';
   const isProdutorView = user?.perfil === 'produtor';
@@ -500,6 +497,9 @@ export default function NovoCadernoScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <SectionCard title="Contexto" subtitle="Defina a propriedade onde o registro será salvo.">
           <View ref={formValidation.registerField('fazendaId')} collapsable={false} style={styles.field}>

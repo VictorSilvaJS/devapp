@@ -73,6 +73,7 @@
     "src/contexts/filtroCompat.ts",
     "src/utils/filtroTerritorial.ts",
     "src/utils/cadernoFormCompat.ts",
+    "src/utils/cadernoCommandFormCompat.ts",
     "src/utils/cadernoLifecycleCompat.ts",
     "src/utils/cadernoLocalizacaoCompat.ts",
     "src/utils/cadernoLocalizacaoSpatialCompat.ts",

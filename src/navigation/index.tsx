@@ -9,6 +9,7 @@ import CadernoCampoScreen from '../screens/CadernoCampoScreen';
 import CadernoDetailScreen from '../screens/CadernoDetailScreen';
 import NovoCadernoScreen from '../screens/NovoCadernoScreen';
 import EditarCadernoScreen from '../screens/EditarCadernoScreen';
+import CorrigirCadernoScreen from '../screens/CorrigirCadernoScreen';
 import PeriodoProdutivoFormScreen from '../screens/PeriodoProdutivoFormScreen';
 import VisitasScreen from '../screens/VisitasScreen';
 import NovaPropriedadeScreen from '../screens/NovaPropriedadeScreen';
@@ -151,6 +152,7 @@ export default function Navigation() {
           <Stack.Screen name="CadernoDetail" component={CadernoDetailScreen} />
           <Stack.Screen name="NovoCaderno" component={NovoCadernoScreen} />
           <Stack.Screen name="EditarCaderno" component={EditarCadernoScreen} />
+          <Stack.Screen name="CorrigirCaderno" component={CorrigirCadernoScreen} />
           <Stack.Screen name="NovoPeriodoProdutivo" component={PeriodoProdutivoFormScreen} />
           <Stack.Screen name="EditarPeriodoProdutivo" component={PeriodoProdutivoFormScreen} />
           <Stack.Screen name="Notificacoes" component={NotificacoesScreen} />

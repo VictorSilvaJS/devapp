@@ -43,6 +43,7 @@ import {
   getVisitaFormFazendaLabel,
 } from '../utils/visitaFormCompat';
 import { buildVisitaIdempotencyKey, type VisitaActor } from '../utils/visitaLifecycleCompat';
+import { resolvePropriedadeRouteContext } from '../navigation/propriedadeRouteCompat';
 import {
   MAX_VISITA_PHOTOS,
   VisitaPhotoLocal,
@@ -58,7 +59,7 @@ export default function NovaVisitaScreen() {
   const route = useRoute<any>();
   const toast = useToast();
   const { user } = useAuth();
-  const routeFazendaId = route.params?.fazendaId || route.params?.produtorId;
+  const routeFazendaId = resolvePropriedadeRouteContext(route.params).effectivePropriedadeId;
   const visitaOrigemId = route.params?.visitaOrigemId;
 
   // Estados do formulário
@@ -348,6 +349,9 @@ export default function NovaVisitaScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <SectionCard title="Contexto" subtitle="Defina a propriedade vinculada à visita técnica.">
           <View ref={formValidation.registerField('fazendaId')} collapsable={false} style={styles.field}>

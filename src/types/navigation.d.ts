@@ -29,6 +29,7 @@ declare global {
       CadernoDetail: { id?: string; cadernoId?: string; registroId?: string } | undefined;
       NovoCaderno: FazendaIdRouteParams | undefined;
       EditarCaderno: { id?: string; cadernoId?: string; registroId?: string } | undefined;
+      CorrigirCaderno: { id?: string; cadernoId?: string; registroId?: string } | undefined;
       Notificacoes: undefined;
       EditProfile: undefined;
       FazendaMapa: FazendaMapaRouteParams | undefined;

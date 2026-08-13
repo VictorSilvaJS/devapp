@@ -207,7 +207,7 @@ export default function VisitaDetailScreen() {
   const handleScheduleFromCancelled = () => {
     if (!fazendaInfo?.id || estado !== 'cancelada' || !canCommand) return;
     navigation.navigate('NovaVisita', {
-      fazendaId: fazendaInfo.id,
+      propriedadeId: fazendaInfo.id,
       visitaOrigemId: visitaRouteId,
     });
   };

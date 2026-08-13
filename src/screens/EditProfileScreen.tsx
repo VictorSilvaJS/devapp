@@ -9,11 +9,13 @@ import { useAuthState, useAuthActions } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { colors, spacing } from '../theme';
 import { normalizeNome } from '../domain';
+import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
 
 export default function EditProfileScreen({ navigation }) {
   const { user } = useAuthState();
   const { updateProfile } = useAuthActions();
   const toast = useToast();
+  const formValidation = useFormValidationFocus(['nome'] as const);
   const perfil = user?.perfil;
   const [form, setForm] = useState({
     nome: normalizeNome(user || {}),
@@ -46,14 +48,24 @@ export default function EditProfileScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Header title="Editar dados" showBack />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        ref={formValidation.scrollViewRef}
+        contentContainerStyle={styles.content}
+        onScroll={formValidation.onScroll}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
         <SectionCard title="Dados cadastrais" icon="person-circle-outline">
-          <FormField
-            label="Nome completo"
-            value={form.nome}
-            onChangeText={(t) => setForm((s) => ({ ...s, nome: t }))}
-            leftIcon="person-outline"
-          />
+          <View ref={formValidation.registerField('nome')} collapsable={false}>
+            <FormField
+              label="Nome completo"
+              value={form.nome}
+              onChangeText={(t) => setForm((s) => ({ ...s, nome: t }))}
+              leftIcon="person-outline"
+            />
+          </View>
 
           {perfil === 'colaborador' && (
             <InfoBox

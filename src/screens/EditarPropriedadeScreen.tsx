@@ -40,6 +40,7 @@ import {
   getUsuarioProdutorId,
   getUsuarioStatusInfo,
 } from '../utils/usuarioAdminCompat';
+import { resolvePropriedadeRouteContext } from '../navigation/propriedadeRouteCompat';
 
 const PROPRIEDADE_FORM_ERROR_ORDER = [
   'escopo',
@@ -67,6 +68,10 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   const { user } = useAuth();
   const { recarregarOpcoes } = useFiltros();
   const formValidation = useFormValidationFocus(PROPRIEDADE_FORM_ERROR_ORDER);
+  const routePropriedadeId = resolvePropriedadeRouteContext(
+    route?.params,
+    { allowIdAsFazendaId: true }
+  ).effectivePropriedadeId;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [propriedadeAtual, setPropriedadeAtual] = useState<any>(null);
@@ -127,7 +132,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   useEffect(() => {
     let ativo = true;
     const carregar = async () => {
-      const propriedadeId = route?.params?.id;
+      const propriedadeId = routePropriedadeId;
       if (!propriedadeId) {
         toast.showError('ID da Propriedade não fornecido');
         navigation.goBack();
@@ -198,7 +203,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
 
     carregar();
     return () => { ativo = false; };
-  }, [route?.params?.id, user?.id, user?.perfil]);
+  }, [routePropriedadeId, user?.id, user?.perfil]);
 
   const handleChange = (campo: string, valor: string) => {
     setForm((atual) => ({ ...atual, [campo]: valor }));
@@ -258,7 +263,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
 
     try {
       setSaving(true);
-      await Produtor.updateWithLinks(route.params.id, buildPayload(), {
+      await Produtor.updateWithLinks(routePropriedadeId, buildPayload(), {
         produtorAutorizadoIds,
         colaboradorIds,
       });
@@ -319,6 +324,9 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <InfoBox
           title="Edição local v2"

@@ -527,6 +527,9 @@ export default function EditarCadernoScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <SectionCard title="Contexto" subtitle="A propriedade vinculada é preservada nesta edição.">
           <View ref={formValidation.registerField('fazendaId')} collapsable={false} style={styles.field}>

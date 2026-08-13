@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-12
+> Atualizado em: 2026-08-13
 >
 > Última execução física registrada: 2026-08-12
 
@@ -23,6 +23,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PASSOU |
 | ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
+| ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, correção, data/hora e teclado | PENDENTE DE REVALIDAÇÃO |
 
 ## Rodada final do mock v2
 
@@ -107,6 +108,33 @@ Na execução física de 2026-08-12, o cenário passou após a correção das
 projeções de vínculo atual: o vínculo inativo deixou de aparecer no Perfil do
 Altair e nas telas administrativas, a Propriedade própria permaneceu acessível
 e a reativação recuperou a Propriedade autorizada sem duplicidade.
+
+Na revalidação `ATUAL-13`, executar na ordem:
+
+1. como Colaborador, abrir uma Propriedade e tocar em `Nova Visita`; confirmar
+   que a mesma Propriedade já vem selecionada, bloqueada e que o registro volta
+   para o contexto correto. Pela aba global de Visitas, confirmar que a seleção
+   continua livre somente entre Propriedades autorizadas;
+2. dentro da mesma Propriedade, abrir `Novo Caderno` e `Nova Safra/Safrinha` e
+   confirmar o mesmo contexto canônico bloqueado. Repetir um acesso por Mapa ao
+   novo Caderno para cobrir a leitura compatível da rota;
+3. salvar um Caderno como rascunho, voltar ao detalhe da Propriedade e confirmar
+   que ele reaparece apenas para o autor. No detalhe do rascunho, continuar a
+   edição, salvar novamente e depois testar o descarte com cancelamento e com
+   confirmação em um segundo rascunho;
+4. enviar um registro, abrir `Ações auditáveis > Corrigir`, alterar ao menos
+   dois campos com um único motivo e confirmar antes/depois no histórico. O
+   registro enviado não pode oferecer exclusão nem edição direta;
+5. em Nova/Editar Visita e Caderno, abrir data, trocar mês, tocar no ano,
+   escolher um ano distante e conferir os limites mínimo/máximo. Abrir horário
+   e confirmar que a hora e o minuto atuais/selecionados aparecem visíveis sem
+   rolagem inicial;
+6. focar os últimos campos de texto de Visita, Caderno, Propriedade, Usuário e
+   Safra/Safrinha. Com o teclado aberto, o campo e o texto digitado devem ficar
+   visíveis; arrastar a tela deve dispensar o teclado sem bloquear botões.
+
+Esse cenário já possui typecheck e testes automatizados focados aprovados. Só
+deve mudar para `PASSOU` depois da execução observável no Android físico.
 
 ## Cenários de campo de MP-38
 

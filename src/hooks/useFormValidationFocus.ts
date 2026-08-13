@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   AccessibilityInfo,
   findNodeHandle,
@@ -6,6 +6,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
+  TextInput,
   View,
 } from 'react-native';
 import {
@@ -41,6 +42,24 @@ export const useFormValidationFocus = <FieldName extends string>(
   const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     currentOffsetRef.current = event.nativeEvent.contentOffset.y;
   }, []);
+
+  const scrollFocusedInputIntoView = useCallback(() => {
+    const focusedInput = TextInput.State.currentlyFocusedInput?.();
+    const nativeHandle = focusedInput ? findNodeHandle(focusedInput as any) : null;
+    const scrollNode = scrollViewRef.current;
+    if (!nativeHandle || !scrollNode) return;
+
+    requestAnimationFrame(() => {
+      scrollNode.scrollResponderScrollNativeHandleToKeyboard(nativeHandle, 120, true);
+    });
+  }, []);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setTimeout(scrollFocusedInputIntoView, 80);
+    });
+    return () => showSubscription.remove();
+  }, [scrollFocusedInputIntoView]);
 
   const focusFirstError = useCallback((errors: FormErrors): FieldName | null => {
     const firstField = getFirstFormErrorKey(errors, visualOrder) as FieldName | null;
@@ -89,5 +108,12 @@ export const useFormValidationFocus = <FieldName extends string>(
     return firstField;
   }, [visualOrder]);
 
-  return { scrollViewRef, registerField, registerFocusable, onScroll, focusFirstError };
+  return {
+    scrollViewRef,
+    registerField,
+    registerFocusable,
+    onScroll,
+    focusFirstError,
+    scrollFocusedInputIntoView,
+  };
 };

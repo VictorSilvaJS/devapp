@@ -64,7 +64,8 @@ evidência do dataset local, não volume produtivo.
 - Propriedades com Talhões, limites e estados vazios controlados;
 - Visitas com estados, fotos locais, exportação explícita e telas dedicadas para
   conclusão e correção auditada;
-- Caderno com tipos, ciclo local, ponto opcional e controle de visibilidade;
+- Caderno com tipos, ciclo local, ponto opcional, controle de visibilidade,
+  retomada/descarte do próprio rascunho e correção auditada em tela dedicada;
 - listas extensas de Propriedades, Visitas e Caderno com renderização
   virtualizada e estado das abas preservado;
 - Períodos produtivos, Plantio e Colheita no recorte local;
@@ -109,6 +110,15 @@ Foram corrigidos:
   de Propriedade: vínculo inativo permanece no histórico local, mas não aparece
   em listas ou contadores atuais. O Perfil também prioriza o cadastro persistido
   mais recente sobre o snapshot restaurado da sessão.
+- contexto operacional de Propriedade centralizado nas rotas de Nova Visita,
+  Novo Caderno e Safra/Safrinha: produtores emitem `propriedadeId`, consumidores
+  priorizam o valor canônico e aliases antigos permanecem somente na leitura;
+- rascunho próprio do Caderno volta a aparecer também dentro do detalhe da
+  Propriedade, sem expor rascunho de outro usuário;
+- calendário reutilizável passa a respeitar limites, navegar por mês e por uma
+  faixa ampliada de anos; horário selecionado abre visível, com hora e minuto;
+- formulários roláveis ajustam a área útil ao teclado e trazem o campo focado
+  para a região visível.
 
 A revalidação física das listas passou. Depois do percurso completo, o processo
 manteve 1.629 views, contra 4.386 antes da otimização. Não houve fatal, ANR,
@@ -128,6 +138,10 @@ Continuam como evidência pendente:
 O gerenciamento de Produtores autorizados foi revalidado no Android físico:
 vínculo, desvínculo, sessão restaurada, Perfil e reativação passaram sem
 duplicidade ou ampliação indevida de escopo.
+
+As últimas complementações de rotas, Caderno, data/hora e teclado passaram por
+typecheck e testes automatizados focados, mas ainda aguardam a revalidação
+manual no Android físico descrita como `ATUAL-13` em `smoke.md`.
 
 O roteiro atual está em [smoke.md](smoke.md).
 

@@ -114,7 +114,12 @@ const run = async () => {
     });
     const corrected = lifecycle.applyCadernoCommand({
       record: complemented, actor: team,
-      command: { tipo: 'corrigir', versaoBase: 2, motivo: 'Ajuste confirmado', alteracoes: { observacoes: 'Corpo vigente corrigido.' } },
+      command: {
+        tipo: 'corrigir',
+        versaoBase: 2,
+        motivo: 'Ajuste confirmado',
+        alteracoes: { observacoes: 'Corpo vigente corrigido.', condicoes_clima: 'Úmido' },
+      },
     });
     assert.equal(corrected.versao_atual, 3);
     assert.equal(corrected.observacoes, 'Corpo vigente corrigido.');
@@ -123,6 +128,8 @@ const run = async () => {
     assert.equal(event.motivo, 'Ajuste confirmado');
     assert.equal(event.antes.observacoes, 'Corpo original do registro.');
     assert.equal(event.depois.observacoes, 'Corpo vigente corrigido.');
+    assert.equal(event.antes.condicoes_clima, undefined);
+    assert.equal(event.depois.condicoes_clima, 'Úmido');
     for (const field of ['propriedade_id', 'fazenda_id']) {
       assert.throws(() => lifecycle.applyCadernoCommand({
         record: corrected, actor: team,
@@ -215,6 +222,9 @@ const run = async () => {
     const created = await CadernoCampo.submit(base(), team);
     await assert.rejects(() => CadernoCampo.update(created.id, { observacoes: 'Sobrescrita' }), /não aceita edição destrutiva/);
     await assert.rejects(() => CadernoCampo.delete(created.id, team), /Somente o criador pode descartar/);
+    const ownDraft = await CadernoCampo.createDraft(base(), team);
+    await CadernoCampo.delete(ownDraft.id, team);
+    await assert.rejects(() => CadernoCampo.get(ownDraft.id), /Registro não encontrado/);
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

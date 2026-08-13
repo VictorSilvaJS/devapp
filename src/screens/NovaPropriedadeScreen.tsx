@@ -266,6 +266,9 @@ export default function NovaPropriedadeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <InfoBox
           title="Cadastro local v2"

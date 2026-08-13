@@ -28,6 +28,7 @@ import {
   podeGerenciarPeriodoProdutivoEmFazenda,
 } from '../utils/acessoControle';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
+import { resolvePropriedadeRouteContext } from '../navigation/propriedadeRouteCompat';
 import { getTalhaoConsultaId, getTalhaoConsultaNome } from '../utils/talhaoConsultaCompat';
 import {
   buildPeriodoProdutivoTalhaoOptions,
@@ -108,11 +109,7 @@ export default function PeriodoProdutivoFormScreen() {
   const formValidation = useFormValidationFocus(PERIODO_FORM_ERROR_ORDER);
 
   const periodoId = route.params?.periodoId || route.params?.id;
-  const routeFazendaId =
-    route.params?.fazendaId
-    || route.params?.produtorId
-    || route.params?.propriedadeId
-    || route.params?.fazenda_id;
+  const routeFazendaId = resolvePropriedadeRouteContext(route.params).effectivePropriedadeId;
   const routeTalhaoId = route.params?.talhaoId || route.params?.talhao_id || '';
   const routeTalhao = route.params?.talhaoNome || route.params?.talhao || '';
   const isEditing = Boolean(periodoId);
@@ -336,6 +333,9 @@ export default function PeriodoProdutivoFormScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <View ref={formValidation.registerField('fazenda')} collapsable={false}>
         <SectionCard title="Contexto" subtitle="O período será salvo localmente para esta Propriedade." icon="home-outline">

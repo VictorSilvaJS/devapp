@@ -246,6 +246,12 @@ nova no MVP mockado.
 - Acesso deriva de `usuario_propriedade` e concede escopo somente para a
   Propriedade especifica.
 - Nova Propriedade no mesmo Municipio exige atribuicao administrativa propria.
+- Rotas que transportam contexto operacional de Propriedade emitem
+  `propriedadeId`. Consumidores usam o resolvedor central, priorizam esse campo
+  e aceitam `fazendaId`, `fazenda_id` ou `produtorId` somente na borda de
+  leitura compativel.
+- Parametro de rota nunca concede acesso; depois de resolver o identificador,
+  cada fluxo revalida perfil, vinculo, acao e Propriedade.
 
 ### Riscos de divergencia
 
@@ -398,11 +404,17 @@ O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
 - Nao deve nascer como modulo excessivamente generico ou pesado.
 - Seu nivel de visibilidade deve ser controlado por regra de perfil e contexto.
 - Rascunho pode ser alterado apenas pelo criador.
+- O proprio criador pode retomar ou descartar o rascunho; o descarte local e
+  definitivo e nunca se aplica a registro enviado.
+- Listas globais e o detalhe da Propriedade exibem somente o rascunho do
+  usuario atual, mantendo rascunhos de outros autores ocultos.
 - Depois do envio, o corpo, a autoria, a origem, a Propriedade e a localizacao
   original ficam imutaveis.
 - Complemento tecnico acrescenta informacao sem reescrever o original.
 - Correcao excepcional exige permissao, motivo, antes/depois e controle de
   versao.
+- A correcao usa tela dedicada, pode reunir varios campos operacionais sob uma
+  unica justificativa e nao reabre edicao destrutiva do registro consolidado.
 - Mudanca de visibilidade e evento auditado.
 - Arquivamento, reativacao e anulacao preservam registro e historico.
 - Produtor nao altera registro consolidado; Admin e Colaborador tambem nao

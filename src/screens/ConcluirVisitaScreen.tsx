@@ -266,6 +266,8 @@ export default function ConcluirVisitaScreen() {
         onScroll={formValidation.onScroll}
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
       >
         <View style={styles.formWidth}>
           <SectionCard title="Contexto da Visita" subtitle="Revise o agendamento antes de registrar a realização." icon="home-outline">

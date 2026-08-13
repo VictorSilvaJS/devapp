@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Header from '../components/Header';
+import ConfirmDialog from '../components/ConfirmDialog';
 import RegistroFotoViewerModal from '../components/RegistroFotoViewerModal';
 import CadernoAuditActions from '../components/CadernoAuditActions';
 import CadernoLocalizacaoPreview from '../components/CadernoLocalizacaoPreview';
@@ -76,6 +77,8 @@ export default function CadernoDetailScreen() {
   const [showTechnicalLocation, setShowTechnicalLocation] = useState(false);
   const [photoLoadErrors, setPhotoLoadErrors] = useState<Record<number, boolean>>({});
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
+  const [discardDialogVisible, setDiscardDialogVisible] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -167,6 +170,31 @@ export default function CadernoDetailScreen() {
     }
 
     navigation.navigate('EditarCaderno', { cadernoId: cadernoRouteId });
+  };
+
+  const handleDiscardDraft = async () => {
+    if (!canEdit() || getCadernoEstado(registro) !== 'rascunho') {
+      setDiscardDialogVisible(false);
+      toast.showWarning('Este rascunho não pode mais ser descartado.');
+      return;
+    }
+    setDiscarding(true);
+    try {
+      const propriedadeId = String(getFazendaUiInfo(fazenda).id || '').trim();
+      await CadernoCampo.delete(registro.id, {
+        usuarioId: String(user?.id || '').trim(),
+        nome: user?.nome || user?.full_name,
+        perfil: user?.perfil || '',
+        propriedadeIds: [propriedadeId],
+      });
+      setDiscardDialogVisible(false);
+      toast.showSuccess('Rascunho descartado.');
+      navigation.goBack();
+    } catch (error: any) {
+      toast.showError(error?.message || 'Não foi possível descartar o rascunho.');
+    } finally {
+      setDiscarding(false);
+    }
   };
 
   if (loading) {
@@ -285,6 +313,16 @@ export default function CadernoDetailScreen() {
             </View>
           )}
         </View>
+
+        {estado === 'rascunho' && canEdit() ? (
+          <View style={styles.draftNotice}>
+            <Ionicons name="document-text-outline" size={22} color={semanticColors.primary.text} />
+            <View style={styles.draftNoticeContent}>
+              <Text style={styles.draftNoticeTitle}>Rascunho privado</Text>
+              <Text style={styles.draftNoticeText}>Somente você pode vê-lo e editá-lo. Continue o preenchimento para revisar e enviar, ou descarte-o definitivamente.</Text>
+            </View>
+          </View>
+        ) : null}
 
         {fazenda && fazendaInfo && (
           <View style={styles.card}>
@@ -711,9 +749,13 @@ export default function CadernoDetailScreen() {
 
       {canEdit() && (
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleEditar}>
+          <TouchableOpacity style={styles.discardButton} onPress={() => setDiscardDialogVisible(true)} disabled={discarding}>
+            <Ionicons name="trash-outline" size={20} color={colors.error} />
+            <Text style={styles.discardButtonText}>Descartar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={handleEditar} disabled={discarding}>
             <Ionicons name="create-outline" size={20} color={colors.card} />
-            <Text style={styles.actionButtonText}>Editar</Text>
+            <Text style={styles.actionButtonText}>Continuar rascunho</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -728,6 +770,17 @@ export default function CadernoDetailScreen() {
         downloadAuthorized={canDownloadSelectedPhoto}
         preferredFileName={selectedPhotoFileName}
         onClose={() => setSelectedPhotoIndex(null)}
+      />
+      <ConfirmDialog
+        visible={discardDialogVisible}
+        title="Descartar rascunho?"
+        message="Este rascunho local será removido e não poderá ser recuperado. Registros já enviados nunca são excluídos por esta ação."
+        type="danger"
+        confirmText="Descartar"
+        cancelText="Manter rascunho"
+        loading={discarding}
+        onCancel={() => setDiscardDialogVisible(false)}
+        onConfirm={() => void handleDiscardDraft()}
       />
     </View>
   );
@@ -772,6 +825,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
+  draftNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: semanticColors.primary.border,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: semanticColors.primary.surface,
+  },
+  draftNoticeContent: { flex: 1 },
+  draftNoticeTitle: { color: semanticColors.primary.text, fontSize: typography.fontBody, fontWeight: typography.weightBold },
+  draftNoticeText: { color: colors.textLight, fontSize: typography.fontSmall, lineHeight: 19, marginTop: spacing.xs },
   statusBadge: {
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
@@ -1058,6 +1125,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   footer: {
+    flexDirection: 'row',
+    gap: spacing.md,
     padding: spacing.lg,
     backgroundColor: colors.card,
     borderTopWidth: 2,
@@ -1065,6 +1134,7 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   actionButton: {
+    flex: 1.35,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1078,5 +1148,23 @@ const styles = StyleSheet.create({
     fontSize: typography.fontBody,
     fontWeight: '700',
     color: colors.card,
+  },
+  discardButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: spacing.radiusSm,
+    gap: spacing.xs,
+    minHeight: 48,
+    borderWidth: 1.5,
+    borderColor: colors.error,
+    backgroundColor: colors.card,
+  },
+  discardButtonText: {
+    fontSize: typography.fontSmall,
+    fontWeight: typography.weightBold,
+    color: colors.error,
   },
 });
