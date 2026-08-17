@@ -1,5 +1,15 @@
 export type CadernoCorrectionEditableValues = {
   dataAtividade?: Date | string | null;
+  tipoAtividade?: unknown;
+  talhaoId?: unknown;
+  talhao?: unknown;
+  periodoProdutivo?: {
+    id?: unknown;
+    label?: unknown;
+    tipoPeriodo?: unknown;
+    cultura?: unknown;
+    anoAgricola?: unknown;
+  } | null;
   observacoes?: unknown;
   operacao?: unknown;
   produtosText?: unknown;
@@ -53,6 +63,36 @@ export const buildCadernoCorrectionChanges = (
     normalizeOptionalDate(registro?.data_atividade),
     normalizeOptionalDate(values.dataAtividade),
   );
+  assignChanged(
+    changes,
+    'tipo_atividade',
+    normalizeOptionalText(registro?.tipo_atividade),
+    normalizeOptionalText(values.tipoAtividade),
+  );
+
+  const currentTalhaoId = normalizeOptionalText(registro?.talhao_id ?? registro?.talhaoId);
+  const nextTalhaoId = normalizeOptionalText(values.talhaoId);
+  const currentTalhaoNome = normalizeOptionalText(registro?.talhao_nome ?? registro?.talhao);
+  const nextTalhaoNome = normalizeOptionalText(values.talhao);
+  if (currentTalhaoId !== nextTalhaoId || currentTalhaoNome !== nextTalhaoNome) {
+    changes.talhao_id = nextTalhaoId;
+    changes.talhaoId = nextTalhaoId;
+    changes.talhao_nome = nextTalhaoNome;
+    changes.talhao = nextTalhaoNome;
+  }
+
+  const currentPeriodoId = normalizeOptionalText(
+    registro?.periodo_produtivo_id ?? registro?.periodoProdutivoId,
+  );
+  const nextPeriodoId = normalizeOptionalText(values.periodoProdutivo?.id);
+  if (currentPeriodoId !== nextPeriodoId) {
+    changes.periodo_produtivo_id = nextPeriodoId;
+    changes.periodoProdutivoId = nextPeriodoId;
+    changes.periodo_produtivo_label = normalizeOptionalText(values.periodoProdutivo?.label);
+    changes.tipo_periodo = normalizeOptionalText(values.periodoProdutivo?.tipoPeriodo);
+    changes.cultura_periodo = normalizeOptionalText(values.periodoProdutivo?.cultura);
+    changes.ano_agricola = normalizeOptionalText(values.periodoProdutivo?.anoAgricola);
+  }
   assignChanged(changes, 'observacoes', normalizeOptionalText(registro?.observacoes), normalizeOptionalText(values.observacoes));
   assignChanged(changes, 'operacao', normalizeOptionalText(registro?.operacao), normalizeOptionalText(values.operacao));
   assignChanged(changes, 'produtos_utilizados', normalizeProducts(registro?.produtos_utilizados), normalizeProducts(values.produtosText));
@@ -63,4 +103,3 @@ export const buildCadernoCorrectionChanges = (
 
   return changes;
 };
-

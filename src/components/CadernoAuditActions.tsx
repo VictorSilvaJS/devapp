@@ -22,10 +22,9 @@ import {
   type CadernoCommand,
 } from '../utils/cadernoLifecycleCompat';
 
-type ActionMode = 'complemento' | 'visibilidade' | 'arquivar' | 'reativar' | 'anular';
+type ActionMode = 'visibilidade' | 'arquivar' | 'reativar' | 'anular';
 
 const ACTION_LABELS: Record<ActionMode, string> = {
-  complemento: 'Complementar',
   visibilidade: 'Alterar visibilidade',
   arquivar: 'Arquivar',
   reativar: 'Reativar',
@@ -46,7 +45,6 @@ export default function CadernoAuditActions({
   const navigation = useNavigation<any>();
   const toast = useToast();
   const [mode, setMode] = useState<ActionMode | null>(null);
-  const [texto, setTexto] = useState('');
   const [motivo, setMotivo] = useState('');
   const [visibleToProducer, setVisibleToProducer] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,7 +53,6 @@ export default function CadernoAuditActions({
   const resetAndClose = () => {
     if (saving) return;
     setMode(null);
-    setTexto('');
     setMotivo('');
     setVisibleToProducer(true);
   };
@@ -69,14 +66,6 @@ export default function CadernoAuditActions({
 
   const buildCommand = (): CadernoCommand => {
     const versaoBase = Number(registro?.versao_atual);
-    if (mode === 'complemento') {
-      return {
-        tipo: 'adicionar_complemento',
-        versaoBase,
-        texto,
-        visivelParaProdutor: visibleToProducer,
-      };
-    }
     if (mode === 'visibilidade') {
       return {
         tipo: 'alterar_visibilidade',
@@ -94,7 +83,6 @@ export default function CadernoAuditActions({
   const execute = async () => {
     try {
       const command = buildCommand();
-      if (mode === 'complemento' && !texto.trim()) throw new Error('Informe o complemento técnico.');
       if (['arquivar', 'reativar', 'anular'].includes(String(mode)) && !motivo.trim()) {
         throw new Error('Informe o motivo da ação.');
       }
@@ -121,8 +109,7 @@ export default function CadernoAuditActions({
       <View style={styles.actions}>
         {estado === 'registrado' ? (
           <>
-            <ActionButton icon="add-circle-outline" label="Complementar" onPress={() => open('complemento')} />
-            <ActionButton icon="create-outline" label="Corrigir" onPress={() => navigation.navigate('CorrigirCaderno', { cadernoId: registro.id })} />
+            <ActionButton icon="create-outline" label="Editar dados" onPress={() => navigation.navigate('CorrigirCaderno', { cadernoId: registro.id })} />
             <ActionButton icon="eye-outline" label="Visibilidade" onPress={() => open('visibilidade')} />
             <ActionButton icon="archive-outline" label="Arquivar" onPress={() => open('arquivar')} />
             <ActionButton icon="close-circle-outline" label="Anular" danger onPress={() => open('anular')} />
@@ -141,21 +128,6 @@ export default function CadernoAuditActions({
               <Text style={styles.subtitle}>
                 A ação registra autor, data, versão e justificativa no histórico do Caderno.
               </Text>
-
-              {mode === 'complemento' ? (
-                <>
-                  <FormField label="Complemento técnico" required value={texto} onChangeText={setTexto} textarea numberOfLines={4} />
-                  <Text style={styles.label}>Visibilidade do complemento</Text>
-                  <RadioCardGroup
-                    options={[
-                      { value: 'visivel', label: 'Liberado ao produtor' },
-                      { value: 'interno', label: 'Somente equipe' },
-                    ]}
-                    value={visibleToProducer ? 'visivel' : 'interno'}
-                    onChange={(value) => setVisibleToProducer(value === 'visivel')}
-                  />
-                </>
-              ) : null}
 
               {mode === 'visibilidade' ? (
                 <>

@@ -115,8 +115,16 @@ Foram corrigidos:
   priorizam o valor canônico e aliases antigos permanecem somente na leitura;
 - rascunho próprio do Caderno volta a aparecer também dentro do detalhe da
   Propriedade, sem expor rascunho de outro usuário;
-- calendário reutilizável passa a respeitar limites, navegar por mês e por uma
-  faixa ampliada de anos; horário selecionado abre visível, com hora e minuto;
+- calendário reutilizável passa a respeitar limites na escolha do dia, navegar
+  por mês e exibir a faixa uniforme de 2000 a 2100; a grade fixa de seis
+  semanas mostra dias adjacentes em tom secundário e evita saltos ou espaços
+  vazios entre meses; horário selecionado abre visível, com hora e minuto;
+- a ação auditável do Caderno aparece como `Editar dados`, permite alterar o
+  tipo e apresenta Safra/Safrinha, Talhão e campos operacionais dependentes;
+  por baixo, continua emitindo correção versionada com motivo e antes/depois,
+  sem sobrescrever o registro enviado;
+- a criação de complemento foi retirada do Caderno; complementos já existentes
+  permanecem disponíveis somente para leitura histórica compatível;
 - formulários roláveis ajustam a área útil ao teclado e trazem o campo focado
   para a região visível.
 

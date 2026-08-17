@@ -9,7 +9,12 @@ const datePicker = read('src/components/DatePicker.tsx');
 assert.match(datePicker, /minimumDay/);
 assert.match(datePicker, /maximumDay/);
 assert.match(datePicker, /setShowYears\(true\)/);
-assert.match(datePicker, /currentYear - 80/);
+assert.match(datePicker, /CALENDAR_MIN_YEAR = 2000/);
+assert.match(datePicker, /CALENDAR_MAX_YEAR = 2100/);
+assert.match(datePicker, /Array\.from\(\{ length: 42 \}/);
+assert.match(datePicker, /dayTextOutside/);
+assert.doesNotMatch(datePicker, /isYearUnavailable/);
+assert.doesNotMatch(datePicker, /yearOptionDisabled/);
 assert.match(datePicker, /date\.getHours\(\) \* TIME_ROW_HEIGHT/);
 assert.match(datePicker, /Array\.from\(\{ length: 60 \}/);
 
@@ -38,7 +43,16 @@ assert.match(cadernoDetail, /CadernoCampo\.delete/);
 
 const cadernoActions = read('src/components/CadernoAuditActions.tsx');
 assert.match(cadernoActions, /navigation\.navigate\('CorrigirCaderno'/);
+assert.match(cadernoActions, /label="Editar dados"/);
+assert.doesNotMatch(cadernoActions, /Complementar|adicionar_complemento/);
 assert.doesNotMatch(cadernoActions, /Campo a corrigir/);
+const corrigirCaderno = read('src/screens/CorrigirCadernoScreen.tsx');
+assert.match(corrigirCaderno, /title="Editar dados do Caderno"/);
+assert.match(corrigirCaderno, /CADERNO_TIPOS_ATIVIDADE/);
+assert.match(corrigirCaderno, /getCadernoFormFieldVisibility/);
+assert.match(corrigirCaderno, /label="Safra\/Safrinha"/);
+assert.match(corrigirCaderno, /label="Talhão"/);
+assert.match(corrigirCaderno, /tipo: 'corrigir'/);
 assert.match(read('src/navigation/index.tsx'), /<Stack\.Screen name="CorrigirCaderno"/);
 
 console.log('Todos os testes de formInteractionCompat passaram.');

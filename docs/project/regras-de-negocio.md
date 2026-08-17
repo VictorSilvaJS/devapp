@@ -410,11 +410,16 @@ O contrato canonico de ciclo de vida esta em `ciclo-vida-caderno.md`.
   usuario atual, mantendo rascunhos de outros autores ocultos.
 - Depois do envio, o corpo, a autoria, a origem, a Propriedade e a localizacao
   original ficam imutaveis.
-- Complemento tecnico acrescenta informacao sem reescrever o original.
+- Complementos antigos permanecem legiveis no historico, mas o MVP nao cria
+  novos complementos no Caderno; ajustes usam edicao auditada.
 - Correcao excepcional exige permissao, motivo, antes/depois e controle de
   versao.
 - A correcao usa tela dedicada, pode reunir varios campos operacionais sob uma
   unica justificativa e nao reabre edicao destrutiva do registro consolidado.
+- Para reduzir ambiguidade, a interface apresenta esse comando como `Editar
+  dados`; tipo de registro, Talhao, Safra/Safrinha e respectivos campos
+  dependentes podem mudar desde que o resultado cumpra as validacoes do novo
+  tipo. A persistencia continua sendo uma correcao versionada e auditada.
 - Mudanca de visibilidade e evento auditado.
 - Arquivamento, reativacao e anulacao preservam registro e historico.
 - Produtor nao altera registro consolidado; Admin e Colaborador tambem nao

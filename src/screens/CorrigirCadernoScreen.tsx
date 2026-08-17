@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -16,17 +15,30 @@ import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import Header from '../components/Header';
 import InfoBox from '../components/InfoBox';
+import RadioCardGroup from '../components/RadioCardGroup';
+import SelectField from '../components/SelectField';
 import SectionCard from '../components/SectionCard';
 import { useToast } from '../components/Toast';
-import { CadernoCampo, Produtor } from '../api/mock';
+import { CadernoCampo, LimiteArea, Produtor } from '../api/mock';
 import { useAuth } from '../auth/AuthContext';
 import { useFormValidationFocus } from '../hooks/useFormValidationFocus';
+import { PeriodoProdutivoService } from '../services/PeriodoProdutivoService';
 import {
   avaliarAcessoCaderno,
+  filtrarLimitesPorFazendaIds,
   podeExecutarComandoCaderno,
 } from '../utils/acessoControle';
 import { buildCadernoCorrectionChanges } from '../utils/cadernoCommandFormCompat';
-import { getCadernoTipoLabel } from '../utils/cadernoFormCompat';
+import {
+  CADERNO_TALHAO_LEGADO_VALUE,
+  CADERNO_TIPOS_ATIVIDADE,
+  buildCadernoPeriodoProdutivoOptions,
+  buildCadernoTalhaoOptions,
+  findCadernoPeriodoProdutivoOption,
+  getCadernoFormFieldVisibility,
+  getCadernoTipoLabel,
+  isCadernoTalhaoLegado,
+} from '../utils/cadernoFormCompat';
 import {
   getCadernoEstado,
   getCadernoTypeValidationErrors,
@@ -36,7 +48,8 @@ import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { colors, semanticColors, spacing, typography } from '../theme';
 
 const FORM_ERROR_ORDER = [
-  'alteracoes', 'dataAtividade', 'observacoes', 'operacao', 'produtos',
+  'alteracoes', 'dataAtividade', 'tipoAtividade', 'periodoProdutivoId', 'talhaoId',
+  'observacoes', 'operacao', 'produtos',
   'dosagem', 'areaAplicada', 'produtividade', 'motivo',
 ] as const;
 
@@ -69,6 +82,12 @@ export default function CorrigirCadernoScreen() {
   const [saving, setSaving] = useState(false);
   const [blockedReason, setBlockedReason] = useState('');
   const [dataAtividade, setDataAtividade] = useState<Date | null>(null);
+  const [tipoAtividade, setTipoAtividade] = useState('');
+  const [talhaoId, setTalhaoId] = useState('');
+  const [talhao, setTalhao] = useState('');
+  const [talhoesDisponiveis, setTalhoesDisponiveis] = useState<any[]>([]);
+  const [periodoProdutivoId, setPeriodoProdutivoId] = useState('');
+  const [periodosProdutivos, setPeriodosProdutivos] = useState<any[]>([]);
   const [observacoes, setObservacoes] = useState('');
   const [operacao, setOperacao] = useState('');
   const [produtosText, setProdutosText] = useState('');
@@ -80,6 +99,42 @@ export default function CorrigirCadernoScreen() {
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [pendingChanges, setPendingChanges] = useState<Record<string, unknown> | null>(null);
 
+  const fieldVisibility = useMemo(
+    () => getCadernoFormFieldVisibility(tipoAtividade),
+    [tipoAtividade],
+  );
+  const tipoOptions = useMemo(() => {
+    const options = CADERNO_TIPOS_ATIVIDADE.map((tipo) => ({ ...tipo }));
+    if (tipoAtividade && !options.some((tipo) => tipo.value === tipoAtividade)) {
+      options.push({ value: tipoAtividade, label: `${getCadernoTipoLabel(tipoAtividade)} (legado)` });
+    }
+    return options;
+  }, [tipoAtividade]);
+  const talhaoSelection = useMemo(
+    () => buildCadernoTalhaoOptions(talhoesDisponiveis, { id: talhaoId, nome: talhao }),
+    [talhao, talhaoId, talhoesDisponiveis],
+  );
+  const periodoOptions = useMemo(() => {
+    const options = buildCadernoPeriodoProdutivoOptions(periodosProdutivos);
+    const currentId = String(
+      registro?.periodo_produtivo_id || registro?.periodoProdutivoId || '',
+    ).trim();
+    if (currentId && !options.some((option) => option.id === currentId)) {
+      options.push({
+        id: currentId,
+        label: String(registro?.periodo_produtivo_label || '').trim() || 'Safra/Safrinha vinculada',
+        tipoPeriodo: String(registro?.tipo_periodo || '').trim() || undefined,
+        cultura: String(registro?.cultura_periodo || '').trim() || undefined,
+        anoAgricola: String(registro?.ano_agricola || '').trim() || undefined,
+      });
+    }
+    return options;
+  }, [periodosProdutivos, registro]);
+  const periodoSelecionado = useMemo(
+    () => findCadernoPeriodoProdutivoOption(periodoOptions, periodoProdutivoId),
+    [periodoOptions, periodoProdutivoId],
+  );
+
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -87,23 +142,37 @@ export default function CorrigirCadernoScreen() {
       setBlockedReason('');
       try {
         if (!cadernoId) throw new Error('Registro não informado');
-        const [registroData, propriedades] = await Promise.all([
+        const [registroData, propriedades, limites] = await Promise.all([
           CadernoCampo.get(cadernoId),
           Produtor.list(),
+          LimiteArea.list(),
         ]);
         const acesso = avaliarAcessoCaderno(user, registroData, propriedades);
         if (acesso.status !== 'permitido' || !podeExecutarComandoCaderno(user, registroData, acesso.fazenda)) {
-          if (active) setBlockedReason('Você não tem permissão para corrigir este registro.');
+          if (active) setBlockedReason('Você não tem permissão para editar este registro.');
           return;
         }
         if (getCadernoEstado(registroData) !== 'registrado') {
-          if (active) setBlockedReason('Somente um registro consolidado pode receber correção auditada.');
+          if (active) setBlockedReason('Somente um registro consolidado pode receber edição auditada.');
           return;
         }
         if (!active) return;
+        const propriedadeId = String(getFazendaUiInfo(acesso.fazenda).id || '').trim();
+        const periodos = propriedadeId
+          ? await PeriodoProdutivoService.listActivePeriodosProdutivosByPropriedade(propriedadeId).catch(() => [])
+          : [];
+        if (!active) return;
         setRegistro(registroData);
         setFazenda(acesso.fazenda);
+        setTalhoesDisponiveis(filtrarLimitesPorFazendaIds(limites, [propriedadeId]));
+        setPeriodosProdutivos(periodos);
         setDataAtividade(toValidDate(registroData?.data_atividade));
+        setTipoAtividade(String(registroData?.tipo_atividade || ''));
+        setTalhaoId(String(registroData?.talhao_id || registroData?.talhaoId || ''));
+        setTalhao(String(registroData?.talhao_nome || registroData?.talhao || ''));
+        setPeriodoProdutivoId(String(
+          registroData?.periodo_produtivo_id || registroData?.periodoProdutivoId || '',
+        ));
         setObservacoes(String(registroData?.observacoes || ''));
         setOperacao(String(registroData?.operacao || ''));
         setProdutosText(Array.isArray(registroData?.produtos_utilizados) ? registroData.produtos_utilizados.join(', ') : '');
@@ -121,8 +190,29 @@ export default function CorrigirCadernoScreen() {
     return () => { active = false; };
   }, [cadernoId, user]);
 
+  const handleTipoAtividadeChange = (value: string) => {
+    const nextVisibility = getCadernoFormFieldVisibility(value);
+    setTipoAtividade(value);
+    if (!nextVisibility.periodo) setPeriodoProdutivoId('');
+    if (!nextVisibility.talhao) {
+      setTalhaoId('');
+      setTalhao('');
+    }
+    if (!nextVisibility.operacao) setOperacao('');
+    if (!nextVisibility.produtos) setProdutosText('');
+    if (!nextVisibility.dosagem) setDosagem('');
+    if (!nextVisibility.area) setAreaAplicada('');
+    if (!nextVisibility.produtividade) setProdutividade('');
+    if (!nextVisibility.clima) setCondicoesClima('');
+    clearChangeError('tipoAtividade');
+  };
+
   const getChanges = () => buildCadernoCorrectionChanges(registro, {
     dataAtividade,
+    tipoAtividade,
+    talhaoId,
+    talhao,
+    periodoProdutivo: periodoSelecionado,
     observacoes,
     operacao,
     produtosText,
@@ -136,6 +226,7 @@ export default function CorrigirCadernoScreen() {
     const nextErrors: Record<string, string> = {};
     if (!dataAtividade) nextErrors.dataAtividade = 'Informe a data do registro.';
     else if (dataAtividade.getTime() > Date.now()) nextErrors.dataAtividade = 'A data do registro não pode estar no futuro.';
+    if (!tipoAtividade.trim()) nextErrors.tipoAtividade = 'Selecione o tipo de registro.';
     if (isInvalidPositiveNumber(areaAplicada)) nextErrors.areaAplicada = 'Informe uma área maior que zero ou deixe em branco.';
     if (isInvalidPositiveNumber(produtividade)) nextErrors.produtividade = 'Informe uma produtividade maior que zero ou deixe em branco.';
     if (!motivo.trim()) nextErrors.motivo = 'Informe o motivo da correção.';
@@ -150,7 +241,7 @@ export default function CorrigirCadernoScreen() {
   const requestCorrection = () => {
     const result = validate();
     if (!result.valid) {
-      toast.showError('Revise a correção informada.');
+      toast.showError('Revise os dados da edição.');
       return;
     }
     setPendingChanges(result.changes);
@@ -158,7 +249,7 @@ export default function CorrigirCadernoScreen() {
 
   const executeCorrection = async () => {
     if (!registro || !fazenda || !pendingChanges || !podeExecutarComandoCaderno(user, registro, fazenda)) {
-      toast.showWarning('A correção não está mais disponível.');
+      toast.showWarning('A edição não está mais disponível.');
       return;
     }
     setSaving(true);
@@ -177,11 +268,11 @@ export default function CorrigirCadernoScreen() {
         alteracoes: pendingChanges,
       }, actor);
       setPendingChanges(null);
-      toast.showSuccess('Correção registrada com os valores anteriores e novos.');
+      toast.showSuccess('Alterações salvas e registradas no histórico.');
       navigation.goBack();
     } catch (error: any) {
       setPendingChanges(null);
-      toast.showError(error?.message || 'Não foi possível corrigir o registro.');
+      toast.showError(error?.message || 'Não foi possível salvar as alterações.');
     } finally {
       setSaving(false);
     }
@@ -192,19 +283,17 @@ export default function CorrigirCadernoScreen() {
   };
 
   if (loading) {
-    return <View style={styles.container}><Header title="Corrigir Caderno" showBack /><View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.centerText}>Carregando registro...</Text></View></View>;
+    return <View style={styles.container}><Header title="Editar dados do Caderno" showBack /><View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /><Text style={styles.centerText}>Carregando registro...</Text></View></View>;
   }
 
   if (blockedReason || !registro || !fazenda) {
-    return <View style={styles.container}><Header title="Corrigir Caderno" showBack /><View style={styles.center}><Ionicons name="lock-closed-outline" size={48} color={colors.muted} /><Text style={styles.centerText}>{blockedReason || 'Registro indisponível.'}</Text></View></View>;
+    return <View style={styles.container}><Header title="Editar dados do Caderno" showBack /><View style={styles.center}><Ionicons name="lock-closed-outline" size={48} color={colors.muted} /><Text style={styles.centerText}>{blockedReason || 'Registro indisponível.'}</Text></View></View>;
   }
 
   const fazendaInfo = getFazendaUiInfo(fazenda);
-  const changeCount = Object.keys(pendingChanges || {}).length;
-
   return (
     <View style={styles.container}>
-      <Header title="Corrigir Caderno" showBack />
+      <Header title="Editar dados do Caderno" showBack />
       <ScrollView
         ref={formValidation.scrollViewRef}
         style={styles.scroll}
@@ -223,36 +312,135 @@ export default function CorrigirCadernoScreen() {
             <Text style={styles.contextText}>{getCadernoTipoLabel(registro.tipo_atividade)} • versão {registro.versao_atual}</Text>
           </SectionCard>
 
-          <InfoBox title="Correção auditada" message="Altere todos os campos incorretos nesta tela e informe um único motivo. O histórico guardará os valores anteriores, os novos valores, o autor e a versão." />
+          <InfoBox title="Edição auditada" message="Edite os dados necessários e informe o motivo. Ao salvar, o registro original não é apagado: o histórico guarda os valores anteriores, os novos valores, o autor e a versão." />
 
           <View ref={formValidation.registerField('alteracoes')} collapsable={false}>
             {errors.alteracoes ? <View style={styles.formWarning}><Ionicons name="alert-circle-outline" size={19} color={semanticColors.warning.text} /><Text style={styles.formWarningText}>{errors.alteracoes}</Text></View> : null}
           </View>
 
-          <SectionCard title="Dados corrigíveis" subtitle="Os valores atuais já estão preenchidos. Você pode corrigir mais de um de uma vez." icon="create-outline">
+          <SectionCard title="Dados do registro" subtitle="Os valores atuais já estão preenchidos. O formulário se adapta ao tipo selecionado." icon="create-outline">
             <View ref={formValidation.registerField('dataAtividade')} collapsable={false}>
               <DatePicker label="Data do registro" required value={dataAtividade} maximumDate={new Date()} error={errors.dataAtividade || undefined} onChange={(value) => { setDataAtividade(value); clearChangeError('dataAtividade'); }} />
             </View>
-            <View ref={formValidation.registerField('observacoes')} collapsable={false}><FormField label="Observações" value={observacoes} error={errors.observacoes || undefined} onChangeText={(value) => { setObservacoes(value); clearChangeError('observacoes'); }} textarea numberOfLines={4} /></View>
-            <View ref={formValidation.registerField('operacao')} collapsable={false}><FormField label="Operação" value={operacao} error={errors.operacao || undefined} onChangeText={(value) => { setOperacao(value); clearChangeError('operacao'); }} /></View>
-            <View ref={formValidation.registerField('produtos')} collapsable={false}><FormField label="Produtos utilizados" helperText="Separe os produtos por vírgula." value={produtosText} error={errors.produtos || undefined} onChangeText={(value) => { setProdutosText(value); clearChangeError('produtos'); }} textarea numberOfLines={3} /></View>
-            <View style={wide ? styles.fieldRow : undefined}>
-              <View ref={formValidation.registerField('dosagem')} collapsable={false} style={styles.flexField}><FormField label="Dosagem" value={dosagem} error={errors.dosagem || undefined} onChangeText={(value) => { setDosagem(value); clearChangeError('dosagem'); }} /></View>
-              <View ref={formValidation.registerField('areaAplicada')} collapsable={false} style={styles.flexField}><FormField label="Área aplicada (ha)" value={areaAplicada} keyboardType="decimal-pad" error={errors.areaAplicada || undefined} onChangeText={(value) => { setAreaAplicada(value); clearChangeError('areaAplicada'); }} /></View>
-              <View ref={formValidation.registerField('produtividade')} collapsable={false} style={styles.flexField}><FormField label="Produtividade" value={produtividade} keyboardType="decimal-pad" error={errors.produtividade || undefined} onChangeText={(value) => { setProdutividade(value); clearChangeError('produtividade'); }} /></View>
+
+            <View ref={formValidation.registerField('tipoAtividade')} collapsable={false} style={styles.field}>
+              <Text style={styles.label}>Tipo de registro <Text style={styles.required}>*</Text></Text>
+              <RadioCardGroup
+                options={tipoOptions}
+                value={tipoAtividade}
+                onChange={handleTipoAtividadeChange}
+                error={errors.tipoAtividade || undefined}
+              />
             </View>
-            <FormField label="Condições climáticas" value={condicoesClima} onChangeText={(value) => { setCondicoesClima(value); clearChangeError(); }} />
+
+            {fieldVisibility.periodo ? (
+              <View ref={formValidation.registerField('periodoProdutivoId')} collapsable={false}>
+                <SelectField
+                  label="Safra/Safrinha"
+                  required
+                  value={periodoProdutivoId}
+                  options={[
+                    { value: '', label: 'Sem Safra/Safrinha vinculada' },
+                    ...periodoOptions.map((periodo) => ({
+                      value: periodo.id,
+                      label: periodo.label,
+                      description: [periodo.status, periodo.talhao].filter(Boolean).join(' • ') || undefined,
+                    })),
+                  ]}
+                  onChange={(value) => {
+                    setPeriodoProdutivoId(value);
+                    clearChangeError('periodoProdutivoId');
+                  }}
+                  helperText="Obrigatória para Plantio e Colheita."
+                  error={errors.periodoProdutivoId || undefined}
+                />
+              </View>
+            ) : null}
+
+            {fieldVisibility.talhao ? (
+              <View ref={formValidation.registerField('talhaoId')} collapsable={false}>
+                <SelectField
+                  label="Talhão"
+                  required
+                  value={talhaoSelection.selectedValue}
+                  options={talhaoSelection.options}
+                  onChange={(value) => {
+                    if (value === CADERNO_TALHAO_LEGADO_VALUE) {
+                      setTalhaoId('');
+                    } else {
+                      const selected = talhaoSelection.options.find((option) => option.value === value);
+                      setTalhaoId(value);
+                      setTalhao(value ? selected?.label || '' : '');
+                    }
+                    clearChangeError('talhaoId');
+                  }}
+                  placeholder="Selecione o Talhão"
+                  helperText={isCadernoTalhaoLegado({ talhao_id: talhaoId, talhao })
+                    ? 'Referência legada preservada. Selecione um Talhão para vinculá-la por ID.'
+                    : 'A seleção mantém o vínculo estável com o Talhão da Propriedade.'}
+                  error={errors.talhaoId || undefined}
+                />
+              </View>
+            ) : null}
+
+            {fieldVisibility.operacao ? (
+              <View ref={formValidation.registerField('operacao')} collapsable={false}>
+                <FormField label="Operação de plantio" required value={operacao} error={errors.operacao || undefined} onChangeText={(value) => { setOperacao(value); clearChangeError('operacao'); }} placeholder="Ex.: Semeadura direta" />
+              </View>
+            ) : null}
+
+            {fieldVisibility.produtos ? (
+              <View ref={formValidation.registerField('produtos')} collapsable={false}>
+                <FormField label="Produtos utilizados" required helperText="Separe os produtos por vírgula." value={produtosText} error={errors.produtos || undefined} onChangeText={(value) => { setProdutosText(value); clearChangeError('produtos'); }} textarea numberOfLines={3} />
+              </View>
+            ) : null}
+
+            <View style={wide ? styles.fieldRow : undefined}>
+              {fieldVisibility.dosagem ? (
+                <View ref={formValidation.registerField('dosagem')} collapsable={false} style={styles.flexField}>
+                  <FormField label="Dosagem" required value={dosagem} error={errors.dosagem || undefined} onChangeText={(value) => { setDosagem(value); clearChangeError('dosagem'); }} />
+                </View>
+              ) : null}
+              {fieldVisibility.area ? (
+                <View ref={formValidation.registerField('areaAplicada')} collapsable={false} style={styles.flexField}>
+                  <FormField label={tipoAtividade === 'colheita' ? 'Área colhida (ha)' : 'Área aplicada (ha)'} required value={areaAplicada} keyboardType="decimal-pad" error={errors.areaAplicada || undefined} onChangeText={(value) => { setAreaAplicada(value); clearChangeError('areaAplicada'); }} />
+                </View>
+              ) : null}
+              {fieldVisibility.produtividade ? (
+                <View ref={formValidation.registerField('produtividade')} collapsable={false} style={styles.flexField}>
+                  <FormField label="Produtividade" required value={produtividade} keyboardType="decimal-pad" error={errors.produtividade || undefined} onChangeText={(value) => { setProdutividade(value); clearChangeError('produtividade'); }} />
+                </View>
+              ) : null}
+            </View>
+
+            {fieldVisibility.clima ? (
+              <FormField label="Condições climáticas" value={condicoesClima} onChangeText={(value) => { setCondicoesClima(value); clearChangeError(); }} />
+            ) : null}
+
+            {fieldVisibility.observacoes ? (
+              <View ref={formValidation.registerField('observacoes')} collapsable={false}>
+                <FormField
+                  label="Observações"
+                  required={['observacao', 'ocorrencia', 'outro'].includes(tipoAtividade)}
+                  value={observacoes}
+                  error={errors.observacoes || undefined}
+                  onChangeText={(value) => { setObservacoes(value); clearChangeError('observacoes'); }}
+                  textarea
+                  numberOfLines={4}
+                />
+              </View>
+            ) : null}
           </SectionCard>
 
-          <SectionCard title="Justificativa" subtitle="Explique por que o registro precisa ser corrigido." icon="chatbox-ellipses-outline">
+          <SectionCard title="Justificativa" subtitle="Explique por que os dados precisam ser alterados." icon="chatbox-ellipses-outline">
             <View ref={formValidation.registerField('motivo')} collapsable={false}>
-              <FormField label="Motivo da correção" required value={motivo} error={errors.motivo || undefined} onChangeText={(value) => { setMotivo(value); setErrors((current) => ({ ...current, motivo: null })); }} textarea numberOfLines={4} placeholder="Ex.: valor transcrito incorretamente no registro original" />
+              <FormField label="Motivo da alteração" required value={motivo} error={errors.motivo || undefined} onChangeText={(value) => { setMotivo(value); setErrors((current) => ({ ...current, motivo: null })); }} textarea numberOfLines={4} placeholder="Ex.: tipo e valor informados incorretamente no registro original" />
             </View>
           </SectionCard>
         </View>
       </ScrollView>
-      <FormFooter onCancel={() => navigation.goBack()} onSubmit={requestCorrection} submitLabel="Revisar correção" submitIcon="shield-checkmark-outline" loading={saving} />
-      <ConfirmDialog visible={pendingChanges !== null} title="Registrar correção?" message={`${changeCount} ${changeCount === 1 ? 'campo será corrigido' : 'campos serão corrigidos'}. O conteúdo anterior permanecerá no histórico do Caderno.`} confirmText="Registrar correção" cancelText="Continuar revisando" onConfirm={() => void executeCorrection()} onCancel={() => setPendingChanges(null)} loading={saving} />
+      <FormFooter onCancel={() => navigation.goBack()} onSubmit={requestCorrection} submitLabel="Revisar alterações" submitIcon="shield-checkmark-outline" loading={saving} />
+      <ConfirmDialog visible={pendingChanges !== null} title="Salvar alterações?" message="Os dados alterados serão registrados em uma nova versão. O conteúdo anterior permanecerá no histórico do Caderno." confirmText="Salvar alterações" cancelText="Continuar revisando" onConfirm={() => void executeCorrection()} onCancel={() => setPendingChanges(null)} loading={saving} />
     </View>
   );
 }
@@ -266,6 +454,9 @@ const styles = StyleSheet.create({
   centerText: { color: colors.muted, fontSize: typography.fontBody, textAlign: 'center' },
   contextTitle: { color: colors.text, fontSize: typography.fontSubtitle, fontWeight: typography.weightBold, marginBottom: spacing.xs },
   contextText: { color: colors.muted, fontSize: typography.fontSmall, lineHeight: 20 },
+  field: { marginBottom: spacing.md },
+  label: { color: colors.text, fontSize: typography.fontBody, fontWeight: typography.weightSemibold, marginBottom: spacing.sm },
+  required: { color: colors.error },
   fieldRow: { flexDirection: 'row', gap: spacing.md },
   flexField: { flex: 1, minWidth: 0 },
   formWarning: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, marginVertical: spacing.md, borderRadius: spacing.radiusSm, backgroundColor: semanticColors.warning.surface, borderWidth: 1, borderColor: semanticColors.warning.border },

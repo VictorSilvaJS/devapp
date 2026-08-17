@@ -23,12 +23,6 @@ export type CadernoActor = {
 
 export type CadernoCommand =
   | {
-    tipo: 'adicionar_complemento';
-    versaoBase: number;
-    texto: string;
-    visivelParaProdutor?: boolean;
-  }
-  | {
     tipo: 'corrigir';
     versaoBase: number;
     motivo: string;
@@ -541,43 +535,6 @@ export const applyCadernoCommand = ({
   assertTeamActorInScope(record, actor);
   const currentVersion = assertBaseVersion(record, command.versaoBase);
   const nextVersion = currentVersion + 1;
-
-  if (command.tipo === 'adicionar_complemento') {
-    assertRegisteredForEvent(record);
-    const text = normalizeText(command.texto);
-    if (!text) throw new Error('CadernoCampo.complemento: Informe o conteúdo técnico.');
-    const complementSequence = getComplements(record).length + 1;
-    const complement = {
-      complemento_id: buildId(normalizeText(record.id), complementSequence, 'complemento'),
-      registro_id: record.id,
-      texto: text,
-      autor_usuario_id: normalizeText(actor.usuarioId),
-      autor_nome: normalizeText(actor.nome) || undefined,
-      criado_em: now,
-      visivel_para_produtor: command.visivelParaProdutor === true,
-      sequencia: complementSequence,
-    };
-    const next = {
-      ...record,
-      versao_atual: nextVersion,
-      complementos_caderno: [...getComplements(record), complement],
-    };
-    return {
-      ...next,
-      eventos_caderno: [
-        ...getEvents(record),
-        buildEvent({
-          record: next,
-          type: 'complemento_adicionado',
-          actor,
-          now,
-          versionBase: currentVersion,
-          versionResult: nextVersion,
-          details: { complemento_id: complement.complemento_id },
-        }),
-      ],
-    };
-  }
 
   if (command.tipo === 'corrigir') {
     assertRegisteredForEvent(record);

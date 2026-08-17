@@ -883,7 +883,7 @@ export default function EditarCadernoScreen() {
       <ConfirmDialog
         visible={showSubmitConfirm}
         title="Confirmar envio ao Caderno"
-        message="Revise os dados. Depois da confirmação, o registro deixa de aceitar edição direta; correções e complementos ficam no histórico de auditoria."
+        message="Revise os dados. Depois da confirmação, o registro deixa de aceitar edição direta; alterações posteriores ficam no histórico de auditoria."
         type="warning"
         confirmText="Confirmar e enviar"
         onCancel={() => setShowSubmitConfirm(false)}

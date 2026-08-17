@@ -106,22 +106,18 @@ const run = async () => {
     assert.throws(() => lifecycle.updateCadernoDraft({ record, data: { observacoes: 'Sobrescrita' }, actor: team }), /não aceita edição destrutiva/);
   });
 
-  await test('complemento e correção são versionados com antes/depois', () => {
+  await test('correção é versionada com antes/depois', () => {
     const original = submitted();
-    const complemented = lifecycle.applyCadernoCommand({
-      record: original, actor: team,
-      command: { tipo: 'adicionar_complemento', versaoBase: 1, texto: 'Recomendação posterior.', visivelParaProdutor: true },
-    });
     const corrected = lifecycle.applyCadernoCommand({
-      record: complemented, actor: team,
+      record: original, actor: team,
       command: {
         tipo: 'corrigir',
-        versaoBase: 2,
+        versaoBase: 1,
         motivo: 'Ajuste confirmado',
         alteracoes: { observacoes: 'Corpo vigente corrigido.', condicoes_clima: 'Úmido' },
       },
     });
-    assert.equal(corrected.versao_atual, 3);
+    assert.equal(corrected.versao_atual, 2);
     assert.equal(corrected.observacoes, 'Corpo vigente corrigido.');
     assert.equal(corrected.conteudo_original.observacoes, 'Corpo original do registro.');
     const event = corrected.eventos_caderno.at(-1);
@@ -133,9 +129,39 @@ const run = async () => {
     for (const field of ['propriedade_id', 'fazenda_id']) {
       assert.throws(() => lifecycle.applyCadernoCommand({
         record: corrected, actor: team,
-        command: { tipo: 'corrigir', versaoBase: 3, motivo: 'Tentativa', alteracoes: { [field]: 'outra' } },
+        command: { tipo: 'corrigir', versaoBase: 2, motivo: 'Tentativa', alteracoes: { [field]: 'outra' } },
       }), /Campos não permitidos/);
     }
+  });
+
+  await test('edição auditada pode alterar tipo e campos dependentes sem sobrescrever o original', () => {
+    const original = submitted();
+    const edited = lifecycle.applyCadernoCommand({
+      record: original,
+      actor: team,
+      command: {
+        tipo: 'corrigir',
+        versaoBase: 1,
+        motivo: 'Classificação original incorreta',
+        alteracoes: {
+          tipo_atividade: 'aplicacao',
+          talhao_id: 'talhao_2',
+          talhaoId: 'talhao_2',
+          talhao_nome: 'Talhão Norte',
+          talhao: 'Talhão Norte',
+          produtos_utilizados: ['Produto A'],
+          dosagem: '2 L/ha',
+          area_aplicada: 10,
+        },
+      },
+    });
+
+    assert.equal(edited.tipo_atividade, 'aplicacao');
+    assert.equal(edited.talhao_id, 'talhao_2');
+    assert.equal(edited.versao_atual, 2);
+    assert.equal(edited.conteudo_original.tipo_atividade, 'observacao');
+    assert.equal(edited.eventos_caderno.at(-1).antes.tipo_atividade, 'observacao');
+    assert.equal(edited.eventos_caderno.at(-1).depois.tipo_atividade, 'aplicacao');
   });
 
   await test('correção de localização exige o grupo integral', () => {
@@ -162,23 +188,22 @@ const run = async () => {
   await test('comando rejeita versão obsoleta e escopo incorreto', () => {
     assert.throws(() => lifecycle.applyCadernoCommand({
       record: submitted(), actor: team,
-      command: { tipo: 'adicionar_complemento', versaoBase: 99, texto: 'Conflito' },
+      command: { tipo: 'corrigir', versaoBase: 99, motivo: 'Conflito', alteracoes: { observacoes: 'Outro texto' } },
     }), /Versão atual 1/);
     assert.throws(() => lifecycle.applyCadernoCommand({
       record: submitted(), actor: { ...team, propriedadeIds: ['outra'] },
-      command: { tipo: 'adicionar_complemento', versaoBase: 1, texto: 'Fora' },
+      command: { tipo: 'corrigir', versaoBase: 1, motivo: 'Fora', alteracoes: { observacoes: 'Outro texto' } },
     }), /fora do escopo/);
   });
 
-  await test('projeção do produtor remove auditoria e complemento restrito', () => {
-    const publicRecord = lifecycle.applyCadernoCommand({
-      record: submitted(), actor: team,
-      command: { tipo: 'adicionar_complemento', versaoBase: 1, texto: 'Público', visivelParaProdutor: true },
-    });
-    const mixed = lifecycle.applyCadernoCommand({
-      record: publicRecord, actor: team,
-      command: { tipo: 'adicionar_complemento', versaoBase: 2, texto: 'Interno', visivelParaProdutor: false },
-    });
+  await test('projeção do produtor preserva leitura histórica e remove complemento restrito', () => {
+    const mixed = {
+      ...submitted(),
+      complementos_caderno: [
+        { complemento_id: 'historico_publico', texto: 'Público', visivel_para_produtor: true },
+        { complemento_id: 'historico_interno', texto: 'Interno', visivel_para_produtor: false },
+      ],
+    };
     const projection = lifecycle.toCadernoProducerProjection(mixed);
     assert.equal('eventos_caderno' in projection, false);
     assert.equal('conteudo_original' in projection, false);
@@ -207,7 +232,7 @@ const run = async () => {
     assert.equal(legacy.conteudo_original.observacoes, base().observacoes);
     assert.throws(() => lifecycle.applyCadernoCommand({
       record: legacy, actor: team,
-      command: { tipo: 'adicionar_complemento', versaoBase: 1, texto: 'Não permitido' },
+      command: { tipo: 'corrigir', versaoBase: 1, motivo: 'Não permitido', alteracoes: { observacoes: 'Outro texto' } },
     }), /indisponível para registro registrado_legado/);
   });
 

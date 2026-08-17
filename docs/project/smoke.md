@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-13
+> Atualizado em: 2026-08-17
 >
 > Última execução física registrada: 2026-08-12
 
@@ -122,13 +122,17 @@ Na revalidação `ATUAL-13`, executar na ordem:
    que ele reaparece apenas para o autor. No detalhe do rascunho, continuar a
    edição, salvar novamente e depois testar o descarte com cancelamento e com
    confirmação em um segundo rascunho;
-4. enviar um registro, abrir `Ações auditáveis > Corrigir`, alterar ao menos
-   dois campos com um único motivo e confirmar antes/depois no histórico. O
-   registro enviado não pode oferecer exclusão nem edição direta;
-5. em Nova/Editar Visita e Caderno, abrir data, trocar mês, tocar no ano,
-   escolher um ano distante e conferir os limites mínimo/máximo. Abrir horário
-   e confirmar que a hora e o minuto atuais/selecionados aparecem visíveis sem
-   rolagem inicial;
+4. enviar um registro, abrir `Ações auditáveis > Editar dados`, trocar o tipo e
+   preencher os campos dependentes apresentados (Safra/Safrinha, Talhão ou
+   dados operacionais), além de alterar outro campo com um único motivo.
+   Confirmar antes/depois no histórico; o registro original deve permanecer
+   preservado e não pode oferecer exclusão nem sobrescrita direta;
+5. em Nova/Editar Visita e Caderno, abrir data, trocar por meses com quatro,
+   cinco e seis semanas visuais, tocar no ano e confirmar a faixa uniforme de
+   2000 a 2100. A altura do modal deve permanecer estável, sem espaços vazios;
+   dias adjacentes aparecem em tom secundário e a regra mínimo/máximo continua
+   protegida na escolha do dia. Abrir horário e confirmar que a hora e o minuto
+   atuais/selecionados aparecem visíveis sem rolagem inicial;
 6. focar os últimos campos de texto de Visita, Caderno, Propriedade, Usuário e
    Safra/Safrinha. Com o teclado aberto, o campo e o texto digitado devem ficar
    visíveis; arrastar a tela deve dispensar o teclado sem bloquear botões.

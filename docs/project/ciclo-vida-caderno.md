@@ -9,8 +9,9 @@
 ## Objetivo
 
 Este documento define o ciclo de vida produtivo do Caderno de Campo:
-rascunho, registro consolidado, complemento, correcao, visibilidade,
-arquivamento, anulacao, autoria, concorrencia e auditoria.
+rascunho, registro consolidado, correcao, visibilidade, arquivamento,
+anulacao, autoria, concorrencia e auditoria. Complementos antigos permanecem
+somente como leitura compativel de historico.
 
 Ele nao altera o mock atual. A implementacao do ciclo no aplicativo pertence a
 `MP-25`; persistencia imutavel, autorizacao e concorrencia no servidor
@@ -39,7 +40,8 @@ produtor` depois de ter sido reescrito pela equipe.
    operacional consolidado.
 2. O envio e uma transicao explicita e atomica.
 3. O corpo original de um registro consolidado nunca e sobrescrito.
-4. Complemento acrescenta informacao sem alterar o relato original.
+4. Complemento antigo permanece legivel, mas o MVP nao cria novos
+   complementos no Caderno.
 5. Correcao excepcional cria nova versao efetiva e preserva antes/depois.
 6. Visibilidade e mudanca auditada, separada do corpo.
 7. Arquivamento e anulacao preservam o registro e o historico.
@@ -56,8 +58,8 @@ produtor` depois de ter sido reescrito pela equipe.
 | `arquivado` | retirado da consulta operacional comum, mas ainda valido no historico |
 | `anulado` | declarado invalido, preservado integralmente e sem efeito operacional |
 
-`complemento`, `correcao` e `alteracao_visibilidade` sao eventos; nao sao
-estados do registro principal.
+`correcao` e `alteracao_visibilidade` sao eventos; nao sao estados do registro
+principal. `complemento` pode existir apenas no historico compativel.
 
 ## Transicoes Permitidas
 
@@ -75,8 +77,8 @@ Regras:
 
 - registro consolidado nunca volta a `rascunho`;
 - `anulado` e terminal no primeiro contrato;
-- registro anulado nao pode receber complemento ou correcao;
-- registro arquivado deve ser reativado antes de novo complemento ou correcao;
+- registro anulado nao pode receber correcao;
+- registro arquivado deve ser reativado antes de nova correcao;
 - nao existe exclusao fisica de registro que ja foi enviado.
 
 ## Rascunho
@@ -129,32 +131,16 @@ Campos que nunca podem ser corrigidos:
 Se a Propriedade estiver errada, o registro deve ser anulado e outro deve ser
 criado. Nao ha transferencia de registro entre Propriedades.
 
-## Complemento Tecnico
+## Complementos Historicos
 
-Equipe autorizada pode acrescentar complemento a registro `registrado` dentro
-do proprio escopo.
+Decisao de produto de 2026-08-17: o Caderno nao oferece acao para criar novos
+complementos. Ajustes em registro consolidado usam `Editar dados`, persistido
+como correcao auditada e versionada.
 
-Cada complemento possui:
-
-- `complemento_id`;
-- `registro_id`;
-- autor por ID e snapshot legivel;
-- texto ou dados tecnicos adicionais;
-- referencias de anexo, quando autorizadas;
-- `criado_em` pelo servidor;
-- sequencia do evento;
-- chave de idempotencia.
-
-Complemento:
-
-- nao substitui campos do registro;
-- aparece separado do relato original;
-- nao muda autoria ou origem;
-- nao pode ser apagado silenciosamente;
-- se incorreto, recebe evento de correcao proprio ou e invalidado com motivo.
-
-O Produtor ve somente complementos liberados e necessarios ao contexto
-operacional.
+Registros locais ou migrados que ja contenham complementos continuam legiveis,
+separados do relato original. A projecao do Produtor mostra somente os antigos
+complementos marcados como liberados. Essa compatibilidade de leitura nao cria
+endpoint, permissao nem comando novo no backend do MVP.
 
 ## Correcao Excepcional
 
@@ -213,7 +199,7 @@ para Produtor sem vinculo com a Propriedade.
 - declara que o registro nao deve produzir efeito operacional;
 - exige justificativa clara;
 - e terminal no primeiro contrato;
-- preserva original, correcoes, complementos e autoria;
+- preserva original, correcoes, complementos historicos e autoria;
 - deve aparecer como anulado nas consultas autorizadas;
 - nao pode ser implementada como exclusao.
 
@@ -224,8 +210,6 @@ Tipos minimos:
 - `rascunho_criado`;
 - `rascunho_atualizado`;
 - `registro_enviado`;
-- `complemento_adicionado`;
-- `complemento_corrigido` ou `complemento_invalidado`;
 - `correcao_aplicada`;
 - `visibilidade_alterada`;
 - `registro_arquivado`;
@@ -248,6 +232,9 @@ Cada evento produtivo registra:
 Eventos sao append-only. Correcao de evento gera outro evento; nao sobrescreve
 a trilha anterior.
 
+Eventos antigos de complemento permanecem aceitos somente na leitura e na
+migracao do historico.
+
 ## Autoridade Por Perfil
 
 ### Produtor
@@ -256,7 +243,8 @@ a trilha anterior.
 - revisa e envia o proprio rascunho;
 - nao altera registro consolidado;
 - nao corrige, arquiva, anula ou muda visibilidade;
-- ve original, estado, valores operacionais vigentes e complementos liberados;
+- ve original, estado, valores operacionais vigentes e complementos historicos
+  liberados;
 - nao recebe justificativas internas, metadados administrativos excessivos ou
   trilha tecnica completa.
 
@@ -264,7 +252,6 @@ a trilha anterior.
 
 - cria e envia os proprios rascunhos dentro do escopo;
 - consulta registros autorizados;
-- adiciona complemento quando possuir a acao;
 - corrige, altera visibilidade, arquiva, reativa ou anula somente com permissao
   explicita, dentro do escopo e conforme justificativa exigida;
 - nao recebe poder de correcao apenas por conseguir abrir o detalhe.
@@ -289,8 +276,7 @@ Toda mutacao de registro consolidado envia:
 Se `versao_base` nao for a atual, o servidor recusa com conflito, devolve a
 versao vigente e exige revisao. Nao existe `last write wins`.
 
-Repetir a mesma chave de idempotencia nao cria complemento, correcao ou
-transicao duplicados.
+Repetir a mesma chave de idempotencia nao cria correcao ou transicao duplicada.
 
 ## Offline E Sincronizacao
 
@@ -303,7 +289,6 @@ O primeiro corte permite:
 O primeiro corte nao permite offline:
 
 - transformar rascunho em `registrado`;
-- adicionar complemento;
 - corrigir;
 - alterar visibilidade;
 - arquivar, reativar ou anular.
@@ -346,7 +331,8 @@ compatibilidade e estado atual, nao regra aprovada.
 1. Estados e transicoes permitidas estao definidos.
 2. Rascunho pode ser alterado apenas pelo criador.
 3. Envio torna o corpo original imutavel.
-4. Complemento, correcao e visibilidade sao eventos separados.
+4. Correcao e visibilidade sao eventos separados; complemento antigo e apenas
+   compatibilidade de leitura.
 5. Correcao preserva antes/depois, motivo, autor e versao.
 6. Localizacao corrigida preserva o grupo original.
 7. Arquivamento e anulacao nao excluem o registro.

@@ -39,6 +39,8 @@ const MONTHS = [
 ];
 const WEEKDAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const TIME_ROW_HEIGHT = 44;
+const CALENDAR_MIN_YEAR = 2000;
+const CALENDAR_MAX_YEAR = 2100;
 
 const isValidDate = (value: unknown): value is Date =>
   value instanceof Date && !Number.isNaN(value.getTime());
@@ -311,12 +313,12 @@ function CalendarSelector({ date, onChange, minimumDate, maximumDate }: MobileSe
   const today = startOfDay(new Date()).getTime();
   const minimumDay = minimumDate ? startOfDay(minimumDate).getTime() : undefined;
   const maximumDay = maximumDate ? startOfDay(maximumDate).getTime() : undefined;
-  const currentYear = new Date().getFullYear();
-  const minimumYear = minimumDate?.getFullYear() ?? currentYear - 80;
-  const maximumYear = maximumDate?.getFullYear() ?? currentYear + 20;
   const years = useMemo(
-    () => Array.from({ length: Math.max(1, maximumYear - minimumYear + 1) }, (_, index) => minimumYear + index),
-    [maximumYear, minimumYear],
+    () => Array.from(
+      { length: CALENDAR_MAX_YEAR - CALENDAR_MIN_YEAR + 1 },
+      (_, index) => CALENDAR_MIN_YEAR + index,
+    ),
+    [],
   );
 
   useEffect(() => {
@@ -326,41 +328,38 @@ function CalendarSelector({ date, onChange, minimumDate, maximumDate }: MobileSe
   useEffect(() => {
     if (!showYears) return;
     const timeout = setTimeout(() => {
-      const row = Math.floor(Math.max(0, date.getFullYear() - minimumYear) / 3);
+      const row = Math.floor(Math.max(0, displayMonth.getFullYear() - CALENDAR_MIN_YEAR) / 3);
       yearScrollRef.current?.scrollTo({ y: Math.max(0, row * 48 - 96), animated: false });
     }, 0);
     return () => clearTimeout(timeout);
-  }, [date, minimumYear, showYears]);
+  }, [displayMonth, showYears]);
 
   const monthFirstDay = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), 1);
-  const monthLastDay = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 0);
-  const leadingEmpty = monthFirstDay.getDay();
-  const calendarCells = [
-    ...Array.from({ length: leadingEmpty }, () => null),
-    ...Array.from({ length: monthLastDay.getDate() }, (_, index) => index + 1),
-  ];
-  while (calendarCells.length % 7 !== 0) calendarCells.push(null);
+  const gridStart = new Date(
+    displayMonth.getFullYear(),
+    displayMonth.getMonth(),
+    1 - monthFirstDay.getDay(),
+  );
+  const calendarCells = Array.from({ length: 42 }, (_, index) => new Date(
+    gridStart.getFullYear(),
+    gridStart.getMonth(),
+    gridStart.getDate() + index,
+  ));
 
   const monthCanBeShown = (offset: number): boolean => {
     const nextStart = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + offset, 1);
-    const nextEnd = new Date(nextStart.getFullYear(), nextStart.getMonth() + 1, 0);
-    return !(minimumDay != null && startOfDay(nextEnd).getTime() < minimumDay)
-      && !(maximumDay != null && startOfDay(nextStart).getTime() > maximumDay);
+    return nextStart.getFullYear() >= CALENDAR_MIN_YEAR
+      && nextStart.getFullYear() <= CALENDAR_MAX_YEAR;
   };
 
-  const selectDay = (day: number) => {
+  const selectDay = (cellDate: Date) => {
     const next = new Date(date);
-    next.setFullYear(displayMonth.getFullYear(), displayMonth.getMonth(), day);
+    next.setFullYear(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
     onChange(clampDate(next, minimumDate, maximumDate));
   };
 
   const selectYear = (year: number) => {
-    const safeDay = Math.min(date.getDate(), new Date(year, date.getMonth() + 1, 0).getDate());
-    const next = new Date(date);
-    next.setFullYear(year, date.getMonth(), safeDay);
-    const clamped = clampDate(next, minimumDate, maximumDate);
-    onChange(clamped);
-    setDisplayMonth(new Date(clamped.getFullYear(), clamped.getMonth(), 1));
+    setDisplayMonth(new Date(year, displayMonth.getMonth(), 1));
     setShowYears(false);
   };
 
@@ -375,16 +374,25 @@ function CalendarSelector({ date, onChange, minimumDate, maximumDate }: MobileSe
         </View>
         <ScrollView ref={yearScrollRef} style={styles.yearScroll} persistentScrollbar>
           <View style={styles.yearGrid}>
-            {years.map((year) => (
-              <TouchableOpacity
-                key={year}
-                style={[styles.yearOption, year === date.getFullYear() ? styles.yearOptionSelected : null]}
-                onPress={() => selectYear(year)}
-                accessibilityState={{ selected: year === date.getFullYear() }}
-              >
-                <Text style={[styles.yearOptionText, year === date.getFullYear() ? styles.yearOptionTextSelected : null]}>{year}</Text>
-              </TouchableOpacity>
-            ))}
+            {years.map((year) => {
+              const selected = year === displayMonth.getFullYear();
+              return (
+                <TouchableOpacity
+                  key={year}
+                  style={[
+                    styles.yearOption,
+                    selected ? styles.yearOptionSelected : null,
+                  ]}
+                  onPress={() => selectYear(year)}
+                  accessibilityState={{ selected }}
+                >
+                  <Text style={[
+                    styles.yearOptionText,
+                    selected ? styles.yearOptionTextSelected : null,
+                  ]}>{year}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </ScrollView>
       </View>
@@ -421,27 +429,37 @@ function CalendarSelector({ date, onChange, minimumDate, maximumDate }: MobileSe
         {WEEKDAYS.map((weekday, index) => <Text key={`${weekday}-${index}`} style={styles.weekday}>{weekday}</Text>)}
       </View>
       <View style={styles.daysGrid}>
-        {calendarCells.map((day, index) => {
-          if (day == null) return <View key={`empty-${index}`} style={styles.dayCell} />;
-          const cellDate = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), day);
+        {calendarCells.map((cellDate) => {
           const cellTimestamp = startOfDay(cellDate).getTime();
           const unavailable = (minimumDay != null && cellTimestamp < minimumDay)
             || (maximumDay != null && cellTimestamp > maximumDay);
+          const outsideMonth = cellDate.getMonth() !== displayMonth.getMonth();
           const selected = date.getFullYear() === cellDate.getFullYear()
             && date.getMonth() === cellDate.getMonth()
-            && date.getDate() === day;
+            && date.getDate() === cellDate.getDate();
           const isToday = cellTimestamp === today;
           return (
             <TouchableOpacity
-              key={`${displayMonth.getFullYear()}-${displayMonth.getMonth()}-${day}`}
-              style={[styles.dayCell, selected ? styles.dayCellSelected : null, isToday && !selected ? styles.dayCellToday : null]}
+              key={`${cellDate.getFullYear()}-${cellDate.getMonth()}-${cellDate.getDate()}`}
+              style={styles.dayCell}
               disabled={unavailable}
-              onPress={() => selectDay(day)}
+              onPress={() => selectDay(cellDate)}
               accessibilityRole="button"
               accessibilityState={{ disabled: unavailable, selected }}
               accessibilityLabel={cellDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
             >
-              <Text style={[styles.dayText, selected ? styles.dayTextSelected : null, unavailable ? styles.dayTextDisabled : null]}>{day}</Text>
+              <View style={[
+                styles.dayCircle,
+                selected ? styles.dayCellSelected : null,
+                isToday && !selected ? styles.dayCellToday : null,
+              ]}>
+                <Text style={[
+                  styles.dayText,
+                  outsideMonth ? styles.dayTextOutside : null,
+                  selected ? styles.dayTextSelected : null,
+                  unavailable ? styles.dayTextDisabled : null,
+                ]}>{cellDate.getDate()}</Text>
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -486,7 +504,7 @@ const styles = StyleSheet.create({
   timeOptionSelected: { backgroundColor: colors.primary },
   timeOptionText: { fontSize: typography.fontBody, color: colors.text },
   timeOptionTextSelected: { color: colors.white, fontWeight: typography.weightBold },
-  calendarContainer: { padding: spacing.lg, minHeight: 350 },
+  calendarContainer: { padding: spacing.lg },
   calendarHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
   monthNavButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: semanticColors.primary.surface },
   monthTitleGroup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: spacing.xs },
@@ -495,11 +513,13 @@ const styles = StyleSheet.create({
   yearPickerText: { color: colors.primary, fontSize: typography.fontBody, fontWeight: typography.weightBold },
   weekRow: { flexDirection: 'row', marginBottom: spacing.xs },
   weekday: { width: '14.2857%', textAlign: 'center', color: colors.muted, fontSize: typography.fontSmall, fontWeight: typography.weightSemibold },
-  daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: '14.2857%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap', height: 264 },
+  dayCell: { width: '14.2857%', height: 44, alignItems: 'center', justifyContent: 'center' },
+  dayCircle: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 19 },
   dayCellSelected: { backgroundColor: colors.primary },
   dayCellToday: { borderWidth: 1.5, borderColor: colors.primary },
   dayText: { color: colors.text, fontSize: typography.fontBody },
+  dayTextOutside: { color: colors.muted },
   dayTextSelected: { color: colors.white, fontWeight: typography.weightBold },
   dayTextDisabled: { color: semanticColors.disabled.text },
   calendarHint: { color: colors.muted, fontSize: typography.fontSmall, textAlign: 'center', marginTop: spacing.md },
