@@ -8,9 +8,11 @@
 
 ## Ponto de partida
 
-O corte local MP-00 a MP-32 está concluído. A rodada final do mock v2 não
-deixou bug funcional aberto no recorte executado. O trabalho agora deve evitar
-novas simulações de segurança no frontend e iniciar a fundação produtiva.
+O corte local MP-00 a MP-32 está concluído. A corrida visual ao reabrir no mapa
+um ponto já persistido no Caderno foi corrigida e revalidada no Android em
+`ATUAL-04`; ela não altera os contratos nem a sequência do backend. O trabalho
+agora deve evitar novas simulações de segurança no frontend e iniciar a
+fundação produtiva.
 
 ## MP-33 — Fundação, autenticação e sessão
 

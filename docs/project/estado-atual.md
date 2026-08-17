@@ -127,6 +127,10 @@ Foram corrigidos:
   permanecem disponíveis somente para leitura histórica compatível;
 - formulários roláveis ajustam a área útil ao teclado e trazem o campo focado
   para a região visível.
+- o ponto persistido no Caderno volta a ser centralizado após a inicialização
+  efetiva da WebView; um segundo envio controlado evita que o comando inicial
+  se perca enquanto o mapa termina de montar, sem recapturar nem alterar a
+  coordenada salva.
 
 A revalidação física das listas passou. Depois do percurso completo, o processo
 manteve 1.629 views, contra 4.386 antes da otimização. Não houve fatal, ANR,
@@ -150,6 +154,17 @@ duplicidade ou ampliação indevida de escopo.
 As últimas complementações de rotas, Caderno, data/hora e teclado passaram por
 typecheck, testes automatizados focados e revalidação manual no Android físico
 em 2026-08-17, registrada como `ATUAL-13` em `smoke.md`.
+
+Na mesma data, a persistência do ponto do Caderno foi confirmada no aparelho,
+mas sua centralização inicial no mapa revelou uma corrida de inicialização. A
+correção passou por typecheck, testes focados, suíte `test:domain-compat`, build
+release e atualização preservando o armazenamento. A reabertura centralizada
+foi confirmada manualmente no Android e `ATUAL-04` voltou a `PASSOU`.
+
+O mesmo ensaio mostrou o ponto do mock persistido sem rede e alguns mosaicos
+já visitados disponíveis em certos níveis de zoom. Isso não comprova mapa
+offline completo: os dados vetoriais locais continuam disponíveis, mas o
+mapa-base remoto depende do cache oportunista da WebView.
 
 O roteiro atual está em [smoke.md](smoke.md).
 

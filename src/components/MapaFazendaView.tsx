@@ -83,6 +83,7 @@ type SvgTalhao = TalhaoMapa & {
 };
 
 const LEAFLET_READY_TIMEOUT_MS = 6500;
+const LOCATION_READY_RETRY_MS = 420;
 const SVG_PADDING = 26;
 
 const normalizeHexColor = (value?: string): string => {
@@ -743,6 +744,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
     const webViewRef = useRef<WebView>(null);
     const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const locationSyncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const locationCenterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const userLocationRef = useRef<ForegroundUserLocation | null | undefined>(userLocation);
     const onMapaReadyRef = useRef(onMapaReady);
     const mapaReadyNotificadoRef = useRef(false);
@@ -824,6 +826,10 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
         clearTimeout(locationSyncTimeoutRef.current);
         locationSyncTimeoutRef.current = null;
       }
+      if (locationCenterTimeoutRef.current) {
+        clearTimeout(locationCenterTimeoutRef.current);
+        locationCenterTimeoutRef.current = null;
+      }
 
       armReadyTimeout();
 
@@ -832,6 +838,10 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
         if (locationSyncTimeoutRef.current) {
           clearTimeout(locationSyncTimeoutRef.current);
           locationSyncTimeoutRef.current = null;
+        }
+        if (locationCenterTimeoutRef.current) {
+          clearTimeout(locationCenterTimeoutRef.current);
+          locationCenterTimeoutRef.current = null;
         }
       };
     }, [armReadyTimeout, clearReadyTimeout, html]);
@@ -876,7 +886,7 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
       locationSyncTimeoutRef.current = setTimeout(() => {
         syncUserLocationToWebView();
         locationSyncTimeoutRef.current = null;
-      }, 420);
+      }, LOCATION_READY_RETRY_MS);
 
       return () => {
         if (locationSyncTimeoutRef.current) {
@@ -946,6 +956,13 @@ const MapaFazendaView = forwardRef<MapaFazendaViewRef, Props>(
             if (locationToCenter) {
               pendingLocationCenterRef.current = null;
               centerLocationInWebView(locationToCenter);
+              if (locationCenterTimeoutRef.current) {
+                clearTimeout(locationCenterTimeoutRef.current);
+              }
+              locationCenterTimeoutRef.current = setTimeout(() => {
+                centerLocationInWebView(locationToCenter);
+                locationCenterTimeoutRef.current = null;
+              }, LOCATION_READY_RETRY_MS);
             }
             return;
           }

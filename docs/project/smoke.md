@@ -14,7 +14,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-01 | Release | Perfil e logs sem painel Smoke Dev ou dado pessoal | PASSOU |
 | ATUAL-02 | Mídia | Câmera, galeria, cancelamento, persistência e limites | PASSOU |
 | ATUAL-03 | Exportação | Pasta, cancelamento e nome físico real | PASSOU |
-| ATUAL-04 | Mapa e Caderno | Ponto salvo e três estados do painel | PASSOU |
+| ATUAL-04 | Mapa e Caderno | Ponto salvo, reabertura centralizada e três estados do painel | PASSOU |
 | ATUAL-05 | Acesso v2 | Três perfis, vínculos e rotas diretas | PASSOU |
 | ATUAL-06 | MP-38 | Dentro, fora e próximo de Talhão em campo | PENDENTE DE CAMPO |
 | ATUAL-07 | Release | Orientação, teclado, TalkBack e matriz Android | PENDENTE DE RELEASE |
@@ -24,6 +24,20 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
 | ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
+
+Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
+persistido com latitude, longitude, precisão e horário corretos, mas a primeira
+centralização podia se perder enquanto a WebView do mapa terminava de iniciar.
+O comando agora é repetido depois da estabilização do mapa, com cancelamento do
+temporizador ao remontar a camada. O APK corrigido foi instalado preservando
+sessão e dados, e o caminho `Caderno > registro com ponto > Ver no mapa` passou
+na repetição manual no Android.
+
+Na mesma verificação, o ponto persistido reapareceu sem rede e partes já
+visitadas do mapa-base continuaram visíveis em alguns níveis de zoom. Isso é
+somente evidência parcial: o Caderno do mock usa armazenamento local, enquanto
+o mapa-base depende de cache oportunista da WebView e não constitui pacote
+offline completo. A repetição offline integral continua pendente.
 
 Na verificação física de 2026-08-17, a fonte ampliada não apresentou corte ou
 inacessibilidade bloqueante nos fluxos percorridos. Variações específicas de

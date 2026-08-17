@@ -135,6 +135,12 @@ test('ponto vindo do Caderno e centralizado assim que o mapa fica pronto', () =>
   assert.match(screenSource, /centerUserLocationOnReady=\{Boolean\(cadernoLocationParam\)\}/);
   assert.match(mapSource, /pendingLocationCenterRef/);
   assert.match(mapSource, /centerUserLocationOnReady \? userLocationRef\.current : null/);
+  assert.match(mapSource, /locationCenterTimeoutRef/);
+  assert.match(
+    mapSource,
+    /locationCenterTimeoutRef\.current = setTimeout\(\(\) => \{\s+centerLocationInWebView\(locationToCenter\)/
+  );
+  assert.match(mapSource, /clearTimeout\(locationCenterTimeoutRef\.current\)/);
 });
 
 if (failed > 0) {
