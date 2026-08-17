@@ -148,8 +148,8 @@ vínculo, desvínculo, sessão restaurada, Perfil e reativação passaram sem
 duplicidade ou ampliação indevida de escopo.
 
 As últimas complementações de rotas, Caderno, data/hora e teclado passaram por
-typecheck e testes automatizados focados, mas ainda aguardam a revalidação
-manual no Android físico descrita como `ATUAL-13` em `smoke.md`.
+typecheck, testes automatizados focados e revalidação manual no Android físico
+em 2026-08-17, registrada como `ATUAL-13` em `smoke.md`.
 
 O roteiro atual está em [smoke.md](smoke.md).
 

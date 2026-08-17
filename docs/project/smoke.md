@@ -2,7 +2,7 @@
 
 > Atualizado em: 2026-08-17
 >
-> Última execução física registrada: 2026-08-12
+> Última execução física registrada: 2026-08-17
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
@@ -23,7 +23,16 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-10 | Usuários | Exclusão administrativa remove usuário, credencial e vínculos | PASSOU |
 | ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
-| ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, correção, data/hora e teclado | PENDENTE DE REVALIDAÇÃO |
+| ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
+
+Na verificação física de 2026-08-17, a fonte ampliada não apresentou corte ou
+inacessibilidade bloqueante nos fluxos percorridos. Variações específicas de
+aparelho, conteúdo real e escalas extremas permanecem como risco residual para
+feedback de uso. Texto secundário encurtado pode ser refinado depois; botão,
+campo, estado ou dado essencial inacessível continua sendo falha de release.
+Na mesma rodada, o percurso orientado com TalkBack passou no dispositivo
+conectado; a ampliação para outros modelos continua pertencendo à matriz de
+release.
 
 ## Rodada final do mock v2
 
@@ -137,8 +146,11 @@ Na revalidação `ATUAL-13`, executar na ordem:
    Safra/Safrinha. Com o teclado aberto, o campo e o texto digitado devem ficar
    visíveis; arrastar a tela deve dispensar o teclado sem bloquear botões.
 
-Esse cenário já possui typecheck e testes automatizados focados aprovados. Só
-deve mudar para `PASSOU` depois da execução observável no Android físico.
+Na execução física de 2026-08-17, o cenário passou após os ajustes finais do
+calendário e da edição auditada do Caderno. A faixa de 2000 a 2100, a grade
+mensal estável, os campos dependentes do tipo, a remoção da ação de complemento
+e os demais itens de `ATUAL-13` foram confirmados no Android sem limpar os
+dados.
 
 ## Cenários de campo de MP-38
 
