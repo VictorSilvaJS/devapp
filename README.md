@@ -10,9 +10,11 @@ O frontend local está funcional e demonstrável com dataset v2, persistência n
 aparelho e três perfis. A última rodada física do mock não deixou bug aberto no
 recorte executado.
 
-O projeto ainda não possui backend, banco, autenticação real, storage remoto,
-sincronização produtiva ou RBAC no servidor. A fundação está aprovada e o
-próximo passo é MP-33 — autenticação e sessão reais.
+O aplicativo ainda não está conectado a backend produtivo e não possui
+autenticação real, storage remoto, sincronização produtiva ou RBAC no servidor.
+A MP-33A estabeleceu a fundação isolada do backend e do banco, mantendo o mock
+inalterado. Autenticação/sessão entram na MP-33B e a integração HTTP do
+aplicativo, na MP-33C.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em
@@ -36,6 +38,10 @@ Comandos principais:
 
 Os demais scripts ficam em [package.json](package.json).
 
+O backend possui runtime e comandos independentes em
+[backend/README.md](backend/README.md). Ele exige Node.js 24; o job do
+aplicativo permanece em Node.js 22.
+
 ## Pastas importantes
 
 | Pasta | Quando olhar |
@@ -49,6 +55,7 @@ Os demais scripts ficam em [package.json](package.json).
 | src/assets | Imagens e recursos empacotados |
 | tests e scripts | Testes de domínio e verificações |
 | android | Configuração e build Android nativo |
+| backend | API, banco, migrations e testes da fundação |
 | docs/project | Estado e contratos vigentes |
 | docs/archive | Histórico, fases e revisões antigas |
 | dist | Evidências geradas; não é fonte de verdade |

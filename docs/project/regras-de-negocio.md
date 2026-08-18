@@ -1,5 +1,7 @@
 # Regras de Negocio
 
+> Revisão documental: 2026-08-18
+
 Este documento registra regras de dominio e acesso que devem orientar modelagem, UX e implementacao. Quando um ponto ainda nao estiver fechado, ele nao deve ser transformado em regra aqui.
 
 ## Convencao de Linguagem
@@ -14,12 +16,12 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 
 - O sistema deve considerar que um produtor pode estar vinculado a uma ou mais propriedades.
 - Cada Propriedade do contrato v2 possui exatamente um Produtor como Titular
-  principal ativo.
+  principal atual.
 - Outros usuarios podem ser vinculados a Propriedade sem se tornarem
   Titulares.
-- O perfil define quais acoes o usuario pode executar; o vinculo ativo em
-  `usuario_propriedade` define em quais Propriedades essas acoes podem ser
-  executadas.
+- O perfil define quais acoes o usuario pode executar. A Titularidade e os
+  vinculos adicionais ativos definem em quais Propriedades essas acoes podem
+  ser executadas.
 - A navegacao, os dados e as permissoes devem respeitar essa relacao.
 - O contexto de propriedade e parte central da leitura do dominio, nao apenas um detalhe cadastral.
 - No mock administrativo, o vinculo entre usuario produtor e propriedade deve ser representado visualmente por uma relacao explicita `usuario_propriedade`, preservando compatibilidade com `produtor_id`/titular enquanto a base legada existir.
@@ -28,12 +30,13 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
   Produtor nao criam Propriedades.
 - A exclusao estrutural de Propriedade tambem e exclusiva de Admin e permanece
   bloqueada quando existem dependencias operacionais vinculadas.
-- O Produtor deve existir antes de ser escolhido como Titular. Um Produtor
+- No mock, o Produtor deve existir antes de ser escolhido como Titular. Um Produtor
   pendente pode ser escolhido na criacao de sua primeira Propriedade; nesse
   caso, Usuario, cadastro de Produtor e vinculo de Titular sao ativados na
   mesma operacao atomica que cria a Propriedade.
-- O cadastro grava `titular_id`, `municipio_id`, `municipio_nome`, `uf_id`,
-  `uf_sigla` e cria o vinculo ativo de Titular em `usuario_propriedade`.
+- No mock, o cadastro grava `titular_id`, `municipio_id`, `municipio_nome`,
+  `uf_id`, `uf_sigla` e cria o vinculo ativo de Titular em
+  `usuario_propriedade`.
 - Colaboradores opcionais sao selecionados nominalmente e recebem um vinculo
   direto ativo por Propriedade; localizacao nao cria vinculo automatico.
 - No mock v2, a criacao da Propriedade e de todos os seus vinculos e atomica:
@@ -55,11 +58,23 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
   o snapshot restaurado da sessao para status e vinculos.
 - O `titular_id` e somente leitura na edicao cadastral comum. Uma futura troca
   de Titular exige fluxo administrativo proprio, transacional e auditado.
-- A edicao v2 nao grava Regiao, Microrregiao, documento da Propriedade nem um
+- A edicao do mock v2 nao grava Regiao, Microrregiao, documento da Propriedade nem um
   campo legado de Colaborador responsavel; acesso continua representado por
   `usuario_propriedade`.
 - A criacao combinada produtiva futura deve preservar a mesma atomicidade no
   backend.
+
+No backend, `propriedades.titular_id` e a unica fonte persistida da
+Titularidade. `usuario_propriedade` aceita somente `usuario_autorizado` e
+`colaborador`; `titular` nao e aceito nem persistido. O acesso do Titular e
+derivado por Propriedade, Produtor Titular e Usuario principal. A API futura
+pode projetar `tipoAcesso=titular`, mas nao duplica esse fato no banco.
+
+A MP-33A armazena somente o Titular atual. Transferencia e historico exigem
+contrato transacional e de auditoria posterior. A conta do Usuario principal
+pode ser inativada sem desfazer a Titularidade cadastral e sem bloqueio por
+constraint permanente. Usuario inativo nao obtem acesso quando a futura
+autenticacao/autorizacao estiver em vigor.
 
 ### Modelo territorial canonico
 
@@ -111,8 +126,10 @@ O contrato canonico esta em `modelo-territorial.md`.
 - As Propriedades de um Produtor sao apresentadas como leitura no cadastro de
   Usuario. Titularidade e novos vinculos sao definidos no fluxo de
   Propriedade, permitindo que o mesmo Produtor seja Titular de varias delas.
-- Colaborador ativo exige ao menos um vinculo direto ativo do tipo
-  `colaborador`; Admin nao recebe vinculo com Propriedade.
+- No mock administrativo, Colaborador ativo exige ao menos um vinculo direto
+  ativo do tipo `colaborador`; Admin nao recebe vinculo com Propriedade. No
+  backend, o workflow/API futuro aplicara essa regra de habilitacao; a MP-33A
+  apenas deixa o Usuario sem vinculo sem qualquer escopo de Propriedade.
 - Novas escritas de Usuario nao gravam nivel administrativo, Regiao,
   Microregiao, `sub_regioes`, `propriedades_atribuidas`,
   `vinculos_microregioes`, `senha` ou aliases equivalentes do v1.
@@ -158,10 +175,13 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Nao deve ser tratado como responsavel por gerenciar a estrutura geral do sistema.
 - No mock administrativo, Produtor ativo deve ter ao menos uma Propriedade
   vinculada; Produtor pendente pode existir sem Propriedade.
-- Produtor com vinculo ativo de Titular nao pode ser colocado como pendente ou
+- No mock, Produtor com vinculo ativo de Titular nao pode ser colocado como pendente ou
   inativo na edicao comum; transferencia de titularidade exige fluxo proprio.
 - No runtime v2, o acesso efetivo do Produtor ocorre por vínculo ativo de
   Titular ou usuário autorizado; aliases antigos permanecem apenas na borda.
+- No backend, o equivalente ao vínculo local de Titular e calculado por
+  `propriedades.titular_id`; somente o acesso adicional
+  `usuario_autorizado` e persistido em `usuario_propriedade`.
 
 ## Regra de Visibilidade
 
@@ -205,7 +225,7 @@ nova no MVP mockado.
 | Perfil | Escopo de Propriedades | Leitura | Operacao |
 |---|---|---|---|
 | Admin | Global | Lista e abre todas as Propriedades autorizadas pela organizacao | Pode administrar cadastros e vinculos conforme papel administrativo |
-| Produtor | Vinculo com Propriedade/Titular | Lista e abre Propriedades em que possui vinculo ativo | Consulta mapas/anexos, visitas e caderno autorizados; nao administra estrutura geral |
+| Produtor | Titularidade ou acesso adicional | Lista e abre Propriedades em que e Titular ou possui `usuario_autorizado` ativo | Consulta mapas/anexos, visitas e caderno autorizados; nao administra estrutura geral |
 | Colaborador | `usuario_propriedade` direto e ativo | Lista e abre somente Propriedades atribuidas | Atua operacionalmente conforme permissoes por acao |
 
 ### Entidades minimas de backend
@@ -213,15 +233,15 @@ nova no MVP mockado.
 - `usuarios`: pessoa/acesso, perfil principal, status e dados de autenticacao.
 - `propriedades`: unidade operacional, titular principal, Municipio/UF,
   status e dados cadastrais.
-- `usuario_propriedade`: vinculos diretos entre usuario e Propriedade, com
-  tipo de vinculo, status, principal quando aplicavel e origem do vinculo.
+- `usuario_propriedade`: acessos adicionais entre usuario e Propriedade, dos
+  tipos `usuario_autorizado` e `colaborador`, com status e origem.
 - `perfis`/`papeis`: definicao de capacidades por perfil e, se necessario,
   papeis administrativos mais granulares.
 
 ### Regras aprovadas de leitura e acao
 
-- Listar Propriedades: Admin lista tudo; Produtor lista por
-  `usuario_propriedade`/titularidade; Colaborador lista por
+- Listar Propriedades: Admin lista tudo; Produtor lista por Titularidade
+  derivada ou `usuario_propriedade` adicional; Colaborador lista por
   `usuario_propriedade` direto e ativo.
 - Abrir detalhe de Propriedade: permitido quando a Propriedade estiver dentro
   do escopo do perfil, seguindo a mesma precedencia de listagem.
@@ -264,16 +284,14 @@ nova no MVP mockado.
 - Se `fazenda_id`, `propriedade_id`, titularidade e vinculos forem migrados sem
   leitura dupla, Produtor pode deixar de ver Propriedades vinculadas.
 
-### Pendencias para modelagem real
+### Implementacao produtiva pendente
 
 - Implementar os ids canonicos definidos em `modelo-dados-mock-v2.md`.
-- Definir validade, origem e auditoria dos vinculos `usuario_propriedade` no
-  backend.
-- Definir matriz de permissoes por acao: listar, abrir detalhe, criar visita,
-  editar visita, criar caderno, editar caderno, liberar/download de anexos e
-  editar cadastro.
-- Definir como auditar alteracoes de vinculos e permissoes.
-- Definir estrategia de descarte do mock v1 e migracao do codigo que usa
+- Implementar a matriz de permissoes por acao ja aprovada nos contratos
+  especificos.
+- Implementar a auditoria de alteracoes de vinculos e permissoes na fase
+  prevista.
+- Executar a estrategia aprovada de descarte do mock v1 e migracao do codigo que usa
   `sub_regioes`, `vinculos_microregioes`, `propriedades_atribuidas`, `produtor_id`,
   `proprietario_id`, `titular_id`, `fazenda_id` e `propriedade_id`.
 

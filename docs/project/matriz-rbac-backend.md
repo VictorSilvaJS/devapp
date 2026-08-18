@@ -1,8 +1,8 @@
 # Matriz Tecnica De RBAC/Backend
 
-Status revisado em 2026-08-07: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
+Status revisado em 2026-08-18: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
 transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
-de aceite. A regra segue as decisoes 31 a 38 de
+de aceite. A regra segue as decisoes 31 a 42 de
 `decisoes-consolidadas.md` e `baseline-backend-v1-2026-08.md`.
 
 ## Separacao De Escopo
@@ -22,7 +22,8 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 ### Regra aprovada para o mock v2 e para o backend
 
 - Admin: acesso global.
-- Produtor: acesso por vinculo com Propriedade/Titular.
+- Produtor: no mock, acesso por vinculo com Propriedade/Titular; no backend,
+  acesso pela Titularidade derivada ou por `usuario_autorizado` ativo.
 - Colaborador: acesso somente por vinculo direto ativo com a Propriedade.
 - Municipio e UF pertencem ao endereco e aos filtros; nao concedem acesso.
 - Nao existe entidade de Regiao Operacional, Area Operacional ou Microregiao
@@ -31,7 +32,8 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 ### Fora do escopo deste documento
 
 - Implementar backend.
-- Implementar o backend e o RBAC; essa execucao pertence a `MP-33`/`MP-35`.
+- Implementar autenticação/RBAC e as rotas; essa execucao pertence a
+  `MP-33B`/`MP-33C`/`MP-35`. A MP-33A implementa somente fundacao e DDL.
 - Inventar registros produtivos sem carga autorizada.
 - Criar novos perfis administrativos ou autorizacao por Municipio/UF.
 
@@ -42,7 +44,7 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 | `usuarios` | Pessoa/acesso e perfil principal | id canonico, perfil, status, autenticacao, dados cadastrais |
 | `produtores` | Perfil final que pode ser titular | id canonico, usuario_id quando houver acesso, dados cadastrais, status |
 | `propriedades` | Unidade operacional protegida | id canonico, `titular_id`, `municipio_id`, `uf_id`, status |
-| `usuario_propriedade` | Vinculo direto usuario-Propriedade | usuario_id, propriedade_id, tipo, status, origem, auditoria |
+| `usuario_propriedade` | Acesso adicional usuario-Propriedade | usuario_id, propriedade_id, tipo `usuario_autorizado` ou `colaborador`, status, origem, auditoria |
 | `perfis`/`papeis` | Capacidades por perfil e papel | permissoes por acao e, quando necessario, nivel administrativo |
 
 ## Matriz De Permissoes Por Perfil
@@ -50,7 +52,7 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 | Perfil | Escopo futuro | Regra de acesso | Observacao de aceite |
 |---|---|---|---|
 | Admin | Global | Acessa Propriedades, usuarios e vinculos conforme papel administrativo | Deve validar permissao no backend, nao apenas no frontend |
-| Produtor | Propriedades vinculadas | Acessa Propriedades onde possui vinculo ativo ou titularidade | Nao pode acessar Propriedade de outro titular |
+| Produtor | Propriedades vinculadas | Acessa por Titularidade derivada ou vinculo adicional ativo | Nao pode acessar Propriedade de outro titular |
 | Colaborador | Propriedades vinculadas diretamente | Acessa apenas Propriedades com `usuario_propriedade` ativo | Municipio e UF nao concedem permissao |
 
 ## Matriz Por Acao
@@ -73,12 +75,13 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 | ID | Caso | Pre-condicao | Resultado esperado |
 |---|---|---|---|
 | RBAC-BE-P01 | Admin acessa tudo | Usuario admin ativo e autenticado | Lista, detalhe, mapas/anexos, visitas, caderno e cadastros autorizados retornam dados |
-| RBAC-BE-P02 | Produtor acessa Propriedade vinculada | `usuario_propriedade` ativo ou titularidade compativel | Lista e abre apenas a Propriedade vinculada |
+| RBAC-BE-P02 | Produtor acessa Propriedade vinculada | Titularidade derivada ou `usuario_propriedade` adicional ativo | Lista e abre apenas a Propriedade vinculada |
 | RBAC-BE-P03 | Colaborador acessa por vinculo direto | `usuario_propriedade` ativo para a Propriedade | Lista e abre a Propriedade vinculada |
 | RBAC-BE-P04 | Colaborador acessa Propriedades em municipios diferentes | Vinculos diretos ativos para cada Propriedade | Acessa todas as vinculadas, independentemente de municipio ou UF |
 | RBAC-BE-P05 | Admin atribui varias Propriedades filtradas por localizacao | Admin filtra municipio/UF e confirma a selecao | Sao criados vinculos diretos individuais e auditaveis |
 | RBAC-BE-P06 | Colaborador cria visita dentro do escopo | Propriedade no escopo e permissao `criar_visita` ativa | Criacao permitida e auditada |
 | RBAC-BE-P07 | Produtor visualiza mapas liberados | Propriedade vinculada e material liberado para produtor | Mapa/anexo aparece sem expor materiais nao liberados |
+| RBAC-BE-P08 | Backend projeta acesso do Titular | Usuario principal ativo do Produtor indicado por `titular_id` | Retorna acesso `titular` calculado sem linha correspondente em `usuario_propriedade` |
 
 ## Casos Negativos De Aceite
 
@@ -92,6 +95,8 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 | RBAC-BE-N06 | Vinculo inativo e usado para acesso | `usuario_propriedade.status` inativo | Vinculo nao concede permissao |
 | RBAC-BE-N07 | Alteracao visual no mock e tratada como seguranca real | Somente mock/frontend alterado, sem vinculo persistente real | Nao deve ser aceito como criterio de seguranca |
 | RBAC-BE-N08 | Rota direta acessa dado fora do escopo | Usuario chama API por id de Propriedade fora do escopo | Backend nega sem retornar dados sensiveis |
+| RBAC-BE-N09 | Tipo `titular` e enviado como vinculo adicional | Payload tenta gravar `usuario_propriedade.tipo_vinculo=titular` | Banco/API rejeitam o valor |
+| RBAC-BE-N10 | Usuario principal inativo tenta usar Titularidade | Propriedade conserva `titular_id`, mas Usuario principal esta inativo | Autenticacao/autorizacao nega acesso sem invalidar o cadastro da Propriedade |
 
 ## Criterios De Aceite Para Backend
 
@@ -100,7 +105,12 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 - `fazenda_id`, `produtor_id`, `proprietario_id`, `titular_id` e
   `propriedade_id` devem ter migracao planejada com leitura dupla enquanto
   houver compatibilidade.
-- Vinculos `usuario_propriedade` devem ser persistentes.
+- Vinculos `usuario_propriedade` adicionais devem ser persistentes e aceitar
+  somente `usuario_autorizado` ou `colaborador`.
+- `propriedades.titular_id` e a unica fonte persistida da Titularidade; o
+  acesso `titular` e derivado.
+- A conta do Usuario principal pode ser inativada sem constraint impeditiva e
+  sem invalidar a Titularidade cadastral; Usuario inativo nao recebe acesso.
 - Vinculos têm status ativo/inativo e não expiram automaticamente no primeiro
   backend.
 - Criacao, alteracao e remocao de vinculos devem ter auditoria minima.

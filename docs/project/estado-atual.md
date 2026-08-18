@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-12
+> Revisão documental: 2026-08-18
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -11,10 +11,10 @@ está funcional como MVP local e demonstrável, com dados persistidos no
 aparelho, três perfis, Propriedades, Talhões, Visitas, Caderno de Campo,
 Materiais técnicos e mapas.
 
-O aplicativo ainda não é um produto conectado à produção. Não existem backend,
-banco, autenticação real, storage remoto, sincronização produtiva nem RBAC
-validado no servidor. A fundação necessária para iniciar essa transição já foi
-decidida e a próxima entrega é MP-33.
+O aplicativo ainda não é um produto conectado à produção. A MP-33A introduziu
+uma fundação isolada de backend e o DDL inicial, mas ainda não existem
+autenticação real, storage remoto, sincronização produtiva, rotas de negócio ou
+RBAC validado no servidor. O mock e seu funcionamento permanecem inalterados.
 
 ## Estado por camada
 
@@ -23,13 +23,13 @@ decidida e a próxima entrega é MP-33.
 | Aplicativo Android | Funcional e validado no recorte local demonstrativo |
 | Dados | Dataset demonstrativo v2 e persistências locais |
 | Autenticação | Login e sessão locais; não são segurança produtiva |
-| Autorização | Regras e guardas locais; servidor ainda inexistente |
-| API | Fachada e mocks locais; sem serviço HTTP produtivo |
-| Banco | Inexistente |
+| Autorização | Regras e guardas locais; fundação HTTP ainda não aplica autorização de negócio |
+| API | Fundação HTTP isolada com health, readiness e OpenAPI; aplicativo ainda usa mocks locais |
+| Banco | DDL e migrations PostgreSQL/PostGIS da MP-33A; nenhum ambiente produtivo implantado |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Consulta/local demonstrativa por fluxo; sem fila geral de sincronização |
 | Notificações | In-app local; sem persistência produtiva ou push |
-| Testes | Typecheck, contratos de domínio e smoke Android; sem suíte E2E de backend |
+| Testes | Baseline do app e suítes unitária/HTTP/integração do backend validadas separadamente; integração usa Docker/Testcontainers |
 
 ## Fonte de dados ativa
 
@@ -82,7 +82,8 @@ evidência do dataset local, não volume produtivo.
   execução.
 - GeoJSON não possui publicação, versionamento e reconciliação produtivos.
 - Notificações não possuem entrega persistida, isolamento real ou push.
-- Observabilidade, backup, restauração, segredos e CI ainda precisam ser
+- Logs estruturados básicos e CI de fundação não equivalem a observabilidade
+  produtiva; backup, restauração e gestão de segredos ainda precisam ser
   implementados.
 - iOS não faz parte da primeira entrega produtiva.
 
@@ -168,11 +169,31 @@ mapa-base remoto depende do cache oportunista da WebView.
 
 O roteiro atual está em [smoke.md](smoke.md).
 
+## Validação da MP-33A
+
+Em 2026-08-18, a fundação passou com Node.js 24.19.0 por instalação limpa,
+verificação do manifesto, typecheck, 38 testes unitários, 5 testes HTTP, build
+produtivo e smoke do JavaScript ESM compilado. A suíte HTTP comprovou health
+independente e readiness recuperável. A integração real executou 12 cenários
+com Testcontainers e `postgis/postgis:17-3.5`, incluindo startup sem migration
+automática, aplicação e rollback, constraints transacionais, proteção contra
+write-skew concorrente, isolamento do schema `public` e preservação do PostGIS.
+Um smoke adicional subiu o Compose local, aplicou a migration, abriu o backend
+compilado, validou health/readiness/OpenAPI e confirmou o rollback antes de
+remover os recursos temporários criados para o ensaio.
+
+O aplicativo permaneceu inalterado e também passou por `npm run typecheck` e
+`npm run test:domain-compat`. A validação não criou tag nem realizou deploy.
+
 ## Próxima etapa
 
-MP-33 está pronta para começar. O primeiro corte deve criar a fundação do
-backend, banco e migrations, autenticação e sessão reais, OpenAPI, fronteira de
-repositórios no aplicativo e uma vertical mínima de Propriedades.
+A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
+health/readiness, garantias operacionais, testes e CI. O mock e o aplicativo
+permanecem inalterados.
+
+A MP-33B implementará autenticação, sessões, refresh tokens, convites,
+recuperação e auditoria genérica. A MP-33C criará as interfaces de
+repositório, seleção mock/HTTP e a primeira vertical de Propriedades.
 
 As decisões de fundação estão em
 [baseline-backend-v1-2026-08.md](baseline-backend-v1-2026-08.md), e a sequência
@@ -187,6 +208,7 @@ está em [proximos-passos.md](proximos-passos.md).
 | Rotas e navegação | src/navigation |
 | Regras e contratos | src/domain, src/types e src/utils |
 | Dados, mocks e integrações | src/api e src/services |
+| Fundação do backend e banco | backend |
 | Login, sessão e contexto | src/auth e src/contexts |
 | Imagens e recursos visuais | src/assets |
 | Testes e verificações | tests e scripts |

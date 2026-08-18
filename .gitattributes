@@ -1,0 +1,4 @@
+* text=auto
+
+# Migrations: UTF-8 e LF deterministico em Windows e Linux.
+backend/migrations/*.sql text eol=lf working-tree-encoding=UTF-8

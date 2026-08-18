@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-17
+> Atualizado em: 2026-08-18
 >
 > Última execução física registrada: 2026-08-17
 
@@ -188,6 +188,20 @@ dados.
   segurança produtiva.
 
 ## Baseline automatizada
+
+### Evidência da MP-33A em 2026-08-18
+
+| ID | Cenário executável | Resultado |
+|---|---|---|
+| MP33A-01 | Node.js 24: manifesto, typecheck, 38 testes unitários, 5 HTTP, build e carga do ESM compilado | PASSOU |
+| MP33A-02 | Testcontainer `postgis/postgis:17-3.5`: 12 cenários de migration, constraints, concorrência e rollback | PASSOU |
+| MP33A-03 | Compose local: banco saudável, `up`, backend compilado, health/readiness/OpenAPI, `down` e limpeza dos recursos temporários | PASSOU |
+| MP33A-04 | Aplicativo em Node.js 22: typecheck e `test:domain-compat`, sem alteração do mock | PASSOU |
+
+Essa rodada valida a fundação local da MP-33A; não representa deploy,
+autenticação, RBAC produtivo nem integração HTTP do aplicativo.
+
+### Comandos gerais
 
 Antes e depois de mudança de código:
 

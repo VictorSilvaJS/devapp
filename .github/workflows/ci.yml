@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: Aplicativo (Node.js 22)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Typecheck do aplicativo
+        run: npm run typecheck
+
+      - name: Contratos de dominio do aplicativo
+        run: npm run test:domain-compat
+
+  backend:
+    name: Backend sem Docker (Node.js 24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar manifesto de migrations
+        run: npm run migrations:verify
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testes unitarios
+        run: npm run test:unit
+
+      - name: Testes HTTP
+        run: npm run test:http
+
+      - name: Build produtivo
+        run: npm run build
+
+      - name: Smoke do JavaScript compilado
+        run: npm run smoke:dist
+
+  migrations-append-only:
+    name: Migrations append-only contra a branch-base
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout com historico da branch-base
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Buscar branch-base protegida
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+        run: git fetch --no-tags origin "+refs/heads/$BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH"
+
+      - name: Comparar migrations integradas
+        env:
+          MIGRATIONS_BASE_REF: origin/${{ github.base_ref }}
+        run: npm run migrations:verify-base
+
+  backend-integration:
+    name: Backend com PostgreSQL/PostGIS (Node.js 24)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      NODE_ENV: test
+      ALLOW_DESTRUCTIVE_DATABASE_TESTS: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar manifesto antes da integracao
+        run: npm run migrations:verify
+
+      - name: Executar integracao real com Testcontainers
+        run: npm run test:integration

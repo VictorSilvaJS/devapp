@@ -1,6 +1,6 @@
 # Nomenclatura Oficial
 
-> Revisão documental: 2026-08-10
+> Revisão documental: 2026-08-18
 
 ## Termos de produto
 
@@ -16,6 +16,12 @@
 | Período produtivo | Contexto de Safra ou Safrinha |
 | Material técnico | Arquivo técnico ligado a Propriedade e contexto aplicável |
 | Município e UF | Localização e filtro; nunca fonte de permissão |
+
+No backend, Titularidade é a relação cadastral persistida somente em
+`propriedades.titular_id`. Vínculo em `usuario_propriedade` significa acesso
+adicional `usuario_autorizado` ou `colaborador`. `tipoAcesso=titular` é uma
+projeção calculada, não um tipo de vínculo persistido. O mock preserva seu
+contrato local até a adaptação da MP-33C.
 
 ## Valores internos de perfil
 

@@ -1,50 +1,70 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-10
+> Atualizado em: 2026-08-18
 >
-> Próxima tarefa: MP-33 — Autenticação e sessão reais
+> Próxima tarefa: MP-33B — Autenticação e sessão reais
 >
-> Estado: PRONTO
+> Estado: MP-33A CONCLUÍDA; MP-33B PRÓXIMA
 
 ## Ponto de partida
 
-O corte local MP-00 a MP-32 está concluído. A corrida visual ao reabrir no mapa
-um ponto já persistido no Caderno foi corrigida e revalidada no Android em
-`ATUAL-04`; ela não altera os contratos nem a sequência do backend. O trabalho
-agora deve evitar novas simulações de segurança no frontend e iniciar a
-fundação produtiva.
+O corte local MP-00 a MP-32 e a fundação MP-33A estão concluídos. A corrida
+visual ao reabrir no mapa um ponto já persistido no Caderno foi corrigida e
+revalidada no Android em `ATUAL-04`; ela não altera os contratos nem a sequência
+do backend. O trabalho agora deve evitar novas simulações de segurança no
+frontend e iniciar a MP-33B, com autenticação e sessão reais. Essa implementação
+não deve antecipar a integração HTTP reservada à MP-33C.
 
-## MP-33 — Fundação, autenticação e sessão
+## MP-33A — Fundação do backend e banco
 
-Objetivo: criar o primeiro corte executável do backend e substituir a
-autenticação local por um caminho real, sem trocar todas as telas de uma vez.
+Objetivo: criar o primeiro corte executável do backend e do banco sem alterar
+o mock, introduzir autenticação parcial ou conectar o aplicativo por HTTP.
+
+Resultado em 2026-08-18: concluído e validado, inclusive com PostgreSQL/PostGIS
+real em Testcontainers. A execução não criou tag nem realizou deploy.
 
 Entrega mínima:
 
-1. serviço modular em Node.js e TypeScript;
-2. API REST sob versão v1 e contrato OpenAPI;
-3. PostgreSQL/PostGIS com migrations repetíveis;
-4. usuários, credenciais, refresh tokens, revogação e auditoria mínima;
-5. access token de 15 minutos e refresh token de 30 dias;
-6. regra de inatividade e janela offline conforme política de sessão;
-7. endpoint de login, refresh, logout e sessão atual;
-8. listagem de Propriedades autorizadas;
-9. criação administrativa mínima de Propriedade;
-10. interfaces de repositório e primeiro adaptador HTTP no aplicativo;
-11. testes positivos, negativos e de isolamento;
-12. CI mínima para typecheck, testes e migrations.
+1. serviço modular em Node.js 24 LTS, Fastify 5, `pg`, `env-schema`, ESM e
+   TypeScript `NodeNext`, sem ORM;
+2. API REST sob `/v1`, OpenAPI, health e readiness recuperável;
+3. PostgreSQL/PostGIS 17-3.5 com DDL e migrations SQL reversíveis;
+4. tabelas de organização, Usuários, Produtores, Propriedades e acessos
+   adicionais;
+5. `propriedades.titular_id` como única fonte persistida da Titularidade;
+6. manifesto SHA-256 e proteção append-only das migrations;
+7. SSL produtivo verificado, logs estruturados e graceful shutdown;
+8. testes unitários/HTTP sem Docker e integração separada com Testcontainers;
+9. CI com o aplicativo em Node.js 22 e o backend em Node.js 24;
+10. documentação operacional e contratos ativos alinhados.
 
 Critério de aceite:
 
-- nenhuma credencial produtiva em AsyncStorage;
-- autorização não depende de dado confiado do cliente;
-- logout e revogação invalidam a retomada;
-- recurso fora do escopo não vaza existência;
-- mock continua disponível apenas como modo demonstrativo explicitamente
-  separado;
-- contratos e código usam propriedade_id nas novas superfícies.
+- mock e job do aplicativo permanecem inalterados;
+- nenhuma autenticação, sessão ou integração HTTP parcial é introduzida;
+- configuração inválida falha cedo, mas banco indisponível não impede a porta
+  HTTP de abrir;
+- `/v1/health` independe do banco e `/v1/readiness` reflete PostgreSQL e
+  PostGIS com timeout curto e recuperação;
+- migrations não executam no startup, possuem `up/down` explícitos e não
+  removem automaticamente o PostGIS;
+- testes destrutivos exigem as três travas aprovadas e integração usa somente
+  a URL do Testcontainer;
+- todas as validações independentes de Docker passam; indisponibilidade do
+  Docker é registrada como bloqueio da integração, nunca como aprovação.
 
-## Sequência depois de MP-33
+## Sequência interna da MP-33
+
+| Ordem | Tarefa | Objetivo | Estado |
+|---:|---|---|---|
+| 33A | MP-33A | Fundação, DDL, operação, testes e CI | CONCLUÍDA |
+| 33B | MP-33B | Autenticação, sessões, refresh, convites, recuperação e auditoria genérica | PRÓXIMA |
+| 33C | MP-33C | Repositórios, seleção mock/HTTP e vertical de Propriedades | BACKLOG |
+
+O mock permanece integralmente inalterado na MP-33A. A MP-33C adaptará o
+vínculo local `titular` para o acesso calculado pelo backend.
+
+## Sequência depois de MP-33C
 
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
@@ -57,7 +77,7 @@ Critério de aceite:
 | 40 | MP-40 | Acessibilidade e matriz de dispositivos | BACKLOG |
 | 41 | MP-41 | Regressão completa dos três perfis | BACKLOG |
 
-MP-38 não bloqueia MP-33. Ele depende de ambiente de campo e deve permanecer
+MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.
 
 ## Como iniciar cada tarefa

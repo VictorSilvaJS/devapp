@@ -1,8 +1,8 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-08-07: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
+Status revisado em 2026-08-18: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
 define a matriz de testes baseada em `contrato-api-rbac.md`, nas decisoes 31 a
-38 e em `baseline-backend-v1-2026-08.md`. Ele nao implementa backend.
+42 e em `baseline-backend-v1-2026-08.md`. Ele nao implementa backend.
 
 ## Escopo Da Matriz
 
@@ -14,6 +14,8 @@ Separacao obrigatoria:
 - Mock v2: deve usar vinculos diretos `usuario_propriedade` como escopo do
   colaborador.
 - Backend futuro: deve validar permissao por acao e por Propriedade.
+- Backend: Titularidade deriva exclusivamente de `propriedades.titular_id`;
+  `usuario_propriedade` persiste somente `usuario_autorizado` e `colaborador`.
 - Municipio e UF podem filtrar listagens e atribuicoes administrativas em
   lote, mas nao concedem acesso.
 - Fora desta fase: implementar backend, autenticar de verdade ou depender do
@@ -69,25 +71,27 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-USR-09 | Admin atualiza usuario | Admin | Usuario existe | `PATCH /usuarios/:id` | Campos parciais permitidos | `200 OK` | Admin/papel autorizado atualiza usuario | Automatizado backend/API |
 | API-RBAC-USR-10 | Colaborador atualiza usuario sem permissao | Colaborador | Sem papel administrativo | `PATCH /usuarios/:id` | Campos parciais | `403 Forbidden` | Colaborador nao edita usuarios por padrao | Automatizado backend/API |
 | API-RBAC-USR-11 | Admin altera status | Admin | Usuario existe e regra permite | `PATCH /usuarios/:id/status` | `{ "status": "inativo" }` | `200 OK` | Status e controlado por admin | Automatizado backend/API |
-| API-RBAC-USR-12 | Alterar status com regra conflitante | Admin | Mudanca viola vinculo obrigatorio | `PATCH /usuarios/:id/status` | `{ "status": "ativo" }` | `409 Conflict` | Conflito de regra retorna 409 | Automatizado backend/API |
+| API-RBAC-USR-12 | Inativar usuario principal do Titular | Admin | Usuario principal ativo e Propriedade titularizada | `PATCH /usuarios/:id/status` | `{ "status": "inativo" }` | `200 OK` | Desativacao da conta nao desfaz nem invalida a Titularidade cadastral | Automatizado backend/API |
+| API-RBAC-USR-13 | Usuario principal inativo tenta acessar como Titular | Produtor inativo | `titular_id` permanece valido | `GET /me/propriedades` | Nao se aplica | `401 Unauthorized` | Usuario inativo nao obtem acesso apesar da Titularidade cadastral | Automatizado backend/API |
 
 ## Propriedades
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
 | API-RBAC-PROP-01 | Admin lista Propriedades | Admin | Admin ativo | `GET /propriedades` | Filtros opcionais | `200 OK` | Admin tem acesso global | Automatizado backend/API |
-| API-RBAC-PROP-02 | Produtor lista vinculadas | Produtor | `usuario_propriedade` ativo ou titularidade | `GET /propriedades` | Filtros opcionais | `200 OK` | Produtor acessa Propriedades vinculadas | Automatizado backend/API |
+| API-RBAC-PROP-02 | Produtor lista vinculadas | Produtor | Titularidade derivada ou `usuario_propriedade` adicional ativo | `GET /propriedades` | Filtros opcionais | `200 OK` | Produtor acessa Propriedades vinculadas | Automatizado backend/API |
 | API-RBAC-PROP-03 | Colaborador lista vinculadas diretamente | Colaborador | `usuario_propriedade` ativo | `GET /propriedades` | Filtros opcionais | `200 OK` | Colaborador acessa somente Propriedades vinculadas | Automatizado backend/API |
 | API-RBAC-PROP-04 | Colaborador filtra vinculadas por municipio/UF | Colaborador | Vinculos diretos ativos em mais de uma localidade | `GET /propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao filtra o escopo ja autorizado | Automatizado backend/API |
 | API-RBAC-PROP-05 | Colaborador abre vinculada em outra localidade | Colaborador | `usuario_propriedade` ativo | `GET /propriedades/:id` | Nao se aplica | `200 OK` | Vinculo direto independe de municipio ou UF | Automatizado backend/API |
 | API-RBAC-PROP-06 | Produtor tenta abrir Propriedade de outro titular | Produtor | Sem vinculo ativo | `GET /propriedades/:id` | Nao se aplica | `404 Not Found` | Produtor nao acessa outro titular nem confirma sua existencia | Automatizado backend/API |
 | API-RBAC-PROP-07 | Colaborador sem vinculo tenta abrir Propriedade | Colaborador | Sem `usuario_propriedade` ativo | `GET /propriedades/:id` | Nao se aplica | `404 Not Found` | Vinculo direto ativo e obrigatorio | Automatizado backend/API |
 | API-RBAC-PROP-08 | Recurso inexistente | Admin | Id inexistente | `GET /propriedades/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna 404 | Automatizado backend/API |
-| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "uf_id": "...", "uf_sigla": "RS", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Admin cria cadastro e vínculos na mesma transação | Automatizado backend/API |
+| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "uf_id": "...", "uf_sigla": "RS", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Admin grava a Titularidade somente em `titular_id` | Automatizado backend/API |
 | API-RBAC-PROP-10 | Criar Propriedade com payload invalido | Admin | Campo obrigatorio ausente | `POST /propriedades` | `{ "nome": "..." }` | `400 Bad Request` | Payload invalido e recusado | Automatizado backend/API |
-| API-RBAC-PROP-11 | Conflito de titular/vinculo | Admin | Regra de titular conflita | `POST /propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 | Automatizado backend/API |
+| API-RBAC-PROP-11 | Conflito de Titularidade | Admin | Regra estrutural de Titularidade conflita | `POST /propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 sem depender de vinculo `titular` | Automatizado backend/API |
 | API-RBAC-PROP-12 | Admin edita Propriedade | Admin | Propriedade existe | `PATCH /propriedades/:id` | Campos parciais | `200 OK` | Admin edita cadastro | Automatizado backend/API |
 | API-RBAC-PROP-13 | Colaborador edita cadastro sem permissao | Colaborador | Escopo valido, sem permissao de acao | `PATCH /propriedades/:id` | Campos parciais | `403 Forbidden` | Escopo nao implica editar cadastro | Automatizado backend/API |
+| API-RBAC-PROP-14 | API apresenta acesso do Titular | Produtor | Usuario principal ativo do Produtor indicado por `titular_id` | `GET /propriedades/:id/permissao` | Nao se aplica | `200 OK` | `tipoAcesso=titular` e calculado e nao possui linha duplicada em `usuario_propriedade` | Automatizado backend/API |
 
 ## Vinculos
 
@@ -102,6 +106,7 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-VINC-07 | Admin atribui lote filtrado | Admin | Selecao confirmada e payload valido | `PUT /usuarios/:id/propriedades` | Lista de `propriedade_id` selecionados | `200 OK` | Cada item gera vinculo direto persistente e auditavel | Automatizado backend/API |
 | API-RBAC-VINC-08 | Propriedade inexistente no lote | Admin | Um `propriedade_id` nao existe | `PUT /usuarios/:id/propriedades` | Payload com id inexistente | `404 Not Found` ou `409 Conflict` | Nao criar vinculo para recurso invalido | Automatizado backend/API |
 | API-RBAC-VINC-09 | Colaborador tenta alterar vinculos | Colaborador | Sem papel administrativo | `PUT /usuarios/:id/propriedades` | Payload valido | `403 Forbidden` | Colaborador nao administra vinculos por padrao | Automatizado backend/API |
+| API-RBAC-VINC-10 | Admin tenta persistir vinculo titular | Admin | Usuario e Propriedade existem | `PUT /usuarios/:id/propriedades` | `{ "propriedades": [{ "propriedade_id": "prop_1", "tipo_vinculo": "titular", "status": "ativo" }] }` | `422 Unprocessable Entity` | `titular` nao e valor aceito em `usuario_propriedade` | Automatizado backend/API |
 
 ## Permissao E Escopo
 
@@ -164,6 +169,8 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 - Casos de rota direta/API por id fora do escopo.
 - Casos de payload invalido para criacao/alteracao.
 - Casos de vinculo duplicado ou conflito de regra.
+- Casos de Titularidade derivada, conta principal inativa e rejeicao do tipo de
+  vinculo `titular`.
 
 ## Testes Que Podem Ser Smoke/Manual
 

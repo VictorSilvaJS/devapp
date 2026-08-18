@@ -4,6 +4,8 @@
 >
 > Definida em: 2026-07-30
 >
+> Revisão documental: 2026-08-18
+>
 > Origem: `MP-01` / `QA-P0-04`
 
 ## Objetivo
@@ -201,7 +203,7 @@ retencao, criptografia e sincronizacao do cache devem ser definidas por fluxo.
 
 Status em 2026-08-07: as decisões de organização, RBAC e cache por fluxo foram
 fechadas em `baseline-backend-v1-2026-08.md`. Os itens abaixo são entregas de
-`MP-33`, não decisões anteriores que mantenham a fase bloqueada.
+`MP-33B`, não decisões anteriores que mantenham a fase bloqueada.
 
 O fechamento produtivo depende de:
 
@@ -213,6 +215,6 @@ O fechamento produtivo depende de:
 - deteccao de conectividade e ciclo de vida do aplicativo;
 - testes negativos de API, rota direta e troca de usuario.
 
-Essas dependencias pertencem a `MP-33 — Autenticacao e sessao reais`. Ate
+Essas dependencias pertencem a `MP-33B — Autenticacao e sessao reais`. Ate
 essa tarefa ser concluida, `QA-P0-04` permanece resolvida apenas em nivel de
 contrato, sem alegacao de seguranca produtiva.

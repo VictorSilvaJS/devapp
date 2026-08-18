@@ -15,8 +15,10 @@ uma API HTTP nem comprova backend, autenticação ou autorização produtivos.
 
 ## Próxima evolução
 
-MP-33 deve introduzir interfaces de repositório e o primeiro adaptador HTTP.
+MP-33C deve introduzir interfaces de repositório e o primeiro adaptador HTTP.
 As telas não devem trocar o mock diretamente por chamadas de rede espalhadas.
+MP-33A cria somente a fundação do backend e mantém esta camada e o mock
+integralmente inalterados.
 
 Os contratos vigentes estão em
 [docs/project](../../docs/project/README.md), especialmente:

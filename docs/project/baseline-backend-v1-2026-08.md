@@ -1,17 +1,21 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `APROVADO_PARA_INICIO`
+> Status: `ATIVO`; fundação da `MP-33A` implementada
 >
 > Fechamento: 2026-08-07
 >
-> Escopo: fundação do backend e do banco; não representa backend já
-> implementado nem autorização de release produtivo.
+> Revisão: 2026-08-18
+>
+> Escopo: baseline do backend e do banco. A fundação foi implementada na
+> `MP-33A`; as fases posteriores e a autorização de release não estão
+> concluídas.
 
 ## 1. Veredito
 
 As decisões de domínio necessárias para iniciar o backend estão fechadas.
-`MP-33 — Autenticação e sessão reais` pode sair de `BLOQUEADO` e entrar em
-`PRONTO`.
+A MP-33 foi dividida em três cortes. A MP-33A cria somente a fundação, o DDL
+e as garantias operacionais; autenticação e sessão pertencem à MP-33B, e a
+integração do aplicativo e a vertical de Propriedades pertencem à MP-33C.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -22,11 +26,15 @@ possuem portões próprios antes de suas respectivas verticais ou do release.
 O primeiro backend seguirá estas decisões:
 
 - backend modular único, sem microserviços no primeiro corte;
-- runtime Node.js com TypeScript;
+- runtime Node.js 24 LTS, com `engines` restrito a `>=24 <25`;
+- Fastify 5, `pg` e `env-schema`, sem ORM;
+- ESM com `type=module` e TypeScript `NodeNext`;
 - API REST JSON versionada em `/v1` e documentada por OpenAPI;
 - banco relacional PostgreSQL;
 - extensão PostGIS para geometrias e operações espaciais;
-- migrations SQL versionadas e executadas pelo pipeline de entrega;
+- imagem de desenvolvimento e integração `postgis/postgis:17-3.5`;
+- migrations SQL versionadas com `node-pg-migrate@9.0.0`, executadas por
+  comando ou pipeline e nunca automaticamente no startup da API;
 - object storage privado e compatível com S3 para arquivos e geometrias de
   origem;
 - URLs temporárias e autorizadas para upload/download;
@@ -35,9 +43,72 @@ O primeiro backend seguirá estas decisões:
 - frontend acessando casos de uso/repositórios, sem trocar importações do mock
   diretamente por HTTP dentro das telas.
 
-Framework HTTP, provedor de nuvem e ferramenta de migrations podem ser
-selecionados no scaffold sem alterar este contrato. A escolha deve preservar
-OpenAPI, PostgreSQL/PostGIS, transações, testes de integração e portabilidade.
+O build produtivo usa `tsc` para gerar JavaScript. Testes TypeScript usam
+`node --import=tsx --test`, mantendo `node:test` como runner. Testes
+unitários/HTTP não dependem de Docker; integração com PostgreSQL/PostGIS é uma
+suíte separada com Testcontainers. O job do aplicativo permanece em Node.js
+22, sem ser elevado junto com o backend.
+
+PNG, PDF e ZIP não serão blobs no PostgreSQL. O banco guardará metadados e
+chaves do futuro object storage; o PostGIS guardará os dados geoespaciais.
+
+### 2.1 Disciplina das migrations
+
+- cada migration é um arquivo SQL com `-- Up Migration` e
+  `-- Down Migration` explícitos;
+- `CREATE EXTENSION IF NOT EXISTS postgis` pode fazer parte do `up`, mas o
+  `down` não remove a extensão e desfaz somente objetos do aplicativo;
+- o manifesto guarda uma entrada SHA-256 por arquivo, com bytes normalizados
+  deterministicamente em UTF-8/LF;
+- o verificador detecta hash divergente, arquivo sem entrada, entrada sem
+  arquivo, identificador duplicado, renomeação, exclusão ou alteração de
+  migration já integrada;
+- a verificação ocorre antes de `up`, `down`, `redo` e da integração;
+- somente migrations presentes na branch-base protegida são imutáveis; as
+  novas da MP-33A podem ser ajustadas e seladas depois de estabilizadas;
+- a CI de pull request compara as migrations com a branch-base; uma correção
+  posterior sempre cria outro arquivo;
+- não existe tabela adicional de checksum no PostgreSQL nesta fase.
+
+### 2.2 Garantias operacionais da MP-33A
+
+- configuração inválida falha antes da abertura da porta;
+- indisponibilidade temporária do PostgreSQL não impede a API de escutar;
+- `/v1/health` independe do banco;
+- `/v1/readiness` usa timeout curto, responde `503` enquanto PostgreSQL ou
+  PostGIS estiverem indisponíveis e volta a `200` após recuperação;
+- `SIGTERM` e `SIGINT` executam shutdown idempotente, fechando Fastify e o pool
+  PostgreSQL;
+- logs estruturados possuem request ID e ocultam cabeçalhos, credenciais,
+  tokens e valores de conexão; configuração integral e mensagens internas do
+  PostgreSQL não são registradas;
+- produção exige SSL PostgreSQL com validação de certificado X.509; não se usa
+  `rejectUnauthorized=false`; a `DATABASE_URL` não aceita parâmetros de
+  consulta nem fragmento, evitando que o parser sobrescreva TLS, `search_path`
+  ou timeouts tipados;
+- testes destrutivos exigem simultaneamente `NODE_ENV=test`, banco terminado
+  em `_test` e `ALLOW_DESTRUCTIVE_DATABASE_TESTS=true`;
+- integração ignora qualquer `DATABASE_URL` do ambiente e usa somente a URL
+  produzida pelo Testcontainer;
+- se Docker estiver indisponível, a integração é registrada como bloqueada,
+  nunca simulada ou declarada aprovada.
+
+### 2.3 Convenções do DDL inicial
+
+- IDs das entidades usam UUID v4 gerado por `gen_random_uuid()`, exceto o ID
+  técnico textual e imutável `org_tche_fertilidade`;
+- o nome de exibição da organização é um atributo separado de seu ID;
+- datas usam `timestamptz`, CHECK constraints possuem nomes estáveis e
+  `atualizado_em` é mantido por trigger pequeno e testado;
+- PKs, FKs compostas, UNIQUEs, índices únicos parciais e CHECKs locais têm
+  prioridade;
+- triggers de constraint diferidas existem somente para invariantes realmente
+  entre tabelas, e os testes exercitam ordens diferentes dentro da transação;
+- os DMLs que participam dessas invariantes são serializados pela linha da
+  organização antes de adquirir locks de linha; a validação diferida testa o
+  estado final e um cenário concorrente impede write-skew;
+- FKs declaram `ON DELETE RESTRICT` ou `NO ACTION` conforme a necessidade de
+  diferimento; não existem cascatas destrutivas.
 
 ## 3. Organização E Identificadores
 
@@ -70,7 +141,7 @@ Caso surja essa necessidade, ela entra como evolução explícita de RBAC.
 ### 4.2 Escopo
 
 - Admin acessa toda a organização.
-- Produtor acessa Propriedades com vínculo ativo `titular` ou
+- Produtor acessa Propriedades pela Titularidade derivada ou por vínculo ativo
   `usuario_autorizado`.
 - Colaborador acessa somente Propriedades com vínculo direto ativo
   `colaborador`.
@@ -108,15 +179,15 @@ permissão da ação.
 
 ## 5. Ciclo Dos Vínculos
 
-`usuario_propriedade` no backend v1 possui:
+`usuario_propriedade` no backend v1 guarda somente acessos adicionais e possui:
 
 - `id`;
 - `organizacao_id`;
 - `usuario_id`;
 - `propriedade_id`;
-- `tipo_vinculo`: `titular`, `usuario_autorizado` ou `colaborador`;
+- `tipo_vinculo`: `usuario_autorizado` ou `colaborador`;
 - `status`: `ativo` ou `inativo`;
-- `origem`: inicialmente `admin_manual` ou `ativacao_titular`;
+- `origem`: inicialmente `admin_manual`;
 - `criado_por`, `criado_em`, `atualizado_por` e `atualizado_em`;
 - motivo obrigatório para inativação.
 
@@ -126,11 +197,25 @@ Regras:
 - vínculo não é apagado fisicamente;
 - não pode existir vínculo ativo duplicado de mesmo usuário, Propriedade e
   tipo;
-- Colaborador ativo precisa ter ao menos um vínculo ativo;
-- vínculo `titular` corresponde ao `titular_id` da Propriedade;
-- vínculo de Titular não pode ser inativado pela edição comum;
-- transferência futura de Titular precisa ser transacional e auditada;
+- o workflow/API futuro só habilita operacionalmente um Colaborador com ao
+  menos um vínculo ativo; a MP-33A não cria a constraint inversa e um Usuário
+  sem vínculo simplesmente não recebe escopo;
+- `titular` não é valor aceito nem persistido em `usuario_propriedade`;
+- `propriedades.titular_id` é a única fonte persistida da Titularidade;
+- o acesso efetivo do Titular é derivado pela cadeia Propriedade → Produtor
+  Titular → Usuário principal;
+- uma resposta futura pode projetar `tipoAcesso=titular`, sem persistir esse
+  valor como vínculo;
+- o primeiro banco guarda somente o Titular atual; transferência e histórico
+  aguardam contrato transacional e de auditoria;
 - redução de escopo revoga/revalida sessão e invalida cache não autorizado.
+
+As garantias do banco cobrem organização comum, referências válidas, tipos
+permitidos, ausência de duplicidade ativa e compatibilidade dos vínculos
+adicionais. A conta do usuário principal pode ser inativada sem desfazer a
+Titularidade cadastral. A futura autenticação/autorização bloqueará o acesso
+de usuário inativo; não haverá constraint permanente que impeça essa
+desativação.
 
 ## 6. Usuário, Ativação E Sessão
 
@@ -255,6 +340,9 @@ backend.
   promoção automática do `AsyncStorage`.
 
 Isso encerra a necessidade de planilha de migração territorial do mock v1.
+O comportamento e a representação atuais do mock permanecem integralmente
+inalterados na MP-33A. A adaptação entre o vínculo local `titular` e a
+Titularidade derivada do backend pertence exclusivamente à MP-33C.
 
 ## 11. O Que Está Fechado E O Que Continua
 
@@ -277,14 +365,16 @@ Isso encerra a necessidade de planilha de migração territorial do mock v1.
 
 ### Entregas que começam com o backend
 
-- scaffold, migrations e OpenAPI;
-- interfaces de repositório no app;
-- autenticação e sessão reais (`MP-33`);
+- scaffold, migrations, DDL, OpenAPI e garantias operacionais (`MP-33A`);
+- autenticação, sessões, refresh tokens, convites, recuperação e auditoria
+  genérica (`MP-33B`);
+- interfaces de repositório, seleção mock/HTTP e primeira vertical de
+  Propriedades no aplicativo (`MP-33C`);
 - RBAC no servidor (`MP-35`);
 - CI do backend;
 - observabilidade, backup e restauração.
 
-### Portões posteriores, sem bloquear `MP-33`
+### Portões posteriores, sem bloquear `MP-33A`
 
 - parâmetros de retenção e limites de Materiais antes da vertical de arquivos;
 - limiares geoespaciais e retenção de rascunhos antes de `MP-37`;
@@ -294,15 +384,18 @@ Isso encerra a necessidade de planilha de migração territorial do mock v1.
 
 ## 12. Primeira Entrega Recomendada
 
-O primeiro corte real deve conter apenas:
+A MP-33A deve conter somente:
 
-1. scaffold do backend e banco;
-2. migrations de organização, usuários, produtores, Propriedades e vínculos;
-3. login, refresh, logout e `/auth/me`;
-4. listagem autorizada de Propriedades;
-5. criação administrativa de Usuário e Propriedade conforme o fluxo v2;
-6. testes de isolamento, status e rota direta;
-7. adaptador HTTP inicial no app, mantendo o adaptador mock para testes.
+1. scaffold do backend em Node.js 24, Fastify 5 e TypeScript;
+2. conexão PostgreSQL/PostGIS e migrations de organização, usuários,
+   produtores, Propriedades e vínculos adicionais;
+3. OpenAPI, health, readiness, logs e graceful shutdown;
+4. manifesto e verificação append-only das migrations;
+5. testes unitários/HTTP separados da integração com Testcontainers;
+6. CI com runtime do aplicativo e do backend separados;
+7. documentação operacional.
 
-Materiais, GeoJSON produtivo, Caderno append-only e notificações entram depois
-que essa fundação estiver implantada e observável.
+Autenticação, sessões, refresh tokens, convites, recuperação e auditoria
+genérica ficam na MP-33B. Repositórios no app, seleção mock/HTTP e vertical de
+Propriedades ficam na MP-33C. Materiais, GeoJSON produtivo, Caderno append-only
+e notificações entram depois que a fundação estiver implantada e observável.

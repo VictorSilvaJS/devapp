@@ -2,7 +2,7 @@
 
 > Status: `ATIVO`
 >
-> Revisado em: 2026-08-05
+> Revisado em: 2026-08-18
 >
 > Substitui o contrato de Regional/Área Operacional definido originalmente em
 > `MP-02`.
@@ -51,7 +51,7 @@ urbana. Nome de cidade e sigla de estado não devem ser usados como chave.
 
 ## Escopo Operacional
 
-O escopo operacional v2 é explícito por Propriedade:
+No mock v2, o escopo operacional é explícito por Propriedade:
 
 ```ts
 interface UsuarioPropriedadeV2 {
@@ -64,12 +64,18 @@ interface UsuarioPropriedadeV2 {
 }
 ```
 
-O perfil define as ações; o vínculo define o conjunto de Propriedades.
+O perfil define as ações; o vínculo local define o conjunto de Propriedades.
 
 - Admin possui visão global dentro da Tchê Fertilidade.
 - Produtor acessa por vínculo de Titular ou usuário autorizado.
 - Colaborador acessa por vínculo direto `colaborador`.
 - Usuário sem vínculo ativo não acessa a Propriedade.
+
+No backend, `usuario_propriedade` aceita somente os acessos adicionais
+`usuario_autorizado` e `colaborador`. A Titularidade existe apenas em
+`propriedades.titular_id`, e o acesso do Titular é derivado pelo Produtor e seu
+Usuário principal. Uma eventual projeção `tipoAcesso=titular` não é outro
+registro. A MP-33C adaptará essa diferença sem alterar o contrato local.
 
 ## Administração Em Lote
 

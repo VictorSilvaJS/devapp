@@ -57,6 +57,8 @@ porque misturavam propostas ou roteiros superados com a documentação atual.
 | Consultar evidências geradas | ../dist |
 
 Para execução por agente de código, comece em [AGENTS.md](../AGENTS.md).
+Para operar a fundação da MP-33A, consulte o
+[README do backend](../backend/README.md).
 
 ## Regra prática
 

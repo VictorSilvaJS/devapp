@@ -15,12 +15,17 @@ Revisao em 2026-08-07: `APROVADO_PARA_IMPLEMENTACAO`. O contrato de escopo foi a
 acesso; Colaborador usa somente vinculo direto ativo com Propriedade. As
 convencoes finais de fundacao estao em `baseline-backend-v1-2026-08.md`.
 
+Revisao em 2026-08-18: a MP-33A implementa apenas fundacao e DDL. Endpoints de
+autenticacao pertencem a MP-33B e a primeira vertical HTTP de Propriedades, a
+MP-33C. O mock permanece inalterado.
+
 ## Decisoes De Base
 
 - Backend valida permissao por acao e por Propriedade.
 - Frontend nao e fonte de seguranca.
 - Admin tem acesso global.
-- Produtor acessa Propriedade por vinculo/titularidade.
+- Produtor acessa Propriedade pela Titularidade derivada ou pelo vinculo
+  adicional `usuario_autorizado`.
 - Colaborador acessa somente Propriedade atribuida diretamente por vinculo
   ativo.
 - Municipio/UF sao localizacao e filtro, nao fonte de autorizacao.
@@ -28,6 +33,12 @@ convencoes finais de fundacao estao em `baseline-backend-v1-2026-08.md`.
   existir apenas como compatibilidade/migracao, nao como contrato final.
 - Contratos novos usam `organizacao_id`, `propriedade_id`, `titular_id`,
   `usuario_id`, `municipio_id`, `uf_id` e ids canonicos equivalentes.
+- `propriedades.titular_id` e a unica fonte persistida da Titularidade;
+  `usuario_propriedade` aceita somente `usuario_autorizado` e `colaborador`.
+- A API pode projetar `tipoAcesso=titular`, calculado pela cadeia Propriedade,
+  Produtor Titular e Usuario principal.
+- Usuario principal inativo conserva a Titularidade cadastral, mas nao obtem
+  acesso; sua desativacao nao e impedida por constraint permanente.
 
 ## Respostas Padrao
 
@@ -178,8 +189,8 @@ Resposta minima:
 
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Outros erros: `400 Bad Request`; `409 Conflict` se a mudanca violar regra de
-  vinculo obrigatorio.
+- Outros erros: `400 Bad Request`; `409 Conflict` para conflito cadastral que
+  nao seja a mera existencia de Propriedade titularizada.
 - Regra de permissao: Admin/papel autorizado.
 - Compatibilidade: status futuro substitui booleanos legados.
 
@@ -225,14 +236,14 @@ Resposta minima:
 
 - Resposta de sucesso: `201 Created`.
 - Acesso negado: `401 Unauthorized`; `403 Forbidden`.
-- Outros erros: `400 Bad Request`; `409 Conflict` para regra de titular/vinculo
+- Outros erros: `400 Bad Request`; `409 Conflict` para regra de Titularidade
   conflitante.
 - Regra de permissao: Admin/papel autorizado; Colaborador somente se politica
   futura explicita permitir.
-- Compatibilidade: o backend deve repetir a transacao v2 já aprovada: criar a
-  Propriedade, criar o vínculo de Titular e ativar Produtor pendente quando for
-  a primeira Titularidade. Não existe cadastro rápido de Propriedade dentro de
-  Novo Usuário.
+- Compatibilidade: o backend cria a Propriedade e registra somente
+  `titular_id`; nao cria vinculo `titular`. A ativacao inicial e o restante da
+  vertical administrativa pertencem a MP-33C. Nao existe cadastro rapido de
+  Propriedade dentro de Novo Usuario.
 
 ### `PATCH /propriedades/:id`
 
@@ -280,6 +291,8 @@ Resposta minima:
 - Outros erros: `400 Bad Request`; `409 Conflict` para vinculo duplicado ou
   regra conflitante.
 - Regra de permissao: Admin/papel autorizado.
+- Regra de validacao: `tipo_vinculo=titular` e rejeitado; somente
+  `usuario_autorizado` e `colaborador` podem ser persistidos.
 - Compatibilidade: `propriedades_atribuidas` deve migrar para vinculos
   persistentes, auditaveis e com status.
 
@@ -291,7 +304,8 @@ Resposta minima:
 - Payload minimo: filtros opcionais.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`.
-- Regra de permissao: Admin global; Produtor por vinculo/titularidade;
+- Regra de permissao: Admin global; Produtor por Titularidade derivada ou
+  vinculo adicional;
   Colaborador por vinculo direto ativo.
 - Compatibilidade: endpoint substitui dependencia de filtro frontend como fonte
   de seguranca.
@@ -332,7 +346,8 @@ Resposta minima:
 {
   "propriedade_id": "prop_1",
   "permitido": true,
-  "origens": ["vinculo_direto"],
+  "tipoAcesso": "titular",
+  "origens": ["titularidade_derivada"],
   "acoes": ["read", "create_visita"]
 }
 ```
@@ -430,11 +445,11 @@ Resposta minima:
 
 ## Implementacao Pendente
 
-As decisões de fundação estão encerradas na baseline v1. Durante `MP-33` e
-`MP-35`, ainda é necessário:
+As decisões de fundação estão encerradas na baseline v1. Depois da MP-33A,
+ainda é necessário:
 
-- materializar autenticação, refresh, revogação e sessão;
-- gerar OpenAPI e migrations a partir deste contrato;
+- materializar autenticação, refresh, revogação e sessão na MP-33B;
+- implementar a vertical de Propriedades e sua projeção de acesso na MP-33C;
 - aplicar cursor, limites e envelope definidos na baseline;
 - aplicar `404` fora do escopo e `403` para ação negada dentro do escopo;
 - persistir auditoria dos vínculos ativos/inativos, sem expiração automática;

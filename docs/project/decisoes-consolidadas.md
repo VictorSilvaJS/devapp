@@ -1,6 +1,6 @@
 # Decisões Consolidadas
 
-> Revisão documental: 2026-08-10
+> Revisão documental: 2026-08-18
 
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
@@ -40,7 +40,9 @@ sub-regiões ou microrregiões como fonte de autorização.
 - O Administrador cria primeiro o Usuário Produtor.
 - Um Produtor sem Propriedade permanece pendente.
 - A primeira Propriedade é criada em etapa própria, seleciona o Titular e ativa
-  o vínculo em uma operação atômica.
+  Usuário e Produtor em uma operação atômica. O mock também preserva seu
+  vínculo local `titular`; o backend registra a Titularidade somente em
+  `propriedades.titular_id`.
 - Troca de perfil, troca de Titular e inativação de vínculo são operações
   estruturais e auditáveis.
 
@@ -64,13 +66,14 @@ sub-regiões ou microrregiões como fonte de autorização.
 ### 31. Organização única
 
 A Tchê Fertilidade é a única organização do primeiro contrato, identificada
-internamente por org_tche_fertilidade. Multiempresa fica fora do primeiro
-backend.
+internamente por `org_tche_fertilidade`. Esse ID técnico textual é imutável e
+separado do nome de exibição. Multiempresa fica fora do primeiro backend.
 
 ### 32. Titular principal
 
-Cada Propriedade possui exatamente um Produtor Titular principal ativo. Outros
-usuários podem ter vínculo sem se tornarem Titulares.
+Cada Propriedade possui exatamente um Produtor Titular principal atual. Outros
+usuários podem ter vínculo sem se tornarem Titulares. Estados necessários para
+autorização não alteram essa responsabilidade cadastral.
 
 ### 33. Colaborador por vínculo direto
 
@@ -111,11 +114,62 @@ autorizada pode usar cache; Caderno admite rascunho local próprio. Transições
 publicações e envios sensíveis exigem conexão. Notificações iniciais são
 in-app, e Android é a primeira plataforma produtiva.
 
+### 39. Titularidade sem duplicação no backend
+
+No banco do backend, `propriedades.titular_id` é a única fonte persistida da
+Titularidade e referencia o cadastro de Produtor. `usuario_propriedade` guarda
+somente acessos adicionais dos tipos `usuario_autorizado` e `colaborador`; o
+tipo `titular` não é aceito nessa tabela.
+
+O acesso do Titular será calculado pela cadeia Propriedade → Produtor Titular
+→ Usuário principal. Uma API futura pode apresentar `tipoAcesso=titular`,
+mas esse valor será derivado. O mock v2 permanece inalterado e sua adaptação
+para o contrato do backend pertence à MP-33C.
+
+A MP-33A armazena somente o Titular atual. Histórico e operação de
+transferência exigem contrato transacional e auditoria futuros. A conta do
+usuário principal pode ser inativada sem invalidar a Titularidade cadastral;
+usuário inativo não obtém acesso quando autenticação e autorização forem
+implementadas.
+
+### 40. Migrations SQL imutáveis
+
+O backend fixa `node-pg-migrate@9.0.0` e possui `package-lock.json` próprio.
+Cada migration usa um arquivo SQL com seções explícitas `-- Up Migration` e
+`-- Down Migration` e uma entrada SHA-256 no manifesto.
+
+Durante o desenvolvimento da MP-33A, uma migration nova pode ser ajustada até
+ser estabilizada e selada. Depois de integrar a branch-base protegida, ela é
+append-only: alteração, renomeação, exclusão, divergência de hash, arquivo sem
+entrada, entrada sem arquivo ou identificador duplicado devem falhar antes de
+`up`, `down`, `redo` e testes de integração. Correções posteriores sempre usam
+uma nova migration. Não há tabela adicional de checksums no PostgreSQL nesta
+fase.
+
+### 41. Binários fora do PostgreSQL
+
+PNG, PDF e ZIP não serão armazenados como blobs no PostgreSQL. O banco guardará
+metadados e chaves de um futuro object storage privado; o PostGIS será usado
+para dados geoespaciais e operações espaciais. A MP-33A não implementa o
+storage de objetos.
+
+### 42. Faseamento da MP-33
+
+- MP-33A: fundação do backend, DDL, migrations, saúde/readiness, operação,
+  testes e CI;
+- MP-33B: autenticação, sessões, refresh tokens, convites, recuperação e
+  auditoria genérica;
+- MP-33C: interfaces de repositório e seleção mock/HTTP no aplicativo e a
+  primeira vertical de Propriedades.
+
+Nenhuma dessas decisões altera o mock durante a MP-33A.
+
 ## Contratos que detalham as decisões
 
 - [Baseline do backend v1](baseline-backend-v1-2026-08.md)
 - [Modelo de dados v2](modelo-dados-mock-v2.md)
 - [Modelo territorial](modelo-territorial.md)
+- [Modelo de Material técnico](modelo-material-tecnico.md)
 - [Matriz de RBAC](matriz-rbac-backend.md)
 - [Política de sessão](politica-sessao.md)
 - [Ciclo do Caderno](ciclo-vida-caderno.md)

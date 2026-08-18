@@ -1,5 +1,7 @@
 # Núcleo Ativo do Projeto
 
+> Revisão documental: 2026-08-18
+
 Esta pasta contém somente documentos que descrevem o projeto como ele é hoje
 ou contratos já aprovados para a próxima implementação.
 
@@ -23,6 +25,7 @@ Para entender o projeto sem percorrer o histórico, leia:
 ## Contratos técnicos vigentes
 
 - [Baseline do backend v1](baseline-backend-v1-2026-08.md)
+- [Operação do backend](../../backend/README.md)
 - [Modelo de dados canônico v2](modelo-dados-mock-v2.md)
 - [Dataset demonstrativo v2](dataset-demonstrativo-v2.md)
 - [Modelo territorial](modelo-territorial.md)

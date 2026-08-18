@@ -1,17 +1,18 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-08-10
+> Revisão documental: 2026-08-18
 
-Não existe decisão de domínio pendente que impeça o início do backend. MP-33
-está pronta. Os itens abaixo são implementações ainda não realizadas ou
+Não existe decisão de domínio pendente que impeça o backend. A arquitetura e a
+implementação da MP-33A estão fechadas e validadas. Os itens abaixo são
+implementações ainda não realizadas ou
 portões que devem ser fechados na entrada da respectiva vertical.
 
-## Implementação imediata
+## Implementação por fase
 
-- criar scaffold do backend, OpenAPI, PostgreSQL/PostGIS e migrations;
-- configurar integração contínua mínima;
-- criar interfaces de repositório e adaptadores HTTP no aplicativo;
-- implementar autenticação e sessão reais de MP-33;
+- implementar autenticação, sessões, refresh tokens, convites, recuperação e
+  auditoria genérica na MP-33B;
+- criar interfaces de repositório, seleção mock/HTTP e a primeira vertical de
+  Propriedades no aplicativo na MP-33C, preservando o mock até essa fase;
 - implementar autorização no servidor de MP-35;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
 - remover gradualmente as leituras de fazenda_id depois que cada borda estiver
@@ -73,6 +74,13 @@ Antes da distribuição produtiva, fechar:
 - organização única;
 - propriedade_id como identificador canônico novo;
 - um Titular principal por Propriedade;
+- `propriedades.titular_id` como única fonte persistida da Titularidade no
+  backend;
+- `usuario_propriedade` restrita aos acessos adicionais
+  `usuario_autorizado` e `colaborador` no backend;
+- acesso do Titular derivado e bloqueio de usuário inativo na futura camada de
+  autenticação/autorização, sem impedir sua desativação por constraint;
+- armazenamento somente do Titular atual na MP-33A;
 - Colaborador por vínculo direto;
 - Município e UF sem efeito de permissão;
 - perfis e matriz de RBAC do primeiro backend;
@@ -80,6 +88,10 @@ Antes da distribuição produtiva, fechar:
 - offline conservador;
 - notificações in-app sem push no primeiro corte;
 - Android como primeira plataforma.
+- migrations com manifesto SHA-256 e proteção append-only contra a
+  branch-base;
+- PNG, PDF e ZIP fora do PostgreSQL, com metadados/chaves no banco e dados
+  geoespaciais no PostGIS.
 
 ## Governança
 

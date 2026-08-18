@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "normalization": "utf8-lf",
+  "migrations": [
+    {
+      "id": "000001",
+      "file": "000001-initial-schema.sql",
+      "sha256": "1a3d2ba528caa3a9e8e1a9d26812f94ba33d66de840decd9da64476be4974d38"
+    }
+  ]
+}

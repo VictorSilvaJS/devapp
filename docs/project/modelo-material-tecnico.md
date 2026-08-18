@@ -1,5 +1,7 @@
 # Modelo Canonico de Material Tecnico
 
+> Revisao documental: 2026-08-18
+
 Este documento define o contrato funcional do `Material tecnico` para novos
 anexos do MVP local. Ele substitui, como referencia principal, o modelo
 especifico de anexos de fertilidade, preservando os registros e fluxos legados
@@ -167,9 +169,9 @@ Propriedade.
 
 Os materiais copiados para o storage interno podem ser consultados no mesmo
 aparelho sem conexao, inclusive depois de fechar e reabrir o app. Isso e cache
-local demonstrativo, nao offline total: nao existe servidor, fila de sync,
-resolucao de conflitos, restauracao entre aparelhos ou garantia depois de
-limpar os dados/desinstalar o aplicativo.
+local demonstrativo, nao offline total: nao existe servidor integrado a esse
+fluxo, fila de sync, resolucao de conflitos, restauracao entre aparelhos ou
+garantia depois de limpar os dados/desinstalar o aplicativo.
 
 ## 8. Acesso
 
@@ -187,6 +189,12 @@ autorizacao por backend/RBAC real.
 Status de fundação em 2026-08-07: object storage privado, URLs temporárias,
 autorização por Propriedade e publicação por Admin estão aprovados em
 `baseline-backend-v1-2026-08.md`.
+
+Decisao de persistencia revisada em 2026-08-18: PNG, PDF e ZIP nao serao
+armazenados como blobs no PostgreSQL. O banco guardara somente metadados e
+chaves de objetos; os bytes pertencerao a um futuro object storage privado. O
+PostGIS sera usado para geometrias e demais dados geoespaciais. A MP-33A nao
+cria tabelas de blob nem implementa o storage de objetos.
 
 Backend, banco e object storage deverao receber os arquivos e metadados,
 validar permissao por Propriedade e servir acesso autorizado. Permanecem

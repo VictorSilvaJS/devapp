@@ -4,6 +4,8 @@
 >
 > Definido em: 2026-08-05
 >
+> Revisão documental: 2026-08-18
+>
 > Escopo: substituição integral dos dados demonstrativos e preparação do
 > frontend para o futuro backend.
 
@@ -13,9 +15,10 @@ Definir um único vocabulário técnico para reconstruir o mock sem carregar os
 aliases históricos de Fazenda, Produtor usado como Propriedade ou escopo por
 texto territorial.
 
-Este contrato orienta primeiro a persistência local demonstrativa v2. O futuro
-backend deve partir dos mesmos identificadores e relações, acrescentando
-autenticação, autorização, auditoria, transações e integridade no servidor.
+Este contrato orienta primeiro a persistência local demonstrativa v2. O backend
+parte dos mesmos identificadores e relações, com a exceção deliberada da
+representação de Titularidade descrita abaixo, e acrescenta autenticação,
+autorização, auditoria, transações e integridade no servidor.
 
 ## Decisões De Base
 
@@ -145,6 +148,26 @@ do usuário nem transfere titularidade.
 Deve existir no máximo um vínculo ativo equivalente para a mesma combinação
 de usuário, Propriedade e tipo. Uma Propriedade referenciada precisa existir e
 pertencer à mesma organização.
+
+### Fronteira intencional do backend
+
+A interface anterior e o vínculo `titular` continuam sendo o contrato do mock
+v2 e não serão alterados na MP-33A. No banco do backend:
+
+- `propriedades.titular_id` é a única fonte persistida da Titularidade;
+- `usuario_propriedade.tipo_vinculo` aceita somente `usuario_autorizado` ou
+  `colaborador`;
+- o acesso do Titular é derivado por Propriedade → Produtor Titular → Usuário
+  principal;
+- `tipoAcesso=titular`, quando existir na API, é uma projeção calculada;
+- somente o Titular atual é armazenado; histórico e transferência aguardam
+  contrato transacional e de auditoria;
+- a inativação da conta do usuário principal não invalida a Titularidade
+  cadastral nem é impedida por constraint permanente; a futura camada de
+  autenticação/autorização deve negar acesso ao usuário inativo.
+
+A adaptação entre as representações local e HTTP pertence à MP-33C. Ela não
+autoriza alterar o mock durante a MP-33A.
 
 ### Localização oficial
 
