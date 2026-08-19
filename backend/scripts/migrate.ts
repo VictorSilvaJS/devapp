@@ -31,6 +31,27 @@ export class MigrationCommandError extends Error {
   }
 }
 
+export function migrationEnvironment(
+  source: Readonly<Record<string, string | undefined>>,
+): Readonly<Record<string, string | undefined>> {
+  const migrationDatabaseUrl = source.MIGRATIONS_DATABASE_URL;
+  if (source.NODE_ENV === 'production' && migrationDatabaseUrl === undefined) {
+    throw new ConfigurationError(
+      'MIGRATIONS_DATABASE_URL is required in production.',
+    );
+  }
+
+  return {
+    NODE_ENV: source.NODE_ENV,
+    DATABASE_URL: migrationDatabaseUrl ?? source.DATABASE_URL,
+    DATABASE_SSL_CA:
+      source.MIGRATIONS_DATABASE_SSL_CA ?? source.DATABASE_SSL_CA,
+    HOST: source.HOST,
+    PORT: source.PORT,
+    LOG_LEVEL: source.LOG_LEVEL,
+  };
+}
+
 function discardMigrationLog(_message: string): void {
   // node-pg-migrate pode emitir SQL e mensagens internas do PostgreSQL. A
   // observabilidade da aplicacao nao deve receber esse conteudo bruto.
@@ -137,7 +158,7 @@ function parseCliArguments(args: readonly string[]): {
 async function main(): Promise<void> {
   try {
     const options = parseCliArguments(process.argv.slice(2));
-    const runtimeConfig = loadRuntimeConfig();
+    const runtimeConfig = loadRuntimeConfig(migrationEnvironment(process.env));
     await runMigrations({ ...options, database: runtimeConfig.database });
     process.stdout.write(`Migration ${options.command} concluida.\n`);
   } catch (error) {

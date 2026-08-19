@@ -6,6 +6,7 @@ import { buildDatabaseConfig } from '../../src/config.js';
 import {
   MigrationCommandError,
   SILENT_MIGRATION_LOGGER,
+  migrationEnvironment,
   runMigrations,
   safeMigrationErrorMessage,
 } from '../../scripts/migrate.js';
@@ -13,6 +14,25 @@ import {
 const database = buildDatabaseConfig({
   nodeEnv: 'test',
   databaseUrl: 'postgresql://test:test@127.0.0.1:5432/tche_agro_test',
+});
+
+test('usa credencial de migration separada e a exige em production', () => {
+  assert.equal(
+    migrationEnvironment({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://runtime:secret@db/runtime',
+      MIGRATIONS_DATABASE_URL: 'postgresql://migrator:secret@db/app',
+    }).DATABASE_URL,
+    'postgresql://migrator:secret@db/app',
+  );
+  assert.throws(
+    () =>
+      migrationEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://runtime:secret@db/runtime',
+      }),
+    /MIGRATIONS_DATABASE_URL/u,
+  );
 });
 
 test('verifica a integridade antes de executar up', async () => {

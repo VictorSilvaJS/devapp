@@ -4,6 +4,7 @@ import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import type { Pool } from 'pg';
 
 import { buildApp } from './app.js';
+import { createBackendSecurityServices } from './backend-services.js';
 import { loadRuntimeConfig, type RuntimeConfig } from './config.js';
 import { createPostgresPool } from './database/pool.js';
 import { createAppLogger } from './observability/logger.js';
@@ -25,11 +26,23 @@ export async function startBackend(
   const config = loadRuntimeConfig(environment);
   const logger = createAppLogger(config.logLevel);
   const database = createPostgresPool(config.database, logger);
-  const app = await buildApp({
-    config,
-    database,
-    logger: logger as FastifyBaseLogger,
-  });
+  let app: FastifyInstance;
+  try {
+    const securityServices = await createBackendSecurityServices({
+      database,
+      runtimeConfig: config,
+      environment,
+    });
+    app = await buildApp({
+      config,
+      database,
+      logger: logger as FastifyBaseLogger,
+      ...securityServices,
+    });
+  } catch {
+    await database.end().catch(() => undefined);
+    throw new Error('Backend initialization failed.');
+  }
   const shutdown = createGracefulShutdown({
     app,
     database,

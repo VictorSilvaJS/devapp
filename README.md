@@ -10,11 +10,13 @@ O frontend local está funcional e demonstrável com dataset v2, persistência n
 aparelho e três perfis. A última rodada física do mock não deixou bug aberto no
 recorte executado.
 
-O aplicativo ainda não está conectado a backend produtivo e não possui
-autenticação real, storage remoto, sincronização produtiva ou RBAC no servidor.
-A MP-33A estabeleceu a fundação isolada do backend e do banco, mantendo o mock
-inalterado. Autenticação/sessão entram na MP-33B e a integração HTTP do
-aplicativo, na MP-33C.
+O aplicativo ainda não está conectado ao backend e continua usando login,
+sessão, persistência e dados locais. A MP-33A estabeleceu a fundação isolada do
+backend e do banco. A MP-33B implementa autenticação/sessão, ações de conta,
+outbox e auditoria no backend e está `CONCLUÍDA TECNICAMENTE`, mas
+`NÃO LIBERADA PARA PRODUÇÃO`; ela não altera nem conecta o aplicativo. A
+integração HTTP permanece reservada à MP-33C e o RBAC completo dos recursos de
+negócio, à MP-35.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em
@@ -55,7 +57,7 @@ aplicativo permanece em Node.js 22.
 | src/assets | Imagens e recursos empacotados |
 | tests e scripts | Testes de domínio e verificações |
 | android | Configuração e build Android nativo |
-| backend | API, banco, migrations e testes da fundação |
+| backend | API, autenticação, banco, migrations, worker e testes do backend |
 | docs/project | Estado e contratos vigentes |
 | docs/archive | Histórico, fases e revisões antigas |
 | dist | Evidências geradas; não é fonte de verdade |

@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-18
+> Atualizado em: 2026-08-19
 >
 > Última execução física registrada: 2026-08-17
 
@@ -200,6 +200,24 @@ dados.
 
 Essa rodada valida a fundação local da MP-33A; não representa deploy,
 autenticação, RBAC produtivo nem integração HTTP do aplicativo.
+
+### Evidência da MP-33B em 2026-08-19
+
+| ID | Cenário executável | Resultado |
+|---|---|---|
+| MP33B-01 | Node.js 24.19.0: manifesto e comparação append-only das 4 migrations, typecheck, 114 testes unitários/contratos de DDL, 19 HTTP, build e smoke ESM da API, servidor, worker, bootstrap e parser break-glass fail-closed | PASSOU |
+| MP33B-02 | Integração destrutiva sem `NODE_ENV=test` e `ALLOW_DESTRUCTIVE_DATABASE_TESTS=true` | PASSOU — bloqueada pela guarda antes de abrir o banco |
+| MP33B-03 | Testcontainer `postgis/postgis:17-3.5`: 27 cenários com as duas flags e banco gerado terminado em `_test`, cobrindo migrations, repositórios, papéis de menor privilégio, guards por `SESSION_USER`, estado final diferido, concorrência e rollback | PASSOU |
+| MP33B-04 | Compose local: Postgres e Mailpit saudáveis, entrega SMTP real pelo worker, auditoria gravada, payload criptografado removido e limpeza dos recursos temporários | PASSOU |
+| MP33B-05 | Aplicativo em Node.js 22: typecheck e `test:domain-compat`, sem alteração nem conexão do mock | PASSOU |
+| MP33B-06 | Dependências produtivas do backend: `npm audit --omit=dev` | PASSOU — 0 vulnerabilidades conhecidas na execução |
+
+A rodada conclui tecnicamente a MP-33B, mas não a libera para produção. MFA de
+Admin, política operacional de identidade, SMTP e segredos produtivos,
+benchmark Argon2id no ambiente-alvo, backup/restauração e observabilidade
+continuam portões. Break-glass não está implementado; Ed25519 ou serviço externo
+equivalente com dois aprovadores é requisito anterior a essa futura capacidade.
+Não houve commit, tag ou deploy nesta execução.
 
 ### Comandos gerais
 

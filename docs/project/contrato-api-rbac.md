@@ -1,9 +1,9 @@
-# Contrato Futuro De API Para RBAC/Backend
+# Contrato De API Para RBAC/Backend
 
-Status em 2026-06-03 (Fase 14G): este documento registra endpoints, payloads
-minimos e respostas esperadas para um backend/RBAC futuro. Ele nao implementa
-backend, autenticacao real, RBAC, mocks, telas, rotas ou comportamento
-funcional. O MVP atual continua mockado.
+Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
+2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-19, a
+parte de autenticação da MP-33B está concluída tecnicamente; as rotas de
+negócio/RBAC continuam futuras. O aplicativo permanece mockado.
 
 Status em 2026-06-03 (Fase 14H): a matriz tecnica de testes de contrato/API
 derivada deste contrato foi registrada em `testes-contrato-api-rbac.md`. Ela
@@ -18,6 +18,11 @@ convencoes finais de fundacao estao em `baseline-backend-v1-2026-08.md`.
 Revisao em 2026-08-18: a MP-33A implementa apenas fundacao e DDL. Endpoints de
 autenticacao pertencem a MP-33B e a primeira vertical HTTP de Propriedades, a
 MP-33C. O mock permanece inalterado.
+
+Revisão em 2026-08-19: os endpoints `/v1/auth` da MP-33B foram implementados e
+validados tecnicamente. Rotas de negócio e RBAC por Propriedade continuam
+contrato futuro da MP-33C/MP-35; o aplicativo permanece no mock, e a MP-33B
+não está liberada para produção.
 
 ## Decisoes De Base
 
@@ -78,7 +83,7 @@ comandos concorrentes exigem a versao-base do recurso. Erros incluem
 
 ## Autenticacao E Sessao
 
-### `POST /auth/login`
+### `POST /v1/auth/login`
 
 - Objetivo: autenticar usuario e iniciar sessao real.
 - Payload minimo:
@@ -90,37 +95,49 @@ comandos concorrentes exigem a versao-base do recurso. Erros incluem
 }
 ```
 
-- Resposta de sucesso: `200 OK` com token/sessao e dados minimos do usuario.
-- Acesso negado: `401 Unauthorized` para credenciais invalidas; `403
-  Forbidden` para usuario inativo ou pendente.
+- Resposta de sucesso: `200 OK` com access/refresh opacos, sessao e dados
+  minimos do usuario; a resposta usa `Cache-Control: no-store` e
+  `Pragma: no-cache`.
+- Acesso negado: o mesmo `401 Unauthorized` para credenciais invalidas,
+  identidade inexistente, usuario inativo/pendente ou ausencia de credencial.
 - Regra de permissao: usuario precisa existir, estar autenticavel e com status
   permitido.
 - Compatibilidade: login mock atual nao e contrato final.
 
-### `GET /auth/me`
+### `GET /v1/auth/me`
 
-- Objetivo: retornar usuario autenticado, perfil, status e resumo de escopo.
+- Objetivo: retornar usuario autenticado, perfil, status, sessao, modo de
+  escopo e versao de autorizacao.
 - Payload minimo: nenhum.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`.
 - Regra de permissao: sessao valida.
-- Compatibilidade: pode expor ids canonicos e, temporariamente, aliases legados
-  apenas para migracao controlada.
+- Compatibilidade: a MP-33B nao lista Propriedades nem expõe aliases legados;
+  a projecao de acesso operacional pertence a MP-33C/MP-35.
 
 Resposta minima:
 
 ```json
 {
   "usuario": {
-    "id": "usr_1",
+    "id": "00000000-0000-4000-8000-000000000001",
     "perfil": "colaborador",
-    "status": "ativo"
+    "status": "ativo",
+    "versao_autorizacao": 1
+  },
+  "sessao": {
+    "id": "00000000-0000-4000-8000-000000000002"
   },
   "escopo": {
-    "propriedades": ["prop_1"]
+    "modo": "vinculos_propriedade",
+    "versao": 1
   }
 }
 ```
+
+Os demais endpoints de credenciais, sessoes, convites, e-mail e recuperacao
+da MP-33B seguem o contrato especifico em
+`contrato-autenticacao-mp33b.md`. RBAC de recursos continua fora deste corte.
 
 ## Usuarios
 
@@ -443,12 +460,11 @@ Resposta minima:
 - Compatibilidade: payload mockado atual pode usar `fazenda_id`; contrato final
   deve usar `propriedade_id`.
 
-## Implementacao Pendente
+## Implementação pendente
 
-As decisões de fundação estão encerradas na baseline v1. Depois da MP-33A,
-ainda é necessário:
+As decisões de fundação estão encerradas na baseline v1. Autenticação, refresh,
+revogação e sessão da MP-33B estão concluídos tecnicamente. Ainda é necessário:
 
-- materializar autenticação, refresh, revogação e sessão na MP-33B;
 - implementar a vertical de Propriedades e sua projeção de acesso na MP-33C;
 - aplicar cursor, limites e envelope definidos na baseline;
 - aplicar `404` fora do escopo e `403` para ação negada dentro do escopo;

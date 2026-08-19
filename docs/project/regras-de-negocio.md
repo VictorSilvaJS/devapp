@@ -1,6 +1,6 @@
 # Regras de Negocio
 
-> Revisão documental: 2026-08-18
+> Revisão documental: 2026-08-19
 
 Este documento registra regras de dominio e acesso que devem orientar modelagem, UX e implementacao. Quando um ponto ainda nao estiver fechado, ele nao deve ser transformado em regra aqui.
 
@@ -534,6 +534,51 @@ O contrato canonico esta em `politica-sessao.md`.
   token, credencial, expiracao, revogacao ou autorizacao no backend.
 - Rota direta, notificacao, cache e interface nunca substituem validacao de
   permissao por acao e Propriedade no servidor.
+
+## Regras De Autenticação E Recuperação Do Backend
+
+O contrato canônico da MP-33B está em
+`contrato-autenticacao-mp33b.md`.
+
+- Senha é definida pelo próprio usuário, nunca entregue em texto pelo Admin,
+  bootstrap, convite ou recuperação.
+- A senha usa NFC, preserva espaços, possui 8–128 pontos de código Unicode,
+  exige ao menos uma categoria entre maiúscula, número ou pontuação/símbolo e
+  não pode corresponder integralmente à blocklist vigente.
+- O mínimo de oito sem MFA é risco aceito. MFA permanece obrigatório antes da
+  liberação pública de contas Administradoras.
+- E-mail inexistente, senha incorreta, conta pendente/inativa e ausência de
+  credencial não podem ser distinguidos pela resposta de login.
+- Convite comum se aplica somente a Usuário pendente já existente e não cria
+  Produtor, Propriedade, Titularidade ou vínculo.
+- Recuperação comum usa o endereço principal verificado, revoga todas as
+  sessões ao concluir e não autentica automaticamente.
+- Troca normal do e-mail principal exige sessão, senha atual e confirmações
+  separadas no endereço atual e no novo endereço.
+- Admin pode manter um contato secundário previamente confirmado. Esse contato
+  não é login e só habilita recuperação restrita com confirmação do secundário,
+  confirmação do novo principal e senha definida pelo próprio usuário.
+- Recuperação assistida por Admin se restringe a Produtor ou Colaborador ativo
+  da mesma organização. Exige motivo, referência operacional, confirmação do
+  novo endereço e auditoria; fica desabilitada em produção sem política de
+  identidade versionada.
+- Nome, documento, data de nascimento, Município, Propriedade ou telefone não
+  verificado não provam isoladamente a identidade.
+- Conta Administradora nunca é alvo da recuperação assistida HTTP. Sua
+  recuperação operacional usa somente o segundo e-mail previamente verificado.
+  Se os dois e-mails forem perdidos, a MP-33B não oferece recuperação.
+- CLI, schema e continuações break-glass são scaffold fail-closed e
+  inalcançável, sem start, HMAC ou privilégio de plataforma. Ed25519 ou serviço
+  externo equivalente com dois aprovadores é pré-requisito técnico antes de
+  implementar ou habilitar essa capacidade.
+- Bootstrap do primeiro Admin é one-shot e somente CLI. A correção de e-mail
+  fica disponível apenas antes do aceite e não reabre bootstrap selado.
+- Conclusão de recuperação revoga sessões, tokens e desafios incompatíveis,
+  incrementa a versão de autorização quando aplicável e nunca ativa usuário,
+  muda perfil, Titularidade ou vínculo.
+- Auditoria crítica é append-only, separada dos logs e não recebe senha,
+  token, headers, payload livre, string de conexão ou evidência pessoal
+  integral.
 
 ## Regra de Uso Deste Documento
 

@@ -61,16 +61,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Testes unitarios
+      - name: Testes unitarios (blocklist, fila Argon2id, servicos e worker)
         run: npm run test:unit
 
-      - name: Testes HTTP
+      - name: Testes HTTP (auth, 429 de capacidade, acoes de conta e OpenAPI)
         run: npm run test:http
 
       - name: Build produtivo
         run: npm run build
 
-      - name: Smoke do JavaScript compilado
+      - name: Smoke ESM (API, worker, bootstrap e scaffold fail-closed)
         run: npm run smoke:dist
 
   migrations-append-only:
@@ -111,7 +111,7 @@ jobs:
   backend-integration:
     name: Backend com PostgreSQL/PostGIS (Node.js 24)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: backend
@@ -133,8 +133,18 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Validar Compose de PostGIS e Mailpit
+        run: docker compose --env-file .env.example config --quiet
+
+      - name: Smoke do Mailpit local
+        run: docker compose --env-file .env.example up -d --wait mailpit
+
       - name: Verificar manifesto antes da integracao
         run: npm run migrations:verify
 
-      - name: Executar integracao real com Testcontainers
+      - name: Executar migrations, repositorios, papeis e guards com Testcontainers
         run: npm run test:integration
+
+      - name: Encerrar Mailpit do smoke
+        if: always()
+        run: docker compose --env-file .env.example down

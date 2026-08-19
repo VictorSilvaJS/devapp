@@ -8,6 +8,12 @@ import fastify, {
 } from 'fastify';
 
 import type { RuntimeConfig } from './config.js';
+import {
+  accountActionRoutesPlugin,
+  type AccountActionRoutesOptions,
+} from './account-actions/account-action-routes.js';
+import { authRoutesPlugin } from './auth/routes.js';
+import type { AuthenticationService } from './auth/service.js';
 import { checkDatabaseReadiness } from './database/readiness.js';
 import type { DatabasePool } from './database/pool.js';
 import { createAppLogger } from './observability/logger.js';
@@ -46,6 +52,11 @@ export interface BuildAppOptions {
   readonly logger?: FastifyBaseLogger | false;
   readonly requestIdFactory?: () => string;
   readonly readinessTimeoutMs?: number;
+  readonly authenticationService?: AuthenticationService;
+  readonly accountActionRoutes?: Omit<
+    AccountActionRoutesOptions,
+    'authenticationService'
+  >;
 }
 
 function generatedRequestId(): string {
@@ -58,6 +69,7 @@ function createFastifyInstance(
   requestIdFactory: () => string,
 ): FastifyInstance {
   const commonOptions = {
+    trustProxy: false as const,
     requestIdHeader: false as const,
     genReqId: requestIdFactory,
     logController: new LogController({
@@ -111,9 +123,35 @@ export async function buildApp(
           name: 'Operação',
           description: 'Sinais operacionais do processo HTTP.',
         },
+        {
+          name: 'Autenticação',
+          description: 'Login, sessão, tokens e recuperação comum de senha.',
+        },
+        {
+          name: 'Ações de conta',
+          description: 'Convites, e-mails verificados e recuperações controladas.',
+        },
       ],
     },
   });
+
+  if (options.authenticationService !== undefined) {
+    await app.register(authRoutesPlugin, {
+      prefix: '/v1/auth',
+      service: options.authenticationService,
+    });
+    if (options.accountActionRoutes !== undefined) {
+      await app.register(accountActionRoutesPlugin, {
+        prefix: '/v1/auth',
+        authenticationService: options.authenticationService,
+        ...options.accountActionRoutes,
+      });
+    }
+  } else if (options.accountActionRoutes !== undefined) {
+    throw new TypeError(
+      'Account action routes require an authentication service.',
+    );
+  }
 
   app.addHook('onRequest', async (request, reply) => {
     reply.header('x-request-id', request.id);

@@ -1,10 +1,10 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `ATIVO`; fundação da `MP-33A` implementada
+> Status: `ATIVO`; `MP-33A` e `MP-33B` concluídas tecnicamente
 >
 > Fechamento: 2026-08-07
 >
-> Revisão: 2026-08-18
+> Revisão: 2026-08-19
 >
 > Escopo: baseline do backend e do banco. A fundação foi implementada na
 > `MP-33A`; as fases posteriores e a autorização de release não estão
@@ -16,6 +16,10 @@ As decisões de domínio necessárias para iniciar o backend estão fechadas.
 A MP-33 foi dividida em três cortes. A MP-33A cria somente a fundação, o DDL
 e as garantias operacionais; autenticação e sessão pertencem à MP-33B, e a
 integração do aplicativo e a vertical de Propriedades pertencem à MP-33C.
+
+A MP-33B foi implementada e validada tecnicamente na branch de trabalho. Isso
+não conecta o aplicativo, não fecha os portões de produção e não autoriza
+release.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -109,6 +113,43 @@ chaves do futuro object storage; o PostGIS guardará os dados geoespaciais.
   estado final e um cenário concorrente impede write-skew;
 - FKs declaram `ON DELETE RESTRICT` ou `NO ACTION` conforme a necessidade de
   diferimento; não existem cascatas destrutivas.
+
+### 2.4 Fundação de segurança da MP-33B
+
+- a API usa credencial membro de `tche_agro_runtime`; migrations usam
+  proprietário/migrador; o worker usa `tche_agro_outbox_worker`; o bootstrap
+  inicial usa `tche_agro_platform_ops`;
+- essas quatro credenciais são independentes em produção, e as três funções de
+  concessão criadas pelo DDL são `NOLOGIN`;
+- `tche_agro_platform_ops` opera somente o bootstrap inicial e a correção de
+  seu convite pendente; não recebe DML de credenciais, sessões, tokens,
+  autorizações, recuperações ou break-glass;
+- os DMLs colunares de plataforma sobre Usuário, desafio, convite, outbox,
+  bootstrap e auditoria possuem guards por `SESSION_USER` e validação diferida
+  do estado final, impedindo papéis combinados e transações parciais;
+- a senha usa NFC, 8–128 pontos de código Unicode, regra deliberada `1-de-3`,
+  blocklist versionada e Argon2id com trabalho ativo e fila limitados; os
+  prechecks por IP e identificador precedem o Argon2, e saturação retorna `429`
+  sem contar falha de credencial;
+- tokens access e refresh são opacos, stateful e persistidos somente por hash;
+- outbox criptografada e worker SMTP são processos separados; Mailpit existe
+  somente para desenvolvimento/teste;
+- bootstrap do primeiro Admin e sua correção anterior ao aceite são comandos
+  CLI one-shot, sem rota HTTP ou emissão de segredo;
+- break-glass não possui start operacional: a CLI é scaffold fail-closed; a
+  porta e o serviço de domínio não têm implementação concreta do
+  verificador/emissor, configuração ou wiring, script npm, HMAC ou privilégio
+  de plataforma;
+- schema e `POST` de continuação permanecem scaffold inalcançável nesta fase;
+  assinatura Ed25519 ou serviço externo equivalente com dois aprovadores é
+  pré-requisito técnico antes de implementar ou habilitar um start;
+- contato secundário de Admin é previamente confirmado; recuperação assistida
+  HTTP de Admin é proibida, e a de Produtor/Colaborador fica condicionada a
+  política operacional versionada em produção;
+- auditoria é append-only e separada dos logs, sem senha, token, payload
+  completo ou dado pessoal usado como evidência; sessão pertence ao ator,
+  Usuário afetado é uma referência separada e continuações públicas usam ator
+  `sistema`.
 
 ## 3. Organização E Identificadores
 
@@ -248,6 +289,19 @@ access token de 15 minutos, refresh rotativo com validade absoluta de 30 dias,
 lock local após 15 minutos e consulta offline por até 24 horas desde a última
 revalidação.
 
+Na MP-33B, a inatividade do backend é de 14 dias desde o último refresh
+bem-sucedido. A recuperação comum e a alteração concluída de e-mail revogam
+todas as sessões e não autenticam automaticamente. A troca autenticada de
+senha revoga as outras sessões e gira access/refresh da sessão atual.
+
+Convite geral aceita somente `usuario` pendente já existente. O primeiro Admin
+é a única identidade criada pelo bootstrap one-shot. Admin pode confirmar um
+e-mail secundário diferente do login; esse é o único caminho operacional de
+recuperação Administradora nesta fase. Perda dos dois endereços não é resolvida
+por outro Admin, pela plataforma ou pelo scaffold break-glass. Uma evolução só
+pode implementar o start depois de adotar Ed25519 ou serviço externo equivalente
+que comprove dois aprovadores distintos.
+
 ## 7. Respostas, Paginação E Concorrência
 
 ### 7.1 Regra `403`/`404`
@@ -341,7 +395,7 @@ backend.
 
 Isso encerra a necessidade de planilha de migração territorial do mock v1.
 O comportamento e a representação atuais do mock permanecem integralmente
-inalterados na MP-33A. A adaptação entre o vínculo local `titular` e a
+inalterados nas MP-33A e MP-33B. A adaptação entre o vínculo local `titular` e a
 Titularidade derivada do backend pertence exclusivamente à MP-33C.
 
 ## 11. O Que Está Fechado E O Que Continua
@@ -366,16 +420,22 @@ Titularidade derivada do backend pertence exclusivamente à MP-33C.
 ### Entregas que começam com o backend
 
 - scaffold, migrations, DDL, OpenAPI e garantias operacionais (`MP-33A`);
-- autenticação, sessões, refresh tokens, convites, recuperação e auditoria
-  genérica (`MP-33B`);
+- autenticação, sessões, refresh tokens, convites, recuperação, outbox e
+  auditoria genérica, concluídas tecnicamente (`MP-33B`);
 - interfaces de repositório, seleção mock/HTTP e primeira vertical de
   Propriedades no aplicativo (`MP-33C`);
 - RBAC no servidor (`MP-35`);
 - CI do backend;
 - observabilidade, backup e restauração.
 
-### Portões posteriores, sem bloquear `MP-33A`
+### Portões posteriores e de release
 
+- MFA de contas Administradoras;
+- política operacional versionada para recuperação assistida;
+- SMTP, segredos, benchmark Argon2id e capacidade do ambiente-alvo;
+- antes de implementar break-glass, Ed25519 ou serviço externo equivalente,
+  dois aprovadores distintos, procedimento e teste de ponta a ponta;
+- retenção de auditoria, observabilidade, backup e restauração;
 - parâmetros de retenção e limites de Materiais antes da vertical de arquivos;
 - limiares geoespaciais e retenção de rascunhos antes de `MP-37`;
 - smoke de localização em campo em `MP-38`;
@@ -384,7 +444,7 @@ Titularidade derivada do backend pertence exclusivamente à MP-33C.
 
 ## 12. Primeira Entrega Recomendada
 
-A MP-33A deve conter somente:
+A MP-33A foi delimitada para conter somente:
 
 1. scaffold do backend em Node.js 24, Fastify 5 e TypeScript;
 2. conexão PostgreSQL/PostGIS e migrations de organização, usuários,
@@ -396,6 +456,7 @@ A MP-33A deve conter somente:
 7. documentação operacional.
 
 Autenticação, sessões, refresh tokens, convites, recuperação e auditoria
-genérica ficam na MP-33B. Repositórios no app, seleção mock/HTTP e vertical de
-Propriedades ficam na MP-33C. Materiais, GeoJSON produtivo, Caderno append-only
-e notificações entram depois que a fundação estiver implantada e observável.
+genérica compõem a MP-33B concluída tecnicamente. Repositórios no app, seleção
+mock/HTTP e vertical de Propriedades ficam na MP-33C. Materiais, GeoJSON
+produtivo, Caderno append-only e notificações entram depois que a fundação
+estiver implantada e observável.
