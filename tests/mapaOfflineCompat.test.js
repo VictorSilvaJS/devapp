@@ -7,7 +7,9 @@ const {
 } = require('../.tmp-domain-compat/src/services/mapaOfflineCompat');
 const { MapaSincronizacaoService } = require('../.tmp-domain-compat/src/services/MapaSincronizacaoService');
 const { Mapa } = require('../.tmp-domain-compat/src/api/mapaSyncEndpoints');
-const { SELA_DEPRATA_1_PRODUTOR_ID } = require('../.tmp-domain-compat/src/assets/kml/selaDeprata1');
+const {
+  SELA_DE_PRATA_1_SHAPE_FAZENDA_ID: SELA_DEPRATA_1_PRODUTOR_ID,
+} = require('../.tmp-domain-compat/src/assets/geojson/selaDePrata1Talhoes');
 
 let failed = 0;
 
