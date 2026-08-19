@@ -1,22 +1,27 @@
 # Backend Tchê Agro
 
-Fundação da MP-33A em Node.js 24, Fastify 5, TypeScript e PostgreSQL/PostGIS.
-Este corte expõe somente sinais operacionais e OpenAPI. Não implementa
-autenticação, sessões, RBAC, rotas de negócio, integração HTTP do aplicativo,
-storage de objetos ou alteração do mock.
+Backend modular em Node.js 24, Fastify 5, TypeScript e PostgreSQL/PostGIS.
+A fundação da MP-33A está concluída. A MP-33B acrescenta autenticação
+stateful, ações de conta, e-mail transacional e auditoria; este corte está
+`CONCLUÍDO TECNICAMENTE`, mas `NÃO LIBERADO PARA PRODUÇÃO`.
+
+O aplicativo e o mock permanecem integralmente inalterados. A integração HTTP
+do aplicativo pertence à MP-33C, e a autorização completa dos recursos de
+negócio pertence à MP-35.
 
 ## Requisitos
 
 - Node.js 24 LTS; o `package.json` exige `>=24 <25` e `.nvmrc` fixa `24`;
-- npm, usando o `package-lock.json` desta pasta;
-- Docker para o PostgreSQL/PostGIS local opcional e para `test:integration`;
+- npm, usando o `package-lock.json` próprio desta pasta;
+- Docker para PostgreSQL/PostGIS, Mailpit local e `test:integration`;
 - nenhuma instalação local de `psql` é necessária.
 
-O aplicativo na raiz continua com seu runtime compatível atual. Instale e
-execute o backend a partir desta pasta:
+O aplicativo na raiz mantém Node.js 22 no respectivo job de CI. Instale e
+valide o backend a partir desta pasta:
 
 ```console
 npm ci
+npm run migrations:verify
 npm run typecheck
 npm run test:unit
 npm run test:http
@@ -24,103 +29,348 @@ npm run build
 npm run smoke:dist
 ```
 
+`npm run test:integration` é deliberadamente separado porque exige Docker.
+
+## Processos e credenciais de banco
+
+Produção usa quatro credenciais separadas. As três funções criadas pelas
+migrations são `NOLOGIN`; a plataforma deve provisionar contas `LOGIN` próprias
+e conceder a associação correspondente.
+
+| Processo | URL | Função/privilégio esperado |
+|---|---|---|
+| API | `DATABASE_URL` | membro de `tche_agro_runtime` |
+| migrations | `MIGRATIONS_DATABASE_URL` | proprietário/migrador do schema |
+| worker de e-mail | `OUTBOX_DATABASE_URL` | membro de `tche_agro_outbox_worker` |
+| bootstrap de plataforma | `PLATFORM_DATABASE_URL` | membro de `tche_agro_platform_ops` |
+
+Em produção, não reutilize uma credencial entre esses processos. A credencial
+de runtime não possui privilégio para alterar, excluir ou truncar auditoria; o
+worker só recebe as operações necessárias da outbox; a operação de plataforma
+fica limitada ao primeiro bootstrap e à correção de seu convite pendente. Ela
+não recebe DML de credenciais, sessões, access/refresh, autorizações,
+recuperações ou break-glass, nem lê hashes de token, payload da outbox,
+Propriedades ou o histórico de auditoria. Os DMLs colunares de Usuário,
+desafio, convite, outbox, bootstrap e auditoria são aceitos somente quando
+compõem esse fluxo.
+
+Os guards consideram `SESSION_USER`, impedem uma credencial de combinar os
+papéis runtime/plataforma e validam, por constraints diferidas, que a transação
+termine com Admin pendente, convite, desafio, outbox e auditoria coerentes. O
+proprietário/migrador não é usado para servir HTTP.
+
+Para cada URL existe um CA opcional específico:
+`DATABASE_SSL_CA`, `MIGRATIONS_DATABASE_SSL_CA`,
+`OUTBOX_DATABASE_SSL_CA` e `PLATFORM_DATABASE_SSL_CA`. Em produção, SSL é
+obrigatório e sempre verifica o certificado. As URLs não aceitam query nem
+fragmento, evitando conflito entre `sslmode` e o objeto SSL tipado.
+
+No desenvolvimento local, as quatro URLs podem apontar temporariamente para o
+mesmo PostgreSQL do Compose. Isso é conveniência local e não modelo de
+privilégios para produção.
+
 ## Configuração
+
+[.env.example](.env.example) enumera as variáveis operacionais. Copie para o
+arquivo ignorado `.env.local`, substitua todos os valores `replace_*` e não
+versione segredos.
+
+### API e banco
 
 | Variável | Obrigatória | Padrão | Regra |
 |---|---:|---|---|
-| `DATABASE_URL` | Sim | — | URL `postgresql://` ou `postgres://`, com host, banco, porta válida e sem query/fragmento |
+| `DATABASE_URL` | Sim | — | URL `postgresql://` ou `postgres://`, com host, banco e porta válida |
 | `NODE_ENV` | Não | `development` | `development`, `test` ou `production` |
-| `DATABASE_SSL_CA` | Não | raízes do sistema | um ou mais certificados X.509 PEM válidos; também aceita quebras representadas por `\n` |
+| `DATABASE_SSL_CA` | Não | raízes do sistema | certificado X.509 PEM válido |
 | `HOST` | Não | `0.0.0.0` | host da porta HTTP |
 | `PORT` | Não | `3000` | inteiro entre 1 e 65535 |
 | `LOG_LEVEL` | Não | `info` | nível reconhecido pelo Pino |
 
-Configuração inválida encerra o processo antes de abrir a porta. A
-indisponibilidade do banco não: o pool é criado sem consulta inicial, permitindo
-que o processo responda health enquanto o PostgreSQL se recupera.
+Configuração inválida encerra o processo antes de abrir a porta. Uma
+indisponibilidade temporária do PostgreSQL não impede a API de escutar: a
+composição dos serviços valida configuração, blocklist e criptografia sem
+consultar o banco. `/v1/readiness` passa a responder `503` até o banco se
+recuperar, enquanto `/v1/health` permanece independente.
 
-Em `production`, SSL do PostgreSQL é sempre criado com
-`rejectUnauthorized: true`. Não inclua parâmetros de consulta em
-`DATABASE_URL`; eles são rejeitados para impedir que o parser do driver
-sobrescreva TLS, `search_path`, timeouts ou outros valores tipados. Não inclua
-fragmento nem use porta zero. Use `DATABASE_SSL_CA` quando a autoridade
-certificadora não estiver nas raízes confiáveis do sistema.
+### Autenticação e senha
 
-Exemplo de execução local em PowerShell, apontando para um banco já existente:
+Os principais valores são:
 
-```powershell
-$env:NODE_ENV = 'development'
-$env:DATABASE_URL = 'postgresql://usuario:senha@localhost:5432/tche_agro_dev'
-npm run dev
-```
+- `PASSWORD_MIN_LENGTH=8` e `PASSWORD_MAX_LENGTH=128`;
+- `PASSWORD_POLICY_VERSION` e `PASSWORD_BLOCKLIST_MANIFEST_PATH`;
+- `ARGON2_MEMORY_KIB`, `ARGON2_TIME_COST`, `ARGON2_PARALLELISM` e
+  `ARGON2_MAX_CONCURRENCY`;
+- `AUTH_EMAIL_HMAC_KEY`, `AUTH_IP_HMAC_KEY` e
+  `AUTH_EXTERNAL_REFERENCE_HMAC_KEY`, com chaves base64 distintas de pelo
+  menos 32 bytes;
+- validades `AUTH_ACCESS_TOKEN_TTL_SECONDS`,
+  `AUTH_SESSION_ABSOLUTE_TTL_SECONDS`,
+  `AUTH_SESSION_INACTIVITY_TTL_SECONDS`, `AUTH_INVITE_TTL_SECONDS`,
+  `AUTH_ACTION_TTL_SECONDS`, `AUTH_PASSWORD_RECOVERY_TTL_SECONDS` e
+  `AUTH_RESTRICTED_AUTHORIZATION_TTL_SECONDS`;
+- proteção de login `AUTH_LOGIN_FAILURE_WINDOW_SECONDS`,
+  `AUTH_LOGIN_FAILURE_THRESHOLD` e `AUTH_LOGIN_LOCK_SCHEDULE_SECONDS`;
+- `ASSISTED_RECOVERY_ENABLED` e `ASSISTED_RECOVERY_POLICY_VERSION`.
 
-O backend não carrega arquivo `.env` implicitamente e nunca deve registrar a
-configuração completa ou valores de conexão.
+O carregador aplica os pisos e tetos aprovados; uma variável não pode reduzir
+silenciosamente a segurança abaixo deles. Em produção, recuperação assistida
+só pode ser habilitada com uma versão de política operacional informada.
 
-## PostgreSQL/PostGIS local
+### Outbox e SMTP
 
-[compose.yaml](compose.yaml) sobe somente o PostgreSQL/PostGIS de
-desenvolvimento. Ele usa `postgis/postgis:17-3.5`, publica a porta
-exclusivamente em `127.0.0.1`, possui healthcheck e mantém os dados no volume
-nomeado `postgres_data`. A API continua sendo executada separadamente pelo
-Node.js.
+- `AUTH_ACTION_BASE_URL` é a única origem dos links de ação; produção exige
+  HTTPS;
+- `OUTBOX_ACTIVE_KEY_ID` e `OUTBOX_ENCRYPTION_KEYS` formam o keyring externo
+  que protege o payload temporário;
+- `OUTBOX_WORKER_ID`, `OUTBOX_WORKER_CONCURRENCY`,
+  `OUTBOX_WORKER_BATCH_SIZE` e `OUTBOX_WORKER_POLL_INTERVAL_MS` controlam o
+  worker;
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_REQUIRE_TLS`, `SMTP_FROM` e,
+  quando necessários, `SMTP_USERNAME`/`SMTP_PASSWORD` configuram o envio;
+- produção exige SMTP com TLS verificado; Mailpit é exclusivo de
+  `development` e `test`.
 
-[.env.example](.env.example) contém apenas valores de exemplo e placeholders.
-Para uso local, copie-o para o arquivo ignorado `.env.local`, substitua todos os
-valores `replace_*` e mantenha `DATABASE_URL` coerente com `POSTGRES_DB`,
-`POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_PORT`. Caracteres reservados de
-usuário ou senha precisam ser codificados para uso na URL.
+Não registre a configuração completa, URLs de conexão, senhas, tokens, chaves
+ou payloads da outbox. Os logs estruturados ocultam os campos sensíveis
+previstos no contrato.
+
+## Ambiente local com PostgreSQL e Mailpit
+
+[compose.yaml](compose.yaml) usa `postgis/postgis:17-3.5` e
+`axllent/mailpit:v1.30.4`, publicados somente em `127.0.0.1`. O Postgres mantém
+os dados no volume nomeado `postgres_data`; a API e o worker continuam sendo
+processos Node.js separados.
 
 ```powershell
 Copy-Item .env.example .env.local
+# Edite .env.local, substitua todos os replace_* e use chaves distintas.
 npm run db:local:config
 npm run db:local:up
 npm run migrate:local:up
-npm run dev:local
 ```
 
-Os comandos locais disponíveis são:
+Para gerar uma chave base64 local de 32 bytes no PowerShell:
+
+```powershell
+$bytes = [byte[]]::new(32)
+[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+[Convert]::ToBase64String($bytes)
+```
+
+Gere um valor novo para cada finalidade. Para o keyring da outbox, associe uma
+dessas chaves ao ID ativo no JSON de `OUTBOX_ENCRYPTION_KEYS`.
+
+Depois das migrations, execute API e worker em terminais separados:
+
+```powershell
+npm run dev:local
+npm run dev:outbox:local
+```
+
+A interface local do Mailpit fica em `http://127.0.0.1:8025`. O SMTP local usa
+`127.0.0.1:1025`. Mailpit captura mensagens de teste; ele não é provedor de
+produção.
 
 | Comando | Efeito |
 |---|---|
 | `npm run db:local:config` | valida silenciosamente a configuração do Compose |
-| `npm run db:local:up` | inicia o banco e aguarda o healthcheck |
+| `npm run db:local:up` | inicia Postgres e Mailpit e aguarda os healthchecks |
 | `npm run db:local:logs` | acompanha os logs do serviço `postgres` |
 | `npm run db:local:down` | encerra os containers e preserva o volume nomeado |
-| `npm run migrate:local:up` | aplica migrations usando explicitamente `.env.local` |
-| `npm run migrate:local:down -- 1` | desfaz migrations usando explicitamente `.env.local` |
-| `npm run migrate:local:redo -- 1` | refaz migrations usando explicitamente `.env.local` |
-| `npm run dev:local` | inicia a API carregando explicitamente `.env.local` |
+| `npm run migrate:local:up` | aplica migrations com `.env.local` |
+| `npm run migrate:local:down -- 1` | desfaz migrations com `.env.local` |
+| `npm run migrate:local:redo -- 1` | refaz migrations com `.env.local` |
+| `npm run dev:local` | inicia a API com `.env.local` |
+| `npm run dev:outbox:local` | inicia o worker de e-mail com `.env.local` |
 
-O Compose não executa migrations nem inicia a API automaticamente. `down` e
-`redo` continuam sendo operações destrutivas sobre o banco selecionado; confira
-o alvo antes de executá-los. Não existe comando de remoção automática do volume.
+O Compose não executa migrations, API, worker nem bootstrap automaticamente.
+Não existe comando de remoção automática do volume.
 
-`.env.local`, o Compose e os scripts `*:local` são exclusivos do
-desenvolvimento. Em produção, use `npm start` com variáveis e segredos injetados
-externamente pela plataforma; o processo produtivo não lê esses arquivos.
+## Bootstrap do primeiro Administrador
 
-## Endpoints operacionais
+O bootstrap é CLI, one-shot e não possui rota HTTP. Ele cria o primeiro Admin
+e enfileira seu convite; não imprime senha nem token. Antes de executar:
+
+1. aplique as migrations;
+2. configure `PLATFORM_DATABASE_URL`;
+3. inicie Mailpit/SMTP e o worker;
+4. habilite explicitamente `INITIAL_ADMIN_BOOTSTRAP_ENABLED=true` somente
+   durante a operação.
+
+No desenvolvimento local:
+
+```powershell
+npm run bootstrap:admin:local:init -- --name "Nome do Admin" --email "admin@example.com"
+```
+
+Se o endereço foi digitado incorretamente e o convite ainda não foi aceito:
+
+```powershell
+npm run bootstrap:admin:local:correct -- --email "correto@example.com"
+```
+
+`--organization-id` é opcional e usa `org_tche_fertilidade` por padrão. A
+correção revoga convite/outbox anteriores, cria novo convite e fica bloqueada
+depois do aceite. Desabilite novamente o flag após a operação. No artefato
+compilado, o entrypoint é `npm run bootstrap:admin -- initialize ...` ou
+`npm run bootstrap:admin -- correct-email ...`.
+
+Convites comuns posteriores usam a API e aceitam somente um `usuario`
+pendente já existente.
+
+## Break-glass de Administrador: indisponível
+
+A MP-33B não implementa o início break-glass. Se um Admin perder os dois
+endereços, não há recuperação operacional neste backend; o caminho disponível
+é a recuperação pelo segundo e-mail previamente verificado.
+
+[break-glass-admin.ts](src/cli/break-glass-admin.ts) permanece somente como
+scaffold fail-closed: o parser compila, mas qualquer tentativa de `start` falha
+antes de acessar o banco. A porta e o serviço de domínio permanecem apenas como
+abstrações não conectadas. Não existe script npm, configuração ou wiring
+operacional, implementação concreta do verificador/emissor, chave HMAC nem
+permissão de start para `tche_agro_platform_ops`.
+
+O schema e os dois `POST` de continuação permanecem como scaffold inalcançável:
+esta fase não consegue criar um caso, desafio ou autorização que eles possam
+consumir. Eles não devem ser apresentados nem operados como recuperação pronta.
+
+Antes de implementar ou habilitar qualquer start, é pré-requisito técnico
+adotar assinatura assimétrica Ed25519, mantendo apenas a chave pública no
+backend, ou um serviço externo equivalente. A solução deve comprovar dois
+aprovadores distintos, finalidade, expiração, anti-replay e custódia externa,
+além de testes ponta a ponta e nova migration append-only quando houver impacto
+persistido. HMAC simétrico não é uma opção aprovada para esse fluxo.
+
+## Endpoints HTTP
+
+### Operação
 
 | Endpoint | Comportamento |
 |---|---|
 | `GET /v1/health` | `200` enquanto o processo HTTP estiver ativo; não consulta o banco |
 | `GET /v1/readiness` | `200` somente com PostgreSQL e PostGIS disponíveis; caso contrário, `503` |
-| `GET /v1/openapi.json` | documento OpenAPI 3.1 gerado pelas rotas registradas |
+| `GET /v1/openapi.json` | OpenAPI 3.1 das rotas registradas |
 
-A readiness possui timeout de até 2 segundos e volta a `200` quando a conexão
-se recupera. Toda resposta possui `x-request-id`, gerado pelo servidor. Os logs
-são estruturados e ocultam authorization, cookie, senhas, tokens e valores de
-conexão. Falhas de PostgreSQL são expostas e registradas apenas com mensagens
-seguras.
+### Autenticação e sessão
 
-`SIGINT` e `SIGTERM` usam o mesmo shutdown idempotente: primeiro
-`fastify.close()`, depois `pool.end()`. Chamadas repetidas aguardam a mesma
-promessa e não fecham recursos novamente.
+Todas as rotas abaixo começam em `/v1/auth`.
+
+| Método e caminho | Comportamento |
+|---|---|
+| `POST /login` | autentica e cria sessão stateful |
+| `POST /refresh` | gira access e refresh de forma atômica |
+| `POST /logout` | revoga a sessão atual de forma idempotente |
+| `POST /logout-all` | revoga todas as sessões do usuário |
+| `GET /me` | retorna identidade, sessão e versão/modo de escopo, sem Propriedades |
+| `GET /sessions` | lista as sessões do próprio usuário |
+| `DELETE /sessions/:sessionId` | revoga uma sessão pertencente ao usuário |
+| `POST /password/change` | troca senha, revoga outras sessões e gira a sessão atual |
+| `POST /password-recovery/request` | responde uniformemente e enfileira recuperação quando aplicável |
+| `POST /password-recovery/complete` | define nova senha, revoga tudo e não autentica automaticamente |
+
+Access e refresh são tokens opacos de 256 bits. Somente SHA-256 é persistido.
+Access vale no máximo 15 minutos; a sessão possui limite absoluto de 30 dias e
+inatividade de 14 dias desde o refresh bem-sucedido. Replay de refresh revoga
+a família comprometida, sem janela de tolerância.
+
+### Convites e ações de conta
+
+Também sob `/v1/auth`:
+
+| Caminho | Comportamento |
+|---|---|
+| `/invitations` e `/invitations/accept` | convite de pendente existente e aceite com definição de senha |
+| `/email-change/*` | troca autenticada com senha atual e duas confirmações |
+| `/secondary-email/*` | cadastro e confirmação do contato secundário de Admin |
+| `/admin-secondary-recovery/*` | recuperação de Admin pelo contato secundário já verificado, sem login automático |
+| `/admin-break-glass/confirm-email` e `/admin-break-glass/complete` | scaffold público `no-store`, inalcançável enquanto não existir um start assimétrico aprovado |
+| `/assisted-recovery/*` | recuperação de Produtor/Colaborador iniciada por Admin e concluída pelo usuário |
+
+Recuperação assistida de conta Administradora por HTTP é proibida. A de
+Produtor/Colaborador fica desabilitada por padrão em produção até existir
+política operacional versionada de comprovação de identidade. Nome, documento,
+Município, Propriedade ou telefone não verificado não constituem isoladamente
+prova suficiente.
+
+O fluxo operacional de recuperação de Admin usa exclusivamente o segundo e-mail
+previamente verificado. Perda dos dois endereços permanece sem solução nesta
+fase; o scaffold break-glass não cria caso, token, sessão ou auto-login.
+
+Respostas com segredos usam `Cache-Control: no-store`, `Pragma: no-cache` e
+`Referrer-Policy: no-referrer`. Toda resposta possui `x-request-id`.
+
+## Senhas, blocklist e benchmark Argon2id
+
+A senha é normalizada em NFC, preserva espaços, possui 8–128 pontos de código
+Unicode, exige a regra aprovada `1-de-3` (`Lu` ou `Nd` ou `P`/`S`) e é comparada
+integralmente, em chave normalizada separada, contra a blocklist. Não há
+`trim`, busca por substring ou troca periódica sem evidência.
+
+O manifesto [passwords.manifest.json](security/blocklists/passwords.manifest.json)
+fixa fonte, licença, versão, contagem e SHA-256 de cada artefato. Em `test` e
+`production`, arquivo ausente, vazio, com contagem ou hash divergente bloqueia
+os fluxos. A atualização da lista é deliberada e revisada.
+
+Argon2id usa PHC completo e a versão exata da dependência. Os parâmetros têm
+piso de 19 MiB, duas iterações e paralelismo 1. Antes do Argon2, o login faz
+precheck persistido primeiro por IP e depois pelo HMAC do identificador; um
+bloqueio responde `429` com `Retry-After` e não consome Argon2.
+
+Um semáforo limita o trabalho ativo a `ARGON2_MAX_CONCURRENCY` e admite no
+máximo a mesma quantidade de requisições aguardando. Acima desses dois limites,
+o backend falha rapidamente com `429` genérico e `Retry-After: 1`, sem registrar
+falha de credencial nem criar bloqueio falso. Login válido executa rehash quando
+necessário.
+
+Calibre no mesmo tipo de CPU e limite de memória do ambiente-alvo:
+
+```console
+npm run benchmark:argon2
+```
+
+O comando emite cinco amostras de hash+verificação e os tempos resumidos. Ele é
+um portão manual de capacidade, não um gate de duração da CI; os testes da CI
+continuam exercitando Argon2id real. Registre os valores escolhidos e valide o
+produto `ARGON2_MEMORY_KIB × ARGON2_MAX_CONCURRENCY` antes de liberar.
+
+## Worker da outbox
+
+O worker é um processo separado da API:
+
+```console
+npm run dev:outbox
+npm run start:outbox
+```
+
+Ele faz claim concorrente com lease, revalida o desafio, descriptografa o
+payload somente para entrega, usa timeout/backoff/tentativas limitadas e grava
+aceitação SMTP antes de limpar o material sensível. A entrega é pelo menos uma
+vez; desafios são de uso único, tornando repetição inofensiva. `SIGINT` e
+`SIGTERM` encerram o loop e o pool de forma idempotente.
+
+## Auditoria
+
+Eventos críticos são inseridos na mesma transação da mudança de estado. A
+tabela append-only distingue `ator_usuario_id`, `sessao_id` do ator e
+`usuario_afetado_id`, todos protegidos por referências da mesma organização;
+também preserva request ID, recurso, resultado, motivo categorizado e metadados
+em allowlist quando aplicáveis.
+
+A sessão de auditoria sempre pertence ao ator informado. Fluxos públicos sem
+sessão usam ator `sistema` e mantêm separado o Usuário afetado. A operação de
+plataforma só pode inserir os dois eventos do bootstrap corrente, na mesma
+transação e com estado final coerente.
+
+Senha, token, endereço desconhecido desnecessário, documentos, conversa,
+headers, payload completo, conexão e chave não entram na auditoria. API,
+worker e bootstrap de plataforma podem inserir somente os eventos permitidos
+de seu fluxo, mas não atualizar, excluir ou truncar o histórico.
 
 ## Migrations
 
-As migrations não rodam no startup da API. Execute-as explicitamente:
+As migrations usam exatamente `node-pg-migrate@9.0.0` e não rodam no startup
+da API ou do worker:
 
 ```console
 npm run migrate:up
@@ -128,58 +378,45 @@ npm run migrate:down -- 1
 npm run migrate:redo -- 1
 ```
 
-`down` e `redo` alteram o banco indicado em `DATABASE_URL`; confirme o alvo
-antes de executá-los. Cada comando verifica o manifesto antes de acessar o
-banco.
+Em produção, esses comandos exigem `MIGRATIONS_DATABASE_URL`. Cada comando
+verifica o manifesto antes de acessar o banco. `down` e `redo` são destrutivos
+para o alvo selecionado; confirme a URL e a quantidade.
 
 Cada migration:
 
-- usa um arquivo `NNNNNN-descricao.sql` em UTF-8 sem BOM e LF;
-- contém exatamente uma seção `-- Up Migration` e uma
-  `-- Down Migration`;
-- possui uma entrada correspondente em `migrations/manifest.json`;
-- é normalizada para UTF-8/LF antes do cálculo SHA-256;
+- usa `NNNNNN-descricao.sql` em UTF-8 sem BOM e LF;
+- contém `-- Up Migration` e `-- Down Migration` explícitos;
+- possui entrada em `migrations/manifest.json` calculada sobre UTF-8/LF;
 - depois de integrada na branch-base, nunca é alterada, renomeada, removida ou
   reordenada.
 
-Uma migration nova pode mudar enquanto o pull request estiver em construção.
-Ao estabilizá-la, calcule o SHA-256 do texto normalizado e acrescente sua entrada
-ao final do manifesto. Então execute:
-
 ```console
 npm run migrations:verify
-npm run migrations:verify-base -- --base-ref origin/nome-da-branch-base
+npm run migrations:verify-base -- --base-ref origin/backend
 ```
 
-A segunda verificação considera integrada somente a lista existente na
-branch-base protegida. Ela detecta hash divergente, arquivo ou entrada ausente,
-identificador duplicado, renomeação, exclusão, reordenação e alteração de uma
-migration integrada. Uma correção posterior exige novo arquivo.
+A verificação contra a branch-base detecta hash divergente, arquivo ou entrada
+ausente, identificador duplicado, renomeação, exclusão, reordenação e alteração
+integrada. Correção posterior exige nova migration. O `down` não remove
+PostGIS e não usa cascata destrutiva.
 
-O `up` pode executar `CREATE EXTENSION IF NOT EXISTS postgis`. O `down` nunca
-remove a extensão e desfaz somente objetos pertencentes ao aplicativo.
+## Testes e validação
 
-## Testes
+| Comando | Cobertura | Dependência externa |
+|---|---|---|
+| `npm run test:unit` | configuração, blocklist/Argon2, serviços, adaptadores, outbox e contratos estáticos de migration | nenhuma |
+| `npm run test:http` | health/readiness, OpenAPI, autenticação e ações de conta por injeção Fastify | nenhuma |
+| `npm run test:integration` | migrations e repositórios reais, concorrência e privilégios dos papéis | Docker |
 
-| Comando | Dependência externa |
-|---|---|
-| `npm run test:unit` | nenhuma |
-| `npm run test:http` | nenhuma; usa injeção HTTP do Fastify |
-| `npm run test:integration` | daemon Docker acessível |
+A integração usa exclusivamente a URL de um Testcontainer
+`postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando
+`DATABASE_URL` do ambiente. O hook `pretest:integration` verifica o manifesto.
 
-A integração usa exclusivamente a URL produzida por um Testcontainer
-`postgis/postgis:17-3.5`, com banco `tche_agro_test`, ignorando qualquer
-`DATABASE_URL` herdada do ambiente. O hook `pretest:integration` verifica o
-manifesto antes de iniciar a suíte.
-
-Testes destrutivos só podem prosseguir quando as três condições forem
-verdadeiras simultaneamente:
+Testes destrutivos só prosseguem com as três travas simultâneas:
 
 1. `NODE_ENV=test`;
-2. o nome do banco terminar em `_test`;
+2. nome do banco terminado em `_test`;
 3. `ALLOW_DESTRUCTIVE_DATABASE_TESTS=true`.
-
-Exemplo:
 
 ```powershell
 $env:NODE_ENV = 'test'
@@ -187,18 +424,32 @@ $env:ALLOW_DESTRUCTIVE_DATABASE_TESTS = 'true'
 npm run test:integration
 ```
 
-Se Docker estiver indisponível, a integração está bloqueada. Não substitua o
-container por mock nem registre a suíte como aprovada. Os demais comandos
-continuam obrigatórios.
+Se Docker estiver indisponível, a integração está bloqueada. Não use mock nem
+registre a suíte como aprovada. As validações independentes continuam
+obrigatórias.
 
-## Build produtivo
+## Build e execução produtiva
 
 ```console
 npm run build
 npm run smoke:dist
 npm start
+npm run start:outbox
 ```
 
-`build` gera JavaScript ESM com `tsc`; `start` executa somente o conteúdo de
-`dist`. O smoke confirma que o artefato compilado pode ser carregado sem usar o
-loader TypeScript.
+`build` gera JavaScript ESM com `tsc`; a API, o worker e a CLI produtiva de
+bootstrap executam somente `dist`. `smoke:dist` carrega API, servidor, worker,
+bootstrap e o parser do scaffold fail-closed de break-glass sem executar
+comandos operacionais. Isso não transforma o scaffold em CLI disponível. API e
+worker devem ser supervisionados como processos separados e receber as
+respectivas credenciais.
+
+`SIGINT` e `SIGTERM` fecham Fastify/pool na API e loop/pool no worker. As
+migrations e a CLI de bootstrap continuam comandos explícitos, nunca efeitos
+colaterais de startup.
+
+Antes de liberação pública ainda são obrigatórios MFA de Admin, política
+operacional de recuperação assistida, benchmark Argon2id no ambiente real,
+SMTP/segredos, observabilidade, backup/restauração e retenção revisada.
+Break-glass permanece uma capacidade não implementada; Ed25519 ou serviço
+externo equivalente com dois aprovadores é pré-requisito para iniciá-la.

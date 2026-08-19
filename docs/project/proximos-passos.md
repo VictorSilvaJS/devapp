@@ -1,19 +1,20 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-18
+> Atualizado em: 2026-08-19
 >
-> Próxima tarefa: MP-33B — Autenticação e sessão reais
+> Próxima tarefa de desenvolvimento: preparar a MP-33C
 >
-> Estado: MP-33A CONCLUÍDA; MP-33B PRÓXIMA
+> Estado: MP-33A CONCLUÍDA; MP-33B CONCLUÍDA TECNICAMENTE E NÃO LIBERADA PARA PRODUÇÃO
 
 ## Ponto de partida
 
 O corte local MP-00 a MP-32 e a fundação MP-33A estão concluídos. A corrida
 visual ao reabrir no mapa um ponto já persistido no Caderno foi corrigida e
 revalidada no Android em `ATUAL-04`; ela não altera os contratos nem a sequência
-do backend. O trabalho agora deve evitar novas simulações de segurança no
-frontend e iniciar a MP-33B, com autenticação e sessão reais. Essa implementação
-não deve antecipar a integração HTTP reservada à MP-33C.
+do backend. A MP-33B foi concluída tecnicamente, sem alterar o mock nem conectar
+o aplicativo. O próximo corte deve primeiro planejar a integração da branch
+`backend` com a linha do aplicativo e então preparar a MP-33C, sem tratar os
+portões de produção abaixo como já resolvidos.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -55,13 +56,55 @@ Critério de aceite:
 
 ## Sequência interna da MP-33
 
+### MP-33B — Autenticação, ações de conta e e-mail
+
+O código concluído tecnicamente inclui:
+
+1. senha Unicode/NFC com blocklist versionada e Argon2id com trabalho ativo e
+   fila limitados; saturação falha com `429` sem contar erro de credencial;
+2. login uniforme, prechecks por IP/HMAC antes do Argon2id, sessões stateful,
+   access/refresh opacos, rotação estrita e revogação;
+3. convites para Usuário pendente existente, recuperação comum, troca de
+   senha/e-mail e gestão de sessões;
+4. contato secundário e recuperação self-service de Admin, sem login
+   automático;
+5. recuperação assistida somente de Produtor/Colaborador, condicionada a
+   política operacional versionada em produção;
+6. outbox criptografada, worker SMTP separado e Mailpit exclusivamente local;
+7. auditoria append-only e quatro credenciais separadas: runtime, migrations,
+   outbox e plataforma bootstrap-only, protegida por `SESSION_USER` e estado
+   final diferido;
+8. bootstrap one-shot e correção de e-mail por CLI; break-glass preservado
+   somente como scaffold fail-closed/inalcançável, sem start, HMAC ou script;
+9. migrations novas com manifesto SHA-256, OpenAPI e testes unitários, HTTP e
+   de integração ampliados.
+
+Validação executada com Node.js 24.19.0:
+
+- manifesto e comparação append-only: 4/4 migrations;
+- testes unitários e contratos estáticos de migration: 114/114;
+- testes HTTP: 19/19;
+- integração real com PostgreSQL/PostGIS por Testcontainers: 27/27;
+- typecheck, build e smoke ESM compilado da API, worker, bootstrap e parser
+  fail-closed: passaram;
+- Compose e ciclo local Postgres + Mailpit + worker SMTP: passaram;
+- aplicativo em Node.js 22: typecheck e `test:domain-compat` passaram;
+- `npm audit --omit=dev`: zero vulnerabilidades conhecidas no resultado
+  executado.
+
+Antes da produção, ainda é necessário executar o benchmark Argon2id no
+ambiente-alvo e fechar MFA de Admin, política de identidade, SMTP/segredos,
+backup/restauração e observabilidade. Break-glass não está implementado;
+Ed25519 ou serviço externo equivalente com dois aprovadores é pré-requisito
+técnico para qualquer evolução desse scaffold.
+
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
 | 33A | MP-33A | Fundação, DDL, operação, testes e CI | CONCLUÍDA |
-| 33B | MP-33B | Autenticação, sessões, refresh, convites, recuperação e auditoria genérica | PRÓXIMA |
+| 33B | MP-33B | Autenticação, sessões, refresh, convites, recuperação e auditoria genérica | CONCLUÍDA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO |
 | 33C | MP-33C | Repositórios, seleção mock/HTTP e vertical de Propriedades | BACKLOG |
 
-O mock permanece integralmente inalterado na MP-33A. A MP-33C adaptará o
+O mock permanece integralmente inalterado nas MP-33A e MP-33B. A MP-33C adaptará o
 vínculo local `titular` para o acesso calculado pelo backend.
 
 ## Sequência depois de MP-33C

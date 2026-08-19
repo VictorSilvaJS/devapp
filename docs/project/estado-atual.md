@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-18
+> Revisão documental: 2026-08-19
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -12,9 +12,12 @@ aparelho, três perfis, Propriedades, Talhões, Visitas, Caderno de Campo,
 Materiais técnicos e mapas.
 
 O aplicativo ainda não é um produto conectado à produção. A MP-33A introduziu
-uma fundação isolada de backend e o DDL inicial, mas ainda não existem
-autenticação real, storage remoto, sincronização produtiva, rotas de negócio ou
-RBAC validado no servidor. O mock e seu funcionamento permanecem inalterados.
+a fundação isolada de backend e o DDL inicial. A MP-33B acrescenta no backend
+autenticação stateful, ações de conta, outbox e auditoria e está concluída
+tecnicamente, mas não liberada para produção. Ela não conecta o aplicativo nem
+libera rotas de negócio. Storage remoto, sincronização produtiva e RBAC completo
+no servidor continuam ausentes. O mock e seu funcionamento permanecem
+inalterados.
 
 ## Estado por camada
 
@@ -22,14 +25,15 @@ RBAC validado no servidor. O mock e seu funcionamento permanecem inalterados.
 |---|---|
 | Aplicativo Android | Funcional e validado no recorte local demonstrativo |
 | Dados | Dataset demonstrativo v2 e persistências locais |
-| Autenticação | Login e sessão locais; não são segurança produtiva |
-| Autorização | Regras e guardas locais; fundação HTTP ainda não aplica autorização de negócio |
-| API | Fundação HTTP isolada com health, readiness e OpenAPI; aplicativo ainda usa mocks locais |
-| Banco | DDL e migrations PostgreSQL/PostGIS da MP-33A; nenhum ambiente produtivo implantado |
+| Autenticação | Aplicativo ainda local; backend MP-33B com fator único stateful validado e sem MFA |
+| Autorização | Ações self-service/Admin mínimas da MP-33B; RBAC de recursos de negócio ainda não implementado |
+| API | Health, readiness, OpenAPI e rotas `/v1/auth` validadas; aplicativo ainda usa mocks locais |
+| Banco | DDL MP-33A e quatro migrations seladas/validadas; nenhum ambiente produtivo implantado |
+| E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Consulta/local demonstrativa por fluxo; sem fila geral de sincronização |
 | Notificações | In-app local; sem persistência produtiva ou push |
-| Testes | Baseline do app e suítes unitária/HTTP/integração do backend validadas separadamente; integração usa Docker/Testcontainers |
+| Testes | MP-33B: 114 unitários/contratos, 19 HTTP e 27 integrações reais; app Node.js 22 também validado |
 
 ## Fonte de dados ativa
 
@@ -76,7 +80,8 @@ evidência do dataset local, não volume produtivo.
 ## Limites que não podem ser confundidos com produto pronto
 
 - O cliente ainda pode ser inspecionado ou alterado; segurança exige servidor.
-- Tokens, refresh, revogação e expiração produtivos ainda não existem.
+- O aplicativo ainda não consome os tokens, refresh, revogação ou expiração
+  implementados no backend da MP-33B; esse uso pertence à MP-33C.
 - Mutação offline geral e resolução de conflitos ainda não existem.
 - Arquivos não têm upload, criptografia, retenção ou storage remoto definidos em
   execução.
@@ -85,6 +90,15 @@ evidência do dataset local, não volume produtivo.
 - Logs estruturados básicos e CI de fundação não equivalem a observabilidade
   produtiva; backup, restauração e gestão de segredos ainda precisam ser
   implementados.
+- A MP-33B permanece sem MFA; conta Administradora não pode ser liberada
+  publicamente antes desse portão.
+- Recuperação assistida exige política operacional de comprovação de identidade
+  e permanece desabilitada por padrão em produção.
+- Break-glass não possui start operacional. CLI, schema e continuações são
+  scaffold fail-closed e inalcançável, sem script npm, HMAC ou permissão de
+  plataforma; perda dos dois e-mails de Admin não é resolvida nesta fase.
+- Ed25519 ou serviço externo equivalente com dois aprovadores é pré-requisito
+  técnico antes de implementar ou habilitar break-glass.
 - iOS não faz parte da primeira entrega produtiva.
 
 ## Resultado da última rodada de QA
@@ -185,15 +199,46 @@ remover os recursos temporários criados para o ensaio.
 O aplicativo permaneceu inalterado e também passou por `npm run typecheck` e
 `npm run test:domain-compat`. A validação não criou tag nem realizou deploy.
 
+## Validação da MP-33B
+
+O corte concluído tecnicamente contém novas migrations append-only, credenciais
+separadas para runtime, migrations, worker e bootstrap de plataforma,
+blocklist versionada, Argon2id com fila limitada, sessões e tokens opacos,
+convites, recuperação
+comum, troca de e-mail, contato secundário de Admin, recuperação assistida
+condicionada, outbox SMTP, auditoria append-only e bootstrap one-shot. A
+credencial `platform_ops` é bootstrap-only, com guards por `SESSION_USER` e
+estado final diferido; não possui DML de credenciais, sessões, tokens,
+recuperações ou break-glass. O parser, schema e continuações break-glass são
+somente scaffold inalcançável.
+
+A validação com Node.js 24.19.0 passou em manifesto e comparação append-only
+das 4 migrations, typecheck, 114 testes unitários/contratos de migration, 19
+HTTP, build e smoke ESM compilado. A integração real passou em 27 cenários com
+Testcontainers/PostGIS. O smoke operacional confirmou Postgres, Mailpit,
+entrega SMTP real pelo worker, auditoria e remoção do payload criptografado. O
+`npm audit --omit=dev` reportou zero vulnerabilidades conhecidas na execução.
+
+O aplicativo permaneceu integralmente no mock e passou em Node.js 22 por
+typecheck e `test:domain-compat`. Não houve commit, tag ou deploy.
+
 ## Próxima etapa
 
 A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
 health/readiness, garantias operacionais, testes e CI. O mock e o aplicativo
 permanecem inalterados.
 
-A MP-33B implementará autenticação, sessões, refresh tokens, convites,
-recuperação e auditoria genérica. A MP-33C criará as interfaces de
-repositório, seleção mock/HTTP e a primeira vertical de Propriedades.
+A MP-33B está concluída tecnicamente na branch própria derivada de `backend`,
+com autenticação, sessões, refresh tokens, convites, recuperação, e-mail
+transacional e auditoria genérica. Antes da MP-33C, deve ser planejada a
+integração dessa branch com a linha do aplicativo; então a MP-33C criará as
+interfaces de repositório, seleção mock/HTTP e a primeira vertical de
+Propriedades.
+
+Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
+SMTP/segredos, observabilidade, backup/restauração e retenção continuam portões
+ativos. Break-glass segue não implementado; Ed25519 ou serviço externo com dois
+aprovadores deve existir antes dessa futura capacidade.
 
 As decisões de fundação estão em
 [baseline-backend-v1-2026-08.md](baseline-backend-v1-2026-08.md), e a sequência

@@ -1,25 +1,26 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-08-18: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
+Status revisado em 2026-08-19: `MP_33B_CONCLUIDA_TECNICAMENTE`. Este documento
 define a matriz de testes baseada em `contrato-api-rbac.md`, nas decisoes 31 a
 42 e em `baseline-backend-v1-2026-08.md`. Ele nao implementa backend.
 
 ## Escopo Da Matriz
 
-Esta matriz deve orientar testes automatizados futuros de API/backend quando a
-frente real existir. Hoje ela e apenas documentacao tecnica.
+Esta matriz orienta a API/backend. Os cenários de autenticação da MP-33B
+possuem automação validada; os cenários de recursos e RBAC por Propriedade
+continuam documentação para MP-33C/MP-35.
 
 Separacao obrigatoria:
 
 - Mock v2: deve usar vinculos diretos `usuario_propriedade` como escopo do
   colaborador.
-- Backend futuro: deve validar permissao por acao e por Propriedade.
+- Backend de negócio futuro: deve validar permissao por acao e por Propriedade.
 - Backend: Titularidade deriva exclusivamente de `propriedades.titular_id`;
   `usuario_propriedade` persiste somente `usuario_autorizado` e `colaborador`.
 - Municipio e UF podem filtrar listagens e atribuicoes administrativas em
   lote, mas nao concedem acesso.
-- Fora desta fase: implementar backend, autenticar de verdade ou depender do
-  frontend como fonte de seguranca.
+- A MP-33B automatiza somente autenticacao e autorizacao estreita de seus
+  endpoints; o frontend nunca e fonte de seguranca.
 
 ## Estrategia Para `403` E `404`
 
@@ -49,12 +50,12 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
-| API-RBAC-AUTH-01 | Login valido | Admin | Usuario ativo com credenciais validas | `POST /auth/login` | `{ "email": "...", "senha": "..." }` | `200 OK` | Usuario ativo pode iniciar sessao | Automatizado backend/API |
-| API-RBAC-AUTH-02 | Login invalido | Nao autenticado | Credenciais incorretas | `POST /auth/login` | `{ "email": "...", "senha": "errada" }` | `401 Unauthorized` | Credenciais invalidas nao autenticam | Automatizado backend/API |
-| API-RBAC-AUTH-03 | Usuario inativo tenta login | Usuario inativo | Credenciais validas, status inativo | `POST /auth/login` | `{ "email": "...", "senha": "..." }` | `403 Forbidden` | Usuario inativo nao acessa area protegida | Automatizado backend/API |
-| API-RBAC-AUTH-04 | Usuario pendente tenta login | Usuario pendente | Credenciais validas, status pendente | `POST /auth/login` | `{ "email": "...", "senha": "..." }` | `403 Forbidden` | Usuario pendente nao acessa area protegida | Automatizado backend/API |
-| API-RBAC-AUTH-05 | Consultar sessao valida | Colaborador | Sessao valida | `GET /auth/me` | Nao se aplica | `200 OK` | Sessao retorna usuario, perfil, status e escopo | Automatizado backend/API |
-| API-RBAC-AUTH-06 | Consultar sessao sem token | Nao autenticado | Sem sessao | `GET /auth/me` | Nao se aplica | `401 Unauthorized` | Area protegida exige autenticacao | Automatizado backend/API |
+| API-RBAC-AUTH-01 | Login valido | Admin | Usuario ativo com credenciais validas | `POST /v1/auth/login` | `{ "email": "...", "senha": "..." }` | `200 OK` | Usuario ativo pode iniciar sessao | Automatizado backend/API |
+| API-RBAC-AUTH-02 | Login invalido | Nao autenticado | Credenciais incorretas | `POST /v1/auth/login` | `{ "email": "...", "senha": "errada" }` | `401 Unauthorized` | Credenciais invalidas nao autenticam | Automatizado backend/API |
+| API-RBAC-AUTH-03 | Usuario inativo tenta login | Usuario inativo | Credenciais validas, status inativo | `POST /v1/auth/login` | `{ "email": "...", "senha": "..." }` | `401 Unauthorized` | Resposta uniforme nao enumera estado | Automatizado backend/API |
+| API-RBAC-AUTH-04 | Usuario pendente tenta login | Usuario pendente | Credenciais validas, status pendente | `POST /v1/auth/login` | `{ "email": "...", "senha": "..." }` | `401 Unauthorized` | Resposta uniforme nao enumera estado | Automatizado backend/API |
+| API-RBAC-AUTH-05 | Consultar sessao valida | Colaborador | Sessao valida | `GET /v1/auth/me` | Nao se aplica | `200 OK` | Sessao retorna identidade, modo de escopo e versao, sem Propriedades | Automatizado backend/API |
+| API-RBAC-AUTH-06 | Consultar sessao sem token | Nao autenticado | Sem sessao | `GET /v1/auth/me` | Nao se aplica | `401 Unauthorized` | Area protegida exige autenticacao | Automatizado backend/API |
 
 ## Usuarios
 

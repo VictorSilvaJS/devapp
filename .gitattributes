@@ -2,3 +2,5 @@
 
 # Migrations: UTF-8 e LF deterministico em Windows e Linux.
 backend/migrations/*.sql text eol=lf working-tree-encoding=UTF-8
+backend/security/blocklists/*.txt text eol=lf working-tree-encoding=UTF-8
+backend/security/blocklists/*.json text eol=lf working-tree-encoding=UTF-8

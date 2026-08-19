@@ -1,6 +1,6 @@
 # Decisões Consolidadas
 
-> Revisão documental: 2026-08-18
+> Revisão documental: 2026-08-19
 
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
@@ -162,7 +162,59 @@ storage de objetos.
 - MP-33C: interfaces de repositório e seleção mock/HTTP no aplicativo e a
   primeira vertical de Propriedades.
 
-Nenhuma dessas decisões altera o mock durante a MP-33A.
+MP-33A e MP-33B não alteram o mock nem conectam o aplicativo. Essa adaptação
+pertence à MP-33C.
+
+### 43. Autenticação de fator único da MP-33B
+
+A MP-33B usa tokens opacos stateful e credenciais Argon2id, sem JWT, cookies
+ou MFA. A senha possui de 8 a 128 pontos de código Unicode após NFC, blocklist
+versionada e regra deliberada `1-de-3` — maiúscula, número ou pontuação/símbolo.
+O mínimo de oito sem MFA e essa composição são riscos aceitos; MFA continua
+portão obrigatório antes da liberação pública de contas Administradoras.
+
+Prechecks persistidos por IP e identificador ocorrem antes do Argon2id. O
+trabalho ativo e a fila são limitados; saturação retorna `429` sem registrar
+falha de credencial.
+
+Access vale quinze minutos. A sessão possui trinta dias absolutos e quatorze
+dias de inatividade desde o último refresh bem-sucedido. Refresh é rotativo,
+sem tolerância a replay, e somente hashes de tokens são persistidos.
+
+### 44. Recuperação, contato secundário e break-glass
+
+Recuperação comum depende do e-mail verificado. Um Admin pode manter um contato
+secundário previamente confirmado para recuperar o endereço principal sem
+criar sessão automática. Esse é o único caminho operacional de recuperação
+Administradora na MP-33B. Se ambos os endereços forem perdidos, não há
+recuperação assistida, de plataforma ou break-glass disponível.
+
+Um único Admin pode aprovar recuperação assistida de Produtor ou Colaborador,
+com risco aceito, motivo categorizado e auditoria. O recurso fica desabilitado
+em produção até existir política operacional versionada de validação de
+identidade. Recuperação assistida HTTP de conta Administradora permanece
+proibida na MP-33B.
+
+O parser de CLI, schema e dois `POST` públicos de continuação permanecem apenas
+scaffold fail-closed e inalcançável. A porta e o serviço de domínio não têm
+implementação concreta do verificador/emissor, configuração ou wiring
+operacional; não existe script npm, HMAC nem privilégio de banco que crie um
+caso consumível.
+
+`tche_agro_platform_ops` é exclusivo do bootstrap inicial e da correção de seu
+convite pendente. Ele não recebe DML de credenciais, sessões, tokens,
+autorizações, recuperações ou break-glass; guards por `SESSION_USER` e estado
+final diferido impedem papéis combinados e operações parciais.
+
+Antes de implementar ou habilitar break-glass, é obrigatório adotar Ed25519 ou
+serviço externo equivalente que comprove dois aprovadores distintos, finalidade,
+expiração e anti-replay. A evolução usa mudança deliberada, testes e migration
+append-only quando afetar persistência.
+
+Convite geral opera somente sobre `usuario` pendente existente e não cria
+Produtor, Propriedade, Titularidade ou vínculo. A auditoria é append-only, a
+outbox usa payload temporário criptografado e o runtime do banco não possui
+privilégios de atualização, exclusão ou truncate sobre auditoria.
 
 ## Contratos que detalham as decisões
 
@@ -172,6 +224,7 @@ Nenhuma dessas decisões altera o mock durante a MP-33A.
 - [Modelo de Material técnico](modelo-material-tecnico.md)
 - [Matriz de RBAC](matriz-rbac-backend.md)
 - [Política de sessão](politica-sessao.md)
+- [Contrato de autenticação e recuperação da MP-33B](contrato-autenticacao-mp33b.md)
 - [Ciclo do Caderno](ciclo-vida-caderno.md)
 - [Estados de Visita](estados-visita.md)
 - [Versionamento de GeoJSON](versionamento-geojson-talhoes.md)

@@ -4,7 +4,7 @@
 >
 > Definida em: 2026-07-30
 >
-> Revisão documental: 2026-08-18
+> Revisão documental: 2026-08-19
 >
 > Origem: `MP-01` / `QA-P0-04`
 
@@ -59,6 +59,7 @@ sessao produtiva.
 | bloqueio local por inatividade ou background | 15 minutos |
 | janela maxima de consulta offline | 24 horas desde a ultima revalidacao bem-sucedida |
 | validade absoluta do refresh token | 30 dias desde o login interativo |
+| inatividade da sessao no servidor | 14 dias desde o ultimo refresh bem-sucedido |
 
 Esses valores sao limites iniciais. Uma organizacao pode adotar limites
 menores. Aumentar qualquer limite exige nova decisao de seguranca registrada
@@ -67,8 +68,11 @@ nos documentos ativos.
 ### Token E Identidade
 
 - O access token deve ser curto e usado apenas para chamadas ao backend.
-- O refresh token deve ser rotacionado a cada uso, protegido pelo storage
+- O refresh token opaco deve ser rotacionado atomicamente a cada uso, protegido pelo storage
   seguro da plataforma e revogado quando houver reutilizacao indevida.
+- O backend persiste somente SHA-256 de access e refresh tokens. Reutilizacao
+  de refresh revoga apenas a sessao/familia comprometida e nao possui janela
+  de tolerancia.
 - Access token e refresh token nao podem ser persistidos em `AsyncStorage`.
 - O access token deve permanecer somente em memoria quando a plataforma
   permitir.
@@ -184,7 +188,8 @@ retencao, criptografia e sincronizacao do cache devem ser definidas por fluxo.
 
 1. Nenhum token ou senha fica em `AsyncStorage`, logs ou payload de UI.
 2. Access token expira em 15 minutos e refresh token rotaciona a cada uso.
-3. Refresh expirado, revogado ou reutilizado encerra a sessao.
+3. Refresh expirado, revogado ou reutilizado encerra a sessao/familia; a
+   MP-33C usa single-flight e nunca repete automaticamente token antigo.
 4. Usuario inativo e sessao revogada perdem acesso na proxima comunicacao com
    o servidor.
 5. Reconexao revalida antes de qualquer operacao remota.
@@ -201,20 +206,22 @@ retencao, criptografia e sincronizacao do cache devem ser definidas por fluxo.
 
 ## Dependencias E Bloqueios
 
-Status em 2026-08-07: as decisões de organização, RBAC e cache por fluxo foram
-fechadas em `baseline-backend-v1-2026-08.md`. Os itens abaixo são entregas de
-`MP-33B`, não decisões anteriores que mantenham a fase bloqueada.
+Status em 2026-08-19: as decisões de organização, RBAC e cache por fluxo foram
+fechadas em `baseline-backend-v1-2026-08.md`. Emissão, rotação, revogação e
+sessões stateful do backend estão concluídas tecnicamente na MP-33B. O
+aplicativo ainda não consome esse contrato.
 
 O fechamento produtivo depende de:
 
-- backend de autenticacao e autorizacao;
-- emissao, rotacao e revogacao de tokens;
+- integração do aplicativo com o backend de autenticação;
+- autorização dos recursos de negócio no servidor;
 - storage seguro da plataforma;
 - identificacao de organizacao/tenant e versao de autorizacao;
 - politica de cache segregado e cifrado;
 - deteccao de conectividade e ciclo de vida do aplicativo;
 - testes negativos de API, rota direta e troca de usuario.
 
-Essas dependencias pertencem a `MP-33B — Autenticacao e sessao reais`. Ate
-essa tarefa ser concluida, `QA-P0-04` permanece resolvida apenas em nivel de
-contrato, sem alegacao de seguranca produtiva.
+O fechamento do backend pertence à MP-33B; integração e single-flight do
+aplicativo pertencem à MP-33C, e RBAC de negócio à MP-35. Até essas tarefas e
+os portões de produção serem concluídos, `QA-P0-04` permanece resolvida apenas
+em nível de contrato no cliente, sem alegação de segurança produtiva.

@@ -18,11 +18,21 @@ export interface DatabasePool {
 
 export type PostgresPoolFactory = (config: PoolConfig) => Pool;
 
-export function buildPostgresPoolConfig(config: DatabaseConfig): PoolConfig {
+function safeApplicationName(value: string): string {
+  if (!/^[a-z][a-z0-9_]{2,62}$/u.test(value)) {
+    throw new TypeError('Invalid PostgreSQL application name.');
+  }
+  return value;
+}
+
+export function buildPostgresPoolConfig(
+  config: DatabaseConfig,
+  applicationName = 'tche_agro_backend',
+): PoolConfig {
   return {
     connectionString: config.connectionString,
     ssl: config.ssl,
-    application_name: 'tche_agro_backend',
+    application_name: safeApplicationName(applicationName),
     options: '-c search_path=pg_catalog,public',
     connectionTimeoutMillis: config.connectionTimeoutMillis,
     idleTimeoutMillis: 30_000,
@@ -34,8 +44,9 @@ export function createPostgresPool(
   config: DatabaseConfig,
   logger: SafeLogger,
   poolFactory: PostgresPoolFactory = (poolConfig) => new Pool(poolConfig),
+  applicationName = 'tche_agro_backend',
 ): Pool {
-  const pool = poolFactory(buildPostgresPoolConfig(config));
+  const pool = poolFactory(buildPostgresPoolConfig(config, applicationName));
 
   pool.on('error', () => {
     logger.error(

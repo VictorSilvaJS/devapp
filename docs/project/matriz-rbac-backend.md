@@ -1,6 +1,7 @@
 # Matriz Tecnica De RBAC/Backend
 
-Status revisado em 2026-08-18: `APROVADO_PARA_IMPLEMENTACAO`. Este documento
+Status revisado em 2026-08-19: `RBAC_DE_NEGOCIO_APROVADO_PARA_IMPLEMENTACAO`.
+Este documento
 transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
 de aceite. A regra segue as decisoes 31 a 42 de
 `decisoes-consolidadas.md` e `baseline-backend-v1-2026-08.md`.
@@ -31,9 +32,9 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 
 ### Fora do escopo deste documento
 
-- Implementar backend.
-- Implementar autenticação/RBAC e as rotas; essa execucao pertence a
-  `MP-33B`/`MP-33C`/`MP-35`. A MP-33A implementa somente fundacao e DDL.
+- Implementar a autenticação já coberta pela MP-33B concluída tecnicamente.
+- Implementar integração do aplicativo e RBAC de recursos; essa execução
+  pertence a `MP-33C`/`MP-35`.
 - Inventar registros produtivos sem carga autorizada.
 - Criar novos perfis administrativos ou autorizacao por Municipio/UF.
 
