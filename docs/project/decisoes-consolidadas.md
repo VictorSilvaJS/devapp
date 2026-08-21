@@ -166,8 +166,10 @@ storage de objetos.
 MP-33A e MP-33B não alteraram o mock nem conectaram o aplicativo. Essa
 adaptação foi implementada na MP-33C.
 
-As três fases estão concluídas tecnicamente; isso não implica integração da
-branch, deploy, release ou fechamento dos portões produtivos.
+As três fases estão concluídas tecnicamente. A MP-33C foi integrada à branch
+`backend` pelo PR #2 no commit `cc78a9f`, com CI pós-merge aprovada. Essa
+integração não implica deploy, release, publicação ou fechamento dos portões
+produtivos.
 
 ### 43. Autenticação de fator único da MP-33B
 
@@ -293,6 +295,18 @@ Testcontainers. Fixture manual exige comando explícito, ambiente permitido,
 `_test`/`_qa` e `QA_FIXTURES_PASSWORD` compatível com a política. Não existe
 seed automático nem produtivo, e dados do mock não são promovidos ao backend.
 
+### 49. Corte mínimo de notificações da MP-34
+
+A MP-34 começa com notificações in-app individuais, persistidas e online-only
+para fatos reais da própria conta. Evento e entrega são gravados na mesma
+transação do fato de origem. `outbox_email` permanece separada e não é
+reutilizada como armazenamento ou transporte de notificação in-app.
+
+O primeiro destino permitido é somente `conta`, e o destinatário é o próprio
+Usuário afetado. Não entram cache persistente, operação offline, push, token de
+dispositivo, fan-out de Propriedade nem ampliação de RBAC. Recursos operacionais,
+MP-35 e fases posteriores permanecem fora desse corte.
+
 ## Contratos que detalham as decisões
 
 - [Baseline do backend v1](baseline-backend-v1-2026-08.md)
@@ -303,6 +317,7 @@ seed automático nem produtivo, e dados do mock não são promovidos ao backend.
 - [Política de sessão](politica-sessao.md)
 - [Contrato de autenticação e recuperação da MP-33B](contrato-autenticacao-mp33b.md)
 - [Contrato de integração do aplicativo da MP-33C](contrato-integracao-app-mp33c.md)
+- [Contrato de notificações](contrato-notificacoes.md)
 - [Ciclo do Caderno](ciclo-vida-caderno.md)
 - [Estados de Visita](estados-visita.md)
 - [Versionamento de GeoJSON](versionamento-geojson-talhoes.md)

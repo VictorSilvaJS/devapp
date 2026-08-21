@@ -13,12 +13,15 @@ uma API HTTP nem comprova backend, autenticação ou autorização produtivos.
 - novas escritas devem usar propriedade_id;
 - fazenda_id pode ser lido somente nas bordas de compatibilidade existentes.
 
-## Próxima evolução
+## Separação vigente
 
-MP-33C deve introduzir interfaces de repositório e o primeiro adaptador HTTP.
-As telas não devem trocar o mock diretamente por chamadas de rede espalhadas.
-MP-33A cria somente a fundação do backend e mantém esta camada e o mock
-integralmente inalterados.
+A MP-33C introduziu as interfaces de repositório e o primeiro adaptador HTTP em
+uma composição separada sob `src/http`. As telas HTTP consomem essas portas em
+vez de espalhar chamadas de rede ou importar esta fachada local.
+
+Esta pasta continua exclusiva do Demo e dos testes. O mock não integra o grafo
+da composição HTTP e nunca é usado como fallback para erro, indisponibilidade
+ou configuração ausente.
 
 Os contratos vigentes estão em
 [docs/project](../../docs/project/README.md), especialmente:
@@ -26,7 +29,8 @@ Os contratos vigentes estão em
 - baseline-backend-v1-2026-08.md;
 - modelo-dados-mock-v2.md;
 - contrato-api-rbac.md;
-- matriz-rbac-backend.md.
+- matriz-rbac-backend.md;
+- contrato-integracao-app-mp33c.md.
 
 Ao alterar esta pasta, execute npm run typecheck e
 npm run test:domain-compat.

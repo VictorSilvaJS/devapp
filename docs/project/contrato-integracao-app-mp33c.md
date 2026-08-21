@@ -2,7 +2,7 @@
 
 > Revisão documental: 2026-08-21
 >
-> Estado: IMPLEMENTADA E VALIDADA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO
+> Estado: INTEGRADA E VALIDADA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO
 
 ## Objetivo
 
@@ -11,9 +11,10 @@ MP-33A e MP-33B, sem misturar dados demonstrativos com dados HTTP. O primeiro
 corte HTTP inclui autenticação e ações de conta da própria pessoa, além da
 leitura de lista e detalhe de Propriedades autorizadas pelo servidor.
 
-O corte está implementado na branch de trabalho e passou pelas validações
-técnicas registradas neste documento e em `estado-atual.md`. Isso não publica
-o aplicativo, não implanta backend ou banco e não fecha os portões de domínio,
+O corte foi integrado à branch `backend` pelo PR #2 no commit `cc78a9f` e
+passou pelas validações técnicas registradas neste documento e em
+`estado-atual.md`. A CI pós-merge também foi aprovada. Isso não publica o
+aplicativo, não implanta backend ou banco e não fecha os portões de domínio,
 assinatura, dispositivo e operação necessários para produção.
 
 ## Composição dos aplicativos
@@ -316,8 +317,8 @@ Continuam obrigatórios antes de qualquer aprovação produtiva:
   aparelho e ambiente reais;
 - fechar MFA de Administrador e os demais portões operacionais da MP-33B.
 
-Não houve commit, tag, deploy, publicação em loja nem promoção de fixtures para
-produção como parte desta implementação.
+O merge produziu o commit `cc78a9f`. Não houve tag, deploy, release, publicação
+em loja nem promoção de fixtures para produção.
 
 ## Fora de escopo
 

@@ -3,14 +3,34 @@
 > Revisão documental: 2026-08-21
 
 Não existe decisão arquitetural pendente dentro do corte da MP-33C. MP-33A,
-MP-33B e MP-33C estão concluídas tecnicamente, mas não liberadas para produção.
-Os itens abaixo são implementações de fases posteriores ou portões que devem
-ser fechados na entrada da respectiva vertical/release.
+MP-33B e MP-33C estão concluídas tecnicamente e integradas. A MP-33C entrou na
+branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada,
+mas não houve deploy, release ou publicação. Os itens abaixo são decisões da
+MP-34, implementações de fases posteriores ou portões que devem ser fechados na
+entrada da respectiva vertical/release.
+
+## MP-34 — decisões anteriores ao código
+
+- ratificar os três eventos iniciais de conta, suas prioridades e o texto dos
+  templates: senha alterada, e-mail principal alterado e recuperação concluída;
+- fixar a retenção da chave de idempotência dos comandos; a proposta inicial é
+  acompanhar os 90 dias das entregas, e ela nunca pode terminar antes do maior
+  `expira_em` alcançável pelo comando;
+- definir responsável, periodicidade, credencial de menor privilégio e alertas
+  da purga física em lotes;
+- concluir a revisão jurídica/de privacidade dos 90 dias e confirmar se existe
+  obrigação de suspender descarte.
+
+Não permanecem em aberto para o corte mínimo: operação online-only, entrega
+in-app individual, evento e entrega na mesma transação, `outbox_email` separada,
+destino inicial somente `conta`, nenhum cache persistente, nenhum push e nenhum
+token de dispositivo. Esses limites estão consolidados em
+`contrato-notificacoes.md`.
 
 ## Implementação por fase
 
-- revisar o diff da MP-33C e integrá-lo à branch-base somente depois de
-  autorização explícita;
+- implementar a MP-34 somente depois de aprovar seu catálogo inicial de eventos,
+  conteúdo seguro e operação de retenção;
 - implementar na MP-35 escritas de Propriedade, administração de
   Usuários/vínculos e o restante do RBAC por ação;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por

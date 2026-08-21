@@ -4,6 +4,10 @@
 >
 > Definido em: 2026-07-30
 >
+> Revisão arquitetural: 2026-08-21
+>
+> Estado da MP-34: `ARQUITETURA_PREPARADA`; implementação não iniciada
+>
 > Origem: `MP-03` / `QA-P0-01`
 
 ## Objetivo
@@ -14,6 +18,54 @@ navegacao segura.
 
 Ele nao implementa backend, push, persistencia local ou navegacao no mock
 atual. A implementacao produtiva pertence a `MP-34`.
+
+## Corte Mínimo Consolidado Da MP-34
+
+A MP-34 deve entregar a primeira vertical HTTP de notificações reais sem
+antecipar recursos de negócio das fases seguintes. O corte mínimo é:
+
+- notificações exclusivamente in-app, persistidas no PostgreSQL e individuais
+  por destinatário;
+- eventos e entregas gravados atomicamente na mesma transação do fato de conta
+  que os origina;
+- lista paginada, contador não lido, leitura individual, leitura em lote,
+  descarte e resolução segura de destino;
+- composição HTTP com estado somente em memória e segregado por organização,
+  usuário, versão de autorização e epoch da sessão;
+- primeiro catálogo emissor limitado a fatos de conta já implementados na
+  MP-33B: senha alterada, e-mail principal alterado e recuperação concluída;
+- destino inicial limitado a `conta`, sempre com o próprio Usuário como recurso
+  e destinatário;
+- retenção padrão de 90 dias, conteúdo por template versionado e auditoria sem
+  texto livre ou segredo;
+- testes negativos de destinatário, organização, sessão, idempotência, troca de
+  usuário, resposta tardia e rota direta.
+
+Os três perfis podem receber eventos da própria conta. O catálogo técnico
+inicial recomendado é:
+
+| `tipo_evento` | Destinatário | Prioridade inicial | Destino |
+|---|---|---|---|
+| `conta.senha_alterada.v1` | Usuário afetado | `alta` | `conta` |
+| `conta.email_principal_alterado.v1` | Usuário afetado | `alta` | `conta` |
+| `conta.recuperacao_concluida.v1` | Usuário afetado | `alta` | `conta` |
+
+Troca autenticada de senha e alteração normal do e-mail principal usam seus
+tipos específicos. Recuperação comum, assistida ou pelo segundo e-mail do
+Administrador usa o mesmo tipo genérico de recuperação concluída, sem revelar
+na interface qual método foi usado.
+
+Ficam fora desse corte:
+
+- push, e-mail, SMS, WebSocket, atualização em background e entrega em tempo
+  real;
+- cadastro, armazenamento ou renovação de token de dispositivo;
+- preferências, silenciamento, digest, campanhas ou comunicado administrativo;
+- cache persistente, consulta offline e fila de mutações no aplicativo;
+- eventos de Propriedade, Visita, Caderno, Material, mapa, GeoJSON ou Talhão
+  enquanto a respectiva fonte e seu guard HTTP produtivo não existirem;
+- qualquer escrita, vínculo ou ampliação de RBAC pertencente à MP-35;
+- fases MP-35 e posteriores, release, deploy e publicação.
 
 ## Problema Confirmado
 
@@ -55,13 +107,14 @@ Representa o fato de dominio que pode gerar uma ou mais entregas.
 | `id` | identificador imutavel do evento |
 | `organizacao_id` | organizacao onde o evento ocorreu |
 | `tipo_evento` | codigo versionado do evento |
+| `chave_origem` | chave idempotente estável produzida pelo fato de domínio |
 | `recurso_tipo` | tipo canonico do recurso relacionado |
 | `recurso_id` | ID estavel do recurso |
 | `propriedade_id` | Propriedade do recurso, quando operacional |
 | `talhao_id` | opcional; exige `propriedade_id` |
 | `autor_id` | usuario ou servico que originou o evento, quando aplicavel |
 | `criado_em` | data/hora do servidor |
-| `dados_apresentacao` | metadados minimos, sem autoridade de acesso |
+| `dados_apresentacao` | objeto tipado e limitado, sem texto livre ou autoridade de acesso |
 
 Eventos de conta ou seguranca podem nao possuir Propriedade. Eventos de
 Visita, Caderno, Mapa, Material ou Talhao devem possuir
@@ -77,20 +130,69 @@ Representa a notificacao efetivamente destinada a um usuario.
 | `evento_id` | referencia a `notificacao_evento` |
 | `destinatario_usuario_id` | usuario exato que pode consultar a entrega |
 | `organizacao_id` | deve coincidir com sessao e evento |
-| `perfil_snapshot` | opcional, somente auditoria/apresentacao |
 | `prioridade` | `baixa`, `normal` ou `alta` |
 | `criada_em` | data/hora do servidor |
 | `lida_em` | `null` enquanto nao lida |
 | `descartada_em` | `null` enquanto visivel |
 | `chave_deduplicacao` | chave idempotente por destinatario |
-| `expira_em` | opcional conforme politica do tipo |
+| `expira_em` | obrigatório; no máximo 90 dias após `criada_em` |
 
-O perfil registrado e apenas snapshot. A autorizacao usa o usuario, a
-organizacao, os vinculos ativos e a regra atual do recurso.
+O corte inicial não persiste perfil como autoridade ou snapshot da entrega. A
+autorizacao usa o usuario, a organizacao, os vinculos ativos e a regra atual do
+recurso.
 
 A unicidade minima deve considerar:
 
 `organizacao_id + destinatario_usuario_id + chave_deduplicacao`
+
+O evento também deve ser único por
+`organizacao_id + tipo_evento + chave_origem`. A chave de origem não contém
+e-mail, token, texto exibível ou outro dado pessoal previsível.
+
+## Persistência, Outbox E Atomicidade Da MP-34
+
+A implementação cria uma migration append-only posterior às quatro migrations
+integradas. Ela adiciona somente `notificacao_evento`, `notificacao_entrega` e
+`notificacao_comando_idempotencia`. A terceira tabela restringe a chave por
+organização/usuário, registra comando, alvo ou corte, hash do pedido, resultado
+e expiração, sem guardar conteúdo de notificação. O registro idempotente não
+pode expirar antes da última entrega que o comando possa afetar. Nenhuma tabela
+existente é alterada para aceitar alias legado ou conteúdo de notificação.
+
+O corte mínimo não possui canal externo nem fan-out amplo: cada fato de conta
+tem um único destinatário exato. Por isso, o serviço grava evento e entrega na
+mesma transação PostgreSQL da mudança de conta. Se qualquer parte falhar, todo o
+fato é revertido; não existe estado parcial que exija compensação ou retry de
+worker.
+
+`outbox_email` não será reutilizada nem ampliada. Ela contém payload SMTP
+temporário cifrado, vínculos com desafios, ciclo de vida e privilégios próprios
+da MP-33B; notificações in-app são conteúdo durável consultado pelo usuário.
+Misturar as duas finalidades ampliaria privilégios e retenção sem necessidade.
+
+Se uma fase futura introduzir fan-out amplo ou canal externo, deverá criar uma
+outbox própria de notificações. Ela pode reutilizar os padrões já testados de
+claim com `FOR UPDATE SKIP LOCKED`, lease comparado na escrita, tentativas
+limitadas, backoff exponencial com jitter e estado terminal auditado, mas não a
+tabela, o payload cifrado ou a credencial SMTP. Essa evolução não pertence ao
+corte inicial da MP-34.
+
+### Idempotência E Repetição
+
+- repetir o mesmo `tipo_evento + chave_origem` não cria outro evento;
+- repetir a criação da entrega não vence a unicidade por destinatário e chave
+  de deduplicação;
+- leitura e descarte são monotônicos: preservam o primeiro horário do servidor
+  e repetir o comando retorna o estado já alcançado;
+- comandos de estado exigem `Idempotency-Key`; a mesma chave com outro comando
+  ou outro alvo é rejeitada;
+- “marcar todas” fixa no primeiro processamento um corte de criação do servidor
+  e o associa à chave idempotente durante toda a vida das entregas alcançáveis,
+  para que um retry não marque notificações que chegaram depois;
+- falha de transporte não gera retry oculto com uma chave nova; a interface
+  mantém o estado confirmado e oferece repetição explícita com a mesma chave;
+- conflitos de unicidade concorrentes são tratados como deduplicação, nunca
+  como segunda entrega.
 
 ## Tipos De Recurso
 
@@ -110,6 +212,12 @@ O primeiro catalogo permitido e:
 Novos tipos exigem regra de autorizacao, destino seguro e teste negativo antes
 de entrar na allowlist. URLs arbitrarias, nomes de tela e objetos de navegacao
 nao fazem parte do contrato persistido.
+
+Essa tabela é o catálogo de domínio aprovado, não a lista automaticamente
+habilitada na MP-34. O primeiro código executável habilita somente `conta`.
+Os demais tipos, inclusive `propriedade`, continuam desabilitados até suas
+verticais possuírem fonte autoritativa, rota HTTP e testes de autorização
+próprios.
 
 ## Destinatario E Escopo
 
@@ -134,6 +242,12 @@ Regras minimas:
   consulta e a abertura do recurso.
 - Perda de acesso torna a entrega indisponivel, mesmo que ainda exista no
   historico interno.
+
+No corte mínimo, não existe seleção por perfil, Município, UF ou lista de
+Propriedades: o destinatário é o próprio Usuário afetado pelo fato de conta.
+Admin não consulta entregas de outra pessoa. A ampliação para destinatários de
+recursos operacionais exige uma regra por `tipo_evento` e pertence à vertical
+que possuir a fonte real desse evento.
 
 ### Consulta
 
@@ -169,6 +283,17 @@ A retenção padrão do primeiro backend é de 90 dias desde `criada_em`, salvo
 retenção do domínio de origem. A retenção nunca pode fazer uma entrega
 reaparecer como não lida.
 
+Entrega expirada deixa de aparecer na lista e no contador imediatamente. A
+purga física deve ser um comando operacional explícito, idempotente e em lotes:
+remove primeiro entregas vencidas e depois eventos de notificação sem entrega.
+Ela não apaga `eventos_auditoria`, cujo prazo é independente, nem transforma a
+tabela de notificações em arquivo permanente. O agendamento, a monitoração e a
+aprovação jurídica/de privacidade dessa purga são portões anteriores à produção.
+
+`lida_em` e `descartada_em` são dados comportamentais do destinatário. Apenas o
+próprio usuário e os processos mínimos de operação podem acessá-los; eles não
+alimentam analytics, perfilamento ou campanhas nesse corte.
+
 ## Navegacao Segura
 
 Ao tocar em uma entrega:
@@ -194,7 +319,7 @@ parametros locais nao podem contornar esse fluxo.
 Lista, contador, cursor, requisicao em andamento e destino pendente devem ser
 particionados por:
 
-`organizacao_id + destinatario_usuario_id`
+`organizacao_id + destinatario_usuario_id + versao_autorizacao + epoch_da_sessao`
 
 Na troca de usuario, organizacao ou logout:
 
@@ -204,29 +329,100 @@ Na troca de usuario, organizacao ou logout:
 4. impedir leitura de cache de outra particao;
 5. consultar novamente depois da autenticacao e revalidacao.
 
-Cache produtivo futuro deve ser segregado e cifrado. No primeiro corte,
-notificacoes em cache podem ser consultadas offline somente dentro da politica
-de sessao e do ultimo escopo autorizado. Marcar como lida, descartar e abrir
-destino exigem conexao; nao ha fila de mutacao offline nesta versao do
-contrato.
+Na MP-34, a composição HTTP permanece online-only e conserva a lista somente
+em memória enquanto a identidade está válida. Não há cache persistente,
+consulta offline nem fila de mutação. Uma fase posterior pode introduzir cache
+segregado e cifrado dentro da política de sessão, mas não pode copiar o
+`AsyncStorage` ou o contexto global do Demo para a composição HTTP. Leitura,
+descarte e resolução de destino exigem conexão neste corte.
 
-## Contrato De API Futuro
+## Contrato De API Da MP-34
 
-Operacoes minimas:
+Todas as respostas usam `snake_case`, `Cache-Control: no-store`, o envelope de
+erro vigente e a identidade derivada exclusivamente do access token.
 
-| Operacao | Comportamento |
+| Método e rota | Comportamento mínimo |
 |---|---|
-| listar minhas notificacoes | pagina por destinatario/organizacao autenticados |
-| obter contador nao lido | usa o mesmo filtro autorizado da lista |
-| marcar uma como lida | altera somente entrega do destinatario |
-| marcar pagina/todas como lidas | escopo explicito da identidade autenticada |
-| descartar uma entrega | cria `descartada_em`, sem apagar evento |
-| resolver destino | reautoriza e retorna referencia canonica permitida |
+| `GET /v1/notificacoes` | lista próprias entregas visíveis por cursor estável `criada_em + id`, limite padrão 50 e máximo 100 |
+| `GET /v1/notificacoes/contador-nao-lidas` | retorna o total pelo mesmo filtro autorizado da lista |
+| `POST /v1/notificacoes/:id/leitura` | marca uma entrega própria como lida e preserva o primeiro `lida_em` |
+| `POST /v1/notificacoes/leituras` | marca como lidas as entregas elegíveis até o corte fixado pelo servidor |
+| `DELETE /v1/notificacoes/:id` | registra `descartada_em`; não apaga evento ou entrega imediatamente |
+| `POST /v1/notificacoes/:id/resolver-destino` | reautoriza e retorna somente tipo e IDs canônicos permitidos |
 
-IDs de destinatario enviados pelo cliente devem ser ignorados ou recusados.
-Operacoes sobre entrega inexistente, de outro usuario, outra organizacao ou
-recurso fora do escopo devem responder de forma controlada sem confirmar a
-existencia do dado.
+Lista aceita apenas `estado`, `limite` e `cursor`. `estado` pode ser
+`nao_lida`, `lida` ou `todas`; descartadas e expiradas nunca entram na coleção
+comum. O contador exclui lidas, descartadas, expiradas e qualquer entrega cujo
+recurso não esteja mais autorizado.
+
+Os comandos de leitura e descarte exigem `Idempotency-Key`. O comando em lote
+não aceita destinatário, lista de IDs ou horário escolhido pelo cliente: o
+servidor registra o próprio corte na primeira execução da chave. A resolução de
+destino não marca como lida nem retorna nome de tela, URL ou objeto de
+navegação.
+
+A representação mínima de uma entrega contém `id`, `tipo_evento`,
+`prioridade`, `criada_em`, `lida_em`, `expira_em`, `recurso_tipo`, `recurso_id`
+e conteúdo seguro produzido pelo template versionado. Não inclui
+`destinatario_usuario_id`, `organizacao_id`, e-mail, token ou payload interno.
+
+IDs de destinatário enviados pelo cliente são recusados. Entrega inexistente,
+de outro usuário, outra organização, descartada, expirada ou fora do escopo
+responde com o mesmo `404`, sem confirmar a existência do dado. Ação inválida
+sobre entrega própria e visível segue o contrato `403`/`409` vigente.
+
+## Conteúdo Seguro E Privacidade
+
+O produtor do evento informa somente `tipo_evento`, IDs canônicos e
+`dados_apresentacao` validados por schema. Título e resumo são gerados no
+servidor por template em português do Brasil e versão conhecida; produtor,
+banco e cliente não enviam HTML, Markdown, URL ou texto arbitrário.
+
+Limites iniciais: título de até 120 caracteres, resumo de até 500 e objeto de
+apresentação de até 2 KiB. O conteúdo é texto puro e não inclui:
+
+- senha, token, desafio, link de ação ou URL completa;
+- e-mail, telefone, documento ou endereço;
+- IP, agente do dispositivo, coordenada ou localização precisa;
+- mensagem de exceção, SQL, header, payload livre ou dado de outro usuário;
+- nome de rota, permissão ou instrução que possa ser tratada como autoridade.
+
+Os três templates iniciais são genéricos e confirmam apenas que a senha, o
+e-mail principal ou a recuperação da própria conta mudou. Detalhes operacionais
+permanecem na auditoria restrita, também sem segredo. Alterar template ou seu
+schema exige versão nova e teste de regressão para clientes antigos.
+
+## Cliente HTTP E Ciclo Da Identidade
+
+A composição HTTP recebe uma nova porta/repositório de notificações, decoders
+estritos e tela própria. Ela não importa `NotificacaoContext`,
+`NOTIFICACOES_INICIAIS`, a tela do Demo ou qualquer implementação de
+`src/api`.
+
+Lista, contador, cursor, comandos em curso e destino pendente usam a partição
+`organizacao_id + usuario_id + versao_autorizacao + epoch_da_sessao`. Logout,
+troca de identidade, mudança conhecida de organização/escopo ou resposta tardia
+invalidam a partição antes de renderizar. O estado confirmado pelo servidor só
+é atualizado depois da resposta; falha mantém o último estado conhecido e
+oferece nova tentativa explícita.
+
+O contador é buscado após autenticação/revalidação e ao voltar à área
+autenticada; lista e pull-to-refresh o reconciliam. Não existe polling em
+background, push, serviço de localização ou nova permissão Android. Ao tocar,
+o cliente resolve o destino no servidor e só então usa uma allowlist local. Na
+primeira versão, `conta` é o único destino habilitado.
+
+## Tokens De Dispositivo
+
+A MP-34 inicial não coleta nem persiste token Expo, FCM, APNs, identificador de
+instalação ou associação usuário-dispositivo. Não adiciona SDK de push,
+receiver, canal do sistema ou permissão Android.
+
+Uma fase futura de push deverá decidir provedor, consentimento, múltiplos
+dispositivos, rotação, revogação em logout, expiração, criptografia, retenção,
+tratamento de token inválido e prevenção de entrega à identidade anterior.
+Essas decisões não bloqueiam notificações in-app e não podem ser antecipadas na
+MP-34.
 
 ## Observabilidade E Auditoria
 
@@ -245,6 +441,11 @@ Registrar, sem incluir conteudo sensivel:
 Logs do cliente nao devem imprimir payload completo, tokens ou dados de outro
 usuario.
 
+Listagem e contador produzem somente métricas/logs estruturados, sem evento de
+auditoria por item. Criação, deduplicação, leitura, leitura em lote, descarte e
+resolução negada são eventos auditáveis por código e IDs. A auditoria não copia
+título, resumo ou `dados_apresentacao`.
+
 ## Criterios De Aceite Da MP-03
 
 1. Evento e entrega individual possuem contratos distintos.
@@ -258,20 +459,86 @@ usuario.
 9. O comportamento global e efemero do mock permanece documentado como falha.
 10. Backend, persistencia e testes negativos ficam explicitamente em `MP-34`.
 
-## Dependencias E Limites
+## Critérios De Aceite Da MP-34
 
-O fechamento produtivo depende de:
+1. A migration `000005-notificacoes.sql` é append-only, reversível, selada no
+   manifesto e preserva as quatro migrations integradas.
+2. Evento, entrega e fato de conta são atômicos; concorrência e repetição não
+   criam duplicidade.
+3. Usuário autenticado lista, conta e altera somente as próprias entregas da
+   organização atual; Admin não recebe acesso ao histórico alheio.
+4. Entrega inexistente, de outro destinatário/organização, expirada ou fora do
+   escopo responde sem confirmar sua existência.
+5. Lista e contador aplicam exatamente o mesmo filtro de visibilidade.
+6. Leitura, leitura em lote e descarte são idempotentes, preservam o primeiro
+   horário do servidor e não afetam itens posteriores ao corte do lote.
+7. Resolver destino reautoriza no servidor e retorna somente referência
+   canônica; a tela consulta novamente o recurso.
+8. Templates e schemas recusam texto livre, HTML, URL, segredo e dado pessoal
+   fora da allowlist.
+9. Expiração de 90 dias, purga em lotes e separação da auditoria possuem testes
+   de relógio e retenção.
+10. Logout, troca de usuário/organização, mudança de versão e resposta tardia
+    limpam lista, contador, cursor e destino pendente.
+11. A composição HTTP não importa o mock, não usa `AsyncStorage` e não recebe
+    SDK, token ou permissão de push.
+12. Typecheck, contratos, testes HTTP, integração real com PostgreSQL/PostGIS,
+    inspeção dos grafos HTTP/Demo e smoke Android proporcional ao fluxo passam
+    em Node.js 22 para o aplicativo e Node.js 24 para o backend.
 
-- backend e banco;
-- autenticacao e organizacao confiaveis;
-- RBAC e escopo territorial no servidor;
-- IDs estaveis dos recursos;
-- persistencia de leitura/descarte;
-- allowlist de destinos e guards nas telas;
-- cache segregado e cifrado;
-- testes negativos de API, troca de usuario, deep link e rota direta;
-- integração push fica fora do primeiro corte de `MP-34`.
+## Plano De Implementação Preparado
 
-Essas dependencias pertencem a `MP-34 — Notificacoes reais e isoladas`. Ate
-essa tarefa ser concluida, `QA-P0-01` permanece resolvida somente em nivel de
-contrato.
+Nenhuma etapa abaixo está autorizada por este documento. Depois da aprovação
+explícita, executar na ordem:
+
+1. fechar as decisões pendentes e congelar os três templates iniciais;
+2. criar a migration append-only, constraints, índices, grants mínimos e testes
+   de migration/privilégio;
+3. criar `backend/src/notifications/` com contratos, templates, repositório,
+   serviço e rotas OpenAPI;
+4. integrar os três produtores aos repositórios de autenticação/conta usando o
+   mesmo `PoolClient` da transação existente;
+5. adicionar contratos, decoders, repositório, estado e tela exclusivos de
+   `src/http`, além do contador e da allowlist `conta`;
+6. cobrir concorrência, deduplicação, idempotência, RBAC negativo, retenção,
+   conteúdo seguro, troca de identidade e separação Demo/HTTP;
+7. atualizar OpenAPI, README operacional, estado, pendências e smoke, sem
+   commit, PR, deploy, release ou publicação automáticos.
+
+Arquivos prováveis: `backend/migrations/000005-notificacoes.sql`, novo módulo
+`backend/src/notifications/`, `backend/src/backend-services.ts`,
+`backend/src/app.ts`, os repositórios transacionais dos fatos de conta,
+`src/http/contracts.ts`, `src/http/decoders.ts`, `src/http/backendApi.ts`,
+`src/http/runtime.ts`, `src/http/HttpNavigation.tsx`, uma tela HTTP própria e
+testes focados nas duas árvores.
+
+## Decisões Pendentes Antes Do Código
+
+- ratificar o catálogo inicial, a prioridade e o texto exato dos três templates;
+- fixar por quanto tempo a chave idempotente de comandos deve ser mantida; a
+  retenção não pode terminar antes do maior `expira_em` alcançável pelo comando,
+  e a proposta inicial é acompanhar os 90 dias das entregas;
+- definir responsável, periodicidade, credencial de menor privilégio e alertas
+  do comando de purga física;
+- concluir a revisão jurídica/de privacidade da retenção e confirmar se existe
+  obrigação de suspensão de descarte.
+
+MP-34 permanecer online-only, não reutilizar `outbox_email`, limitar o destino a
+`conta`, usar corte do servidor em “marcar todas” e manter push/tokens de
+dispositivo fora do corte são decisões desta arquitetura. O catálogo de
+recursos operacionais continua contrato futuro e não autoriza implementação.
+
+## Dependências E Limites
+
+Backend, banco, autenticação, organização confiável e sessão da MP-33B já estão
+disponíveis; a composição HTTP e a autorização de Propriedades da MP-33C também.
+O fechamento produtivo da MP-34 ainda depende de:
+
+- aprovação das decisões pendentes acima;
+- persistência, API, allowlist e guards implementados e testados;
+- operação de purga, observabilidade, backup/restauração e gestão de segredos;
+- portões gerais de domínio, assinatura, dispositivo, MFA de Administrador e
+  release ainda registrados no núcleo ativo.
+
+Integração push, cache offline e MP-35 ficam fora. Até a implementação ser
+concluída, `QA-P0-01` permanece resolvida somente em nível de contrato.

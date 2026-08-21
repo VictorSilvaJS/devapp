@@ -2,9 +2,9 @@
 
 > Atualizado em: 2026-08-21
 >
-> Próxima tarefa: revisar e integrar a MP-33C somente após autorização
+> Próxima tarefa: ratificar as decisões pendentes da MP-34 antes do código
 >
-> Estado: MP-33A CONCLUÍDA; MP-33B E MP-33C CONCLUÍDAS TECNICAMENTE; SEM RELEASE
+> Estado: MP-33A, MP-33B E MP-33C INTEGRADAS; SEM DEPLOY, RELEASE OU PUBLICAÇÃO
 
 ## Ponto de partida
 
@@ -12,11 +12,12 @@ O corte local MP-00 a MP-32 e a fundação MP-33A estão concluídos. A corrida
 visual ao reabrir no mapa um ponto já persistido no Caderno foi corrigida e
 revalidada no Android em `ATUAL-04`; ela não altera os contratos nem a sequência
 do backend. A MP-33B foi concluída tecnicamente, sem alterar o mock nem conectar
-o aplicativo, e integrada à branch-base `backend`. A MP-33C foi implementada e
-validada tecnicamente em sua branch de trabalho: o Demo foi preservado, a
-composição HTTP recebeu sessão segura e ações self-service, e o backend passou
-a oferecer lista/detalhe autorizados de Propriedades. Ainda não houve commit,
-tag, deploy, assinatura ou publicação como consequência desta rodada.
+o aplicativo, e integrada à branch-base `backend`. A MP-33C também foi
+concluída tecnicamente e integrada à mesma base pelo PR #2 no commit `cc78a9f`:
+o Demo foi preservado, a composição HTTP recebeu sessão segura e ações
+self-service, e o backend passou a oferecer lista/detalhe autorizados de
+Propriedades. A CI pós-merge foi aprovada. Não houve tag, deploy, release,
+assinatura ou publicação.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -104,7 +105,7 @@ técnico para qualquer evolução desse scaffold.
 |---:|---|---|---|
 | 33A | MP-33A | Fundação, DDL, operação, testes e CI | CONCLUÍDA |
 | 33B | MP-33B | Autenticação, sessões, refresh, convites, recuperação e auditoria genérica | CONCLUÍDA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO |
-| 33C | MP-33C | Demo/HTTP separados, sessão segura e leitura de Propriedades | CONCLUÍDA TECNICAMENTE; PENDENTE DE REVISÃO/INTEGRAÇÃO E PORTÕES DE RELEASE |
+| 33C | MP-33C | Demo/HTTP separados, sessão segura e leitura de Propriedades | CONCLUÍDA E INTEGRADA PELO PR #2 EM `cc78a9f`; PORTÕES PRODUTIVOS PENDENTES |
 
 O mock permanece integralmente inalterado nas MP-33A e MP-33B. Na MP-33C ele
 continua no Demo e nos testes, mas fica fisicamente fora do grafo de produção.
@@ -158,7 +159,7 @@ Critérios satisfeitos no corte técnico:
 - lista/detalhe usam contrato `snake_case`, `tipo_acesso` calculado, cursor,
   filtros no servidor e escopo validado pelo backend;
 - a composição HTTP é online-only e comunica indisponibilidade honestamente;
-- nenhum seed automático/produtivo, commit, tag, deploy ou publicação;
+- nenhum seed automático/produtivo, tag, deploy, release ou publicação;
 - a execução real da integração usou Docker; uma futura indisponibilidade deve
   continuar sendo registrada como bloqueio, nunca como aprovação simulada.
 
@@ -175,13 +176,13 @@ continuam ativos.
 
 ## Sequência depois de MP-33C
 
-Depois da revisão do diff, a integração da branch depende de autorização
-explícita. A sequência funcional abaixo não autoriza commit, pull request,
-deploy ou publicação por si só.
+A MP-33C já está integrada. A sequência funcional abaixo começa pela MP-34 e
+não autoriza implementação, commit, pull request, deploy ou publicação por si
+só.
 
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
-| 34 | MP-34 | Notificações reais, persistidas e isoladas | BACKLOG |
+| 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | ARQUITETURA PREPARADA; CÓDIGO NÃO INICIADO |
 | 35 | MP-35 | Escopo por Propriedade e vínculos no servidor | BACKLOG |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
@@ -189,6 +190,29 @@ deploy ou publicação por si só.
 | 39 | MP-39 | Regressão histórica de GeoJSON | BACKLOG |
 | 40 | MP-40 | Acessibilidade e matriz de dispositivos | BACKLOG |
 | 41 | MP-41 | Regressão completa dos três perfis | BACKLOG |
+
+### Arquitetura preparada da MP-34
+
+Contrato: [contrato-notificacoes.md](contrato-notificacoes.md).
+
+O menor corte implementável permanece online-only e inclui somente
+notificações in-app de fatos de conta já reais na MP-33B: senha alterada,
+e-mail principal alterado e recuperação concluída. Cada fato cria evento e
+entrega individual para o próprio Usuário na mesma transação, com deduplicação,
+leitura/descarte persistentes, contador, cursor, resolução segura de destino e
+retenção de 90 dias.
+
+`outbox_email` não será reutilizada; push e tokens de dispositivo não entram.
+O Demo e seu contexto local permanecem inalterados. Eventos de Propriedade,
+Visita, Caderno, Material, mapa, GeoJSON e Talhão aguardam as fontes e guards de
+suas próprias verticais. MP-35 e fases seguintes ficam fora.
+
+Antes de iniciar código, ainda é necessário ratificar catálogo/textos,
+retenção da chave idempotente e operação/privacidade da purga. A implementação
+planejada segue: migration `000005`, módulo backend e OpenAPI, produtores
+transacionais de conta, porta/tela exclusivas da composição HTTP, testes
+negativos e integração real, e fechamento documental. Nenhuma dessas etapas
+está autorizada automaticamente por este plano.
 
 MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.

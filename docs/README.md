@@ -57,7 +57,8 @@ porque misturavam propostas ou roteiros superados com a documentação atual.
 | Consultar evidências geradas | ../dist |
 
 Para execução por agente de código, comece em [AGENTS.md](../AGENTS.md).
-Para operar a fundação e a MP-33B concluída tecnicamente, consulte o
+Para operar a fundação, a MP-33B e a integração HTTP da MP-33C concluídas
+tecnicamente, consulte o
 [README do backend](../backend/README.md).
 Para revisar ou operar a conexão do aplicativo sem misturar Demo e HTTP,
 consulte o

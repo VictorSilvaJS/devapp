@@ -1,13 +1,15 @@
 # Backend Tchê Agro
 
 Backend modular em Node.js 24, Fastify 5, TypeScript e PostgreSQL/PostGIS.
-A fundação da MP-33A está concluída. A MP-33B acrescenta autenticação
-stateful, ações de conta, e-mail transacional e auditoria; este corte está
-`CONCLUÍDO TECNICAMENTE`, mas `NÃO LIBERADO PARA PRODUÇÃO`.
+A fundação da MP-33A e a autenticação stateful, ações de conta, e-mail
+transacional e auditoria da MP-33B estão concluídas tecnicamente.
 
-O aplicativo e o mock permanecem integralmente inalterados. A integração HTTP
-do aplicativo pertence à MP-33C, e a autorização completa dos recursos de
-negócio pertence à MP-35.
+A MP-33C conectou uma composição HTTP separada à autenticação e à leitura
+autorizada de Propriedades. Ela foi integrada à branch `backend` pelo PR #2 no
+commit `cc78a9f`, com CI pós-merge aprovada. O mock permanece somente no Demo e
+nos testes; o aplicativo HTTP não possui fallback para ele. Não houve deploy,
+release ou publicação, e os portões produtivos continuam abertos. A autorização
+completa dos demais recursos de negócio permanece nas fases posteriores.
 
 ## Requisitos
 

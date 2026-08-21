@@ -6,17 +6,23 @@ técnicos e mapas.
 
 ## Situação atual
 
-O frontend local está funcional e demonstrável com dataset v2, persistência no
+O Demo interno está funcional e demonstrável com dataset v2, persistência no
 aparelho e três perfis. A última rodada física do mock não deixou bug aberto no
 recorte executado.
 
-O aplicativo ainda não está conectado ao backend e continua usando login,
-sessão, persistência e dados locais. A MP-33A estabeleceu a fundação isolada do
-backend e do banco. A MP-33B implementa autenticação/sessão, ações de conta,
-outbox e auditoria no backend e está `CONCLUÍDA TECNICAMENTE`, mas
-`NÃO LIBERADA PARA PRODUÇÃO`; ela não altera nem conecta o aplicativo. A
-integração HTTP permanece reservada à MP-33C e o RBAC completo dos recursos de
-negócio, à MP-35.
+A composição HTTP está conectada ao backend para autenticação, ações de conta
+e leitura autorizada de lista/detalhe de Propriedades. A MP-33A estabeleceu a
+fundação do backend e do banco; a MP-33B implementou autenticação/sessão,
+ações de conta, outbox e auditoria; e a MP-33C separou Demo/HTTP e concluiu essa
+primeira integração. A MP-33C foi integrada à branch `backend` pelo PR #2 no
+commit `cc78a9f`, e a CI pós-merge foi aprovada.
+
+O mock permanece somente no Demo e nos testes, fora do aplicativo HTTP, que não
+possui fallback para mock. As três fases estão concluídas tecnicamente, mas não
+houve deploy, release ou publicação. MFA de Administrador, domínio e associação
+de links, SMTP/segredos, observabilidade, backup/restauração, assinatura e
+validação em ambiente real continuam portões produtivos. O restante do RBAC de
+negócio permanece nas fases posteriores, sem ser antecipado por esse merge.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em

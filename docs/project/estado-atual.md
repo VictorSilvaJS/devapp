@@ -13,10 +13,11 @@ Materiais técnicos e mapas.
 
 O aplicativo ainda não é um produto implantado em produção. A MP-33A introduziu
 a fundação do backend e o DDL inicial; a MP-33B acrescentou autenticação
-stateful, ações de conta, outbox e auditoria. A MP-33C está implementada e
-validada tecnicamente na branch de trabalho: separa o Demo interno da
+stateful, ações de conta, outbox e auditoria. A MP-33C separa o Demo interno da
 composição HTTP, conecta sessão e ações self-service e entrega a primeira
-vertical de Propriedades somente leitura com autorização no backend.
+vertical de Propriedades somente leitura com autorização no backend. Ela foi
+concluída tecnicamente e integrada à branch `backend` pelo PR #2 no commit
+`cc78a9f`; a CI pós-merge foi aprovada.
 
 O mock e seu funcionamento permanecem preservados no Demo e nos testes. A
 composição HTTP não contém fallback, módulos, seed, bootstrap ou credenciais do
@@ -281,7 +282,9 @@ O carregador manual de QA é sintético, transacional e fail-closed. Ele exige
 ambiente permitido, flag explícita, URL própria para banco `_test`/`_qa` e
 senha compatível com a política; não roda em migration, startup ou produção.
 
-Essa rodada não realizou commit, tag, deploy, assinatura ou publicação. Ainda
+O fechamento pós-merge confirmou o PR #2 integrado no commit `cc78a9f` e a CI
+da branch `backend` aprovada para o aplicativo em Node.js 22 e o backend em
+Node.js 24. Não houve tag, deploy, release, assinatura ou publicação. Ainda
 faltam domínio oficial com `assetlinks.json`/AASA, configuração de assinatura e
 validação ponta a ponta em aparelho/ambiente de release.
 
@@ -293,15 +296,16 @@ aplicativo permaneceram inalterados.
 
 A MP-33B está concluída tecnicamente e integrada à branch-base `backend`, com
 autenticação, sessões, refresh tokens, convites, recuperação, e-mail
-transacional e auditoria genérica. A MP-33C implementa sobre essa base a
-separação Demo/HTTP, a sessão do cliente e a leitura autorizada de Propriedades,
-sem alterar o comportamento persistido do Demo.
+transacional e auditoria genérica. A MP-33C também está concluída tecnicamente
+e integrada nessa base pelo PR #2 no commit `cc78a9f`, sem alterar o
+comportamento persistido do Demo.
 
-O próximo fechamento é revisar o diff e, somente com autorização, integrar a
-branch. Em paralelo, devem ser preparados os portões externos de domínio,
-associação de links, assinatura e dispositivo. Escritas administrativas e o
-restante do RBAC continuam na MP-35; o sequenciamento funcional seguinte parte
-da MP-34 sem converter portão de release em capacidade já entregue.
+A arquitetura da MP-34 de notificações in-app reais, persistidas e isoladas
+está preparada, sem código iniciado. O próximo portão é ratificar seu catálogo,
+conteúdo seguro, idempotência e operação de retenção; implementação continua
+dependente de autorização explícita. Em paralelo, permanecem os portões
+externos de domínio, associação de links, assinatura e dispositivo. Escritas
+administrativas e o restante do RBAC continuam na MP-35 e não integram a MP-34.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e retenção continuam portões
