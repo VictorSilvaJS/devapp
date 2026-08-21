@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Tchê Agro Demo",
+    "slug": "tche-agro-demo",
+    "version": "1.0.0",
+    "icon": "../src/assets/images/app-icon.png",
+    "splash": {
+      "backgroundColor": "#FFFFFF"
+    },
+    "platforms": ["android", "web"],
+    "android": {
+      "package": "com.tcheagro.mobile.demo",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permita selecionar fotos para anexá-las ao registro local de uma Visita.",
+          "cameraPermission": "Permita usar a câmera para registrar fotos locais de uma Visita.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos sua localização apenas para mostrar a posição aproximada do aparelho no mapa de Talhões enquanto você usa a tela.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
+    ],
+    "extra": {
+      "appVariant": "demo",
+      "storageNamespace": "tche_agro.demo"
+    }
+  }
+}

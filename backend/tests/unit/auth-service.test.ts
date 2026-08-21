@@ -29,6 +29,13 @@ import {
 
 const config = loadAuthenticationRuntimeConfig({ NODE_ENV: 'test' });
 
+const issuedTokenWindow = Object.freeze({
+  issuedAt: new Date('2026-08-21T12:00:00.000Z'),
+  accessExpiresAt: new Date('2026-08-21T12:15:00.000Z'),
+  inactivityExpiresAt: new Date('2026-09-04T12:00:00.000Z'),
+  absoluteExpiresAt: new Date('2026-09-20T12:00:00.000Z'),
+});
+
 const activeSubject: LoginSubject = {
   id: '11111111-1111-4111-8111-111111111111',
   organizationId: 'org_tche_fertilidade',
@@ -130,7 +137,11 @@ class FakeRepository implements AuthRepository {
     input: Parameters<AuthRepository['createSession']>[0],
   ) {
     this.createdSession = input;
-    return { status: 'created' as const, sessionId: 'session-created' };
+    return {
+      status: 'created' as const,
+      sessionId: 'session-created',
+      ...issuedTokenWindow,
+    };
   }
 
   public async rotateRefreshToken(): Promise<RotateRefreshResult> {
@@ -163,7 +174,11 @@ class FakeRepository implements AuthRepository {
     input: Parameters<AuthRepository['replacePasswordAndRotateCurrentSession']>[0],
   ) {
     this.replacement = input;
-    return { status: 'changed' as const, principal: principal(input.currentSessionId) };
+    return {
+      status: 'changed' as const,
+      principal: principal(input.currentSessionId),
+      ...issuedTokenWindow,
+    };
   }
   public async beginPasswordRecovery(input: PasswordRecoveryBeginInput): Promise<void> {
     this.recovery = input;
@@ -269,6 +284,16 @@ describe('authentication service', () => {
     });
 
     assert.equal(response.expiresIn, 900);
+    assert.deepEqual(response.issuedAt, issuedTokenWindow.issuedAt);
+    assert.deepEqual(response.accessExpiresAt, issuedTokenWindow.accessExpiresAt);
+    assert.deepEqual(
+      response.sessionInactivityExpiresAt,
+      issuedTokenWindow.inactivityExpiresAt,
+    );
+    assert.deepEqual(
+      response.sessionAbsoluteExpiresAt,
+      issuedTokenWindow.absoluteExpiresAt,
+    );
     assert.equal(response.scope.mode, 'property_bindings');
     assert.equal('properties' in response.scope, false);
     assert.equal(isWellFormedOpaqueToken(response.accessToken), true);
@@ -300,6 +325,7 @@ describe('authentication service', () => {
     fixture.repository.rotateResult = {
       status: 'rotated',
       principal: principal('rotated-session'),
+      ...issuedTokenWindow,
     };
     const response = await fixture.service.refresh({
       refreshToken,

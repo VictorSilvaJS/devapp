@@ -1,6 +1,6 @@
 # Contrato de Autenticação e Recuperação — MP-33B
 
-> Revisão documental: 2026-08-19
+> Revisão documental: 2026-08-21
 >
 > Estado: CONCLUÍDA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO
 
@@ -10,11 +10,19 @@ A MP-33B implementa no backend credenciais, login, sessões stateful, tokens
 opacos, convites, ações de conta, envio transacional de e-mail, proteção contra
 abuso e auditoria genérica. Ela não conecta o aplicativo à API, não altera o
 mock, não lista Propriedades em `/v1/auth/me` e não antecipa o RBAC completo da
-MP-35.
+MP-35. A conexão posterior do cliente foi realizada na MP-33C sem alterar essa
+fronteira do backend.
 
 A branch-base protegida é `backend`. A migration `000001`, já integrada nessa
 base, é imutável. Todo objeto da MP-33B nasce em novas migrations SQL com
 `up/down` explícitos e checksum selado antes do pull request.
+
+A integração implementada na MP-33C mantém este backend sem alterar suas regras:
+access token somente em memória, refresh token em storage seguro nativo,
+single-flight, nenhum token/sessão HTTP no `AsyncStorage` e nenhum fallback
+para mock. Os fluxos de convite, senha e e-mail são concluídos pela própria
+pessoa; o segundo e-mail verificado do Administrador permanece disponível.
+Detalhes do cliente estão em `contrato-integracao-app-mp33c.md`.
 
 ## Estado da implementação
 
@@ -26,7 +34,8 @@ API, o migrador, o worker e o bootstrap de plataforma usam credenciais
 distintas.
 
 O corte passou por typecheck, suítes unitária/HTTP/integração, build e smokes.
-Não existe integração com o aplicativo, commit, tag, deploy ou autorização de
+A composição HTTP da MP-33C agora consome seus contratos de autenticação e
+conta; o Demo continua independente. Não existe deploy ou autorização de
 release implícita neste estado. Os portões de produção continuam descritos ao
 fim do contrato e nas pendências ativas.
 
@@ -95,8 +104,8 @@ SHA-256 é persistido. Não são usados JWT nem cookies nesta fase.
 
 Em chamadas concorrentes, uma resposta pode retornar sucesso antes de outra
 detectar replay e revogar a família; nesse caso, o token recém-emitido também
-se torna inválido. A MP-33C deverá implementar refresh single-flight e não
-repetir automaticamente um refresh antigo.
+se torna inválido. A MP-33C implementa refresh single-flight e não repete
+automaticamente um refresh antigo.
 
 Logout da sessão atual é idempotente. Logout global, recuperação de senha,
 inativação, alteração concluída de e-mail e mudanças estruturais aplicáveis
@@ -117,7 +126,10 @@ Desafios são opacos, aleatórios, vinculados a finalidade e sujeito,
 armazenados somente por hash, de uso único e consumidos atomicamente. Um novo
 desafio incompatível revoga o anterior. Desafios de ação podem estar no
 fragmento de um link HTTPS confiável e são enviados à API somente por `POST`.
-O cliente futuro deverá aplicar política `no-referrer`.
+O cliente da MP-33C aplica allowlist exata de origem, caminho e finalidade,
+mantém o token somente em memória e bloqueia repetição automática. Token e URL
+completa não entram em parâmetros de navegação, persistência ou logs. O domínio
+oficial precisa estar associado e validado antes da aprovação produtiva.
 
 Convite geral opera somente sobre um `usuario` pendente já existente. Ele não
 cria Usuário, Produtor, Propriedade, Titularidade ou vínculo. O bootstrap do

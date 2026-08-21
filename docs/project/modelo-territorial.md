@@ -2,7 +2,7 @@
 
 > Status: `ATIVO`
 >
-> Revisado em: 2026-08-18
+> Revisado em: 2026-08-21
 >
 > Substitui o contrato de Regional/Área Operacional definido originalmente em
 > `MP-02`.
@@ -74,8 +74,9 @@ O perfil define as ações; o vínculo local define o conjunto de Propriedades.
 No backend, `usuario_propriedade` aceita somente os acessos adicionais
 `usuario_autorizado` e `colaborador`. A Titularidade existe apenas em
 `propriedades.titular_id`, e o acesso do Titular é derivado pelo Produtor e seu
-Usuário principal. Uma eventual projeção `tipoAcesso=titular` não é outro
-registro. A MP-33C adaptará essa diferença sem alterar o contrato local.
+Usuário principal. A projeção HTTP `tipo_acesso=titular` não é outro registro.
+A MP-33C adaptou essa diferença sem alterar o contrato local do Demo; a
+composição de produção não importa o mock.
 
 ## Administração Em Lote
 

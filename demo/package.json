@@ -1,0 +1,10 @@
+{
+  "name": "tche-agro-demo-entry",
+  "private": true,
+  "main": "../src/entry/demo.tsx",
+  "expo": {
+    "autolinking": {
+      "searchPaths": ["../node_modules"]
+    }
+  }
+}

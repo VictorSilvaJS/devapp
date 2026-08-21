@@ -1,10 +1,10 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-19
+> Atualizado em: 2026-08-21
 >
-> Próxima tarefa de desenvolvimento: preparar a MP-33C
+> Próxima tarefa: revisar e integrar a MP-33C somente após autorização
 >
-> Estado: MP-33A CONCLUÍDA; MP-33B CONCLUÍDA TECNICAMENTE E NÃO LIBERADA PARA PRODUÇÃO
+> Estado: MP-33A CONCLUÍDA; MP-33B E MP-33C CONCLUÍDAS TECNICAMENTE; SEM RELEASE
 
 ## Ponto de partida
 
@@ -12,9 +12,11 @@ O corte local MP-00 a MP-32 e a fundação MP-33A estão concluídos. A corrida
 visual ao reabrir no mapa um ponto já persistido no Caderno foi corrigida e
 revalidada no Android em `ATUAL-04`; ela não altera os contratos nem a sequência
 do backend. A MP-33B foi concluída tecnicamente, sem alterar o mock nem conectar
-o aplicativo. O próximo corte deve primeiro planejar a integração da branch
-`backend` com a linha do aplicativo e então preparar a MP-33C, sem tratar os
-portões de produção abaixo como já resolvidos.
+o aplicativo, e integrada à branch-base `backend`. A MP-33C foi implementada e
+validada tecnicamente em sua branch de trabalho: o Demo foi preservado, a
+composição HTTP recebeu sessão segura e ações self-service, e o backend passou
+a oferecer lista/detalhe autorizados de Propriedades. Ainda não houve commit,
+tag, deploy, assinatura ou publicação como consequência desta rodada.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -102,12 +104,80 @@ técnico para qualquer evolução desse scaffold.
 |---:|---|---|---|
 | 33A | MP-33A | Fundação, DDL, operação, testes e CI | CONCLUÍDA |
 | 33B | MP-33B | Autenticação, sessões, refresh, convites, recuperação e auditoria genérica | CONCLUÍDA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO |
-| 33C | MP-33C | Repositórios, seleção mock/HTTP e vertical de Propriedades | BACKLOG |
+| 33C | MP-33C | Demo/HTTP separados, sessão segura e leitura de Propriedades | CONCLUÍDA TECNICAMENTE; PENDENTE DE REVISÃO/INTEGRAÇÃO E PORTÕES DE RELEASE |
 
-O mock permanece integralmente inalterado nas MP-33A e MP-33B. A MP-33C adaptará o
-vínculo local `titular` para o acesso calculado pelo backend.
+O mock permanece integralmente inalterado nas MP-33A e MP-33B. Na MP-33C ele
+continua no Demo e nos testes, mas fica fisicamente fora do grafo de produção.
+A composição HTTP adapta o vínculo local `titular` para o `tipo_acesso`
+calculado pelo backend sem mudar a representação persistida do Demo.
+
+## MP-33C — Integração do aplicativo e primeira vertical
+
+Contrato: [contrato-integracao-app-mp33c.md](contrato-integracao-app-mp33c.md).
+
+Resultado implementado:
+
+1. raízes/configurações separadas para HTTP e Demo, com
+   `com.tcheagro.mobile` e `com.tcheagro.mobile.demo`;
+2. mock preservado no Demo/testes e ausente dos grafos JavaScript e Android da
+   composição HTTP, sem fallback;
+3. portas HTTP de autenticação, conta e Propriedades, com access token em
+   memória, refresh no SecureStore, single-flight e rotações serializadas;
+4. restauração sob lock, proteção visual imediata no background, novo login
+   depois de 15 minutos em background e lock local por inatividade sem logout;
+5. `GET /v1/propriedades` e `GET /v1/propriedades/:id`, somente leitura, com
+   autorização na consulta, cursor e filtros no servidor;
+6. lista/detalhe HTTP sem métricas incompletas ou ações exclusivas do Demo;
+7. ações self-service da MP-33B, inclusive segundo e-mail verificado do Admin,
+   com tokens de link somente em memória;
+8. App Links/Universal Links configuráveis por origem e caminho dedicados;
+9. fixtures sintéticas de integração e carregador manual protegido por
+   ambiente, flag, URL dedicada, sufixo do banco e senha;
+10. CI, inspeção de bundles e prebuild temporário da composição HTTP.
+
+Validação executada:
+
+- aplicativo Node.js 22: typecheck, `test:domain-compat` e 38/38 testes focados
+  da MP-33C;
+- exports Android HTTP/Demo: passaram; o scanner confirmou mock e
+  `AsyncStorage` ausentes do bundle HTTP e Demo preservado;
+- Expo Autolinking: passou; dependências exclusivas do Demo ficaram fora do
+  grafo nativo Android HTTP e permaneceram disponíveis no Demo;
+- prebuild HTTP: passou com ID definitivo, App Link dedicado, backup seguro e
+  somente permissão efetiva `INTERNET`;
+- backend Node.js 24: manifesto, typecheck, 126/126 unitários/contratos,
+  23/23 HTTP, build e smoke ESM passaram;
+- integração real com Testcontainers/PostGIS: 36/36; Docker esteve disponível.
+
+Critérios satisfeitos no corte técnico:
+
+- produção usa somente HTTP e nunca recua para mock;
+- Demo preserva o funcionamento e os testes atuais;
+- sessão/tokens HTTP não usam `AsyncStorage`;
+- navegação e deep links HTTP expõem somente funcionalidades reais;
+- lista/detalhe usam contrato `snake_case`, `tipo_acesso` calculado, cursor,
+  filtros no servidor e escopo validado pelo backend;
+- a composição HTTP é online-only e comunica indisponibilidade honestamente;
+- nenhum seed automático/produtivo, commit, tag, deploy ou publicação;
+- a execução real da integração usou Docker; uma futura indisponibilidade deve
+  continuar sendo registrada como bloqueio, nunca como aprovação simulada.
+
+Continuam fora da MP-33C: criação/edição/inativação de Propriedades,
+transferência de Titularidade, gestão de Usuários/vínculos, demais recursos de
+negócio HTTP, offline seguro, MFA, deploy e publicação. As operações
+administrativas e o restante do RBAC por ação permanecem na MP-35.
+
+Antes de tratar a composição HTTP como candidata produtiva, ainda é obrigatório
+definir o domínio oficial, publicar/validar `assetlinks.json` e AASA, configurar
+a assinatura oficial e executar a validação ponta a ponta em dispositivo e
+ambiente de release. MFA de Admin e os portões operacionais da MP-33B também
+continuam ativos.
 
 ## Sequência depois de MP-33C
+
+Depois da revisão do diff, a integração da branch depende de autorização
+explícita. A sequência funcional abaixo não autoriza commit, pull request,
+deploy ou publicação por si só.
 
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|

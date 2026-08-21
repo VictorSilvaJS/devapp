@@ -164,9 +164,49 @@ describe(
       });
     }
 
+    async function assertPersistedTokenWindow(tokens: {
+      readonly accessToken: string;
+      readonly sessionId: string;
+      readonly issuedAt: Date;
+      readonly accessExpiresAt: Date;
+      readonly sessionInactivityExpiresAt: Date;
+      readonly sessionAbsoluteExpiresAt: Date;
+    }): Promise<void> {
+      const persisted = await requirePool().query<{
+        emitido_em: Date;
+        access_expira_em: Date;
+        expira_inatividade_em: Date;
+        expira_absolutamente_em: Date;
+      }>(
+        `
+          SELECT acesso.emitido_em, acesso.expira_em AS access_expira_em,
+                 sessao.expira_inatividade_em, sessao.expira_absolutamente_em
+          FROM public.tokens_acesso AS acesso
+          JOIN public.sessoes_autenticacao AS sessao
+            ON sessao.organizacao_id = acesso.organizacao_id
+           AND sessao.id = acesso.sessao_id
+          WHERE acesso.token_hash = $1 AND sessao.id = $2
+        `,
+        [Buffer.from(hashOpaqueToken(tokens.accessToken), 'base64url'), tokens.sessionId],
+      );
+      const row = persisted.rows[0];
+      assert.ok(row);
+      assert.equal(tokens.issuedAt.getTime(), row.emitido_em.getTime());
+      assert.equal(tokens.accessExpiresAt.getTime(), row.access_expira_em.getTime());
+      assert.equal(
+        tokens.sessionInactivityExpiresAt.getTime(),
+        row.expira_inatividade_em.getTime(),
+      );
+      assert.equal(
+        tokens.sessionAbsoluteExpiresAt.getTime(),
+        row.expira_absolutamente_em.getTime(),
+      );
+    }
+
     test('login cria sessão stateful e access respeita status, idle, absoluto e auth-version', async () => {
       const regular = await seedActiveUser();
       const tokens = await login(regular, 'req-login');
+      await assertPersistedTokenWindow(tokens);
       const principal = await requireRepository().resolveAccessToken(
         hashOpaqueToken(tokens.accessToken),
       );
@@ -291,6 +331,7 @@ describe(
         newPassword: 'NovaSenhaSegura2',
         requestId: 'req-password-change',
       });
+      await assertPersistedTokenWindow(replacement);
 
       assert.equal(replacement.sessionId, current.sessionId);
       assert.equal(
@@ -322,6 +363,7 @@ describe(
         refreshToken: replacement.refreshToken,
         requestId: 'req-password-new-refresh',
       });
+      await assertPersistedTokenWindow(refreshed);
       assert.equal(refreshed.sessionId, current.sessionId);
       assert.ok(
         await requireRepository().resolveAccessToken(

@@ -56,7 +56,14 @@ export interface LoginThrottle {
   }): Promise<void>;
 }
 
-export interface CreateSessionResult {
+export interface IssuedTokenWindow {
+  readonly issuedAt: Date;
+  readonly accessExpiresAt: Date;
+  readonly inactivityExpiresAt: Date;
+  readonly absoluteExpiresAt: Date;
+}
+
+export interface CreateSessionResult extends IssuedTokenWindow {
   readonly status: 'created';
   readonly sessionId: string;
 }
@@ -65,14 +72,14 @@ export type RotateRefreshResult =
   | Readonly<{
       status: 'rotated';
       principal: AuthenticatedPrincipal;
-    }>
+    } & IssuedTokenWindow>
   | Readonly<{ status: 'invalid' | 'replayed' }>;
 
 export type PasswordChangeResult =
   | Readonly<{
       status: 'changed';
       principal: AuthenticatedPrincipal;
-    }>
+    } & IssuedTokenWindow>
   | Readonly<{ status: 'denied' }>;
 
 export interface PasswordRecoveryBeginInput {

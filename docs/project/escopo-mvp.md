@@ -1,5 +1,7 @@
 # Escopo do MVP
 
+> Revisão documental: 2026-08-21
+
 Este documento define o que deve ser tratado como parte do MVP atual, o que fica fora por padrao e o que ainda depende de definicao adicional. Seu objetivo e reduzir ambiguidade de escopo antes da evolucao do codigo e da arquitetura.
 
 ## Objetivo do MVP
@@ -104,6 +106,29 @@ em requisito obrigatorio para salvar registros.
 
 O MVP deve considerar operacao em campo com conectividade ruim. A prioridade aqui e viabilizar consulta e visualizacao de forma segura e realista, sem prometer capacidades offline totais que ainda nao estejam definidas.
 
+### 7. Primeiro corte HTTP da MP-33C
+
+A limitação de conectividade continua sendo requisito do produto, mas a
+primeira composição HTTP é deliberadamente online-only. A MP-33C cobre:
+
+- autenticação e ações de conta já implementadas no backend da MP-33B;
+- lista e detalhe somente leitura de Propriedades;
+- cursor e filtros executados no servidor;
+- escopo aplicado pelo backend antes de filtrar, ordenar ou paginar;
+- proteção de sessão e navegação compatíveis com a composição produtiva.
+
+Esse corte não oferece cache produtivo, sincronização nem fila offline. A
+indisponibilidade é apresentada de forma honesta e nunca aciona o mock. O
+offline seguro continua parte do produto, mas entra em fase posterior depois
+de existir armazenamento cifrado, segregação por identidade, invalidação de
+escopo e testes próprios.
+
+O Demo interno preserva integralmente o MVP local. Ele usa identificador e
+namespace próprios, não integra o artefato produtivo e não é distribuído nas
+lojas. A composição produtiva contém somente HTTP e exibe apenas
+funcionalidades realmente conectadas; rotas exclusivas do Demo também são
+bloqueadas quando chamadas por deep link.
+
 ## Fora do MVP por Padrao
 
 Os itens abaixo nao devem ser assumidos como parte obrigatoria do MVP sem decisao explicita posterior:
@@ -127,6 +152,8 @@ Antes das respectivas verticais produtivas, ainda devem ser definidos:
 - limites e retenção de arquivos de Material;
 - limiares de reconciliação e retenção do GeoJSON;
 - parâmetros operacionais de infraestrutura, observabilidade e release.
+- domínio oficial e associação verificada de Android App Links/iOS Universal
+  Links antes da aprovação produtiva da MP-33C.
 
 A taxonomia agronômica além das três categorias do MVP pode evoluir depois e
 não bloqueia o primeiro backend.

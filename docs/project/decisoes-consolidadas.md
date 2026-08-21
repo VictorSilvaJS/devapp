@@ -1,6 +1,6 @@
 # Decisões Consolidadas
 
-> Revisão documental: 2026-08-19
+> Revisão documental: 2026-08-21
 
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
@@ -121,8 +121,8 @@ Titularidade e referencia o cadastro de Produtor. `usuario_propriedade` guarda
 somente acessos adicionais dos tipos `usuario_autorizado` e `colaborador`; o
 tipo `titular` não é aceito nessa tabela.
 
-O acesso do Titular será calculado pela cadeia Propriedade → Produtor Titular
-→ Usuário principal. Uma API futura pode apresentar `tipoAcesso=titular`,
+O acesso do Titular é calculado pela cadeia Propriedade → Produtor Titular
+→ Usuário principal. A API pode apresentar `tipo_acesso=titular`,
 mas esse valor será derivado. O mock v2 permanece inalterado e sua adaptação
 para o contrato do backend pertence à MP-33C.
 
@@ -159,11 +159,15 @@ storage de objetos.
   testes e CI;
 - MP-33B: autenticação, sessões, refresh tokens, convites, recuperação e
   auditoria genérica;
-- MP-33C: interfaces de repositório e seleção mock/HTTP no aplicativo e a
-  primeira vertical de Propriedades.
+- MP-33C: raízes de composição separadas para Demo/HTTP, interfaces de
+  repositório, sessão segura no cliente e primeira vertical somente leitura de
+  Propriedades.
 
-MP-33A e MP-33B não alteram o mock nem conectam o aplicativo. Essa adaptação
-pertence à MP-33C.
+MP-33A e MP-33B não alteraram o mock nem conectaram o aplicativo. Essa
+adaptação foi implementada na MP-33C.
+
+As três fases estão concluídas tecnicamente; isso não implica integração da
+branch, deploy, release ou fechamento dos portões produtivos.
 
 ### 43. Autenticação de fator único da MP-33B
 
@@ -216,6 +220,79 @@ Produtor, Propriedade, Titularidade ou vínculo. A auditoria é append-only, a
 outbox usa payload temporário criptografado e o runtime do banco não possui
 privilégios de atualização, exclusão ou truncate sobre auditoria.
 
+### 45. Demo e produção são composições distintas
+
+O mock permanece no repositório e preserva integralmente o comportamento atual,
+mas é usado somente pelo Demo interno e pelos testes. Demo e produção possuem
+identificadores de aplicativo e namespaces locais distintos. O grafo estático
+e o bundle JavaScript, assim como o grafo nativo Android da composição HTTP,
+não contêm módulos, seeds, bootstrap ou credenciais do mock.
+
+No Android, produção preserva `com.tcheagro.mobile` e o Demo usa
+`com.tcheagro.mobile.demo`.
+
+A composição produtiva usa exclusivamente HTTP, é a única preparada para as
+lojas e não possui fallback para mock. A seleção ocorre no build por raízes de
+composição separadas, nunca por preferência persistida ou alternância feita
+pelo usuário. A navegação HTTP mostra apenas funcionalidades realmente
+conectadas e bloqueia rotas do Demo inclusive quando chamadas por deep link.
+
+### 46. Sessão e proteção local da MP-33C
+
+Na composição HTTP, access token fica somente em memória e refresh token fica
+somente no storage seguro nativo (`SecureStore`). Senha, tokens e sessão HTTP
+não usam `AsyncStorage`. A renovação é single-flight; cada chamada pode repetir no
+máximo uma vez depois de refresh bem-sucedido e nunca reutiliza um refresh
+antigo após resultado ambíguo.
+
+No cold start, refresh aceito restaura a sessão sob lock e exige a senha
+completa. Somente `503` explícito durante refresh/restauração preserva o segredo;
+falha de transporte ambígua limpa a sessão. Com sessão carregada, transporte,
+`429` ou `5xx` em `/v1/auth/me` preserva a identidade local sob tela
+indisponível.
+Logout invalida a identidade e descarta respostas em curso; ele não promete
+desfazer mutação já aceita pelo servidor.
+
+Entrar em background cobre os dados imediatamente. Com 15 minutos ou mais em
+background, o aplicativo exige novo login. Quinze minutos sem interação no
+foreground aplicam bloqueio local, mas ausência de toque não encerra nem revoga
+a sessão automaticamente. Bloqueio visual e logout são operações distintas.
+
+A composição HTTP da MP-33C é online-only. Não existe cache persistente de
+negócio, restauração offline ou fila de sincronização nesse piloto. Offline
+seguro será uma evolução posterior; indisponibilidade nunca seleciona o mock.
+
+### 47. Vertical de Propriedades da MP-33C
+
+A primeira vertical HTTP usa exclusivamente `GET /v1/propriedades` e
+`GET /v1/propriedades/:id`; não existe duplicação por
+`/v1/me/propriedades`. Ela é somente leitura, usa cursor estável e aplica
+busca/filtros no servidor depois de restringir a consulta ao escopo autorizado.
+
+O contrato JSON é exclusivamente `snake_case`. `tipo_acesso` é calculado como
+`admin`, `titular`, `usuario_autorizado` ou `colaborador`; não é persistido.
+Métricas dependentes do conjunto completo ficam ocultas até existir endpoint
+agregado autorizado. Escritas de Propriedades e administração de Usuários ou
+vínculos permanecem na MP-35.
+
+### 48. Conta, links e dados de QA da MP-33C
+
+Convite, senha, e-mail e recuperação são apresentados como fluxos concluídos
+pela própria pessoa. O segundo e-mail previamente verificado do Administrador
+é mantido, a recuperação assistida segue as restrições da MP-33B e operações
+administrativas de negócio permanecem na MP-35.
+
+Links de ação usam Android App Links e o contrato equivalente de iOS Universal
+Links. O domínio oficial e seus arquivos de associação devem estar definidos e
+validados antes da aprovação produtiva; Android continua sendo a primeira
+plataforma.
+
+Testes automatizados usam dados sintéticos criados no PostgreSQL do
+Testcontainers. Fixture manual exige comando explícito, ambiente permitido,
+`ALLOW_QA_FIXTURES=true`, `QA_FIXTURES_DATABASE_URL` dedicada a banco
+`_test`/`_qa` e `QA_FIXTURES_PASSWORD` compatível com a política. Não existe
+seed automático nem produtivo, e dados do mock não são promovidos ao backend.
+
 ## Contratos que detalham as decisões
 
 - [Baseline do backend v1](baseline-backend-v1-2026-08.md)
@@ -225,6 +302,7 @@ privilégios de atualização, exclusão ou truncate sobre auditoria.
 - [Matriz de RBAC](matriz-rbac-backend.md)
 - [Política de sessão](politica-sessao.md)
 - [Contrato de autenticação e recuperação da MP-33B](contrato-autenticacao-mp33b.md)
+- [Contrato de integração do aplicativo da MP-33C](contrato-integracao-app-mp33c.md)
 - [Ciclo do Caderno](ciclo-vida-caderno.md)
 - [Estados de Visita](estados-visita.md)
 - [Versionamento de GeoJSON](versionamento-geojson-talhoes.md)

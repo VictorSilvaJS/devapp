@@ -1,25 +1,26 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `ATIVO`; `MP-33A` e `MP-33B` concluídas tecnicamente
+> Status: `ATIVO`; `MP-33A`, `MP-33B` e `MP-33C` concluídas tecnicamente
 >
 > Fechamento: 2026-08-07
 >
-> Revisão: 2026-08-19
+> Revisão: 2026-08-21
 >
 > Escopo: baseline do backend e do banco. A fundação foi implementada na
-> `MP-33A`; as fases posteriores e a autorização de release não estão
-> concluídas.
+> `MP-33A`; autenticação/conta, na `MP-33B`; integração e primeira leitura de
+> Propriedades, na `MP-33C`. A autorização de release não está concluída.
 
 ## 1. Veredito
 
 As decisões de domínio necessárias para iniciar o backend estão fechadas.
-A MP-33 foi dividida em três cortes. A MP-33A cria somente a fundação, o DDL
-e as garantias operacionais; autenticação e sessão pertencem à MP-33B, e a
-integração do aplicativo e a vertical de Propriedades pertencem à MP-33C.
+A MP-33 foi dividida em três cortes. A MP-33A criou a fundação, o DDL e as
+garantias operacionais; autenticação e sessão foram concluídas na MP-33B; a
+integração do aplicativo e a vertical de Propriedades, na MP-33C.
 
-A MP-33B foi implementada e validada tecnicamente na branch de trabalho. Isso
-não conecta o aplicativo, não fecha os portões de produção e não autoriza
-release.
+MP-33B e MP-33C foram implementadas e validadas tecnicamente. A MP-33C conecta
+somente sua composição HTTP às rotas já disponíveis e à leitura autorizada de
+Propriedades; o Demo continua isolado. Isso não implanta ambiente, não fecha os
+portões de produção e não autoriza release.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -45,7 +46,10 @@ O primeiro backend seguirá estas decisões:
 - processamento assíncrono somente para arquivos, validações pesadas e tarefas
   geoespaciais;
 - frontend acessando casos de uso/repositórios, sem trocar importações do mock
-  diretamente por HTTP dentro das telas.
+  diretamente por HTTP dentro das telas;
+- Demo e produção HTTP compostos em raízes distintas, com identificadores e
+  namespaces locais separados; o mock continua no repositório para Demo/testes,
+  mas não integra o grafo nem o artefato produtivo.
 
 O build produtivo usa `tsc` para gerar JavaScript. Testes TypeScript usam
 `node --import=tsx --test`, mantendo `node:test` como runner. Testes
@@ -245,7 +249,7 @@ Regras:
 - `propriedades.titular_id` é a única fonte persistida da Titularidade;
 - o acesso efetivo do Titular é derivado pela cadeia Propriedade → Produtor
   Titular → Usuário principal;
-- uma resposta futura pode projetar `tipoAcesso=titular`, sem persistir esse
+- uma resposta pode projetar `tipo_acesso=titular`, sem persistir esse
   valor como vínculo;
 - o primeiro banco guarda somente o Titular atual; transferência e histórico
   aguardam contrato transacional e de auditoria;
@@ -254,9 +258,9 @@ Regras:
 As garantias do banco cobrem organização comum, referências válidas, tipos
 permitidos, ausência de duplicidade ativa e compatibilidade dos vínculos
 adicionais. A conta do usuário principal pode ser inativada sem desfazer a
-Titularidade cadastral. A futura autenticação/autorização bloqueará o acesso
-de usuário inativo; não haverá constraint permanente que impeça essa
-desativação.
+Titularidade cadastral. A autenticação/autorização bloqueia o acesso de usuário
+inativo na vertical implementada e deve repetir a regra nas futuras; não haverá
+constraint permanente que impeça essa desativação.
 
 ## 6. Usuário, Ativação E Sessão
 
@@ -284,10 +288,13 @@ Fluxo aprovado:
    autenticável.
 8. Inativação ou redução de escopo revoga refresh tokens ativos.
 
-A política de sessão de `politica-sessao.md` permanece integralmente válida:
-access token de 15 minutos, refresh rotativo com validade absoluta de 30 dias,
-lock local após 15 minutos e consulta offline por até 24 horas desde a última
-revalidação.
+A política de sessão de `politica-sessao.md` permanece válida para tokens e
+backend: access token de 15 minutos e refresh rotativo com validade absoluta de
+30 dias. No cliente da MP-33C, background cobre os dados imediatamente, 15
+minutos em background exigem novo login e inatividade no foreground aplica
+lock local sem logout automático. A antiga janela de consulta offline de até
+24 horas é apenas teto de evolução futura e não é habilitada neste piloto
+online-only.
 
 Na MP-33B, a inatividade do backend é de 14 dias desde o último refresh
 bem-sucedido. A recuperação comum e a alteração concluída de e-mail revogam
@@ -345,6 +352,11 @@ usuário, segredo ou confirmação de recurso fora do escopo.
 
 ## 8. Política Offline Aprovada
 
+A matriz abaixo continua sendo o alvo conservador das verticais futuras. A
+MP-33C não a implementa: sua composição HTTP piloto é online-only, sem cache
+persistente de negócio, restauração offline ou fila de sincronização. O Demo
+preserva seu funcionamento local, isolado do artefato produtivo.
+
 | Fluxo | Leitura offline | Escrita offline no primeiro corte |
 |---|---|---|
 | Login, convite, troca de usuário e recuperação | Não | Não |
@@ -396,7 +408,13 @@ backend.
 Isso encerra a necessidade de planilha de migração territorial do mock v1.
 O comportamento e a representação atuais do mock permanecem integralmente
 inalterados nas MP-33A e MP-33B. A adaptação entre o vínculo local `titular` e a
-Titularidade derivada do backend pertence exclusivamente à MP-33C.
+Titularidade derivada do backend foi implementada exclusivamente na composição
+HTTP da MP-33C.
+
+Na MP-33C, o mock permanece como implementação do Demo e dos testes. Produção
+usa somente HTTP e não contém fallback nem importação estática do mock. Não há
+migração de dados demonstrativos, e a composição HTTP não usa `AsyncStorage`
+para token, sessão ou cache de negócio.
 
 ## 11. O Que Está Fechado E O Que Continua
 
@@ -422,9 +440,13 @@ Titularidade derivada do backend pertence exclusivamente à MP-33C.
 - scaffold, migrations, DDL, OpenAPI e garantias operacionais (`MP-33A`);
 - autenticação, sessões, refresh tokens, convites, recuperação, outbox e
   auditoria genérica, concluídas tecnicamente (`MP-33B`);
-- interfaces de repositório, seleção mock/HTTP e primeira vertical de
-  Propriedades no aplicativo (`MP-33C`);
-- RBAC no servidor (`MP-35`);
+- raízes de composição, interfaces de repositório, sessão segura e primeira
+  vertical somente leitura de Propriedades no aplicativo, concluídas na
+  `MP-33C`;
+- autorização mínima de leitura por Propriedade na própria consulta,
+  concluída na `MP-33C`;
+- escritas administrativas e o restante do RBAC por ação no servidor
+  (`MP-35`);
 - CI do backend;
 - observabilidade, backup e restauração.
 
@@ -456,7 +478,8 @@ A MP-33A foi delimitada para conter somente:
 7. documentação operacional.
 
 Autenticação, sessões, refresh tokens, convites, recuperação e auditoria
-genérica compõem a MP-33B concluída tecnicamente. Repositórios no app, seleção
-mock/HTTP e vertical de Propriedades ficam na MP-33C. Materiais, GeoJSON
+genérica compõem a MP-33B concluída tecnicamente. Separação Demo/HTTP, sessão
+segura no cliente e lista/detalhe HTTP de Propriedades foram concluídas na
+MP-33C. Escritas administrativas permanecem na MP-35. Materiais, GeoJSON
 produtivo, Caderno append-only e notificações entram depois que a fundação
 estiver implantada e observável.

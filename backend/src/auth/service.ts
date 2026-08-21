@@ -32,6 +32,10 @@ export interface AuthTokenResponse {
   readonly refreshToken: string;
   readonly tokenType: 'Bearer';
   readonly expiresIn: number;
+  readonly issuedAt: Date;
+  readonly accessExpiresAt: Date;
+  readonly sessionInactivityExpiresAt: Date;
+  readonly sessionAbsoluteExpiresAt: Date;
   readonly sessionId: string;
   readonly user: AuthUser;
   readonly scope: Readonly<{
@@ -114,12 +118,20 @@ function tokenResponse(input: {
   readonly sessionId: string;
   readonly subject: AuthenticatedPrincipal | LoginSubject;
   readonly accessTtlSeconds: number;
+  readonly issuedAt: Date;
+  readonly accessExpiresAt: Date;
+  readonly inactivityExpiresAt: Date;
+  readonly absoluteExpiresAt: Date;
 }): AuthTokenResponse {
   return {
     accessToken: input.accessToken,
     refreshToken: input.refreshToken,
     tokenType: 'Bearer',
     expiresIn: input.accessTtlSeconds,
+    issuedAt: input.issuedAt,
+    accessExpiresAt: input.accessExpiresAt,
+    sessionInactivityExpiresAt: input.inactivityExpiresAt,
+    sessionAbsoluteExpiresAt: input.absoluteExpiresAt,
     sessionId: input.sessionId,
     user: userFromSubject(input.subject),
     scope: scopeFor(input.subject),
@@ -246,6 +258,10 @@ export class DefaultAuthenticationService implements AuthenticationService {
       sessionId: created.sessionId,
       subject,
       accessTtlSeconds: this.#config.tokens.accessTtlSeconds,
+      issuedAt: created.issuedAt,
+      accessExpiresAt: created.accessExpiresAt,
+      inactivityExpiresAt: created.inactivityExpiresAt,
+      absoluteExpiresAt: created.absoluteExpiresAt,
     });
   }
 
@@ -278,6 +294,10 @@ export class DefaultAuthenticationService implements AuthenticationService {
       sessionId: result.principal.sessionId,
       subject: result.principal,
       accessTtlSeconds: this.#config.tokens.accessTtlSeconds,
+      issuedAt: result.issuedAt,
+      accessExpiresAt: result.accessExpiresAt,
+      inactivityExpiresAt: result.inactivityExpiresAt,
+      absoluteExpiresAt: result.absoluteExpiresAt,
     });
   }
 
@@ -408,6 +428,10 @@ export class DefaultAuthenticationService implements AuthenticationService {
       sessionId: changed.principal.sessionId,
       subject: changed.principal,
       accessTtlSeconds: this.#config.tokens.accessTtlSeconds,
+      issuedAt: changed.issuedAt,
+      accessExpiresAt: changed.accessExpiresAt,
+      inactivityExpiresAt: changed.inactivityExpiresAt,
+      absoluteExpiresAt: changed.absoluteExpiresAt,
     });
   }
 

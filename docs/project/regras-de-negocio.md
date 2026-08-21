@@ -1,6 +1,6 @@
 # Regras de Negocio
 
-> Revisão documental: 2026-08-19
+> Revisão documental: 2026-08-21
 
 Este documento registra regras de dominio e acesso que devem orientar modelagem, UX e implementacao. Quando um ponto ainda nao estiver fechado, ele nao deve ser transformado em regra aqui.
 
@@ -67,14 +67,34 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 No backend, `propriedades.titular_id` e a unica fonte persistida da
 Titularidade. `usuario_propriedade` aceita somente `usuario_autorizado` e
 `colaborador`; `titular` nao e aceito nem persistido. O acesso do Titular e
-derivado por Propriedade, Produtor Titular e Usuario principal. A API futura
-pode projetar `tipoAcesso=titular`, mas nao duplica esse fato no banco.
+derivado por Propriedade, Produtor Titular e Usuario principal. A API
+projeta `tipo_acesso=titular`, mas nao duplica esse fato no banco.
 
 A MP-33A armazena somente o Titular atual. Transferencia e historico exigem
 contrato transacional e de auditoria posterior. A conta do Usuario principal
 pode ser inativada sem desfazer a Titularidade cadastral e sem bloqueio por
 constraint permanente. Usuario inativo nao obtem acesso quando a futura
 autenticacao/autorizacao estiver em vigor.
+
+### Primeira vertical HTTP de Propriedades
+
+- A MP-33C oferece somente lista e detalhe de Propriedades em leitura.
+- O backend restringe primeiro por organização, perfil, Titularidade ou vínculo
+  ativo e somente depois aplica busca, filtros, ordenação e cursor.
+- Administrador ativo consulta o escopo da organização; Produtor ativo consulta
+  por Titularidade derivada ou `usuario_autorizado` ativo; Colaborador ativo
+  consulta por vínculo `colaborador` ativo.
+- Produtor e Colaborador recebem somente Propriedades ativas na MP-33C. O
+  Administrador pode filtrar ativas ou inativas.
+- Consulta por ID inexistente ou fora do escopo retorna o mesmo `404`.
+- A projeção HTTP usa `tipo_acesso` calculado. O contrato não aceita
+  `tipoAcesso` nem persiste `titular` em `usuario_propriedade`.
+- A API nova usa exclusivamente `snake_case`; aliases do mock permanecem
+  confinados ao adaptador Demo.
+- Paginação parcial não produz totalizadores. Métricas permanecem ocultas até
+  existir endpoint agregado e autorizado.
+- Criar, editar, inativar ou transferir Propriedade e administrar Usuários ou
+  vínculos permanecem na MP-35.
 
 ### Modelo territorial canonico
 
@@ -213,7 +233,9 @@ O contrato canonico esta em `contrato-notificacoes.md`.
 
 Status em 2026-08-07: as decisões 33 e 37 substituíram a recomendação regional
 anterior. O runtime v2 e o backend usam vínculo direto por Propriedade para
-Colaborador. O contrato está aprovado para implementação.
+Colaborador. Em 2026-08-21, a leitura de Propriedades desse contrato está
+implementada e validada na MP-33C; escritas e demais recursos continuam por
+fase.
 
 Status em 2026-06-03 (Fase 14F): a matriz tecnica de testes e criterios de
 aceite deste contrato foi registrada em `matriz-rbac-backend.md`. Ela deve
@@ -284,11 +306,12 @@ nova no MVP mockado.
 - Se `fazenda_id`, `propriedade_id`, titularidade e vinculos forem migrados sem
   leitura dupla, Produtor pode deixar de ver Propriedades vinculadas.
 
-### Implementacao produtiva pendente
+### Implementação por fase
 
-- Implementar os ids canonicos definidos em `modelo-dados-mock-v2.md`.
-- Implementar a matriz de permissoes por acao ja aprovada nos contratos
-  especificos.
+- IDs canônicos e autorização de lista/detalhe de Propriedades estão
+  implementados no backend da MP-33A/MP-33C.
+- Implementar na MP-35 as escritas administrativas e, em cada vertical, o
+  restante da matriz de permissões por ação aprovada nos contratos específicos.
 - Implementar a auditoria de alteracoes de vinculos e permissoes na fase
   prevista.
 - Executar a estrategia aprovada de descarte do mock v1 e migracao do codigo que usa
@@ -511,6 +534,13 @@ Essas validacoes continuam sendo regras do mock administrativo e nao substituem 
 - O contexto de uso em campo exige cautela com dependencias de conectividade continua.
 - A prioridade do offline deve comecar por consulta e visualizacao.
 - Nao se deve prometer experiencia offline total sem definicao tecnica e funcional clara.
+- A composição HTTP da MP-33C é online-only: não persiste respostas de negócio,
+  não restaura lista/detalhe por cache e não possui fila de sincronização.
+- Falha de conectividade na composição HTTP mostra indisponibilidade e nunca
+  seleciona o mock como fallback.
+- O comportamento offline/local atual pertence somente ao Demo. Offline
+  produtivo seguro exige fase posterior, cache cifrado e segregado, invalidação
+  de escopo e testes específicos.
 
 ## Regra Sobre Sessao E Retomada Segura
 
@@ -522,10 +552,17 @@ O contrato canonico esta em `politica-sessao.md`.
   protegido, rotativo e com validade absoluta de 30 dias.
 - Perfil, status e escopo devem ser revalidados na renovacao, na reconexao e
   antes de liberar uma sessao restaurada quando houver rede.
-- Depois de 15 minutos de inatividade/background, a interface deve exigir
-  retomada segura antes de mostrar dados.
-- A janela inicial de consulta offline e de 24 horas desde a ultima
-  revalidacao, limitada a dados locais e ao ultimo escopo autorizado.
+- Ao entrar em background, a composição HTTP cobre os dados imediatamente. Com
+  15 minutos ou mais em background, exige novo login.
+- Depois de 15 minutos sem interação no foreground, a interface aplica bloqueio
+  local, sem logout ou revogação automáticos baseados apenas em ausência de
+  toque.
+- A MP-33C não habilita a janela de consulta offline de 24 horas. Essa janela é
+  teto de uma evolução futura e depende de cache seguro por fluxo.
+- Access token fica somente em memória e refresh token somente no storage
+  seguro nativo; token e sessão HTTP nunca usam `AsyncStorage`.
+- Renovação concorrente é single-flight, cada chamada repete no máximo uma vez
+  e produção nunca recua para mock.
 - Ate cada fluxo possuir contrato proprio, offline produtivo e somente leitura
   e rascunho local nao equivale a registro aceito pelo servidor.
 - Logout limpa e bloqueia a sessao local imediatamente, revoga a sessao remota
