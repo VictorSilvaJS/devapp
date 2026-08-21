@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-19
+> Revisão documental: 2026-08-21
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -11,34 +11,69 @@ está funcional como MVP local e demonstrável, com dados persistidos no
 aparelho, três perfis, Propriedades, Talhões, Visitas, Caderno de Campo,
 Materiais técnicos e mapas.
 
-O aplicativo ainda não é um produto conectado à produção. A MP-33A introduziu
-a fundação isolada de backend e o DDL inicial. A MP-33B acrescenta no backend
-autenticação stateful, ações de conta, outbox e auditoria e está concluída
-tecnicamente, mas não liberada para produção. Ela não conecta o aplicativo nem
-libera rotas de negócio. Storage remoto, sincronização produtiva e RBAC completo
-no servidor continuam ausentes. O mock e seu funcionamento permanecem
-inalterados.
+O aplicativo ainda não é um produto implantado em produção. A MP-33A introduziu
+a fundação do backend e o DDL inicial; a MP-33B acrescentou autenticação
+stateful, ações de conta, outbox e auditoria. A MP-33C está implementada e
+validada tecnicamente na branch de trabalho: separa o Demo interno da
+composição HTTP, conecta sessão e ações self-service e entrega a primeira
+vertical de Propriedades somente leitura com autorização no backend.
+
+O mock e seu funcionamento permanecem preservados no Demo e nos testes. A
+composição HTTP não contém fallback, módulos, seed, bootstrap ou credenciais do
+mock em seus grafos JavaScript e Android. Isso ainda não representa deploy,
+release ou loja: não existe ambiente produtivo implantado, domínio oficial
+associado, assinatura oficial nem validação final em dispositivo/loja.
 
 ## Estado por camada
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Funcional e validado no recorte local demonstrativo |
-| Dados | Dataset demonstrativo v2 e persistências locais |
-| Autenticação | Aplicativo ainda local; backend MP-33B com fator único stateful validado e sem MFA |
-| Autorização | Ações self-service/Admin mínimas da MP-33B; RBAC de recursos de negócio ainda não implementado |
-| API | Health, readiness, OpenAPI e rotas `/v1/auth` validadas; aplicativo ainda usa mocks locais |
+| Aplicativo Android | Demo local preservado e composição HTTP da MP-33C implementada; sem release produtivo |
+| Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
+| Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
+| Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
+| API | Health, readiness, OpenAPI, `/v1/auth` e `/v1/propriedades` validados |
 | Banco | DDL MP-33A e quatro migrations seladas/validadas; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
-| Offline | Consulta/local demonstrativa por fluxo; sem fila geral de sincronização |
+| Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | In-app local; sem persistência produtiva ou push |
-| Testes | MP-33B: 114 unitários/contratos, 19 HTTP e 27 integrações reais; app Node.js 22 também validado |
+| Testes | MP-33C: app Node.js 22, contratos/sessão/arquitetura, bundles e prebuild; backend Node.js 24 com 36 integrações reais |
+
+## Corte implementado da MP-33C
+
+O comportamento implementado e seus limites estão congelados no
+[contrato de integração da MP-33C](contrato-integracao-app-mp33c.md):
+
+- mock mantido no repositório apenas para Demo interno e testes, fora do grafo
+  de dependências e do artefato de produção;
+- Demo e produção com identificadores e namespaces locais distintos; somente a
+  composição HTTP pode ser futura candidata às lojas;
+- access token somente em memória, refresh token no `SecureStore`,
+  refresh single-flight, nenhum token/sessão HTTP no `AsyncStorage` e nenhum
+  fallback para mock;
+- proteção visual imediata ao entrar em background, novo login depois de 15
+  minutos em background e bloqueio local por inatividade sem logout automático;
+- primeira vertical limitada a lista e detalhe somente leitura por
+  `/v1/propriedades`, com cursor, filtros no servidor e autorização aplicada no
+  backend;
+- contrato HTTP exclusivamente `snake_case`, `tipo_acesso` calculado e métricas
+  ocultas enquanto não existir agregado autorizado;
+- composição HTTP online-only no piloto, sem cache persistente ou sincronização;
+- configuração para App Links/Universal Links com caminho dedicado; domínio
+  oficial e arquivos de associação continuam obrigatórios antes da aprovação
+  produtiva;
+- dados sintéticos por Testcontainers e fixture manual protegida somente em
+  desenvolvimento/QA, sem seed automático ou produtivo.
+
+Escritas de Propriedade, administração de Usuários/vínculos e RBAC por ação
+continuam na MP-35. O segundo e-mail verificado do Administrador e a
+recuperação da MP-33B permanecem válidos.
 
 ## Fonte de dados ativa
 
-O dataset demonstrativo v2 é a fonte estruturada principal instalada pelo
-bootstrap. A complementação de QA foi feita no mesmo modelo e no mesmo
+No Demo, o dataset demonstrativo v2 é a fonte estruturada principal instalada
+pelo bootstrap. A complementação de QA foi feita no mesmo modelo e no mesmo
 snapshot, preservando dados locais existentes.
 
 O runtime ainda projeta dados v2 para adaptadores de compatibilidade usados por
@@ -80,8 +115,10 @@ evidência do dataset local, não volume produtivo.
 ## Limites que não podem ser confundidos com produto pronto
 
 - O cliente ainda pode ser inspecionado ou alterado; segurança exige servidor.
-- O aplicativo ainda não consome os tokens, refresh, revogação ou expiração
-  implementados no backend da MP-33B; esse uso pertence à MP-33C.
+- A composição HTTP não tem ambiente produtivo, domínio oficial, assinatura ou
+  publicação; o corte foi validado tecnicamente com configurações de teste.
+- A MP-33C é online-only e não possui cache persistente de negócio, restauração
+  offline ou fila de sincronização. O offline local continua exclusivo do Demo.
 - Mutação offline geral e resolução de conflitos ainda não existem.
 - Arquivos não têm upload, criptografia, retenção ou storage remoto definidos em
   execução.
@@ -222,18 +259,49 @@ entrega SMTP real pelo worker, auditoria e remoção do payload criptografado. O
 O aplicativo permaneceu integralmente no mock e passou em Node.js 22 por
 typecheck e `test:domain-compat`. Não houve commit, tag ou deploy.
 
+## Validação da MP-33C
+
+O backend passou com Node.js 24 em verificação do manifesto de migrations,
+typecheck, 126 testes unitários/contratos, 23 testes HTTP, build e smoke ESM.
+A integração real executou 36 cenários com Testcontainers e
+`postgis/postgis:17-3.5`, incluindo autorização, filtros, cursor e fixtures de
+QA; Docker esteve disponível e a suíte não foi simulada.
+
+O aplicativo passou com Node.js 22 em typecheck, na suíte completa
+`test:domain-compat` e em 38 testes focados da MP-33C: 8 de contrato, 25 de
+sessão/concorrência e 5 de arquitetura. Exports Android reais das composições
+HTTP e Demo foram inspecionados separadamente; o bundle HTTP não contém os
+marcadores, módulos ou `AsyncStorage` do mock, e o Demo preserva sua composição
+local. O gate de Expo Autolinking confirmou que módulos nativos exclusivos do
+Demo não integram o grafo Android HTTP. O prebuild HTTP temporário confirmou
+`com.tcheagro.mobile`, App Link em caminho dedicado, regras de backup do
+SecureStore e somente `INTERNET` como permissão efetiva.
+
+O carregador manual de QA é sintético, transacional e fail-closed. Ele exige
+ambiente permitido, flag explícita, URL própria para banco `_test`/`_qa` e
+senha compatível com a política; não roda em migration, startup ou produção.
+
+Essa rodada não realizou commit, tag, deploy, assinatura ou publicação. Ainda
+faltam domínio oficial com `assetlinks.json`/AASA, configuração de assinatura e
+validação ponta a ponta em aparelho/ambiente de release.
+
 ## Próxima etapa
 
 A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
-health/readiness, garantias operacionais, testes e CI. O mock e o aplicativo
-permanecem inalterados.
+health/readiness, garantias operacionais, testes e CI. Naquela fase, o mock e o
+aplicativo permaneceram inalterados.
 
-A MP-33B está concluída tecnicamente na branch própria derivada de `backend`,
-com autenticação, sessões, refresh tokens, convites, recuperação, e-mail
-transacional e auditoria genérica. Antes da MP-33C, deve ser planejada a
-integração dessa branch com a linha do aplicativo; então a MP-33C criará as
-interfaces de repositório, seleção mock/HTTP e a primeira vertical de
-Propriedades.
+A MP-33B está concluída tecnicamente e integrada à branch-base `backend`, com
+autenticação, sessões, refresh tokens, convites, recuperação, e-mail
+transacional e auditoria genérica. A MP-33C implementa sobre essa base a
+separação Demo/HTTP, a sessão do cliente e a leitura autorizada de Propriedades,
+sem alterar o comportamento persistido do Demo.
+
+O próximo fechamento é revisar o diff e, somente com autorização, integrar a
+branch. Em paralelo, devem ser preparados os portões externos de domínio,
+associação de links, assinatura e dispositivo. Escritas administrativas e o
+restante do RBAC continuam na MP-35; o sequenciamento funcional seguinte parte
+da MP-34 sem converter portão de release em capacidade já entregue.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e retenção continuam portões
@@ -253,8 +321,10 @@ está em [proximos-passos.md](proximos-passos.md).
 | Rotas e navegação | src/navigation |
 | Regras e contratos | src/domain, src/types e src/utils |
 | Dados, mocks e integrações | src/api e src/services |
+| Composição HTTP e sessão segura | src/http e src/entry/http.tsx |
+| Composição Demo preservada | demo e src/entry/demo.tsx |
 | Fundação do backend e banco | backend |
-| Login, sessão e contexto | src/auth e src/contexts |
+| Login e sessão locais do Demo | src/auth e src/contexts |
 | Imagens e recursos visuais | src/assets |
 | Testes e verificações | tests e scripts |
 | Projeto Android nativo | android |

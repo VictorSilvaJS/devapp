@@ -22,6 +22,7 @@
     "bootstrap:admin:local:correct": "node --env-file=.env.local --import=tsx src/cli/bootstrap-admin.ts correct-email",
     "smoke:dist": "node scripts/smoke-dist.mjs",
     "benchmark:argon2": "node --import=tsx scripts/benchmark-argon2.ts",
+    "fixtures:qa": "node --import=tsx scripts/load-qa-fixtures.ts",
     "test": "npm run test:unit && npm run test:http",
     "test:unit": "node --import=tsx --test \"tests/unit/*.test.ts\" \"tests/migrations/*.test.ts\"",
     "test:http": "node --import=tsx --test \"tests/http/*.test.ts\"",

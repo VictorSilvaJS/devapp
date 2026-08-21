@@ -1,0 +1,140 @@
+export type HttpProfile = 'admin' | 'colaborador' | 'produtor';
+export type HttpUserStatus = 'pendente' | 'ativo' | 'inativo';
+export type PropertyStatus = 'ativa' | 'inativa';
+export type PropertyAccessType =
+  | 'admin'
+  | 'titular'
+  | 'usuario_autorizado'
+  | 'colaborador';
+
+export interface HttpUser {
+  readonly id: string;
+  readonly organizacao_id: string;
+  readonly nome: string;
+  readonly email: string;
+  readonly perfil: HttpProfile;
+  readonly status: HttpUserStatus;
+  readonly versao_autorizacao: number;
+}
+
+export interface HttpScope {
+  readonly modo: 'organizacao' | 'vinculos_propriedade';
+  readonly versao: number;
+}
+
+export interface HttpSessionIdentity {
+  readonly id: string;
+  readonly usuario: HttpUser;
+  readonly escopo: HttpScope;
+}
+
+export interface TokenResponse extends HttpSessionIdentity {
+  readonly access_token: string;
+  readonly refresh_token: string;
+  readonly token_type: 'Bearer';
+  readonly expires_in: number;
+  readonly emitido_em: string;
+  readonly access_expira_em: string;
+  readonly sessao_expira_inatividade_em: string;
+  readonly sessao_expira_absolutamente_em: string;
+}
+
+export interface SessionSnapshot extends HttpSessionIdentity {
+  readonly emitido_em: string;
+  readonly access_expira_em: string;
+  readonly sessao_expira_inatividade_em: string;
+  readonly sessao_expira_absolutamente_em: string;
+  /** Monotonic process-local deadline derived from server timestamps. */
+  readonly access_expires_monotonic: number;
+}
+
+export interface PropertyOwnerProjection {
+  readonly id: string;
+  readonly nome: string;
+}
+
+export interface PropertyProjection {
+  readonly id: string;
+  readonly organizacao_id: string;
+  readonly titular_id: string;
+  readonly titular: PropertyOwnerProjection;
+  readonly nome: string;
+  readonly municipio_id: string;
+  readonly municipio_nome: string;
+  readonly uf_id: string;
+  readonly uf_sigla: string;
+  readonly area_total: number | null;
+  readonly cultura_principal: string | null;
+  readonly status: PropertyStatus;
+  readonly tipo_acesso: PropertyAccessType;
+}
+
+export interface PropertyPage {
+  readonly itens: readonly PropertyProjection[];
+  readonly paginacao: {
+    readonly proximo_cursor: string | null;
+  };
+}
+
+export interface PropertyFilters {
+  readonly busca?: string;
+  readonly status?: PropertyStatus;
+  readonly uf?: string;
+  readonly municipio?: string;
+  readonly limite?: number;
+  readonly cursor?: string;
+}
+
+export type ApiErrorCode =
+  | 'invalid_request'
+  | 'invalid_credentials'
+  | 'invalid_session'
+  | 'forbidden'
+  | 'not_found'
+  | 'conflict'
+  | 'password_policy_violation'
+  | 'invalid_or_expired_challenge'
+  | 'rate_limited'
+  | 'service_unavailable';
+
+export interface ApiErrorPayload {
+  readonly code: ApiErrorCode;
+  readonly message: string;
+  readonly request_id: string;
+  readonly details: readonly Record<string, unknown>[];
+}
+
+export interface AcceptedResponse {
+  readonly status: 'aceito';
+}
+
+export interface RestrictedTokenResponse {
+  readonly token: string;
+  readonly expira_em: string;
+}
+
+export interface RemoteSessionProjection {
+  readonly id: string;
+  readonly criada_em: string;
+  readonly ultima_renovacao_em: string;
+  readonly expira_em: string;
+  readonly atual: boolean;
+  readonly identificacao_cliente?: string;
+  readonly revogada_em?: string;
+}
+
+export type AccountAction =
+  | 'accept-invitation'
+  | 'accept-initial-admin-invitation'
+  | 'complete-password-recovery'
+  | 'confirm-current-primary-email'
+  | 'confirm-new-primary-email'
+  | 'verify-secondary-email'
+  | 'confirm-admin-secondary-recovery'
+  | 'confirm-admin-recovery-new-primary'
+  | 'confirm-assisted-recovery-email';
+
+export interface ParsedAccountActionLink {
+  readonly action: AccountAction;
+  readonly token: string;
+}

@@ -243,6 +243,7 @@ export const accountActionRoutesPlugin: FastifyPluginAsync<
         operationId: 'postAccountInvitation',
         summary: 'Convida um usuário pendente existente',
         tags: ['Ações de conta'],
+        security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
           additionalProperties: false,
@@ -311,6 +312,7 @@ export const accountActionRoutesPlugin: FastifyPluginAsync<
         operationId: 'postPrimaryEmailChangeRequest',
         summary: 'Solicita troca do e-mail principal',
         tags: ['Ações de conta'],
+        security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
           additionalProperties: false,
@@ -411,6 +413,7 @@ export const accountActionRoutesPlugin: FastifyPluginAsync<
         operationId: 'postSecondaryEmailRequest',
         summary: 'Solicita verificação do contato secundário do Admin',
         tags: ['Ações de conta'],
+        security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
           additionalProperties: false,
@@ -695,6 +698,7 @@ export const accountActionRoutesPlugin: FastifyPluginAsync<
         operationId: 'postAssistedRecovery',
         summary: 'Inicia recuperação assistida de Produtor ou Colaborador',
         tags: ['Ações de conta'],
+        security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
           additionalProperties: false,

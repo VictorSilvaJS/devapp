@@ -23,6 +23,8 @@ import type { RuntimeConfig } from './config.js';
 import { loadEmailRuntimeConfig } from './email/config.js';
 import { createOutboxPayloadCipherFromBase64KeyRing } from './outbox/crypto.js';
 import { EncryptedEmailOutboxFactory } from './outbox/email-message.js';
+import { PostgresPropertyRepository } from './properties/postgres-property-repository.js';
+import { DefaultPropertyService, type PropertyService } from './properties/service.js';
 
 export interface BackendSecurityServices {
   readonly authenticationService: AuthenticationService;
@@ -30,6 +32,7 @@ export interface BackendSecurityServices {
     AccountActionRoutesOptions,
     'authenticationService'
   >;
+  readonly propertyRoutes: Readonly<{ service: PropertyService }>;
 }
 
 /**
@@ -74,6 +77,12 @@ export async function createBackendSecurityServices(input: {
 
   return Object.freeze({
     authenticationService,
+    propertyRoutes: Object.freeze({
+      service: new DefaultPropertyService({
+        authentication: authenticationService,
+        repository: new PostgresPropertyRepository(input.database),
+      }),
+    }),
     accountActionRoutes: Object.freeze({
       invitationService: new InvitationService({
         repository: new PostgresInvitationRepository(

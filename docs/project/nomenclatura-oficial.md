@@ -1,6 +1,6 @@
 # Nomenclatura Oficial
 
-> Revisão documental: 2026-08-18
+> Revisão documental: 2026-08-21
 
 ## Termos de produto
 
@@ -19,9 +19,10 @@
 
 No backend, Titularidade é a relação cadastral persistida somente em
 `propriedades.titular_id`. Vínculo em `usuario_propriedade` significa acesso
-adicional `usuario_autorizado` ou `colaborador`. `tipoAcesso=titular` é uma
-projeção calculada, não um tipo de vínculo persistido. O mock preserva seu
-contrato local até a adaptação da MP-33C.
+adicional `usuario_autorizado` ou `colaborador`. `tipo_acesso=titular` é uma
+projeção HTTP calculada, não um tipo de vínculo persistido. O mock preserva seu
+contrato local no Demo/testes; ele não integra a composição de produção da
+MP-33C.
 
 ## Valores internos de perfil
 
@@ -60,7 +61,7 @@ borda de migração.
 ## Território e acesso
 
 Regional, Área Operacional, Região, Microrregião, sub_regioes e
-vinculos_microregioes são legado do mock v1. O runtime v2 e o futuro backend
+vinculos_microregioes são legado do mock v1. O runtime v2 e o backend
 autorizam o Colaborador somente por usuario_propriedade ativo.
 
 Município e UF podem ajudar na seleção administrativa em lote. A seleção deve

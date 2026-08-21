@@ -1,13 +1,13 @@
 # Modelo De Dados Canônico V2
 
-> Status: `APROVADO_PARA_IMPLEMENTACAO`
+> Status: `ATIVO NO DEMO; ADAPTADO NA COMPOSIÇÃO HTTP`
 >
 > Definido em: 2026-08-05
 >
-> Revisão documental: 2026-08-18
+> Revisão documental: 2026-08-21
 >
-> Escopo: substituição integral dos dados demonstrativos e preparação do
-> frontend para o futuro backend.
+> Escopo: dados demonstrativos do Demo e vocabulário de compatibilidade com o
+> backend.
 
 ## Objetivo
 
@@ -159,15 +159,17 @@ v2 e não serão alterados na MP-33A. No banco do backend:
   `colaborador`;
 - o acesso do Titular é derivado por Propriedade → Produtor Titular → Usuário
   principal;
-- `tipoAcesso=titular`, quando existir na API, é uma projeção calculada;
+- `tipo_acesso=titular`, quando existir na API, é uma projeção calculada;
 - somente o Titular atual é armazenado; histórico e transferência aguardam
   contrato transacional e de auditoria;
 - a inativação da conta do usuário principal não invalida a Titularidade
-  cadastral nem é impedida por constraint permanente; a futura camada de
-  autenticação/autorização deve negar acesso ao usuário inativo.
+  cadastral nem é impedida por constraint permanente; a camada de
+  autenticação/autorização nega acesso ao usuário inativo.
 
-A adaptação entre as representações local e HTTP pertence à MP-33C. Ela não
-autoriza alterar o mock durante a MP-33A.
+A adaptação entre as representações local e HTTP foi implementada na MP-33C. Ela
+preserva este contrato dentro do Demo e dos testes, enquanto a composição HTTP
+usa portas/adaptadores e o contrato `snake_case` do backend. O mock não integra
+o grafo nem o artefato de produção, e não existe fallback HTTP → mock.
 
 ### Localização oficial
 

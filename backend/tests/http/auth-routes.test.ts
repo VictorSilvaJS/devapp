@@ -16,11 +16,16 @@ import {
 import { issueOpaqueToken } from '../../src/security/tokens.js';
 
 function successfulTokens(): AuthTokenResponse {
+  const issuedAt = new Date('2026-08-21T12:00:00.000Z');
   return {
     accessToken: issueOpaqueToken().value,
     refreshToken: issueOpaqueToken().value,
     tokenType: 'Bearer',
     expiresIn: 900,
+    issuedAt,
+    accessExpiresAt: new Date('2026-08-21T12:15:00.000Z'),
+    sessionInactivityExpiresAt: new Date('2026-09-04T12:00:00.000Z'),
+    sessionAbsoluteExpiresAt: new Date('2026-09-20T12:00:00.000Z'),
     sessionId: 'session-1',
     user: {
       id: 'user-1',
@@ -116,6 +121,16 @@ describe('authentication HTTP plugin', () => {
     const body = response.json();
     assert.equal(typeof body.access_token, 'string');
     assert.equal(typeof body.refresh_token, 'string');
+    assert.equal(body.emitido_em, '2026-08-21T12:00:00.000Z');
+    assert.equal(body.access_expira_em, '2026-08-21T12:15:00.000Z');
+    assert.equal(
+      body.sessao.expira_inatividade_em,
+      '2026-09-04T12:00:00.000Z',
+    );
+    assert.equal(
+      body.sessao.expira_absolutamente_em,
+      '2026-09-20T12:00:00.000Z',
+    );
     assert.equal(body.usuario.organizacao_id, 'org_tche_fertilidade');
     assert.deepEqual(body.escopo, { modo: 'organizacao', versao: 4 });
     assert.deepEqual(service.loginInput?.password, 'SenhaSegura1');

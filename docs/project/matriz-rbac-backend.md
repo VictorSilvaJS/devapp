@@ -1,9 +1,9 @@
 # Matriz Tecnica De RBAC/Backend
 
-Status revisado em 2026-08-19: `RBAC_DE_NEGOCIO_APROVADO_PARA_IMPLEMENTACAO`.
+Status revisado em 2026-08-21: `LEITURA_MP33C_IMPLEMENTADA_E_VALIDADA`.
 Este documento
 transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
-de aceite. A regra segue as decisoes 31 a 42 de
+de aceite. A regra segue as decisoes 31 a 48 de
 `decisoes-consolidadas.md` e `baseline-backend-v1-2026-08.md`.
 
 ## Separacao De Escopo
@@ -30,15 +30,21 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 - Nao existe entidade de Regiao Operacional, Area Operacional ou Microregiao
   no modelo aprovado.
 
-### Fora do escopo deste documento
+### Faseamento de implementação
 
-- Implementar a autenticação já coberta pela MP-33B concluída tecnicamente.
-- Implementar integração do aplicativo e RBAC de recursos; essa execução
-  pertence a `MP-33C`/`MP-35`.
+- Autenticação já foi coberta pela MP-33B e não é reimplementada nesta matriz.
+- A MP-33C implementou somente autorização de leitura em
+  `GET /v1/propriedades` e `GET /v1/propriedades/:id`, aplicada dentro da
+  consulta antes de filtros e paginação.
+- A MP-35 implementa escritas administrativas e o restante das permissões por
+  ação desta matriz.
+
+### Fora do escopo deste corte
+
 - Inventar registros produtivos sem carga autorizada.
 - Criar novos perfis administrativos ou autorizacao por Municipio/UF.
 
-## Entidades Minimas Futuras
+## Entidades Do Contrato
 
 | Entidade | Papel no RBAC/backend | Requisitos minimos |
 |---|---|---|
@@ -50,7 +56,7 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 
 ## Matriz De Permissoes Por Perfil
 
-| Perfil | Escopo futuro | Regra de acesso | Observacao de aceite |
+| Perfil | Escopo | Regra de acesso | Observacao de aceite |
 |---|---|---|---|
 | Admin | Global | Acessa Propriedades, usuarios e vinculos conforme papel administrativo | Deve validar permissao no backend, nao apenas no frontend |
 | Produtor | Propriedades vinculadas | Acessa por Titularidade derivada ou vinculo adicional ativo | Nao pode acessar Propriedade de outro titular |
@@ -60,8 +66,8 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 
 | Acao | Admin | Produtor | Colaborador |
 |---|---|---|---|
-| Listar Propriedades | Sim, global | Sim, apenas vinculadas | Sim, apenas por vinculo direto ativo |
-| Abrir detalhe da Propriedade | Sim, global | Sim, se vinculada | Sim, se possuir vinculo direto ativo |
+| Listar Propriedades | Sim, global; MP-33C | Sim, apenas ativas e vinculadas; MP-33C | Sim, apenas ativas por vinculo direto ativo; MP-33C |
+| Abrir detalhe da Propriedade | Sim, global; MP-33C | Sim, se ativa e vinculada; MP-33C | Sim, se ativa e possuir vinculo direto ativo; MP-33C |
 | Visualizar mapas/anexos | Sim, se material existir/liberado por politica | Sim, se Propriedade vinculada e material liberado ao produtor | Sim, se Propriedade no escopo e material liberado a equipe |
 | Criar visita | Sim | Nao | Sim, se Propriedade vinculada |
 | Visualizar visitas | Sim, global | Sim, das Propriedades vinculadas quando liberadas | Sim, das Propriedades no escopo |
@@ -118,6 +124,10 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 - Usuarios inativos ou pendentes nao devem acessar areas protegidas do backend.
 - Recurso por ID fora do escopo retorna `404`; acao negada sobre recurso
   conhecido e dentro do escopo retorna `403`.
+- A coleção canônica é `/v1/propriedades`; não existe
+  `/v1/me/propriedades` duplicado.
+- A resposta da MP-33C usa `snake_case` e `tipo_acesso` calculado; não expõe
+  aliases legados.
 - Mapas/anexos, visitas e caderno devem validar permissao por Propriedade em
   cada operacao.
 - Testes automatizados devem cobrir casos positivos e negativos por perfil,
@@ -125,6 +135,11 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 - Testes devem cobrir rotas diretas/API por id, nao apenas listagens.
 - Filtros por municipio/UF usados em atribuicoes em lote devem materializar
   vinculos diretos; o filtro nao pode virar autorizacao implicita.
+
+No recorte da MP-33C, os critérios de lista/detalhe foram validados em testes
+unitários, HTTP e 36 cenários reais de integração com Testcontainers/PostGIS.
+Os critérios ligados a escrita, vínculos administrativos e outros recursos
+continuam atribuídos às fases posteriores indicadas na matriz.
 
 ## Riscos Fora Do MVP Atual
 

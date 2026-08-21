@@ -84,6 +84,8 @@ const tokenResponseSchema = {
     'refresh_token',
     'token_type',
     'expires_in',
+    'emitido_em',
+    'access_expira_em',
     'sessao',
     'usuario',
     'escopo',
@@ -93,11 +95,21 @@ const tokenResponseSchema = {
     refresh_token: tokenSchema,
     token_type: { type: 'string', const: 'Bearer' },
     expires_in: { type: 'integer', minimum: 1 },
+    emitido_em: { type: 'string', format: 'date-time' },
+    access_expira_em: { type: 'string', format: 'date-time' },
     sessao: {
       type: 'object',
       additionalProperties: false,
-      required: ['id'],
-      properties: { id: { type: 'string' } },
+      required: [
+        'id',
+        'expira_inatividade_em',
+        'expira_absolutamente_em',
+      ],
+      properties: {
+        id: { type: 'string' },
+        expira_inatividade_em: { type: 'string', format: 'date-time' },
+        expira_absolutamente_em: { type: 'string', format: 'date-time' },
+      },
     },
     usuario: userResponseSchema,
     escopo: scopeResponseSchema,
@@ -138,7 +150,13 @@ function externalTokenResponse(response: AuthTokenResponse) {
     refresh_token: response.refreshToken,
     token_type: response.tokenType,
     expires_in: response.expiresIn,
-    sessao: { id: response.sessionId },
+    emitido_em: response.issuedAt.toISOString(),
+    access_expira_em: response.accessExpiresAt.toISOString(),
+    sessao: {
+      id: response.sessionId,
+      expira_inatividade_em: response.sessionInactivityExpiresAt.toISOString(),
+      expira_absolutamente_em: response.sessionAbsoluteExpiresAt.toISOString(),
+    },
     usuario: externalUser(response.user),
     escopo: externalScope(response.scope),
   };
@@ -270,6 +288,7 @@ export const authRoutesPlugin: FastifyPluginAsync<AuthRoutesOptions> = async (
         operationId: 'postAuthLogout',
         summary: 'Revoga a sessão atual',
         tags: ['Autenticação'],
+        security: [{ bearerAuth: [] }],
         response: {
           204: { type: 'null' },
           401: errorResponseSchema,
@@ -294,6 +313,7 @@ export const authRoutesPlugin: FastifyPluginAsync<AuthRoutesOptions> = async (
         operationId: 'postAuthLogoutAll',
         summary: 'Revoga todas as sessões do usuário',
         tags: ['Autenticação'],
+        security: [{ bearerAuth: [] }],
         response: {
           204: { type: 'null' },
           401: errorResponseSchema,
@@ -318,6 +338,7 @@ export const authRoutesPlugin: FastifyPluginAsync<AuthRoutesOptions> = async (
         operationId: 'getAuthMe',
         summary: 'Retorna identidade e versão de escopo da sessão',
         tags: ['Autenticação'],
+        security: [{ bearerAuth: [] }],
         response: {
           200: {
             type: 'object',
@@ -359,6 +380,7 @@ export const authRoutesPlugin: FastifyPluginAsync<AuthRoutesOptions> = async (
         operationId: 'getAuthSessions',
         summary: 'Lista sessões do usuário',
         tags: ['Autenticação'],
+        security: [{ bearerAuth: [] }],
         response: {
           200: {
             type: 'object',
@@ -425,6 +447,7 @@ export const authRoutesPlugin: FastifyPluginAsync<AuthRoutesOptions> = async (
         operationId: 'deleteAuthSession',
         summary: 'Revoga uma sessão pertencente ao usuário',
         tags: ['Autenticação'],
+        security: [{ bearerAuth: [] }],
         params: {
           type: 'object',
           additionalProperties: false,
@@ -457,6 +480,7 @@ export const authRoutesPlugin: FastifyPluginAsync<AuthRoutesOptions> = async (
         operationId: 'postAuthPasswordChange',
         summary: 'Troca a senha, revoga outras sessões e gira os tokens atuais',
         tags: ['Autenticação'],
+        security: [{ bearerAuth: [] }],
         body: {
           type: 'object',
           additionalProperties: false,

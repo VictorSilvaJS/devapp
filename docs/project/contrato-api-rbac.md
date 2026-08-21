@@ -1,9 +1,12 @@
 # Contrato De API Para RBAC/Backend
 
+> Revisão documental: 2026-08-21
+
 Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
-2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-19, a
-parte de autenticação da MP-33B está concluída tecnicamente; as rotas de
-negócio/RBAC continuam futuras. O aplicativo permanece mockado.
+2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
+autenticação da MP-33B e a leitura autorizada de Propriedades da MP-33C estão
+concluídas tecnicamente. As demais rotas de negócio/RBAC continuam futuras. O
+Demo permanece mockado, e a composição HTTP consome somente capacidades reais.
 
 Status em 2026-06-03 (Fase 14H): a matriz tecnica de testes de contrato/API
 derivada deste contrato foi registrada em `testes-contrato-api-rbac.md`. Ela
@@ -20,9 +23,16 @@ autenticacao pertencem a MP-33B e a primeira vertical HTTP de Propriedades, a
 MP-33C. O mock permanece inalterado.
 
 Revisão em 2026-08-19: os endpoints `/v1/auth` da MP-33B foram implementados e
-validados tecnicamente. Rotas de negócio e RBAC por Propriedade continuam
-contrato futuro da MP-33C/MP-35; o aplicativo permanece no mock, e a MP-33B
-não está liberada para produção.
+validados tecnicamente. Naquele checkpoint, rotas de negócio e RBAC por
+Propriedade ainda eram contrato futuro da MP-33C/MP-35, e o aplicativo
+permanecia no mock. A MP-33B não foi liberada para produção.
+
+Revisão em 2026-08-21: a primeira vertical da MP-33C foi implementada e
+validada em `GET /v1/propriedades` e
+`GET /v1/propriedades/:id`, sem endpoint duplicado em `/v1/me/propriedades`.
+Ela é somente leitura e inclui a autorização mínima necessária dentro da
+consulta. Escritas e administração continuam na MP-35. O contrato detalhado do
+cliente está em `contrato-integracao-app-mp33c.md`.
 
 ## Decisoes De Base
 
@@ -40,7 +50,7 @@ não está liberada para produção.
   `usuario_id`, `municipio_id`, `uf_id` e ids canonicos equivalentes.
 - `propriedades.titular_id` e a unica fonte persistida da Titularidade;
   `usuario_propriedade` aceita somente `usuario_autorizado` e `colaborador`.
-- A API pode projetar `tipoAcesso=titular`, calculado pela cadeia Propriedade,
+- A API pode projetar `tipo_acesso=titular`, calculado pela cadeia Propriedade,
   Produtor Titular e Usuario principal.
 - Usuario principal inativo conserva a Titularidade cadastral, mas nao obtem
   acesso; sua desativacao nao e impedida por constraint permanente.
@@ -113,7 +123,8 @@ comandos concorrentes exigem a versao-base do recurso. Erros incluem
 - Acesso negado: `401 Unauthorized`.
 - Regra de permissao: sessao valida.
 - Compatibilidade: a MP-33B nao lista Propriedades nem expõe aliases legados;
-  a projecao de acesso operacional pertence a MP-33C/MP-35.
+  `tipo_acesso` de leitura pertence à MP-33C e capacidades administrativas, à
+  MP-35.
 
 Resposta minima:
 
@@ -213,28 +224,72 @@ da MP-33B seguem o contrato especifico em
 
 ## Propriedades
 
-### `GET /propriedades`
+### `GET /v1/propriedades`
 
 - Objetivo: listar Propriedades conforme escopo do usuario.
-- Payload minimo: filtros opcionais por status, UF, Municipio e busca.
-- Resposta de sucesso: `200 OK`.
+- Query: `busca`, `status`, `uf`, `municipio`, `limite` e `cursor`, todos
+  opcionais; limite padrão 50 e máximo 100.
+- `busca`: substring literal no nome da Propriedade, do Titular ou do
+  Município.
+- `uf`: compara `uf_id` ou `uf_sigla`, sem distinguir maiúsculas de
+  minúsculas.
+- `municipio`: compara `municipio_id` ou `municipio_nome`, sem distinguir
+  maiúsculas de minúsculas.
+- Resposta de sucesso: `200 OK` com `itens` e
+  `paginacao.proximo_cursor`.
 - Acesso negado: `401 Unauthorized`.
-- Regra de permissao: Admin lista global; Produtor lista vinculadas;
-  Colaborador lista somente as atribuidas diretamente.
-- Compatibilidade: resposta pode incluir `fazenda_id` temporario, mas contrato
-  final deve usar `propriedade_id`.
+- Regra de permissao: Admin ativo lista o escopo da organização; Produtor ativo
+  lista Propriedades ativas por Titularidade derivada ou
+  `usuario_autorizado` ativo; Colaborador ativo lista Propriedades ativas por
+  vínculo `colaborador` ativo.
+- Escopo é aplicado antes de filtros, ordenação e cursor. Filtros nunca
+  concedem acesso.
+- Ordenação estável por nome e ID; cursor é opaco e representa apenas essa
+  posição canônica. Cursor malformado falha com `400`; o contrato não declara
+  vínculo criptográfico do cursor com os filtros.
+- Compatibilidade: resposta usa somente `snake_case` e IDs canônicos, sem
+  aliases `fazenda_id`, `produtor_id`, `proprietario_id` ou `tipoAcesso`.
 
-### `GET /propriedades/:id`
+### `GET /v1/propriedades/:id`
 
 - Objetivo: abrir detalhe de Propriedade.
 - Payload minimo: `id` canonico da Propriedade.
 - Resposta de sucesso: `200 OK`.
-- Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
+- Acesso negado: `401 Unauthorized`; `404 Not Found` tanto para inexistente
+  quanto para fora do escopo.
 - Regra de permissao: acesso por perfil e escopo da Propriedade.
-- Compatibilidade: `produtor_id`/`proprietario_id` nao devem substituir
-  `titular_id` no contrato final.
+- Compatibilidade: usa `titular_id`, projeção `titular` e `tipo_acesso`
+  calculado; aliases legados não integram a resposta HTTP.
 
-### `POST /propriedades`
+Representação mínima comum à lista e ao detalhe:
+
+```json
+{
+  "id": "00000000-0000-4000-8000-000000000001",
+  "organizacao_id": "org_tche_fertilidade",
+  "titular_id": "00000000-0000-4000-8000-000000000002",
+  "titular": {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "nome": "Produtor"
+  },
+  "nome": "Propriedade Exemplo",
+  "municipio_id": "4306106",
+  "municipio_nome": "Caçapava do Sul",
+  "uf_id": "43",
+  "uf_sigla": "RS",
+  "area_total": 120.5,
+  "cultura_principal": "Soja",
+  "status": "ativa",
+  "tipo_acesso": "titular"
+}
+```
+
+`tipo_acesso` aceita `admin`, `titular`, `usuario_autorizado` ou
+`colaborador`. Métricas dependentes do conjunto completo não fazem parte deste
+contrato; não se calcula total a partir de uma página. Para Produtor que também
+possua acesso adicional à mesma Propriedade, `titular` tem precedência.
+
+### `POST /v1/propriedades`
 
 - Objetivo: criar Propriedade.
 - Payload minimo:
@@ -257,12 +312,12 @@ da MP-33B seguem o contrato especifico em
   conflitante.
 - Regra de permissao: Admin/papel autorizado; Colaborador somente se politica
   futura explicita permitir.
+- Fase: fora da MP-33C; pertence à MP-35.
 - Compatibilidade: o backend cria a Propriedade e registra somente
-  `titular_id`; nao cria vinculo `titular`. A ativacao inicial e o restante da
-  vertical administrativa pertencem a MP-33C. Nao existe cadastro rapido de
+  `titular_id`; nao cria vinculo `titular`. Nao existe cadastro rapido de
   Propriedade dentro de Novo Usuario.
 
-### `PATCH /propriedades/:id`
+### `PATCH /v1/propriedades/:id`
 
 - Objetivo: atualizar cadastro de Propriedade.
 - Payload minimo: campos parciais permitidos.
@@ -272,6 +327,7 @@ da MP-33B seguem o contrato especifico em
   conflitante.
 - Regra de permissao: Admin/papel autorizado; Colaborador apenas com permissao
   explicita por acao.
+- Fase: fora da MP-33C; pertence à MP-35.
 - Compatibilidade: preservar leitura dupla enquanto `fazenda_id` existir.
 
 ## Vinculos
@@ -315,17 +371,11 @@ da MP-33B seguem o contrato especifico em
 
 ## Permissao E Escopo
 
-### `GET /me/propriedades`
+### Sem duplicação de coleção pessoal
 
-- Objetivo: listar Propriedades acessiveis ao usuario autenticado.
-- Payload minimo: filtros opcionais.
-- Resposta de sucesso: `200 OK`.
-- Acesso negado: `401 Unauthorized`.
-- Regra de permissao: Admin global; Produtor por Titularidade derivada ou
-  vinculo adicional;
-  Colaborador por vinculo direto ativo.
-- Compatibilidade: endpoint substitui dependencia de filtro frontend como fonte
-  de seguranca.
+Não será criado `GET /v1/me/propriedades`. A coleção canônica
+`GET /v1/propriedades` já retorna exclusivamente o escopo da identidade
+autenticada e substitui qualquer filtro do frontend como fonte de segurança.
 
 ### `GET /me/permissoes`
 
@@ -363,7 +413,7 @@ Resposta minima:
 {
   "propriedade_id": "prop_1",
   "permitido": true,
-  "tipoAcesso": "titular",
+  "tipo_acesso": "titular",
   "origens": ["titularidade_derivada"],
   "acoes": ["read", "create_visita"]
 }
@@ -460,13 +510,14 @@ Resposta minima:
 - Compatibilidade: payload mockado atual pode usar `fazenda_id`; contrato final
   deve usar `propriedade_id`.
 
-## Implementação pendente
+## Implementação restante
 
 As decisões de fundação estão encerradas na baseline v1. Autenticação, refresh,
-revogação e sessão da MP-33B estão concluídos tecnicamente. Ainda é necessário:
+revogação e sessão da MP-33B estão concluídos tecnicamente. A MP-33C também
+concluiu lista/detalhe, projeção `tipo_acesso`, cursor/filtros e `404`
+indistinguível. Ainda é necessário:
 
-- implementar a vertical de Propriedades e sua projeção de acesso na MP-33C;
-- aplicar cursor, limites e envelope definidos na baseline;
-- aplicar `404` fora do escopo e `403` para ação negada dentro do escopo;
-- persistir auditoria dos vínculos ativos/inativos, sem expiração automática;
-- transformar a matriz de `testes-contrato-api-rbac.md` em testes executáveis.
+- implementar na MP-35 as escritas administrativas, auditoria de vínculos e o
+  restante do RBAC por ação;
+- transformar em testes executáveis somente as linhas das fases futuras em
+  `testes-contrato-api-rbac.md`.

@@ -5,6 +5,7 @@ ios/
 build/
 dist/
 .tmp-domain-compat/
+.tmp-mp33c/
 coverage/
 .vscode/
 .DS_Store

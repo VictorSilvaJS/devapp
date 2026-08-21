@@ -1,6 +1,6 @@
 # Núcleo Ativo do Projeto
 
-> Revisão documental: 2026-08-19
+> Revisão documental: 2026-08-21
 
 Esta pasta contém somente documentos que descrevem o projeto como ele é hoje
 ou contratos já aprovados para a próxima implementação.
@@ -34,6 +34,7 @@ Para entender o projeto sem percorrer o histórico, leia:
 - [Testes de contrato da API](testes-contrato-api-rbac.md)
 - [Política de sessão](politica-sessao.md)
 - [Contrato de autenticação e recuperação da MP-33B](contrato-autenticacao-mp33b.md)
+- [Contrato de integração do aplicativo da MP-33C](contrato-integracao-app-mp33c.md)
 - [Contrato de notificações](contrato-notificacoes.md)
 - [Ciclo de vida do Caderno](ciclo-vida-caderno.md)
 - [Estados de Visita](estados-visita.md)

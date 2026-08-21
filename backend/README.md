@@ -274,6 +274,30 @@ Access vale no máximo 15 minutos; a sessão possui limite absoluto de 30 dias e
 inatividade de 14 dias desde o refresh bem-sucedido. Replay de refresh revoga
 a família comprometida, sem janela de tolerância.
 
+As respostas que emitem ou giram tokens preservam `expires_in` e acrescentam
+os instantes efetivamente persistidos: `emitido_em`, `access_expira_em`,
+`sessao.expira_inatividade_em` e `sessao.expira_absolutamente_em`. O cliente
+não precisa reconstruir esses limites a partir de seu próprio relógio.
+
+### Propriedades somente leitura
+
+| Endpoint | Comportamento |
+|---|---|
+| `GET /v1/propriedades` | lista o escopo autorizado com cursor estável `nome` + `id`, limite padrão 50 e máximo 100 |
+| `GET /v1/propriedades/:id` | retorna o detalhe autorizado; inexistente e fora do escopo respondem o mesmo `404` |
+
+Os filtros aceitos são somente `busca`, `status`, `uf` e `municipio`. `uf`
+compara `uf_id` ou `uf_sigla`; `municipio` compara `municipio_id` ou nome; a
+busca trata `%`, `_` e `\` como caracteres literais. Filtros sempre reduzem o
+escopo calculado no SQL e nunca concedem acesso.
+
+Admin vê as Propriedades ativas e inativas da organização. Produtor vê apenas
+ativas por Titularidade derivada ou vínculo `usuario_autorizado` ativo, desde
+que Usuário e cadastro de Produtor estejam ativos. Colaborador vê apenas
+ativas por vínculo `colaborador` direto e ativo. `tipo_acesso` é calculado e
+`titular_id` continua sendo a única fonte persistida da Titularidade. As
+respostas são `no-store` e não incluem aliases legados.
+
 ### Convites e ações de conta
 
 Também sob `/v1/auth`:
@@ -427,6 +451,37 @@ npm run test:integration
 Se Docker estiver indisponível, a integração está bloqueada. Não use mock nem
 registre a suíte como aprovada. As validações independentes continuam
 obrigatórias.
+
+## Fixtures sintéticas manuais
+
+O loader de QA é um comando explícito e separado; não roda no startup, nas
+migrations ou nos testes automaticamente. Ele cria Usuários sintéticos ativos
+e PHCs Argon2id a partir de uma senha temporária obrigatória fornecida pelo
+operador; a senha não é fixa, não é impressa nem persistida em texto.
+
+| E-mail sintético | Perfil | Cenário principal |
+|---|---|---|
+| `qa.produtor.1@qa.invalid` | Produtor | Titular de Propriedade ativa e inativa |
+| `qa.produtor.2@qa.invalid` | Produtor | Titular de uma ativa e autorizado em outra |
+| `qa.colaborador@qa.invalid` | Colaborador | Vínculo direto em duas Propriedades ativas |
+
+Os três logins usam exclusivamente a senha temporária informada no comando.
+
+```powershell
+$env:NODE_ENV = 'development' # também aceita test ou qa
+$env:ALLOW_QA_FIXTURES = 'true'
+$env:QA_FIXTURES_DATABASE_URL = 'postgresql://usuario:senha@127.0.0.1:5432/tche_agro_qa'
+$env:QA_FIXTURES_PASSWORD = '<senha temporária exclusiva de QA>'
+npm run fixtures:qa
+```
+
+As três travas são simultâneas: ambiente permitido, flag exatamente `true` e
+banco terminado em `_test` ou `_qa`. `production` é recusado sempre. O comando
+exige `QA_FIXTURES_DATABASE_URL`, nunca usa `DATABASE_URL` como fallback, é
+idempotente para seus IDs reservados e contém somente dados sintéticos. Se um
+ID reservado já existir com campos divergentes, ou se a senha não validar os
+PHCs existentes, toda a execução é revertida sem sobrescrever esse estado.
+Remova `QA_FIXTURES_PASSWORD` do ambiente após a execução.
 
 ## Build e execução produtiva
 

@@ -33,6 +33,15 @@ jobs:
       - name: Contratos de dominio do aplicativo
         run: npm run test:domain-compat
 
+      - name: Separacao real dos bundles HTTP e Demo
+        run: npm run test:bundle:mp33c
+
+      - name: Separacao do grafo nativo Android HTTP e Demo
+        run: npm run test:native-graph:mp33c
+
+      - name: Prebuild nativo HTTP isolado
+        run: npm run test:native-config:mp33c
+
   backend:
     name: Backend sem Docker (Node.js 24)
     runs-on: ubuntu-latest
@@ -64,7 +73,7 @@ jobs:
       - name: Testes unitarios (blocklist, fila Argon2id, servicos e worker)
         run: npm run test:unit
 
-      - name: Testes HTTP (auth, 429 de capacidade, acoes de conta e OpenAPI)
+      - name: Testes HTTP (auth, Propriedades, capacidade, conta e OpenAPI)
         run: npm run test:http
 
       - name: Build produtivo
@@ -142,7 +151,7 @@ jobs:
       - name: Verificar manifesto antes da integracao
         run: npm run migrations:verify
 
-      - name: Executar migrations, repositorios, papeis e guards com Testcontainers
+      - name: Executar migrations, repositorios, escopo e guards com Testcontainers
         run: npm run test:integration
 
       - name: Encerrar Mailpit do smoke

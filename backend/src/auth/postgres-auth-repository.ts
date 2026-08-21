@@ -448,7 +448,11 @@ export class PostgresAuthRepository implements AuthRepository {
         return { status: 'denied' as const };
       }
 
-      const session = await query<{ id: string }>(
+      const session = await query<{
+        id: string;
+        expira_inatividade_em: Date;
+        expira_absolutamente_em: Date;
+      }>(
         client,
         `
           INSERT INTO public.sessoes_autenticacao (
@@ -462,7 +466,7 @@ export class PostgresAuthRepository implements AuthRepository {
             ),
             pg_catalog.clock_timestamp() + $6::integer * interval '1 second'
           )
-          RETURNING id
+          RETURNING id, expira_inatividade_em, expira_absolutamente_em
         `,
         [
           this.#organizationId,
@@ -473,10 +477,13 @@ export class PostgresAuthRepository implements AuthRepository {
           absoluteTtl,
         ],
       );
-      const sessionId = session.rows[0]?.id;
-      if (sessionId === undefined) throw new Error('Session insert failed.');
+      const sessionRow = session.rows[0];
+      const sessionId = sessionRow?.id;
+      if (sessionRow === undefined || sessionId === undefined) {
+        throw new Error('Session insert failed.');
+      }
 
-      await query(
+      const access = await query<{ emitido_em: Date; expira_em: Date }>(
         client,
         `
           INSERT INTO public.tokens_acesso (
@@ -485,6 +492,7 @@ export class PostgresAuthRepository implements AuthRepository {
             $1, $2, $3, $4,
             pg_catalog.clock_timestamp() + $5::integer * interval '1 second'
           )
+          RETURNING emitido_em, expira_em
         `,
         [
           this.#organizationId,
@@ -517,7 +525,16 @@ export class PostgresAuthRepository implements AuthRepository {
         resourceId: sessionId,
         requestId: input.requestId,
       });
-      return { status: 'created' as const, sessionId };
+      const accessRow = access.rows[0];
+      if (accessRow === undefined) throw new Error('Access token insert failed.');
+      return {
+        status: 'created' as const,
+        sessionId,
+        issuedAt: accessRow.emitido_em,
+        accessExpiresAt: accessRow.expira_em,
+        inactivityExpiresAt: sessionRow.expira_inatividade_em,
+        absoluteExpiresAt: sessionRow.expira_absolutamente_em,
+      };
     });
   }
 
@@ -624,7 +641,10 @@ export class PostgresAuthRepository implements AuthRepository {
         `,
         [row.organizacao_id, row.refresh_id],
       );
-      await query(
+      const sessionWindow = await query<{
+        expira_inatividade_em: Date;
+        expira_absolutamente_em: Date;
+      }>(
         client,
         `
           UPDATE public.sessoes_autenticacao
@@ -634,6 +654,7 @@ export class PostgresAuthRepository implements AuthRepository {
                 expira_absolutamente_em
               )
           WHERE organizacao_id = $1 AND id = $2 AND status = 'ativa'
+          RETURNING expira_inatividade_em, expira_absolutamente_em
         `,
         [row.organizacao_id, row.sessao_id, inactivityTtl],
       );
@@ -653,7 +674,7 @@ export class PostgresAuthRepository implements AuthRepository {
           row.expira_absolutamente_em,
         ],
       );
-      await query(
+      const access = await query<{ emitido_em: Date; expira_em: Date }>(
         client,
         `
           INSERT INTO public.tokens_acesso (
@@ -665,6 +686,7 @@ export class PostgresAuthRepository implements AuthRepository {
               $6::timestamptz
             )
           )
+          RETURNING emitido_em, expira_em
         `,
         [
           row.organizacao_id,
@@ -686,7 +708,19 @@ export class PostgresAuthRepository implements AuthRepository {
         resourceId: row.sessao_id,
         requestId: input.requestId,
       });
-      return { status: 'rotated' as const, principal: mapPrincipal(row) };
+      const sessionWindowRow = sessionWindow.rows[0];
+      const accessRow = access.rows[0];
+      if (sessionWindowRow === undefined || accessRow === undefined) {
+        throw new Error('Rotated token window unavailable.');
+      }
+      return {
+        status: 'rotated' as const,
+        principal: mapPrincipal(row),
+        issuedAt: accessRow.emitido_em,
+        accessExpiresAt: accessRow.expira_em,
+        inactivityExpiresAt: sessionWindowRow.expira_inatividade_em,
+        absoluteExpiresAt: sessionWindowRow.expira_absolutamente_em,
+      };
     });
   }
 
@@ -1005,7 +1039,10 @@ export class PostgresAuthRepository implements AuthRepository {
         `,
         [this.#organizationId, row.refresh_id],
       );
-      await query(
+      const sessionWindow = await query<{
+        expira_inatividade_em: Date;
+        expira_absolutamente_em: Date;
+      }>(
         client,
         `
           UPDATE public.sessoes_autenticacao
@@ -1016,6 +1053,7 @@ export class PostgresAuthRepository implements AuthRepository {
                 expira_absolutamente_em
               )
           WHERE organizacao_id = $1 AND id = $2 AND status = 'ativa'
+          RETURNING expira_inatividade_em, expira_absolutamente_em
         `,
         [
           this.#organizationId,
@@ -1040,7 +1078,7 @@ export class PostgresAuthRepository implements AuthRepository {
           row.expira_absolutamente_em,
         ],
       );
-      await query(
+      const access = await query<{ emitido_em: Date; expira_em: Date }>(
         client,
         `
           INSERT INTO public.tokens_acesso (
@@ -1052,6 +1090,7 @@ export class PostgresAuthRepository implements AuthRepository {
               $6::timestamptz
             )
           )
+          RETURNING emitido_em, expira_em
         `,
         [
           this.#organizationId,
@@ -1074,12 +1113,21 @@ export class PostgresAuthRepository implements AuthRepository {
         sessionId: input.currentSessionId,
         metadata: { sessao_atual_preservada: true, tokens_girados: true },
       });
+      const sessionWindowRow = sessionWindow.rows[0];
+      const accessRow = access.rows[0];
+      if (sessionWindowRow === undefined || accessRow === undefined) {
+        throw new Error('Password-change token window unavailable.');
+      }
       return {
         status: 'changed' as const,
         principal: mapPrincipal({
           ...row,
           versao_autorizacao: authorizationVersion,
         }),
+        issuedAt: accessRow.emitido_em,
+        accessExpiresAt: accessRow.expira_em,
+        inactivityExpiresAt: sessionWindowRow.expira_inatividade_em,
+        absoluteExpiresAt: sessionWindowRow.expira_absolutamente_em,
       };
     });
   }

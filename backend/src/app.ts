@@ -17,6 +17,10 @@ import type { AuthenticationService } from './auth/service.js';
 import { checkDatabaseReadiness } from './database/readiness.js';
 import type { DatabasePool } from './database/pool.js';
 import { createAppLogger } from './observability/logger.js';
+import {
+  propertyRoutesPlugin,
+  type PropertyRoutesOptions,
+} from './properties/routes.js';
 
 const healthResponseSchema = {
   type: 'object',
@@ -57,6 +61,7 @@ export interface BuildAppOptions {
     AccountActionRoutesOptions,
     'authenticationService'
   >;
+  readonly propertyRoutes?: PropertyRoutesOptions;
 }
 
 function generatedRequestId(): string {
@@ -118,6 +123,15 @@ export async function buildApp(
         description: 'Contrato HTTP da fundação do backend Tchê Agro.',
         version: '1.0.0',
       },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'opaque',
+          },
+        },
+      },
       tags: [
         {
           name: 'Operação',
@@ -130,6 +144,10 @@ export async function buildApp(
         {
           name: 'Ações de conta',
           description: 'Convites, e-mails verificados e recuperações controladas.',
+        },
+        {
+          name: 'Propriedades',
+          description: 'Consulta de Propriedades dentro do escopo autorizado.',
         },
       ],
     },
@@ -151,6 +169,16 @@ export async function buildApp(
     throw new TypeError(
       'Account action routes require an authentication service.',
     );
+  }
+
+  if (options.propertyRoutes !== undefined) {
+    if (options.authenticationService === undefined) {
+      throw new TypeError('Property routes require an authentication service.');
+    }
+    await app.register(propertyRoutesPlugin, {
+      prefix: '/v1/propriedades',
+      ...options.propertyRoutes,
+    });
   }
 
   app.addHook('onRequest', async (request, reply) => {

@@ -1,20 +1,23 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-08-19: `MP_33B_CONCLUIDA_TECNICAMENTE`. Este documento
-define a matriz de testes baseada em `contrato-api-rbac.md`, nas decisoes 31 a
-42 e em `baseline-backend-v1-2026-08.md`. Ele nao implementa backend.
+Status revisado em 2026-08-21: `LEITURA_MP33C_AUTOMATIZADA_E_VALIDADA`. Este
+documento define a matriz baseada em `contrato-api-rbac.md`, nas decisões 31 a
+48 e em `baseline-backend-v1-2026-08.md`, distinguindo o corte já executável das
+linhas que continuam planejadas.
 
 ## Escopo Da Matriz
 
 Esta matriz orienta a API/backend. Os cenários de autenticação da MP-33B
-possuem automação validada; os cenários de recursos e RBAC por Propriedade
-continuam documentação para MP-33C/MP-35.
+possuem automação validada. Os cenários de leitura de Propriedades viraram
+testes executáveis e foram validados na MP-33C; escritas administrativas e o
+restante do RBAC por ação continuam documentação para a MP-35.
 
 Separacao obrigatoria:
 
 - Mock v2: deve usar vinculos diretos `usuario_propriedade` como escopo do
   colaborador.
-- Backend de negócio futuro: deve validar permissao por acao e por Propriedade.
+- Backend: valida permissão dentro da consulta de Propriedades na MP-33C; cada
+  vertical futura também deve validar por ação e Propriedade.
 - Backend: Titularidade deriva exclusivamente de `propriedades.titular_id`;
   `usuario_propriedade` persiste somente `usuario_autorizado` e `colaborador`.
 - Municipio e UF podem filtrar listagens e atribuicoes administrativas em
@@ -42,9 +45,10 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 
 | Tipo | Destino |
 |---|---|
-| Automatizado backend/API | Deve virar teste de contrato, dominio ou integracao quando houver backend |
+| Automatizado MP-33B/MP-33C | Teste executável de contrato, domínio, HTTP ou integração |
+| Planejado backend/API | Deve virar teste executável na fase indicada |
 | Smoke/manual | Pode virar checklist de documentacao ou validacao manual de fluxo |
-| Fora do MVP mockado | Nao deve ser executado como exigencia funcional no app atual |
+| Fora do Demo mockado | Deve ser executado somente contra a composição HTTP/backend aplicável |
 
 ## Autenticacao E Sessao
 
@@ -73,26 +77,34 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-USR-10 | Colaborador atualiza usuario sem permissao | Colaborador | Sem papel administrativo | `PATCH /usuarios/:id` | Campos parciais | `403 Forbidden` | Colaborador nao edita usuarios por padrao | Automatizado backend/API |
 | API-RBAC-USR-11 | Admin altera status | Admin | Usuario existe e regra permite | `PATCH /usuarios/:id/status` | `{ "status": "inativo" }` | `200 OK` | Status e controlado por admin | Automatizado backend/API |
 | API-RBAC-USR-12 | Inativar usuario principal do Titular | Admin | Usuario principal ativo e Propriedade titularizada | `PATCH /usuarios/:id/status` | `{ "status": "inativo" }` | `200 OK` | Desativacao da conta nao desfaz nem invalida a Titularidade cadastral | Automatizado backend/API |
-| API-RBAC-USR-13 | Usuario principal inativo tenta acessar como Titular | Produtor inativo | `titular_id` permanece valido | `GET /me/propriedades` | Nao se aplica | `401 Unauthorized` | Usuario inativo nao obtem acesso apesar da Titularidade cadastral | Automatizado backend/API |
+| API-RBAC-USR-13 | Usuario principal inativo tenta acessar como Titular | Produtor inativo | `titular_id` permanece valido | `GET /v1/propriedades` | Nao se aplica | `401 Unauthorized` | Usuario inativo nao obtem acesso apesar da Titularidade cadastral | Automatizado na MP-33C |
 
 ## Propriedades
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
-| API-RBAC-PROP-01 | Admin lista Propriedades | Admin | Admin ativo | `GET /propriedades` | Filtros opcionais | `200 OK` | Admin tem acesso global | Automatizado backend/API |
-| API-RBAC-PROP-02 | Produtor lista vinculadas | Produtor | Titularidade derivada ou `usuario_propriedade` adicional ativo | `GET /propriedades` | Filtros opcionais | `200 OK` | Produtor acessa Propriedades vinculadas | Automatizado backend/API |
-| API-RBAC-PROP-03 | Colaborador lista vinculadas diretamente | Colaborador | `usuario_propriedade` ativo | `GET /propriedades` | Filtros opcionais | `200 OK` | Colaborador acessa somente Propriedades vinculadas | Automatizado backend/API |
-| API-RBAC-PROP-04 | Colaborador filtra vinculadas por municipio/UF | Colaborador | Vinculos diretos ativos em mais de uma localidade | `GET /propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao filtra o escopo ja autorizado | Automatizado backend/API |
-| API-RBAC-PROP-05 | Colaborador abre vinculada em outra localidade | Colaborador | `usuario_propriedade` ativo | `GET /propriedades/:id` | Nao se aplica | `200 OK` | Vinculo direto independe de municipio ou UF | Automatizado backend/API |
-| API-RBAC-PROP-06 | Produtor tenta abrir Propriedade de outro titular | Produtor | Sem vinculo ativo | `GET /propriedades/:id` | Nao se aplica | `404 Not Found` | Produtor nao acessa outro titular nem confirma sua existencia | Automatizado backend/API |
-| API-RBAC-PROP-07 | Colaborador sem vinculo tenta abrir Propriedade | Colaborador | Sem `usuario_propriedade` ativo | `GET /propriedades/:id` | Nao se aplica | `404 Not Found` | Vinculo direto ativo e obrigatorio | Automatizado backend/API |
-| API-RBAC-PROP-08 | Recurso inexistente | Admin | Id inexistente | `GET /propriedades/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna 404 | Automatizado backend/API |
-| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "uf_id": "...", "uf_sigla": "RS", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Admin grava a Titularidade somente em `titular_id` | Automatizado backend/API |
-| API-RBAC-PROP-10 | Criar Propriedade com payload invalido | Admin | Campo obrigatorio ausente | `POST /propriedades` | `{ "nome": "..." }` | `400 Bad Request` | Payload invalido e recusado | Automatizado backend/API |
-| API-RBAC-PROP-11 | Conflito de Titularidade | Admin | Regra estrutural de Titularidade conflita | `POST /propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 sem depender de vinculo `titular` | Automatizado backend/API |
-| API-RBAC-PROP-12 | Admin edita Propriedade | Admin | Propriedade existe | `PATCH /propriedades/:id` | Campos parciais | `200 OK` | Admin edita cadastro | Automatizado backend/API |
-| API-RBAC-PROP-13 | Colaborador edita cadastro sem permissao | Colaborador | Escopo valido, sem permissao de acao | `PATCH /propriedades/:id` | Campos parciais | `403 Forbidden` | Escopo nao implica editar cadastro | Automatizado backend/API |
-| API-RBAC-PROP-14 | API apresenta acesso do Titular | Produtor | Usuario principal ativo do Produtor indicado por `titular_id` | `GET /propriedades/:id/permissao` | Nao se aplica | `200 OK` | `tipoAcesso=titular` e calculado e nao possui linha duplicada em `usuario_propriedade` | Automatizado backend/API |
+| API-RBAC-PROP-01 | Admin lista Propriedades | Admin | Admin ativo | `GET /v1/propriedades` | Filtros opcionais | `200 OK` | Admin tem acesso global | Automatizado na MP-33C |
+| API-RBAC-PROP-02 | Produtor lista vinculadas | Produtor | Titularidade derivada ou `usuario_propriedade` adicional ativo | `GET /v1/propriedades` | Filtros opcionais | `200 OK` | Produtor acessa somente Propriedades ativas vinculadas | Automatizado na MP-33C |
+| API-RBAC-PROP-03 | Colaborador lista vinculadas diretamente | Colaborador | `usuario_propriedade` ativo | `GET /v1/propriedades` | Filtros opcionais | `200 OK` | Colaborador acessa somente Propriedades ativas vinculadas | Automatizado na MP-33C |
+| API-RBAC-PROP-04 | Colaborador filtra vinculadas por municipio/UF | Colaborador | Vinculos diretos ativos em mais de uma localidade | `GET /v1/propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao filtra o escopo ja autorizado | Automatizado na MP-33C |
+| API-RBAC-PROP-05 | Colaborador abre vinculada em outra localidade | Colaborador | `usuario_propriedade` ativo | `GET /v1/propriedades/:id` | Nao se aplica | `200 OK` | Vinculo direto independe de municipio ou UF | Automatizado na MP-33C |
+| API-RBAC-PROP-06 | Produtor tenta abrir Propriedade de outro titular | Produtor | Sem vinculo ativo | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Produtor nao acessa outro titular nem confirma sua existencia | Automatizado na MP-33C |
+| API-RBAC-PROP-07 | Colaborador sem vinculo tenta abrir Propriedade | Colaborador | Sem `usuario_propriedade` ativo | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Vinculo direto ativo e obrigatorio | Automatizado na MP-33C |
+| API-RBAC-PROP-08 | Recurso inexistente | Admin | Id inexistente | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna o mesmo 404 do fora de escopo | Automatizado na MP-33C |
+| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /v1/propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "uf_id": "...", "uf_sigla": "RS", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Admin grava a Titularidade somente em `titular_id` | MP-35 |
+| API-RBAC-PROP-10 | Criar Propriedade com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/propriedades` | `{ "nome": "..." }` | `400 Bad Request` | Payload invalido e recusado | MP-35 |
+| API-RBAC-PROP-11 | Conflito de Titularidade | Admin | Regra estrutural de Titularidade conflita | `POST /v1/propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 sem depender de vinculo `titular` | MP-35 |
+| API-RBAC-PROP-12 | Admin edita Propriedade | Admin | Propriedade existe | `PATCH /v1/propriedades/:id` | Campos parciais | `200 OK` | Admin edita cadastro | MP-35 |
+| API-RBAC-PROP-13 | Colaborador edita cadastro sem permissao | Colaborador | Escopo valido, sem permissao de acao | `PATCH /v1/propriedades/:id` | Campos parciais | `403 Forbidden` | Escopo nao implica editar cadastro | MP-35 |
+| API-RBAC-PROP-14 | API apresenta acesso do Titular | Produtor | Usuario principal ativo do Produtor indicado por `titular_id` | `GET /v1/propriedades/:id` | Nao se aplica | `200 OK` | `tipo_acesso=titular` e calculado e nao possui linha duplicada em `usuario_propriedade` | Automatizado na MP-33C |
+| API-RBAC-PROP-15 | Busca literal no escopo | Perfil autenticado | Nomes distintos de Propriedade, Titular e Município | `GET /v1/propriedades` | `busca` | `200 OK` | Substring literal busca nos três campos sem ampliar escopo | Automatizado na MP-33C |
+| API-RBAC-PROP-16 | Filtro UF por ID ou sigla | Perfil autenticado | Propriedades autorizadas em UFs diferentes | `GET /v1/propriedades` | `uf=43` e `uf=rs` | `200 OK` | `uf_id` e `uf_sigla` são aceitos, sigla sem diferença de caixa | Automatizado na MP-33C |
+| API-RBAC-PROP-17 | Filtro Município por ID ou nome | Perfil autenticado | Propriedades autorizadas em Municípios diferentes | `GET /v1/propriedades` | `municipio=4306106` e nome | `200 OK` | ID ou nome filtram sem diferença de caixa e sem conceder acesso | Automatizado na MP-33C |
+| API-RBAC-PROP-18 | Cursor estável sem duplicação | Perfil autenticado | Mais registros que o limite e nomes repetidos | `GET /v1/propriedades` | `limite`, depois `cursor` | `200 OK` | Ordenação nome/ID não perde nem repete item | Automatizado na MP-33C |
+| API-RBAC-PROP-19 | Contrato sem alias legado | Perfil autenticado | Lista ou detalhe autorizado | `GET /v1/propriedades` | Nao se aplica | `200 OK` | JSON usa `snake_case`, `tipo_acesso` e nenhum alias legado | Automatizado na MP-33C |
+| API-RBAC-PROP-20 | Endpoint pessoal duplicado ausente | Perfil autenticado | Sessao valida | `GET /v1/me/propriedades` | Nao se aplica | `404 Not Found` | Coleção canônica é somente `/v1/propriedades` | Automatizado na MP-33C |
+| API-RBAC-PROP-21 | Colaborador com vínculo inativo | Colaborador | Somente vínculo inativo | `GET /v1/propriedades` | Nao se aplica | `200 OK` vazio | Vínculo inativo não concede escopo | Automatizado na MP-33C |
+| API-RBAC-PROP-22 | Produtor/Colaborador tenta listar Propriedade inativa | Produtor ou Colaborador | Escopo estrutural existente, Propriedade inativa | `GET /v1/propriedades` | `status=inativa` | `200 OK` vazio | Perfis não administrativos recebem somente Propriedades ativas | Automatizado na MP-33C |
 
 ## Vinculos
 
@@ -113,8 +125,8 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
-| API-RBAC-SCOPE-01 | Usuario lista seu escopo | Colaborador | Sessao valida | `GET /me/propriedades` | Filtros opcionais | `200 OK` | Escopo calculado no backend | Automatizado backend/API |
-| API-RBAC-SCOPE-02 | Nao autenticado consulta escopo | Nao autenticado | Sem sessao | `GET /me/propriedades` | Filtros opcionais | `401 Unauthorized` | Autenticacao obrigatoria | Automatizado backend/API |
+| API-RBAC-SCOPE-01 | Usuario lista seu escopo pela coleção canônica | Colaborador | Sessao valida | `GET /v1/propriedades` | Filtros opcionais | `200 OK` | Escopo calculado no backend | Automatizado na MP-33C |
+| API-RBAC-SCOPE-02 | Nao autenticado consulta escopo | Nao autenticado | Sem sessao | `GET /v1/propriedades` | Filtros opcionais | `401 Unauthorized` | Autenticacao obrigatoria | Automatizado na MP-33C |
 | API-RBAC-SCOPE-03 | Usuario recebe permissoes | Produtor | Sessao valida | `GET /me/permissoes` | Nao se aplica | `200 OK` | Usuario autenticado recebe capacidades | Automatizado backend/API |
 | API-RBAC-SCOPE-04 | Permissao por Propriedade permitida | Colaborador | Vinculo direto ativo | `GET /propriedades/:id/permissao` | Nao se aplica | `200 OK` | Backend valida por Propriedade | Automatizado backend/API |
 | API-RBAC-SCOPE-05 | Permissao por Propriedade negada | Colaborador | Sem vinculo direto ativo | `GET /propriedades/:id/permissao` | Nao se aplica | `404 Not Found` | Nao revelar recurso fora do escopo | Automatizado backend/API |
@@ -159,9 +171,9 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-CAD-08 | Produtor cria caderno na propria Propriedade | Produtor | Propriedade vinculada e politica permite criacao | `POST /caderno` | Payload minimo valido | `201 Created` | Produtor cria apenas quando politica permitir | Automatizado backend/API |
 | API-RBAC-CAD-09 | Criar caderno com payload invalido | Admin | Campo obrigatorio ausente | `POST /caderno` | `{ "observacoes": "..." }` | `400 Bad Request` | Payload invalido e recusado | Automatizado backend/API |
 
-## Testes Que Devem Virar Automatizados
+## Testes Que Ainda Devem Virar Automatizados
 
-- Todos os casos marcados como `Automatizado backend/API`.
+- Todos os casos futuros ainda marcados como `Automatizado backend/API`.
 - Casos de acesso permitido e negado para cada endpoint protegido.
 - Casos de `401`, `403`, `404`, `400` e `409`.
 - Casos de acesso direto ativo, vinculo inativo e ausencia de vinculo para o
@@ -182,7 +194,7 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
   como fonte unica de seguranca.
 - Conferir mensagens visuais de acesso negado quando o backend real existir.
 
-## Testes Que Nao Pertencem Ao MVP Mockado
+## Testes Que Não Pertencem Ao Demo Mockado
 
 - Qualquer teste que exija `POST /auth/login` real.
 - Qualquer teste que dependa de token, sessao real, refresh ou revogacao.
@@ -194,12 +206,22 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 
 ## Riscos Fora Do MVP
 
-- API futura divergir do contrato e aceitar operacoes apenas porque o frontend
-  esconde ou mostra botoes.
+- Verticais futuras divergirem do contrato e aceitarem operacoes apenas porque
+  o frontend esconde ou mostra botoes.
 - Backend usar municipio/UF como permissao implicita, ampliando indevidamente
   o acesso.
-- Backend nao cobrir rotas diretas por id e vazar Propriedades fora do escopo.
+- Novos recursos não cobrirem rotas diretas por id e vazarem dados fora do
+  escopo; lista/detalhe de Propriedades já possuem essa cobertura na MP-33C.
 - Migracao de `fazenda_id`, `produtor_id` e `proprietario_id` quebrar acesso do
   Produtor.
 - Usuarios inativos/pendentes manterem sessoes validas.
 - `403` e `404` serem usados sem estrategia, revelando recursos fora do escopo.
+
+## Evidência Executada Da MP-33C
+
+Com Docker disponível, a suíte real do backend passou em 36 cenários com
+Testcontainers/PostgreSQL/PostGIS. Os testes HTTP e de integração cobrem lista,
+detalhe, autenticação obrigatória, perfis ativos, Titularidade derivada,
+vínculos ativos/inativos, Propriedade inativa, filtros, busca literal, cursor,
+contrato `snake_case`, endpoint duplicado ausente e `404` indistinguível. Essa
+evidência não antecipa as linhas atribuídas à MP-35 ou às verticais posteriores.
