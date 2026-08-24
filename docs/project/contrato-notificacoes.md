@@ -6,8 +6,9 @@
 >
 > Revisão técnica: 2026-08-24
 >
-> Estado da MP-34: `CONCLUIDA_TECNICAMENTE_NO_WORKING_TREE`; sem commit, pull
-> request, integração, tag, deploy, release ou publicação
+> Estado da MP-34: `CONCLUIDA_TECNICAMENTE_E_INTEGRADA`; integração direta na
+> branch `backend` pelo commit `e787707`, sem pull request e com CI pós-push
+> aprovada
 >
 > Origem: `MP-03` / `QA-P0-01`
 
@@ -19,8 +20,8 @@ navegacao segura. A MP-34 implementou tecnicamente esse corte no backend e na
 composição HTTP.
 
 O corte não adiciona push, persistência local nem navegação ao mock atual. A
-implementação permanece somente no working tree e ainda não foi integrada nem
-liberada em ambiente produtivo.
+implementação foi integrada diretamente à branch `backend`, mas não foi
+implantada nem liberada em ambiente produtivo.
 
 ## Corte Mínimo Consolidado Da MP-34
 
@@ -516,9 +517,10 @@ título, resumo ou `dados_apresentacao`.
     separadamente e permanece `NÃO EXECUTADO`; ele não pode ser marcado como
     aprovado por inferência.
 
-## Implementação Técnica Concluída No Working Tree
+## Implementação Técnica Concluída E Integrada
 
-A execução autorizada entregou, sem criar commit ou integração:
+A execução autorizada entregou e a integração direta no commit `e787707`
+preservou:
 
 1. os três templates iniciais aprovados e seu catálogo fechado;
 2. a migration append-only `000005-notificacoes.sql`, constraints, índices,
@@ -531,8 +533,8 @@ A execução autorizada entregou, sem criar commit ou integração:
    contador e allowlist limitada a `conta`;
 6. cobertura de concorrência, deduplicação, idempotência, RBAC negativo,
    retenção, conteúdo seguro, troca de identidade e separação Demo/HTTP;
-7. documentação operacional e smoke atualizados sem commit, pull request,
-   integração, tag, deploy, release ou publicação.
+7. documentação operacional e smoke do corte, sem tag, deploy, release ou
+   publicação.
 
 Os arquivos efetivos incluem `backend/migrations/000005-notificacoes.sql`, o
 novo módulo `backend/src/notifications/`, o wiring do backend e dos produtores
@@ -568,7 +570,7 @@ recursos operacionais continua contrato futuro e não autoriza implementação.
 Backend, banco, autenticação, organização confiável e sessão da MP-33B já estão
 disponíveis; a composição HTTP e a autorização de Propriedades da MP-33C também.
 Persistência, API, allowlist e guards da MP-34 foram implementados e testados no
-working tree. O fechamento produtivo ainda depende de:
+commit integrado `e787707`. O fechamento produtivo ainda depende de:
 
 - operação agendada da purga, observabilidade, backup/restauração e gestão de
   segredos;
@@ -576,5 +578,6 @@ working tree. O fechamento produtivo ainda depende de:
   release ainda registrados no núcleo ativo.
 
 Integração push, cache offline e MP-35 ficam fora. `QA-P0-01` está resolvida
-tecnicamente pela MP-34, mas não existe commit, pull request, integração, tag,
-deploy, release ou publicação dessa implementação.
+tecnicamente pela MP-34, integrada diretamente à branch `backend` no commit
+`e787707`, sem pull request. Os três jobs da CI pós-push foram aprovados; não
+houve tag, deploy, release ou publicação dessa implementação.

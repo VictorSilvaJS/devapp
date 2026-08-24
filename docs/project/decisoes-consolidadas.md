@@ -342,9 +342,10 @@ jurídica/de privacidade externa deve validar essa premissa junto com os 90 dias
 se ela exigir a capacidade, a mudança será futura, explícita e versionada antes
 da produção.
 
-A implementação dessas decisões foi concluída tecnicamente somente no working
-tree. Não existe commit, pull request, integração, tag, deploy, release ou
-publicação da MP-34.
+A implementação dessas decisões foi concluída tecnicamente e integrada
+diretamente à branch `backend` no commit `e787707`, sem pull request e com os
+três jobs da CI pós-push aprovados. Não houve tag, deploy, release ou publicação
+da MP-34.
 
 ## Contratos que detalham as decisões
 

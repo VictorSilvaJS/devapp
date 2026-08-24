@@ -11,8 +11,9 @@ nos testes; o aplicativo HTTP não possui fallback para ele.
 
 A MP-34 acrescenta notificações in-app persistidas da própria conta, cinco
 fluxos emissores transacionais, API, composição HTTP e purga one-shot. Ela está
-concluída tecnicamente somente no working tree: não existe commit, pull request,
-integração, tag, deploy, release ou publicação. Os portões produtivos continuam
+concluída tecnicamente e integrada diretamente à branch `backend` no commit
+`e787707`, sem pull request e com os três jobs da CI pós-push aprovados. Não
+houve tag, deploy, release ou publicação. Os portões produtivos continuam
 abertos, e o Android físico específico da fase permanece `NÃO EXECUTADO`.
 
 ## Requisitos
@@ -584,5 +585,6 @@ MP-34 permanece `NÃO EXECUTADO`.
 Break-glass permanece uma capacidade não implementada; Ed25519 ou serviço
 externo equivalente com dois aprovadores é pré-requisito para iniciá-la.
 
-A MP-34 está concluída tecnicamente somente no working tree. Não existe commit,
-pull request, integração, tag, deploy, release ou publicação dessa fase.
+A MP-34 está concluída tecnicamente e integrada diretamente à branch `backend`
+no commit `e787707`, sem pull request e com os três jobs da CI pós-push
+aprovados. Não houve tag, deploy, release ou publicação dessa fase.

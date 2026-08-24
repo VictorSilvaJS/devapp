@@ -268,7 +268,9 @@ publicação.
 | MP34-02 | Node.js 24: manifesto, typecheck, 138 testes unitários/contratos de migration, 26 HTTP, build e smoke ESM | PASSOU |
 | MP34-03 | Testcontainer: 41 cenários reais — 15 migrations, 8 autenticação, 7 ações de conta, 9 Propriedades/QA e 2 notificações | PASSOU |
 | MP34-04 | Grafo HTTP sem mock legado, `src/api`, `AsyncStorage`, push ou token de dispositivo; Demo preservado | PASSOU |
-| MP34-05 | Android físico específico da vertical | NÃO EXECUTADO |
+| MP34-05 | Integração direta na branch `backend` pelo commit `e787707` e três jobs da CI pós-push | PASSOU |
+| MP34-06 | Node.js 24: cinco migrations e `000005` append-only comparadas com o commit-base anterior `3dd8f42` | PASSOU |
+| MP34-07 | Android físico específico da vertical | NÃO EXECUTADO |
 
 A rodada valida tecnicamente migration `000005`, cinco fluxos emissores
 transacionais para três tipos de evento, API self-only, idempotência, conteúdo
@@ -276,8 +278,9 @@ seguro, retenção exata de 90 dias, purga one-shot e composição HTTP. Ela nã
 comprova operação produtiva da purga, revisão jurídica/de privacidade,
 observabilidade, backup/restauração ou release.
 
-A MP-34 permanece somente no working tree. Não houve commit, pull request,
-integração, tag, deploy, release ou publicação.
+A MP-34 foi integrada diretamente à branch `backend` no commit `e787707`, sem
+pull request e com CI pós-push aprovada. Não houve tag, deploy, release ou
+publicação.
 
 ### Comandos gerais
 

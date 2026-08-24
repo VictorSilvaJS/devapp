@@ -20,9 +20,10 @@ integração. A MP-33C foi integrada à branch `backend` pelo PR #2 no commit
 `cc78a9f`, e a CI pós-merge foi aprovada.
 
 O mock permanece somente no Demo e nos testes, fora do aplicativo HTTP, que não
-possui fallback para mock. A MP-34 está concluída tecnicamente somente no
-working tree, sem commit, pull request ou integração. Não houve tag, deploy,
-release ou publicação. Responsável/agendamento/alertas da purga, credencial e
+possui fallback para mock. A MP-34 está concluída tecnicamente e integrada
+diretamente à branch `backend` no commit `e787707`, sem pull request; os três
+jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
+publicação. Responsável/agendamento/alertas da purga, credencial e
 segredo de manutenção, validação jurídica/de privacidade dos 90 dias,
 observabilidade, backup/restauração, MFA de Administrador, domínio e associação
 de links, SMTP/segredos, assinatura e validação em ambiente real continuam

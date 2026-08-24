@@ -26,9 +26,10 @@ release ou loja: não existe ambiente produtivo implantado, domínio oficial
 associado, assinatura oficial nem validação final em dispositivo/loja.
 
 A MP-34 acrescenta notificações in-app reais, persistidas e isoladas para fatos
-da própria conta. Ela está concluída tecnicamente somente no working tree: não
-existe commit, pull request, integração, tag, deploy, release ou publicação da
-fase. O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
+da própria conta. Ela está concluída tecnicamente e integrada diretamente à
+branch `backend` no commit `e787707`, sem pull request; os três jobs da CI
+pós-push foram aprovados. Não houve tag, deploy, release ou publicação da fase.
+O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
 
 ## Estado por camada
 
@@ -39,7 +40,7 @@ fase. O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
 | API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/propriedades` e `/v1/notificacoes` validados |
-| Banco | Quatro migrations integradas e `000005-notificacoes.sql` validada somente no working tree; nenhum ambiente produtivo implantado |
+| Banco | Cinco migrations integradas; `000005-notificacoes.sql` validada no manifesto e como append-only contra `3dd8f42`; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
@@ -311,8 +312,10 @@ conta, 9 de Propriedades/QA e 2 de notificações. O corte inclui a migration
 `000005`, cinco fluxos emissores transacionais, API self-only, idempotência,
 retenção exata de 90 dias e purga one-shot com credencial de menor privilégio.
 
-A validação é técnica e local. O Android físico da MP-34 não foi executado, e
-não houve commit, pull request, integração, tag, deploy, release ou publicação.
+A validação técnica foi complementada pela integração direta no commit
+`e787707`, pela CI pós-push aprovada e pela comparação append-only das cinco
+migrations contra `3dd8f42`. O Android físico da MP-34 não foi executado, e não
+houve pull request, tag, deploy, release ou publicação.
 
 ## Próxima etapa
 
@@ -326,9 +329,11 @@ transacional e auditoria genérica. A MP-33C também está concluída tecnicamen
 e integrada nessa base pelo PR #2 no commit `cc78a9f`, sem alterar o
 comportamento persistido do Demo.
 
-A MP-34 está concluída tecnicamente somente no working tree. A próxima decisão
-é autorizar ou não seu commit e pull request; essa decisão não implica
-integração nem liberação produtiva. Antes de produção, permanecem responsável,
+A MP-34 está concluída tecnicamente e integrada diretamente à branch `backend`
+no commit `e787707`, sem pull request e com CI pós-push aprovada. A próxima
+decisão é autorizar ou não o commit documental deste fechamento e escolher a
+fase seguinte; nenhuma dessas decisões implica liberação produtiva. Antes de
+produção, permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de

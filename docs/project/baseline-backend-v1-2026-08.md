@@ -1,7 +1,7 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `ATIVO`; `MP-33A`, `MP-33B` e `MP-33C` integradas; `MP-34` concluída
-> tecnicamente somente no working tree
+> Status: `ATIVO`; `MP-33A`, `MP-33B`, `MP-33C` e `MP-34` integradas à branch
+> `backend`; a MP-34 entrou diretamente no commit `e787707`
 >
 > Fechamento: 2026-08-07
 >
@@ -25,8 +25,9 @@ Propriedades; o Demo continua isolado. Isso não implanta ambiente, não fecha o
 portões de produção e não autoriza release.
 
 A MP-34 acrescenta notificações individuais da própria conta, persistência,
-API, cliente HTTP e purga de retenção. Ela está concluída tecnicamente somente
-no working tree, sem commit, pull request, integração, tag, deploy, release ou
+API, cliente HTTP e purga de retenção. Ela está concluída tecnicamente e foi
+integrada diretamente à branch `backend` no commit `e787707`, sem pull request;
+os três jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
 publicação. O Android físico específico da fase permanece `NÃO EXECUTADO`.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
@@ -475,7 +476,7 @@ para token, sessão ou cache de negócio.
   concluída na `MP-33C`;
 - notificações in-app self-only, migration append-only, cinco fluxos emissores
   transacionais, API, composição HTTP e purga one-shot, concluídas tecnicamente
-  na `MP-34` somente no working tree;
+  e integradas diretamente na `MP-34` pelo commit `e787707`;
 - escritas administrativas e o restante do RBAC por ação no servidor
   (`MP-35`);
 - CI do backend;
@@ -518,8 +519,9 @@ Autenticação, sessões, refresh tokens, convites, recuperação e auditoria
 genérica compõem a MP-33B concluída tecnicamente. Separação Demo/HTTP, sessão
 segura no cliente e lista/detalhe HTTP de Propriedades foram concluídas na
 MP-33C. Notificações in-app da própria conta, persistência, API e composição HTTP
-foram concluídas tecnicamente na MP-34 somente no working tree. Não existe
-commit, pull request, integração, tag, deploy, release ou publicação dessa fase;
-o Android físico da MP-34 não foi executado. Escritas administrativas
+foram concluídas tecnicamente e integradas diretamente na MP-34 pelo commit
+`e787707`, sem pull request e com os três jobs da CI pós-push aprovados. Não
+houve tag, deploy, release ou publicação dessa fase; o Android físico da MP-34
+não foi executado. Escritas administrativas
 permanecem na MP-35. Materiais, GeoJSON produtivo e Caderno append-only entram
 depois que a fundação estiver implantada e observável.

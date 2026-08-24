@@ -2,12 +2,11 @@
 
 > Atualizado em: 2026-08-24
 >
-> Próxima tarefa: revisar o fechamento técnico da MP-34 e decidir explicitamente
-> sobre eventual commit e pull request
+> Próxima tarefa: revisar e decidir explicitamente sobre o commit documental do
+> fechamento pós-integração da MP-34; a fase seguinte continua sem autorização
 >
-> Estado: MP-33A, MP-33B E MP-33C INTEGRADAS; MP-34 CONCLUÍDA TECNICAMENTE
-> SOMENTE NO WORKING TREE, SEM COMMIT, PR, INTEGRAÇÃO, TAG, DEPLOY, RELEASE OU
-> PUBLICAÇÃO
+> Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; MP-34 NO COMMIT `e787707`,
+> SEM PR, TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -23,9 +22,11 @@ Propriedades. A CI pós-merge foi aprovada. Não houve tag, deploy, release,
 assinatura ou publicação.
 
 A MP-34 implementou notificações in-app reais, persistidas e isoladas para fatos
-da própria conta. A implementação e seus testes estão somente no working tree:
-não existe commit, pull request, integração, tag, deploy, release ou publicação
-da fase. O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
+da própria conta. Ela foi integrada diretamente à branch `backend` no commit
+`e787707`, sem pull request; os três jobs da CI pós-push foram aprovados. A
+verificação complementar confirmou as cinco migrations e o caráter append-only
+da `000005` contra `3dd8f42`. Não houve tag, deploy, release ou publicação. O
+smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -184,13 +185,13 @@ continuam ativos.
 
 ## Estado da sequência depois de MP-33C
 
-A MP-33C já está integrada. A MP-34 foi concluída tecnicamente no working tree,
-mas esse estado não autoriza commit, pull request, integração, tag, deploy,
-release ou publicação por si só.
+A MP-33C já está integrada. A MP-34 também foi concluída tecnicamente e
+integrada diretamente à branch `backend` no commit `e787707`, sem pull request.
+Esse estado não autoriza tag, deploy, release ou publicação por si só.
 
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
-| 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA TECNICAMENTE NO WORKING TREE; SEM COMMIT/PR/INTEGRAÇÃO; PORTÕES PRODUTIVOS PENDENTES |
+| 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35 | MP-35 | Escopo por Propriedade e vínculos no servidor | BACKLOG |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
@@ -233,8 +234,9 @@ MP-34 não foi executado.
 Antes de produção ainda faltam responsável, agendamento e alertas da purga,
 provisionamento da credencial/CA/segredo de manutenção, revisão
 jurídica/de privacidade da retenção, observabilidade, backup/restauração e os
-portões gerais de release. Não houve commit, pull request, integração, tag,
-deploy, release ou publicação da MP-34.
+portões gerais de release. A integração ocorreu diretamente no commit
+`e787707`, sem pull request; não houve tag, deploy, release ou publicação da
+MP-34.
 
 MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.

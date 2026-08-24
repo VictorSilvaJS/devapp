@@ -64,9 +64,10 @@ Para revisar ou operar a conexão do aplicativo sem misturar Demo e HTTP,
 consulte o
 [contrato de integração da MP-33C](project/contrato-integracao-app-mp33c.md).
 O corte de notificações está em
-[contrato de notificações](project/contrato-notificacoes.md). A MP-34 permanece
-somente no working tree, sem commit, pull request, integração, tag, deploy,
-release ou publicação.
+[contrato de notificações](project/contrato-notificacoes.md). A MP-34 foi
+integrada diretamente à branch `backend` no commit `e787707`, sem pull request,
+e os três jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
+publicação.
 
 ## Regra prática
 

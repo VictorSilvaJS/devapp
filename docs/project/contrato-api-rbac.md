@@ -6,8 +6,9 @@ Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
 2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
 autenticação da MP-33B e a leitura autorizada de Propriedades da MP-33C foram
 concluídas tecnicamente. Em 2026-08-24, notificações da própria conta da MP-34
-foram concluídas tecnicamente somente no working tree, sem commit, pull request,
-integração, tag, deploy, release ou publicação. As demais rotas de negócio/RBAC
+foram concluídas tecnicamente e integradas diretamente à branch `backend` no
+commit `e787707`, sem pull request e com os três jobs da CI pós-push aprovados.
+Não houve tag, deploy, release ou publicação. As demais rotas de negócio/RBAC
 continuam futuras. O Demo permanece mockado, e a composição HTTP consome
 somente capacidades reais.
 

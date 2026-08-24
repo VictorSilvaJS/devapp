@@ -2,12 +2,14 @@
 
 > Revisão documental: 2026-08-24
 
-Não existe decisão arquitetural pendente dentro do corte da MP-33C. MP-33A,
-MP-33B e MP-33C estão concluídas tecnicamente e integradas. A MP-33C entrou na
+Não existe decisão arquitetural pendente dentro dos cortes da MP-33C e da
+MP-34. MP-33A, MP-33B, MP-33C e MP-34 estão concluídas tecnicamente e
+integradas. A MP-33C entrou na
 branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada.
-A MP-34 foi concluída tecnicamente somente no working tree: não existe commit,
-pull request, integração, tag, deploy, release ou publicação dessa fase. Os
-itens abaixo são portões produtivos ou implementações de fases posteriores.
+A MP-34 entrou diretamente na mesma branch pelo commit `e787707`, sem pull
+request, e os três jobs da CI pós-push foram aprovados. Não houve tag, deploy,
+release ou publicação dessa fase. Os itens abaixo são portões produtivos ou
+implementações de fases posteriores.
 
 ## MP-34 — portões produtivos após a conclusão técnica
 

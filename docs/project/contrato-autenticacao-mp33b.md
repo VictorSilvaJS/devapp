@@ -258,8 +258,9 @@ Esse total descreve o corte histórico da MP-33B. A MP-34 acrescenta uma quinta
 credencial operacional, membro exclusivo do papel `NOLOGIN`
 `tche_agro_notifications_maintenance`, para a purga one-shot de notificações.
 Ela não pode combinar o papel de runtime e ainda não foi provisionada em
-produção; a implementação permanece somente no working tree, sem commit, pull
-request, integração, tag, deploy, release ou publicação.
+produção. A implementação foi integrada diretamente à branch `backend` no
+commit `e787707`, sem pull request e com os três jobs da CI pós-push aprovados;
+não houve tag, deploy, release ou publicação.
 
 ## Autorização mínima e liberação
 
