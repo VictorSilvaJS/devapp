@@ -25,7 +25,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
 | ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
 | ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO; PORTÕES PRODUTIVOS PENDENTES |
-| ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PENDENTE DE ANDROID FÍSICO |
+| ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -220,9 +220,20 @@ Com backend/PostgreSQL reais e ao menos duas identidades sintéticas:
 9. repetir o Demo e confirmar login rápido, dados locais e telas ainda
    demonstrativas preservados em seu identificador separado.
 
-O resultado só pode passar depois de execução observável no Android físico. Os
-testes automatizados de grafo e comportamento não promovem esse item por
-inferência.
+O cenário passou em 2026-08-24 no TCL 8483A, Android 15/API 35, ARM64, tela
+800×1280 e conexão USB. A primeira execução revelou que a barra inferior usava
+altura fixa e ocupava a área de gestos do Android. Depois da correção
+compartilhada por `useSafeAreaInsets`, os alvos das abas ficaram entre
+`y=1162–1238`, acima da área gestual, e os toques no centro passaram nas três
+abas HTTP e nas seis abas do Demo.
+
+Na composição HTTP também passaram login conectado, lista, busca, filtros,
+estado vazio, detalhe de Propriedade, Perfil, sessões, Notificações, troca de
+identidade e indisponibilidade honesta sem fallback. O Demo foi instalado sob
+seu identificador separado, preservou login rápido e dados locais. A massa
+física de Propriedades não produziu uma segunda página; cursor continua coberto
+pela automação e não é promovido a evidência física por inferência. Não houve
+tag, deploy, release ou publicação.
 
 ## Cenários de campo de MP-38
 

@@ -36,7 +36,7 @@ compartilhada que já constava da arquitetura: a interface aprovada no Demo é
 reutilizada por componentes que recebem dados e ações, enquanto os adaptadores
 locais e HTTP continuam separados. O primeiro corte cobre as capacidades reais
 de login, Propriedades, Perfil e Notificações; a validação física da interface
-convergida continua pendente.
+convergida passou em 2026-08-24 nas composições Demo e HTTP.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -486,7 +486,7 @@ para token, sessão ou cache de negócio.
   transacionais, API, composição HTTP e purga one-shot, concluídas tecnicamente
   e integradas diretamente na `MP-34` pelo commit `e787707`;
 - convergência da apresentação aprovada nas capacidades HTTP existentes,
-  implementada localmente antes da MP-35 e ainda pendente de smoke físico;
+  implementada e aprovada no smoke físico antes da MP-35, ainda sem commit;
 - escritas administrativas e o restante do RBAC por ação no servidor
   (`MP-35`), com integração das telas administrativas existentes;
 - CI do backend;

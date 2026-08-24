@@ -51,6 +51,7 @@ test('entry HTTP tem grafo estático separado do App mock', () => {
   assert.equal(packageJson.main, 'src/entry/http.tsx');
   const httpGraph = staticGraph(path.join(root, packageJson.main));
   const demoPackage = require('../demo/package.json');
+  assert.equal(demoPackage.main, 'index.js');
   const demoGraph = staticGraph(path.resolve(root, 'demo', demoPackage.main));
   const httpFiles = relativeFiles(httpGraph);
   const demoFiles = relativeFiles(demoGraph);

@@ -104,12 +104,16 @@ tela HTTP paralela quando já existir apresentação aprovada equivalente.
 - Visitas, Caderno, Materiais, GeoJSON produtivo ou agregados do Dashboard;
 - iOS, assinatura, deploy, release ou publicação.
 
-## Validação Pendente
+## Validação Executada
 
 O corte passou no typecheck, na suíte completa `test:domain-compat`, nas suítes
-MP-33C/MP-34, nos 6/6 testes focados de convergência, na inspeção dos grafos
-nativos, nos bundles separados e no prebuild HTTP temporário. Ele ainda deve
-ser complementado no Android físico com login, lista/filtros/detalhe de
-Propriedades, Perfil, Notificações, troca de identidade e indisponibilidade da
-API. Essa validação não substitui os portões produtivos das MP-33B, MP-33C e
-MP-34.
+MP-33C/MP-34, nos 7/7 testes focados de convergência, na inspeção dos grafos
+nativos, nos bundles separados e no prebuild HTTP temporário.
+
+Em 2026-08-24, o TCL 8483A com Android 15/API 35 confirmou login,
+lista/busca/filtros/estado vazio/detalhe de Propriedades, Perfil, Notificações,
+troca de identidade e indisponibilidade da API sem fallback. Depois da correção
+por safe area, os alvos da barra ficaram acima da região de gestos e passaram em
+3/3 abas HTTP e 6/6 abas Demo. A massa física não produziu segunda página de
+Propriedades; o cursor permanece coberto pela automação. Essa validação não
+substitui os portões produtivos das MP-33B, MP-33C e MP-34.

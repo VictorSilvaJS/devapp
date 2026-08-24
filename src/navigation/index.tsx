@@ -27,8 +27,10 @@ import NovoUsuarioScreen from '../screens/NovoUsuarioScreen';
 import NotificacoesScreen from '../screens/NotificacoesScreen';
 import LoadingScreen from '../components/LoadingScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthState } from '../auth/AuthContext';
 import { colors } from '../theme';
+import { resolveBottomTabSafeArea } from './bottomTabSafeArea';
 import ClienteDashboardScreen from '../screens/ClienteDashboardScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import FazendaMapaScreen from '../screens/FazendaMapaScreen';
@@ -38,8 +40,10 @@ const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // opções de tab estáveis para evitar recriação em cada render
-function tabScreenOptions({ route }) {
-  return {
+function createTabScreenOptions(bottomInset: number) {
+  const safeAreaLayout = resolveBottomTabSafeArea(bottomInset);
+
+  return ({ route }) => ({
     headerShown: false,
     lazy: true,
     freezeOnBlur: true,
@@ -58,9 +62,9 @@ function tabScreenOptions({ route }) {
       backgroundColor: colors.card,
       borderTopWidth: 2,
       borderTopColor: colors.border,
-      paddingBottom: 4,
+      paddingBottom: safeAreaLayout.paddingBottom,
       paddingTop: 8,
-      height: 65,
+      height: safeAreaLayout.height,
       elevation: 8,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: -2 },
@@ -72,11 +76,17 @@ function tabScreenOptions({ route }) {
       fontWeight: '600' as const,
       marginBottom: 4
     }
-  };
+  });
+}
+
+function useTabScreenOptions() {
+  const { bottom } = useSafeAreaInsets();
+  return React.useMemo(() => createTabScreenOptions(bottom), [bottom]);
 }
 const AdminTabs = React.memo(function AdminTabs() {
+  const screenOptions = useTabScreenOptions();
   return (
-    <Tab.Navigator screenOptions={tabScreenOptions} detachInactiveScreens>
+    <Tab.Navigator screenOptions={screenOptions} detachInactiveScreens>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="Propriedades" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Usuarios" component={UsuariosScreen} options={{ title: 'Usuários', tabBarLabel: 'Usuários' }} />
@@ -88,8 +98,9 @@ const AdminTabs = React.memo(function AdminTabs() {
 });
 
 const ColaboradorTabs = React.memo(function ColaboradorTabs() {
+  const screenOptions = useTabScreenOptions();
   return (
-    <Tab.Navigator screenOptions={tabScreenOptions} detachInactiveScreens>
+    <Tab.Navigator screenOptions={screenOptions} detachInactiveScreens>
       <Tab.Screen name="Home" component={DashboardScreen} options={{ title: 'Dashboard' }} />
       <Tab.Screen name="PropriedadesColaborador" component={PropriedadesScreen} options={{ title: 'Propriedades', tabBarLabel: 'Propriedades' }} />
       <Tab.Screen name="Minhas Visitas" component={VisitasScreen} options={{ title: 'Visitas' }} />
@@ -100,8 +111,9 @@ const ColaboradorTabs = React.memo(function ColaboradorTabs() {
 });
 
 const ClienteTabs = React.memo(function ClienteTabs() {
+  const screenOptions = useTabScreenOptions();
   return (
-    <Tab.Navigator screenOptions={tabScreenOptions} detachInactiveScreens>
+    <Tab.Navigator screenOptions={screenOptions} detachInactiveScreens>
       <Tab.Screen name="Minhas Fazendas" component={ClienteDashboardScreen} options={{ title: 'Minhas Propriedades' }} />
       <Tab.Screen name="Histórico" component={CadernoCampoScreen} options={{ title: 'Caderno', tabBarLabel: 'Caderno' }} />
       <Tab.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />

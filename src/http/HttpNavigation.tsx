@@ -7,6 +7,7 @@ import {
 } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAccountAction } from './AccountActionContext';
 import { actionNavigationTarget } from './actionNavigation';
@@ -44,6 +45,7 @@ import {
 } from './screens/HttpPropertyScreens';
 import { HttpNotificationScreen } from './screens/HttpNotificationScreen';
 import { colors } from '../theme';
+import { resolveBottomTabSafeArea } from '../navigation/bottomTabSafeArea';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -51,6 +53,11 @@ const navigationRef = createNavigationContainerRef<any>();
 
 function HttpTabsNavigator() {
   const { unreadCount } = useHttpNotifications();
+  const { bottom } = useSafeAreaInsets();
+  const safeAreaLayout = React.useMemo(
+    () => resolveBottomTabSafeArea(bottom),
+    [bottom],
+  );
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
@@ -63,9 +70,9 @@ function HttpTabsNavigator() {
           backgroundColor: colors.card,
           borderTopWidth: 2,
           borderTopColor: colors.border,
-          paddingBottom: 4,
+          paddingBottom: safeAreaLayout.paddingBottom,
           paddingTop: 8,
-          height: 65,
+          height: safeAreaLayout.height,
           elevation: 8,
         },
         tabBarLabelStyle: {

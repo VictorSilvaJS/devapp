@@ -64,7 +64,22 @@ test('navegação HTTP mantém somente capacidades conectadas no padrão de abas
     assert.doesNotMatch(navigation, new RegExp(`name="${forbidden}"`));
   }
   assert.match(navigation, /headerShown: false/);
-  assert.match(navigation, /height: 65/);
+  assert.match(navigation, /resolveBottomTabSafeArea\(bottom\)/);
+});
+
+test('barras inferiores Demo e HTTP reservam a safe area física', () => {
+  const demoNavigation = source('src/navigation/index.tsx');
+  const httpNavigation = source('src/http/HttpNavigation.tsx');
+  const layout = source('src/navigation/bottomTabSafeArea.ts');
+
+  for (const navigation of [demoNavigation, httpNavigation]) {
+    assert.match(navigation, /useSafeAreaInsets/);
+    assert.match(navigation, /resolveBottomTabSafeArea/);
+    assert.match(navigation, /safeAreaLayout\.paddingBottom/);
+    assert.match(navigation, /safeAreaLayout\.height/);
+  }
+  assert.match(layout, /height: BASE_TAB_BAR_HEIGHT \+ safeBottomInset/);
+  assert.match(layout, /paddingBottom: BASE_TAB_BAR_BOTTOM_PADDING \+ safeBottomInset/);
 });
 
 test('gradiente é dependência visual HTTP sem promover módulos funcionais do Demo', () => {

@@ -16,19 +16,18 @@ implementações de fases posteriores.
 O contrato arquitetural está fechado em
 `contrato-convergencia-interface-http.md`: a interface aprovada é compartilhada
 por apresentação, enquanto Demo e HTTP mantêm adaptadores e capacidades
-separados. O primeiro corte está implementado localmente e ainda exige:
+separados. O primeiro corte está implementado localmente e validado no Android
+físico. Permanecem como obrigações das próximas verticais:
 
-- executar o smoke Android físico de login, Propriedades, Perfil e
-  Notificações na composição HTTP convergida;
-- confirmar troca de identidade e indisponibilidade da API sem estado cruzado
-  nem fallback demonstrativo;
 - integrar em cada vertical futura a tela existente correspondente, em vez de
   criar uma nova interface paralela;
 - criar cortes HTTP explícitos para Visitas, Materiais e agregados do Dashboard
   antes da regressão final MP-40/MP-41.
 
-Esses itens são validação e implementação futura; não reabrem decisões da
-MP-33C ou da MP-34 e não autorizam exibir capacidade sem backend.
+O smoke Android físico da convergência passou em 2026-08-24, incluindo troca de
+identidade, indisponibilidade da API sem fallback e barras inferiores Demo/HTTP
+fora da área gestual. Os itens restantes são implementação futura; não reabrem
+decisões da MP-33C ou da MP-34 e não autorizam exibir capacidade sem backend.
 
 ## MP-34 — portões produtivos após a conclusão técnica
 

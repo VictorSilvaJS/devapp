@@ -36,13 +36,14 @@ garantia a convergência da interface aprovada no Demo. O primeiro corte
 corretivo anterior à MP-35 está implementado: login e componentes visuais são
 compartilhados por injeção de dados/ações, e Propriedades, Perfil e Notificações
 HTTP usam o padrão visual existente sem importar o mock. A validação física
-desse novo corte ainda precisa ser executada.
+passou em 2026-08-24 nas duas composições, depois da correção compartilhada da
+barra inferior para respeitar a safe area gestual do Android.
 
 ## Estado por camada
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil e notificações reais no padrão visual aprovado; convergência física pendente e sem release produtivo |
+| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil e notificações reais no padrão visual aprovado; convergência física aprovada e sem release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
@@ -52,7 +53,7 @@ desse novo corte ainda precisa ser executada.
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
-| Testes | MP-34 preservada: app Node.js 22 com 35/35 focados; backend Node.js 24 com 138 unitários/migration, 26 HTTP e 41 integrações reais; convergência com typecheck, `test:domain-compat`, 6/6 focados, grafos, bundles e prebuild aprovados; smoke físico pendente |
+| Testes | MP-34 preservada: app Node.js 22 com 35/35 focados; backend Node.js 24 com 138 unitários/migration, 26 HTTP e 41 integrações reais; convergência com typecheck, `test:domain-compat`, 7/7 focados, grafos, bundles e prebuild aprovados; smoke físico Demo/HTTP aprovado |
 
 ## Corte implementado da MP-33C
 
@@ -331,7 +332,7 @@ publicação.
 ## Validação da convergência visual pré-MP-35
 
 O aplicativo passou em Node.js 22 no typecheck e na suíte completa
-`test:domain-compat`, que inclui novamente MP-33C, MP-34 e os 6/6 testes focados
+`test:domain-compat`, que inclui novamente MP-33C, MP-34 e os 7/7 testes focados
 de convergência. A inspeção do grafo estático e dos bundles Android confirmou
 que o HTTP compartilha apresentação sem alcançar `src/api`, dados
 demonstrativos ou `AsyncStorage`; o Demo preservou seu próprio grafo e seus
@@ -339,9 +340,13 @@ dados. O grafo nativo admitiu `expo-linear-gradient` como dependência visual e
 manteve storage comum, câmera, localização, mapas, SVG e WebView fora do HTTP.
 
 O prebuild HTTP temporário preservou ID definitivo, App Link, regras de backup
-e somente `INTERNET` como permissão efetiva. A validação física da nova
-interface ainda não foi executada; por isso o corte não está fechado para
-iniciar a MP-35. Não houve commit, tag, deploy, release ou publicação.
+e somente `INTERNET` como permissão efetiva. No TCL 8483A com Android 15/API 35,
+as três abas HTTP e as seis abas do Demo responderam ao toque normal depois de
+a barra reservar os 36 px da safe area inferior. O roteiro conectado de login,
+Propriedades, Perfil, Notificações, troca de identidade e API indisponível
+também passou. O cursor não foi gerado fisicamente pela massa disponível e
+permanece comprovado pela automação. Não houve commit, tag, deploy, release ou
+publicação desse corte local.
 
 ## Próxima etapa
 
@@ -358,7 +363,8 @@ comportamento persistido do Demo.
 A MP-34 está concluída tecnicamente e integrada diretamente à branch `backend`
 no commit `e787707`, sem pull request e com CI pós-push aprovada. Antes da
 MP-35, o corte corretivo de convergência reutiliza a apresentação aprovada nas
-capacidades HTTP existentes; seu próximo portão é o smoke em Android físico.
+capacidades HTTP existentes e passou no smoke Android físico. O corte continua
+local e ainda não foi commitado.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
@@ -390,7 +396,7 @@ está em [proximos-passos.md](proximos-passos.md).
 | Dados, mocks e integrações | src/api e src/services |
 | Composição HTTP e sessão segura | src/http e src/entry/http.tsx |
 | Apresentação compartilhada Demo/HTTP | src/components |
-| Composição Demo preservada | demo e src/entry/demo.tsx |
+| Composição Demo preservada | demo/index.js, demo e src/entry/demo.tsx |
 | Fundação do backend e banco | backend |
 | Login e sessão locais do Demo | src/auth e src/contexts |
 | Imagens e recursos visuais | src/assets |

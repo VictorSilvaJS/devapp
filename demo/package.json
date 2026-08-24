@@ -1,7 +1,7 @@
 {
   "name": "tche-agro-demo-entry",
   "private": true,
-  "main": "../src/entry/demo.tsx",
+  "main": "index.js",
   "expo": {
     "autolinking": {
       "searchPaths": ["../node_modules"]

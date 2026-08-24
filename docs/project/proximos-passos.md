@@ -2,12 +2,12 @@
 
 > Atualizado em: 2026-08-24
 >
-> Próxima tarefa: executar o smoke Android físico do corte de convergência
-> visual anterior à MP-35
+> Próxima tarefa: revisar e, mediante autorização explícita, criar o commit
+> local do corte de convergência visual; depois preparar a MP-35
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
-> IMPLEMENTADA LOCALMENTE E AINDA NÃO COMITADA; SEM TAG, DEPLOY, RELEASE OU
-> PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> IMPLEMENTADA E APROVADA NO ANDROID FÍSICO, AINDA NÃO COMITADA; SEM TAG,
+> DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -32,8 +32,10 @@ smoke funcional Android físico específico da MP-34 passou em 2026-08-24.
 Uma auditoria posterior confirmou que a fila MP-35 a MP-41 não continha uma
 entrega explícita de convergência entre a interface aprovada no Demo e as
 verticais HTTP. O corte corretivo anterior à MP-35 passa a reutilizar
-apresentações e componentes existentes, sem misturar fontes de dados. Ele deve
-ser validado em Android físico antes de iniciar as escritas administrativas.
+apresentações e componentes existentes, sem misturar fontes de dados. Sua
+validação em Android físico era o portão anterior às escritas administrativas e
+passou em 2026-08-24 depois da correção da barra inferior para respeitar a safe
+area gestual nas composições Demo e HTTP.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -199,7 +201,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
 | 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
-| 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | IMPLEMENTADA LOCALMENTE; AUTOMAÇÃO, GRAFOS, BUNDLES E PREBUILD APROVADOS; SMOKE FÍSICO PENDENTE |
+| 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA TECNICAMENTE E APROVADA NO ANDROID FÍSICO; COMMIT LOCAL PENDENTE DE AUTORIZAÇÃO |
 | 35 | MP-35 | Escritas de Propriedade, Usuários/vínculos, RBAC e integração das telas administrativas existentes | BACKLOG |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
@@ -278,6 +280,13 @@ Critério de fechamento:
   Perfil, Notificações, troca de identidade e indisponibilidade honesta;
 - documentação e código permanecem coerentes, sem commit, tag, deploy ou
   publicação automáticos.
+
+O fechamento técnico passou em 2026-08-24 no TCL 8483A, Android 15/API 35. A
+barra inferior inicialmente invadia a área de gestos; a safe area corrigida
+deixou os alvos entre `y=1162–1238`. Toques centrais passaram em 3/3 abas HTTP e
+6/6 abas Demo, sem fatal no log. O cenário HTTP conectado também confirmou os
+fluxos acima e a ausência de fallback. Cursor permaneceu automatizado porque a
+massa física não gerou segunda página.
 
 Depois desse fechamento, a MP-35 deve integrar as telas administrativas já
 existentes no mesmo corte das escritas e do RBAC. MP-36 e MP-37 repetem o padrão
