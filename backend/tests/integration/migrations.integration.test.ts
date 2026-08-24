@@ -99,7 +99,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         );
         await runMigrations({
           command: 'down',
-          count: 4,
+          count: 5,
           database: activeMigrationDatabase,
         });
       }
@@ -1799,7 +1799,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     assertDestructiveDatabaseTestsAllowed(activeMigrationDatabase.connectionString);
     await runMigrations({
       command: 'down',
-      count: 4,
+      count: 5,
       database: activeMigrationDatabase,
     });
 

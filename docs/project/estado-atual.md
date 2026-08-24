@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-24
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -25,21 +25,26 @@ mock em seus grafos JavaScript e Android. Isso ainda não representa deploy,
 release ou loja: não existe ambiente produtivo implantado, domínio oficial
 associado, assinatura oficial nem validação final em dispositivo/loja.
 
+A MP-34 acrescenta notificações in-app reais, persistidas e isoladas para fatos
+da própria conta. Ela está concluída tecnicamente somente no working tree: não
+existe commit, pull request, integração, tag, deploy, release ou publicação da
+fase. O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
+
 ## Estado por camada
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado e composição HTTP da MP-33C implementada; sem release produtivo |
+| Aplicativo Android | Demo local preservado e composição HTTP com sessão, Propriedades e notificações da MP-34; sem release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
-| API | Health, readiness, OpenAPI, `/v1/auth` e `/v1/propriedades` validados |
-| Banco | DDL MP-33A e quatro migrations seladas/validadas; nenhum ambiente produtivo implantado |
+| API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/propriedades` e `/v1/notificacoes` validados |
+| Banco | Quatro migrations integradas e `000005-notificacoes.sql` validada somente no working tree; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
-| Notificações | In-app local; sem persistência produtiva ou push |
-| Testes | MP-33C: app Node.js 22, contratos/sessão/arquitetura, bundles e prebuild; backend Node.js 24 com 36 integrações reais |
+| Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
+| Testes | MP-34: app Node.js 22 com 35/35 focados; backend Node.js 24 com 138 unitários/migration, 26 HTTP e 41 integrações reais |
 
 ## Corte implementado da MP-33C
 
@@ -124,7 +129,9 @@ evidência do dataset local, não volume produtivo.
 - Arquivos não têm upload, criptografia, retenção ou storage remoto definidos em
   execução.
 - GeoJSON não possui publicação, versionamento e reconciliação produtivos.
-- Notificações não possuem entrega persistida, isolamento real ou push.
+- A composição HTTP possui entrega persistida e isolamento técnico de
+  notificações, mas ainda não existe ambiente produtivo, operação agendada da
+  purga ou push. O mock global permanece somente no Demo.
 - Logs estruturados básicos e CI de fundação não equivalem a observabilidade
   produtiva; backup, restauração e gestão de segredos ainda precisam ser
   implementados.
@@ -288,6 +295,25 @@ Node.js 24. Não houve tag, deploy, release, assinatura ou publicação. Ainda
 faltam domínio oficial com `assetlinks.json`/AASA, configuração de assinatura e
 validação ponta a ponta em aparelho/ambiente de release.
 
+## Validação da MP-34
+
+O aplicativo passou em Node.js 22 no typecheck, `test:domain-compat` e nos 35/35
+testes focados de `test:mp34`: 10 de contratos, 12 de repositório e 13 de
+arquitetura. A arquitetura inclui cinco gates comportamentais: dois do open gate
+e três do context coordinator. O grafo HTTP permanece sem mock legado,
+`src/api`, `AsyncStorage`, push ou token de dispositivo; o Demo continua
+intacto.
+
+O backend passou em Node.js 24 no manifesto, typecheck, build/smoke e nas suítes
+confirmadas de 138 testes unitários/contratos de migration, 26 HTTP e 41
+cenários reais de integração: 15 de migrations, 8 de autenticação, 7 de ações de
+conta, 9 de Propriedades/QA e 2 de notificações. O corte inclui a migration
+`000005`, cinco fluxos emissores transacionais, API self-only, idempotência,
+retenção exata de 90 dias e purga one-shot com credencial de menor privilégio.
+
+A validação é técnica e local. O Android físico da MP-34 não foi executado, e
+não houve commit, pull request, integração, tag, deploy, release ou publicação.
+
 ## Próxima etapa
 
 A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
@@ -300,17 +326,22 @@ transacional e auditoria genérica. A MP-33C também está concluída tecnicamen
 e integrada nessa base pelo PR #2 no commit `cc78a9f`, sem alterar o
 comportamento persistido do Demo.
 
-A arquitetura da MP-34 de notificações in-app reais, persistidas e isoladas
-está preparada, sem código iniciado. O próximo portão é ratificar seu catálogo,
-conteúdo seguro, idempotência e operação de retenção; implementação continua
-dependente de autorização explícita. Em paralelo, permanecem os portões
-externos de domínio, associação de links, assinatura e dispositivo. Escritas
-administrativas e o restante do RBAC continuam na MP-35 e não integram a MP-34.
+A MP-34 está concluída tecnicamente somente no working tree. A próxima decisão
+é autorizar ou não seu commit e pull request; essa decisão não implica
+integração nem liberação produtiva. Antes de produção, permanecem responsável,
+agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
+manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
+observabilidade, backup/restauração e os portões de domínio, associação de
+links, assinatura e dispositivo. Escritas administrativas e o restante do RBAC
+continuam fora da MP-34.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
-SMTP/segredos, observabilidade, backup/restauração e retenção continuam portões
-ativos. Break-glass segue não implementado; Ed25519 ou serviço externo com dois
-aprovadores deve existir antes dessa futura capacidade.
+SMTP/segredos, observabilidade, backup/restauração e validação externa da
+retenção continuam portões ativos. A MP-34 não implementa legal hold ou
+suspensão de descarte; eventual exigência da revisão jurídica/de privacidade
+produzirá alteração futura versionada antes da produção. Break-glass segue não
+implementado; Ed25519 ou serviço externo com dois aprovadores deve existir antes
+dessa futura capacidade.
 
 As decisões de fundação estão em
 [baseline-backend-v1-2026-08.md](baseline-backend-v1-2026-08.md), e a sequência

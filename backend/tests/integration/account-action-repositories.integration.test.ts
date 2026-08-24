@@ -34,6 +34,8 @@ import type { EncryptedOutboxPayload } from '../../src/outbox/contracts.js';
 import { OutboxPayloadCipher } from '../../src/outbox/crypto.js';
 import { EncryptedEmailOutboxFactory } from '../../src/outbox/email-message.js';
 import { PostgresOutboxRepository } from '../../src/outbox/postgres-repository.js';
+import type { AccountNotificationWriter } from '../../src/notifications/contracts.js';
+import { HttpError } from '../../src/security/http-error.js';
 import {
   startPostgisTestDatabase,
   type StartedPostgisTestDatabase,
@@ -1008,6 +1010,302 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
     assert.equal(state.rows[0]?.authorization_status, 'consumida');
     assert.equal(state.rows[0]?.approvals, '1');
     assert.equal(Number(state.rows[0]?.audits), 4);
+  });
+
+  test('falha da notificação reverte os três fatos transacionais de AccountAction', async () => {
+    let writerCalls = 0;
+    const notificationWriter: AccountNotificationWriter = {
+      async create() {
+        writerCalls += 1;
+        throw new Error('notification-writer-injected-failure');
+      },
+    };
+    const failingOptions = () => ({
+      ...postgresOptions(),
+      notificationWriter,
+    });
+    const assertServiceUnavailable = (error: unknown) =>
+      error instanceof HttpError && error.code === 'service_unavailable';
+
+    const emailUser = await seedUser({ profile: 'colaborador' });
+    const emailSessionId = await seedSession(emailUser.id);
+    const emailService = new PrimaryEmailChangeService({
+      repository: new PostgresPrimaryEmailChangeRepository(failingOptions()),
+      passwordVerifier: new PostgresPrimaryEmailPasswordVerifier({
+        pool: requirePool(),
+        passwordCredentials: credentials,
+      }),
+      emailOutbox,
+      actionBaseUrl: ACTION_URL,
+    });
+    const pendingEmail = `rollback-primary-${emailUser.id}@example.test`;
+    const emailRequest = await emailService.request({
+      organizationId: ORGANIZATION_ID,
+      authenticatedUserId: emailUser.id,
+      authenticatedSessionId: emailSessionId,
+      currentPassword: 'SenhaAtual1',
+      newEmail: pendingEmail,
+    });
+    await emailService.confirmCurrentAddress({
+      token: await tokenForChallenge(emailRequest.challengeId),
+    });
+    const pendingEmailChallenge = await activeChallenge(
+      emailUser.id,
+      'confirmacao_email_novo',
+    );
+    await assert.rejects(
+      emailService.confirmNewAddress({
+        token: await tokenForChallenge(pendingEmailChallenge.id),
+      }),
+      assertServiceUnavailable,
+    );
+    const emailState = await requirePool().query<{
+      email: string;
+      versao_autorizacao: string;
+      session_status: string;
+      request_status: string;
+      challenge_status: string;
+      completion_audits: string;
+      notifications: string;
+    }>(
+      `
+        SELECT usuario.email, usuario.versao_autorizacao::text,
+               sessao.status AS session_status,
+               solicitacao.status AS request_status,
+               desafio.status AS challenge_status,
+               (SELECT count(*)::text FROM public.eventos_auditoria
+                WHERE organizacao_id = usuario.organizacao_id
+                  AND usuario_afetado_id = usuario.id
+                  AND evento = 'auth.email_principal.alterado') AS completion_audits,
+               (SELECT count(*)::text FROM public.notificacao_entrega
+                WHERE organizacao_id = usuario.organizacao_id
+                  AND destinatario_usuario_id = usuario.id) AS notifications
+        FROM public.usuarios AS usuario
+        JOIN public.sessoes_autenticacao AS sessao
+          ON sessao.organizacao_id = usuario.organizacao_id
+         AND sessao.id = $3
+        JOIN public.solicitacoes_alteracao_email AS solicitacao
+          ON solicitacao.organizacao_id = usuario.organizacao_id
+         AND solicitacao.usuario_id = usuario.id
+        JOIN public.desafios_autenticacao AS desafio
+          ON desafio.organizacao_id = solicitacao.organizacao_id
+         AND desafio.id = solicitacao.desafio_email_novo_id
+        WHERE usuario.organizacao_id = $1 AND usuario.id = $2
+      `,
+      [ORGANIZATION_ID, emailUser.id, emailSessionId],
+    );
+    assert.deepEqual(emailState.rows[0], {
+      email: emailUser.email,
+      versao_autorizacao: '1',
+      session_status: 'ativa',
+      request_status: 'aguardando_confirmacao_novo',
+      challenge_status: 'ativo',
+      completion_audits: '0',
+      notifications: '0',
+    });
+
+    const secondaryAdmin = await seedUser({ profile: 'admin' });
+    const secondaryAdminSessionId = await seedSession(secondaryAdmin.id);
+    const verifiedSecondaryEmail =
+      `rollback-secondary-${secondaryAdmin.id}@example.test`;
+    const secondaryEmailService = new SecondaryEmailService({
+      repository: new PostgresSecondaryEmailRepository(postgresOptions()),
+      emailOutbox,
+      actionBaseUrl: ACTION_URL,
+    });
+    const secondaryVerification =
+      await secondaryEmailService.requestVerification({
+        organizationId: ORGANIZATION_ID,
+        authenticatedUserId: secondaryAdmin.id,
+        actorSessionId: secondaryAdminSessionId,
+        newEmail: verifiedSecondaryEmail,
+      });
+    await secondaryEmailService.confirm({
+      token: await tokenForChallenge(secondaryVerification.challengeId),
+    });
+    const secondaryRecovery = new AdminSecondaryRecoveryService({
+      repository: new PostgresAdminSecondaryRecoveryRepository(
+        failingOptions(),
+      ),
+      passwordCredentials: credentials,
+      emailOutbox,
+      actionBaseUrl: ACTION_URL,
+      throttle: new PostgresLoginThrottle({ pool: requirePool() }),
+      abuseProtection: authenticationConfig.abuseProtection,
+    });
+    const recoveredAdminEmail =
+      `rollback-recovered-${secondaryAdmin.id}@example.test`;
+    await secondaryRecovery.request({
+      secondaryEmail: verifiedSecondaryEmail,
+      newPrimaryEmail: recoveredAdminEmail,
+      ipAddress: '198.51.100.77',
+    });
+    const secondaryRecoveryChallenge = await activeChallenge(
+      secondaryAdmin.id,
+      'recuperacao_admin_secundario',
+    );
+    await secondaryRecovery.confirmSecondaryAddress({
+      token: await tokenForChallenge(secondaryRecoveryChallenge.id),
+    });
+    const recoveredEmailChallenge = await activeChallenge(
+      secondaryAdmin.id,
+      'recuperacao_admin_email_novo',
+    );
+    const secondaryRestricted =
+      await secondaryRecovery.confirmNewPrimaryAddress({
+        token: await tokenForChallenge(recoveredEmailChallenge.id),
+      });
+    await assert.rejects(
+      secondaryRecovery.complete({
+        token: secondaryRestricted.token,
+        newPassword: 'SenhaRollbackAdmin2',
+      }),
+      assertServiceUnavailable,
+    );
+    const secondaryState = await requirePool().query<{
+      email: string;
+      versao_autorizacao: string;
+      senha_phc: string;
+      session_status: string;
+      recovery_status: string;
+      authorization_status: string;
+      completion_audits: string;
+      notifications: string;
+    }>(
+      `
+        SELECT usuario.email, usuario.versao_autorizacao::text,
+               credencial.senha_phc, sessao.status AS session_status,
+               recuperacao.status AS recovery_status,
+               autorizacao.status AS authorization_status,
+               (SELECT count(*)::text FROM public.eventos_auditoria
+                WHERE organizacao_id = usuario.organizacao_id
+                  AND usuario_afetado_id = usuario.id
+                  AND evento = 'auth.recuperacao_admin.concluida') AS completion_audits,
+               (SELECT count(*)::text FROM public.notificacao_entrega
+                WHERE organizacao_id = usuario.organizacao_id
+                  AND destinatario_usuario_id = usuario.id) AS notifications
+        FROM public.usuarios AS usuario
+        JOIN public.credenciais_usuario AS credencial
+          ON credencial.organizacao_id = usuario.organizacao_id
+         AND credencial.usuario_id = usuario.id
+        JOIN public.sessoes_autenticacao AS sessao
+          ON sessao.organizacao_id = usuario.organizacao_id
+         AND sessao.id = $3
+        JOIN public.recuperacoes_admin_email_secundario AS recuperacao
+          ON recuperacao.organizacao_id = usuario.organizacao_id
+         AND recuperacao.usuario_admin_id = usuario.id
+        JOIN public.autorizacoes_restritas AS autorizacao
+          ON autorizacao.organizacao_id = recuperacao.organizacao_id
+         AND autorizacao.id = recuperacao.autorizacao_restrita_id
+        WHERE usuario.organizacao_id = $1 AND usuario.id = $2
+      `,
+      [ORGANIZATION_ID, secondaryAdmin.id, secondaryAdminSessionId],
+    );
+    assert.deepEqual(secondaryState.rows[0], {
+      email: secondaryAdmin.email,
+      versao_autorizacao: '1',
+      senha_phc: phcFor('SenhaAtual1'),
+      session_status: 'ativa',
+      recovery_status: 'aguardando_nova_senha',
+      authorization_status: 'ativa',
+      completion_audits: '0',
+      notifications: '0',
+    });
+
+    const assistedAdmin = await seedUser({ profile: 'admin' });
+    const assistedAdminSessionId = await seedSession(assistedAdmin.id);
+    const assistedTarget = await seedUser({ profile: 'produtor' });
+    const assistedTargetSessionId = await seedSession(assistedTarget.id);
+    const assistedRecovery = new AssistedRecoveryService({
+      repository: new PostgresAssistedRecoveryRepository(failingOptions()),
+      passwordCredentials: credentials,
+      emailOutbox,
+      actionBaseUrl: ACTION_URL,
+    });
+    const assistedPendingEmail =
+      `rollback-assisted-${assistedTarget.id}@example.test`;
+    const assistedStarted = await assistedRecovery.startByAdministrator({
+      organizationId: ORGANIZATION_ID,
+      actorAdminUserId: assistedAdmin.id,
+      actorSessionId: assistedAdminSessionId,
+      targetUserId: assistedTarget.id,
+      newEmail: assistedPendingEmail,
+      reasonCode: 'other_verified_case',
+      externalCaseReference: `ROLLBACK-${assistedTarget.id}`,
+    });
+    const assistedChallenge = await requirePool().query<{
+      desafio_email_id: string;
+    }>(
+      `SELECT desafio_email_id FROM public.recuperacoes_assistidas WHERE id = $1`,
+      [assistedStarted.recoveryId],
+    );
+    const assistedChallengeId = assistedChallenge.rows[0]?.desafio_email_id;
+    assert.ok(assistedChallengeId);
+    const assistedRestricted = await assistedRecovery.confirmNewEmail({
+      token: await tokenForChallenge(assistedChallengeId),
+    });
+    await assert.rejects(
+      assistedRecovery.complete({
+        token: assistedRestricted.token,
+        newPassword: 'SenhaRollbackAssisted2',
+      }),
+      assertServiceUnavailable,
+    );
+    const assistedState = await requirePool().query<{
+      email: string;
+      versao_autorizacao: string;
+      senha_phc: string;
+      session_status: string;
+      recovery_status: string;
+      authorization_status: string;
+      completion_audits: string;
+      notifications: string;
+    }>(
+      `
+        SELECT usuario.email, usuario.versao_autorizacao::text,
+               credencial.senha_phc, sessao.status AS session_status,
+               recuperacao.status AS recovery_status,
+               autorizacao.status AS authorization_status,
+               (SELECT count(*)::text FROM public.eventos_auditoria
+                WHERE organizacao_id = usuario.organizacao_id
+                  AND usuario_afetado_id = usuario.id
+                  AND evento = 'auth.recuperacao_assistida.concluida') AS completion_audits,
+               (SELECT count(*)::text FROM public.notificacao_entrega
+                WHERE organizacao_id = usuario.organizacao_id
+                  AND destinatario_usuario_id = usuario.id) AS notifications
+        FROM public.usuarios AS usuario
+        JOIN public.credenciais_usuario AS credencial
+          ON credencial.organizacao_id = usuario.organizacao_id
+         AND credencial.usuario_id = usuario.id
+        JOIN public.sessoes_autenticacao AS sessao
+          ON sessao.organizacao_id = usuario.organizacao_id
+         AND sessao.id = $3
+        JOIN public.recuperacoes_assistidas AS recuperacao
+          ON recuperacao.organizacao_id = usuario.organizacao_id
+         AND recuperacao.id = $4
+        JOIN public.autorizacoes_restritas AS autorizacao
+          ON autorizacao.organizacao_id = recuperacao.organizacao_id
+         AND autorizacao.id = recuperacao.autorizacao_restrita_id
+        WHERE usuario.organizacao_id = $1 AND usuario.id = $2
+      `,
+      [
+        ORGANIZATION_ID,
+        assistedTarget.id,
+        assistedTargetSessionId,
+        assistedStarted.recoveryId,
+      ],
+    );
+    assert.deepEqual(assistedState.rows[0], {
+      email: assistedTarget.email,
+      versao_autorizacao: '1',
+      senha_phc: phcFor('SenhaAtual1'),
+      session_status: 'ativa',
+      recovery_status: 'aguardando_nova_senha',
+      authorization_status: 'ativa',
+      completion_audits: '0',
+      notifications: '0',
+    });
+    assert.equal(writerCalls, 3);
   });
 
   test('outbox workers claim disjoint leases and terminal delivery wipes ciphertext', async () => {

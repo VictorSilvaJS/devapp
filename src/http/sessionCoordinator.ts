@@ -61,6 +61,11 @@ export class SessionCoordinator {
     return this.#snapshot;
   }
 
+  /** Process-local identity generation. It contains no token or stable secret. */
+  get epoch(): number {
+    return this.#epoch;
+  }
+
   subscribe(listener: SessionListener): () => void {
     this.#listeners.add(listener);
     return () => this.#listeners.delete(listener);

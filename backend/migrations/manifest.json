@@ -22,6 +22,11 @@
       "id": "000004",
       "file": "000004-recuperacao-outbox-auditoria.sql",
       "sha256": "6720f0e2e93042b253c6e02eb31d77c64e037503158dd2c67ea18e0f27531985"
+    },
+    {
+      "id": "000005",
+      "file": "000005-notificacoes.sql",
+      "sha256": "adba158f8a05386d473af7e81522a8a1847984cb31ef51831bfb09965c631a8f"
     }
   ]
 }

@@ -17,6 +17,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/server.js",
     "start:outbox": "node dist/outbox/server.js",
+    "notifications:purge": "node dist/notifications/purge.js",
+    "notifications:purge:local": "node --env-file=.env.local --import=tsx src/notifications/purge.ts",
     "bootstrap:admin": "node dist/cli/bootstrap-admin.js",
     "bootstrap:admin:local:init": "node --env-file=.env.local --import=tsx src/cli/bootstrap-admin.ts initialize",
     "bootstrap:admin:local:correct": "node --env-file=.env.local --import=tsx src/cli/bootstrap-admin.ts correct-email",

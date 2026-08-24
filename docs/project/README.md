@@ -1,9 +1,10 @@
 # Núcleo Ativo do Projeto
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-24
 
-Esta pasta contém somente documentos que descrevem o projeto como ele é hoje
-ou contratos já aprovados para a próxima implementação.
+Esta pasta contém somente documentos que descrevem o projeto como ele é hoje ou
+contratos aprovados, estejam eles implementados ou reservados para um corte
+futuro autorizado.
 
 ## Leitura rápida
 

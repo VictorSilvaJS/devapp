@@ -18,7 +18,7 @@ async function migration(file: string): Promise<string> {
   return readFile(join(migrationsDirectory, file), 'utf8');
 }
 
-test('mantém 000001 imutável e sela todas as migrations MP-33B', async () => {
+test('mantém 000001 imutável e sela o manifesto ativo', async () => {
   const initialBytes = await readFile(
     join(migrationsDirectory, '000001-initial-schema.sql'),
   );
@@ -28,7 +28,7 @@ test('mantém 000001 imutável e sela todas as migrations MP-33B', async () => {
   );
 
   const verified = await verifyMigrationIntegrity({ migrationsDirectory });
-  assert.equal(verified.checkedMigrations, 4);
+  assert.equal(verified.checkedMigrations, 5);
 });
 
 test('DDL de identidade persiste somente PHC e contato secundário verificável', async () => {

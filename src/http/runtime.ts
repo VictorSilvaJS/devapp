@@ -6,6 +6,10 @@ import {
   type PropertyRepository,
 } from './propertyRepository';
 import {
+  HttpNotificationRepository,
+  type NotificationRepository,
+} from './notificationRepository';
+import {
   SecureStoreRefreshTokenStore,
   type RefreshTokenStore,
 } from './refreshTokenStore';
@@ -16,6 +20,7 @@ export interface HttpRuntime {
   readonly api: BackendApi;
   readonly session: SessionCoordinator;
   readonly properties: PropertyRepository;
+  readonly notifications: NotificationRepository;
 }
 
 export function createHttpRuntime(
@@ -43,5 +48,6 @@ export function createHttpRuntime(
     api,
     session,
     properties: new HttpPropertyRepository(api, session),
+    notifications: new HttpNotificationRepository(api, session),
   };
 }

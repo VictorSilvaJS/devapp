@@ -85,6 +85,65 @@ export interface PropertyFilters {
   readonly cursor?: string;
 }
 
+export type NotificationEventType =
+  | 'conta.senha_alterada.v1'
+  | 'conta.email_principal_alterado.v1'
+  | 'conta.recuperacao_concluida.v1';
+
+export type NotificationState = 'nao_lida' | 'lida' | 'todas';
+
+export interface NotificationProjection {
+  readonly id: string;
+  readonly tipo_evento: NotificationEventType;
+  readonly prioridade: 'baixa' | 'normal' | 'alta';
+  readonly criada_em: string;
+  readonly lida_em: string | null;
+  readonly expira_em: string;
+  readonly recurso_tipo: 'conta';
+  readonly recurso_id: string;
+  readonly conteudo: Readonly<{
+    titulo: string;
+    resumo: string;
+  }>;
+}
+
+export interface NotificationPage {
+  readonly itens: readonly NotificationProjection[];
+  readonly paginacao: Readonly<{
+    proximo_cursor: string | null;
+  }>;
+}
+
+export interface NotificationFilters {
+  readonly estado?: NotificationState;
+  readonly limite?: number;
+  readonly cursor?: string;
+}
+
+export interface NotificationUnreadCount {
+  readonly total_nao_lidas: number;
+}
+
+export interface NotificationReadResult {
+  readonly id: string;
+  readonly lida_em: string;
+}
+
+export interface NotificationReadAllResult {
+  readonly corte_em: string;
+  readonly atualizadas: number;
+}
+
+export interface NotificationDiscardResult {
+  readonly id: string;
+  readonly descartada_em: string;
+}
+
+export interface NotificationDestination {
+  readonly recurso_tipo: 'conta';
+  readonly recurso_id: string;
+}
+
 export type ApiErrorCode =
   | 'invalid_request'
   | 'invalid_credentials'

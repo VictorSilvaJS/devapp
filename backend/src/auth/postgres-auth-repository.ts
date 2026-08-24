@@ -27,6 +27,8 @@ import {
 import { hmacIdentifier } from '../security/tokens.js';
 import type { EncryptedEmailOutboxFactory } from '../outbox/email-message.js';
 import type { EncryptedOutboxMessageDraft } from '../outbox/contracts.js';
+import type { AccountNotificationWriter } from '../notifications/contracts.js';
+import { PostgresAccountNotificationWriter } from '../notifications/postgres-account-notification-writer.js';
 import { normalizeEmail } from './normalization.js';
 
 const DEFAULT_ORGANIZATION_ID = 'org_tche_fertilidade';
@@ -113,6 +115,7 @@ function mapPrincipal(row: PrincipalRow): AuthenticatedPrincipal {
 async function appendAudit(
   client: PoolClient,
   input: {
+    readonly id?: string;
     readonly organizationId: string;
     readonly event: string;
     readonly result?: 'sucesso' | 'negado' | 'falha';
@@ -131,14 +134,16 @@ async function appendAudit(
     client,
     `
       INSERT INTO public.eventos_auditoria (
-        organizacao_id, evento, resultado, ator_tipo, ator_usuario_id,
+        id, organizacao_id, evento, resultado, ator_tipo, ator_usuario_id,
         sessao_id, usuario_afetado_id, recurso_tipo, recurso_id, request_id,
         email_hmac, metadados
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb
+        COALESCE($1::uuid, pg_catalog.gen_random_uuid()),
+        $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb
       )
     `,
     [
+      input.id ?? null,
       input.organizationId,
       input.event,
       input.result ?? 'sucesso',
@@ -313,6 +318,7 @@ export interface PostgresAuthRepositoryOptions {
   readonly recoveryActionBaseUrl: string;
   readonly organizationId?: string;
   readonly idGenerator?: () => string;
+  readonly notificationWriter?: AccountNotificationWriter;
 }
 
 export class PostgresAuthRepository implements AuthRepository {
@@ -322,6 +328,7 @@ export class PostgresAuthRepository implements AuthRepository {
   readonly #recoveryOutboxFactory: EncryptedEmailOutboxFactory;
   readonly #recoveryActionBaseUrl: string;
   readonly #idGenerator: () => string;
+  readonly #notificationWriter: AccountNotificationWriter;
 
   public constructor(options: PostgresAuthRepositoryOptions) {
     if (options.emailHmacKey.byteLength < 32) {
@@ -333,6 +340,8 @@ export class PostgresAuthRepository implements AuthRepository {
     this.#recoveryOutboxFactory = options.recoveryOutboxFactory;
     this.#recoveryActionBaseUrl = options.recoveryActionBaseUrl;
     this.#idGenerator = options.idGenerator ?? randomUUID;
+    this.#notificationWriter =
+      options.notificationWriter ?? new PostgresAccountNotificationWriter();
   }
 
   public findLoginSubject(normalizedEmail: string): Promise<LoginSubject | null> {
@@ -1101,7 +1110,9 @@ export class PostgresAuthRepository implements AuthRepository {
           row.expira_absolutamente_em,
         ],
       );
+      const auditId = this.#idGenerator();
       await appendAudit(client, {
+        id: auditId,
         organizationId: this.#organizationId,
         event: 'auth.senha.alterada',
         actorType: 'usuario',
@@ -1112,6 +1123,13 @@ export class PostgresAuthRepository implements AuthRepository {
         requestId: input.requestId,
         sessionId: input.currentSessionId,
         metadata: { sessao_atual_preservada: true, tokens_girados: true },
+      });
+      await this.#notificationWriter.create(client, {
+        organizationId: this.#organizationId,
+        recipientUserId: input.userId,
+        eventType: 'conta.senha_alterada.v1',
+        sourceKey: auditId,
+        authorUserId: input.userId,
       });
       const sessionWindowRow = sessionWindow.rows[0];
       const accessRow = access.rows[0];
@@ -1397,7 +1415,9 @@ export class PostgresAuthRepository implements AuthRepository {
         `,
         [row.organizacao_id, row.usuario_id],
       );
+      const auditId = this.#idGenerator();
       await appendAudit(client, {
+        id: auditId,
         organizationId: row.organizacao_id,
         event: 'auth.recuperacao_senha.concluida',
         actorType: 'sistema',
@@ -1406,6 +1426,12 @@ export class PostgresAuthRepository implements AuthRepository {
         resourceId: row.usuario_id,
         requestId: input.requestId,
         metadata: { login_automatico: false },
+      });
+      await this.#notificationWriter.create(client, {
+        organizationId: row.organizacao_id,
+        recipientUserId: row.usuario_id,
+        eventType: 'conta.recuperacao_concluida.v1',
+        sourceKey: auditId,
       });
       return true;
     });

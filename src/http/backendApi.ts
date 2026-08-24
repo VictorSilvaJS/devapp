@@ -2,6 +2,13 @@ import type {
   AcceptedResponse,
   ApiErrorCode,
   HttpSessionIdentity,
+  NotificationDestination,
+  NotificationDiscardResult,
+  NotificationFilters,
+  NotificationPage,
+  NotificationReadAllResult,
+  NotificationReadResult,
+  NotificationUnreadCount,
   PropertyFilters,
   PropertyPage,
   PropertyProjection,
@@ -12,6 +19,12 @@ import type {
 import {
   decodeAcceptedResponse,
   decodeApiError,
+  decodeNotificationDestination,
+  decodeNotificationDiscardResult,
+  decodeNotificationPage,
+  decodeNotificationReadAllResult,
+  decodeNotificationReadResult,
+  decodeNotificationUnreadCount,
   decodeProperty,
   decodePropertyPage,
   decodeRemoteSessions,
@@ -463,5 +476,92 @@ export class BackendApi {
       accessToken,
     });
     return decodeProperty(response.body);
+  }
+
+  async listNotifications(
+    accessToken: string,
+    filters: NotificationFilters,
+  ): Promise<NotificationPage> {
+    const query = new URLSearchParams();
+    if (filters.estado) query.set('estado', filters.estado);
+    if (filters.limite !== undefined) query.set('limite', String(filters.limite));
+    if (filters.cursor) query.set('cursor', filters.cursor);
+    const serialized = query.toString();
+    const response = await this.#send({
+      method: 'GET',
+      path: `/v1/notificacoes${serialized ? `?${serialized}` : ''}`,
+      expectedStatus: 200,
+      accessToken,
+    });
+    return decodeNotificationPage(response.body);
+  }
+
+  async countUnreadNotifications(
+    accessToken: string,
+  ): Promise<NotificationUnreadCount> {
+    const response = await this.#send({
+      method: 'GET',
+      path: '/v1/notificacoes/contador-nao-lidas',
+      expectedStatus: 200,
+      accessToken,
+    });
+    return decodeNotificationUnreadCount(response.body);
+  }
+
+  async markNotificationRead(
+    accessToken: string,
+    notificationId: string,
+    idempotencyKey: string,
+  ): Promise<NotificationReadResult> {
+    const response = await this.#send({
+      method: 'POST',
+      path: `/v1/notificacoes/${encodeURIComponent(notificationId)}/leitura`,
+      expectedStatus: 200,
+      accessToken,
+      idempotencyKey,
+    });
+    return decodeNotificationReadResult(response.body);
+  }
+
+  async markAllNotificationsRead(
+    accessToken: string,
+    idempotencyKey: string,
+  ): Promise<NotificationReadAllResult> {
+    const response = await this.#send({
+      method: 'POST',
+      path: '/v1/notificacoes/leituras',
+      expectedStatus: 200,
+      accessToken,
+      idempotencyKey,
+    });
+    return decodeNotificationReadAllResult(response.body);
+  }
+
+  async discardNotification(
+    accessToken: string,
+    notificationId: string,
+    idempotencyKey: string,
+  ): Promise<NotificationDiscardResult> {
+    const response = await this.#send({
+      method: 'DELETE',
+      path: `/v1/notificacoes/${encodeURIComponent(notificationId)}`,
+      expectedStatus: 200,
+      accessToken,
+      idempotencyKey,
+    });
+    return decodeNotificationDiscardResult(response.body);
+  }
+
+  async resolveNotificationDestination(
+    accessToken: string,
+    notificationId: string,
+  ): Promise<NotificationDestination> {
+    const response = await this.#send({
+      method: 'POST',
+      path: `/v1/notificacoes/${encodeURIComponent(notificationId)}/resolver-destino`,
+      expectedStatus: 200,
+      accessToken,
+    });
+    return decodeNotificationDestination(response.body);
   }
 }

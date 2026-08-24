@@ -46,6 +46,7 @@ describe('MP-33B production composition', () => {
       'function',
     );
     assert.equal(typeof securityServices.propertyRoutes.service.list, 'function');
+    assert.equal(typeof securityServices.notificationRoutes.service.list, 'function');
 
     const app = await buildApp({
       config: runtimeConfig,
@@ -108,6 +109,12 @@ describe('MP-33B production composition', () => {
         '/v1/auth/assisted-recovery',
         '/v1/propriedades',
         '/v1/propriedades/{id}',
+        '/v1/notificacoes',
+        '/v1/notificacoes/contador-nao-lidas',
+        '/v1/notificacoes/{id}/leitura',
+        '/v1/notificacoes/leituras',
+        '/v1/notificacoes/{id}',
+        '/v1/notificacoes/{id}/resolver-destino',
       ]) {
         assert.ok(document.paths[path], `missing composed route ${path}`);
       }
@@ -128,8 +135,11 @@ describe('MP-33B production composition', () => {
         .sort();
       assert.deepEqual(bearerProtectedOperations, [
         'DELETE /v1/auth/sessions/{sessionId}',
+        'DELETE /v1/notificacoes/{id}',
         'GET /v1/auth/me',
         'GET /v1/auth/sessions',
+        'GET /v1/notificacoes',
+        'GET /v1/notificacoes/contador-nao-lidas',
         'GET /v1/propriedades',
         'GET /v1/propriedades/{id}',
         'POST /v1/auth/assisted-recovery',
@@ -139,6 +149,9 @@ describe('MP-33B production composition', () => {
         'POST /v1/auth/logout-all',
         'POST /v1/auth/password/change',
         'POST /v1/auth/secondary-email/request',
+        'POST /v1/notificacoes/leituras',
+        'POST /v1/notificacoes/{id}/leitura',
+        'POST /v1/notificacoes/{id}/resolver-destino',
       ]);
       assert.deepEqual(document.paths['/v1/propriedades']?.get?.security, [
         { bearerAuth: [] },

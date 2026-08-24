@@ -20,6 +20,7 @@ import {
 } from '../../src/security/tokens.js';
 import { OutboxPayloadCipher } from '../../src/outbox/crypto.js';
 import { EncryptedEmailOutboxFactory } from '../../src/outbox/email-message.js';
+import type { AccountNotificationWriter } from '../../src/notifications/contracts.js';
 import {
   startPostgisTestDatabase,
   type StartedPostgisTestDatabase,
@@ -64,6 +65,12 @@ describe(
     let service: DefaultAuthenticationService | undefined;
     let loginSequence = 0;
     const authConfig = loadAuthenticationRuntimeConfig({ NODE_ENV: 'test' });
+    const recoveryOutboxFactory = new EncryptedEmailOutboxFactory(
+      new OutboxPayloadCipher({
+        activeKeyId: 'integration-key',
+        keys: [{ id: 'integration-key', key: Buffer.alloc(32, 0x41) }],
+      }),
+    );
 
     before(async () => {
       assertDestructiveDatabaseTestsAllowed(
@@ -86,17 +93,7 @@ describe(
       assertDestructiveDatabaseTestsAllowed(testDatabase.connectionString);
       await runMigrations({ command: 'up', database: testDatabase.database });
       pool = new Pool(buildPostgresPoolConfig(testDatabase.database));
-      repository = new PostgresAuthRepository({
-        pool,
-        emailHmacKey: authConfig.abuseProtection.emailHmacKey,
-        recoveryOutboxFactory: new EncryptedEmailOutboxFactory(
-          new OutboxPayloadCipher({
-            activeKeyId: 'integration-key',
-            keys: [{ id: 'integration-key', key: Buffer.alloc(32, 0x41) }],
-          }),
-        ),
-        recoveryActionBaseUrl: 'https://example.test/auth/action',
-      });
+      repository = createRepository();
       throttle = new PostgresLoginThrottle({ pool });
       service = new DefaultAuthenticationService({
         config: authConfig,
@@ -130,6 +127,18 @@ describe(
     function requireService(): DefaultAuthenticationService {
       assert.ok(service);
       return service;
+    }
+
+    function createRepository(
+      notificationWriter?: AccountNotificationWriter,
+    ): PostgresAuthRepository {
+      return new PostgresAuthRepository({
+        pool: requirePool(),
+        emailHmacKey: authConfig.abuseProtection.emailHmacKey,
+        recoveryOutboxFactory,
+        recoveryActionBaseUrl: 'https://example.test/auth/action',
+        ...(notificationWriter === undefined ? {} : { notificationWriter }),
+      });
     }
 
     async function seedActiveUser(): Promise<{ id: string; email: string }> {
@@ -386,6 +395,93 @@ describe(
       assert.equal(Number(credential.rows[0]?.versao_autorizacao), 2);
     });
 
+    test('falha da notificação reverte atomicamente a troca autenticada de senha', async () => {
+      const user = await seedActiveUser();
+      const current = await login(user, 'req-password-rollback-login');
+      const injectedFailure = 'notification-writer-injected-failure';
+      const failingRepository = createRepository({
+        async create() {
+          throw new Error(injectedFailure);
+        },
+      });
+      const failingService = new DefaultAuthenticationService({
+        config: authConfig,
+        repository: failingRepository,
+        throttle: requireThrottle(),
+        credentials: new FixturePasswordCredentials(),
+        dummyPasswordHash: phcFor('DummyPassword1'),
+      });
+
+      await assert.rejects(
+        failingService.changePassword({
+          accessToken: current.accessToken,
+          currentPassword: initialPassword,
+          newPassword: 'NovaSenhaRollback2',
+          requestId: 'req-password-rollback',
+        }),
+        (error: unknown) =>
+          error instanceof HttpError && error.code === 'service_unavailable',
+      );
+
+      const state = await requirePool().query<{
+        senha_phc: string;
+        versao_autorizacao: string;
+        session_status: string;
+        access_status: string;
+        refresh_status: string;
+        audits: string;
+        notifications: string;
+      }>(
+        `
+          SELECT credencial.senha_phc, usuario.versao_autorizacao::text,
+                 sessao.status AS session_status,
+                 acesso.status AS access_status,
+                 refresh.status AS refresh_status,
+                 (SELECT count(*)::text FROM public.eventos_auditoria
+                  WHERE request_id = 'req-password-rollback') AS audits,
+                 (SELECT count(*)::text FROM public.notificacao_entrega
+                  WHERE destinatario_usuario_id = usuario.id) AS notifications
+          FROM public.usuarios AS usuario
+          JOIN public.credenciais_usuario AS credencial
+            ON credencial.organizacao_id = usuario.organizacao_id
+           AND credencial.usuario_id = usuario.id
+          JOIN public.sessoes_autenticacao AS sessao
+            ON sessao.organizacao_id = usuario.organizacao_id
+           AND sessao.id = $2
+          JOIN public.tokens_acesso AS acesso
+            ON acesso.organizacao_id = sessao.organizacao_id
+           AND acesso.sessao_id = sessao.id
+           AND acesso.token_hash = $3
+          JOIN public.tokens_refresh AS refresh
+            ON refresh.organizacao_id = sessao.organizacao_id
+           AND refresh.sessao_id = sessao.id
+           AND refresh.token_hash = $4
+          WHERE usuario.organizacao_id = $1 AND usuario.id = $5
+        `,
+        [
+          ORGANIZATION_ID,
+          current.sessionId,
+          Buffer.from(hashOpaqueToken(current.accessToken), 'base64url'),
+          Buffer.from(hashOpaqueToken(current.refreshToken), 'base64url'),
+          user.id,
+        ],
+      );
+      assert.deepEqual(state.rows[0], {
+        senha_phc: phcFor(initialPassword),
+        versao_autorizacao: '1',
+        session_status: 'ativa',
+        access_status: 'ativo',
+        refresh_status: 'ativo',
+        audits: '0',
+        notifications: '0',
+      });
+      assert.ok(
+        await requireRepository().resolveAccessToken(
+          hashOpaqueToken(current.accessToken),
+        ),
+      );
+    });
+
     test('logout/listagem e revogação própria são isolados por usuário', async () => {
       const user = await seedActiveUser();
       const first = await login(user, 'req-list-a');
@@ -529,6 +625,84 @@ describe(
         senha_phc: phcFor('SenhaRecuperada3'),
         versao_autorizacao: '2',
       });
+    });
+
+    test('falha da notificação reverte atomicamente a recuperação comum', async () => {
+      const user = await seedActiveUser();
+      const activeSession = await login(user, 'req-recovery-rollback-login');
+      const token = issueOpaqueToken();
+      await requireRepository().beginPasswordRecovery({
+        normalizedEmail: user.email,
+        tokenHash: token.hash,
+        deliveryToken: token.value,
+        ttlSeconds: 1_800,
+        requestId: 'req-recovery-rollback-start',
+      });
+      const failingRepository = createRepository({
+        async create() {
+          throw new Error('notification-writer-injected-failure');
+        },
+      });
+
+      await assert.rejects(
+        failingRepository.completePasswordRecovery({
+          tokenHash: token.hash,
+          replacementPasswordHash: phcFor('SenhaRecuperadaRollback3'),
+          policyVersion: 'integration-v2',
+          requestId: 'req-recovery-rollback-complete',
+        }),
+        (error: unknown) =>
+          error instanceof HttpError && error.code === 'service_unavailable',
+      );
+
+      const state = await requirePool().query<{
+        desafio_status: string;
+        senha_phc: string;
+        versao_autorizacao: string;
+        session_status: string;
+        audits: string;
+        notifications: string;
+      }>(
+        `
+          SELECT desafio.status AS desafio_status, credencial.senha_phc,
+                 usuario.versao_autorizacao::text,
+                 sessao.status AS session_status,
+                 (SELECT count(*)::text FROM public.eventos_auditoria
+                  WHERE request_id = 'req-recovery-rollback-complete') AS audits,
+                 (SELECT count(*)::text FROM public.notificacao_entrega
+                  WHERE destinatario_usuario_id = usuario.id) AS notifications
+          FROM public.desafios_autenticacao AS desafio
+          JOIN public.usuarios AS usuario
+            ON usuario.organizacao_id = desafio.organizacao_id
+           AND usuario.id = desafio.usuario_id
+          JOIN public.credenciais_usuario AS credencial
+            ON credencial.organizacao_id = usuario.organizacao_id
+           AND credencial.usuario_id = usuario.id
+          JOIN public.sessoes_autenticacao AS sessao
+            ON sessao.organizacao_id = usuario.organizacao_id
+           AND sessao.usuario_id = usuario.id
+           AND sessao.id = $2
+          WHERE desafio.token_hash = $1
+        `,
+        [Buffer.from(token.hash, 'base64url'), activeSession.sessionId],
+      );
+      assert.deepEqual(state.rows[0], {
+        desafio_status: 'ativo',
+        senha_phc: phcFor(initialPassword),
+        versao_autorizacao: '1',
+        session_status: 'ativa',
+        audits: '0',
+        notifications: '0',
+      });
+      assert.equal(
+        await requireRepository().isPasswordRecoveryTokenUsable(token.hash),
+        true,
+      );
+      assert.ok(
+        await requireRepository().resolveAccessToken(
+          hashOpaqueToken(activeSession.accessToken),
+        ),
+      );
     });
 
     test('limite persistente aplica 1 minuto na quinta falha e separa IP/e-mail', async () => {

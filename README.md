@@ -11,18 +11,22 @@ aparelho e três perfis. A última rodada física do mock não deixou bug aberto
 recorte executado.
 
 A composição HTTP está conectada ao backend para autenticação, ações de conta
-e leitura autorizada de lista/detalhe de Propriedades. A MP-33A estabeleceu a
-fundação do backend e do banco; a MP-33B implementou autenticação/sessão,
-ações de conta, outbox e auditoria; e a MP-33C separou Demo/HTTP e concluiu essa
-primeira integração. A MP-33C foi integrada à branch `backend` pelo PR #2 no
-commit `cc78a9f`, e a CI pós-merge foi aprovada.
+e leitura autorizada de lista/detalhe de Propriedades. A MP-34 acrescenta lista,
+contador, leitura individual/em lote, descarte e resolução segura de destino de
+notificações in-app persistidas da própria conta. A MP-33A estabeleceu a
+fundação do backend e do banco; a MP-33B implementou autenticação/sessão, ações
+de conta, outbox e auditoria; e a MP-33C separou Demo/HTTP e concluiu a primeira
+integração. A MP-33C foi integrada à branch `backend` pelo PR #2 no commit
+`cc78a9f`, e a CI pós-merge foi aprovada.
 
 O mock permanece somente no Demo e nos testes, fora do aplicativo HTTP, que não
-possui fallback para mock. As três fases estão concluídas tecnicamente, mas não
-houve deploy, release ou publicação. MFA de Administrador, domínio e associação
-de links, SMTP/segredos, observabilidade, backup/restauração, assinatura e
-validação em ambiente real continuam portões produtivos. O restante do RBAC de
-negócio permanece nas fases posteriores, sem ser antecipado por esse merge.
+possui fallback para mock. A MP-34 está concluída tecnicamente somente no
+working tree, sem commit, pull request ou integração. Não houve tag, deploy,
+release ou publicação. Responsável/agendamento/alertas da purga, credencial e
+segredo de manutenção, validação jurídica/de privacidade dos 90 dias,
+observabilidade, backup/restauração, MFA de Administrador, domínio e associação
+de links, SMTP/segredos, assinatura e validação em ambiente real continuam
+portões produtivos. O Android físico da MP-34 permanece `NÃO EXECUTADO`.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em
@@ -42,6 +46,7 @@ Comandos principais:
 - npm start
 - npm run android
 - npm run typecheck
+- npm run test:mp34
 - npm run test:domain-compat
 
 Os demais scripts ficam em [package.json](package.json).
@@ -60,6 +65,7 @@ aplicativo permanece em Node.js 22.
 | src/domain, src/types e src/utils | Contratos, regras e compatibilidade |
 | src/api e src/services | Mock, persistência, arquivos e integrações |
 | src/auth e src/contexts | Login, sessão e estado compartilhado |
+| src/http | Composição HTTP real, sessão, Propriedades e notificações |
 | src/assets | Imagens e recursos empacotados |
 | tests e scripts | Testes de domínio e verificações |
 | android | Configuração e build Android nativo |

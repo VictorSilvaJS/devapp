@@ -1,12 +1,20 @@
 # Contrato De API Para RBAC/Backend
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-24
 
 Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
 2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
-autenticação da MP-33B e a leitura autorizada de Propriedades da MP-33C estão
-concluídas tecnicamente. As demais rotas de negócio/RBAC continuam futuras. O
-Demo permanece mockado, e a composição HTTP consome somente capacidades reais.
+autenticação da MP-33B e a leitura autorizada de Propriedades da MP-33C foram
+concluídas tecnicamente. Em 2026-08-24, notificações da própria conta da MP-34
+foram concluídas tecnicamente somente no working tree, sem commit, pull request,
+integração, tag, deploy, release ou publicação. As demais rotas de negócio/RBAC
+continuam futuras. O Demo permanece mockado, e a composição HTTP consome
+somente capacidades reais.
+
+A validação final do backend com a MP-34 executou 41 cenários reais de
+integração: 15 de migrations, 8 de autenticação, 7 de ações de conta, 9 de
+Propriedades/QA e 2 de notificações. Os 36 cenários registrados nos documentos
+da MP-33C permanecem evidência histórica daquele recorte, não o total atual.
 
 Status em 2026-06-03 (Fase 14H): a matriz tecnica de testes de contrato/API
 derivada deste contrato foi registrada em `testes-contrato-api-rbac.md`. Ela
@@ -88,8 +96,15 @@ evita escolhas diferentes entre endpoints.
 
 Todas as colecoes usam cursor estavel, limite padrao 50 e maximo 100, com ID
 como desempate. Criacoes e comandos de transicao exigem `Idempotency-Key`;
-comandos concorrentes exigem a versao-base do recurso. Erros incluem
-`request_id` e nao retornam detalhes sensiveis.
+transições versionadas e comandos concorrentes que avançam ou substituem a
+versão do recurso exigem a versão-base. Erros incluem `request_id` e não
+retornam detalhes sensíveis.
+
+A exceção é restrita à leitura individual, leitura em lote e descarte de
+notificações da MP-34. Esses comandos são monotônicos, não aceitam `version` nem
+versão-base e usam `Idempotency-Key` com binding persistido de comando,
+alvo/corte e hash do pedido. A exceção não altera a exigência de versão-base de
+nenhuma outra transição versionada.
 
 ## Autenticacao E Sessao
 

@@ -623,6 +623,12 @@ export class PostgresAdminSecondaryRecoveryRepository
         });
       }
       await this.#store.insertAudit(client, input.audit);
+      await this.#store.insertAccountNotification(client, {
+        organizationId: row.organizacao_id,
+        recipientUserId: row.id,
+        eventType: 'conta.recuperacao_concluida.v1',
+        sourceKey: input.audit.id,
+      });
       return 'completed';
     });
   }

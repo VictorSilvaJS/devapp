@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "outDir": ".tmp-mp34",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "tests/mp33c-globals.d.ts",
+    "src/http/contracts.ts",
+    "src/http/decoders.ts",
+    "src/http/httpTransport.ts",
+    "src/http/backendApi.ts",
+    "src/http/sessionCoordinator.ts",
+    "src/http/notificationRepository.ts",
+    "src/http/idempotencyKey.ts",
+    "src/http/notificationContextCoordinator.ts",
+    "src/http/notificationOpenGate.ts",
+    "src/http/runtime.ts",
+    "src/http/HttpNotificationContext.tsx",
+    "src/http/screens/HttpNotificationScreen.tsx"
+  ]
+}

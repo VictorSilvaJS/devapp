@@ -32,6 +32,7 @@ type SessionUiStatus =
 interface HttpSessionContextValue {
   readonly runtime: HttpRuntime;
   readonly snapshot: SessionSnapshot | null;
+  readonly sessionEpoch: number;
   readonly status: SessionUiStatus;
   readonly busy: boolean;
   readonly message: string | null;
@@ -70,6 +71,7 @@ export function HttpSessionProvider({
   children,
 }: React.PropsWithChildren<{ readonly runtime: HttpRuntime }>) {
   const [snapshot, setSnapshot] = React.useState(runtime.session.snapshot);
+  const [sessionEpoch, setSessionEpoch] = React.useState(runtime.session.epoch);
   const [status, setStatus] = React.useState<SessionUiStatus>('booting');
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -88,6 +90,7 @@ export function HttpSessionProvider({
   React.useEffect(() => {
     return runtime.session.subscribe((next) => {
       setSnapshot(next);
+      setSessionEpoch(runtime.session.epoch);
       if (next === null && statusRef.current !== 'booting') {
         setStatus('anonymous');
       }
@@ -291,6 +294,7 @@ export function HttpSessionProvider({
   const value = React.useMemo<HttpSessionContextValue>(() => ({
     runtime,
     snapshot,
+    sessionEpoch,
     status,
     busy,
     message,
@@ -302,6 +306,7 @@ export function HttpSessionProvider({
   }), [
     runtime,
     snapshot,
+    sessionEpoch,
     status,
     busy,
     message,

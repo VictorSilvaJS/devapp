@@ -1,14 +1,16 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `ATIVO`; `MP-33A`, `MP-33B` e `MP-33C` concluídas tecnicamente
+> Status: `ATIVO`; `MP-33A`, `MP-33B` e `MP-33C` integradas; `MP-34` concluída
+> tecnicamente somente no working tree
 >
 > Fechamento: 2026-08-07
 >
-> Revisão: 2026-08-21
+> Revisão: 2026-08-24
 >
 > Escopo: baseline do backend e do banco. A fundação foi implementada na
 > `MP-33A`; autenticação/conta, na `MP-33B`; integração e primeira leitura de
-> Propriedades, na `MP-33C`. A autorização de release não está concluída.
+> Propriedades, na `MP-33C`; notificações in-app, na `MP-34`. A autorização de
+> release não está concluída.
 
 ## 1. Veredito
 
@@ -21,6 +23,11 @@ MP-33B e MP-33C foram implementadas e validadas tecnicamente. A MP-33C conecta
 somente sua composição HTTP às rotas já disponíveis e à leitura autorizada de
 Propriedades; o Demo continua isolado. Isso não implanta ambiente, não fecha os
 portões de produção e não autoriza release.
+
+A MP-34 acrescenta notificações individuais da própria conta, persistência,
+API, cliente HTTP e purga de retenção. Ela está concluída tecnicamente somente
+no working tree, sem commit, pull request, integração, tag, deploy, release ou
+publicação. O Android físico específico da fase permanece `NÃO EXECUTADO`.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -125,6 +132,9 @@ chaves do futuro object storage; o PostGIS guardará os dados geoespaciais.
   inicial usa `tche_agro_platform_ops`;
 - essas quatro credenciais são independentes em produção, e as três funções de
   concessão criadas pelo DDL são `NOLOGIN`;
+- a MP-34 acrescenta uma quinta credencial, membro exclusivo do novo papel
+  `NOLOGIN` `tche_agro_notifications_maintenance`, para a purga one-shot de
+  notificações; runtime e manutenção não podem ser combinados;
 - `tche_agro_platform_ops` opera somente o bootstrap inicial e a correção de
   seu convite pendente; não recebe DML de credenciais, sessões, tokens,
   autorizações, recuperações ou break-glass;
@@ -347,15 +357,20 @@ usuário, segredo ou confirmação de recurso fora do escopo.
 - ordenação determinística com ID como desempate;
 - filtros em allowlist por endpoint;
 - `Idempotency-Key` obrigatória em criações e comandos de transição;
-- `version`/versão-base obrigatória em comandos concorrentes;
+- `version`/versão-base obrigatória nas transições versionadas e nos comandos
+  concorrentes cujo contrato avança ou substitui a versão do recurso;
+- como exceção estrita, leitura individual, leitura em lote e descarte de
+  notificações da MP-34 são comandos monotônicos e não aceitam `version` nem
+  versão-base; usam `Idempotency-Key` vinculada ao comando, alvo/corte e hash do
+  pedido. Essa exceção não se estende a outra transição;
 - nenhuma exclusão física de entidade operacional pelo fluxo comum.
 
 ## 8. Política Offline Aprovada
 
-A matriz abaixo continua sendo o alvo conservador das verticais futuras. A
-MP-33C não a implementa: sua composição HTTP piloto é online-only, sem cache
-persistente de negócio, restauração offline ou fila de sincronização. O Demo
-preserva seu funcionamento local, isolado do artefato produtivo.
+A matriz abaixo continua sendo o alvo conservador das verticais futuras. As
+composições HTTP da MP-33C e da MP-34 são online-only, sem cache persistente de
+negócio, restauração offline ou fila de sincronização. O Demo preserva seu
+funcionamento local, isolado do artefato produtivo.
 
 | Fluxo | Leitura offline | Escrita offline no primeiro corte |
 |---|---|---|
@@ -370,7 +385,7 @@ preserva seu funcionamento local, isolado do artefato produtivo.
 | Importação/publicação de Material | Não | Não |
 | GeoJSON publicado | Somente versão já baixada | Não |
 | Importação/reconciliação/publicação GeoJSON | Não | Não |
-| Notificações | Última lista cacheada | Leitura/descarte exigem rede |
+| Notificações | Não; estado somente em memória na composição HTTP | Leitura/descarte exigem rede |
 
 Regras comuns:
 
@@ -383,14 +398,27 @@ Regras comuns:
 
 ## 9. Notificações E Primeira Plataforma
 
-- Notificações do primeiro corte são in-app.
-- Push fica explicitamente fora de `MP-34` inicial.
-- Entregas expiram 90 dias após criação, salvo prazo menor definido pelo
-  evento; o evento de auditoria segue a retenção do domínio de origem.
+- Notificações do primeiro corte foram implementadas como in-app individuais
+  da própria conta, persistidas e online-only.
+- Push, tokens de dispositivo e cache persistente ficam explicitamente fora da
+  `MP-34` inicial.
+- Entregas e chaves idempotentes expiram exatamente 90 dias após seus
+  respectivos instantes de criação/processamento; o evento de auditoria segue a
+  retenção independente do domínio de origem.
+- `outbox_email` permanece separada; os cinco fluxos emissores de conta gravam
+  evento e entrega na mesma transação do fato, convergindo em três tipos de
+  evento.
+- A purga é one-shot, em lotes e usa a credencial exclusiva de manutenção; seu
+  responsável, agendamento, alertas e operação produtiva ainda não estão
+  definidos.
 - Estado lida/descartada nunca reaparece por expiração ou sincronização.
 - A primeira entrega produtiva é Android.
 - iOS permanece fora do primeiro release e não bloqueia backend, banco ou QA
   Android.
+
+A validação final do backend executou 41 cenários reais de integração: 15 de
+migrations, 8 de autenticação, 7 de ações de conta, 9 de Propriedades/QA e 2 de
+notificações.
 
 ## 10. Migração Do Mock
 
@@ -445,6 +473,9 @@ para token, sessão ou cache de negócio.
   `MP-33C`;
 - autorização mínima de leitura por Propriedade na própria consulta,
   concluída na `MP-33C`;
+- notificações in-app self-only, migration append-only, cinco fluxos emissores
+  transacionais, API, composição HTTP e purga one-shot, concluídas tecnicamente
+  na `MP-34` somente no working tree;
 - escritas administrativas e o restante do RBAC por ação no servidor
   (`MP-35`);
 - CI do backend;
@@ -458,6 +489,12 @@ para token, sessão ou cache de negócio.
 - antes de implementar break-glass, Ed25519 ou serviço externo equivalente,
   dois aprovadores distintos, procedimento e teste de ponta a ponta;
 - retenção de auditoria, observabilidade, backup e restauração;
+- responsável, agendamento, alertas, credencial/segredo e observabilidade da
+  purga de notificações;
+- validação jurídica/de privacidade externa da retenção exata de 90 dias e da
+  premissa aprovada de não implementar legal hold nesse corte; se a revisão
+  exigir suspensão de descarte, será necessária alteração futura versionada
+  antes da produção;
 - parâmetros de retenção e limites de Materiais antes da vertical de arquivos;
 - limiares geoespaciais e retenção de rascunhos antes de `MP-37`;
 - smoke de localização em campo em `MP-38`;
@@ -480,6 +517,9 @@ A MP-33A foi delimitada para conter somente:
 Autenticação, sessões, refresh tokens, convites, recuperação e auditoria
 genérica compõem a MP-33B concluída tecnicamente. Separação Demo/HTTP, sessão
 segura no cliente e lista/detalhe HTTP de Propriedades foram concluídas na
-MP-33C. Escritas administrativas permanecem na MP-35. Materiais, GeoJSON
-produtivo, Caderno append-only e notificações entram depois que a fundação
-estiver implantada e observável.
+MP-33C. Notificações in-app da própria conta, persistência, API e composição HTTP
+foram concluídas tecnicamente na MP-34 somente no working tree. Não existe
+commit, pull request, integração, tag, deploy, release ou publicação dessa fase;
+o Android físico da MP-34 não foi executado. Escritas administrativas
+permanecem na MP-35. Materiais, GeoJSON produtivo e Caderno append-only entram
+depois que a fundação estiver implantada e observável.

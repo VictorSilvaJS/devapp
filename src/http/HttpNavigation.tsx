@@ -13,6 +13,10 @@ import { actionNavigationTarget } from './actionNavigation';
 import { parseAccountActionLink } from './actionLinks';
 import { useHttpSession } from './HttpSessionContext';
 import {
+  HttpNotificationProvider,
+  useHttpNotifications,
+} from './HttpNotificationContext';
+import {
   HttpBootScreen,
   HttpLockedScreen,
   HttpLoginScreen,
@@ -38,13 +42,15 @@ import {
   HttpPropertiesScreen,
   HttpPropertyDetailScreen,
 } from './screens/HttpPropertyScreens';
+import { HttpNotificationScreen } from './screens/HttpNotificationScreen';
 import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 const navigationRef = createNavigationContainerRef<any>();
 
-function HttpTabs() {
+function HttpTabsNavigator() {
+  const { unreadCount } = useHttpNotifications();
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
@@ -53,7 +59,13 @@ function HttpTabs() {
         tabBarInactiveTintColor: colors.muted,
         tabBarIcon: ({ color, size }) => (
           <Ionicons
-            name={route.name === 'Properties' ? 'business-outline' : 'person-outline'}
+            name={
+              route.name === 'Properties'
+                ? 'business-outline'
+                : route.name === 'Notifications'
+                  ? 'notifications-outline'
+                  : 'person-outline'
+            }
             color={color}
             size={size}
           />
@@ -66,11 +78,27 @@ function HttpTabs() {
         options={{ title: 'Propriedades' }}
       />
       <Tabs.Screen
+        name="Notifications"
+        component={HttpNotificationScreen}
+        options={{
+          title: 'Notificações',
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+        }}
+      />
+      <Tabs.Screen
         name="Account"
         component={HttpAccountScreen}
         options={{ title: 'Conta' }}
       />
     </Tabs.Navigator>
+  );
+}
+
+function HttpTabs() {
+  return (
+    <HttpNotificationProvider>
+      <HttpTabsNavigator />
+    </HttpNotificationProvider>
   );
 }
 
@@ -91,7 +119,7 @@ function ConfirmAdminSecondaryRecovery() {
 }
 
 export function HttpNavigation() {
-  const { status, snapshot, runtime } = useHttpSession();
+  const { status, snapshot, sessionEpoch, runtime } = useHttpSession();
   const accountAction = useAccountAction();
   const setPendingAction = accountAction.setPending;
   const queuedTarget = React.useRef<string | null>(null);
@@ -150,6 +178,7 @@ export function HttpNavigation() {
         snapshot.usuario.perfil,
         snapshot.usuario.versao_autorizacao,
         snapshot.escopo.versao,
+        sessionEpoch,
         status,
       ].join(':');
 

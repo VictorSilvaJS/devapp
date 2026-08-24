@@ -1,6 +1,6 @@
 # Decisões Consolidadas
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-24
 
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
@@ -297,15 +297,54 @@ seed automático nem produtivo, e dados do mock não são promovidos ao backend.
 
 ### 49. Corte mínimo de notificações da MP-34
 
-A MP-34 começa com notificações in-app individuais, persistidas e online-only
-para fatos reais da própria conta. Evento e entrega são gravados na mesma
-transação do fato de origem. `outbox_email` permanece separada e não é
-reutilizada como armazenamento ou transporte de notificação in-app.
+O corte mínimo aprovado da MP-34 usa notificações in-app individuais,
+persistidas e online-only para fatos reais da própria conta. Evento e entrega
+são gravados na mesma transação do fato de origem. `outbox_email` permanece
+separada e não é reutilizada como armazenamento ou transporte de notificação
+in-app.
 
 O primeiro destino permitido é somente `conta`, e o destinatário é o próprio
 Usuário afetado. Não entram cache persistente, operação offline, push, token de
 dispositivo, fan-out de Propriedade nem ampliação de RBAC. Recursos operacionais,
 MP-35 e fases posteriores permanecem fora desse corte.
+
+### 50. Catálogo, retenção e manutenção de notificações da MP-34
+
+O catálogo emissor inicial contém somente `conta.senha_alterada.v1`,
+`conta.email_principal_alterado.v1` e `conta.recuperacao_concluida.v1`. Cinco
+fluxos emissores transacionais produzem esses três tipos: troca de senha,
+alteração normal de e-mail, recuperação comum, recuperação de Administrador por
+segundo e-mail e recuperação assistida. Todos emitem prioridade `alta`; o
+contrato de entrega continua aceitando `baixa`, `normal` e `alta` para evolução
+compatível.
+
+Os textos aprovados são, respectivamente, `Senha alterada` / `A senha da sua
+conta foi alterada.`, `E-mail principal alterado` / `O e-mail principal da sua
+conta foi alterado.` e `Recuperação concluída` / `A recuperação da sua conta foi
+concluída.`. Produtores não enviam título, resumo, HTML, URL ou texto livre.
+
+Entregas e chaves idempotentes do corte expiram exatamente 90 dias após seus
+respectivos instantes de criação/processamento. A purga é um comando one-shot
+em lotes, executado por credencial membro do papel `NOLOGIN`
+`tche_agro_notifications_maintenance`, sempre separado do runtime. Responsável,
+agendamento/frequência, alertas, provisionamento do segredo e revisão
+jurídica/de privacidade continuam portões produtivos, não decisões em aberto do
+código.
+
+Versão-base continua obrigatória para transições versionadas. Leitura
+individual, leitura em lote e descarte de notificações são a exceção estrita:
+por serem monotônicos, não aceitam `version`/versão-base e usam
+`Idempotency-Key` vinculada ao comando, alvo/corte e hash do pedido. Essa
+exceção não pode ser generalizada para outro comando.
+
+A MP-34 não implementa legal hold nem suspensão de descarte. A revisão
+jurídica/de privacidade externa deve validar essa premissa junto com os 90 dias;
+se ela exigir a capacidade, a mudança será futura, explícita e versionada antes
+da produção.
+
+A implementação dessas decisões foi concluída tecnicamente somente no working
+tree. Não existe commit, pull request, integração, tag, deploy, release ou
+publicação da MP-34.
 
 ## Contratos que detalham as decisões
 

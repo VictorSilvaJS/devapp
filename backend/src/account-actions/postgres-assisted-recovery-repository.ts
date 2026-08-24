@@ -26,6 +26,7 @@ interface RecoveryChallengeRow extends QueryResultRow {
 interface RestrictedRecoveryRow extends AccountRow {
   readonly authorization_id: string;
   readonly recovery_id: string;
+  readonly solicitada_por_usuario_id: string;
   readonly novo_email: string;
   readonly current_email: string;
 }
@@ -363,7 +364,9 @@ export class PostgresAssistedRecoveryRepository
           SELECT usuario.id, usuario.organizacao_id, usuario.nome, usuario.email,
                  usuario.perfil, usuario.status, usuario.xmin::text AS version,
                  autorizacao.id AS authorization_id,
-                 recuperacao.id AS recovery_id, recuperacao.novo_email,
+                 recuperacao.id AS recovery_id,
+                 recuperacao.solicitada_por_usuario_id,
+                 recuperacao.novo_email,
                  usuario.email AS current_email
           FROM public.autorizacoes_restritas AS autorizacao
           JOIN public.recuperacoes_assistidas AS recuperacao
@@ -412,6 +415,7 @@ export class PostgresAssistedRecoveryRepository
                  autorizacao.status AS authorization_status,
                  autorizacao.expira_em AS authorization_expires_at,
                  recuperacao.id AS recovery_id, recuperacao.status AS recovery_status,
+                 recuperacao.solicitada_por_usuario_id,
                  recuperacao.novo_email, credencial.id AS credential_id
           FROM public.autorizacoes_restritas AS autorizacao
           JOIN public.recuperacoes_assistidas AS recuperacao
@@ -520,6 +524,13 @@ export class PostgresAssistedRecoveryRepository
         originId: row.recovery_id,
       });
       await this.#store.insertAudit(client, input.audit);
+      await this.#store.insertAccountNotification(client, {
+        organizationId: row.organizacao_id,
+        recipientUserId: row.id,
+        eventType: 'conta.recuperacao_concluida.v1',
+        sourceKey: input.audit.id,
+        authorUserId: row.solicitada_por_usuario_id,
+      });
       return 'completed';
     });
   }

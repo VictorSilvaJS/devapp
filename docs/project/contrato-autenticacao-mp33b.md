@@ -1,6 +1,6 @@
 # Contrato de Autenticação e Recuperação — MP-33B
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-24
 >
 > Estado: CONCLUÍDA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO
 
@@ -253,6 +253,13 @@ Seus DMLs colunares de Usuário, desafio, convite, outbox, bootstrap e auditoria
 são limitados ao primeiro Admin pendente e protegidos por `SESSION_USER` e
 constraints diferidas de estado final. Nenhuma migration destrutiva usa cascade
 e o down da MP-33B remove somente seus próprios objetos.
+
+Esse total descreve o corte histórico da MP-33B. A MP-34 acrescenta uma quinta
+credencial operacional, membro exclusivo do papel `NOLOGIN`
+`tche_agro_notifications_maintenance`, para a purga one-shot de notificações.
+Ela não pode combinar o papel de runtime e ainda não foi provisionada em
+produção; a implementação permanece somente no working tree, sem commit, pull
+request, integração, tag, deploy, release ou publicação.
 
 ## Autorização mínima e liberação
 

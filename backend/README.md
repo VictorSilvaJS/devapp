@@ -7,9 +7,13 @@ transacional e auditoria da MP-33B estão concluídas tecnicamente.
 A MP-33C conectou uma composição HTTP separada à autenticação e à leitura
 autorizada de Propriedades. Ela foi integrada à branch `backend` pelo PR #2 no
 commit `cc78a9f`, com CI pós-merge aprovada. O mock permanece somente no Demo e
-nos testes; o aplicativo HTTP não possui fallback para ele. Não houve deploy,
-release ou publicação, e os portões produtivos continuam abertos. A autorização
-completa dos demais recursos de negócio permanece nas fases posteriores.
+nos testes; o aplicativo HTTP não possui fallback para ele.
+
+A MP-34 acrescenta notificações in-app persistidas da própria conta, cinco
+fluxos emissores transacionais, API, composição HTTP e purga one-shot. Ela está
+concluída tecnicamente somente no working tree: não existe commit, pull request,
+integração, tag, deploy, release ou publicação. Os portões produtivos continuam
+abertos, e o Android físico específico da fase permanece `NÃO EXECUTADO`.
 
 ## Requisitos
 
@@ -35,7 +39,7 @@ npm run smoke:dist
 
 ## Processos e credenciais de banco
 
-Produção usa quatro credenciais separadas. As três funções criadas pelas
+Produção usa cinco credenciais separadas. As quatro funções criadas pelas
 migrations são `NOLOGIN`; a plataforma deve provisionar contas `LOGIN` próprias
 e conceder a associação correspondente.
 
@@ -44,30 +48,33 @@ e conceder a associação correspondente.
 | API | `DATABASE_URL` | membro de `tche_agro_runtime` |
 | migrations | `MIGRATIONS_DATABASE_URL` | proprietário/migrador do schema |
 | worker de e-mail | `OUTBOX_DATABASE_URL` | membro de `tche_agro_outbox_worker` |
+| manutenção de notificações | `NOTIFICATIONS_MAINTENANCE_DATABASE_URL` | membro de `tche_agro_notifications_maintenance` |
 | bootstrap de plataforma | `PLATFORM_DATABASE_URL` | membro de `tche_agro_platform_ops` |
 
 Em produção, não reutilize uma credencial entre esses processos. A credencial
 de runtime não possui privilégio para alterar, excluir ou truncar auditoria; o
-worker só recebe as operações necessárias da outbox; a operação de plataforma
-fica limitada ao primeiro bootstrap e à correção de seu convite pendente. Ela
-não recebe DML de credenciais, sessões, access/refresh, autorizações,
-recuperações ou break-glass, nem lê hashes de token, payload da outbox,
-Propriedades ou o histórico de auditoria. Os DMLs colunares de Usuário,
-desafio, convite, outbox, bootstrap e auditoria são aceitos somente quando
-compõem esse fluxo.
+worker só recebe as operações necessárias da outbox; a manutenção de
+notificações só consulta o backlog mínimo e exclui entregas/chaves expiradas e
+eventos órfãos pelo comando de purga; a operação de plataforma fica limitada ao
+primeiro bootstrap e à correção de seu convite pendente. Ela não recebe DML de
+credenciais, sessões, access/refresh, autorizações, recuperações ou break-glass,
+nem lê hashes de token, payload da outbox, Propriedades ou o histórico de
+auditoria. Os DMLs colunares de Usuário, desafio, convite, outbox, bootstrap e
+auditoria são aceitos somente quando compõem esse fluxo.
 
 Os guards consideram `SESSION_USER`, impedem uma credencial de combinar os
-papéis runtime/plataforma e validam, por constraints diferidas, que a transação
-termine com Admin pendente, convite, desafio, outbox e auditoria coerentes. O
-proprietário/migrador não é usado para servir HTTP.
+papéis runtime/plataforma ou runtime/manutenção e validam, por constraints
+diferidas, que a transação termine com Admin pendente, convite, desafio, outbox
+e auditoria coerentes. O proprietário/migrador não é usado para servir HTTP.
 
 Para cada URL existe um CA opcional específico:
 `DATABASE_SSL_CA`, `MIGRATIONS_DATABASE_SSL_CA`,
-`OUTBOX_DATABASE_SSL_CA` e `PLATFORM_DATABASE_SSL_CA`. Em produção, SSL é
-obrigatório e sempre verifica o certificado. As URLs não aceitam query nem
-fragmento, evitando conflito entre `sslmode` e o objeto SSL tipado.
+`OUTBOX_DATABASE_SSL_CA`, `NOTIFICATIONS_MAINTENANCE_DATABASE_SSL_CA` e
+`PLATFORM_DATABASE_SSL_CA`. Em produção, SSL é obrigatório e sempre verifica o
+certificado. As URLs não aceitam query nem fragmento, evitando conflito entre
+`sslmode` e o objeto SSL tipado.
 
-No desenvolvimento local, as quatro URLs podem apontar temporariamente para o
+No desenvolvimento local, as cinco URLs podem apontar temporariamente para o
 mesmo PostgreSQL do Compose. Isso é conveniência local e não modelo de
 privilégios para produção.
 
@@ -136,6 +143,24 @@ Não registre a configuração completa, URLs de conexão, senhas, tokens, chave
 ou payloads da outbox. Os logs estruturados ocultam os campos sensíveis
 previstos no contrato.
 
+### Notificações e purga
+
+O corte da MP-34 persiste entregas e chaves idempotentes por exatamente 90 dias.
+A purga física não roda no startup nem em loop interno: é um comando one-shot,
+idempotente e em lotes, com lock concorrente, tentativas limitadas para falhas
+transitórias e log estruturado do resultado.
+
+- `NOTIFICATIONS_MAINTENANCE_DATABASE_URL` identifica a credencial exclusiva de
+  manutenção e é obrigatória em produção;
+- `NOTIFICATIONS_MAINTENANCE_DATABASE_SSL_CA` configura seu CA opcional;
+- `NOTIFICATIONS_PURGE_BATCH_SIZE` aceita de 1 a 5000 e usa 1000 por padrão.
+
+O responsável, o agendamento/frequência e os alertas externos ainda são portões
+produtivos. A revisão jurídica/de privacidade externa deve validar os 90 dias e
+a premissa aprovada de que a MP-34 não implementa legal hold ou suspensão de
+descarte. Se essa premissa for recusada, a mudança será futura e versionada antes
+da produção.
+
 ## Ambiente local com PostgreSQL e Mailpit
 
 [compose.yaml](compose.yaml) usa `postgis/postgis:17-3.5` e
@@ -184,8 +209,10 @@ produção.
 | `npm run migrate:local:redo -- 1` | refaz migrations com `.env.local` |
 | `npm run dev:local` | inicia a API com `.env.local` |
 | `npm run dev:outbox:local` | inicia o worker de e-mail com `.env.local` |
+| `npm run notifications:purge:local` | executa uma rodada explícita da purga com `.env.local` |
 
-O Compose não executa migrations, API, worker nem bootstrap automaticamente.
+O Compose não executa migrations, API, worker, purga nem bootstrap
+automaticamente.
 Não existe comando de remoção automática do volume.
 
 ## Bootstrap do primeiro Administrador
@@ -326,6 +353,43 @@ fase; o scaffold break-glass não cria caso, token, sessão ou auto-login.
 Respostas com segredos usam `Cache-Control: no-store`, `Pragma: no-cache` e
 `Referrer-Policy: no-referrer`. Toda resposta possui `x-request-id`.
 
+### Notificações in-app
+
+Todas as rotas usam a identidade da sessão e retornam somente entregas do
+próprio Usuário na organização atual. Admin não consulta histórico alheio;
+entrega ausente, expirada, descartada ou de outro destinatário/organização usa o
+mesmo `404`. As respostas são `no-store`.
+
+| Método e caminho | Comportamento |
+|---|---|
+| `GET /v1/notificacoes` | lista por cursor estável, com `estado`, `limite` e `cursor` como únicos filtros |
+| `GET /v1/notificacoes/contador-nao-lidas` | conta pelo mesmo filtro autorizado da lista |
+| `POST /v1/notificacoes/:id/leitura` | preserva o primeiro horário de leitura |
+| `POST /v1/notificacoes/leituras` | marca elegíveis até o corte fixado pelo servidor |
+| `DELETE /v1/notificacoes/:id` | registra descarte sem exclusão física imediata |
+| `POST /v1/notificacoes/:id/resolver-destino` | reautoriza e retorna somente `conta` + UUID canônico |
+
+Leitura individual, leitura em lote e descarte exigem `Idempotency-Key`. Retry
+explícito de resultado ambíguo reutiliza a mesma chave; uma nova ação após
+sucesso usa outra. O cliente não informa destinatário, organização, horário de
+corte, URL ou nome de tela. Esses três comandos monotônicos não aceitam
+`version` nem versão-base: a chave fica vinculada ao comando, alvo/corte e hash
+do pedido. Isso não altera a versão-base obrigatória de outras transições
+versionadas.
+
+As quatro rotas `POST`/`DELETE` de comando ou resolução não declaram nem aceitam
+corpo. UUID hifenizado em caixa diferente é normalizado para minúsculas antes
+do hash e da consulta; URN e outras formas não canônicas respondem `400`.
+
+O catálogo inicial contém três tipos: senha alterada, e-mail principal alterado
+e recuperação concluída. Cinco fluxos emissores transacionais os produzem:
+troca de senha, alteração normal de e-mail, recuperação comum, recuperação de
+Administrador por segundo e-mail e recuperação assistida. Todos gravam evento e
+entrega para o próprio Usuário na mesma transação do fato de conta e usam
+templates fixos, sem dado pessoal, segredo, HTML, URL ou texto livre.
+`outbox_email` permanece separada; push, tokens de dispositivo, cache persistente
+e operação offline não entram.
+
 ## Senhas, blocklist e benchmark Argon2id
 
 A senha é normalizada em NFC, preserva espaços, possui 8–128 pontos de código
@@ -430,9 +494,13 @@ PostGIS e não usa cascata destrutiva.
 
 | Comando | Cobertura | Dependência externa |
 |---|---|---|
-| `npm run test:unit` | configuração, blocklist/Argon2, serviços, adaptadores, outbox e contratos estáticos de migration | nenhuma |
-| `npm run test:http` | health/readiness, OpenAPI, autenticação e ações de conta por injeção Fastify | nenhuma |
-| `npm run test:integration` | migrations e repositórios reais, concorrência e privilégios dos papéis | Docker |
+| `npm run test:unit` | configuração, blocklist/Argon2, serviços, adaptadores, outbox, notificações, purga e contratos estáticos de migration | nenhuma |
+| `npm run test:http` | health/readiness, OpenAPI, autenticação, ações de conta e notificações por injeção Fastify | nenhuma |
+| `npm run test:integration` | migrations, repositórios reais de notificações, concorrência, retenção/purga e privilégios dos papéis | Docker |
+
+Na rodada técnica da MP-34 foram confirmados 138 testes unitários/contratos de
+migration, 26 HTTP e 41 cenários reais de integração: 15 de migrations, 8 de
+autenticação, 7 de ações de conta, 9 de Propriedades/QA e 2 de notificações.
 
 A integração usa exclusivamente a URL de um Testcontainer
 `postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando
@@ -492,21 +560,29 @@ npm run build
 npm run smoke:dist
 npm start
 npm run start:outbox
+npm run notifications:purge
 ```
 
 `build` gera JavaScript ESM com `tsc`; a API, o worker e a CLI produtiva de
-bootstrap executam somente `dist`. `smoke:dist` carrega API, servidor, worker,
-bootstrap e o parser do scaffold fail-closed de break-glass sem executar
-comandos operacionais. Isso não transforma o scaffold em CLI disponível. API e
-worker devem ser supervisionados como processos separados e receber as
-respectivas credenciais.
+bootstrap executam somente `dist`; a purga também usa seu módulo compilado.
+`smoke:dist` carrega API, servidor, worker, bootstrap e o parser do scaffold
+fail-closed de break-glass sem executar comandos operacionais. Isso não
+transforma o scaffold em CLI disponível. API e worker devem ser supervisionados
+como processos separados. A purga é uma execução one-shot disparada por
+orquestração externa e recebe sua própria credencial.
 
-`SIGINT` e `SIGTERM` fecham Fastify/pool na API e loop/pool no worker. As
-migrations e a CLI de bootstrap continuam comandos explícitos, nunca efeitos
+`SIGINT` e `SIGTERM` fecham Fastify/pool na API e loop/pool no worker. Migrations,
+purga e CLI de bootstrap continuam comandos explícitos, nunca efeitos
 colaterais de startup.
 
 Antes de liberação pública ainda são obrigatórios MFA de Admin, política
 operacional de recuperação assistida, benchmark Argon2id no ambiente real,
-SMTP/segredos, observabilidade, backup/restauração e retenção revisada.
+SMTP/segredos, observabilidade, backup/restauração, responsável/agendamento e
+alertas da purga, credencial/CA/segredo de manutenção e validação
+jurídica/de privacidade externa da retenção de 90 dias. O Android físico da
+MP-34 permanece `NÃO EXECUTADO`.
 Break-glass permanece uma capacidade não implementada; Ed25519 ou serviço
 externo equivalente com dois aprovadores é pré-requisito para iniciá-la.
+
+A MP-34 está concluída tecnicamente somente no working tree. Não existe commit,
+pull request, integração, tag, deploy, release ou publicação dessa fase.

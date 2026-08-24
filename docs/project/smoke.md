@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-19
+> Atualizado em: 2026-08-24
 >
 > Última execução física registrada: 2026-08-17
 
@@ -24,6 +24,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
 | ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
+| ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO; ANDROID FÍSICO NÃO EXECUTADO |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -166,6 +167,32 @@ mensal estável, os campos dependentes do tipo, a remoção da ação de complem
 e os demais itens de `ATUAL-13` foram confirmados no Android sem limpar os
 dados.
 
+## Cenários HTTP da MP-34 antes do release
+
+Com backend real e duas identidades sintéticas, repetir:
+
+1. listar por `estado`, paginar por cursor e reconciliar contador pelo mesmo
+   filtro;
+2. marcar uma entrega e todas as elegíveis como lidas, atualizar a tela e
+   confirmar persistência do primeiro horário e do corte do servidor;
+3. repetir resultado de transporte ambíguo com a mesma `Idempotency-Key` e
+   confirmar que ação nova após sucesso usa chave nova;
+4. descartar uma entrega, atualizar e confirmar que ela não reaparece;
+5. resolver destino `conta`, revalidar a sessão e só então abrir a própria conta;
+6. trocar Usuário/organização ou avançar o epoch com requisições pendentes e
+   confirmar que lista, contador, cursor e navegação antigos não reaparecem;
+7. tentar acessar entrega de outro destinatário/organização e observar o mesmo
+   `404`, sem confirmação de existência;
+8. retirar a rede e confirmar indisponibilidade honesta, sem cache persistente,
+   fila offline ou fallback para o mock;
+9. inspecionar o grafo/runtime HTTP para ausência de `NotificacaoContext`,
+   `NOTIFICACOES_INICIAIS`, `src/api`, `AsyncStorage`, push e token de
+   dispositivo; confirmar que o Demo continua intacto.
+
+Os gates automatizados correspondentes passaram. A execução física Android
+específica da MP-34 permanece `NÃO EXECUTADO`; este documento não a promove a
+`PASSOU` por inferência.
+
 ## Cenários de campo de MP-38
 
 - posição dentro de Talhão;
@@ -219,12 +246,56 @@ continuam portões. Break-glass não está implementado; Ed25519 ou serviço ext
 equivalente com dois aprovadores é requisito anterior a essa futura capacidade.
 Não houve commit, tag ou deploy nesta execução.
 
+### Evidência da MP-33C em 2026-08-21
+
+| ID | Cenário executável | Resultado |
+|---|---|---|
+| MP33C-01 | Node.js 24: manifesto, typecheck, 126 testes unitários/contratos, 23 HTTP, build e smoke ESM | PASSOU |
+| MP33C-02 | Testcontainer `postgis/postgis:17-3.5`: 36 cenários de autorização, filtros, cursor, fixtures e privilégios | PASSOU |
+| MP33C-03 | Node.js 22: typecheck, `test:domain-compat` e 38 focados — 8 contratos, 25 sessão/concorrência e 5 arquitetura | PASSOU |
+| MP33C-04 | Bundles HTTP/Demo, Autolinking, grafo Android e prebuild temporário inspecionados separadamente | PASSOU |
+| MP33C-05 | PR #2 integrado em `cc78a9f` e CI pós-merge da branch `backend` | PASSOU |
+
+O fechamento da MP-33C preservou o mock apenas no Demo/testes e confirmou que o
+aplicativo HTTP não possui fallback. Não houve tag, deploy, release ou
+publicação.
+
+### Evidência da MP-34 em 2026-08-24
+
+| ID | Cenário executável | Resultado |
+|---|---|---|
+| MP34-01 | Node.js 22: typecheck, `test:domain-compat` e `test:mp34` com 10 contratos, 12 repositório e 13 arquitetura; 5 gates comportamentais — 2 open gate + 3 context coordinator | PASSOU — 35/35 |
+| MP34-02 | Node.js 24: manifesto, typecheck, 138 testes unitários/contratos de migration, 26 HTTP, build e smoke ESM | PASSOU |
+| MP34-03 | Testcontainer: 41 cenários reais — 15 migrations, 8 autenticação, 7 ações de conta, 9 Propriedades/QA e 2 notificações | PASSOU |
+| MP34-04 | Grafo HTTP sem mock legado, `src/api`, `AsyncStorage`, push ou token de dispositivo; Demo preservado | PASSOU |
+| MP34-05 | Android físico específico da vertical | NÃO EXECUTADO |
+
+A rodada valida tecnicamente migration `000005`, cinco fluxos emissores
+transacionais para três tipos de evento, API self-only, idempotência, conteúdo
+seguro, retenção exata de 90 dias, purga one-shot e composição HTTP. Ela não
+comprova operação produtiva da purga, revisão jurídica/de privacidade,
+observabilidade, backup/restauração ou release.
+
+A MP-34 permanece somente no working tree. Não houve commit, pull request,
+integração, tag, deploy, release ou publicação.
+
 ### Comandos gerais
 
 Antes e depois de mudança de código:
 
 - npm run typecheck
+- npm run test:mp34
 - npm run test:domain-compat
+
+No backend, em Node.js 24:
+
+- npm run migrations:verify
+- npm run typecheck
+- npm run test:unit
+- npm run test:http
+- npm run test:integration
+- npm run build
+- npm run smoke:dist
 
 Acrescente testes focados da vertical. Para mudança somente documental, valide
 links locais e execute git diff --check.

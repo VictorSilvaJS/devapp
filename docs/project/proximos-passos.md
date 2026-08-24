@@ -1,10 +1,13 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-21
+> Atualizado em: 2026-08-24
 >
-> Próxima tarefa: ratificar as decisões pendentes da MP-34 antes do código
+> Próxima tarefa: revisar o fechamento técnico da MP-34 e decidir explicitamente
+> sobre eventual commit e pull request
 >
-> Estado: MP-33A, MP-33B E MP-33C INTEGRADAS; SEM DEPLOY, RELEASE OU PUBLICAÇÃO
+> Estado: MP-33A, MP-33B E MP-33C INTEGRADAS; MP-34 CONCLUÍDA TECNICAMENTE
+> SOMENTE NO WORKING TREE, SEM COMMIT, PR, INTEGRAÇÃO, TAG, DEPLOY, RELEASE OU
+> PUBLICAÇÃO
 
 ## Ponto de partida
 
@@ -18,6 +21,11 @@ o Demo foi preservado, a composição HTTP recebeu sessão segura e ações
 self-service, e o backend passou a oferecer lista/detalhe autorizados de
 Propriedades. A CI pós-merge foi aprovada. Não houve tag, deploy, release,
 assinatura ou publicação.
+
+A MP-34 implementou notificações in-app reais, persistidas e isoladas para fatos
+da própria conta. A implementação e seus testes estão somente no working tree:
+não existe commit, pull request, integração, tag, deploy, release ou publicação
+da fase. O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -174,15 +182,15 @@ a assinatura oficial e executar a validação ponta a ponta em dispositivo e
 ambiente de release. MFA de Admin e os portões operacionais da MP-33B também
 continuam ativos.
 
-## Sequência depois de MP-33C
+## Estado da sequência depois de MP-33C
 
-A MP-33C já está integrada. A sequência funcional abaixo começa pela MP-34 e
-não autoriza implementação, commit, pull request, deploy ou publicação por si
-só.
+A MP-33C já está integrada. A MP-34 foi concluída tecnicamente no working tree,
+mas esse estado não autoriza commit, pull request, integração, tag, deploy,
+release ou publicação por si só.
 
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
-| 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | ARQUITETURA PREPARADA; CÓDIGO NÃO INICIADO |
+| 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA TECNICAMENTE NO WORKING TREE; SEM COMMIT/PR/INTEGRAÇÃO; PORTÕES PRODUTIVOS PENDENTES |
 | 35 | MP-35 | Escopo por Propriedade e vínculos no servidor | BACKLOG |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
@@ -191,28 +199,42 @@ só.
 | 40 | MP-40 | Acessibilidade e matriz de dispositivos | BACKLOG |
 | 41 | MP-41 | Regressão completa dos três perfis | BACKLOG |
 
-### Arquitetura preparada da MP-34
+### Resultado técnico da MP-34
 
 Contrato: [contrato-notificacoes.md](contrato-notificacoes.md).
 
-O menor corte implementável permanece online-only e inclui somente
-notificações in-app de fatos de conta já reais na MP-33B: senha alterada,
-e-mail principal alterado e recuperação concluída. Cada fato cria evento e
-entrega individual para o próprio Usuário na mesma transação, com deduplicação,
-leitura/descarte persistentes, contador, cursor, resolução segura de destino e
-retenção de 90 dias.
+O corte implementado permanece online-only e inclui somente notificações in-app
+de fatos de conta já reais na MP-33B: senha alterada, e-mail principal alterado
+e recuperação concluída. Cada fato cria evento e entrega individual para o
+próprio Usuário na mesma transação, com deduplicação, leitura/descarte
+persistentes, contador, cursor, resolução segura de destino e retenção de
+exatamente 90 dias. A chave idempotente também expira exatamente 90 dias após o
+processamento.
 
-`outbox_email` não será reutilizada; push e tokens de dispositivo não entram.
+`outbox_email` não foi reutilizada; push e tokens de dispositivo não entram.
 O Demo e seu contexto local permanecem inalterados. Eventos de Propriedade,
 Visita, Caderno, Material, mapa, GeoJSON e Talhão aguardam as fontes e guards de
 suas próprias verticais. MP-35 e fases seguintes ficam fora.
 
-Antes de iniciar código, ainda é necessário ratificar catálogo/textos,
-retenção da chave idempotente e operação/privacidade da purga. A implementação
-planejada segue: migration `000005`, módulo backend e OpenAPI, produtores
-transacionais de conta, porta/tela exclusivas da composição HTTP, testes
-negativos e integração real, e fechamento documental. Nenhuma dessas etapas
-está autorizada automaticamente por este plano.
+Foram entregues a migration `000005`, o módulo backend e OpenAPI, cinco fluxos
+emissores transacionais de conta para três tipos de evento, porta/tela
+exclusivas da composição HTTP, papel de manutenção e comando one-shot de purga.
+Essa quinta credencial operacional é separada das quatro credenciais
+introduzidas na MP-33B.
+
+A rodada confirmada registra no aplicativo `test:mp34` com 35/35 casos: 10 de
+contratos, 12 de repositório e 13 de arquitetura. Há cinco gates
+comportamentais: dois do open gate e três do context coordinator. No backend,
+foram confirmados 138 testes unitários/contratos de migration, 26 HTTP e 41
+cenários reais de integração: 15 de migrations, 8 de autenticação, 7 de ações
+de conta, 9 de Propriedades/QA e 2 de notificações. O smoke Android físico da
+MP-34 não foi executado.
+
+Antes de produção ainda faltam responsável, agendamento e alertas da purga,
+provisionamento da credencial/CA/segredo de manutenção, revisão
+jurídica/de privacidade da retenção, observabilidade, backup/restauração e os
+portões gerais de release. Não houve commit, pull request, integração, tag,
+deploy, release ou publicação da MP-34.
 
 MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.

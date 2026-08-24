@@ -4,9 +4,10 @@
 >
 > Definido em: 2026-07-30
 >
-> Revisão arquitetural: 2026-08-21
+> Revisão técnica: 2026-08-24
 >
-> Estado da MP-34: `ARQUITETURA_PREPARADA`; implementação não iniciada
+> Estado da MP-34: `CONCLUIDA_TECNICAMENTE_NO_WORKING_TREE`; sem commit, pull
+> request, integração, tag, deploy, release ou publicação
 >
 > Origem: `MP-03` / `QA-P0-01`
 
@@ -14,15 +15,17 @@
 
 Este documento define o contrato produtivo minimo para notificacoes in-app:
 destinatario, escopo, recurso relacionado, persistencia, deduplicacao e
-navegacao segura.
+navegacao segura. A MP-34 implementou tecnicamente esse corte no backend e na
+composição HTTP.
 
-Ele nao implementa backend, push, persistencia local ou navegacao no mock
-atual. A implementacao produtiva pertence a `MP-34`.
+O corte não adiciona push, persistência local nem navegação ao mock atual. A
+implementação permanece somente no working tree e ainda não foi integrada nem
+liberada em ambiente produtivo.
 
 ## Corte Mínimo Consolidado Da MP-34
 
-A MP-34 deve entregar a primeira vertical HTTP de notificações reais sem
-antecipar recursos de negócio das fases seguintes. O corte mínimo é:
+A MP-34 entrega a primeira vertical HTTP de notificações reais sem antecipar
+recursos de negócio das fases seguintes. O corte mínimo implementado é:
 
 - notificações exclusivamente in-app, persistidas no PostgreSQL e individuais
   por destinatário;
@@ -42,7 +45,7 @@ antecipar recursos de negócio das fases seguintes. O corte mínimo é:
   usuário, resposta tardia e rota direta.
 
 Os três perfis podem receber eventos da própria conta. O catálogo técnico
-inicial recomendado é:
+inicial aprovado e implementado é:
 
 | `tipo_evento` | Destinatário | Prioridade inicial | Destino |
 |---|---|---|---|
@@ -50,10 +53,19 @@ inicial recomendado é:
 | `conta.email_principal_alterado.v1` | Usuário afetado | `alta` | `conta` |
 | `conta.recuperacao_concluida.v1` | Usuário afetado | `alta` | `conta` |
 
-Troca autenticada de senha e alteração normal do e-mail principal usam seus
-tipos específicos. Recuperação comum, assistida ou pelo segundo e-mail do
-Administrador usa o mesmo tipo genérico de recuperação concluída, sem revelar
-na interface qual método foi usado.
+Os templates aprovados são fixos e não recebem texto livre do produtor:
+
+| `tipo_evento` | Título | Resumo |
+|---|---|---|
+| `conta.senha_alterada.v1` | `Senha alterada` | `A senha da sua conta foi alterada.` |
+| `conta.email_principal_alterado.v1` | `E-mail principal alterado` | `O e-mail principal da sua conta foi alterado.` |
+| `conta.recuperacao_concluida.v1` | `Recuperação concluída` | `A recuperação da sua conta foi concluída.` |
+
+Há cinco fluxos emissores transacionais: troca autenticada de senha, alteração
+normal do e-mail principal, recuperação comum, recuperação de Administrador
+pelo segundo e-mail e recuperação assistida. Os dois primeiros usam seus tipos
+específicos; os três fluxos de recuperação convergem no mesmo tipo genérico de
+recuperação concluída, sem revelar na interface qual método foi usado.
 
 Ficam fora desse corte:
 
@@ -135,7 +147,7 @@ Representa a notificacao efetivamente destinada a um usuario.
 | `lida_em` | `null` enquanto nao lida |
 | `descartada_em` | `null` enquanto visivel |
 | `chave_deduplicacao` | chave idempotente por destinatario |
-| `expira_em` | obrigatório; no máximo 90 dias após `criada_em` |
+| `expira_em` | obrigatório; exatamente 90 dias após `criada_em` no corte da MP-34 |
 
 O corte inicial não persiste perfil como autoridade ou snapshot da entrega. A
 autorizacao usa o usuario, a organizacao, os vinculos ativos e a regra atual do
@@ -151,13 +163,14 @@ e-mail, token, texto exibível ou outro dado pessoal previsível.
 
 ## Persistência, Outbox E Atomicidade Da MP-34
 
-A implementação cria uma migration append-only posterior às quatro migrations
-integradas. Ela adiciona somente `notificacao_evento`, `notificacao_entrega` e
-`notificacao_comando_idempotencia`. A terceira tabela restringe a chave por
-organização/usuário, registra comando, alvo ou corte, hash do pedido, resultado
-e expiração, sem guardar conteúdo de notificação. O registro idempotente não
-pode expirar antes da última entrega que o comando possa afetar. Nenhuma tabela
-existente é alterada para aceitar alias legado ou conteúdo de notificação.
+A implementação técnica criou uma migration append-only posterior às quatro
+migrations integradas. Ela adiciona somente `notificacao_evento`,
+`notificacao_entrega` e `notificacao_comando_idempotencia`. A terceira tabela
+restringe a chave por organização/usuário, registra comando, alvo ou corte,
+hash do pedido, resultado e expiração, sem guardar conteúdo de notificação. No
+corte da MP-34, entregas e chaves idempotentes expiram exatamente 90 dias após
+seu respectivo instante de criação/processamento. Nenhuma tabela existente é
+alterada para aceitar alias legado ou conteúdo de notificação.
 
 O corte mínimo não possui canal externo nem fan-out amplo: cada fato de conta
 tem um único destinatário exato. Por isso, o serviço grava evento e entrega na
@@ -165,7 +178,7 @@ mesma transação PostgreSQL da mudança de conta. Se qualquer parte falhar, tod
 fato é revertido; não existe estado parcial que exija compensação ou retry de
 worker.
 
-`outbox_email` não será reutilizada nem ampliada. Ela contém payload SMTP
+`outbox_email` não é reutilizada nem ampliada. Ela contém payload SMTP
 temporário cifrado, vínculos com desafios, ciclo de vida e privilégios próprios
 da MP-33B; notificações in-app são conteúdo durável consultado pelo usuário.
 Misturar as duas finalidades ampliaria privilégios e retenção sem necessidade.
@@ -186,6 +199,12 @@ corte inicial da MP-34.
   e repetir o comando retorna o estado já alcançado;
 - comandos de estado exigem `Idempotency-Key`; a mesma chave com outro comando
   ou outro alvo é rejeitada;
+- leitura individual, leitura em lote e descarte não aceitam `version` nem
+  versão-base: o binding persistido associa a chave ao comando, alvo ou corte e
+  hash do pedido;
+- essa exceção existe somente porque esses três comandos são monotônicos; a
+  versão-base continua obrigatória nas demais transições versionadas e comandos
+  concorrentes do contrato geral;
 - “marcar todas” fixa no primeiro processamento um corte de criação do servidor
   e o associa à chave idempotente durante toda a vida das entregas alcançáveis,
   para que um retry não marque notificações que chegaram depois;
@@ -214,7 +233,7 @@ de entrar na allowlist. URLs arbitrarias, nomes de tela e objetos de navegacao
 nao fazem parte do contrato persistido.
 
 Essa tabela é o catálogo de domínio aprovado, não a lista automaticamente
-habilitada na MP-34. O primeiro código executável habilita somente `conta`.
+habilitada na MP-34. A implementação técnica habilita somente `conta`.
 Os demais tipos, inclusive `propriedade`, continuam desabilitados até suas
 verticais possuírem fonte autoritativa, rota HTTP e testes de autorização
 próprios.
@@ -278,10 +297,9 @@ Marcar como lida, marcar todas como lidas e descartar devem ser operacoes
 idempotentes, persistidas por destinatario e registradas com horario do
 servidor. Descartar nao apaga o evento nem a trilha administrativa.
 
-A retenção padrão do primeiro backend é de 90 dias desde `criada_em`, salvo
-`expira_em` anterior definido pelo evento. O evento de auditoria segue a
-retenção do domínio de origem. A retenção nunca pode fazer uma entrega
-reaparecer como não lida.
+A retenção da entrega no corte da MP-34 é exatamente 90 dias desde `criada_em`.
+O evento de auditoria segue a retenção independente do domínio de origem. A
+retenção nunca pode fazer uma entrega reaparecer como não lida.
 
 Entrega expirada deixa de aparecer na lista e no contador imediatamente. A
 purga física deve ser um comando operacional explícito, idempotente e em lotes:
@@ -361,6 +379,15 @@ servidor registra o próprio corte na primeira execução da chave. A resoluçã
 destino não marca como lida nem retorna nome de tela, URL ou objeto de
 navegação.
 
+Leitura individual, leitura em lote e descarte também não aceitam `version` ou
+versão-base. O servidor vincula a chave idempotente ao comando, alvo/corte e hash
+do pedido. Essa é uma exceção estreita para mutações monotônicas e não relaxa a
+versão-base obrigatória nas demais transições versionadas.
+
+As quatro rotas `POST`/`DELETE` de comando ou resolução não declaram nem aceitam
+corpo. UUID hifenizado em caixa diferente é canonicalizado para minúsculas antes
+do hash e da consulta; `urn:uuid:` e outras formas não canônicas respondem `400`.
+
 A representação mínima de uma entrega contém `id`, `tipo_evento`,
 `prioridade`, `criada_em`, `lida_em`, `expira_em`, `recurso_tipo`, `recurso_id`
 e conteúdo seguro produzido pelo template versionado. Não inclui
@@ -394,7 +421,7 @@ schema exige versão nova e teste de regressão para clientes antigos.
 
 ## Cliente HTTP E Ciclo Da Identidade
 
-A composição HTTP recebe uma nova porta/repositório de notificações, decoders
+A composição HTTP recebeu uma nova porta/repositório de notificações, decoders
 estritos e tela própria. Ela não importa `NotificacaoContext`,
 `NOTIFICACOES_INICIAIS`, a tela do Demo ou qualquer implementação de
 `src/api`.
@@ -457,7 +484,8 @@ título, resumo ou `dados_apresentacao`.
 7. Navegacao usa allowlist e reautorizacao antes de abrir.
 8. Leitura nao e tratada como autorizacao.
 9. O comportamento global e efemero do mock permanece documentado como falha.
-10. Backend, persistencia e testes negativos ficam explicitamente em `MP-34`.
+10. Backend, persistencia e testes negativos foram entregues tecnicamente na
+    `MP-34`.
 
 ## Critérios De Aceite Da MP-34
 
@@ -482,46 +510,53 @@ título, resumo ou `dados_apresentacao`.
     limpam lista, contador, cursor e destino pendente.
 11. A composição HTTP não importa o mock, não usa `AsyncStorage` e não recebe
     SDK, token ou permissão de push.
-12. Typecheck, contratos, testes HTTP, integração real com PostgreSQL/PostGIS,
-    inspeção dos grafos HTTP/Demo e smoke Android proporcional ao fluxo passam
-    em Node.js 22 para o aplicativo e Node.js 24 para o backend.
+12. Typecheck, contratos, testes HTTP, integração real com PostgreSQL/PostGIS e
+    inspeção dos grafos HTTP/Demo passam em Node.js 22 para o aplicativo e
+    Node.js 24 para o backend. O smoke Android físico da MP-34 é registrado
+    separadamente e permanece `NÃO EXECUTADO`; ele não pode ser marcado como
+    aprovado por inferência.
 
-## Plano De Implementação Preparado
+## Implementação Técnica Concluída No Working Tree
 
-Nenhuma etapa abaixo está autorizada por este documento. Depois da aprovação
-explícita, executar na ordem:
+A execução autorizada entregou, sem criar commit ou integração:
 
-1. fechar as decisões pendentes e congelar os três templates iniciais;
-2. criar a migration append-only, constraints, índices, grants mínimos e testes
-   de migration/privilégio;
-3. criar `backend/src/notifications/` com contratos, templates, repositório,
-   serviço e rotas OpenAPI;
-4. integrar os três produtores aos repositórios de autenticação/conta usando o
-   mesmo `PoolClient` da transação existente;
-5. adicionar contratos, decoders, repositório, estado e tela exclusivos de
-   `src/http`, além do contador e da allowlist `conta`;
-6. cobrir concorrência, deduplicação, idempotência, RBAC negativo, retenção,
-   conteúdo seguro, troca de identidade e separação Demo/HTTP;
-7. atualizar OpenAPI, README operacional, estado, pendências e smoke, sem
-   commit, PR, deploy, release ou publicação automáticos.
+1. os três templates iniciais aprovados e seu catálogo fechado;
+2. a migration append-only `000005-notificacoes.sql`, constraints, índices,
+   grants mínimos, papel de manutenção e testes de migration/privilégio;
+3. `backend/src/notifications/` com contratos, templates, repositório, serviço,
+   rotas OpenAPI e comando one-shot de purga;
+4. os cinco fluxos emissores transacionais dos fatos de conta usando o mesmo
+   `PoolClient` da mudança de origem;
+5. contratos, decoders, repositório, estado e tela exclusivos de `src/http`,
+   contador e allowlist limitada a `conta`;
+6. cobertura de concorrência, deduplicação, idempotência, RBAC negativo,
+   retenção, conteúdo seguro, troca de identidade e separação Demo/HTTP;
+7. documentação operacional e smoke atualizados sem commit, pull request,
+   integração, tag, deploy, release ou publicação.
 
-Arquivos prováveis: `backend/migrations/000005-notificacoes.sql`, novo módulo
-`backend/src/notifications/`, `backend/src/backend-services.ts`,
-`backend/src/app.ts`, os repositórios transacionais dos fatos de conta,
-`src/http/contracts.ts`, `src/http/decoders.ts`, `src/http/backendApi.ts`,
-`src/http/runtime.ts`, `src/http/HttpNavigation.tsx`, uma tela HTTP própria e
-testes focados nas duas árvores.
+Os arquivos efetivos incluem `backend/migrations/000005-notificacoes.sql`, o
+novo módulo `backend/src/notifications/`, o wiring do backend e dos produtores
+transacionais de conta, além de contratos, repositório, estado, navegação, tela
+e testes próprios em `src/http` e `tests`.
 
-## Decisões Pendentes Antes Do Código
+## Decisões Fechadas E Portões Produtivos
 
-- ratificar o catálogo inicial, a prioridade e o texto exato dos três templates;
-- fixar por quanto tempo a chave idempotente de comandos deve ser mantida; a
-  retenção não pode terminar antes do maior `expira_em` alcançável pelo comando,
-  e a proposta inicial é acompanhar os 90 dias das entregas;
-- definir responsável, periodicidade, credencial de menor privilégio e alertas
-  do comando de purga física;
-- concluir a revisão jurídica/de privacidade da retenção e confirmar se existe
-  obrigação de suspensão de descarte.
+Foram fechados no corte técnico:
+
+- catálogo de três tipos, prioridade `alta` dos cinco fluxos emissores e textos
+  exatos dos templates;
+- retenção das entregas e das chaves idempotentes por exatamente 90 dias;
+- comando de purga one-shot em lotes e papel `NOLOGIN`
+  `tche_agro_notifications_maintenance`, separado do runtime.
+
+Continuam portões produtivos:
+
+- definir responsável, frequência/agendamento e alertas externos da purga;
+- provisionar a conta `LOGIN`, CA e segredo da manutenção com menor privilégio;
+- validar externamente, na revisão jurídica/de privacidade, os 90 dias e a
+  premissa aprovada de que a MP-34 não implementa legal hold nem suspensão de
+  descarte. Se essa revisão exigir a capacidade, ela será uma alteração futura
+  versionada e anterior à produção.
 
 MP-34 permanecer online-only, não reutilizar `outbox_email`, limitar o destino a
 `conta`, usar corte do servidor em “marcar todas” e manter push/tokens de
@@ -532,13 +567,14 @@ recursos operacionais continua contrato futuro e não autoriza implementação.
 
 Backend, banco, autenticação, organização confiável e sessão da MP-33B já estão
 disponíveis; a composição HTTP e a autorização de Propriedades da MP-33C também.
-O fechamento produtivo da MP-34 ainda depende de:
+Persistência, API, allowlist e guards da MP-34 foram implementados e testados no
+working tree. O fechamento produtivo ainda depende de:
 
-- aprovação das decisões pendentes acima;
-- persistência, API, allowlist e guards implementados e testados;
-- operação de purga, observabilidade, backup/restauração e gestão de segredos;
+- operação agendada da purga, observabilidade, backup/restauração e gestão de
+  segredos;
 - portões gerais de domínio, assinatura, dispositivo, MFA de Administrador e
   release ainda registrados no núcleo ativo.
 
-Integração push, cache offline e MP-35 ficam fora. Até a implementação ser
-concluída, `QA-P0-01` permanece resolvida somente em nível de contrato.
+Integração push, cache offline e MP-35 ficam fora. `QA-P0-01` está resolvida
+tecnicamente pela MP-34, mas não existe commit, pull request, integração, tag,
+deploy, release ou publicação dessa implementação.

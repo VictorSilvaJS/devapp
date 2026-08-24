@@ -470,6 +470,13 @@ export class PostgresPrimaryEmailChangeRepository
         originId: row.request_id,
       });
       await this.#store.insertAudit(client, input.audit);
+      await this.#store.insertAccountNotification(client, {
+        organizationId: row.organizacao_id,
+        recipientUserId: row.id,
+        eventType: 'conta.email_principal_alterado.v1',
+        sourceKey: input.audit.id,
+        authorUserId: row.id,
+      });
       return 'confirmed';
     });
   }

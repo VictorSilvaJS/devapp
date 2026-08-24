@@ -5,6 +5,13 @@ import type {
   HttpScope,
   HttpSessionIdentity,
   HttpUser,
+  NotificationDestination,
+  NotificationDiscardResult,
+  NotificationPage,
+  NotificationProjection,
+  NotificationReadAllResult,
+  NotificationReadResult,
+  NotificationUnreadCount,
   PropertyPage,
   PropertyProjection,
   RemoteSessionProjection,
@@ -45,6 +52,12 @@ function requiredInteger(value: unknown): number {
 function positiveInteger(value: unknown): number {
   const decoded = requiredInteger(value);
   if (decoded < 1) throw new InvalidBackendResponseError();
+  return decoded;
+}
+
+function nonNegativeInteger(value: unknown): number {
+  const decoded = requiredInteger(value);
+  if (decoded < 0) throw new InvalidBackendResponseError();
   return decoded;
 }
 
@@ -234,6 +247,120 @@ export function decodePropertyPage(value: unknown): PropertyPage {
   return {
     itens: input.itens.map(decodeProperty),
     paginacao: { proximo_cursor: cursor as string | null },
+  };
+}
+
+export function decodeNotification(value: unknown): NotificationProjection {
+  const input = record(value);
+  const content = record(input.conteudo);
+  const title = requiredString(content.titulo);
+  const summary = requiredString(content.resumo);
+  const type = oneOf(input.tipo_evento, [
+    'conta.senha_alterada.v1',
+    'conta.email_principal_alterado.v1',
+    'conta.recuperacao_concluida.v1',
+  ] as const);
+  const expectedContent = {
+    'conta.senha_alterada.v1': {
+      title: 'Senha alterada',
+      summary: 'A senha da sua conta foi alterada.',
+    },
+    'conta.email_principal_alterado.v1': {
+      title: 'E-mail principal alterado',
+      summary: 'O e-mail principal da sua conta foi alterado.',
+    },
+    'conta.recuperacao_concluida.v1': {
+      title: 'Recuperação concluída',
+      summary: 'A recuperação da sua conta foi concluída.',
+    },
+  }[type];
+  const createdAt = dateTime(input.criada_em);
+  const expiresAt = dateTime(input.expira_em);
+  const readAt = input.lida_em === null ? null : dateTime(input.lida_em);
+  if (
+    title.length > 120 ||
+    summary.length > 500 ||
+    title !== expectedContent.title ||
+    summary !== expectedContent.summary ||
+    Date.parse(expiresAt) <= Date.parse(createdAt) ||
+    (readAt !== null && Date.parse(readAt) < Date.parse(createdAt))
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return {
+    id: uuidV4(input.id),
+    tipo_evento: type,
+    prioridade: oneOf(input.prioridade, ['baixa', 'normal', 'alta'] as const),
+    criada_em: createdAt,
+    lida_em: readAt,
+    expira_em: expiresAt,
+    recurso_tipo: oneOf(input.recurso_tipo, ['conta'] as const),
+    recurso_id: uuidV4(input.recurso_id),
+    conteudo: { titulo: title, resumo: summary },
+  };
+}
+
+export function decodeNotificationPage(value: unknown): NotificationPage {
+  const input = record(value);
+  if (!Array.isArray(input.itens) || input.itens.length > 100) {
+    throw new InvalidBackendResponseError();
+  }
+  const pagination = record(input.paginacao);
+  const cursor = pagination.proximo_cursor;
+  if (
+    cursor !== null &&
+    (typeof cursor !== 'string' || cursor.length === 0 || cursor.length > 32_768)
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return {
+    itens: input.itens.map(decodeNotification),
+    paginacao: { proximo_cursor: cursor as string | null },
+  };
+}
+
+export function decodeNotificationUnreadCount(
+  value: unknown,
+): NotificationUnreadCount {
+  return {
+    total_nao_lidas: nonNegativeInteger(record(value).total_nao_lidas),
+  };
+}
+
+export function decodeNotificationReadResult(
+  value: unknown,
+): NotificationReadResult {
+  const input = record(value);
+  return { id: uuidV4(input.id), lida_em: dateTime(input.lida_em) };
+}
+
+export function decodeNotificationReadAllResult(
+  value: unknown,
+): NotificationReadAllResult {
+  const input = record(value);
+  return {
+    corte_em: dateTime(input.corte_em),
+    atualizadas: nonNegativeInteger(input.atualizadas),
+  };
+}
+
+export function decodeNotificationDiscardResult(
+  value: unknown,
+): NotificationDiscardResult {
+  const input = record(value);
+  return {
+    id: uuidV4(input.id),
+    descartada_em: dateTime(input.descartada_em),
+  };
+}
+
+export function decodeNotificationDestination(
+  value: unknown,
+): NotificationDestination {
+  const input = record(value);
+  return {
+    recurso_tipo: oneOf(input.recurso_tipo, ['conta'] as const),
+    recurso_id: uuidV4(input.recurso_id),
   };
 }
 

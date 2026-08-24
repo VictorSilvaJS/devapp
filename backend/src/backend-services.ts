@@ -23,6 +23,11 @@ import type { RuntimeConfig } from './config.js';
 import { loadEmailRuntimeConfig } from './email/config.js';
 import { createOutboxPayloadCipherFromBase64KeyRing } from './outbox/crypto.js';
 import { EncryptedEmailOutboxFactory } from './outbox/email-message.js';
+import { PostgresNotificationRepository } from './notifications/postgres-notification-repository.js';
+import {
+  DefaultNotificationService,
+  type NotificationService,
+} from './notifications/service.js';
 import { PostgresPropertyRepository } from './properties/postgres-property-repository.js';
 import { DefaultPropertyService, type PropertyService } from './properties/service.js';
 
@@ -33,10 +38,11 @@ export interface BackendSecurityServices {
     'authenticationService'
   >;
   readonly propertyRoutes: Readonly<{ service: PropertyService }>;
+  readonly notificationRoutes: Readonly<{ service: NotificationService }>;
 }
 
 /**
- * Composes the MP-33B services without touching PostgreSQL. Keeping this
+ * Composes the MP-33B/MP-34 services without touching PostgreSQL. Keeping this
  * factory free of queries preserves the operational contract that a temporary
  * database outage must not prevent the HTTP port from opening.
  */
@@ -81,6 +87,12 @@ export async function createBackendSecurityServices(input: {
       service: new DefaultPropertyService({
         authentication: authenticationService,
         repository: new PostgresPropertyRepository(input.database),
+      }),
+    }),
+    notificationRoutes: Object.freeze({
+      service: new DefaultNotificationService({
+        authentication: authenticationService,
+        repository: new PostgresNotificationRepository(input.database),
       }),
     }),
     accountActionRoutes: Object.freeze({

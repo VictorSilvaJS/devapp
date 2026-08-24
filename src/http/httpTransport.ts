@@ -2,6 +2,7 @@ export interface HttpTransportRequest {
   readonly method: 'GET' | 'POST' | 'DELETE';
   readonly url: string;
   readonly accessToken?: string;
+  readonly idempotencyKey?: string;
   readonly body?: Readonly<Record<string, unknown>>;
   readonly timeoutMs: number;
 }
@@ -44,6 +45,9 @@ export class FetchHttpTransport implements HttpTransport {
           ...(request.accessToken === undefined
             ? {}
             : { authorization: `Bearer ${request.accessToken}` }),
+          ...(request.idempotencyKey === undefined
+            ? {}
+            : { 'idempotency-key': request.idempotencyKey }),
         },
         ...(request.body === undefined
           ? {}

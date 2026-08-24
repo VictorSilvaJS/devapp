@@ -8,6 +8,11 @@ import {
   type AuthPostgresPool,
 } from '../auth/postgres-common.js';
 import type { EncryptedOutboxMessageDraft } from '../outbox/contracts.js';
+import type {
+  AccountNotificationDraft,
+  AccountNotificationWriter,
+} from '../notifications/contracts.js';
+import { PostgresAccountNotificationWriter } from '../notifications/postgres-account-notification-writer.js';
 import { serviceUnavailable } from '../security/http-error.js';
 import { hmacIdentifier } from '../security/tokens.js';
 import type {
@@ -25,6 +30,7 @@ export interface PostgresAccountActionOptions {
   readonly emailHmacKey: Uint8Array;
   /** Independent key for operational/external case references. */
   readonly externalReferenceHmacKey: Uint8Array;
+  readonly notificationWriter?: AccountNotificationWriter;
 }
 
 export interface AccountRow extends QueryResultRow {
@@ -152,6 +158,7 @@ export class AccountActionPostgresStore {
   readonly #pool: AuthPostgresPool;
   readonly #emailHmacKey: Uint8Array;
   readonly #externalReferenceHmacKey: Uint8Array;
+  readonly #notificationWriter: AccountNotificationWriter;
 
   public constructor(options: PostgresAccountActionOptions) {
     this.#pool = options.pool;
@@ -160,6 +167,8 @@ export class AccountActionPostgresStore {
       options.externalReferenceHmacKey,
       'externalReferenceHmacKey',
     );
+    this.#notificationWriter =
+      options.notificationWriter ?? new PostgresAccountNotificationWriter();
   }
 
   public read<T>(operation: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -414,6 +423,13 @@ export class AccountActionPostgresStore {
         draft.occurredAt,
       ],
     );
+  }
+
+  public insertAccountNotification(
+    client: PoolClient,
+    draft: AccountNotificationDraft,
+  ): Promise<void> {
+    return this.#notificationWriter.create(client, draft);
   }
 
   public async cancelOutboxForChallenges(

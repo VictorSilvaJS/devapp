@@ -21,6 +21,10 @@ import {
   propertyRoutesPlugin,
   type PropertyRoutesOptions,
 } from './properties/routes.js';
+import {
+  notificationRoutesPlugin,
+  type NotificationRoutesOptions,
+} from './notifications/routes.js';
 
 const healthResponseSchema = {
   type: 'object',
@@ -62,6 +66,7 @@ export interface BuildAppOptions {
     'authenticationService'
   >;
   readonly propertyRoutes?: PropertyRoutesOptions;
+  readonly notificationRoutes?: NotificationRoutesOptions;
 }
 
 function generatedRequestId(): string {
@@ -149,6 +154,10 @@ export async function buildApp(
           name: 'Propriedades',
           description: 'Consulta de Propriedades dentro do escopo autorizado.',
         },
+        {
+          name: 'Notificações',
+          description: 'Notificações in-app próprias, persistidas e isoladas.',
+        },
       ],
     },
   });
@@ -178,6 +187,18 @@ export async function buildApp(
     await app.register(propertyRoutesPlugin, {
       prefix: '/v1/propriedades',
       ...options.propertyRoutes,
+    });
+  }
+
+  if (options.notificationRoutes !== undefined) {
+    if (options.authenticationService === undefined) {
+      throw new TypeError(
+        'Notification routes require an authentication service.',
+      );
+    }
+    await app.register(notificationRoutesPlugin, {
+      prefix: '/v1/notificacoes',
+      ...options.notificationRoutes,
     });
   }
 

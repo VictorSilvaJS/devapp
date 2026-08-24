@@ -1,36 +1,38 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-24
 
 Não existe decisão arquitetural pendente dentro do corte da MP-33C. MP-33A,
 MP-33B e MP-33C estão concluídas tecnicamente e integradas. A MP-33C entrou na
-branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada,
-mas não houve deploy, release ou publicação. Os itens abaixo são decisões da
-MP-34, implementações de fases posteriores ou portões que devem ser fechados na
-entrada da respectiva vertical/release.
+branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada.
+A MP-34 foi concluída tecnicamente somente no working tree: não existe commit,
+pull request, integração, tag, deploy, release ou publicação dessa fase. Os
+itens abaixo são portões produtivos ou implementações de fases posteriores.
 
-## MP-34 — decisões anteriores ao código
+## MP-34 — portões produtivos após a conclusão técnica
 
-- ratificar os três eventos iniciais de conta, suas prioridades e o texto dos
-  templates: senha alterada, e-mail principal alterado e recuperação concluída;
-- fixar a retenção da chave de idempotência dos comandos; a proposta inicial é
-  acompanhar os 90 dias das entregas, e ela nunca pode terminar antes do maior
-  `expira_em` alcançável pelo comando;
-- definir responsável, periodicidade, credencial de menor privilégio e alertas
-  da purga física em lotes;
-- concluir a revisão jurídica/de privacidade dos 90 dias e confirmar se existe
-  obrigação de suspender descarte.
+- definir responsável, frequência/agendamento e alertas externos da purga física
+  em lotes;
+- provisionar conta `LOGIN`, CA e segredo próprios para o papel de menor
+  privilégio `tche_agro_notifications_maintenance`;
+- validar externamente, na revisão jurídica/de privacidade, os 90 dias e a
+  premissa aprovada de que a MP-34 não implementa legal hold nem suspensão de
+  descarte; eventual exigência produzirá alteração futura versionada antes da
+  produção;
+- integrar monitoração, backup/restauração e gestão de segredos ao ambiente que
+  vier a hospedar a vertical.
 
-Não permanecem em aberto para o corte mínimo: operação online-only, entrega
-in-app individual, evento e entrega na mesma transação, `outbox_email` separada,
-destino inicial somente `conta`, nenhum cache persistente, nenhum push e nenhum
-token de dispositivo. Esses limites estão consolidados em
-`contrato-notificacoes.md`.
+Não permanecem em aberto para o corte mínimo: os três eventos/templates de
+conta e sua prioridade inicial `alta`, retenção exata de 90 dias para entregas e
+chaves idempotentes, operação online-only, entrega individual, evento e entrega
+na mesma transação, `outbox_email` separada, destino somente `conta`, nenhum
+cache persistente, nenhum push e nenhum token de dispositivo. Esses limites
+estão consolidados em `contrato-notificacoes.md`.
 
 ## Implementação por fase
 
-- implementar a MP-34 somente depois de aprovar seu catálogo inicial de eventos,
-  conteúdo seguro e operação de retenção;
+- operar ou liberar produtivamente a MP-34 somente depois de fechar os portões
+  de purga, privacidade, segredos, observabilidade e release;
 - implementar na MP-35 escritas de Propriedade, administração de
   Usuários/vínculos e o restante do RBAC por ação;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
@@ -40,6 +42,18 @@ token de dispositivo. Esses limites estão consolidados em
   coberta pelo contrato canônico.
 
 ## Portões por vertical
+
+### Notificações da MP-34
+
+Antes de operar a vertical em produção, fechar:
+
+- proprietário operacional, frequência/agendamento e alertas da purga;
+- provisionamento e rotação da credencial de manutenção, CA e segredo;
+- revisão jurídica/de privacidade externa da retenção exata de 90 dias e da
+  premissa de não implementar legal hold nesse corte;
+- observabilidade, backup/restauração e teste do comando one-shot no ambiente
+  alvo;
+- smoke Android físico da MP-34, atualmente `NÃO EXECUTADO`.
 
 ### Autenticação e recuperação
 

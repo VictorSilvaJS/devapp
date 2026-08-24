@@ -57,12 +57,16 @@ porque misturavam propostas ou roteiros superados com a documentação atual.
 | Consultar evidências geradas | ../dist |
 
 Para execução por agente de código, comece em [AGENTS.md](../AGENTS.md).
-Para operar a fundação, a MP-33B e a integração HTTP da MP-33C concluídas
-tecnicamente, consulte o
+Para operar a fundação, a MP-33B, a integração HTTP da MP-33C e a implementação
+técnica de notificações da MP-34, consulte o
 [README do backend](../backend/README.md).
 Para revisar ou operar a conexão do aplicativo sem misturar Demo e HTTP,
 consulte o
 [contrato de integração da MP-33C](project/contrato-integracao-app-mp33c.md).
+O corte de notificações está em
+[contrato de notificações](project/contrato-notificacoes.md). A MP-34 permanece
+somente no working tree, sem commit, pull request, integração, tag, deploy,
+release ou publicação.
 
 ## Regra prática
 
