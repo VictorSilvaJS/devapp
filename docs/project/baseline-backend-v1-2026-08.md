@@ -28,7 +28,8 @@ A MP-34 acrescenta notificações individuais da própria conta, persistência,
 API, cliente HTTP e purga de retenção. Ela está concluída tecnicamente e foi
 integrada diretamente à branch `backend` no commit `e787707`, sem pull request;
 os três jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
-publicação. O Android físico específico da fase permanece `NÃO EXECUTADO`.
+publicação. O smoke funcional específico da fase passou em Android físico em
+2026-08-24; os portões de ambiente, operação e release permanecem pendentes.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -521,7 +522,7 @@ segura no cliente e lista/detalhe HTTP de Propriedades foram concluídas na
 MP-33C. Notificações in-app da própria conta, persistência, API e composição HTTP
 foram concluídas tecnicamente e integradas diretamente na MP-34 pelo commit
 `e787707`, sem pull request e com os três jobs da CI pós-push aprovados. Não
-houve tag, deploy, release ou publicação dessa fase; o Android físico da MP-34
-não foi executado. Escritas administrativas
+houve tag, deploy, release ou publicação dessa fase; o smoke funcional da MP-34
+passou em Android físico em 2026-08-24. Escritas administrativas
 permanecem na MP-35. Materiais, GeoJSON produtivo e Caderno append-only entram
 depois que a fundação estiver implantada e observável.

@@ -513,9 +513,10 @@ título, resumo ou `dados_apresentacao`.
     SDK, token ou permissão de push.
 12. Typecheck, contratos, testes HTTP, integração real com PostgreSQL/PostGIS e
     inspeção dos grafos HTTP/Demo passam em Node.js 22 para o aplicativo e
-    Node.js 24 para o backend. O smoke Android físico da MP-34 é registrado
-    separadamente e permanece `NÃO EXECUTADO`; ele não pode ser marcado como
-    aprovado por inferência.
+    Node.js 24 para o backend. O smoke funcional Android físico da MP-34 foi
+    executado e aprovado em 2026-08-24, com escopo e limitações registrados
+    separadamente em [smoke.md](smoke.md); nenhuma cobertura adicional é
+    promovida por inferência.
 
 ## Implementação Técnica Concluída E Integrada
 

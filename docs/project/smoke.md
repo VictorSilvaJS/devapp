@@ -24,7 +24,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-11 | Acesso v2 | Produtor autorizado abre Propriedade e somente Materiais liberados | PASSOU |
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
 | ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
-| ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO; ANDROID FÍSICO NÃO EXECUTADO |
+| ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO; PORTÕES PRODUTIVOS PENDENTES |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -189,9 +189,12 @@ Com backend real e duas identidades sintéticas, repetir:
    `NOTIFICACOES_INICIAIS`, `src/api`, `AsyncStorage`, push e token de
    dispositivo; confirmar que o Demo continua intacto.
 
-Os gates automatizados correspondentes passaram. A execução física Android
-específica da MP-34 permanece `NÃO EXECUTADO`; este documento não a promove a
-`PASSOU` por inferência.
+Os gates automatizados correspondentes passaram. O corte funcional exposto na
+interface foi executado no Android físico em 2026-08-24 e está detalhado em
+`MP34-07`. Paginação com mais de uma página, repetição após transporte ambíguo
+com a mesma `Idempotency-Key` e `404` direto entre destinatários continuam
+comprovados pelas suítes HTTP/de integração, não por uma tela que não expõe
+esses mecanismos; essa cobertura não é promovida a física por inferência.
 
 ## Cenários de campo de MP-38
 
@@ -270,7 +273,21 @@ publicação.
 | MP34-04 | Grafo HTTP sem mock legado, `src/api`, `AsyncStorage`, push ou token de dispositivo; Demo preservado | PASSOU |
 | MP34-05 | Integração direta na branch `backend` pelo commit `e787707` e três jobs da CI pós-push | PASSOU |
 | MP34-06 | Node.js 24: cinco migrations e `000005` append-only comparadas com o commit-base anterior `3dd8f42` | PASSOU |
-| MP34-07 | Android físico específico da vertical | NÃO EXECUTADO |
+| MP34-07 | TCL 8483A, Android 15/API 35, ARM64 e USB: variante HTTP debug com backend/PostgreSQL reais; login de duas identidades; estado vazio; evento de senha; badge, lista e filtros; destino `conta`; leitura individual e em lote; persistência após reinício/reautenticação; descarte; isolamento entre destinatários; indisponibilidade honesta sem API/mock | PASSOU |
+
+No aparelho, duas trocas autenticadas de senha produziram duas entregas reais
+`conta.senha_alterada.v1` para o primeiro Usuário. A senha sintética foi
+restaurada ao valor inicial da fixture. O PostgreSQL confirmou duas entregas,
+ambas lidas e uma descartada; a segunda identidade abriu a lista vazia, sem
+badge ou conteúdo do primeiro destinatário. Todas as chamadas observadas da
+vertical conectada concluíram com sucesso; ao remover apenas o túnel da API, o
+aplicativo ocultou os dados e informou que não conseguiu confirmar a renovação,
+sem cache persistente ou fallback para o mock.
+
+A execução física não criou massa suficiente para paginação por cursor e não
+simulou transporte ambíguo nem acesso direto por ID de outro destinatário. Esses
+três mecanismos permanecem cobertos pelos testes HTTP/de integração já
+registrados em `MP34-02` e `MP34-03`.
 
 A rodada valida tecnicamente migration `000005`, cinco fluxos emissores
 transacionais para três tipos de evento, API self-only, idempotência, conteúdo

@@ -29,7 +29,7 @@ A MP-34 acrescenta notificações in-app reais, persistidas e isoladas para fato
 da própria conta. Ela está concluída tecnicamente e integrada diretamente à
 branch `backend` no commit `e787707`, sem pull request; os três jobs da CI
 pós-push foram aprovados. Não houve tag, deploy, release ou publicação da fase.
-O smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
+O smoke funcional Android físico específico da MP-34 passou em 2026-08-24.
 
 ## Estado por camada
 
@@ -314,8 +314,9 @@ retenção exata de 90 dias e purga one-shot com credencial de menor privilégio
 
 A validação técnica foi complementada pela integração direta no commit
 `e787707`, pela CI pós-push aprovada e pela comparação append-only das cinco
-migrations contra `3dd8f42`. O Android físico da MP-34 não foi executado, e não
-houve pull request, tag, deploy, release ou publicação.
+migrations contra `3dd8f42`. O smoke funcional da MP-34 passou no Android
+físico em 2026-08-24, e não houve pull request, tag, deploy, release ou
+publicação.
 
 ## Próxima etapa
 

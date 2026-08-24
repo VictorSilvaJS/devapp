@@ -26,7 +26,7 @@ da própria conta. Ela foi integrada diretamente à branch `backend` no commit
 `e787707`, sem pull request; os três jobs da CI pós-push foram aprovados. A
 verificação complementar confirmou as cinco migrations e o caráter append-only
 da `000005` contra `3dd8f42`. Não houve tag, deploy, release ou publicação. O
-smoke Android físico específico da MP-34 permanece `NÃO EXECUTADO`.
+smoke funcional Android físico específico da MP-34 passou em 2026-08-24.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -228,8 +228,10 @@ contratos, 12 de repositório e 13 de arquitetura. Há cinco gates
 comportamentais: dois do open gate e três do context coordinator. No backend,
 foram confirmados 138 testes unitários/contratos de migration, 26 HTTP e 41
 cenários reais de integração: 15 de migrations, 8 de autenticação, 7 de ações
-de conta, 9 de Propriedades/QA e 2 de notificações. O smoke Android físico da
-MP-34 não foi executado.
+de conta, 9 de Propriedades/QA e 2 de notificações. O smoke funcional Android
+físico da MP-34 passou em 2026-08-24 no TCL 8483A com Android 15/API 35; o
+escopo e as limitações da execução estão registrados em
+[smoke.md](smoke.md).
 
 Antes de produção ainda faltam responsável, agendamento e alertas da purga,
 provisionamento da credencial/CA/segredo de manutenção, revisão

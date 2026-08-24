@@ -54,8 +54,11 @@ Antes de operar a vertical em produção, fechar:
 - revisão jurídica/de privacidade externa da retenção exata de 90 dias e da
   premissa de não implementar legal hold nesse corte;
 - observabilidade, backup/restauração e teste do comando one-shot no ambiente
-  alvo;
-- smoke Android físico da MP-34, atualmente `NÃO EXECUTADO`.
+  alvo.
+
+O smoke funcional Android físico da MP-34 foi executado e aprovado em
+2026-08-24. Ele deixa de ser pendência da vertical, mas não substitui a matriz
+de dispositivos nem a validação do build assinado no ambiente de release.
 
 ### Autenticação e recuperação
 
