@@ -63,6 +63,8 @@ técnica de notificações da MP-34, consulte o
 Para revisar ou operar a conexão do aplicativo sem misturar Demo e HTTP,
 consulte o
 [contrato de integração da MP-33C](project/contrato-integracao-app-mp33c.md).
+A regra de reutilização das telas aprovadas está no
+[contrato de convergência da interface](project/contrato-convergencia-interface-http.md).
 O corte de notificações está em
 [contrato de notificações](project/contrato-notificacoes.md). A MP-34 foi
 integrada diretamente à branch `backend` no commit `e787707`, sem pull request,

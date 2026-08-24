@@ -65,7 +65,6 @@ const forbiddenInHttp = [
   'expo-document-picker',
   'expo-image-picker',
   'expo-intent-launcher',
-  'expo-linear-gradient',
   'expo-location',
   'react-native-maps',
   'react-native-svg',
@@ -73,6 +72,7 @@ const forbiddenInHttp = [
 ];
 const requiredInHttp = [
   'expo-secure-store',
+  'expo-linear-gradient',
   'react-native-gesture-handler',
   'react-native-safe-area-context',
   'react-native-screens',

@@ -347,6 +347,30 @@ diretamente à branch `backend` no commit `e787707`, sem pull request e com os
 três jobs da CI pós-push aprovados. Não houve tag, deploy, release ou publicação
 da MP-34.
 
+### 51. Interface aprovada é compartilhada entre Demo e HTTP
+
+A interface consolidada no Demo é a referência visual do produto. Demo e HTTP
+continuam composições separadas por fonte de dados e capacidade, mas reutilizam
+apresentações que recebem dados e ações por propriedades/portas. Componentes
+compartilhados não importam implementações concretas do mock nem do HTTP.
+
+O aplicativo HTTP exibe somente capacidades cujo backend e cuja autorização já
+existem. Isso permite ocultar temporariamente seções ainda demonstrativas sem
+criar uma segunda linguagem visual. Métricas sem endpoint agregado autorizado
+continuam ocultas, e nenhuma indisponibilidade aciona fallback para o Demo.
+
+Cada vertical futura deve integrar as telas existentes no mesmo corte em que
+entrega backend e RBAC. MP-40 e MP-41 validam o resultado final; não são fases
+de migração automática de interface. Visitas, Materiais e agregados do
+Dashboard exigem cortes HTTP explícitos antes dessa validação final.
+
+O primeiro corte de convergência anterior à MP-35 compartilha o login e os
+componentes visuais centrais e aplica o padrão aprovado a Propriedades, Perfil
+e Notificações já reais. `expo-linear-gradient` passa a ser dependência nativa
+de apresentação também no HTTP; módulos de dados, storage comum, câmera,
+localização, mapas e WebView que pertencem a fluxos ainda demonstrativos
+continuam excluídos.
+
 ## Contratos que detalham as decisões
 
 - [Baseline do backend v1](baseline-backend-v1-2026-08.md)
@@ -357,6 +381,7 @@ da MP-34.
 - [Política de sessão](politica-sessao.md)
 - [Contrato de autenticação e recuperação da MP-33B](contrato-autenticacao-mp33b.md)
 - [Contrato de integração do aplicativo da MP-33C](contrato-integracao-app-mp33c.md)
+- [Contrato de convergência da interface Demo/HTTP](contrato-convergencia-interface-http.md)
 - [Contrato de notificações](contrato-notificacoes.md)
 - [Ciclo do Caderno](ciclo-vida-caderno.md)
 - [Estados de Visita](estados-visita.md)

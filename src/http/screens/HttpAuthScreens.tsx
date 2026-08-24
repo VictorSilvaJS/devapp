@@ -1,5 +1,6 @@
 import React from 'react';
 
+import LoginPresentation from '../../components/LoginPresentation';
 import { useHttpSession } from '../HttpSessionContext';
 import {
   HttpBusy,
@@ -26,43 +27,30 @@ export function HttpLoginScreen({ navigation }: any) {
   };
 
   return (
-    <HttpScreen>
-      <HttpTitle>Tchê Agro</HttpTitle>
-      <HttpParagraph>
-        Acesso conectado. Esta versão não usa dados demonstrativos nem fallback
-        para o mock.
-      </HttpParagraph>
-      <HttpField
-        label="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        maxLength={254}
-      />
-      <HttpField
-        label="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        maxLength={128}
-      />
-      <HttpFeedback message={message} />
-      <HttpButton
-        title={busy ? 'Entrando...' : 'Entrar'}
-        onPress={() => void submit()}
-        disabled={busy || !email.trim() || !password}
-      />
-      <HttpButton
-        title="Esqueci minha senha"
-        variant="secondary"
-        onPress={() => navigation.navigate('RequestPasswordRecovery')}
-      />
-      <HttpButton
-        title="Recuperar Admin pelo segundo e-mail"
-        variant="secondary"
-        onPress={() => navigation.navigate('RequestAdminSecondaryRecovery')}
-      />
-    </HttpScreen>
+    <LoginPresentation
+      email={email}
+      password={password}
+      onEmailChange={setEmail}
+      onPasswordChange={setPassword}
+      onSubmit={() => void submit()}
+      busy={busy}
+      error={message}
+      subtitle="Acesso conectado"
+      note="Entre com sua conta real. Os dados desta versão vêm exclusivamente do serviço HTTP autorizado."
+      submitLabel="Entrar"
+      secondaryActions={[
+        {
+          label: 'Esqueci minha senha',
+          icon: 'key-outline',
+          onPress: () => navigation.navigate('RequestPasswordRecovery'),
+        },
+        {
+          label: 'Recuperar Admin pelo segundo e-mail',
+          icon: 'shield-checkmark-outline',
+          onPress: () => navigation.navigate('RequestAdminSecondaryRecovery'),
+        },
+      ]}
+    />
   );
 }
 

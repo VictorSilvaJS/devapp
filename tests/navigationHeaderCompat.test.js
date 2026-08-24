@@ -52,12 +52,14 @@ const rootHeaderScreens = [
 
 test('Header oferece um único contrato de retorno acessível', () => {
   const source = readSource('src/components/Header.tsx');
+  const presentation = readSource('src/components/AppHeader.tsx');
 
   assert.doesNotMatch(source, /showBackButton/);
-  assert.match(source, /showBack\?: boolean/);
+  assert.match(source, /AppHeaderProps/);
+  assert.match(presentation, /showBack\?: boolean/);
   assert.match(source, /onBack \? onBack\(\) : navigation\.goBack\(\)/);
-  assert.match(source, /accessibilityRole="button"/);
-  assert.match(source, /accessibilityLabel="Voltar"/);
+  assert.match(presentation, /accessibilityRole="button"/);
+  assert.match(presentation, /accessibilityLabel="Voltar"/);
 });
 
 test('telas internas com Header exibem seta em todos os estados', () => {

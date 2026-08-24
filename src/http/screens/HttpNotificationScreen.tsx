@@ -5,10 +5,13 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
+import EmptyState from '../../components/EmptyState';
+import SegmentedChips from '../../components/SegmentedChips';
 import type {
   NotificationProjection,
   NotificationState,
@@ -16,6 +19,7 @@ import type {
 } from '../contracts';
 import { ApiResponseError } from '../backendApi';
 import { InvalidBackendResponseError } from '../decoders';
+import { HttpTabHeader } from '../HttpAppHeader';
 import { useHttpNotifications } from '../HttpNotificationContext';
 import { useHttpSession } from '../HttpSessionContext';
 import { NotificationOpenGate } from '../notificationOpenGate';
@@ -23,7 +27,6 @@ import {
   controlledUiError,
   HttpButton,
   HttpFeedback,
-  HttpParagraph,
 } from '../ui';
 import { colors, spacing, typography } from '../../theme';
 
@@ -46,8 +49,20 @@ function NotificationCard({
   readonly onRead: () => void;
   readonly onDiscard: () => void;
 }) {
+  const priorityColor = item.prioridade === 'alta'
+    ? colors.error
+    : item.prioridade === 'baixa'
+      ? colors.muted
+      : colors.primary;
+  const icon = item.tipo_evento === 'conta.senha_alterada.v1'
+    ? 'key-outline'
+    : item.tipo_evento === 'conta.email_principal_alterado.v1'
+      ? 'mail-outline'
+      : 'shield-checkmark-outline';
+
   return (
     <View style={[styles.card, item.lida_em === null && styles.cardUnread]}>
+      {item.lida_em === null ? <View style={styles.unreadIndicator} /> : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Abrir destino: ${item.conteudo.titulo}`}
@@ -55,14 +70,26 @@ function NotificationCard({
         onPress={onOpen}
         style={({ pressed }) => pressed && styles.pressed}
       >
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>{item.conteudo.titulo}</Text>
-          {item.lida_em === null ? <Text style={styles.unreadBadge}>Nova</Text> : null}
+        <View style={styles.cardMain}>
+          <View style={[styles.iconContainer, { backgroundColor: `${priorityColor}20` }]}>
+            <Ionicons name={icon} size={24} color={priorityColor} />
+          </View>
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle} numberOfLines={1}>{item.conteudo.titulo}</Text>
+              <Text style={styles.cardDate}>
+                {new Date(item.criada_em).toLocaleDateString('pt-BR')}
+              </Text>
+            </View>
+            <Text style={styles.cardSummary}>{item.conteudo.resumo}</Text>
+            {item.prioridade === 'alta' ? (
+              <View style={styles.priorityBadge}>
+                <Ionicons name="warning-outline" size={14} color={colors.error} />
+                <Text style={styles.priorityText}>Prioridade alta</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
-        <Text style={styles.cardSummary}>{item.conteudo.resumo}</Text>
-        <Text style={styles.cardDate}>
-          {new Date(item.criada_em).toLocaleString()}
-        </Text>
       </Pressable>
       <View style={styles.actions}>
         {item.lida_em === null ? (
@@ -155,37 +182,31 @@ export function HttpNotificationScreen({ navigation }: any) {
   const interactionBusy = opening || notifications.mutating || notifications.resolving;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <View style={styles.container}>
+      <HttpTabHeader
+        title="Notificações"
+        navigation={navigation}
+        showNotifications={false}
+      />
       <View style={styles.toolbar}>
-        <View style={styles.filters}>
-          {(Object.keys(FILTER_LABELS) as NotificationState[]).map((filter) => (
-            <Pressable
-              key={filter}
-              accessibilityRole="button"
-              accessibilityState={{ selected: notifications.stateFilter === filter }}
-              disabled={interactionBusy}
-              onPress={() => {
-                if (!openGate.busy) notifications.setStateFilter(filter);
-              }}
-              style={[
-                styles.filter,
-                notifications.stateFilter === filter && styles.filterActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  notifications.stateFilter === filter && styles.filterTextActive,
-                ]}
-              >
-                {FILTER_LABELS[filter]}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <HttpButton
-          title={notifications.markingAll ? 'Marcando...' : 'Marcar todas como lidas'}
-          variant="secondary"
+        <SegmentedChips
+          options={(Object.keys(FILTER_LABELS) as NotificationState[]).map((filter) => ({
+            value: filter,
+            label: FILTER_LABELS[filter],
+            count: filter === 'nao_lida' ? notifications.unreadCount : undefined,
+            disabled: interactionBusy,
+          }))}
+          value={notifications.stateFilter}
+          onChange={(filter) => {
+            if (!openGate.busy) notifications.setStateFilter(filter);
+          }}
+          horizontal
+        />
+        <TouchableOpacity
+          style={[
+            styles.markAllButton,
+            (interactionBusy || notifications.unreadCount === 0) && styles.disabled,
+          ]}
           disabled={
             interactionBusy ||
             notifications.unreadCount === 0
@@ -195,9 +216,18 @@ export function HttpNotificationScreen({ navigation }: any) {
               void notifications.markAllRead().catch(() => undefined);
             }
           }}
-        />
+        >
+          <Ionicons name="checkmark-done" size={20} color={colors.primary} />
+          <Text style={styles.markAllText}>
+            {notifications.markingAll ? 'Marcando...' : 'Marcar todas como lidas'}
+          </Text>
+        </TouchableOpacity>
       </View>
-      <HttpFeedback message={openError ?? notifications.error} />
+      {openError ?? notifications.error ? (
+        <View style={styles.feedbackContainer}>
+          <HttpFeedback message={openError ?? notifications.error} />
+        </View>
+      ) : null}
       {notifications.loading ? (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.primary} size="large" />
@@ -240,57 +270,86 @@ export function HttpNotificationScreen({ navigation }: any) {
           }}
           onEndReachedThreshold={0.4}
           ListEmptyComponent={(
-            <HttpParagraph>Nenhuma notificação disponível.</HttpParagraph>
+            <EmptyState
+              icon="notifications-off-outline"
+              title="Nenhuma notificação"
+              message="Você está em dia. Não há notificações disponíveis neste filtro."
+              style={styles.emptyState}
+            />
           )}
           ListFooterComponent={notifications.loadingMore ? (
             <ActivityIndicator color={colors.primary} />
           ) : null}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  toolbar: { padding: spacing.screen, paddingBottom: spacing.sm, gap: spacing.sm },
-  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  filter: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 999,
+  container: { flex: 1, backgroundColor: colors.background },
+  toolbar: {
+    paddingHorizontal: spacing.screen,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
     backgroundColor: colors.card,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  filterActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
-  filterText: { color: colors.textLight, fontSize: 14, fontWeight: '600' },
-  filterTextActive: { color: colors.primaryDark },
-  list: { flexGrow: 1, padding: spacing.screen, gap: spacing.md },
+  markAllButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  markAllText: { color: colors.primary, fontSize: typography.fontCaption + 1, fontWeight: typography.weightSemibold },
+  disabled: { opacity: 0.5 },
+  feedbackContainer: { paddingHorizontal: spacing.screen, paddingTop: spacing.md },
+  list: { flexGrow: 1, paddingBottom: spacing.xl },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: {
-    borderWidth: 1,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+    borderWidth: 2,
     borderColor: colors.border,
     borderRadius: spacing.radius,
     backgroundColor: colors.card,
-    padding: spacing.lg,
     gap: spacing.sm,
   },
-  cardUnread: { borderColor: colors.primary },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  cardTitle: { flex: 1, color: colors.text, fontSize: typography.fontBody, fontWeight: '700' },
-  cardSummary: { color: colors.textLight, fontSize: typography.fontBody, lineHeight: 22 },
-  cardDate: { color: colors.muted, fontSize: 12, marginTop: spacing.xs },
-  unreadBadge: {
-    color: colors.primaryDark,
-    backgroundColor: colors.primaryLight,
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    fontSize: 12,
-    fontWeight: '700',
+  cardUnread: { borderColor: colors.primary, backgroundColor: `${colors.accent}10` },
+  unreadIndicator: {
+    position: 'absolute',
+    left: spacing.xs,
+    top: spacing.xs,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
   },
+  cardMain: { flexDirection: 'row' },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  cardContent: { flex: 1, minWidth: 0 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs },
+  cardTitle: { flex: 1, color: colors.text, fontSize: typography.fontBody, fontWeight: '700' },
+  cardSummary: { color: colors.textLight, fontSize: typography.fontCaption + 1, lineHeight: 18 },
+  cardDate: { color: colors.muted, fontSize: typography.fontCaption },
+  priorityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: spacing.radiusSm,
+    backgroundColor: `${colors.error}20`,
+  },
+  priorityText: { color: colors.error, fontSize: typography.fontCaption, fontWeight: typography.weightSemibold },
   actions: { flexDirection: 'row', gap: spacing.sm },
   actionCell: { flex: 1 },
   pressed: { opacity: 0.75 },
+  emptyState: { minHeight: 360 },
 });

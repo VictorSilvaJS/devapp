@@ -4,7 +4,26 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, shadows } from '../theme';
 import { normalizeNome } from '../domain';
 
-export default function UserProfile({ user, size = 'medium', showDetails = true, showPerfilBadge = true }) {
+type UserProfileProps = {
+  readonly user?: {
+    readonly nome?: string | null;
+    readonly nome_completo?: string | null;
+    readonly full_name?: string | null;
+    readonly perfil?: string | null;
+  } | null;
+  readonly size?: 'small' | 'medium' | 'large';
+  readonly showDetails?: boolean;
+  readonly showPerfilBadge?: boolean;
+  readonly accessLabel?: string;
+};
+
+export default function UserProfile({
+  user,
+  size = 'medium',
+  showDetails = true,
+  showPerfilBadge = true,
+  accessLabel = 'Acesso demonstrativo',
+}: UserProfileProps) {
   const sizeStyles = {
     small: { width: 36, height: 36, fontSize: 16 },
     medium: { width: 48, height: 48, fontSize: 20 },
@@ -12,7 +31,10 @@ export default function UserProfile({ user, size = 'medium', showDetails = true,
   };
 
   const avatarSize = sizeStyles[size] || sizeStyles.medium;
-  const displayName = normalizeNome(user || {}) || 'Usuário';
+  const displayName = normalizeNome({
+    nome: user?.nome ?? user?.nome_completo,
+    full_name: user?.full_name,
+  }) || 'Usuário';
 
   const getInitials = () => {
     const names = displayName.split(' ');
@@ -61,7 +83,7 @@ export default function UserProfile({ user, size = 'medium', showDetails = true,
           </Text>
           {showPerfilBadge && (
             <View style={styles.badge}>
-              <Text style={styles.perfil}>Acesso demonstrativo</Text>
+              <Text style={styles.perfil}>{accessLabel}</Text>
             </View>
           )}
         </View>

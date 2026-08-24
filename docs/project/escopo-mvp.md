@@ -129,6 +129,12 @@ lojas. A composição produtiva contém somente HTTP e exibe apenas
 funcionalidades realmente conectadas; rotas exclusivas do Demo também são
 bloqueadas quando chamadas por deep link.
 
+A separação de fontes não cria uma interface visual definitiva diferente. Pelo
+contrato de convergência, o Demo é a referência de apresentação e cada vertical
+HTTP reutiliza as telas/componentes aprovados por injeção de repositório e
+capacidade. Seções ainda sem backend permanecem ocultas ou explicitamente
+indisponíveis; não recebem dados demonstrativos na composição HTTP.
+
 ## Fora do MVP por Padrao
 
 Os itens abaixo nao devem ser assumidos como parte obrigatoria do MVP sem decisao explicita posterior:

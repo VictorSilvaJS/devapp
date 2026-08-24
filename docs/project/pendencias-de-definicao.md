@@ -11,6 +11,25 @@ request, e os três jobs da CI pós-push foram aprovados. Não houve tag, deploy
 release ou publicação dessa fase. Os itens abaixo são portões produtivos ou
 implementações de fases posteriores.
 
+## Convergência da interface antes da MP-35
+
+O contrato arquitetural está fechado em
+`contrato-convergencia-interface-http.md`: a interface aprovada é compartilhada
+por apresentação, enquanto Demo e HTTP mantêm adaptadores e capacidades
+separados. O primeiro corte está implementado localmente e ainda exige:
+
+- executar o smoke Android físico de login, Propriedades, Perfil e
+  Notificações na composição HTTP convergida;
+- confirmar troca de identidade e indisponibilidade da API sem estado cruzado
+  nem fallback demonstrativo;
+- integrar em cada vertical futura a tela existente correspondente, em vez de
+  criar uma nova interface paralela;
+- criar cortes HTTP explícitos para Visitas, Materiais e agregados do Dashboard
+  antes da regressão final MP-40/MP-41.
+
+Esses itens são validação e implementação futura; não reabrem decisões da
+MP-33C ou da MP-34 e não autorizam exibir capacidade sem backend.
+
 ## MP-34 — portões produtivos após a conclusão técnica
 
 - definir responsável, frequência/agendamento e alertas externos da purga física
@@ -36,7 +55,8 @@ estão consolidados em `contrato-notificacoes.md`.
 - operar ou liberar produtivamente a MP-34 somente depois de fechar os portões
   de purga, privacidade, segredos, observabilidade e release;
 - implementar na MP-35 escritas de Propriedade, administração de
-  Usuários/vínculos e o restante do RBAC por ação;
+  Usuários/vínculos, o restante do RBAC por ação e a integração das telas
+  administrativas existentes;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;

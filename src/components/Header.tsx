@@ -1,155 +1,33 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, border, shadows } from '../theme';
 import { useAuthState } from '../auth/AuthContext';
 import { useNotificacao } from '../contexts/NotificacaoContext';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import UserProfile from './UserProfile';
-import NotificationBadge from './NotificationBadge';
+import AppHeader, { type AppHeaderProps } from './AppHeader';
 
-const LOGO = require('../assets/images/logo.png');
-
-type HeaderProps = {
-  title: string;
-  showUser?: boolean;
-  showNotifications?: boolean;
-  showBack?: boolean;
-  onBack?: () => void;
-  onActionPress?: () => void;
-  actionIcon?: string;
-  actionLabel?: string;
-};
+type HeaderProps = Omit<
+  AppHeaderProps,
+  'user' | 'unreadCount' | 'onNotificationsPress' | 'accessLabel'
+>;
 
 export default function Header({ title, showUser = true, showNotifications = true, showBack = false, onBack, onActionPress, actionIcon, actionLabel }: HeaderProps) {
   const { user } = useAuthState();
   const { contarNaoLidas } = useNotificacao();
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-  
-  const notificacoesNaoLidas = contarNaoLidas();
-  
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient
-        colors={[colors.white, colors.backgroundAlt]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.gradient}
-      >
-        <View style={styles.logoContainer}>
-          {showBack ? (
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => onBack ? onBack() : navigation.goBack()}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              accessibilityHint="Retorna à tela anterior"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-          ) : (
-            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-          )}
-        </View>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        </View>
-        {onActionPress && (
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={onActionPress}
-          >
-            <Ionicons name={actionIcon || "add"} size={24} color={colors.primary} />
-            {actionLabel && <Text style={styles.actionLabel}>{actionLabel}</Text>}
-          </TouchableOpacity>
-        )}
-        {showNotifications && (
-          <TouchableOpacity 
-            style={styles.notificationButton}
-            onPress={() => navigation.navigate('Notificacoes')}
-          >
-            <Ionicons name="notifications-outline" size={24} color={colors.text} />
-            {notificacoesNaoLidas > 0 && (
-              <NotificationBadge count={notificacoesNaoLidas} size="small" />
-            )}
-          </TouchableOpacity>
-        )}
-        {showUser && (
-          <View style={styles.userContainer}>
-            <UserProfile user={user} size="small" showDetails={false} />
-          </View>
-        )}
-      </LinearGradient>
-    </View>
+    <AppHeader
+      title={title}
+      user={user}
+      unreadCount={contarNaoLidas()}
+      showUser={showUser}
+      showNotifications={showNotifications}
+      showBack={showBack}
+      onBack={() => onBack ? onBack() : navigation.goBack()}
+      onNotificationsPress={() => navigation.navigate('Notificacoes')}
+      onActionPress={onActionPress}
+      actionIcon={actionIcon}
+      actionLabel={actionLabel}
+      accessLabel="Acesso demonstrativo"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
-    ...shadows.sm
-  },
-  gradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.card,
-    paddingVertical: spacing.card + 4
-  },
-  logoContainer: {
-    width: 50,
-    height: 50,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    ...shadows.sm
-  },
-  logo: {
-    width: 42,
-    height: 42
-  },
-  titleContainer: {
-    flex: 1
-  },
-  backButton: {
-    padding: spacing.sm,
-    marginLeft: -spacing.sm,
-  },
-  title: {
-    fontSize: typography.fontTitle - 4,
-    fontWeight: typography.weightBold,
-    color: colors.text
-  },
-  notificationButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 4,
-    position: 'relative'
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.accent,
-    borderRadius: spacing.radiusSm,
-    marginRight: spacing.sm,
-    gap: spacing.xs,
-  },
-  actionLabel: {
-    fontSize: typography.fontSmall,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  userContainer: {
-    marginLeft: 8
-  }
-});

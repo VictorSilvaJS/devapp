@@ -1,6 +1,20 @@
 import React from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
+import ConfirmDialog from '../../components/ConfirmDialog';
+import SectionCard from '../../components/SectionCard';
+import UserProfile from '../../components/UserProfile';
+import { colors, shadows, spacing, typography } from '../../theme';
 import type { RemoteSessionProjection } from '../contracts';
+import { HttpTabHeader } from '../HttpAppHeader';
 import { useHttpSession } from '../HttpSessionContext';
 import {
   HttpButton,
@@ -20,41 +34,131 @@ function passwordIsLocallyPlausible(value: string): boolean {
 export function HttpAccountScreen({ navigation }: any) {
   const { snapshot, logout, busy } = useHttpSession();
   const user = snapshot?.usuario;
+  const [logoutVisible, setLogoutVisible] = React.useState(false);
+
   return (
-    <HttpScreen>
-      <HttpTitle>Conta</HttpTitle>
-      <HttpParagraph>{user?.nome ?? ''}</HttpParagraph>
-      <HttpParagraph>{user?.email ?? ''}</HttpParagraph>
-      <HttpParagraph>Perfil: {user?.perfil ?? ''}</HttpParagraph>
-      <HttpButton
-        title="Trocar senha"
-        variant="secondary"
-        onPress={() => navigation.navigate('ChangePassword')}
+    <View style={accountStyles.container}>
+      <HttpTabHeader title="Perfil" navigation={navigation} />
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]}
+        style={accountStyles.gradient}
+      >
+        <ScrollView contentContainerStyle={accountStyles.content}>
+          <View style={accountStyles.profileCard}>
+            <UserProfile
+              user={user}
+              size="large"
+              accessLabel="Acesso conectado"
+            />
+            <View style={accountStyles.profileDetails}>
+              <AccountInfoRow label="E-mail" value={user?.email ?? ''} />
+              <AccountInfoRow label="Perfil" value={profileLabel(user?.perfil)} />
+              <AccountInfoRow label="Status" value={user?.status === 'ativo' ? 'Ativo' : user?.status ?? ''} last />
+            </View>
+          </View>
+
+          <SectionCard
+            title="Segurança da conta"
+            icon="shield-checkmark-outline"
+            subtitle="Ações confirmadas e persistidas pelo serviço conectado."
+            contentStyle={accountStyles.actions}
+          >
+            <AccountActionRow
+              icon="key-outline"
+              label="Trocar senha"
+              onPress={() => navigation.navigate('ChangePassword')}
+            />
+            <AccountActionRow
+              icon="mail-outline"
+              label="Trocar e-mail principal"
+              onPress={() => navigation.navigate('RequestPrimaryEmailChange')}
+            />
+            {user?.perfil === 'admin' ? (
+              <AccountActionRow
+                icon="mail-unread-outline"
+                label="Segundo e-mail do Administrador"
+                onPress={() => navigation.navigate('RequestSecondaryEmail')}
+              />
+            ) : null}
+            <AccountActionRow
+              icon="phone-portrait-outline"
+              label="Gerenciar sessões"
+              onPress={() => navigation.navigate('Sessions')}
+            />
+          </SectionCard>
+
+          <SectionCard title="Ações" icon="settings-outline">
+            <TouchableOpacity
+              style={accountStyles.logoutButton}
+              onPress={() => setLogoutVisible(true)}
+              disabled={busy}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="log-out-outline" size={19} color={colors.white} />
+              <Text style={accountStyles.logoutText}>{busy ? 'Saindo...' : 'Sair da conta'}</Text>
+            </TouchableOpacity>
+          </SectionCard>
+        </ScrollView>
+      </LinearGradient>
+
+      <ConfirmDialog
+        visible={logoutVisible}
+        title="Sair da conta"
+        message="Deseja realmente encerrar esta sessão no aparelho?"
+        type="danger"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        onConfirm={() => {
+          setLogoutVisible(false);
+          void logout();
+        }}
+        onCancel={() => setLogoutVisible(false)}
       />
-      <HttpButton
-        title="Trocar e-mail principal"
-        variant="secondary"
-        onPress={() => navigation.navigate('RequestPrimaryEmailChange')}
-      />
-      {user?.perfil === 'admin' ? (
-        <HttpButton
-          title="Cadastrar ou alterar segundo e-mail"
-          variant="secondary"
-          onPress={() => navigation.navigate('RequestSecondaryEmail')}
-        />
-      ) : null}
-      <HttpButton
-        title="Gerenciar sessões"
-        variant="secondary"
-        onPress={() => navigation.navigate('Sessions')}
-      />
-      <HttpButton
-        title={busy ? 'Saindo...' : 'Sair'}
-        variant="danger"
-        disabled={busy}
-        onPress={() => void logout()}
-      />
-    </HttpScreen>
+    </View>
+  );
+}
+
+function profileLabel(profile?: string): string {
+  if (profile === 'admin') return 'Administrador';
+  if (profile === 'colaborador') return 'Colaborador';
+  if (profile === 'produtor') return 'Produtor';
+  return '';
+}
+
+function AccountInfoRow({
+  label,
+  value,
+  last = false,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly last?: boolean;
+}) {
+  return (
+    <View style={[accountStyles.infoRow, last && accountStyles.infoRowLast]}>
+      <Text style={accountStyles.infoLabel}>{label}</Text>
+      <Text style={accountStyles.infoValue}>{value}</Text>
+    </View>
+  );
+}
+
+function AccountActionRow({
+  icon,
+  label,
+  onPress,
+}: {
+  readonly icon: React.ComponentProps<typeof Ionicons>['name'];
+  readonly label: string;
+  readonly onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity style={accountStyles.actionRow} onPress={onPress} activeOpacity={0.75}>
+      <View style={accountStyles.actionIcon}>
+        <Ionicons name={icon} size={20} color={colors.primary} />
+      </View>
+      <Text style={accountStyles.actionLabel}>{label}</Text>
+      <Ionicons name="chevron-forward-outline" size={20} color={colors.primary} />
+    </TouchableOpacity>
   );
 }
 
@@ -234,3 +338,62 @@ export function HttpSessionsScreen() {
     </HttpScreen>
   );
 }
+
+const accountStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  gradient: { flex: 1 },
+  content: { padding: spacing.screen, paddingBottom: spacing.xl * 2 },
+  profileCard: {
+    backgroundColor: colors.card,
+    padding: spacing.lg,
+    borderRadius: spacing.radiusLg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    ...shadows.md,
+  },
+  profileDetails: { marginTop: spacing.lg },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  infoRowLast: { borderBottomWidth: 0 },
+  infoLabel: { color: colors.muted, fontSize: typography.fontBody - 1, fontWeight: typography.weightSemibold },
+  infoValue: { flex: 1, color: colors.text, fontSize: typography.fontBody - 1, fontWeight: typography.weightBold, textAlign: 'right' },
+  actions: { gap: spacing.sm },
+  actionRow: {
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: spacing.radius,
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  actionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+  },
+  actionLabel: { flex: 1, color: colors.text, fontSize: typography.fontBody, fontWeight: typography.weightSemibold },
+  logoutButton: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderRadius: spacing.radius,
+    backgroundColor: colors.error,
+    ...shadows.sm,
+  },
+  logoutText: { color: colors.white, fontSize: typography.fontBody, fontWeight: typography.weightBold },
+});

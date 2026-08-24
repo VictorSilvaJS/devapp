@@ -7,7 +7,12 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, typography } from '../theme';
 
-export default function NotificationBadge({ count, size = 'medium' }) {
+type NotificationBadgeProps = {
+  readonly count: number;
+  readonly size?: 'small' | 'medium' | 'large';
+};
+
+export default function NotificationBadge({ count, size = 'medium' }: NotificationBadgeProps) {
   if (!count || count === 0) return null;
 
   const displayCount = count > 99 ? '99+' : count.toString();

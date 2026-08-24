@@ -44,6 +44,14 @@ Regras obrigatórias:
 Os identificadores acima são parte do contrato de build e não podem ser
 invertidos por variável de runtime.
 
+Depois da MP-34, o contrato de convergência em
+`contrato-convergencia-interface-http.md` torna explícito que separação de
+composição não significa uma segunda linguagem visual. Apresentações recebem
+dados e ações por portas e podem ser compartilhadas; adaptadores locais e HTTP
+permanecem separados. `expo-linear-gradient` integra também o grafo HTTP como
+dependência puramente visual, sem promover storage comum, localização, mapas,
+mídia ou qualquer fonte demonstrativa.
+
 ## Portas e capacidades
 
 A raiz de composição fornece portas explícitas para:
@@ -52,6 +60,10 @@ A raiz de composição fornece portas explícitas para:
 - coordenação da sessão;
 - leitura de Propriedades;
 - configuração e capacidades do cliente.
+
+A MP-34 acrescentou a porta real de notificações da própria conta. Ela não
+altera o corte de Propriedades da MP-33C nem autoriza recursos operacionais
+posteriores.
 
 O modo deve ser um valor discriminado de build, sem seleção dinâmica por dado
 persistido. A composição HTTP expõe somente capacidades realmente conectadas.
@@ -324,7 +336,8 @@ em loja nem promoção de fixtures para produção.
 
 - escrita ou administração de Propriedades, Usuários e vínculos;
 - transferência e histórico de Titularidade;
-- Talhões, Visitas, Caderno, Materiais, mapas e notificações via HTTP;
+- Talhões, Visitas, Caderno, Materiais, mapas e notificações operacionais via
+  HTTP; notificações self-only de conta foram implementadas depois, na MP-34;
 - cache persistente e offline produtivo;
 - MFA, break-glass operacional e liberação pública de Admin;
 - publicação em loja, rollout, commit, tag ou deploy;

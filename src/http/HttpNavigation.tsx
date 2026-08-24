@@ -54,9 +54,25 @@ function HttpTabsNavigator() {
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
-        headerShown: true,
+        headerShown: false,
+        lazy: true,
+        freezeOnBlur: true,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: {
+          backgroundColor: colors.card,
+          borderTopWidth: 2,
+          borderTopColor: colors.border,
+          paddingBottom: 4,
+          paddingTop: 8,
+          height: 65,
+          elevation: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginBottom: 4,
+        },
         tabBarIcon: ({ color, size }) => (
           <Ionicons
             name={
@@ -88,7 +104,7 @@ function HttpTabsNavigator() {
       <Tabs.Screen
         name="Account"
         component={HttpAccountScreen}
-        options={{ title: 'Conta' }}
+        options={{ title: 'Perfil' }}
       />
     </Tabs.Navigator>
   );
@@ -219,7 +235,7 @@ export function HttpNavigation() {
         ) : status === 'authenticated' && snapshot !== null ? (
           <Stack.Group navigationKey={identityKey}>
             <Stack.Screen name="Main" component={HttpTabs} options={{ headerShown: false }} />
-            <Stack.Screen name="PropertyDetail" component={HttpPropertyDetailScreen} options={{ title: 'Propriedade' }} />
+            <Stack.Screen name="PropertyDetail" component={HttpPropertyDetailScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ChangePassword" component={HttpChangePasswordScreen} options={{ title: 'Trocar senha' }} />
             <Stack.Screen name="RequestPrimaryEmailChange" component={HttpPrimaryEmailChangeScreen} options={{ title: 'Trocar e-mail' }} />
             <Stack.Screen name="RequestSecondaryEmail" component={HttpSecondaryEmailScreen} options={{ title: 'Segundo e-mail' }} />

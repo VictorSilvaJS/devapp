@@ -31,11 +31,18 @@ branch `backend` no commit `e787707`, sem pull request; os três jobs da CI
 pós-push foram aprovados. Não houve tag, deploy, release ou publicação da fase.
 O smoke funcional Android físico específico da MP-34 passou em 2026-08-24.
 
+Depois desse fechamento foi identificado que o roteiro MP-35 a MP-41 não
+garantia a convergência da interface aprovada no Demo. O primeiro corte
+corretivo anterior à MP-35 está implementado: login e componentes visuais são
+compartilhados por injeção de dados/ações, e Propriedades, Perfil e Notificações
+HTTP usam o padrão visual existente sem importar o mock. A validação física
+desse novo corte ainda precisa ser executada.
+
 ## Estado por camada
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado e composição HTTP com sessão, Propriedades e notificações da MP-34; sem release produtivo |
+| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil e notificações reais no padrão visual aprovado; convergência física pendente e sem release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
@@ -45,7 +52,7 @@ O smoke funcional Android físico específico da MP-34 passou em 2026-08-24.
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
-| Testes | MP-34: app Node.js 22 com 35/35 focados; backend Node.js 24 com 138 unitários/migration, 26 HTTP e 41 integrações reais |
+| Testes | MP-34 preservada: app Node.js 22 com 35/35 focados; backend Node.js 24 com 138 unitários/migration, 26 HTTP e 41 integrações reais; convergência com typecheck, `test:domain-compat`, 6/6 focados, grafos, bundles e prebuild aprovados; smoke físico pendente |
 
 ## Corte implementado da MP-33C
 
@@ -133,6 +140,9 @@ evidência do dataset local, não volume produtivo.
 - A composição HTTP possui entrega persistida e isolamento técnico de
   notificações, mas ainda não existe ambiente produtivo, operação agendada da
   purga ou push. O mock global permanece somente no Demo.
+- A convergência visual atual cobre somente capacidades HTTP já reais. Visitas,
+  Caderno, Materiais, mapas e agregados do Dashboard não aparecem
+  automaticamente e continuam dependentes de suas verticais.
 - Logs estruturados básicos e CI de fundação não equivalem a observabilidade
   produtiva; backup, restauração e gestão de segredos ainda precisam ser
   implementados.
@@ -318,6 +328,21 @@ migrations contra `3dd8f42`. O smoke funcional da MP-34 passou no Android
 físico em 2026-08-24, e não houve pull request, tag, deploy, release ou
 publicação.
 
+## Validação da convergência visual pré-MP-35
+
+O aplicativo passou em Node.js 22 no typecheck e na suíte completa
+`test:domain-compat`, que inclui novamente MP-33C, MP-34 e os 6/6 testes focados
+de convergência. A inspeção do grafo estático e dos bundles Android confirmou
+que o HTTP compartilha apresentação sem alcançar `src/api`, dados
+demonstrativos ou `AsyncStorage`; o Demo preservou seu próprio grafo e seus
+dados. O grafo nativo admitiu `expo-linear-gradient` como dependência visual e
+manteve storage comum, câmera, localização, mapas, SVG e WebView fora do HTTP.
+
+O prebuild HTTP temporário preservou ID definitivo, App Link, regras de backup
+e somente `INTERNET` como permissão efetiva. A validação física da nova
+interface ainda não foi executada; por isso o corte não está fechado para
+iniciar a MP-35. Não houve commit, tag, deploy, release ou publicação.
+
 ## Próxima etapa
 
 A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
@@ -331,10 +356,11 @@ e integrada nessa base pelo PR #2 no commit `cc78a9f`, sem alterar o
 comportamento persistido do Demo.
 
 A MP-34 está concluída tecnicamente e integrada diretamente à branch `backend`
-no commit `e787707`, sem pull request e com CI pós-push aprovada. A próxima
-decisão é autorizar ou não o commit documental deste fechamento e escolher a
-fase seguinte; nenhuma dessas decisões implica liberação produtiva. Antes de
-produção, permanecem responsável,
+no commit `e787707`, sem pull request e com CI pós-push aprovada. Antes da
+MP-35, o corte corretivo de convergência reutiliza a apresentação aprovada nas
+capacidades HTTP existentes; seu próximo portão é o smoke em Android físico.
+Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
+permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
@@ -363,6 +389,7 @@ está em [proximos-passos.md](proximos-passos.md).
 | Regras e contratos | src/domain, src/types e src/utils |
 | Dados, mocks e integrações | src/api e src/services |
 | Composição HTTP e sessão segura | src/http e src/entry/http.tsx |
+| Apresentação compartilhada Demo/HTTP | src/components |
 | Composição Demo preservada | demo e src/entry/demo.tsx |
 | Fundação do backend e banco | backend |
 | Login e sessão locais do Demo | src/auth e src/contexts |

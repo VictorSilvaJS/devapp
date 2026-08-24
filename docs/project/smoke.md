@@ -2,7 +2,7 @@
 
 > Atualizado em: 2026-08-24
 >
-> Última execução física registrada: 2026-08-17
+> Última execução física registrada: 2026-08-24
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
@@ -25,6 +25,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-12 | Usuários e acesso | Admin vincula, desvincula e revincula Produtor autorizado | PASSOU |
 | ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
 | ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO; PORTÕES PRODUTIVOS PENDENTES |
+| ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PENDENTE DE ANDROID FÍSICO |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -195,6 +196,33 @@ interface foi executado no Android físico em 2026-08-24 e está detalhado em
 com a mesma `Idempotency-Key` e `404` direto entre destinatários continuam
 comprovados pelas suítes HTTP/de integração, não por uma tela que não expõe
 esses mecanismos; essa cobertura não é promovida a física por inferência.
+
+## Cenário de convergência visual anterior à MP-35
+
+Com backend/PostgreSQL reais e ao menos duas identidades sintéticas:
+
+1. abrir a variante HTTP e confirmar o login no padrão visual aprovado, sem
+   acesso rápido demonstrativo;
+2. autenticar e verificar cabeçalho, avatar, barra inferior e badge sem conteúdo
+   ou identidade do Demo;
+3. em Propriedades, conferir cartões, busca enviada ao servidor, filtros de
+   status/UF/Município, limpeza, gesto de atualização, estado vazio e cursor;
+4. abrir uma Propriedade autorizada e conferir somente nome, localização,
+   Titular, área, cultura, status e tipo de acesso reais; Talhões, mapas,
+   Visitas, Caderno, Materiais e métricas não podem ser simulados;
+5. abrir Perfil, trocar entre suas ações reais e voltar sem perder a identidade;
+6. abrir Notificações, alternar filtros, ler, descartar e resolver destino
+   `conta`, preservando os gates da MP-34;
+7. trocar de Usuário e confirmar que lista, badge, filtros, respostas tardias e
+   destino da identidade anterior não reaparecem;
+8. interromper a API e confirmar indisponibilidade honesta, sem cache
+   persistente nem fallback demonstrativo;
+9. repetir o Demo e confirmar login rápido, dados locais e telas ainda
+   demonstrativas preservados em seu identificador separado.
+
+O resultado só pode passar depois de execução observável no Android físico. Os
+testes automatizados de grafo e comportamento não promovem esse item por
+inferência.
 
 ## Cenários de campo de MP-38
 

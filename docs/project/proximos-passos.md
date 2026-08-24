@@ -2,11 +2,12 @@
 
 > Atualizado em: 2026-08-24
 >
-> Próxima tarefa: revisar e decidir explicitamente sobre o commit documental do
-> fechamento pós-integração da MP-34; a fase seguinte continua sem autorização
+> Próxima tarefa: executar o smoke Android físico do corte de convergência
+> visual anterior à MP-35
 >
-> Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; MP-34 NO COMMIT `e787707`,
-> SEM PR, TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
+> IMPLEMENTADA LOCALMENTE E AINDA NÃO COMITADA; SEM TAG, DEPLOY, RELEASE OU
+> PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -27,6 +28,12 @@ da própria conta. Ela foi integrada diretamente à branch `backend` no commit
 verificação complementar confirmou as cinco migrations e o caráter append-only
 da `000005` contra `3dd8f42`. Não houve tag, deploy, release ou publicação. O
 smoke funcional Android físico específico da MP-34 passou em 2026-08-24.
+
+Uma auditoria posterior confirmou que a fila MP-35 a MP-41 não continha uma
+entrega explícita de convergência entre a interface aprovada no Demo e as
+verticais HTTP. O corte corretivo anterior à MP-35 passa a reutilizar
+apresentações e componentes existentes, sem misturar fontes de dados. Ele deve
+ser validado em Android físico antes de iniciar as escritas administrativas.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -192,7 +199,8 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
 | 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
-| 35 | MP-35 | Escopo por Propriedade e vínculos no servidor | BACKLOG |
+| 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | IMPLEMENTADA LOCALMENTE; AUTOMAÇÃO, GRAFOS, BUNDLES E PREBUILD APROVADOS; SMOKE FÍSICO PENDENTE |
+| 35 | MP-35 | Escritas de Propriedade, Usuários/vínculos, RBAC e integração das telas administrativas existentes | BACKLOG |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
@@ -239,6 +247,43 @@ jurídica/de privacidade da retenção, observabilidade, backup/restauração e 
 portões gerais de release. A integração ocorreu diretamente no commit
 `e787707`, sem pull request; não houve tag, deploy, release ou publicação da
 MP-34.
+
+### Convergência visual anterior à MP-35
+
+Contrato:
+[contrato-convergencia-interface-http.md](contrato-convergencia-interface-http.md).
+
+O primeiro corte implementado localmente:
+
+1. compartilha a apresentação de login entre Demo e HTTP, mantendo acesso
+   rápido exclusivamente demonstrativo;
+2. compartilha cabeçalho, identidade visual, cartões e estados vazios sem
+   compartilhar fonte de dados;
+3. aplica à lista/detalhe HTTP de Propriedades o padrão visual existente, com
+   busca, filtros e cursor ainda executados pelo servidor;
+4. apresenta Perfil e ações self-service reais no padrão visual aprovado;
+5. preserva toda a semântica segura de Notificações da MP-34 no layout
+   convergido;
+6. mantém métricas sem agregado, Talhões, mapas, Visitas, Caderno, Materiais e
+   Dashboard fora da navegação HTTP até suas verticais reais.
+
+Critério de fechamento:
+
+- typecheck, `test:domain-compat`, MP-33C, MP-34 e teste focado de arquitetura
+  aprovados em Node.js 22;
+- grafos HTTP/Demo continuam isolados; somente `expo-linear-gradient` é
+  promovido como dependência visual HTTP, sem promover storage, localização,
+  mapas, mídia ou dados demonstrativos;
+- smoke Android físico confirma login, lista/filtros/detalhe de Propriedades,
+  Perfil, Notificações, troca de identidade e indisponibilidade honesta;
+- documentação e código permanecem coerentes, sem commit, tag, deploy ou
+  publicação automáticos.
+
+Depois desse fechamento, a MP-35 deve integrar as telas administrativas já
+existentes no mesmo corte das escritas e do RBAC. MP-36 e MP-37 repetem o padrão
+para Caderno e GeoJSON/Talhões. Visitas, Materiais e agregados do Dashboard
+precisam entrar como verticais explícitas antes da MP-40/41; não surgem
+automaticamente ao final da fila.
 
 MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.

@@ -31,6 +31,13 @@ os três jobs da CI pós-push foram aprovados. Não houve tag, deploy, release o
 publicação. O smoke funcional específico da fase passou em Android físico em
 2026-08-24; os portões de ambiente, operação e release permanecem pendentes.
 
+Um corte corretivo anterior à MP-35 aplica a regra de apresentação
+compartilhada que já constava da arquitetura: a interface aprovada no Demo é
+reutilizada por componentes que recebem dados e ações, enquanto os adaptadores
+locais e HTTP continuam separados. O primeiro corte cobre as capacidades reais
+de login, Propriedades, Perfil e Notificações; a validação física da interface
+convergida continua pendente.
+
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
 possuem portões próprios antes de suas respectivas verticais ou do release.
@@ -478,8 +485,10 @@ para token, sessão ou cache de negócio.
 - notificações in-app self-only, migration append-only, cinco fluxos emissores
   transacionais, API, composição HTTP e purga one-shot, concluídas tecnicamente
   e integradas diretamente na `MP-34` pelo commit `e787707`;
+- convergência da apresentação aprovada nas capacidades HTTP existentes,
+  implementada localmente antes da MP-35 e ainda pendente de smoke físico;
 - escritas administrativas e o restante do RBAC por ação no servidor
-  (`MP-35`);
+  (`MP-35`), com integração das telas administrativas existentes;
 - CI do backend;
 - observabilidade, backup e restauração.
 

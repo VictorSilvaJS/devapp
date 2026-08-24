@@ -6,39 +6,35 @@ import { colors, typography, spacing, border, shadows } from '../theme';
 import { getFazendaUiInfo } from '../utils/fazendaUiCompat';
 import { formatAreaHa, resolveAreaTotalInformada } from '../utils/talhaoMedidasCompat';
 
-export default function ProdutorCard({ produtor, onPress }) {
-  const fazendaInfo = getFazendaUiInfo(produtor);
-  const nomeFazenda = fazendaInfo.fazendaNome || 'Propriedade sem nome';
-  const nomeTitular = fazendaInfo.titularNome || 'Titular não informado';
-  const localizacao = [fazendaInfo.localizacao, produtor.regiao].filter(Boolean).join(' • ');
-  const areaTotalInformada = formatAreaHa(resolveAreaTotalInformada(produtor));
+export type PropertyCardPresentation = {
+  readonly id: string;
+  readonly nome: string;
+  readonly titularNome: string;
+  readonly localizacao: string;
+  readonly areaTotal: number | null;
+  readonly status: 'ativo' | 'pendente' | 'inativo';
+  readonly accessLabel?: string;
+};
+
+type PropertyCardViewProps = {
+  readonly property: PropertyCardPresentation;
+  readonly onPress: () => void;
+};
+
+export function PropertyCardView({ property, onPress }: PropertyCardViewProps) {
+  const nomeFazenda = property.nome || 'Propriedade sem nome';
+  const nomeTitular = property.titularNome || 'Titular não informado';
+  const localizacao = property.localizacao;
+  const areaTotalInformada = formatAreaHa(property.areaTotal);
 
   const getStatusInfo = () => {
-    switch (produtor.status) {
+    switch (property.status) {
       case 'ativo':
-        return { 
-          color: colors.success, 
-          label: 'Ativo',
-          icon: 'checkmark-circle'
-        };
+        return { color: colors.success, label: 'Ativa', icon: 'checkmark-circle' as const };
       case 'pendente':
-        return { 
-          color: colors.warning, 
-          label: 'Pendente',
-          icon: 'time'
-        };
+        return { color: colors.warning, label: 'Pendente', icon: 'time' as const };
       case 'inativo':
-        return { 
-          color: colors.muted, 
-          label: 'Inativo',
-          icon: 'close-circle'
-        };
-      default:
-        return { 
-          color: colors.muted, 
-          label: 'N/A',
-          icon: 'help-circle'
-        };
+        return { color: colors.muted, label: 'Inativa', icon: 'close-circle' as const };
     }
   };
 
@@ -58,9 +54,9 @@ export default function ProdutorCard({ produtor, onPress }) {
         <View style={styles.info}>
           <View style={styles.header}>
             <Text style={styles.nome} numberOfLines={1}>{nomeFazenda}</Text>
-            <View style={[styles.statusBadge, { 
-              backgroundColor: statusInfo.color + '15',
-              borderColor: statusInfo.color + '40'
+            <View style={[styles.statusBadge, {
+              backgroundColor: `${statusInfo.color}15`,
+              borderColor: `${statusInfo.color}40`,
             }]}>
               <Ionicons name={statusInfo.icon} size={12} color={statusInfo.color} />
               <Text style={[styles.statusText, { color: statusInfo.color }]}>
@@ -82,12 +78,37 @@ export default function ProdutorCard({ produtor, onPress }) {
             <View style={styles.metaDivider} />
             <View style={styles.metaItem}>
               <Ionicons name="resize" size={13} color={colors.muted} />
-              <Text style={styles.meta}>Área total informada: {areaTotalInformada}</Text>
+              <Text style={styles.meta}>{areaTotalInformada}</Text>
             </View>
           </View>
+          {property.accessLabel ? (
+            <Text style={styles.accessLabel}>{property.accessLabel}</Text>
+          ) : null}
         </View>
       </View>
     </TouchableOpacity>
+  );
+}
+
+export default function ProdutorCard({ produtor, onPress }) {
+  const fazendaInfo = getFazendaUiInfo(produtor);
+  const localizacao = [fazendaInfo.localizacao, produtor.regiao].filter(Boolean).join(' • ');
+  return (
+    <PropertyCardView
+      property={{
+        id: fazendaInfo.id,
+        nome: fazendaInfo.fazendaNome,
+        titularNome: fazendaInfo.titularNome,
+        localizacao,
+        areaTotal: resolveAreaTotalInformada(produtor),
+        status: produtor.status === 'pendente'
+          ? 'pendente'
+          : produtor.status === 'inativo'
+            ? 'inativo'
+            : 'ativo',
+      }}
+      onPress={onPress}
+    />
   );
 }
 
@@ -187,5 +208,11 @@ const styles = StyleSheet.create({
     fontSize: typography.fontCaption + 1,
     fontWeight: '500',
     flexShrink: 1,
-  }
+  },
+  accessLabel: {
+    color: colors.primaryDark,
+    fontSize: typography.fontCaption,
+    fontWeight: typography.weightSemibold,
+    marginTop: spacing.xs,
+  },
 });
