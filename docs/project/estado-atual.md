@@ -37,7 +37,9 @@ corretivo anterior à MP-35 está implementado: login e componentes visuais são
 compartilhados por injeção de dados/ações, e Propriedades, Perfil e Notificações
 HTTP usam o padrão visual existente sem importar o mock. A validação física
 passou em 2026-08-24 nas duas composições, depois da correção compartilhada da
-barra inferior para respeitar a safe area gestual do Android.
+barra inferior para respeitar a safe area gestual do Android. O corte foi
+integrado diretamente à branch `backend` no commit `e47bb02`, e os três jobs da
+CI pós-push foram aprovados.
 
 ## Estado por camada
 
@@ -345,8 +347,9 @@ as três abas HTTP e as seis abas do Demo responderam ao toque normal depois de
 a barra reservar os 36 px da safe area inferior. O roteiro conectado de login,
 Propriedades, Perfil, Notificações, troca de identidade e API indisponível
 também passou. O cursor não foi gerado fisicamente pela massa disponível e
-permanece comprovado pela automação. Não houve commit, tag, deploy, release ou
-publicação desse corte local.
+permanece comprovado pela automação. O corte foi integrado diretamente à branch
+`backend` no commit `e47bb02`, com os três jobs da CI pós-push aprovados. Não
+houve tag, deploy, release ou publicação.
 
 ## Próxima etapa
 
@@ -363,8 +366,8 @@ comportamento persistido do Demo.
 A MP-34 está concluída tecnicamente e integrada diretamente à branch `backend`
 no commit `e787707`, sem pull request e com CI pós-push aprovada. Antes da
 MP-35, o corte corretivo de convergência reutiliza a apresentação aprovada nas
-capacidades HTTP existentes e passou no smoke Android físico. O corte continua
-local e ainda não foi commitado.
+capacidades HTTP existentes, passou no smoke Android físico e foi integrado
+diretamente no commit `e47bb02`, com os três jobs da CI pós-push aprovados.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de

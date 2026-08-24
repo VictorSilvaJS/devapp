@@ -2,7 +2,7 @@
 
 > Status: `ATIVO`
 >
-> Definido e implementado no primeiro corte: 2026-08-24
+> Definido, implementado e integrado no primeiro corte: 2026-08-24
 >
 > Escopo: apresentação compartilhada e integração progressiva das telas já
 > aprovadas com as verticais HTTP reais
@@ -117,3 +117,7 @@ por safe area, os alvos da barra ficaram acima da região de gestos e passaram e
 3/3 abas HTTP e 6/6 abas Demo. A massa física não produziu segunda página de
 Propriedades; o cursor permanece coberto pela automação. Essa validação não
 substitui os portões produtivos das MP-33B, MP-33C e MP-34.
+
+O corte foi integrado diretamente à branch `backend` no commit `e47bb02`, e os
+três jobs da CI pós-push foram aprovados. Essa integração não criou tag, deploy,
+release ou publicação e não altera os portões produtivos e de loja.

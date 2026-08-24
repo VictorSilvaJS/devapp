@@ -2,12 +2,12 @@
 
 > Atualizado em: 2026-08-24
 >
-> Próxima tarefa: revisar e, mediante autorização explícita, criar o commit
-> local do corte de convergência visual; depois preparar a MP-35
+> Próxima tarefa: preparar a arquitetura da MP-35 em um novo chat, sem iniciar
+> implementação antes da aprovação explícita do escopo e das decisões
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
-> IMPLEMENTADA E APROVADA NO ANDROID FÍSICO, AINDA NÃO COMITADA; SEM TAG,
-> DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
+> SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -35,7 +35,9 @@ verticais HTTP. O corte corretivo anterior à MP-35 passa a reutilizar
 apresentações e componentes existentes, sem misturar fontes de dados. Sua
 validação em Android físico era o portão anterior às escritas administrativas e
 passou em 2026-08-24 depois da correção da barra inferior para respeitar a safe
-area gestual nas composições Demo e HTTP.
+area gestual nas composições Demo e HTTP. O corte foi integrado diretamente à
+branch `backend` no commit `e47bb02`, e os três jobs da CI pós-push foram
+aprovados.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -201,7 +203,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | Ordem | Tarefa | Objetivo | Estado |
 |---:|---|---|---|
 | 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
-| 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA TECNICAMENTE E APROVADA NO ANDROID FÍSICO; COMMIT LOCAL PENDENTE DE AUTORIZAÇÃO |
+| 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e47bb02`; CI PÓS-PUSH APROVADA |
 | 35 | MP-35 | Escritas de Propriedade, Usuários/vínculos, RBAC e integração das telas administrativas existentes | BACKLOG |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
@@ -255,7 +257,7 @@ MP-34.
 Contrato:
 [contrato-convergencia-interface-http.md](contrato-convergencia-interface-http.md).
 
-O primeiro corte implementado localmente:
+O primeiro corte implementado e integrado:
 
 1. compartilha a apresentação de login entre Demo e HTTP, mantendo acesso
    rápido exclusivamente demonstrativo;
@@ -278,8 +280,8 @@ Critério de fechamento:
   mapas, mídia ou dados demonstrativos;
 - smoke Android físico confirma login, lista/filtros/detalhe de Propriedades,
   Perfil, Notificações, troca de identidade e indisponibilidade honesta;
-- documentação e código permanecem coerentes, sem commit, tag, deploy ou
-  publicação automáticos.
+- documentação e código permanecem coerentes; integração técnica não autoriza
+  tag, deploy, release ou publicação.
 
 O fechamento técnico passou em 2026-08-24 no TCL 8483A, Android 15/API 35. A
 barra inferior inicialmente invadia a área de gestos; a safe area corrigida
@@ -287,6 +289,11 @@ deixou os alvos entre `y=1162–1238`. Toques centrais passaram em 3/3 abas HTTP
 6/6 abas Demo, sem fatal no log. O cenário HTTP conectado também confirmou os
 fluxos acima e a ausência de fallback. Cursor permaneceu automatizado porque a
 massa física não gerou segunda página.
+
+O commit `e47bb02` integrou diretamente esse corte à branch `backend`, e os três
+jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
+publicação. A arquitetura da MP-35 será preparada em um novo chat e continuará
+dependente de aprovação antes de qualquer implementação.
 
 Depois desse fechamento, a MP-35 deve integrar as telas administrativas já
 existentes no mesmo corte das escritas e do RBAC. MP-36 e MP-37 repetem o padrão

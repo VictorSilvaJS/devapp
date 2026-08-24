@@ -16,8 +16,9 @@ implementações de fases posteriores.
 O contrato arquitetural está fechado em
 `contrato-convergencia-interface-http.md`: a interface aprovada é compartilhada
 por apresentação, enquanto Demo e HTTP mantêm adaptadores e capacidades
-separados. O primeiro corte está implementado localmente e validado no Android
-físico. Permanecem como obrigações das próximas verticais:
+separados. O primeiro corte foi validado no Android físico e integrado
+diretamente à branch `backend` no commit `e47bb02`, com os três jobs da CI
+pós-push aprovados. Permanecem como obrigações das próximas verticais:
 
 - integrar em cada vertical futura a tela existente correspondente, em vez de
   criar uma nova interface paralela;

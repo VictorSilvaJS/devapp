@@ -1,7 +1,8 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `ATIVO`; `MP-33A`, `MP-33B`, `MP-33C` e `MP-34` integradas à branch
-> `backend`; a MP-34 entrou diretamente no commit `e787707`
+> Status: `ATIVO`; `MP-33A`, `MP-33B`, `MP-33C`, `MP-34` e o corte de
+> convergência pré-MP-35 integrados à branch `backend`; a convergência entrou
+> diretamente no commit `e47bb02`
 >
 > Fechamento: 2026-08-07
 >
@@ -36,7 +37,9 @@ compartilhada que já constava da arquitetura: a interface aprovada no Demo é
 reutilizada por componentes que recebem dados e ações, enquanto os adaptadores
 locais e HTTP continuam separados. O primeiro corte cobre as capacidades reais
 de login, Propriedades, Perfil e Notificações; a validação física da interface
-convergida passou em 2026-08-24 nas composições Demo e HTTP.
+convergida passou em 2026-08-24 nas composições Demo e HTTP. O commit
+`e47bb02` integrou o corte diretamente à branch `backend`, e os três jobs da CI
+pós-push foram aprovados. Isso não realizou tag, deploy, release ou publicação.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -486,7 +489,8 @@ para token, sessão ou cache de negócio.
   transacionais, API, composição HTTP e purga one-shot, concluídas tecnicamente
   e integradas diretamente na `MP-34` pelo commit `e787707`;
 - convergência da apresentação aprovada nas capacidades HTTP existentes,
-  implementada e aprovada no smoke físico antes da MP-35, ainda sem commit;
+  implementada, aprovada no smoke físico e integrada diretamente no commit
+  `e47bb02`, com os três jobs da CI pós-push aprovados;
 - escritas administrativas e o restante do RBAC por ação no servidor
   (`MP-35`), com integração das telas administrativas existentes;
 - CI do backend;

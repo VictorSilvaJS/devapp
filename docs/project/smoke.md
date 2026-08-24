@@ -232,8 +232,9 @@ estado vazio, detalhe de Propriedade, Perfil, sessões, Notificações, troca de
 identidade e indisponibilidade honesta sem fallback. O Demo foi instalado sob
 seu identificador separado, preservou login rápido e dados locais. A massa
 física de Propriedades não produziu uma segunda página; cursor continua coberto
-pela automação e não é promovido a evidência física por inferência. Não houve
-tag, deploy, release ou publicação.
+pela automação e não é promovido a evidência física por inferência. O corte foi
+integrado diretamente à branch `backend` no commit `e47bb02`, e os três jobs da
+CI pós-push foram aprovados. Não houve tag, deploy, release ou publicação.
 
 ## Cenários de campo de MP-38
 
