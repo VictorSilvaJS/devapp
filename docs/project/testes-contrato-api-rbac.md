@@ -1,16 +1,17 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-08-21: `LEITURA_MP33C_AUTOMATIZADA_E_VALIDADA`. Este
-documento define a matriz baseada em `contrato-api-rbac.md`, nas decisões 31 a
-48 e em `baseline-backend-v1-2026-08.md`, distinguindo o corte já executável das
-linhas que continuam planejadas.
+Status revisado em 2026-08-25:
+`MP-35A corrigida localmente, não integrada, em validação final`. Este documento
+define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
+em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
 ## Escopo Da Matriz
 
 Esta matriz orienta a API/backend. Os cenários de autenticação da MP-33B
 possuem automação validada. Os cenários de leitura de Propriedades viraram
 testes executáveis e foram validados na MP-33C; escritas administrativas e o
-restante do RBAC por ação continuam documentação para a MP-35.
+restante do RBAC por ação continuam documentação para MP-35B/C. A MP-35A
+implementa somente a fundação persistente aprovada em D1-D13.
 
 Separacao obrigatoria:
 
@@ -65,19 +66,27 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
-| API-RBAC-USR-01 | Admin lista usuarios | Admin | Admin ativo | `GET /usuarios` | Filtros opcionais | `200 OK` | Admin/papel autorizado gerencia usuarios | Automatizado backend/API |
-| API-RBAC-USR-02 | Produtor tenta listar usuarios | Produtor | Produtor autenticado | `GET /usuarios` | Filtros opcionais | `403 Forbidden` | Produtor nao edita usuarios/vinculos | Automatizado backend/API |
-| API-RBAC-USR-03 | Nao autenticado lista usuarios | Nao autenticado | Sem sessao | `GET /usuarios` | Filtros opcionais | `401 Unauthorized` | Autenticacao obrigatoria | Automatizado backend/API |
-| API-RBAC-USR-04 | Admin abre detalhe de usuario | Admin | Usuario existe | `GET /usuarios/:id` | Nao se aplica | `200 OK` | Admin pode abrir detalhe administrativo | Automatizado backend/API |
-| API-RBAC-USR-05 | Usuario inexistente | Admin | Id nao existe | `GET /usuarios/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna 404 | Automatizado backend/API |
-| API-RBAC-USR-06 | Admin cria usuario valido | Admin | E-mail nao existe | `POST /usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor", "status": "pendente" }` | `201 Created` | Criacao administrativa permitida | Automatizado backend/API |
-| API-RBAC-USR-07 | Criar usuario com payload invalido | Admin | Campo obrigatorio ausente | `POST /usuarios` | `{ "email": "invalido" }` | `400 Bad Request` | Payload invalido e recusado | Automatizado backend/API |
-| API-RBAC-USR-08 | Criar usuario com e-mail duplicado | Admin | E-mail ja cadastrado | `POST /usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor", "status": "ativo" }` | `409 Conflict` | Conflito de regra retorna 409 | Automatizado backend/API |
-| API-RBAC-USR-09 | Admin atualiza usuario | Admin | Usuario existe | `PATCH /usuarios/:id` | Campos parciais permitidos | `200 OK` | Admin/papel autorizado atualiza usuario | Automatizado backend/API |
-| API-RBAC-USR-10 | Colaborador atualiza usuario sem permissao | Colaborador | Sem papel administrativo | `PATCH /usuarios/:id` | Campos parciais | `403 Forbidden` | Colaborador nao edita usuarios por padrao | Automatizado backend/API |
-| API-RBAC-USR-11 | Admin altera status | Admin | Usuario existe e regra permite | `PATCH /usuarios/:id/status` | `{ "status": "inativo" }` | `200 OK` | Status e controlado por admin | Automatizado backend/API |
-| API-RBAC-USR-12 | Inativar usuario principal do Titular | Admin | Usuario principal ativo e Propriedade titularizada | `PATCH /usuarios/:id/status` | `{ "status": "inativo" }` | `200 OK` | Desativacao da conta nao desfaz nem invalida a Titularidade cadastral | Automatizado backend/API |
+| API-RBAC-USR-01 | Admin lista usuarios | Admin | Admin ativo | `GET /v1/usuarios` | Filtros opcionais | `200 OK` | Somente Admin gerencia usuarios | MP-35B |
+| API-RBAC-USR-02 | Produtor tenta listar usuarios | Produtor | Produtor autenticado | `GET /v1/usuarios` | Filtros opcionais | `403 Forbidden` | Produtor nao edita usuarios/vinculos | MP-35B |
+| API-RBAC-USR-03 | Nao autenticado lista usuarios | Nao autenticado | Sem sessao | `GET /v1/usuarios` | Filtros opcionais | `401 Unauthorized` | Autenticacao obrigatoria | MP-35B |
+| API-RBAC-USR-04 | Admin abre detalhe de usuario | Admin | Usuario existe | `GET /v1/usuarios/:id` | Nao se aplica | `200 OK` | Admin pode abrir detalhe administrativo | MP-35B |
+| API-RBAC-USR-05 | Usuario inexistente | Admin | Id nao existe | `GET /v1/usuarios/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna 404 | MP-35B |
+| API-RBAC-USR-06 | Admin cria usuario valido | Admin | E-mail nao existe | `POST /v1/usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor" }` | `201 Created` | Servidor cria pendente, sem senha, e emite convite | MP-35B |
+| API-RBAC-USR-07 | Criar usuario com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/usuarios` | `{ "email": "invalido" }` | `400 Bad Request` | Payload invalido e recusado | MP-35B |
+| API-RBAC-USR-08 | Criar usuario com e-mail duplicado | Admin | E-mail ja cadastrado | `POST /v1/usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor" }` | `409 Conflict` | Conflito de regra retorna 409 | MP-35B |
+| API-RBAC-USR-09 | Admin atualiza usuario | Admin | Usuario existe | `PATCH /v1/usuarios/:id` | Campos parciais e `versao` | `200 OK` | Somente Admin atualiza usuario | MP-35B |
+| API-RBAC-USR-10 | Colaborador atualiza usuario sem permissao | Colaborador | Sem papel administrativo | `PATCH /v1/usuarios/:id` | Campos parciais | `403 Forbidden` | Colaborador nao edita usuarios | MP-35B |
+| API-RBAC-USR-11 | Admin altera status | Admin | Usuario existe e regra permite | `PATCH /v1/usuarios/:id/status` | `{ "status": "inativo", "versao": 2, "motivo": "fim_relacao" }` | `200 OK` | Status e controlado por Admin e revoga sessões afetadas | MP-35B |
+| API-RBAC-USR-12 | Inativar Titular de Propriedade ativa isoladamente | Admin | Usuario/Produtor ativo e Propriedade ativa | `PATCH /v1/usuarios/:id/status` | `{ "status": "inativo", "versao": 2, "motivo": "suspensao_operacional" }` | `409 Conflict` | Estado final não pode deixar Propriedade ativa sem Titular habilitado | MP-35B |
 | API-RBAC-USR-13 | Usuario principal inativo tenta acessar como Titular | Produtor inativo | `titular_id` permanece valido | `GET /v1/propriedades` | Nao se aplica | `401 Unauthorized` | Usuario inativo nao obtem acesso apesar da Titularidade cadastral | Automatizado na MP-33C |
+| API-RBAC-USR-14 | Aceitar convite novo de Colaborador | Colaborador pendente | Convite `ativar_usuario`, sem credencial | `POST /v1/auth/invitations/accept` | Token e senha válida | `204 No Content` | Credencial e Usuário ativo no mesmo commit, mesmo com zero vínculos | Automatizado na MP-35A |
+| API-RBAC-USR-15 | Aceitar convite novo de Produtor | Produtor pendente/inativo | Convite `ativar_usuario`, sem credencial | `POST /v1/auth/invitations/accept` | Token e senha válida | `204 No Content` | Usuário, Produtor e credencial ficam ativos atomicamente com login real membro somente de `tche_agro_runtime` | Automatizado na MP-35A |
+| API-RBAC-USR-16 | Emitir modo histórico em fluxo novo | Admin | Usuário pendente | `POST /v1/usuarios/:id/convites` | Tentativa `manter_status` | `422 Unprocessable Entity` | `manter_status` é somente compatibilidade histórica | MP-35B; constraint automatizada na MP-35A |
+| API-RBAC-USR-17 | Retry idempotente de mutação | Admin | Primeira resposta ambígua | Repetir rota mutável | Mesma `Idempotency-Key` e mesmo corpo | Mesmo status/recibo | Nenhuma versão ou efeito avança duas vezes | MP-35B/C |
+| API-RBAC-USR-18 | Reuso conflitante da chave | Admin | Chave já concluída | Repetir rota mutável | Mesma chave e corpo diferente | `409 Conflict` | Hash do pedido vincula a chave ao comando | MP-35B/C |
+| API-RBAC-USR-19 | Ativar Usuário sem credencial | Runtime | Usuário pendente sem credencial ativa | Escrita SQL controlada | Alterar para ativo | Transação rejeitada | Ativação exige credencial ativa mesmo por escrita direta | Automatizado na MP-35A |
+| API-RBAC-USR-20 | Concluir bootstrap e inativar último Admin em corrida | Runtime | Uma conexão conclui bootstrap e outra inativa o Admin | Duas transações com barreira | Não se aplica | No máximo um commit | Proteção do último Admin compartilha o lock singleton | Automatizado na MP-35A |
+| API-RBAC-USR-21 | Alteração futura de autorização | Admin | MP-35B/C implementada | Rota mutável aplicável | Comando válido | Conforme rota | D13 revoga sessões dos Usuários diretamente afetados, inclusive em ampliação | Planejado MP-35B/C |
 
 ## Propriedades
 
@@ -91,11 +100,11 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-PROP-06 | Produtor tenta abrir Propriedade de outro titular | Produtor | Sem vinculo ativo | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Produtor nao acessa outro titular nem confirma sua existencia | Automatizado na MP-33C |
 | API-RBAC-PROP-07 | Colaborador sem vinculo tenta abrir Propriedade | Colaborador | Sem `usuario_propriedade` ativo | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Vinculo direto ativo e obrigatorio | Automatizado na MP-33C |
 | API-RBAC-PROP-08 | Recurso inexistente | Admin | Id inexistente | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna o mesmo 404 do fora de escopo | Automatizado na MP-33C |
-| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /v1/propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "uf_id": "...", "uf_sigla": "RS", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Admin grava a Titularidade somente em `titular_id` | MP-35 |
-| API-RBAC-PROP-10 | Criar Propriedade com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/propriedades` | `{ "nome": "..." }` | `400 Bad Request` | Payload invalido e recusado | MP-35 |
-| API-RBAC-PROP-11 | Conflito de Titularidade | Admin | Regra estrutural de Titularidade conflita | `POST /v1/propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 sem depender de vinculo `titular` | MP-35 |
-| API-RBAC-PROP-12 | Admin edita Propriedade | Admin | Propriedade existe | `PATCH /v1/propriedades/:id` | Campos parciais | `200 OK` | Admin edita cadastro | MP-35 |
-| API-RBAC-PROP-13 | Colaborador edita cadastro sem permissao | Colaborador | Escopo valido, sem permissao de acao | `PATCH /v1/propriedades/:id` | Campos parciais | `403 Forbidden` | Escopo nao implica editar cadastro | MP-35 |
+| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /v1/propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Cliente envia só Município; Admin grava a Titularidade somente em `titular_id`; backend deriva UF, nome e sigla | MP-35C |
+| API-RBAC-PROP-10 | Criar Propriedade com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/propriedades` | `{ "nome": "..." }` | `400 Bad Request` | Payload invalido e recusado | MP-35C |
+| API-RBAC-PROP-11 | Conflito de Titularidade | Admin | Regra estrutural de Titularidade conflita | `POST /v1/propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 sem depender de vinculo `titular` | MP-35C |
+| API-RBAC-PROP-12 | Admin edita Propriedade | Admin | Propriedade existe | `PATCH /v1/propriedades/:id` | Campos parciais e `versao` | `200 OK` | Admin edita cadastro sem transferir Titularidade | MP-35C |
+| API-RBAC-PROP-13 | Colaborador edita cadastro sem permissao | Colaborador | Escopo valido, sem permissao de acao | `PATCH /v1/propriedades/:id` | Campos parciais e `versao` | `403 Forbidden` | Escopo nao implica editar cadastro | MP-35C |
 | API-RBAC-PROP-14 | API apresenta acesso do Titular | Produtor | Usuario principal ativo do Produtor indicado por `titular_id` | `GET /v1/propriedades/:id` | Nao se aplica | `200 OK` | `tipo_acesso=titular` e calculado e nao possui linha duplicada em `usuario_propriedade` | Automatizado na MP-33C |
 | API-RBAC-PROP-15 | Busca literal no escopo | Perfil autenticado | Nomes distintos de Propriedade, Titular e Município | `GET /v1/propriedades` | `busca` | `200 OK` | Substring literal busca nos três campos sem ampliar escopo | Automatizado na MP-33C |
 | API-RBAC-PROP-16 | Filtro UF por ID ou sigla | Perfil autenticado | Propriedades autorizadas em UFs diferentes | `GET /v1/propriedades` | `uf=43` e `uf=rs` | `200 OK` | `uf_id` e `uf_sigla` são aceitos, sigla sem diferença de caixa | Automatizado na MP-33C |
@@ -105,21 +114,35 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-PROP-20 | Endpoint pessoal duplicado ausente | Perfil autenticado | Sessao valida | `GET /v1/me/propriedades` | Nao se aplica | `404 Not Found` | Coleção canônica é somente `/v1/propriedades` | Automatizado na MP-33C |
 | API-RBAC-PROP-21 | Colaborador com vínculo inativo | Colaborador | Somente vínculo inativo | `GET /v1/propriedades` | Nao se aplica | `200 OK` vazio | Vínculo inativo não concede escopo | Automatizado na MP-33C |
 | API-RBAC-PROP-22 | Produtor/Colaborador tenta listar Propriedade inativa | Produtor ou Colaborador | Escopo estrutural existente, Propriedade inativa | `GET /v1/propriedades` | `status=inativa` | `200 OK` vazio | Perfis não administrativos recebem somente Propriedades ativas | Automatizado na MP-33C |
+| API-RBAC-PROP-23 | Campo territorial derivado em escrita | Admin | Propriedade existente | `PATCH /v1/propriedades/:id` | `uf_id`, `uf_sigla` ou `municipio_nome` | `422 Unprocessable Entity` | Escrita externa aceita somente `municipio_id`; backend deriva os demais campos | MP-35C; validador automatizado na MP-35A |
+| API-RBAC-PROP-24 | Alterar Titular no PATCH ordinário | Admin | Propriedade existente | `PATCH /v1/propriedades/:id` | `titular_id` | `422 Unprocessable Entity` | Titular é obrigatório na criação e transferência fica fora da MP-35 | MP-35C; validador automatizado na MP-35A |
+
+## Localidades
+
+| ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
+|---|---|---|---|---|---|---|---|---|
+| API-RBAC-LOC-01 | Admin lista UFs | Admin | Snapshot ativo | `GET /v1/localidades/ufs` | Nao se aplica | `200 OK` | 27 UFs locais, sem consulta externa | MP-35C |
+| API-RBAC-LOC-02 | Admin lista Municípios por UF | Admin | UF válida | `GET /v1/localidades/municipios` | `uf_id`, busca/cursor opcionais | `200 OK` | Cursor nome/ID e somente versão ativa | MP-35C |
+| API-RBAC-LOC-03 | Município sem UF | Admin | Sessão válida | `GET /v1/localidades/municipios` | Sem `uf_id` | `400 Bad Request` | Filtro de UF é obrigatório | MP-35C |
+| API-RBAC-LOC-04 | Perfil final consulta catálogo administrativo | Produtor ou Colaborador | Sessão válida | `GET /v1/localidades/ufs` | Nao se aplica | `403 Forbidden` | Catálogo administrativo não amplia escopo | MP-35C |
 
 ## Vinculos
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
-| API-RBAC-VINC-01 | Admin lista Propriedades vinculadas ao usuario | Admin | Usuario existe | `GET /usuarios/:id/propriedades` | Nao se aplica | `200 OK` | Admin consulta vinculos diretos | Automatizado backend/API |
-| API-RBAC-VINC-02 | Produtor tenta listar vinculos de outro usuario | Produtor | Sem permissao administrativa | `GET /usuarios/:id/propriedades` | Nao se aplica | `404 Not Found` | Vinculos nao devem vazar escopo | Automatizado backend/API |
-| API-RBAC-VINC-03 | Admin grava vinculos de Propriedade | Admin | Payload valido | `PUT /usuarios/:id/propriedades` | `{ "propriedades": [{ "propriedade_id": "prop_1", "tipo_vinculo": "colaborador", "status": "ativo" }] }` | `200 OK` | `usuario_propriedade` persistente e auditavel | Automatizado backend/API |
-| API-RBAC-VINC-04 | Vinculo duplicado | Admin | Payload duplica vinculo ativo | `PUT /usuarios/:id/propriedades` | Lista com duplicidade | `409 Conflict` | Duplicidade retorna conflito | Automatizado backend/API |
-| API-RBAC-VINC-05 | Payload invalido de vinculo | Admin | Falta `propriedade_id` | `PUT /usuarios/:id/propriedades` | `{ "propriedades": [{ "status": "ativo" }] }` | `400 Bad Request` | Payload invalido e recusado | Automatizado backend/API |
-| API-RBAC-VINC-06 | Admin filtra Propriedades para atribuicao | Admin | Propriedades cadastradas | `GET /propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao auxilia selecao, sem conceder acesso | Automatizado backend/API |
-| API-RBAC-VINC-07 | Admin atribui lote filtrado | Admin | Selecao confirmada e payload valido | `PUT /usuarios/:id/propriedades` | Lista de `propriedade_id` selecionados | `200 OK` | Cada item gera vinculo direto persistente e auditavel | Automatizado backend/API |
-| API-RBAC-VINC-08 | Propriedade inexistente no lote | Admin | Um `propriedade_id` nao existe | `PUT /usuarios/:id/propriedades` | Payload com id inexistente | `404 Not Found` ou `409 Conflict` | Nao criar vinculo para recurso invalido | Automatizado backend/API |
-| API-RBAC-VINC-09 | Colaborador tenta alterar vinculos | Colaborador | Sem papel administrativo | `PUT /usuarios/:id/propriedades` | Payload valido | `403 Forbidden` | Colaborador nao administra vinculos por padrao | Automatizado backend/API |
-| API-RBAC-VINC-10 | Admin tenta persistir vinculo titular | Admin | Usuario e Propriedade existem | `PUT /usuarios/:id/propriedades` | `{ "propriedades": [{ "propriedade_id": "prop_1", "tipo_vinculo": "titular", "status": "ativo" }] }` | `422 Unprocessable Entity` | `titular` nao e valor aceito em `usuario_propriedade` | Automatizado backend/API |
+| API-RBAC-VINC-01 | Admin lista Propriedades vinculadas ao usuario | Admin | Usuario existe | `GET /v1/usuarios/:id/propriedades` | Nao se aplica | `200 OK` | Admin consulta vinculos diretos | MP-35C |
+| API-RBAC-VINC-02 | Produtor tenta listar vinculos de outro usuario | Produtor | Sem permissao administrativa | `GET /v1/usuarios/:id/propriedades` | Nao se aplica | `403 Forbidden` | Produtor não administra vínculos | MP-35C |
+| API-RBAC-VINC-03 | Admin aplica delta de vínculos | Admin | Payload valido | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": [{ "propriedade_id": "prop_1", "tipo_vinculo": "colaborador" }], "remover": [] }` | `200 OK` | Delta persistente, versionado e auditável | MP-35C |
+| API-RBAC-VINC-04 | Delta com vínculo duplicado | Admin | Payload duplica vínculo ativo | `PATCH /v1/usuarios/:id/propriedades` | Delta com duplicidade | `409 Conflict` | Duplicidade retorna conflito | MP-35C |
+| API-RBAC-VINC-05 | Payload invalido de vinculo | Admin | Falta `propriedade_id` | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": [{}], "remover": [] }` | `400 Bad Request` | Payload invalido e recusado | MP-35C |
+| API-RBAC-VINC-06 | Admin filtra Propriedades para atribuicao | Admin | Propriedades cadastradas | `GET /v1/propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao auxilia selecao, sem conceder acesso | Automatizado backend/API |
+| API-RBAC-VINC-07 | Admin atribui lote filtrado | Admin | Selecao confirmada e payload valido | `PATCH /v1/usuarios/:id/propriedades` | Delta com IDs selecionados | `200 OK` | Cada item gera vínculo direto persistente e auditável | MP-35C |
+| API-RBAC-VINC-08 | Propriedade inexistente no lote | Admin | Um `propriedade_id` nao existe | `PATCH /v1/usuarios/:id/propriedades` | Delta com ID inexistente | `404 Not Found` | Nao criar vinculo para recurso invalido | MP-35C |
+| API-RBAC-VINC-09 | Colaborador tenta alterar vinculos | Colaborador | Sem papel administrativo | `PATCH /v1/usuarios/:id/propriedades` | Payload valido | `403 Forbidden` | Colaborador nao administra vinculos | MP-35C |
+| API-RBAC-VINC-10 | Admin tenta persistir vinculo titular | Admin | Usuario e Propriedade existem | `PATCH /v1/usuarios/:id/propriedades` | Delta com `tipo_vinculo=titular` | `422 Unprocessable Entity` | `titular` nao e valor aceito em `usuario_propriedade` | MP-35C |
+| API-RBAC-VINC-11 | Delta vazio | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | `adicionar=[]`, `remover=[]` | `422 Unprocessable Entity` | Comando sem efeito é inválido | MP-35C; validador automatizado na MP-35A |
+| API-RBAC-VINC-12 | Delta duplicado ou sobreposto | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | ID repetido ou em adicionar/remover | `422 Unprocessable Entity` | Um ID aparece no máximo uma vez no delta | MP-35C; validador automatizado na MP-35A |
+| API-RBAC-VINC-13 | Delta acima do limite | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | Mais de 100 IDs somados | `422 Unprocessable Entity` | Limite D9 é global ao delta | MP-35C; validador automatizado na MP-35A |
 
 ## Permissao E Escopo
 
@@ -182,8 +205,8 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 - Casos de rota direta/API por id fora do escopo.
 - Casos de payload invalido para criacao/alteracao.
 - Casos de vinculo duplicado ou conflito de regra.
-- Casos de Titularidade derivada, conta principal inativa e rejeicao do tipo de
-  vinculo `titular`.
+- Casos de Titularidade derivada, rejeição de Propriedade ativa com Titular
+  desabilitado e rejeição do tipo de vínculo `titular`.
 
 ## Testes Que Podem Ser Smoke/Manual
 

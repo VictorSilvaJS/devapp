@@ -468,6 +468,110 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
     return challenge.rows[0];
   }
 
+  test('MP-35A preserva um Admin ativo sob inativações concorrentes', async () => {
+    const databasePool = requirePool();
+    const primaryAdminId = bootstrapAdminUserId;
+    assert.ok(primaryAdminId);
+    const bootstrap = await databasePool.query<{ status: string }>(`
+      SELECT status
+      FROM public.bootstrap_autenticacao
+      WHERE organizacao_id = $1
+    `, [ORGANIZATION_ID]);
+    assert.equal(bootstrap.rows[0]?.status, 'concluido');
+
+    const secondaryAdminId = randomUUID();
+    const setupClient = await databasePool.connect();
+    try {
+      await setupClient.query('BEGIN');
+      await setupClient.query(`
+        INSERT INTO public.usuarios (
+          id, organizacao_id, nome, email, perfil, status
+        ) VALUES ($1, $2, 'Admin concorrente MP-35A', $3, 'admin', 'ativo')
+      `, [
+        secondaryAdminId,
+        ORGANIZATION_ID,
+        `admin-concorrente-${secondaryAdminId}@example.test`,
+      ]);
+      await setupClient.query(`
+        INSERT INTO public.credenciais_usuario (
+          organizacao_id, usuario_id, senha_phc, versao_politica_senha
+        ) VALUES ($1, $2, $3, 'integration-v1')
+      `, [ORGANIZATION_ID, secondaryAdminId, phcFor('SenhaAdmin2')]);
+      await setupClient.query('COMMIT');
+    } catch (error) {
+      await setupClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      setupClient.release();
+    }
+
+    const deactivate = async (userId: string): Promise<void> => {
+      const client = await databasePool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query("SET LOCAL lock_timeout = '10s'; SET LOCAL statement_timeout = '15s'");
+        await client.query(
+          "UPDATE public.usuarios SET status = 'inativo' WHERE id = $1",
+          [userId],
+        );
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    };
+
+    const results = await Promise.allSettled([
+      deactivate(primaryAdminId),
+      deactivate(secondaryAdminId),
+    ]);
+    assert.equal(
+      results.filter((result) => result.status === 'fulfilled').length,
+      1,
+    );
+    const rejection = results.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+    assert.ok(rejection);
+    assert.match(
+      String(rejection.reason),
+      /ao menos um Administrador ativo|ultimo_admin_ativo/i,
+    );
+
+    const activeAdmins = await databasePool.query<{ total: number }>(`
+      SELECT count(*)::integer AS total
+      FROM public.usuarios
+      WHERE organizacao_id = $1 AND perfil = 'admin' AND status = 'ativo'
+    `, [ORGANIZATION_ID]);
+    assert.equal(activeAdmins.rows[0]?.total, 1);
+
+    const cleanupClient = await databasePool.connect();
+    try {
+      await cleanupClient.query('BEGIN');
+      await cleanupClient.query(`
+        UPDATE public.usuarios
+        SET status = 'ativo'
+        WHERE id = ANY($1::uuid[])
+      `, [[primaryAdminId, secondaryAdminId]]);
+      await cleanupClient.query(
+        'DELETE FROM public.credenciais_usuario WHERE usuario_id = $1',
+        [secondaryAdminId],
+      );
+      await cleanupClient.query(
+        'DELETE FROM public.usuarios WHERE id = $1',
+        [secondaryAdminId],
+      );
+      await cleanupClient.query('COMMIT');
+    } catch (error) {
+      await cleanupClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      cleanupClient.release();
+    }
+  });
+
   test('invitation is atomic and the same token is accepted once under concurrency', async () => {
     const admin = await seedUser({ profile: 'admin' });
     const adminSessionId = await seedSession(admin.id);
@@ -494,17 +598,95 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
       service.accept({ token, password: 'SenhaNova1' }),
     ]);
     assert.equal(attempts.filter((item) => item.status === 'fulfilled').length, 1);
-    const state = await requirePool().query<{ credentials: string; accepted: string }>(
+    const state = await requirePool().query<{
+      credentials: string;
+      accepted: string;
+      activation_mode: string;
+      user_status: string;
+    }>(
       `
         SELECT
           (SELECT count(*)::text FROM public.credenciais_usuario
            WHERE organizacao_id = $1 AND usuario_id = $2 AND status = 'ativa') AS credentials,
           (SELECT count(*)::text FROM public.convites_usuario
-           WHERE organizacao_id = $1 AND usuario_id = $2 AND status = 'aceito') AS accepted
+           WHERE organizacao_id = $1 AND usuario_id = $2 AND status = 'aceito') AS accepted,
+          (SELECT modo_ativacao FROM public.convites_usuario
+           WHERE organizacao_id = $1 AND usuario_id = $2 AND status = 'aceito') AS activation_mode,
+          (SELECT status FROM public.usuarios
+           WHERE organizacao_id = $1 AND id = $2) AS user_status
       `,
       [ORGANIZATION_ID, pending.id],
     );
-    assert.deepEqual(state.rows[0], { credentials: '1', accepted: '1' });
+    assert.deepEqual(state.rows[0], {
+      credentials: '1',
+      accepted: '1',
+      activation_mode: 'ativar_usuario',
+      user_status: 'ativo',
+    });
+  });
+
+  test('new Producer invitation activates Usuario and Produtor atomically', async () => {
+    const admin = await seedUser({ profile: 'admin' });
+    const adminSessionId = await seedSession(admin.id);
+    const pending = await seedUser({
+      profile: 'produtor',
+      status: 'pendente',
+      withCredential: false,
+    });
+    const producerId = randomUUID();
+    await requirePool().query(`
+      INSERT INTO public.produtores (
+        id, organizacao_id, usuario_id, nome, status
+      ) VALUES ($1, $2, $3, 'Produtor convidado', 'inativo')
+    `, [producerId, ORGANIZATION_ID, pending.id]);
+
+    const service = new InvitationService({
+      repository: new PostgresInvitationRepository(postgresOptions()),
+      passwordCredentials: credentials,
+      emailOutbox,
+      actionBaseUrl: ACTION_URL,
+    });
+    const issued = await service.issueForExistingPendingUser({
+      organizationId: ORGANIZATION_ID,
+      actorAdminUserId: admin.id,
+      actorSessionId: adminSessionId,
+      userId: pending.id,
+    });
+    await service.accept({
+      token: await tokenForChallenge(issued.challengeId),
+      password: 'SenhaNovaProdutor1',
+    });
+
+    const state = await requirePool().query<{
+      activation_mode: string;
+      user_status: string;
+      producer_status: string;
+      credential_count: string;
+    }>(`
+      SELECT convite.modo_ativacao AS activation_mode,
+             usuario.status AS user_status,
+             produtor.status AS producer_status,
+             count(credencial.id)::text AS credential_count
+      FROM public.usuarios AS usuario
+      JOIN public.produtores AS produtor
+        ON produtor.organizacao_id = usuario.organizacao_id
+       AND produtor.usuario_id = usuario.id
+      JOIN public.convites_usuario AS convite
+        ON convite.organizacao_id = usuario.organizacao_id
+       AND convite.usuario_id = usuario.id
+      LEFT JOIN public.credenciais_usuario AS credencial
+        ON credencial.organizacao_id = usuario.organizacao_id
+       AND credencial.usuario_id = usuario.id
+       AND credencial.status = 'ativa'
+      WHERE usuario.organizacao_id = $1 AND usuario.id = $2
+      GROUP BY convite.modo_ativacao, usuario.status, produtor.status
+    `, [ORGANIZATION_ID, pending.id]);
+    assert.deepEqual(state.rows[0], {
+      activation_mode: 'ativar_usuario',
+      user_status: 'ativo',
+      producer_status: 'ativo',
+      credential_count: '1',
+    });
   });
 
   test('primary e-mail change requires both addresses and revokes all active grants', async () => {

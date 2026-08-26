@@ -14,7 +14,13 @@ fluxos emissores transacionais, API, composição HTTP e purga one-shot. Ela est
 concluída tecnicamente e integrada diretamente à branch `backend` no commit
 `e787707`, sem pull request e com os três jobs da CI pós-push aprovados. Não
 houve tag, deploy, release ou publicação. Os portões produtivos continuam
-abertos, e o Android físico específico da fase permanece `NÃO EXECUTADO`.
+abertos, e o smoke Android físico específico da fase passou em 2026-08-24.
+
+A situação corrente é `MP-35A corrigida localmente, não integrada, em validação final`.
+Ela não cria endpoints:
+acrescenta contratos TypeScript e as migrations append-only `000006`/`000007` com versões,
+limites, estados, motivos, proteção do último Admin, idempotência administrativa
+e snapshot nacional IBGE. MP-35B/C/D permanecem não iniciadas.
 
 ## Requisitos
 
@@ -40,8 +46,12 @@ npm run smoke:dist
 
 ## Processos e credenciais de banco
 
-Produção usa cinco credenciais separadas. As quatro funções criadas pelas
-migrations são `NOLOGIN`; a plataforma deve provisionar contas `LOGIN` próprias
+Produção usa cinco credenciais separadas no corte integrado. A MP-35A acrescenta
+o sexto papel `NOLOGIN` `tche_agro_administration_maintenance`, com função SQL
+one-shot estreita, ainda sem conta `LOGIN`, agendamento ou operação produtiva.
+Os papéis criados pelas
+migrations são `NOLOGIN`;
+a plataforma deve provisionar contas `LOGIN` próprias
 e conceder a associação correspondente.
 
 | Processo | URL | Função/privilégio esperado |
@@ -51,6 +61,7 @@ e conceder a associação correspondente.
 | worker de e-mail | `OUTBOX_DATABASE_URL` | membro de `tche_agro_outbox_worker` |
 | manutenção de notificações | `NOTIFICATIONS_MAINTENANCE_DATABASE_URL` | membro de `tche_agro_notifications_maintenance` |
 | bootstrap de plataforma | `PLATFORM_DATABASE_URL` | membro de `tche_agro_platform_ops` |
+| purga de idempotência administrativa | cliente SQL/credencial exclusiva ainda não provisionados | membro somente de `tche_agro_administration_maintenance` |
 
 Em produção, não reutilize uma credencial entre esses processos. A credencial
 de runtime não possui privilégio para alterar, excluir ou truncar auditoria; o
@@ -68,6 +79,11 @@ papéis runtime/plataforma ou runtime/manutenção e validam, por constraints
 diferidas, que a transação termine com Admin pendente, convite, desafio, outbox
 e auditoria coerentes. O proprietário/migrador não é usado para servir HTTP.
 
+O aceite de convite de Produtor não amplia os grants do runtime. A API chama
+`tche_ativar_produtor_por_convite_mp35a(uuid)`, função `SECURITY DEFINER` que
+deriva e trava o agregado a partir do convite válido; `tche_agro_runtime`
+continua sem `UPDATE` em `produtores`.
+
 Para cada URL existe um CA opcional específico:
 `DATABASE_SSL_CA`, `MIGRATIONS_DATABASE_SSL_CA`,
 `OUTBOX_DATABASE_SSL_CA`, `NOTIFICATIONS_MAINTENANCE_DATABASE_SSL_CA` e
@@ -75,7 +91,7 @@ Para cada URL existe um CA opcional específico:
 certificado. As URLs não aceitam query nem fragmento, evitando conflito entre
 `sslmode` e o objeto SSL tipado.
 
-No desenvolvimento local, as cinco URLs podem apontar temporariamente para o
+No desenvolvimento local, as cinco URLs executáveis podem apontar temporariamente para o
 mesmo PostgreSQL do Compose. Isso é conveniência local e não modelo de
 privilégios para produção.
 
@@ -161,6 +177,25 @@ produtivos. A revisão jurídica/de privacidade externa deve validar os 90 dias 
 a premissa aprovada de que a MP-34 não implementa legal hold ou suspensão de
 descarte. Se essa premissa for recusada, a mudança será futura e versionada antes
 da produção.
+
+### Idempotência administrativa e purga
+
+Reservas administrativas expiram exatamente 90 dias após a criação. Uma conta
+`LOGIN` exclusiva, membro apenas de `tche_agro_administration_maintenance`,
+executa uma rodada explícita por cliente SQL:
+
+```sql
+SELECT public.tche_purgar_comandos_administrativos_mp35a(1000);
+```
+
+O limite aceito é de 1 a 5.000; `NULL` explícito e valores fora desse intervalo
+são recusados com SQLSTATE `22023` antes de qualquer remoção. A omissão usa o
+default limitado de 1.000. A função usa lote ordenado com
+`FOR UPDATE SKIP LOCKED`, remove somente registros expirados e pode ser repetida.
+O papel executor tem apenas `USAGE` no schema e `EXECUTE` nessa função; não tem
+`SELECT`/`DELETE` direto na tabela. Conta que combine manutenção e runtime é
+recusada. Provisionamento, frequência, timeout, monitoramento, alertas e
+responsável permanecem portões produtivos; não há scheduler neste corte.
 
 ## Ambiente local com PostgreSQL e Mailpit
 
@@ -491,17 +526,31 @@ ausente, identificador duplicado, renomeação, exclusão, reordenação e alter
 integrada. Correção posterior exige nova migration. O `down` não remove
 PostGIS e não usa cascata destrutiva.
 
+Na MP-35A, `000006-fundacao-administrativa-mp35a.sql` cria a fundação de
+administração e `000007-catalogo-ibge-2026-08-25.sql` carrega 27 UFs e 5.571
+Municípios. O snapshot é gerado de uma captura explícita da API oficial pelo
+script `scripts/generate-ibge-snapshot-migration.mjs`; o backend não consulta o
+IBGE em runtime. O gerador recusa sobrescrever destino existente, valida
+consistência dos metadados de UF e produz versões publicadas imutáveis; o banco
+permite somente marcar a versão ativa como `substituido`.
+
 ## Testes e validação
 
 | Comando | Cobertura | Dependência externa |
 |---|---|---|
 | `npm run test:unit` | configuração, blocklist/Argon2, serviços, adaptadores, outbox, notificações, purga e contratos estáticos de migration | nenhuma |
 | `npm run test:http` | health/readiness, OpenAPI, autenticação, ações de conta e notificações por injeção Fastify | nenhuma |
-| `npm run test:integration` | migrations, repositórios reais de notificações, concorrência, retenção/purga e privilégios dos papéis | Docker |
+| `npm run test:integration` | migrations, upgrade adversarial MP-35A, duas conexões com barreira de lock, repositórios reais, concorrência, retenção/purga e privilégios dos papéis | Docker |
 
 Na rodada técnica da MP-34 foram confirmados 138 testes unitários/contratos de
 migration, 26 HTTP e 41 cenários reais de integração: 15 de migrations, 8 de
 autenticação, 7 de ações de conta, 9 de Propriedades/QA e 2 de notificações.
+
+A rodada focalizada da MP-35A confirmou 152 testes unitários/contratos, 26 HTTP
+e 54 cenários reais de integração. Entre eles estão oito cenários adversariais
+de upgrade, login runtime real, atomicidade, vínculo ator-sessão, papel mínimo
+de purga e concorrência. O estado permanece `MP-35A corrigida localmente, não
+integrada, em validação final` porque não houve commit nem integração.
 
 A integração usa exclusivamente a URL de um Testcontainer
 `postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando
@@ -581,7 +630,12 @@ operacional de recuperação assistida, benchmark Argon2id no ambiente real,
 SMTP/segredos, observabilidade, backup/restauração, responsável/agendamento e
 alertas da purga, credencial/CA/segredo de manutenção e validação
 jurídica/de privacidade externa da retenção de 90 dias. O Android físico da
-MP-34 permanece `NÃO EXECUTADO`.
+MP-34 passou em 2026-08-24; a MP-35A não altera o aplicativo.
+Antes das escritas administrativas produtivas também são obrigatórios o
+provisionamento/runbook/operação da purga idempotente e o ensaio de
+`000006`/`000007` em cópia
+anonimizada com volume e contenção representativos. Testcontainers não
+substituem esse ensaio.
 Break-glass permanece uma capacidade não implementada; Ed25519 ou serviço
 externo equivalente com dois aprovadores é pré-requisito para iniciá-la.
 

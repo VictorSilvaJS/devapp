@@ -1,6 +1,6 @@
 # Contrato De API Para RBAC/Backend
 
-> Revisão documental: 2026-08-24
+> Revisão documental: 2026-08-25
 
 Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
 2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
@@ -42,6 +42,10 @@ validada em `GET /v1/propriedades` e
 Ela é somente leitura e inclui a autorização mínima necessária dentro da
 consulta. Escritas e administração continuam na MP-35. O contrato detalhado do
 cliente está em `contrato-integracao-app-mp33c.md`.
+
+Revisão em 2026-08-25: D1-D13 e a divisão MP-35A-D foram consolidadas em
+`contrato-administracao-mp35.md`. A MP-35A implementa somente contratos e
+fundação persistente; as rotas abaixo permanecem reservadas para MP-35B/C.
 
 ## Decisoes De Base
 
@@ -96,7 +100,7 @@ Forbidden`. Colecao administrativa sem capacidade retorna `403`. Essa regra
 evita escolhas diferentes entre endpoints.
 
 Todas as colecoes usam cursor estavel, limite padrao 50 e maximo 100, com ID
-como desempate. Criacoes e comandos de transicao exigem `Idempotency-Key`;
+como desempate. Toda mutação administrativa exige `Idempotency-Key`;
 transições versionadas e comandos concorrentes que avançam ou substituem a
 versão do recurso exigem a versão-base. Erros incluem `request_id` e não
 retornam detalhes sensíveis.
@@ -165,31 +169,33 @@ Resposta minima:
 Os demais endpoints de credenciais, sessoes, convites, e-mail e recuperacao
 da MP-33B seguem o contrato especifico em
 `contrato-autenticacao-mp33b.md`. RBAC de recursos continua fora deste corte.
+O endpoint existente `POST /v1/auth/invitations/accept` preserva o contrato
+implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 
 ## Usuarios
 
-### `GET /usuarios`
+### `GET /v1/usuarios`
 
 - Objetivo: listar usuarios para administracao.
 - Payload minimo: filtros opcionais por perfil, status ou texto.
 - Resposta de sucesso: `200 OK` com lista paginada.
 - Acesso negado: `401 Unauthorized`; `403 Forbidden` se nao for admin/papel
   autorizado.
-- Regra de permissao: somente Admin ou papel administrativo.
+- Regra de permissao: somente Admin.
 - Compatibilidade: `ativo` pode ser campo derivado temporario; contrato final
   deve usar `status`.
 
-### `GET /usuarios/:id`
+### `GET /v1/usuarios/:id`
 
 - Objetivo: abrir detalhe administrativo de usuario.
 - Payload minimo: `id` canonico na rota.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Regra de permissao: Admin/papel autorizado; o proprio usuario pode consultar
-  dados basicos se a politica permitir.
+- Regra de permissao: somente Admin; autoedição continua nos endpoints de conta
+  da MP-33B.
 - Compatibilidade: ids legados nao devem ser rota final.
 
-### `POST /usuarios`
+### `POST /v1/usuarios`
 
 - Objetivo: criar usuario administrativo.
 - Payload minimo:
@@ -198,45 +204,63 @@ da MP-33B seguem o contrato especifico em
 {
   "nome": "Nome",
   "email": "usuario@exemplo.com",
-  "perfil": "produtor",
-  "status": "pendente"
+  "perfil": "produtor"
 }
 ```
 
 - Resposta de sucesso: `201 Created`.
 - Acesso negado: `401 Unauthorized`; `403 Forbidden`.
 - Outros erros: `400 Bad Request`; `409 Conflict` para e-mail duplicado.
-- Regra de permissao: Admin/papel autorizado.
-- Compatibilidade: criacao no MVP mockado nao cria login real.
+- Regra de permissao: somente Admin; o servidor fixa `status=pendente`, cria o
+  cadastro Produtor inativo quando aplicável e emite convite sem senha.
+- Idempotência: `Idempotency-Key` obrigatória, retenção de 90 dias.
 
-### `PATCH /usuarios/:id`
+### `PATCH /v1/usuarios/:id`
 
 - Objetivo: atualizar dados cadastrais de usuario.
-- Payload minimo: campos parciais permitidos.
+- Payload minimo: campos parciais permitidos e `versao` esperada.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
 - Outros erros: `400 Bad Request`; `409 Conflict` para conflito de e-mail ou
   regra.
-- Regra de permissao: Admin/papel autorizado ou regra explicita de autoedicao.
+- Regra de permissao: somente Admin.
+- Idempotência: `Idempotency-Key` obrigatória.
 - Compatibilidade: nao usar `ativo` como fonte final; preferir `status`.
 
-### `PATCH /usuarios/:id/status`
+### `PATCH /v1/usuarios/:id/status`
 
-- Objetivo: ativar, inativar ou marcar pendencia de usuario.
+- Objetivo: reativar ou inativar usuario; `pendente` é estado de criação e
+  convite, não transição administrativa desta rota.
 - Payload minimo:
 
 ```json
 {
-  "status": "ativo"
+  "status": "inativo",
+  "versao": 3,
+  "motivo": "suspensao_operacional"
 }
 ```
 
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Outros erros: `400 Bad Request`; `409 Conflict` para conflito cadastral que
-  nao seja a mera existencia de Propriedade titularizada.
-- Regra de permissao: Admin/papel autorizado.
+- Outros erros: `400 Bad Request`; `409 Conflict` para versão, auto-inativação
+  ou proteção do último Admin; `422` para estado semântico inválido.
+- Regra de permissao: somente Admin. Ativação sem credencial ativa é proibida;
+  Produtor e Propriedades titularizadas devem terminar a transação em estado
+  coerente.
+- Idempotência: `Idempotency-Key` obrigatória.
 - Compatibilidade: status futuro substitui booleanos legados.
+
+### `POST /v1/usuarios/:id/convites`
+
+- Objetivo: emitir ou reemitir convite para Usuário pendente.
+- Regra de permissão: somente Admin; `Idempotency-Key` obrigatória.
+- Convite novo usa `ativar_usuario`. `manter_status` continua aceito somente
+  para convites históricos e fluxos explícitos de compatibilidade.
+- Aceite cria a credencial e ativa a conta na mesma transação; perfil Produtor
+  ativa também `produtores.status`.
+- O aceite existente responde `204 No Content`; os endpoints administrativos
+  desta seção permanecem reservados à MP-35B.
 
 ## Propriedades
 
@@ -313,10 +337,8 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 ```json
 {
   "nome": "Propriedade Exemplo",
-  "titular_id": "prod_1",
+  "titular_id": "0c57bed2-b18a-45c4-aeca-4cb5696716d7",
   "municipio_id": "4306106",
-  "uf_id": "43",
-  "uf_sigla": "RS",
   "area_total": 120.5,
   "status": "ativa"
 }
@@ -326,9 +348,12 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 - Acesso negado: `401 Unauthorized`; `403 Forbidden`.
 - Outros erros: `400 Bad Request`; `409 Conflict` para regra de Titularidade
   conflitante.
-- Regra de permissao: Admin/papel autorizado; Colaborador somente se politica
-  futura explicita permitir.
-- Fase: fora da MP-33C; pertence à MP-35.
+- Regra de permissao: somente Admin.
+- Localização: o cliente envia somente `municipio_id`; o backend valida o
+  Município no snapshot ativo e deriva `uf_id`, `municipio_nome` e `uf_sigla`.
+  `uf_id`, nome e sigla são rejeitados como escrita autoritativa.
+- Idempotência: `Idempotency-Key` obrigatória, retenção de 90 dias.
+- Fase: MP-35C.
 - Compatibilidade: o backend cria a Propriedade e registra somente
   `titular_id`; nao cria vinculo `titular`. Nao existe cadastro rapido de
   Propriedade dentro de Novo Usuario.
@@ -336,42 +361,55 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 ### `PATCH /v1/propriedades/:id`
 
 - Objetivo: atualizar cadastro de Propriedade.
-- Payload minimo: campos parciais permitidos.
+- Payload minimo: campos parciais permitidos e `versao` esperada; Titularidade
+  não pode ser transferida por esta rota.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
 - Outros erros: `400 Bad Request`; `409 Conflict` para titularidade ou estado
   conflitante.
-- Regra de permissao: Admin/papel autorizado; Colaborador apenas com permissao
-  explicita por acao.
-- Fase: fora da MP-33C; pertence à MP-35.
+- Regra de permissao: somente Admin.
+- Localização: quando alterada, recebe somente `municipio_id`; o backend deriva
+  todos os campos de UF/nome. `titular_id` não é aceito no `PATCH` ordinário.
+- Fase: MP-35C.
 - Compatibilidade: preservar leitura dupla enquanto `fazenda_id` existir.
+
+### `PATCH /v1/propriedades/:id/status`
+
+- Objetivo: ativar ou inativar Propriedade com `versao`, motivo e detalhe
+  opcional; `outro` exige detalhe.
+- Regra: somente Admin. Ativação exige Titular habilitado; inativação revoga as
+  sessões dos Usuários diretamente afetados no MVP.
+- Resposta: `200 OK`; `409` para versão divergente; `422` para estado inválido.
+- Idempotência: `Idempotency-Key` obrigatória.
 
 ## Vinculos
 
-### `GET /usuarios/:id/propriedades`
+### `GET /v1/usuarios/:id/propriedades`
 
 - Objetivo: listar vinculos diretos usuario-Propriedade.
 - Payload minimo: `id` canonico do usuario.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Regra de permissao: Admin/papel autorizado; proprio usuario apenas se a
-  politica permitir consulta de escopo.
+- Regra de permissao: somente Admin.
 - Compatibilidade: corresponde ao futuro real de `usuario_propriedade`.
 
-### `PUT /usuarios/:id/propriedades`
+### `PATCH /v1/usuarios/:id/propriedades`
 
-- Objetivo: substituir ou sincronizar vinculos diretos usuario-Propriedade.
+- Objetivo: aplicar delta versionado de vínculos diretos
+  Usuário-Propriedade, sem substituir a lista completa.
 - Payload minimo:
 
 ```json
 {
-  "propriedades": [
+  "versao": 4,
+  "adicionar": [
     {
       "propriedade_id": "prop_1",
-      "tipo_vinculo": "colaborador",
-      "status": "ativo"
+      "tipo_vinculo": "colaborador"
     }
-  ]
+  ],
+  "remover": [],
+  "motivo": "mudanca_responsabilidade"
 }
 ```
 
@@ -379,11 +417,31 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
 - Outros erros: `400 Bad Request`; `409 Conflict` para vinculo duplicado ou
   regra conflitante.
-- Regra de permissao: Admin/papel autorizado.
+- Regra de permissao: somente Admin.
 - Regra de validacao: `tipo_vinculo=titular` e rejeitado; somente
-  `usuario_autorizado` e `colaborador` podem ser persistidos.
+  `usuario_autorizado` e `colaborador` podem ser persistidos; o total do delta
+  é limitado a 100 IDs e remover o último acesso é permitido.
+- Idempotência: `Idempotency-Key` obrigatória.
 - Compatibilidade: `propriedades_atribuidas` deve migrar para vinculos
   persistentes, auditaveis e com status.
+
+## Localidades
+
+### `GET /v1/localidades/ufs`
+
+- Objetivo: listar as 27 UFs da versão ativa do snapshot local IBGE.
+- Regra de permissão: somente Admin autenticado; nenhuma localidade concede
+  escopo operacional.
+- Resposta: `200 OK`, ordenada por nome e ID; sem consulta externa em runtime.
+- Fase: MP-35C.
+
+### `GET /v1/localidades/municipios`
+
+- Objetivo: listar Municípios da versão ativa, exigindo filtro `uf_id` e usando
+  `busca`, `limite` e cursor estável por nome/ID.
+- Regra de permissão: somente Admin autenticado.
+- Resposta: `200 OK`; `400` para UF/cursor inválido.
+- Fase: MP-35C.
 
 ## Permissao E Escopo
 
@@ -533,7 +591,8 @@ revogação e sessão da MP-33B estão concluídos tecnicamente. A MP-33C també
 concluiu lista/detalhe, projeção `tipo_acesso`, cursor/filtros e `404`
 indistinguível. Ainda é necessário:
 
-- implementar na MP-35 as escritas administrativas, auditoria de vínculos e o
-  restante do RBAC por ação;
+- implementar na MP-35B/C as escritas administrativas, auditoria de vínculos,
+  idempotência, revogação de sessão e o restante do RBAC por ação; a MP-35A
+  entrega somente a fundação persistente;
 - transformar em testes executáveis somente as linhas das fases futuras em
   `testes-contrato-api-rbac.md`.

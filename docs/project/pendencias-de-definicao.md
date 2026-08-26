@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-08-24
+> Revisão documental: 2026-08-25
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C e da
 MP-34. MP-33A, MP-33B, MP-33C e MP-34 estão concluídas tecnicamente e
@@ -9,7 +9,8 @@ branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada.
 A MP-34 entrou diretamente na mesma branch pelo commit `e787707`, sem pull
 request, e os três jobs da CI pós-push foram aprovados. Não houve tag, deploy,
 release ou publicação dessa fase. Os itens abaixo são portões produtivos ou
-implementações de fases posteriores.
+implementações de fases posteriores. D1-D13 da MP-35 estão decididas; não são
+pendências arquiteturais.
 
 ## Convergência da interface antes da MP-35
 
@@ -54,9 +55,15 @@ estão consolidados em `contrato-notificacoes.md`.
 
 - operar ou liberar produtivamente a MP-34 somente depois de fechar os portões
   de purga, privacidade, segredos, observabilidade e release;
-- implementar na MP-35 escritas de Propriedade, administração de
-  Usuários/vínculos, o restante do RBAC por ação e a integração das telas
-  administrativas existentes;
+- concluir a validação final da MP-35A corrigida localmente e integrá-la
+  somente após autorização explícita;
+- implementar na MP-35B a administração HTTP de Usuários/convites;
+- antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
+  convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
+  autoriza reescrita ou exclusão silenciosa;
+- implementar na MP-35C escritas de Propriedade e deltas de vínculos;
+- integrar na MP-35D as telas administrativas existentes e executar a
+  validação física;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
@@ -79,6 +86,30 @@ Antes de operar a vertical em produção, fechar:
 O smoke funcional Android físico da MP-34 foi executado e aprovado em
 2026-08-24. Ele deixa de ser pendência da vertical, mas não substitui a matriz
 de dispositivos nem a validação do build assinado no ambiente de release.
+
+### Fundação administrativa da MP-35A
+
+Antes de operar as futuras escritas administrativas em produção, fechar:
+
+- provisionar uma conta `LOGIN` exclusiva membro apenas de
+  `tche_agro_administration_maintenance` para executar, por cliente SQL, o
+  comando one-shot em lotes já implementado:
+  `SELECT public.tche_purgar_comandos_administrativos_mp35a(1000);`;
+- preservar a retenção exata de 90 dias; a função aceita lotes de 1 a 5.000 e
+  remove somente reservas expiradas. O papel não possui `SELECT` ou `DELETE`
+  direto na tabela e combinação com runtime falha de forma segura;
+- definir proprietário, frequência, tamanho de lote, timeout, métricas,
+  alertas, runbook de falha/repetição e revisão de privacidade da retenção de
+  90 dias;
+- ensaiar `000006`/`000007` numa cópia representativa e anonimizada do volume
+  alvo. Comando-base: `npm run migrations:verify` seguido de
+  `npm run migrate:up`, usando a credencial de migration e monitoramento
+  paralelo de `pg_stat_activity` e `pg_locks`;
+- aprovar o ensaio somente se ele concluir dentro da janela de manutenção
+  formalmente aprovada, falhar/retroceder atomicamente, não conservar lock após
+  rollback e preservar contagens e amostras de `criado_em`/`atualizado_em`.
+  O ensaio local com Testcontainers mede funcionalidade e duração local, mas
+  não substitui volume nem contenção representativos.
 
 ### Autenticação e recuperação
 
@@ -151,6 +182,9 @@ Antes da distribuição produtiva, fechar:
 - revisar dependências e permissões Android;
 - remover artefatos temporários e evidências geradas que não precisem ser
   versionadas.
+- corrigir em tarefa documental própria os 19 links locais quebrados
+  remanescentes exclusivamente em `docs/archive`; essa dívida histórica não
+  altera o núcleo ativo nem pode ser usada como contrato atual.
 
 ## Itens que não estão mais em aberto
 

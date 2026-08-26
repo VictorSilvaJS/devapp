@@ -1,6 +1,6 @@
 # Escopo do MVP
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-25
 
 Este documento define o que deve ser tratado como parte do MVP atual, o que fica fora por padrao e o que ainda depende de definicao adicional. Seu objetivo e reduzir ambiguidade de escopo antes da evolucao do codigo e da arquitetura.
 
@@ -26,6 +26,11 @@ No contrato v2, Admin possui visao global dentro da Tche Fertilidade,
 Produtor acessa por titularidade/vinculo e Colaborador acessa somente por
 vinculo direto ativo com Propriedade. Municipio/UF servem para localizacao e
 filtros, nao para conceder acesso.
+
+A MP-35A acrescenta ao MVP técnico somente a fundação persistente dos futuros
+comandos administrativos: versões, limites, estados, motivos, idempotência e
+catálogo nacional IBGE. Endpoints e integração de telas permanecem nas fases
+MP-35B/C/D.
 
 ### 2. Organizacao por produtor e propriedade
 

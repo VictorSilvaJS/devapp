@@ -1,6 +1,6 @@
 # Decisões Consolidadas
 
-> Revisão documental: 2026-08-24
+> Revisão documental: 2026-08-25
 
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
@@ -38,9 +38,10 @@ sub-regiões ou microrregiões como fonte de autorização.
 
 - Usuário, Produtor, Propriedade e vínculo são conceitos separados.
 - O Administrador cria primeiro o Usuário Produtor.
-- Um Produtor sem Propriedade permanece pendente.
-- A primeira Propriedade é criada em etapa própria, seleciona o Titular e ativa
-  Usuário e Produtor em uma operação atômica. O mock também preserva seu
+- O convite aceito ativa Usuário e Produtor; zero Propriedades acessíveis é um
+  estado válido e não inativa nem torna a conta pendente.
+- A primeira Propriedade é criada em etapa própria e seleciona o Titular. Se
+  for ativa, exige Usuário e Produtor Titular já habilitados. O mock também preserva seu
   vínculo local `titular`; o backend registra a Titularidade somente em
   `propriedades.titular_id`.
 - Troca de perfil, troca de Titular e inativação de vínculo são operações
@@ -84,8 +85,9 @@ canônica.
 ### 34. Produtor e primeira Propriedade em duas etapas
 
 O cadastro do Usuário Produtor e a criação da primeira Propriedade são
-operações separadas. A segunda operação cria Propriedade, Titularidade e
-ativação de forma transacional.
+operações separadas. A aceitação do convite cria a credencial e ativa Usuário e
+Produtor de forma transacional; a segunda operação cria Propriedade e
+Titularidade sem usar quantidade de Propriedades como estado cadastral.
 
 ### 35. Mídia local explícita
 
@@ -217,8 +219,10 @@ serviço externo equivalente que comprove dois aprovadores distintos, finalidade
 expiração e anti-replay. A evolução usa mudança deliberada, testes e migration
 append-only quando afetar persistência.
 
-Convite geral opera somente sobre `usuario` pendente existente e não cria
-Produtor, Propriedade, Titularidade ou vínculo. A auditoria é append-only, a
+Convite geral opera sobre `usuario` pendente existente e não cria Propriedade,
+Titularidade ou vínculo. Convites históricos preservam `manter_status`; convites
+novos usam `ativar_usuario` e ativam também o cadastro de Produtor quando o
+perfil for Produtor. A auditoria é append-only, a
 outbox usa payload temporário criptografado e o runtime do banco não possui
 privilégios de atualização, exclusão ou truncate sobre auditoria.
 
@@ -370,6 +374,26 @@ e Notificações já reais. `expo-linear-gradient` passa a ser dependência nati
 de apresentação também no HTTP; módulos de dados, storage comum, câmera,
 localização, mapas e WebView que pertencem a fluxos ainda demonstrativos
 continuam excluídos.
+
+### 52. Administração da MP-35
+
+As decisões D1-D13 estão aprovadas no
+[contrato de administração da MP-35](contrato-administracao-mp35.md). A MP-35A
+implementa apenas contratos e fundação persistente append-only: versões,
+limites, catálogo unificado de motivos, modo de convite `ativar_usuario`,
+proteção do último Admin, coerência de estados, idempotência de 90 dias e
+snapshot nacional versionado do IBGE.
+
+Em D8, o DTO externo de escrita recebe somente `municipio_id`; o backend
+deriva UF, nome e sigla do snapshot ativo. `titular_id` é obrigatório na criação
+de Propriedade e não pode ser alterado pelo `PATCH` cadastral ordinário.
+
+Usuário ativo significa conta habilitada, não existência de Propriedade.
+Colaborador continua restrito a vínculo direto ativo e Propriedade ativa.
+Produtor pode permanecer ativo com zero acessos e não administra estrutura.
+Toda Propriedade mantém `titular_id`; somente Propriedade ativa exige Titular
+habilitado. Vínculos futuros mudam por delta versionado, e qualquer mudança de
+autorização revoga sessões diretamente afetadas no MVP.
 
 ## Contratos que detalham as decisões
 

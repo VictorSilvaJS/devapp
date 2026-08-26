@@ -1,13 +1,14 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-24
+> Atualizado em: 2026-08-25
 >
-> Próxima tarefa: preparar a arquitetura da MP-35 em um novo chat, sem iniciar
-> implementação antes da aprovação explícita do escopo e das decisões
+> Tarefa atual: concluir a validação final da MP-35A corrigida localmente — sem
+> iniciar MP-35B/C/D
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
-> SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> D1-D13 APROVADAS; MP-35A CORRIGIDA LOCALMENTE, NÃO INTEGRADA, EM VALIDAÇÃO FINAL; SEM TAG, DEPLOY, RELEASE OU
+> PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -204,7 +205,10 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 |---:|---|---|---|
 | 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e47bb02`; CI PÓS-PUSH APROVADA |
-| 35 | MP-35 | Escritas de Propriedade, Usuários/vínculos, RBAC e integração das telas administrativas existentes | BACKLOG |
+| 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CORRIGIDA LOCALMENTE, NÃO INTEGRADA, EM VALIDAÇÃO FINAL |
+| 35B | MP-35B | Administração HTTP de Usuários e convites | AGUARDA AUTORIZAÇÃO APÓS MP-35A |
+| 35C | MP-35C | Escritas HTTP de Propriedades e deltas de vínculos | AGUARDA MP-35A/B |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | AGUARDA MP-35B/C |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
@@ -292,11 +296,12 @@ massa física não gerou segunda página.
 
 O commit `e47bb02` integrou diretamente esse corte à branch `backend`, e os três
 jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
-publicação. A arquitetura da MP-35 será preparada em um novo chat e continuará
-dependente de aprovação antes de qualquer implementação.
+publicação. A arquitetura D1-D13 foi aprovada em 2026-08-25. A autorização usada
+cobre somente a implementação/correção local da MP-35A e não autoriza
+MP-35B/C/D, commit ou integração.
 
-Depois desse fechamento, a MP-35 deve integrar as telas administrativas já
-existentes no mesmo corte das escritas e do RBAC. MP-36 e MP-37 repetem o padrão
+Depois da MP-35A, MP-35B/C devem implementar as escritas e o RBAC; a MP-35D
+integra as telas administrativas já existentes. MP-36 e MP-37 repetem o padrão
 para Caderno e GeoJSON/Talhões. Visitas, Materiais e agregados do Dashboard
 precisam entrar como verticais explícitas antes da MP-40/41; não surgem
 automaticamente ao final da fila.

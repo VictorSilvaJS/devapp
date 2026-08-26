@@ -4,7 +4,7 @@
 >
 > Definido em: 2026-08-05
 >
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-25
 >
 > Escopo: dados demonstrativos do Demo e vocabulário de compatibilidade com o
 > backend.
@@ -23,8 +23,8 @@ autorização, auditoria, transações e integridade no servidor.
 ## Decisões De Base
 
 1. A Tchê Fertilidade é a única organização operadora do aplicativo.
-2. Cada Propriedade possui exatamente um Produtor como Titular principal
-   ativo.
+2. Cada Propriedade possui exatamente um Produtor como Titular principal; se a
+   Propriedade estiver ativa, Usuário e Produtor Titular precisam estar ativos.
 3. Um Produtor pode ser Titular de uma ou mais Propriedades.
 4. Outros usuários acessam uma Propriedade somente por vínculo explícito e
    ativo em `usuario_propriedade`.
@@ -79,6 +79,7 @@ interface UsuarioV2 {
   telefone?: string;
   documento?: string;
   observacoes?: string;
+  versao?: number;
 }
 ```
 
@@ -95,6 +96,7 @@ interface ProdutorV2 {
   usuario_id: string;
   nome: string;
   status: 'ativo' | 'inativo';
+  versao?: number;
 }
 ```
 
@@ -116,12 +118,15 @@ interface PropriedadeV2 {
   area_total?: number;
   cultura_principal?: string;
   status: 'ativa' | 'inativa';
+  versao?: number;
 }
 ```
 
 `titular_id` referencia `produtores.id`. Cada Propriedade possui exatamente um
-Titular principal ativo. Troca futura de titularidade deve ser transacional e
-auditada; uma edição cadastral comum não altera o Titular.
+Titular principal. Propriedade inativa pode apontar para Produtor ainda
+pendente/inativo; Propriedade ativa exige Titular habilitado. Troca futura de
+titularidade deve ser transacional e auditada; uma edição cadastral comum não
+altera o Titular.
 
 ### `usuarios_propriedades`
 
@@ -138,6 +143,7 @@ interface UsuarioPropriedadeV2 {
   propriedade_id: string;
   tipo_vinculo: TipoVinculoPropriedadeV2;
   status: 'ativo' | 'inativo';
+  versao?: number;
 }
 ```
 
@@ -162,9 +168,10 @@ v2 e não serão alterados na MP-33A. No banco do backend:
 - `tipo_acesso=titular`, quando existir na API, é uma projeção calculada;
 - somente o Titular atual é armazenado; histórico e transferência aguardam
   contrato transacional e de auditoria;
-- a inativação da conta do usuário principal não invalida a Titularidade
-  cadastral nem é impedida por constraint permanente; a camada de
-  autenticação/autorização nega acesso ao usuário inativo.
+- a inativação da conta não apaga a Titularidade, mas uma Propriedade ativa não
+  pode terminar a transação com Titular desabilitado;
+- conta ativa e zero Propriedades acessíveis é um estado válido para Produtor e
+  Colaborador.
 
 A adaptação entre as representações local e HTTP foi implementada na MP-33C. Ela
 preserva este contrato dentro do Demo e dos testes, enquanto a composição HTTP
@@ -173,8 +180,13 @@ o grafo nem o artefato de produção, e não existe fallback HTTP → mock.
 
 ### Localização oficial
 
-O mock pode carregar uma lista controlada de UF e Município ou validar os
-respectivos códigos na carga de dados.
+O Demo pode carregar sua lista controlada. O backend usa snapshot nacional
+versionado do IBGE e deriva nomes/siglas dos códigos, sem dependência externa em
+runtime.
+
+No contrato externo de escrita administrativa, o cliente envia apenas
+`municipio_id`. `uf_id`, `uf_sigla` e `municipio_nome` abaixo são campos
+persistidos/projetados e derivados pelo backend, não entradas autoritativas.
 
 Campos canônicos:
 
@@ -309,7 +321,8 @@ acesso, rotas, telas, serviços, storage e testes tiverem migrado para v2.
 
 1. Nenhum registro v2 usa `fazenda_id` ou identificador textual como relação.
 2. Um Produtor pode titularizar várias Propriedades.
-3. Cada Propriedade possui um único Titular principal ativo.
+3. Cada Propriedade possui um único Titular principal cadastral; somente
+   Propriedade ativa exige Titular habilitado.
 4. Usuários adicionais não se tornam Titulares por receber acesso.
 5. Colaborador acessa apenas Propriedades com vínculo direto ativo.
 6. Município/UF filtram, mas não autorizam.

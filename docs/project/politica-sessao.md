@@ -4,7 +4,7 @@
 >
 > Definida em: 2026-07-30
 >
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-25
 >
 > Origem: `MP-01` / `QA-P0-04`
 
@@ -86,6 +86,9 @@ nos documentos ativos.
 - A sessao produtiva deve possuir ao menos `session_id`, `usuario_id`,
   organizacao/tenant, instante de emissao, expiracoes e instante da ultima
   revalidacao.
+- Reservas idempotentes administrativas persistem ator e sessão com referência
+  composta: a sessão deve pertencer ao mesmo Usuário e à mesma organização.
+  Informar `actorUserId` com sessão alheia é rejeitado pelo banco.
 - Perfil e escopo recebidos no login sao fotografia de apresentacao. A
   autorizacao efetiva continua sendo validada no servidor por acao e
   Propriedade.
@@ -205,6 +208,11 @@ Invalidar a sessão no cliente não desfaz uma mutação que o servidor já tenh
 aceitado. A resposta tardia é descartada e não pode recriar a identidade local;
 a consistência remota continua sendo responsabilidade do endpoint e de sua
 transação.
+
+Na MP-35B/C, qualquer mudança de autorização revoga todas as sessões dos
+Usuários diretamente afetados, inclusive quando amplia acesso. Alterações
+exclusivamente cadastrais preservam a sessão. Preservar sessão em ampliações é
+evolução futura e não integra o contrato atual D13.
 
 Excluir arquivos operacionais no logout nao e regra automatica deste contrato.
 O requisito e que eles fiquem inacessiveis a outro usuario. Exclusao,

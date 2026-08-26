@@ -99,7 +99,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         );
         await runMigrations({
           command: 'down',
-          count: 5,
+          count: 7,
           database: activeMigrationDatabase,
         });
       }
@@ -209,6 +209,177 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     );
   });
 
+  test('MP-35A instala catálogos versionados e motivos administrativos fechados', async () => {
+    const databasePool = requirePool();
+    const catalog = await databasePool.query<{
+      version_count: number;
+      state_count: number;
+      municipality_count: number;
+      content_hash: string;
+    }>(`
+      SELECT
+        count(DISTINCT catalogo.id)::integer AS version_count,
+        count(DISTINCT uf.id)::integer AS state_count,
+        count(DISTINCT municipio.id)::integer AS municipality_count,
+        max(encode(catalogo.sha256, 'hex')) AS content_hash
+      FROM catalogo_localidades_ibge_versoes AS catalogo
+      JOIN ufs_ibge AS uf ON uf.versao_id = catalogo.id
+      JOIN municipios_ibge AS municipio ON municipio.versao_id = catalogo.id
+      WHERE catalogo.status = 'ativo'
+    `);
+    assert.deepEqual(catalog.rows[0], {
+      version_count: 1,
+      state_count: 27,
+      municipality_count: 5571,
+      content_hash: 'c5a20d20a0b9ca9ea0f1a43005beac59a3fc454862c0f25d7bd2b2d1746f6361',
+    });
+
+    const reasons = await databasePool.query<{
+      codigo: string;
+      exige_detalhe: boolean;
+    }>(`
+      SELECT codigo, exige_detalhe
+      FROM motivos_administrativos
+      ORDER BY codigo
+    `);
+    assert.deepEqual(reasons.rows, [
+      { codigo: 'cadastro_duplicado', exige_detalhe: false },
+      { codigo: 'correcao_administrativa', exige_detalhe: false },
+      { codigo: 'fim_relacao', exige_detalhe: false },
+      { codigo: 'mudanca_responsabilidade', exige_detalhe: false },
+      { codigo: 'outro', exige_detalhe: true },
+      { codigo: 'suspensao_operacional', exige_detalhe: false },
+    ]);
+
+    await assert.rejects(
+      databasePool.query(`
+        UPDATE municipios_ibge
+        SET nome = 'Nome adulterado'
+        WHERE versao_id = 'ibge-localidades-2026-08-25'
+          AND id = '4305108'
+      `),
+      /versao publicada|linha_imutavel/i,
+    );
+    await assert.rejects(
+      databasePool.query(`
+        UPDATE catalogo_localidades_ibge_versoes
+        SET quantidade_municipios = quantidade_municipios - 1
+        WHERE id = 'ibge-localidades-2026-08-25'
+      `),
+      /aceita apenas substituicao|versao_imutavel/i,
+    );
+
+    const lifecycleClient = await databasePool.connect();
+    try {
+      await lifecycleClient.query('BEGIN');
+      const substituted = await lifecycleClient.query<{ status: string }>(`
+        UPDATE catalogo_localidades_ibge_versoes
+        SET status = 'substituido'
+        WHERE id = 'ibge-localidades-2026-08-25'
+        RETURNING status
+      `);
+      assert.equal(substituted.rows[0]?.status, 'substituido');
+      await lifecycleClient.query('ROLLBACK');
+    } finally {
+      lifecycleClient.release();
+    }
+  });
+
+  test('MP-35A incrementa versao exatamente uma vez em toda mutação administrativa', async () => {
+    const databasePool = requirePool();
+    const holderUserId = randomUUID();
+    const holderId = randomUUID();
+    const collaboratorId = randomUUID();
+    const propertyId = randomUUID();
+    const linkId = randomUUID();
+    const client = await databasePool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`
+        INSERT INTO usuarios (id, organizacao_id, nome, email, perfil, status)
+        VALUES
+          ($1, $3, 'Titular versão', $4, 'produtor', 'ativo'),
+          ($2, $3, 'Colaborador versão', $5, 'colaborador', 'ativo')
+      `, [
+        holderUserId,
+        collaboratorId,
+        ORGANIZATION_ID,
+        `titular-versao-${holderUserId}@example.test`,
+        `colaborador-versao-${collaboratorId}@example.test`,
+      ]);
+      await client.query(`
+        INSERT INTO credenciais_usuario (
+          organizacao_id, usuario_id, senha_phc, versao_politica_senha
+        )
+        SELECT $1, usuario_id,
+          '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC12ZXJzYW8$aGFzaC12ZXJzYW8tbmFvLXJlYWw',
+          'fixture-v1'
+        FROM unnest($2::uuid[]) AS usuario_id
+      `, [ORGANIZATION_ID, [holderUserId, collaboratorId]]);
+      await client.query(`
+        INSERT INTO produtores (id, organizacao_id, usuario_id, nome, status)
+        VALUES ($1, $2, $3, 'Titular versão', 'ativo')
+      `, [holderId, ORGANIZATION_ID, holderUserId]);
+      await client.query(`
+        INSERT INTO propriedades (
+          id, organizacao_id, titular_id, nome,
+          municipio_id, municipio_nome, uf_id, uf_sigla, status
+        ) VALUES ($1, $2, $3, 'Propriedade versão',
+          '4305108', 'será derivado', '43', 'RS', 'ativa')
+      `, [propertyId, ORGANIZATION_ID, holderId]);
+      await client.query(`
+        INSERT INTO usuario_propriedade (
+          id, organizacao_id, usuario_id, propriedade_id, tipo_vinculo, status
+        ) VALUES ($1, $2, $3, $4, 'colaborador', 'ativo')
+      `, [linkId, ORGANIZATION_ID, collaboratorId, propertyId]);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
+
+    await databasePool.query(
+      'UPDATE usuarios SET nome = nome WHERE id = $1',
+      [collaboratorId],
+    );
+    await databasePool.query(
+      'UPDATE produtores SET nome = nome WHERE id = $1',
+      [holderId],
+    );
+    await databasePool.query(
+      'UPDATE propriedades SET nome = nome WHERE id = $1',
+      [propertyId],
+    );
+    await databasePool.query(
+      'UPDATE usuario_propriedade SET tipo_vinculo = tipo_vinculo WHERE id = $1',
+      [linkId],
+    );
+    const versions = await databasePool.query<{
+      user_version: string;
+      producer_version: string;
+      property_version: string;
+      link_version: string;
+    }>(`
+      SELECT
+        (SELECT versao::text FROM usuarios WHERE id = $1) AS user_version,
+        (SELECT versao::text FROM produtores WHERE id = $2) AS producer_version,
+        (SELECT versao::text FROM propriedades WHERE id = $3) AS property_version,
+        (SELECT versao::text FROM usuario_propriedade WHERE id = $4) AS link_version
+    `, [collaboratorId, holderId, propertyId, linkId]);
+    assert.deepEqual(versions.rows[0], {
+      user_version: '2',
+      producer_version: '2',
+      property_version: '2',
+      link_version: '2',
+    });
+    await assert.rejects(
+      databasePool.query(
+        'UPDATE usuarios SET versao = versao + 2 WHERE id = $1',
+        [collaboratorId],
+      ),
+      /versao administrativa|incremento_unitario/i,
+    );
+  });
+
   test('aceita inserção fora da ordem quando o estado final satisfaz as FKs compostas', async () => {
     const client = await requirePool().connect();
     const userId = randomUUID();
@@ -220,7 +391,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         INSERT INTO propriedades (
           id, organizacao_id, titular_id, nome,
           municipio_id, municipio_nome, uf_id, uf_sigla
-        ) VALUES ($1, $2, $3, 'Propriedade ordem inversa', '4314902', 'Porto Alegre', '43', 'RS')
+        ) VALUES ($1, $2, $3, 'Propriedade ordem inversa', '4314902', 'Nome não confiável', '43', 'XX')
       `, [propertyId, ORGANIZATION_ID, producerId]);
       await client.query(`
         INSERT INTO produtores (id, organizacao_id, usuario_id, nome, status)
@@ -230,19 +401,35 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         INSERT INTO usuarios (id, organizacao_id, nome, email, perfil, status)
         VALUES ($1, $2, 'Usuário ordem inversa', $3, 'produtor', 'ativo')
       `, [userId, ORGANIZATION_ID, `ordem-${userId}@example.test`]);
+      await client.query(`
+        INSERT INTO credenciais_usuario (
+          organizacao_id, usuario_id, senha_phc, versao_politica_senha
+        ) VALUES ($1, $2,
+          '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1vcmRlbQ$aGFzaC1vcmRlbS1uYW8tcmVhbA',
+          'fixture-v1')
+      `, [ORGANIZATION_ID, userId]);
       await client.query('COMMIT');
     } finally {
       client.release();
     }
 
     const persisted = await requirePool().query(
-      'SELECT titular_id FROM propriedades WHERE id = $1',
+      `SELECT titular_id, municipio_nome, uf_sigla, localidades_versao_id,
+              versao
+       FROM propriedades WHERE id = $1`,
       [propertyId],
     );
     assert.equal(persisted.rows[0]?.titular_id, producerId);
+    assert.equal(persisted.rows[0]?.municipio_nome, 'Porto Alegre');
+    assert.equal(persisted.rows[0]?.uf_sigla, 'RS');
+    assert.equal(
+      persisted.rows[0]?.localidades_versao_id,
+      'ibge-localidades-2026-08-25',
+    );
+    assert.equal(persisted.rows[0]?.versao, '1');
   });
 
-  test('titular_id é a única titularidade e conta principal inativa preserva o cadastro', async () => {
+  test('titular_id é a única titularidade e Propriedade ativa exige Titular habilitado', async () => {
     const databasePool = requirePool();
     const owner = await databasePool.query<{ user_id: string; property_id: string }>(`
       SELECT produtor.usuario_id AS user_id, propriedade.id AS property_id
@@ -253,10 +440,37 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     const row = owner.rows[0];
     assert.ok(row);
 
-    await databasePool.query(
-      "UPDATE usuarios SET status = 'inativo' WHERE id = $1",
-      [row.user_id],
+    await assert.rejects(
+      databasePool.query(
+        "UPDATE usuarios SET status = 'inativo' WHERE id = $1",
+        [row.user_id],
+      ),
+      /estado cadastral|status do Usuario|Titular habilitado|status_compativel/i,
     );
+
+    const stateClient = await databasePool.connect();
+    try {
+      await stateClient.query('BEGIN');
+      await stateClient.query(
+        "UPDATE propriedades SET status = 'inativa' WHERE id = $1",
+        [row.property_id],
+      );
+      await stateClient.query(`
+        UPDATE produtores
+        SET status = 'inativo'
+        WHERE usuario_id = $1
+      `, [row.user_id]);
+      await stateClient.query(
+        "UPDATE usuarios SET status = 'inativo' WHERE id = $1",
+        [row.user_id],
+      );
+      await stateClient.query('COMMIT');
+    } catch (error) {
+      await stateClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      stateClient.release();
+    }
     const propertyStillExists = await databasePool.query(
       'SELECT 1 FROM propriedades WHERE id = $1',
       [row.property_id],
@@ -285,6 +499,29 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       WHERE propriedade_id = $1 AND usuario_id = $2
     `, [row.property_id, row.user_id]);
     assert.equal(duplicatedTitle.rowCount, 0);
+
+    const restoreClient = await databasePool.connect();
+    try {
+      await restoreClient.query('BEGIN');
+      await restoreClient.query(
+        "UPDATE usuarios SET status = 'ativo' WHERE id = $1",
+        [row.user_id],
+      );
+      await restoreClient.query(
+        "UPDATE produtores SET status = 'ativo' WHERE usuario_id = $1",
+        [row.user_id],
+      );
+      await restoreClient.query(
+        "UPDATE propriedades SET status = 'ativa' WHERE id = $1",
+        [row.property_id],
+      );
+      await restoreClient.query('COMMIT');
+    } catch (error) {
+      await restoreClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      restoreClient.release();
+    }
   });
 
   test('impede vínculo ativo duplicado e preserva múltiplos registros inativos', async () => {
@@ -323,11 +560,26 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         status, motivo_inativacao
       ) VALUES ($1, $2, $3, 'colaborador', 'inativo', 'Histórico adicional')
     `, [ORGANIZATION_ID, userId, propertyId]);
-    const inactive = await databasePool.query(
-      "SELECT 1 FROM usuario_propriedade WHERE usuario_id = $1 AND status = 'inativo'",
+    const inactive = await databasePool.query<{
+      motivo_inativacao_codigo: string;
+      motivo_inativacao_detalhe: string;
+    }>(
+      `SELECT motivo_inativacao_codigo, motivo_inativacao_detalhe
+       FROM usuario_propriedade
+       WHERE usuario_id = $1 AND status = 'inativo'
+       ORDER BY criado_em`,
       [userId],
     );
-    assert.equal(inactive.rowCount, 2);
+    assert.deepEqual(inactive.rows, [
+      {
+        motivo_inativacao_codigo: 'outro',
+        motivo_inativacao_detalhe: 'Substituição de teste',
+      },
+      {
+        motivo_inativacao_codigo: 'outro',
+        motivo_inativacao_detalhe: 'Histórico adicional',
+      },
+    ]);
   });
 
   test('compatibilidade ativa é diferida e vale em qualquer ordem dentro da transação', async () => {
@@ -694,13 +946,17 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     );
   });
 
-  test('convite geral mantém usuário pendente e recuperação HTTP bloqueia alvo Admin', async () => {
+  test('convite novo ativa conta e compatibilidade manter_status não pode ser emitida novamente', async () => {
     const databasePool = requirePool();
     const adminId = randomUUID();
     const pendingId = randomUUID();
     const collaboratorId = randomUUID();
     const invitationChallengeId = randomUUID();
     const invitationId = randomUUID();
+    const activatedProducerUserId = randomUUID();
+    const activatedProducerId = randomUUID();
+    const activationChallengeId = randomUUID();
+    const activationInvitationId = randomUUID();
 
     await databasePool.query(`
       INSERT INTO usuarios (id, organizacao_id, nome, email, perfil, status)
@@ -718,49 +974,196 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       `colaborador-${collaboratorId}@example.test`,
     ]);
     await databasePool.query(`
+      INSERT INTO credenciais_usuario (
+        organizacao_id, usuario_id, senha_phc, versao_politica_senha
+      ) VALUES ($1, $2,
+        '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1hZG1pbg$aGFzaC1hZG1pbi1uYW8tcmVhbA',
+        'fixture-v1')
+    `, [ORGANIZATION_ID, adminId]);
+    await databasePool.query(`
       INSERT INTO desafios_autenticacao (
         id, organizacao_id, usuario_id, finalidade, token_hash, expira_em
       ) VALUES ($1, $2, $3, 'convite', $4, clock_timestamp() + interval '72 hours')
     `, [invitationChallengeId, ORGANIZATION_ID, pendingId, Buffer.alloc(32, 10)]);
-    await databasePool.query(`
-      INSERT INTO convites_usuario (
-        id, organizacao_id, usuario_id, desafio_id, origem, modo_ativacao,
-        criado_por_usuario_id, expira_em
-      ) VALUES ($1, $2, $3, $4, 'admin', 'manter_status', $5,
-        clock_timestamp() + interval '72 hours')
-    `, [invitationId, ORGANIZATION_ID, pendingId, invitationChallengeId, adminId]);
-
-    const invitationClient = await databasePool.connect();
-    try {
-      await invitationClient.query('BEGIN');
-      await invitationClient.query(`
-        INSERT INTO credenciais_usuario (
-          organizacao_id, usuario_id, senha_phc, versao_politica_senha
-        ) VALUES ($1, $2, $3, 'senha-v1')
-      `, [
-        ORGANIZATION_ID,
-        pendingId,
-        '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1jb252aXRl$aGFzaC1jb252aXRlLW5hby1yZWFs',
-      ]);
-      await invitationClient.query(`
-        UPDATE desafios_autenticacao
-        SET status = 'consumido', consumido_em = clock_timestamp()
-        WHERE id = $1
-      `, [invitationChallengeId]);
-      await invitationClient.query(`
-        UPDATE convites_usuario
-        SET status = 'aceito', aceito_em = clock_timestamp()
-        WHERE id = $1
-      `, [invitationId]);
-      await invitationClient.query('COMMIT');
-    } finally {
-      invitationClient.release();
-    }
+    await assert.rejects(
+      databasePool.query(`
+        INSERT INTO convites_usuario (
+          id, organizacao_id, usuario_id, desafio_id, origem, modo_ativacao,
+          criado_por_usuario_id, expira_em
+        ) VALUES ($1, $2, $3, $4, 'admin', 'manter_status', $5,
+          clock_timestamp() + interval '72 hours')
+      `, [invitationId, ORGANIZATION_ID, pendingId, invitationChallengeId, adminId]),
+      /convites_usuario_modo_historico|devem ativar o Usuario/i,
+    );
     const stillPending = await databasePool.query<{ status: string }>(
       'SELECT status FROM usuarios WHERE id = $1',
       [pendingId],
     );
     assert.equal(stillPending.rows[0]?.status, 'pendente');
+
+    const runtimeClient = await databasePool.connect();
+    try {
+      await runtimeClient.query('BEGIN');
+      await runtimeClient.query('SET LOCAL ROLE tche_agro_runtime');
+      await runtimeClient.query(
+        "UPDATE usuarios SET status = 'ativo' WHERE id = $1",
+        [pendingId],
+      );
+      await expectCommitFailure(
+        runtimeClient,
+        /ativar Usuario exige credencial|ativacao_exige_credencial/i,
+      );
+    } finally {
+      runtimeClient.release();
+    }
+
+    const inactiveIssuerId = randomUUID();
+    await databasePool.query(`
+      INSERT INTO usuarios (id, organizacao_id, nome, email, perfil, status)
+      VALUES ($1, $2, 'Admin emissor inativo', $3, 'admin', 'inativo')
+    `, [
+      inactiveIssuerId,
+      ORGANIZATION_ID,
+      `admin-inativo-${inactiveIssuerId}@example.test`,
+    ]);
+    await assert.rejects(
+      databasePool.query(`
+        INSERT INTO convites_usuario (
+          organizacao_id, usuario_id, desafio_id, origem, modo_ativacao,
+          criado_por_usuario_id, expira_em
+        ) VALUES ($1, $2, $3, 'admin', 'ativar_usuario', $4,
+          clock_timestamp() + interval '72 hours')
+      `, [ORGANIZATION_ID, pendingId, invitationChallengeId, inactiveIssuerId]),
+      /emissor Administrador ativo|emissor_admin_ativo/i,
+    );
+
+    await databasePool.query(`
+      INSERT INTO usuarios (id, organizacao_id, nome, email, perfil, status)
+      VALUES ($1, $2, 'Produtor ativado por convite', $3, 'produtor', 'pendente')
+    `, [
+      activatedProducerUserId,
+      ORGANIZATION_ID,
+      `produtor-convite-${activatedProducerUserId}@example.test`,
+    ]);
+    await databasePool.query(`
+      INSERT INTO produtores (id, organizacao_id, usuario_id, nome, status)
+      VALUES ($1, $2, $3, 'Produtor ativado por convite', 'inativo')
+    `, [activatedProducerId, ORGANIZATION_ID, activatedProducerUserId]);
+    await databasePool.query(`
+      INSERT INTO desafios_autenticacao (
+        id, organizacao_id, usuario_id, finalidade, token_hash, expira_em
+      ) VALUES ($1, $2, $3, 'convite', $4, clock_timestamp() + interval '72 hours')
+    `, [
+      activationChallengeId,
+      ORGANIZATION_ID,
+      activatedProducerUserId,
+      Buffer.alloc(32, 15),
+    ]);
+    await databasePool.query(`
+      INSERT INTO convites_usuario (
+        id, organizacao_id, usuario_id, desafio_id, origem, modo_ativacao,
+        criado_por_usuario_id, expira_em
+      ) VALUES ($1, $2, $3, $4, 'admin', 'ativar_usuario', $5,
+        clock_timestamp() + interval '72 hours')
+    `, [
+      activationInvitationId,
+      ORGANIZATION_ID,
+      activatedProducerUserId,
+      activationChallengeId,
+      adminId,
+    ]);
+
+    const activationClient = await databasePool.connect();
+    try {
+      await activationClient.query('BEGIN');
+      await activationClient.query(`
+        INSERT INTO credenciais_usuario (
+          organizacao_id, usuario_id, senha_phc, versao_politica_senha
+        ) VALUES ($1, $2, $3, 'senha-v1')
+      `, [
+        ORGANIZATION_ID,
+        activatedProducerUserId,
+        '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1tcDM1YQ$aGFzaC1tcDM1YS1uYW8tcmVhbA',
+      ]);
+      await activationClient.query(
+        "UPDATE usuarios SET status = 'ativo' WHERE id = $1",
+        [activatedProducerUserId],
+      );
+      await activationClient.query(
+        "UPDATE produtores SET status = 'ativo' WHERE id = $1",
+        [activatedProducerId],
+      );
+      await activationClient.query(`
+        UPDATE desafios_autenticacao
+        SET status = 'consumido', consumido_em = clock_timestamp()
+        WHERE id = $1
+      `, [activationChallengeId]);
+      await activationClient.query(`
+        UPDATE convites_usuario
+        SET status = 'aceito', aceito_em = clock_timestamp()
+        WHERE id = $1
+      `, [activationInvitationId]);
+      await activationClient.query('COMMIT');
+    } finally {
+      activationClient.release();
+    }
+    const activatedWithoutProperty = await databasePool.query<{
+      user_status: string;
+      producer_status: string;
+      property_count: number;
+      user_version: string;
+      producer_version: string;
+    }>(`
+      SELECT usuario.status AS user_status,
+             produtor.status AS producer_status,
+        count(propriedade.id)::integer AS property_count,
+        usuario.versao::text AS user_version,
+        produtor.versao::text AS producer_version
+      FROM usuarios AS usuario
+      JOIN produtores AS produtor
+        ON produtor.organizacao_id = usuario.organizacao_id
+       AND produtor.usuario_id = usuario.id
+      LEFT JOIN propriedades AS propriedade
+        ON propriedade.organizacao_id = produtor.organizacao_id
+       AND propriedade.titular_id = produtor.id
+      WHERE usuario.id = $1
+      GROUP BY usuario.status, produtor.status, usuario.versao, produtor.versao
+    `, [activatedProducerUserId]);
+    assert.deepEqual(activatedWithoutProperty.rows[0], {
+      user_status: 'ativo',
+      producer_status: 'ativo',
+      property_count: 0,
+      user_version: '2',
+      producer_version: '2',
+    });
+
+    const cleanupActivationClient = await databasePool.connect();
+    try {
+      await cleanupActivationClient.query('BEGIN');
+      await cleanupActivationClient.query(
+        'DELETE FROM convites_usuario WHERE id = $1',
+        [activationInvitationId],
+      );
+      await cleanupActivationClient.query(
+        'DELETE FROM desafios_autenticacao WHERE id = $1',
+        [activationChallengeId],
+      );
+      await cleanupActivationClient.query(
+        'DELETE FROM credenciais_usuario WHERE usuario_id = $1',
+        [activatedProducerUserId],
+      );
+      await cleanupActivationClient.query(
+        'DELETE FROM produtores WHERE id = $1',
+        [activatedProducerId],
+      );
+      await cleanupActivationClient.query(
+        'DELETE FROM usuarios WHERE id = $1',
+        [activatedProducerUserId],
+      );
+      await cleanupActivationClient.query('COMMIT');
+    } finally {
+      cleanupActivationClient.release();
+    }
 
     const adminRecoveryId = randomUUID();
     await assert.rejects(
@@ -1026,6 +1429,114 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     );
   });
 
+  test('MP-35A persiste a reserva idempotente por 90 dias e exige recibo concluído', async () => {
+    const databasePool = requirePool();
+    const actor = await databasePool.query<{ id: string }>(`
+      SELECT id FROM usuarios
+      WHERE perfil = 'admin' AND status = 'ativo'
+      ORDER BY criado_em
+      LIMIT 1
+    `);
+    const actorId = actor.rows[0]?.id;
+    assert.ok(actorId);
+    const commandId = randomUUID();
+    const sessionId = randomUUID();
+    const keyHash = Buffer.alloc(32, 21);
+    const requestHash = Buffer.alloc(32, 22);
+
+    await databasePool.query(`
+      INSERT INTO sessoes_autenticacao (
+        id, organizacao_id, usuario_id, versao_autorizacao,
+        expira_inatividade_em, expira_absolutamente_em
+      ) VALUES ($1, $2, $3, 1,
+        clock_timestamp() + interval '1 day',
+        clock_timestamp() + interval '2 days')
+    `, [sessionId, ORGANIZATION_ID, actorId]);
+
+    await databasePool.query(`
+      WITH instante AS (SELECT clock_timestamp() AS valor)
+      INSERT INTO comandos_administrativos_idempotencia (
+        id, organizacao_id, ator_usuario_id, sessao_id,
+        request_id, correlation_id, chave_idempotencia_hash,
+        comando, hash_requisicao, criado_em, expira_em
+      )
+      SELECT $1, $2, $3, $4, 'request-mp35a-1', 'correlation-mp35a-1',
+             $5, 'usuario.criar', $6,
+             instante.valor, instante.valor + interval '90 days'
+      FROM instante
+    `, [commandId, ORGANIZATION_ID, actorId, sessionId, keyHash, requestHash]);
+
+    await assert.rejects(
+      databasePool.query(`
+        WITH instante AS (SELECT clock_timestamp() AS valor)
+        INSERT INTO comandos_administrativos_idempotencia (
+          organizacao_id, ator_usuario_id, sessao_id,
+          request_id, correlation_id, chave_idempotencia_hash,
+          comando, hash_requisicao, criado_em, expira_em
+        )
+        SELECT $1, $2, $3, 'request-mp35a-2', 'correlation-mp35a-1',
+               $4, 'usuario.atualizar', $5,
+               instante.valor, instante.valor + interval '90 days'
+        FROM instante
+      `, [
+        ORGANIZATION_ID,
+        actorId,
+        sessionId,
+        keyHash,
+        Buffer.alloc(32, 23),
+      ]),
+      /uq_comandos_administrativos_chave|duplicate key/i,
+    );
+    await assert.rejects(
+      databasePool.query(`
+        UPDATE comandos_administrativos_idempotencia
+        SET status = 'concluido', codigo_http = 201,
+            concluido_em = clock_timestamp()
+        WHERE id = $1
+      `, [commandId]),
+      /ck_comandos_administrativos_ciclo_vida|check constraint/i,
+    );
+    await assert.rejects(
+      databasePool.query(`
+        UPDATE comandos_administrativos_idempotencia
+        SET status = 'concluido', codigo_http = 201,
+            recibo = jsonb_build_object(
+              'outcome', 'criado',
+              'resourceType', 'propriedade',
+              'resourceId', $2::text,
+              'password', 'segredo'
+            ),
+            concluido_em = clock_timestamp()
+        WHERE id = $1
+      `, [commandId, randomUUID()]),
+      /ck_comandos_administrativos_recibo|check constraint/i,
+    );
+
+    const completed = await databasePool.query<{
+      status: string;
+      codigo_http: number;
+      exact_retention: boolean;
+    }>(`
+      UPDATE comandos_administrativos_idempotencia
+      SET status = 'concluido', codigo_http = 201,
+          recibo = jsonb_build_object(
+            'outcome', 'criado',
+            'resourceType', 'usuario',
+            'resourceId', $2::text,
+            'version', 1
+          ),
+          concluido_em = clock_timestamp()
+      WHERE id = $1
+      RETURNING status, codigo_http,
+                expira_em = criado_em + interval '90 days' AS exact_retention
+    `, [commandId, randomUUID()]);
+    assert.deepEqual(completed.rows[0], {
+      status: 'concluido',
+      codigo_http: 201,
+      exact_retention: true,
+    });
+  });
+
   test('papéis runtime/worker são mínimos e auditoria é append-only', async () => {
     const databasePool = requirePool();
     const actorUserId = randomUUID();
@@ -1143,11 +1654,12 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       WHERE rolname IN (
         'tche_agro_runtime',
         'tche_agro_outbox_worker',
-        'tche_agro_platform_ops'
+        'tche_agro_platform_ops',
+        'tche_agro_administration_maintenance'
       )
       ORDER BY rolname
     `);
-    assert.equal(roleAttributes.rowCount, 3);
+    assert.equal(roleAttributes.rowCount, 4);
     for (const role of roleAttributes.rows) {
       assert.deepEqual(
         {
@@ -1799,7 +2311,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     assertDestructiveDatabaseTestsAllowed(activeMigrationDatabase.connectionString);
     await runMigrations({
       command: 'down',
-      count: 5,
+      count: 7,
       database: activeMigrationDatabase,
     });
 

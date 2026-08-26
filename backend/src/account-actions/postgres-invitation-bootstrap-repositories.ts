@@ -4,7 +4,10 @@ import type {
   InitialAdminBootstrapRepository,
   InitialAdminBootstrapState,
 } from './bootstrap-service.js';
-import type { AccountSnapshot } from './contracts.js';
+import type {
+  AccountSnapshot,
+} from './contracts.js';
+import { invitationAcceptanceModeFromPersisted } from './contracts.js';
 import type { InvitationIssueRepository } from './invitation-service.js';
 import {
   AccountActionPostgresStore,
@@ -17,7 +20,7 @@ import { query } from '../auth/postgres-common.js';
 
 interface InvitationInspectionRow extends AccountRow {
   readonly challenge_id: string;
-  readonly modo_ativacao: 'manter_status' | 'ativar_admin_bootstrap';
+  readonly modo_ativacao: string;
 }
 
 interface LockedInvitationRow extends InvitationInspectionRow {
@@ -25,14 +28,6 @@ interface LockedInvitationRow extends InvitationInspectionRow {
   readonly desafio_status: string;
   readonly convite_status: string;
   readonly credencial_id: string | null;
-}
-
-function activationMode(
-  value: InvitationInspectionRow['modo_ativacao'],
-): 'keep_status' | 'activate_bootstrap_admin' {
-  return value === 'ativar_admin_bootstrap'
-    ? 'activate_bootstrap_admin'
-    : 'keep_status';
 }
 
 export class PostgresInvitationRepository
@@ -147,7 +142,7 @@ export class PostgresInvitationRepository
           INSERT INTO public.convites_usuario (
             organizacao_id, usuario_id, desafio_id, origem, modo_ativacao,
             criado_por_usuario_id, expira_em
-          ) VALUES ($1, $2, $3, 'admin', 'manter_status', $4, $5)
+          ) VALUES ($1, $2, $3, 'admin', 'ativar_usuario', $4, $5)
           RETURNING id
         `,
         [
@@ -204,7 +199,9 @@ export class PostgresInvitationRepository
         : {
             challengeId: row.challenge_id,
             recipient: accountSnapshot(row),
-            activationMode: activationMode(row.modo_ativacao),
+            activationMode: invitationAcceptanceModeFromPersisted(
+              row.modo_ativacao,
+            ),
           };
     });
   }
@@ -270,7 +267,7 @@ export class PostgresInvitationRepository
       if (row.version !== input.expectedRecipientVersion) {
         return 'concurrent_change';
       }
-      const mode = activationMode(row.modo_ativacao);
+      const mode = invitationAcceptanceModeFromPersisted(row.modo_ativacao);
       if (
         row.status !== 'pendente' ||
         (mode === 'activate_bootstrap_admin' && row.perfil !== 'admin')
@@ -294,7 +291,14 @@ export class PostgresInvitationRepository
           input.acceptedAt,
         ],
       );
-      if (mode === 'activate_bootstrap_admin') {
+      if (mode === 'activate_user' && row.perfil === 'produtor') {
+        await query(
+          client,
+          'SELECT public.tche_ativar_produtor_por_convite_mp35a($1)',
+          [row.convite_id],
+        );
+      }
+      if (mode === 'activate_bootstrap_admin' || mode === 'activate_user') {
         await query(
           client,
           `

@@ -2,6 +2,29 @@ import type { EncryptedOutboxMessageDraft } from '../outbox/contracts.js';
 
 export type AccountProfile = 'admin' | 'colaborador' | 'produtor';
 export type AccountStatus = 'pendente' | 'ativo' | 'inativo';
+export type InvitationAcceptanceMode =
+  | 'keep_status'
+  | 'activate_user'
+  | 'activate_bootstrap_admin';
+export type PersistedInvitationActivationMode =
+  | 'manter_status'
+  | 'ativar_usuario'
+  | 'ativar_admin_bootstrap';
+
+export function invitationAcceptanceModeFromPersisted(
+  value: unknown,
+): InvitationAcceptanceMode {
+  switch (value) {
+    case 'manter_status':
+      return 'keep_status';
+    case 'ativar_usuario':
+      return 'activate_user';
+    case 'ativar_admin_bootstrap':
+      return 'activate_bootstrap_admin';
+    default:
+      throw new TypeError('Unknown persisted invitation activation mode.');
+  }
+}
 
 export interface AccountSnapshot {
   readonly id: string;
@@ -48,7 +71,7 @@ export interface ActionChallengeDraft {
   readonly expiresAt: Date;
   readonly pendingNormalizedEmail?: string;
   readonly recoveryId?: string;
-  readonly activationMode?: 'keep_status' | 'activate_bootstrap_admin';
+  readonly activationMode?: InvitationAcceptanceMode;
 }
 
 export interface RestrictedAuthorizationDraft {

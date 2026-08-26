@@ -1,6 +1,6 @@
 # Contrato de Autenticação e Recuperação — MP-33B
 
-> Revisão documental: 2026-08-24
+> Revisão documental: 2026-08-25
 >
 > Estado: CONCLUÍDA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO
 
@@ -134,6 +134,14 @@ oficial precisa estar associado e validado antes da aprovação produtiva.
 Convite geral opera somente sobre um `usuario` pendente já existente. Ele não
 cria Usuário, Produtor, Propriedade, Titularidade ou vínculo. O bootstrap do
 primeiro Admin é a única exceção de identidade inicial e permanece CLI one-shot.
+Convites administrativos novos persistem `ativar_usuario`: o aceite cria a
+credencial e ativa Usuário e, quando aplicável, Produtor no mesmo commit.
+`manter_status` permanece consumível somente em convites históricos já
+persistidos e não pode ser emitido novamente.
+O endpoint de aceite preserva `204 No Content`. Para Produtor, o papel runtime
+não recebe `UPDATE` amplo em `produtores`: a transação chama uma função
+`SECURITY DEFINER` estreita que rederiva e trava o agregado a partir do convite,
+valida finalidade, modo, expiração, consumo, credencial e estados esperados.
 
 Recuperação comum responde `202` uniformemente, exista ou não a conta. Não
 altera a conta antes do consumo válido, revoga todas as sessões na conclusão e

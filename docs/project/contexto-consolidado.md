@@ -22,17 +22,22 @@ O sistema busca centralizar informacoes ligadas ao trabalho tecnico e ao acompan
 
 ### Administracao Geral
 
-Perfil com visao ampla da operacao. Precisa navegar entre regioes, produtores e propriedades sem perder o panorama consolidado do sistema.
+Perfil global dentro da organização. Precisa navegar entre Município/UF,
+Produtores e Propriedades sem perder o panorama consolidado; não depende de
+vínculo individual e é o único perfil que administra a estrutura geral.
 
 ### Colaborador
 
 Perfil operacional da Tche Fertilidade. Atua na consulta e manutencao dos
 dados somente nas Propriedades atribuidas diretamente, conforme permissao por
-acao.
+acao. Pode autenticar com zero vínculos, caso em que não acessa Propriedade.
 
 ### Produtor
 
-Perfil final ligado a uma ou mais propriedades. Seu foco principal e consultar materiais, visualizar historico e acessar dados autorizados da sua propria realidade operacional.
+Perfil final que pode estar ligado a zero, uma ou mais Propriedades. Seu foco
+principal é consultar materiais, visualizar histórico e acessar dados
+autorizados da sua própria realidade operacional; não administra a estrutura
+geral.
 
 ## Unidade Central do Dominio
 

@@ -10,6 +10,7 @@ import {
   type AuditEventDraft,
   type Clock,
   type IdGenerator,
+  type InvitationAcceptanceMode,
 } from './contracts.js';
 import { AccountActionError } from './errors.js';
 
@@ -36,9 +37,10 @@ export interface InvitationIssueRepository {
   }): Promise<{
     readonly challengeId: string;
     readonly recipient: AccountSnapshot;
-    readonly activationMode: 'keep_status' | 'activate_bootstrap_admin';
+    readonly activationMode: InvitationAcceptanceMode;
   } | null>;
-  /** Consumes the challenge and writes credential/audit in one transaction. */
+  /** Consumes the challenge and writes credential, applicable account
+   * activation, and audit in one transaction. */
   acceptInvitationAtomically(input: {
     readonly tokenSha256: string;
     readonly expectedChallengeId: string;
@@ -103,7 +105,7 @@ export class InvitationService {
     const challengeId = this.#idGenerator();
     const messageId = this.#idGenerator();
     const token = createOpaqueActionToken();
-    const activationMode = 'keep_status' as const;
+    const activationMode = 'activate_user' as const;
     const challenge: ActionChallengeDraft = {
       id: challengeId,
       organizationId: recipient.organizationId,

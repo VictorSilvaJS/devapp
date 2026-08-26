@@ -335,10 +335,45 @@ describe('PostgresPropertyRepository', { timeout: 180_000 }, () => {
       [],
     );
 
-    await requirePool().query(
-      `UPDATE public.produtores SET status = 'inativo' WHERE id = $1`,
+    await assert.rejects(
+      requirePool().query(
+        `UPDATE public.produtores SET status = 'inativo' WHERE id = $1`,
+        [fixture.titularProducer],
+      ),
+      /estado cadastral|Titular habilitado/i,
+    );
+
+    const activeProperties = await requirePool().query<{ id: string }>(
+      `
+        SELECT id
+        FROM public.propriedades
+        WHERE titular_id = $1 AND status = 'ativa'
+      `,
       [fixture.titularProducer],
     );
+    const stateClient = await requirePool().connect();
+    try {
+      await stateClient.query('BEGIN');
+      await stateClient.query(
+        `UPDATE public.propriedades SET status = 'inativa' WHERE id = ANY($1::uuid[])`,
+        [activeProperties.rows.map((row) => row.id)],
+      );
+      await stateClient.query(
+        `UPDATE public.produtores SET status = 'inativo' WHERE id = $1`,
+        [fixture.titularProducer],
+      );
+      await stateClient.query(
+        `UPDATE public.usuarios SET status = 'inativo' WHERE id = $1`,
+        [fixture.titularUser],
+      );
+      await stateClient.query('COMMIT');
+    } catch (error) {
+      await stateClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      stateClient.release();
+    }
+
     assert.deepEqual(
       await requireRepository().list({
         principal: principal(fixture.titularUser, 'produtor'),
@@ -346,6 +381,29 @@ describe('PostgresPropertyRepository', { timeout: 180_000 }, () => {
       }),
       [],
     );
+
+    const restoreClient = await requirePool().connect();
+    try {
+      await restoreClient.query('BEGIN');
+      await restoreClient.query(
+        `UPDATE public.usuarios SET status = 'ativo' WHERE id = $1`,
+        [fixture.titularUser],
+      );
+      await restoreClient.query(
+        `UPDATE public.produtores SET status = 'ativo' WHERE id = $1`,
+        [fixture.titularProducer],
+      );
+      await restoreClient.query(
+        `UPDATE public.propriedades SET status = 'ativa' WHERE id = ANY($1::uuid[])`,
+        [activeProperties.rows.map((row) => row.id)],
+      );
+      await restoreClient.query('COMMIT');
+    } catch (error) {
+      await restoreClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      restoreClient.release();
+    }
   });
 
   test('loader manual usa só a URL explícita protegida e é idempotente', async () => {
@@ -476,6 +534,28 @@ async function seedFixtures(pool: Pool): Promise<FixtureIds> {
         ids.collaborator,
         ids.staleCollaborator,
         ORGANIZATION_ID,
+      ],
+    );
+    await client.query(
+      `
+        INSERT INTO public.credenciais_usuario (
+          organizacao_id, usuario_id, senha_phc, versao_politica_senha
+        )
+        SELECT $1, usuario_id,
+          '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1wcm9w$aGFzaC1wcm9wLW5hby1yZWFs',
+          'fixture-v1'
+        FROM unnest($2::uuid[]) AS usuario_id
+      `,
+      [
+        ORGANIZATION_ID,
+        [
+          ids.admin,
+          ids.titularUser,
+          ids.authorizedUser,
+          ids.otherUser,
+          ids.collaborator,
+          ids.staleCollaborator,
+        ],
       ],
     );
     await client.query(

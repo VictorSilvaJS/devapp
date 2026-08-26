@@ -1,6 +1,6 @@
 # Núcleo Ativo do Projeto
 
-> Revisão documental: 2026-08-24
+> Revisão documental: 2026-08-25
 
 Esta pasta contém somente documentos que descrevem o projeto como ele é hoje ou
 contratos aprovados, estejam eles implementados ou reservados para um corte
@@ -38,6 +38,7 @@ Para entender o projeto sem percorrer o histórico, leia:
 - [Contrato de integração do aplicativo da MP-33C](contrato-integracao-app-mp33c.md)
 - [Contrato de convergência da interface Demo/HTTP](contrato-convergencia-interface-http.md)
 - [Contrato de notificações](contrato-notificacoes.md)
+- [Contrato de administração da MP-35](contrato-administracao-mp35.md)
 - [Ciclo de vida do Caderno](ciclo-vida-caderno.md)
 - [Estados de Visita](estados-visita.md)
 - [Modelo de Material técnico](modelo-material-tecnico.md)

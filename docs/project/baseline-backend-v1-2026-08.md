@@ -6,7 +6,7 @@
 >
 > Fechamento: 2026-08-07
 >
-> Revisão: 2026-08-24
+> Revisão: 2026-08-25
 >
 > Escopo: baseline do backend e do banco. A fundação foi implementada na
 > `MP-33A`; autenticação/conta, na `MP-33B`; integração e primeira leitura de
@@ -264,9 +264,9 @@ Regras:
 - vínculo não é apagado fisicamente;
 - não pode existir vínculo ativo duplicado de mesmo usuário, Propriedade e
   tipo;
-- o workflow/API futuro só habilita operacionalmente um Colaborador com ao
-  menos um vínculo ativo; a MP-33A não cria a constraint inversa e um Usuário
-  sem vínculo simplesmente não recebe escopo;
+- o convite pode deixar um Colaborador ativo com zero vínculos; nesse estado a
+  autenticação é válida, mas a coleção de Propriedades fica vazia até existir
+  vínculo direto ativo;
 - `titular` não é valor aceito nem persistido em `usuario_propriedade`;
 - `propriedades.titular_id` é a única fonte persistida da Titularidade;
 - o acesso efetivo do Titular é derivado pela cadeia Propriedade → Produtor
@@ -279,10 +279,9 @@ Regras:
 
 As garantias do banco cobrem organização comum, referências válidas, tipos
 permitidos, ausência de duplicidade ativa e compatibilidade dos vínculos
-adicionais. A conta do usuário principal pode ser inativada sem desfazer a
-Titularidade cadastral. A autenticação/autorização bloqueia o acesso de usuário
-inativo na vertical implementada e deve repetir a regra nas futuras; não haverá
-constraint permanente que impeça essa desativação.
+adicionais. A conta do usuário principal pode ser inativada sem apagar a
+Titularidade cadastral, mas uma Propriedade ativa não pode terminar a transação
+sem Titular habilitado. A autenticação/autorização bloqueia usuário inativo.
 
 ## 6. Usuário, Ativação E Sessão
 
@@ -298,17 +297,20 @@ auditoria, não novos valores de `status` no primeiro contrato.
 Fluxo aprovado:
 
 1. Admin cria Usuário Produtor como `pendente`.
-2. A primeira Propriedade cria Titularidade e ativa Usuário/Produtor em uma
-   única transação.
-3. Colaborador só pode ficar `ativo` com ao menos uma Propriedade vinculada.
-4. Admin nasce ativo conforme ação administrativa autenticada.
-5. Backend envia convite de uso único para definição de senha; senha inicial
+2. Backend envia convite de uso único para definição de senha; convite novo
+   cria credencial e ativa Usuário/Produtor na mesma transação.
+3. Produtor e Colaborador ativos podem ter zero Propriedades acessíveis.
+4. A criação da Propriedade seleciona Titular obrigatoriamente; se a
+   Propriedade for ativa, o Titular precisa estar habilitado.
+5. Admin adicional também nasce pendente e aceita convite; senha inicial
    não integra o cadastro nem o seed.
 6. Convite e recuperação usam token aleatório, armazenado somente como hash,
    com expiração configurável e uso único.
 7. Alteração de e-mail exige nova verificação antes de substituir o endereço
    autenticável.
-8. Inativação ou redução de escopo revoga refresh tokens ativos.
+8. Na MP-35B/C, qualquer mudança de autorização revoga todas as sessões dos
+   Usuários diretamente afetados, inclusive ampliações; alterações apenas
+   cadastrais preservam a sessão.
 
 A política de sessão de `politica-sessao.md` permanece válida para tokens e
 backend: access token de 15 minutos e refresh rotativo com validade absoluta de
@@ -323,7 +325,8 @@ bem-sucedido. A recuperação comum e a alteração concluída de e-mail revogam
 todas as sessões e não autenticam automaticamente. A troca autenticada de
 senha revoga as outras sessões e gira access/refresh da sessão atual.
 
-Convite geral aceita somente `usuario` pendente já existente. O primeiro Admin
+Convite geral aceita `usuario` pendente já existente. Convites novos usam
+`ativar_usuario`; `manter_status` permanece compatibilidade histórica. O primeiro Admin
 é a única identidade criada pelo bootstrap one-shot. Admin pode confirmar um
 e-mail secundário diferente do login; esse é o único caminho operacional de
 recuperação Administradora nesta fase. Perda dos dois endereços não é resolvida
@@ -491,8 +494,10 @@ para token, sessão ou cache de negócio.
 - convergência da apresentação aprovada nas capacidades HTTP existentes,
   implementada, aprovada no smoke físico e integrada diretamente no commit
   `e47bb02`, com os três jobs da CI pós-push aprovados;
+- contratos e fundação persistente administrativa (`MP-35A`), no estado
+  `MP-35A corrigida localmente, não integrada, em validação final`, sem endpoints;
 - escritas administrativas e o restante do RBAC por ação no servidor
-  (`MP-35`), com integração das telas administrativas existentes;
+  (`MP-35B/C`), seguidos pela integração das telas existentes (`MP-35D`);
 - CI do backend;
 - observabilidade, backup e restauração.
 
@@ -536,6 +541,7 @@ MP-33C. Notificações in-app da própria conta, persistência, API e composiç�
 foram concluídas tecnicamente e integradas diretamente na MP-34 pelo commit
 `e787707`, sem pull request e com os três jobs da CI pós-push aprovados. Não
 houve tag, deploy, release ou publicação dessa fase; o smoke funcional da MP-34
-passou em Android físico em 2026-08-24. Escritas administrativas
-permanecem na MP-35. Materiais, GeoJSON produtivo e Caderno append-only entram
+passou em Android físico em 2026-08-24. A MP-35A acrescenta somente contratos,
+constraints, versões, catálogos, snapshot IBGE e idempotência persistente;
+escritas administrativas permanecem na MP-35B/C. Materiais, GeoJSON produtivo e Caderno append-only entram
 depois que a fundação estiver implantada e observável.

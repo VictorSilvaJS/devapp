@@ -1,6 +1,6 @@
 # Regras de Negocio
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-08-25
 
 Este documento registra regras de dominio e acesso que devem orientar modelagem, UX e implementacao. Quando um ponto ainda nao estiver fechado, ele nao deve ser transformado em regra aqui.
 
@@ -30,10 +30,10 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
   Produtor nao criam Propriedades.
 - A exclusao estrutural de Propriedade tambem e exclusiva de Admin e permanece
   bloqueada quando existem dependencias operacionais vinculadas.
-- No mock, o Produtor deve existir antes de ser escolhido como Titular. Um Produtor
-  pendente pode ser escolhido na criacao de sua primeira Propriedade; nesse
-  caso, Usuario, cadastro de Produtor e vinculo de Titular sao ativados na
-  mesma operacao atomica que cria a Propriedade.
+- O Produtor deve existir antes de ser escolhido como Titular. No backend, o
+  convite aceito ativa Usuario e Produtor mesmo com zero Propriedades. Uma
+  Propriedade inativa pode apontar para Titular ainda pendente/inativo; uma
+  Propriedade ativa exige Titular habilitado.
 - No mock, o cadastro grava `titular_id`, `municipio_id`, `municipio_nome`,
   `uf_id`, `uf_sigla` e cria o vinculo ativo de Titular em
   `usuario_propriedade`.
@@ -44,9 +44,11 @@ No codigo legado e em documentos tecnicos, `fazenda`, `fazenda_id`, nomes de rot
 - A edicao cadastral comum da Propriedade tambem e exclusiva de Admin e deve
   atualizar os dados canonicos e os vinculos diretos de Colaboradores e
   Produtores autorizados em uma unica operacao atomica.
-- Somente usuarios ativos com perfil Produtor podem receber vinculo
-  `usuario_autorizado`. O Titular atual nao integra essa selecao, e conceder ou
-  encerrar esse acesso nao altera o `titular_id` da Propriedade.
+- Somente usuários com perfil Produtor podem receber vínculo
+  `usuario_autorizado`. O vínculo pode ser preparado enquanto a conta está
+  pendente, mas só concede acesso com Usuário, vínculo e Propriedade ativos. O
+  Titular atual não integra essa seleção, e conceder ou encerrar esse acesso
+  não altera o `titular_id` da Propriedade.
 - No mock local, desmarcar um Produtor autorizado inativa o vinculo existente
   em vez de criar duplicidade ou apagar a relacao. A reducao de escopo
   produtiva continua dependente de auditoria, revogacao/revalidacao de sessao e
@@ -140,16 +142,15 @@ O contrato canonico esta em `modelo-territorial.md`.
   essa acao.
 - Perfil e um dado estrutural: a edicao comum nao transforma Admin,
   Colaborador e Produtor entre si.
-- O cadastro de Produtor nasce `pendente` quando ainda nao possui
-  Propriedade. A primeira Propriedade e criada no fluxo proprio, selecionando
-  esse Produtor como Titular; o salvamento o ativa atomicamente.
+- O Usuario Produtor nasce `pendente` e o cadastro `produtores` nasce
+  `inativo`. A aceitação do convite define credencial e ativa ambos
+  atomicamente; zero Propriedades acessíveis continua sendo estado válido.
 - As Propriedades de um Produtor sao apresentadas como leitura no cadastro de
   Usuario. Titularidade e novos vinculos sao definidos no fluxo de
   Propriedade, permitindo que o mesmo Produtor seja Titular de varias delas.
-- No mock administrativo, Colaborador ativo exige ao menos um vinculo direto
-  ativo do tipo `colaborador`; Admin nao recebe vinculo com Propriedade. No
-  backend, o workflow/API futuro aplicara essa regra de habilitacao; a MP-33A
-  apenas deixa o Usuario sem vinculo sem qualquer escopo de Propriedade.
+- Colaborador ativo pode ter zero vínculos. Seu acesso exige vínculo direto
+  ativo do tipo `colaborador` e Propriedade ativa; Admin não recebe vínculo com
+  Propriedade.
 - Novas escritas de Usuario nao gravam nivel administrativo, Regiao,
   Microregiao, `sub_regioes`, `propriedades_atribuidas`,
   `vinculos_microregioes`, `senha` ou aliases equivalentes do v1.
@@ -193,10 +194,11 @@ O contrato canonico esta em `modelo-territorial.md`.
 - Acessa os dados da sua propria realidade operacional.
 - Deve conseguir consultar materiais e historicos autorizados.
 - Nao deve ser tratado como responsavel por gerenciar a estrutura geral do sistema.
-- No mock administrativo, Produtor ativo deve ter ao menos uma Propriedade
-  vinculada; Produtor pendente pode existir sem Propriedade.
-- No mock, Produtor com vinculo ativo de Titular nao pode ser colocado como pendente ou
-  inativo na edicao comum; transferencia de titularidade exige fluxo proprio.
+- Produtor ativo pode ter zero Propriedades acessíveis; seu estado cadastral não
+  acompanha a quantidade de acessos.
+- Produtor Titular de Propriedade ativa não pode ser inativado sem que a mesma
+  transação também deixe a Propriedade em estado válido. Transferência de
+  Titularidade exige fluxo próprio e permanece fora da MP-35.
 - No runtime v2, o acesso efetivo do Produtor ocorre por vínculo ativo de
   Titular ou usuário autorizado; aliases antigos permanecem apenas na borda.
 - No backend, o equivalente ao vínculo local de Titular e calculado por
@@ -515,13 +517,16 @@ Enquanto `Admin -> Usuarios` estiver em MVP visual/mockado, as validacoes minima
 - perfil obrigatorio
 - status obrigatorio
 - perfil imutavel na edicao comum
-- produtor ativo com pelo menos uma Propriedade vinculada
-- produtor pendente podendo ficar sem Propriedade vinculada
-- primeiro cadastro de Propriedade aceitando Produtor pendente e ativando
-  Usuario, Produtor e vinculo de Titular na mesma operacao
+- produtor ativo podendo ficar com zero Propriedades acessíveis
+- convite aceito ativando Usuario e Produtor atomicamente
+- Propriedade inativa aceitando cadastro com Usuário pendente/inativo e
+  Produtor inativo
+- Propriedade ativa exigindo Usuario e Produtor Titular ativos
 - vinculo de Titular correspondendo ao `titular_id` real da Propriedade
-- produtor Titular ativo nao podendo ser inativado sem fluxo de transferencia
-- colaborador ativo com ao menos uma Propriedade vinculada diretamente
+- Produtor Titular não pode terminar inativo enquanto alguma Propriedade sua
+  continuar ativa; a mesma transação pode inativar essas Propriedades, sem
+  transferir nem apagar a Titularidade
+- colaborador ativo podendo ter zero vínculos e, nesse caso, zero acesso
 - colaborador usando somente vinculos do tipo `colaborador`
 - admin sem vinculo de Propriedade ou Microregiao
 - payload v2 sem campos territoriais, senha ou aliases administrativos do v1
@@ -586,8 +591,10 @@ O contrato canônico da MP-33B está em
   liberação pública de contas Administradoras.
 - E-mail inexistente, senha incorreta, conta pendente/inativa e ausência de
   credencial não podem ser distinguidos pela resposta de login.
-- Convite comum se aplica somente a Usuário pendente já existente e não cria
-  Produtor, Propriedade, Titularidade ou vínculo.
+- Convite comum se aplica a Usuário pendente já existente e não cria
+  Propriedade, Titularidade ou vínculo. Convite novo usa `ativar_usuario` e
+  ativa também o cadastro Produtor já criado; `manter_status` permanece apenas
+  para compatibilidade de convites históricos.
 - Recuperação comum usa o endereço principal verificado, revoga todas as
   sessões ao concluir e não autentica automaticamente.
 - Troca normal do e-mail principal exige sessão, senha atual e confirmações

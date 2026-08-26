@@ -2,7 +2,7 @@
 
 > Status: `ATIVO`
 >
-> Revisado em: 2026-08-21
+> Revisado em: 2026-08-25
 >
 > Substitui o contrato de Regional/Área Operacional definido originalmente em
 > `MP-02`.
@@ -26,6 +26,11 @@ Regional ou Área Operacional no primeiro modelo canônico.
 5. Colaborador acessa somente Propriedades com vínculo direto ativo em
    `usuario_propriedade`.
 6. Somente Admin autorizado cria, altera ou encerra esses vínculos.
+7. O backend deriva nome do Município e sigla da UF do snapshot nacional IBGE
+   versionado; a API externa não é consultada em runtime.
+8. Em escritas externas, o cliente envia somente `municipio_id`; `uf_id`,
+   `municipio_nome` e `uf_sigla` são derivados pelo backend e rejeitados como
+   entrada autoritativa.
 
 O contrato completo das entidades e relações está em
 `modelo-dados-mock-v2.md`.
@@ -45,6 +50,12 @@ Campos canônicos:
 - `municipio_id`;
 - `municipio_nome` como snapshot de apresentação;
 - `propriedade_id`.
+
+Os cinco campos acima descrevem a persistência e as projeções de leitura. No
+DTO de criação/alteração administrativa, somente `municipio_id` é entrada. O
+banco preserva `municipio_id` e `uf_id` juntos para integridade referencial e o
+trigger do catálogo deriva nome e sigla da versão ativa. O Titular é obrigatório
+na criação; `titular_id` não integra o `PATCH` cadastral ordinário.
 
 Uma Propriedade rural pertence ao Município mesmo quando estiver fora da área
 urbana. Nome de cidade e sigla de estado não devem ser usados como chave.
@@ -98,8 +109,9 @@ Admin a atribua.
 - Somente Admin com permissão explícita gerencia vínculos.
 - Alteração futura deve registrar autor, usuário afetado, Propriedade, valor
   anterior, valor novo, justificativa, horário e correlação da requisição.
-- Redução de escopo deve revalidar ou revogar a sessão e limpar dados locais
-  que deixaram de ser autorizados.
+- Na MP-35B/C, qualquer mudança de autorização revoga as sessões dos Usuários
+  diretamente afetados, inclusive ampliações; redução também limpa dados
+  locais que deixaram de ser autorizados.
 
 O frontend local pode aplicar essas regras para coerência do mock, mas a
 garantia produtiva pertence ao backend.
@@ -126,7 +138,8 @@ territorial antiga.
 
 ## Critérios De Aceite
 
-1. Propriedade v2 possui Município e UF canônicos.
+1. Propriedade v2 possui Município e UF canônicos; escrita externa recebe só o
+   Município e o backend deriva a UF.
 2. Município/UF não concedem acesso.
 3. Colaborador acessa somente Propriedades diretamente vinculadas.
 4. Admin pode atribuir e encerrar vínculos.

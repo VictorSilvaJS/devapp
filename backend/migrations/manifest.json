@@ -27,6 +27,16 @@
       "id": "000005",
       "file": "000005-notificacoes.sql",
       "sha256": "adba158f8a05386d473af7e81522a8a1847984cb31ef51831bfb09965c631a8f"
+    },
+    {
+      "id": "000006",
+      "file": "000006-fundacao-administrativa-mp35a.sql",
+      "sha256": "6ef70cdbe573f91f21f851858af18f31bbcbe9842fb0e21e806f5685fa92552e"
+    },
+    {
+      "id": "000007",
+      "file": "000007-catalogo-ibge-2026-08-25.sql",
+      "sha256": "efed85aa268ae74a32395c61f93047208ddf2312a6e80eeb3a46604e4e69a4bc"
     }
   ]
 }

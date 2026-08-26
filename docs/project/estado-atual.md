@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-24
+> Revisão documental: 2026-08-25
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -41,6 +41,11 @@ barra inferior para respeitar a safe area gestual do Android. O corte foi
 integrado diretamente à branch `backend` no commit `e47bb02`, e os três jobs da
 CI pós-push foram aprovados.
 
+Em 2026-08-25, D1-D13 da MP-35 foram aprovadas. A implementação local da
+MP-35A, limitada a contratos e fundação persistente, está no estado exato:
+`MP-35A corrigida localmente, não integrada, em validação final`.
+Não há rota, tela, commit, push, tag, deploy ou publicação da MP-35A.
+
 ## Estado por camada
 
 | Camada | Situação atual |
@@ -50,12 +55,12 @@ CI pós-push foram aprovados.
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
 | API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/propriedades` e `/v1/notificacoes` validados |
-| Banco | Cinco migrations integradas; `000005-notificacoes.sql` validada no manifesto e como append-only contra `3dd8f42`; nenhum ambiente produtivo implantado |
+| Banco | Cinco migrations integradas; duas migrations locais novas da MP-35A para fundação administrativa e snapshot nacional IBGE; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
-| Testes | MP-34 preservada: app Node.js 22 com 35/35 focados; backend Node.js 24 com 138 unitários/migration, 26 HTTP e 41 integrações reais; convergência com typecheck, `test:domain-compat`, 7/7 focados, grafos, bundles e prebuild aprovados; smoke físico Demo/HTTP aprovado |
+| Testes | Rodada focalizada aprovada localmente: aplicativo com typecheck e compatibilidade; backend com typecheck/build, 152 unitários/contratos, 26 HTTP, 54 integrações reais e oito cenários adversariais; migrations, up/down/reaplicação, smoke ESM e links ativos aprovados |
 
 ## Corte implementado da MP-33C
 
@@ -84,7 +89,8 @@ O comportamento implementado e seus limites estão congelados no
   desenvolvimento/QA, sem seed automático ou produtivo.
 
 Escritas de Propriedade, administração de Usuários/vínculos e RBAC por ação
-continuam na MP-35. O segundo e-mail verificado do Administrador e a
+continuam na MP-35B/C; a integração das telas, na MP-35D. A MP-35A não antecipa
+essas capacidades. O segundo e-mail verificado do Administrador e a
 recuperação da MP-33B permanecem válidos.
 
 ## Fonte de dados ativa
@@ -351,6 +357,25 @@ permanece comprovado pela automação. O corte foi integrado diretamente à bran
 `backend` no commit `e47bb02`, com os três jobs da CI pós-push aprovados. Não
 houve tag, deploy, release ou publicação.
 
+## Validação local da MP-35A
+
+A rodada focalizada de 2026-08-25 permanece no estado documental de validação
+final, sem integração. A prova adversarial executada usa login real membro de
+`tche_agro_runtime`, confirma
+`current_user=session_user`, aceite atômico de Produtor/Colaborador sem
+`UPDATE` amplo em `produtores`, rollback integral em falha intermediária,
+referência composta ator-sessão, purga por papel exclusivo e a corrida do
+último Admin com duas conexões e barreira observada em `pg_stat_activity`.
+
+A execução completa aprovou typecheck/compatibilidade do aplicativo, typecheck
+e build do backend, 152 testes unitários/contratos, 26 HTTP e 54 integrações
+reais, incluindo `up/down/reaplicação`; também aprovou integridade das sete
+migrations, smoke ESM, links ativos e higiene do diff. O ensaio permanece
+funcional em banco efêmero, não volumétrico. Operação da purga e ensaio
+representativo de duração/bloqueios continuam portões anteriores à produção.
+A MP-35A não altera o aplicativo e não cria novo smoke físico; essa validação
+pertence à MP-35D.
+
 ## Próxima etapa
 
 A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
@@ -374,7 +399,7 @@ agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
 links, assinatura e dispositivo. Escritas administrativas e o restante do RBAC
-continuam fora da MP-34.
+continuam fora da MP-35A e exigem autorização específica para MP-35B/C/D.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da

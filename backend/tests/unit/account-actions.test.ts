@@ -104,6 +104,7 @@ describe('account invitation actions', () => {
 
     assert.equal(result.challengeId, 'generated-1');
     assert.ok(captured.issued);
+    assert.equal(captured.issued.challenge.activationMode, 'activate_user');
     assert.equal(captured.issued.challenge.tokenSha256.length, 64);
     assert.doesNotMatch(JSON.stringify(captured.issued.outbox.payload), /token=/);
     const decoded = cipher.decrypt(captured.issued.outbox.payload, {
@@ -134,7 +135,7 @@ describe('account invitation actions', () => {
         return {
           challengeId: 'challenge-1',
           recipient,
-          activationMode: 'keep_status',
+          activationMode: 'activate_user',
         };
       },
       async acceptInvitationAtomically(input) {

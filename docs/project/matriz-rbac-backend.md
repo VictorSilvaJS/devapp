@@ -1,10 +1,12 @@
 # Matriz Tecnica De RBAC/Backend
 
-Status revisado em 2026-08-21: `LEITURA_MP33C_IMPLEMENTADA_E_VALIDADA`.
+Status revisado em 2026-08-25:
+`MP-35A corrigida localmente, não integrada, em validação final`.
 Este documento
 transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
-de aceite. A regra segue as decisoes 31 a 48 de
-`decisoes-consolidadas.md` e `baseline-backend-v1-2026-08.md`.
+de aceite. A regra segue as decisões consolidadas anteriores e D1-D13 da
+MP-35 em `decisoes-consolidadas.md`,
+`contrato-administracao-mp35.md` e `baseline-backend-v1-2026-08.md`.
 
 ## Separacao De Escopo
 
@@ -36,8 +38,8 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 - A MP-33C implementou somente autorização de leitura em
   `GET /v1/propriedades` e `GET /v1/propriedades/:id`, aplicada dentro da
   consulta antes de filtros e paginação.
-- A MP-35 implementa escritas administrativas e o restante das permissões por
-  ação desta matriz.
+- A MP-35A implementa apenas contratos e fundação persistente. MP-35B/C
+  implementam escritas administrativas; MP-35D integra as telas existentes.
 
 ### Fora do escopo deste corte
 
@@ -73,8 +75,10 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 | Visualizar visitas | Sim, global | Sim, das Propriedades vinculadas quando liberadas | Sim, das Propriedades no escopo |
 | Criar registro no caderno | Sim | Sim, na propria Propriedade | Sim, se Propriedade vinculada |
 | Visualizar caderno | Sim, global | Sim, da propria Propriedade conforme visibilidade | Sim, das Propriedades no escopo |
-| Editar cadastro de Propriedade | Sim | Nao | Nao |
-| Editar usuarios/vinculos | Sim | Nao | Nao |
+| Criar/editar/alterar status de Propriedade | Sim | Nao | Nao |
+| Criar/editar/alterar status de Usuario | Sim | Nao | Nao |
+| Emitir convite administrativo | Sim | Nao | Nao |
+| Consultar/alterar vínculos administrativos | Sim | Nao | Nao |
 | Publicar Material ou GeoJSON | Sim | Nao | Nao |
 
 ## Casos Positivos De Aceite
@@ -103,7 +107,7 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
 | RBAC-BE-N07 | Alteracao visual no mock e tratada como seguranca real | Somente mock/frontend alterado, sem vinculo persistente real | Nao deve ser aceito como criterio de seguranca |
 | RBAC-BE-N08 | Rota direta acessa dado fora do escopo | Usuario chama API por id de Propriedade fora do escopo | Backend nega sem retornar dados sensiveis |
 | RBAC-BE-N09 | Tipo `titular` e enviado como vinculo adicional | Payload tenta gravar `usuario_propriedade.tipo_vinculo=titular` | Banco/API rejeitam o valor |
-| RBAC-BE-N10 | Usuario principal inativo tenta usar Titularidade | Propriedade conserva `titular_id`, mas Usuario principal esta inativo | Autenticacao/autorizacao nega acesso sem invalidar o cadastro da Propriedade |
+| RBAC-BE-N10 | Transação tenta deixar Propriedade ativa com Titular inativo | Propriedade conserva `titular_id`, mas Usuario/Produtor seria inativado | Banco rejeita o estado final; a Titularidade não é apagada |
 
 ## Criterios De Aceite Para Backend
 
@@ -116,8 +120,12 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
   somente `usuario_autorizado` ou `colaborador`.
 - `propriedades.titular_id` e a unica fonte persistida da Titularidade; o
   acesso `titular` e derivado.
-- A conta do Usuario principal pode ser inativada sem constraint impeditiva e
-  sem invalidar a Titularidade cadastral; Usuario inativo nao recebe acesso.
+- A conta do Usuario principal pode ser inativada sem apagar a Titularidade,
+  mas a transação também deve inativar a Propriedade ativa ou produzir outro
+  estado válido; transferência de Titularidade permanece fora da MP-35.
+- Usuário e Produtor ativos podem terminar com zero Propriedades acessíveis.
+- Alterações de vínculos usam delta versionado; remover o último acesso é
+  permitido e não inativa automaticamente a conta.
 - Vinculos têm status ativo/inativo e não expiram automaticamente no primeiro
   backend.
 - Criacao, alteracao e remocao de vinculos devem ter auditoria minima.
