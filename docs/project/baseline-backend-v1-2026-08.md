@@ -1,12 +1,12 @@
 # Baseline Aprovada Para O Backend V1
 
-> Status: `ATIVO`; `MP-33A`, `MP-33B`, `MP-33C`, `MP-34` e o corte de
-> convergência pré-MP-35 integrados à branch `backend`; a convergência entrou
-> diretamente no commit `e47bb02`
+> Status: `ATIVO`; `MP-33A`, `MP-33B`, `MP-33C`, `MP-34`, o corte de
+> convergência pré-MP-35 e a `MP-35A` integrados à branch `backend`; a MP-35A
+> entrou diretamente no commit `a51389e`
 >
 > Fechamento: 2026-08-07
 >
-> Revisão: 2026-08-25
+> Revisão: 2026-08-26
 >
 > Escopo: baseline do backend e do banco. A fundação foi implementada na
 > `MP-33A`; autenticação/conta, na `MP-33B`; integração e primeira leitura de
@@ -40,6 +40,11 @@ de login, Propriedades, Perfil e Notificações; a validação física da interf
 convergida passou em 2026-08-24 nas composições Demo e HTTP. O commit
 `e47bb02` integrou o corte diretamente à branch `backend`, e os três jobs da CI
 pós-push foram aprovados. Isso não realizou tag, deploy, release ou publicação.
+
+A MP-35A acrescentou os contratos e a fundação persistente administrativa sem
+criar endpoints. Ela foi integrada diretamente à branch `backend` no commit
+`a51389e`, com os três jobs executados da CI pós-push aprovados. Não houve tag,
+deploy, release ou publicação; MP-35B/C/D permanecem fora desse corte.
 
 Não é necessário concluir Materiais produtivos, GeoJSON produtivo, smoke de
 campo ou assinatura oficial do APK antes de criar a API e o banco. Esses itens
@@ -494,8 +499,9 @@ para token, sessão ou cache de negócio.
 - convergência da apresentação aprovada nas capacidades HTTP existentes,
   implementada, aprovada no smoke físico e integrada diretamente no commit
   `e47bb02`, com os três jobs da CI pós-push aprovados;
-- contratos e fundação persistente administrativa (`MP-35A`), no estado
-  `MP-35A corrigida localmente, não integrada, em validação final`, sem endpoints;
+- contratos e fundação persistente administrativa (`MP-35A`), concluídos e
+  integrados diretamente no commit `a51389e`, sem endpoints e com CI pós-push
+  aprovada;
 - escritas administrativas e o restante do RBAC por ação no servidor
   (`MP-35B/C`), seguidos pela integração das telas existentes (`MP-35D`);
 - CI do backend;

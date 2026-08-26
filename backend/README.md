@@ -16,11 +16,13 @@ concluída tecnicamente e integrada diretamente à branch `backend` no commit
 houve tag, deploy, release ou publicação. Os portões produtivos continuam
 abertos, e o smoke Android físico específico da fase passou em 2026-08-24.
 
-A situação corrente é `MP-35A corrigida localmente, não integrada, em validação final`.
-Ela não cria endpoints:
-acrescenta contratos TypeScript e as migrations append-only `000006`/`000007` com versões,
-limites, estados, motivos, proteção do último Admin, idempotência administrativa
-e snapshot nacional IBGE. MP-35B/C/D permanecem não iniciadas.
+A MP-35A está concluída tecnicamente e integrada diretamente à branch
+`backend` no commit `a51389e`, com os três jobs executados da CI pós-push
+aprovados. Ela não cria endpoints: acrescenta contratos TypeScript e as
+migrations append-only `000006`/`000007` com versões, limites, estados,
+motivos, proteção do último Admin, idempotência administrativa e snapshot
+nacional IBGE. Não houve tag, deploy, release ou publicação. MP-35B/C/D
+permanecem não iniciadas.
 
 ## Requisitos
 
@@ -549,8 +551,9 @@ autenticação, 7 de ações de conta, 9 de Propriedades/QA e 2 de notificaçõe
 A rodada focalizada da MP-35A confirmou 152 testes unitários/contratos, 26 HTTP
 e 54 cenários reais de integração. Entre eles estão oito cenários adversariais
 de upgrade, login runtime real, atomicidade, vínculo ator-sessão, papel mínimo
-de purga e concorrência. O estado permanece `MP-35A corrigida localmente, não
-integrada, em validação final` porque não houve commit nem integração.
+de purga e concorrência. O corte foi integrado diretamente à branch `backend`
+no commit `a51389e`, e os três jobs executados da CI pós-push foram aprovados.
+Não houve tag, deploy, release ou publicação.
 
 A integração usa exclusivamente a URL de um Testcontainer
 `postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando

@@ -1,13 +1,12 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-25
+> Atualizado em: 2026-08-26
 >
-> Tarefa atual: concluir a validação final da MP-35A corrigida localmente — sem
-> iniciar MP-35B/C/D
+> Tarefa atual: delimitar e autorizar a MP-35B — sem iniciar MP-35C/D
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
-> D1-D13 APROVADAS; MP-35A CORRIGIDA LOCALMENTE, NÃO INTEGRADA, EM VALIDAÇÃO FINAL; SEM TAG, DEPLOY, RELEASE OU
+> D1-D13 APROVADAS; MP-35A INTEGRADA DIRETAMENTE EM `a51389e`, COM CI PÓS-PUSH APROVADA; SEM TAG, DEPLOY, RELEASE OU
 > PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
@@ -39,6 +38,12 @@ passou em 2026-08-24 depois da correção da barra inferior para respeitar a saf
 area gestual nas composições Demo e HTTP. O corte foi integrado diretamente à
 branch `backend` no commit `e47bb02`, e os três jobs da CI pós-push foram
 aprovados.
+
+A MP-35A implementou somente os contratos e a fundação persistente
+administrativa. Depois da auditoria final independente, ela foi integrada
+diretamente à branch `backend` no commit `a51389e`; os três jobs executados da
+CI pós-push foram aprovados. Não houve tag, deploy, release ou publicação, e
+nenhum endpoint ou tela da MP-35B/C/D foi antecipado.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -205,8 +210,8 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 |---:|---|---|---|
 | 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e47bb02`; CI PÓS-PUSH APROVADA |
-| 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CORRIGIDA LOCALMENTE, NÃO INTEGRADA, EM VALIDAÇÃO FINAL |
-| 35B | MP-35B | Administração HTTP de Usuários e convites | AGUARDA AUTORIZAÇÃO APÓS MP-35A |
+| 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
+| 35B | MP-35B | Administração HTTP de Usuários e convites | PRÓXIMA FASE; AGUARDA AUTORIZAÇÃO ESPECÍFICA |
 | 35C | MP-35C | Escritas HTTP de Propriedades e deltas de vínculos | AGUARDA MP-35A/B |
 | 35D | MP-35D | Integração das telas administrativas existentes e teste físico | AGUARDA MP-35B/C |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
@@ -296,9 +301,10 @@ massa física não gerou segunda página.
 
 O commit `e47bb02` integrou diretamente esse corte à branch `backend`, e os três
 jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
-publicação. A arquitetura D1-D13 foi aprovada em 2026-08-25. A autorização usada
-cobre somente a implementação/correção local da MP-35A e não autoriza
-MP-35B/C/D, commit ou integração.
+publicação. A arquitetura D1-D13 foi aprovada em 2026-08-25. A MP-35A foi
+integrada diretamente no commit `a51389e`, com CI pós-push aprovada. A MP-35B é
+a próxima fase e exige autorização específica; MP-35C/D permanecem fora do
+corte atual.
 
 Depois da MP-35A, MP-35B/C devem implementar as escritas e o RBAC; a MP-35D
 integra as telas administrativas já existentes. MP-36 e MP-37 repetem o padrão

@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-25
+> Revisão documental: 2026-08-26
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -41,10 +41,10 @@ barra inferior para respeitar a safe area gestual do Android. O corte foi
 integrado diretamente à branch `backend` no commit `e47bb02`, e os três jobs da
 CI pós-push foram aprovados.
 
-Em 2026-08-25, D1-D13 da MP-35 foram aprovadas. A implementação local da
-MP-35A, limitada a contratos e fundação persistente, está no estado exato:
-`MP-35A corrigida localmente, não integrada, em validação final`.
-Não há rota, tela, commit, push, tag, deploy ou publicação da MP-35A.
+Em 2026-08-25, D1-D13 da MP-35 foram aprovadas. A MP-35A, limitada a contratos
+e fundação persistente, foi integrada diretamente à branch `backend` no commit
+`a51389e`; os três jobs executados da CI pós-push foram aprovados. Não há rota,
+tela, tag, deploy, release ou publicação da MP-35A.
 
 ## Estado por camada
 
@@ -55,7 +55,7 @@ Não há rota, tela, commit, push, tag, deploy ou publicação da MP-35A.
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
 | API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/propriedades` e `/v1/notificacoes` validados |
-| Banco | Cinco migrations integradas; duas migrations locais novas da MP-35A para fundação administrativa e snapshot nacional IBGE; nenhum ambiente produtivo implantado |
+| Banco | Sete migrations integradas, incluindo a fundação administrativa e o snapshot nacional IBGE da MP-35A; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
@@ -357,10 +357,11 @@ permanece comprovado pela automação. O corte foi integrado diretamente à bran
 `backend` no commit `e47bb02`, com os três jobs da CI pós-push aprovados. Não
 houve tag, deploy, release ou publicação.
 
-## Validação local da MP-35A
+## Validação e integração da MP-35A
 
-A rodada focalizada de 2026-08-25 permanece no estado documental de validação
-final, sem integração. A prova adversarial executada usa login real membro de
+A rodada focalizada de 2026-08-25 foi aprovada e integrada diretamente à branch
+`backend` no commit `a51389e`, com os três jobs executados da CI pós-push
+aprovados. A prova adversarial executada usa login real membro de
 `tche_agro_runtime`, confirma
 `current_user=session_user`, aceite atômico de Produtor/Colaborador sem
 `UPDATE` amplo em `produtores`, rollback integral em falha intermediária,
@@ -393,6 +394,9 @@ no commit `e787707`, sem pull request e com CI pós-push aprovada. Antes da
 MP-35, o corte corretivo de convergência reutiliza a apresentação aprovada nas
 capacidades HTTP existentes, passou no smoke Android físico e foi integrado
 diretamente no commit `e47bb02`, com os três jobs da CI pós-push aprovados.
+A MP-35A também está concluída e integrada diretamente no commit `a51389e`,
+com CI pós-push aprovada e sem antecipar endpoints ou telas. A próxima fase é a
+MP-35B, ainda não iniciada e dependente de autorização específica.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de

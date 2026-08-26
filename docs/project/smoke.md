@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-25
+> Atualizado em: 2026-08-26
 >
 > Última execução física registrada: 2026-08-24
 
@@ -26,7 +26,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-13 | Rotas e formulários | Contexto de Propriedade, rascunho, edição auditada, data/hora e teclado | PASSOU |
 | ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO; PORTÕES PRODUTIVOS PENDENTES |
 | ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO |
-| ATUAL-16 | MP-35A | Upgrade, convites, constraints, concorrência, privilégios, versões e catálogo IBGE | MP-35A CORRIGIDA LOCALMENTE, NÃO INTEGRADA, EM VALIDAÇÃO FINAL |
+| ATUAL-16 | MP-35A | Upgrade, convites, constraints, concorrência, privilégios, versões e catálogo IBGE | PASSOU AUTOMATIZADO; INTEGRADA EM `a51389e`; PORTÕES PRODUTIVOS PENDENTES |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -351,14 +351,17 @@ conexões e barreira de lock observada em `pg_stat_activity`. Também exige
 typecheck/build/smoke do backend, testes HTTP, typecheck/compatibilidade do app,
 integridade das migrations, links ativos e `git diff --check`.
 
-A rodada focalizada atual está no estado `MP-35A corrigida localmente, não
-integrada, em validação final`. Passou em oito cenários adversariais com
+A rodada focalizada passou em oito cenários adversariais com
 login runtime real, `current_user=session_user`, função estreita de ativação de
 Produtor, rollback integral, vínculo ator-sessão, purga por papel exclusivo e
 concorrência com barreira. A rodada completa aprovou typecheck/compatibilidade
 do aplicativo, typecheck/build do backend, 152 testes unitários/contratos, 26
 HTTP, 54 integrações reais, `up/down/reaplicação`, smoke do artefato, integridade
 das sete migrations, links ativos e higiene do diff.
+
+A MP-35A foi integrada diretamente à branch `backend` no commit `a51389e`, e
+os três jobs executados da CI pós-push foram aprovados. Não houve tag, deploy,
+release ou publicação.
 
 Como a MP-35A não altera tela, navegação nem artefato mobile, ela não cria novo
 teste físico. A validação Android física pertence à MP-35D; o smoke físico

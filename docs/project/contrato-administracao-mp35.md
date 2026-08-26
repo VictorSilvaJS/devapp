@@ -1,8 +1,10 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A corrigida localmente, não integrada, em validação final`
+> Status: `MP-35A concluída e integrada; MP-35B/C/D não iniciadas`
 >
 > Definido em: 2026-08-25
+>
+> Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
 > Escopo deste documento: contrato consolidado de Usuários, Propriedades,
 > vínculos, concorrência e fundação persistente da MP-35.
@@ -11,7 +13,7 @@
 
 | Fase | Conteúdo | Estado |
 |---|---|---|
-| MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | corrigida localmente, não integrada, em validação final |
+| MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | não iniciada |
 | MP-35C | escritas HTTP de Propriedades e deltas de vínculos | não iniciada |
 | MP-35D | integração das telas administrativas existentes e validação física | não iniciada |

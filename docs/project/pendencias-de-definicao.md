@@ -1,16 +1,18 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-08-25
+> Revisão documental: 2026-08-26
 
-Não existe decisão arquitetural pendente dentro dos cortes da MP-33C e da
-MP-34. MP-33A, MP-33B, MP-33C e MP-34 estão concluídas tecnicamente e
-integradas. A MP-33C entrou na
+Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
+e da MP-35A. MP-33A, MP-33B, MP-33C, MP-34 e MP-35A estão concluídas
+tecnicamente e integradas. A MP-33C entrou na
 branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada.
 A MP-34 entrou diretamente na mesma branch pelo commit `e787707`, sem pull
 request, e os três jobs da CI pós-push foram aprovados. Não houve tag, deploy,
 release ou publicação dessa fase. Os itens abaixo são portões produtivos ou
 implementações de fases posteriores. D1-D13 da MP-35 estão decididas; não são
-pendências arquiteturais.
+pendências arquiteturais. A MP-35A entrou diretamente na branch `backend` no
+commit `a51389e`, com os três jobs executados da CI pós-push aprovados e sem
+tag, deploy, release ou publicação.
 
 ## Convergência da interface antes da MP-35
 
@@ -55,9 +57,8 @@ estão consolidados em `contrato-notificacoes.md`.
 
 - operar ou liberar produtivamente a MP-34 somente depois de fechar os portões
   de purga, privacidade, segredos, observabilidade e release;
-- concluir a validação final da MP-35A corrigida localmente e integrá-la
-  somente após autorização explícita;
-- implementar na MP-35B a administração HTTP de Usuários/convites;
+- planejar e implementar, somente após autorização explícita, a MP-35B de
+  administração HTTP de Usuários/convites;
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
