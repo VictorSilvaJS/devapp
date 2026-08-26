@@ -6,6 +6,7 @@ build/
 dist/
 .tmp-domain-compat/
 .tmp-mp33c/
+.tmp-mp34/
 coverage/
 .vscode/
 .DS_Store
