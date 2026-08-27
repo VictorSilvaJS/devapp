@@ -405,8 +405,9 @@ Organização, ator, destinatário, recurso, resultado, metadados e horário sã
 derivados no PostgreSQL. Efeito e auditoria são atômicos e seus IDs de tentativa
 ou `requestId` tornam replay idempotente.
 
-Esta decisão foi aplicada somente à `000008` local, ainda não integrada, e não
-inicia MP-35C/D.
+Esta decisão foi aplicada à `000008`, integrada pela MP-35B no commit `60144c2`
+após reauditoria independente e com CI pós-push aprovada; ela não inicia
+MP-35C/D.
 
 ## Contratos que detalham as decisões
 

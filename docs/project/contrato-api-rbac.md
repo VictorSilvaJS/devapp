@@ -47,9 +47,10 @@ Revisão em 2026-08-25: D1-D13 e a divisão MP-35A-D foram consolidadas em
 `contrato-administracao-mp35.md`. A MP-35A implementa somente contratos e
 fundação persistente.
 
-Revisão em 2026-08-26: a MP-35B está corrigida localmente, não integrada e em
-validação final. As seis rotas de Usuários abaixo são executáveis; escritas de
-Propriedades e vínculos permanecem reservadas à MP-35C, e telas à MP-35D.
+Revisão em 2026-08-27: a MP-35B foi aprovada em reauditoria independente e
+integrada diretamente no commit `60144c2`, com CI pós-push aprovada. As seis
+rotas de Usuários abaixo são executáveis; escritas de Propriedades e vínculos
+permanecem reservadas à MP-35C, e telas à MP-35D.
 
 ## Decisoes De Base
 
@@ -286,7 +287,7 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Aceite cria a credencial e ativa a conta na mesma transação; perfil Produtor
   ativa também `produtores.status`.
 - O aceite existente responde `204 No Content`; os endpoints administrativos
-  desta seção estão implementados localmente na MP-35B.
+  desta seção foram implementados e integrados na MP-35B.
 - O corpo administrativo contém somente
   `{ "modo_ativacao": "ativar_usuario" }`. `manter_status` é recusado com
   `422` e não pode ser emitido novamente.
@@ -657,10 +658,10 @@ Resposta minima:
 As decisões de fundação estão encerradas na baseline v1. Autenticação, refresh,
 revogação e sessão da MP-33B estão concluídos tecnicamente. A MP-33C também
 concluiu lista/detalhe, projeção `tipo_acesso`, cursor/filtros e `404`
-indistinguível. Ainda é necessário:
+indistinguível. A MP-35B concluiu e integrou a administração HTTP de Usuários e
+convites. Ainda é necessário:
 
-- concluir a validação final e integrar separadamente a MP-35B já corrigida;
-  implementar na MP-35C apenas as escritas de Propriedade, auditoria de
+- implementar na MP-35C apenas as escritas de Propriedade, auditoria de
   vínculos, idempotência e o RBAC por ação ainda pertencente a essa fase;
 - transformar em testes executáveis somente as linhas das fases futuras em
   `testes-contrato-api-rbac.md`.

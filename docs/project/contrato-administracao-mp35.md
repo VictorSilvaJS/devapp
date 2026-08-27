@@ -1,10 +1,13 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A concluída e integrada; MP-35B corrigida localmente, não integrada e em validação final; MP-35C/D não iniciadas`
+> Status: `MP-35A/B concluídas e integradas; MP-35C/D não iniciadas`
 >
 > Definido em: 2026-08-25
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
+>
+> Integração da MP-35B: 2026-08-27, commit `60144c2`, reauditoria independente
+> e CI pós-push aprovadas
 >
 > Escopo deste documento: contrato consolidado de Usuários, Propriedades,
 > vínculos, concorrência e fundação persistente da MP-35.
@@ -14,7 +17,7 @@
 | Fase | Conteúdo | Estado |
 |---|---|---|
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
-| MP-35B | administração HTTP de Usuários e convites | corrigida localmente; não integrada; em validação final |
+| MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | escritas HTTP de Propriedades e deltas de vínculos | não iniciada |
 | MP-35D | integração das telas administrativas existentes e validação física | não iniciada |
 
@@ -187,7 +190,7 @@ esse modo, qualquer ambiente que o tenha consumido deve tratar o downgrade como
 incompatível: o esquema anterior não representa fielmente o histórico e a
 operação deve falhar com segurança em vez de reescrever ou apagar convites.
 
-## Contratos HTTP da MP-35B local e reservados para MP-35C
+## Contratos HTTP implementados na MP-35B e reservados para MP-35C
 
 ### Precisões de execução da MP-35B
 
@@ -332,7 +335,7 @@ direto na tabela. Continuam como portões produtivos:
   com a outbox, medir a busca infixa `ILIKE` no volume esperado e ensaiar a
   capacidade/latência do SMTP com a transação e o lock do worker abertos.
 
-A MP-35B local acrescenta domínio, repositórios, transações, RBAC, auditoria,
+A MP-35B integrada acrescenta domínio, repositórios, transações, RBAC, auditoria,
 revogação de sessões, idempotência e testes HTTP/integrados para Usuários. A
 MP-35C deverá fazer o equivalente apenas para Propriedades e vínculos. A
 MP-35D conectará as telas existentes sem redesenho não necessário e exigirá

@@ -57,13 +57,12 @@ estão consolidados em `contrato-notificacoes.md`.
 
 - operar ou liberar produtivamente a MP-34 somente depois de fechar os portões
   de purga, privacidade, segredos, observabilidade e release;
-- concluir a validação final da correção local da MP-35B; integração posterior
-  exige ação específica e não foi autorizada nesta execução;
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- manter MP-35C/D não iniciadas; escritas de Propriedade/deltas de vínculos e
-  integração das telas dependem de autorização futura específica;
+- delimitar e autorizar especificamente a MP-35C antes de iniciar escritas de
+  Propriedade/deltas de vínculos; manter a MP-35D não iniciada até autorização
+  futura própria para integração das telas;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;

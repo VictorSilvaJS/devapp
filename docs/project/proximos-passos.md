@@ -1,12 +1,12 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-26
+> Atualizado em: 2026-08-27
 >
-> Tarefa atual: fechar tecnicamente a MP-35B — sem iniciar MP-35C/D
+> Tarefa atual: delimitar e autorizar a MP-35C — sem iniciar MP-35D
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
-> D1-D13 APROVADAS; MP-35A INTEGRADA DIRETAMENTE EM `a51389e`, COM CI PÓS-PUSH APROVADA; MP-35B CORRIGIDA LOCALMENTE, NÃO INTEGRADA E EM VALIDAÇÃO FINAL; MP-35C/D NÃO INICIADAS; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> D1-D13 APROVADAS; MP-35A INTEGRADA DIRETAMENTE EM `a51389e`, COM CI PÓS-PUSH APROVADA; MP-35B INTEGRADA DIRETAMENTE EM `60144c2`, COM REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; MP-35C/D NÃO INICIADAS; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -44,9 +44,10 @@ diretamente à branch `backend` no commit `a51389e`; os três jobs executados da
 CI pós-push foram aprovados. Não houve tag, deploy, release ou publicação, e
 nenhum endpoint ou tela da MP-35B/C/D foi antecipado.
 
-A MP-35B recebeu correção focal local no worktree em 2026-08-27 após
-reauditoria independente e está em validação final. Ela entrega a administração HTTP de
-Usuários e convites com RBAC Admin, concorrência otimista, idempotência
+A MP-35B recebeu a correção focal em 2026-08-27, foi aprovada em reauditoria
+independente e integrada diretamente no commit `60144c2`, com CI pós-push
+aprovada. Ela entrega a administração HTTP de Usuários e convites com RBAC
+Admin, concorrência otimista, idempotência
 persistida, auditoria e atomicidade; remove somente a emissão administrativa
 antiga em `/v1/auth/invitations` e preserva exclusivamente o aceite público em
 `/v1/auth/invitations/accept`. A correção final revoga também o `INSERT` direto
@@ -56,9 +57,9 @@ exposto. A correção focal de notificações remove ainda as wrappers isoladas 
 deduplicação e destino negado do runtime: a primeira nasce somente do resultado
 real de `INSERT ... ON CONFLICT`, e a segunda somente da resolução autenticada;
 identidade, organização, recurso, resultado e horário são derivados no banco e
-persistidos na mesma transação. MP-35C/D, telas,
-Propriedades e vínculos permanecem fora e não foram iniciadas. Ainda não houve
-commit, integração ou CI desta fase.
+persistidos na mesma transação. MP-35C/D, telas, Propriedades e vínculos
+permanecem fora e não foram iniciadas. Não houve tag, deploy, release ou
+publicação da MP-35B.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -226,7 +227,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 34 | MP-34 | Notificações in-app reais, persistidas e isoladas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e787707`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e47bb02`; CI PÓS-PUSH APROVADA |
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
-| 35B | MP-35B | Administração HTTP de Usuários e convites | CORRIGIDA LOCALMENTE; NÃO INTEGRADA; EM VALIDAÇÃO FINAL; SEM COMMIT/CI |
+| 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Escritas HTTP de Propriedades e deltas de vínculos | NÃO INICIADA; FORA DO CORTE ATUAL |
 | 35D | MP-35D | Integração das telas administrativas existentes e teste físico | NÃO INICIADA; FORA DO CORTE ATUAL |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
@@ -318,18 +319,19 @@ O commit `e47bb02` integrou diretamente esse corte à branch `backend`, e os tr�
 jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
 publicação. A arquitetura D1-D13 foi aprovada em 2026-08-25. A MP-35A foi
 integrada diretamente no commit `a51389e`, com CI pós-push aprovada. A MP-35B
-está corrigida localmente, não integrada e em validação final; MP-35C/D não
-foram iniciadas e permanecem fora do corte atual.
+foi integrada diretamente no commit `60144c2`, com reauditoria independente e
+CI pós-push aprovadas; MP-35C/D não foram iniciadas e permanecem fora do corte
+atual.
 
-O passo atual é fechar e revisar a validação final da MP-35B. Somente depois de
-autorização específica, a MP-35C poderá implementar Propriedades e vínculos e a
+O passo atual é delimitar e autorizar especificamente a MP-35C, que poderá
+implementar Propriedades e vínculos; somente depois de autorização própria, a
 MP-35D poderá integrar as telas administrativas já existentes. MP-36 e MP-37
 repetem o padrão
 para Caderno e GeoJSON/Talhões. Visitas, Materiais e agregados do Dashboard
 precisam entrar como verticais explícitas antes da MP-40/41; não surgem
 automaticamente ao final da fila.
 
-Mesmo após o fechamento local, continuam como portões produtivos da MP-35B o
+Mesmo após a integração, continuam como portões produtivos da MP-35B o
 provisionamento/rotação do keyring dedicado de cursor, o benchmark da busca
 infixa `ILIKE` no volume esperado e o ensaio de capacidade/latência do SMTP com
 a transação e o advisory lock do outbox abertos. Testcontainers comprovam a

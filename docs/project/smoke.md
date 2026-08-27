@@ -27,7 +27,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO; PORTÕES PRODUTIVOS PENDENTES |
 | ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO |
 | ATUAL-16 | MP-35A | Upgrade, convites, constraints, concorrência, privilégios, versões e catálogo IBGE | PASSOU AUTOMATIZADO; INTEGRADA EM `a51389e`; PORTÕES PRODUTIVOS PENDENTES |
-| ATUAL-17 | MP-35B | Seis rotas de Usuários, privilégios, cursor, códigos HTTP e concorrência | PASSOU NA RODADA AUTOMATIZADA INTEGRAL LOCAL; EM VALIDAÇÃO FINAL; NÃO INTEGRADA |
+| ATUAL-17 | MP-35B | Seis rotas de Usuários, privilégios, cursor, códigos HTTP e concorrência | PASSOU NA RODADA AUTOMATIZADA INTEGRAL; REAUDITORIA INDEPENDENTE APROVADA; INTEGRADA EM `60144c2`; CI PÓS-PUSH APROVADA |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -430,10 +430,9 @@ rollback atômico. A rodada integral aprovou typecheck e compatibilidade na raiz
 manifesto e comparação append-only com `fb7cfb0`; typecheck, build e smoke ESM
 do backend; 166 unitários/contratos, 33 HTTP e 74 integrações
 PostgreSQL/PostGIS; ciclo explícito `000008 up/down/up`; links locais e higiene
-do diff. O status permanece em
-validação final até revisão independente e ação posterior. A MP-35B não possui
-commit ou CI e não autoriza tag, deploy, release ou publicação; MP-35C/D não
-foram iniciadas.
+do diff. A reauditoria independente aprovou o resultado, integrado diretamente
+no commit `60144c2`, com CI pós-push aprovada. Isso não autoriza tag, deploy,
+release ou publicação; MP-35C/D não foram iniciadas.
 
 ### Comandos gerais
 

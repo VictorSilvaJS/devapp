@@ -46,9 +46,10 @@ e fundação persistente, foi integrada diretamente à branch `backend` no commi
 `a51389e`; os três jobs executados da CI pós-push foram aprovados. Não há rota,
 tela, tag, deploy, release ou publicação da MP-35A.
 
-Em 2026-08-27, a MP-35B recebeu a correção focal dos achados restantes da
-reauditoria independente e permanece não integrada, em validação final. A API lista,
-detalha, cria e edita Usuários, altera status e emite convites com RBAC Admin,
+Em 2026-08-27, a MP-35B recebeu a correção focal dos achados restantes, foi
+aprovada em reauditoria independente e integrada diretamente no commit
+`60144c2`, com CI pós-push aprovada. A API lista, detalha, cria e edita
+Usuários, altera status e emite convites com RBAC Admin,
 versão, idempotência persistida, auditoria e transação atômica. O runtime não
 possui mais DML administrativo direto em Usuários, Produtores ou idempotência;
 as mutações passam por funções estreitas que revalidam a sessão no PostgreSQL.
@@ -59,9 +60,8 @@ destino negado deriva de uma tentativa autenticada de resolução; ambas gravam
 auditoria internamente, com horário do PostgreSQL e na mesma transação.
 A rota administrativa antiga de emissão em `/v1/auth/invitations` foi
 removida; o aceite público permanece em `/v1/auth/invitations/accept`. O
-aplicativo e as escritas de Propriedade/vínculos não foram alterados. Ainda não
-houve commit, integração, CI, tag, deploy, release ou publicação da MP-35B, e
-MP-35C/D não foram iniciadas.
+aplicativo e as escritas de Propriedade/vínculos não foram alterados. Não houve
+tag, deploy, release ou publicação da MP-35B, e MP-35C/D não foram iniciadas.
 
 ## Estado por camada
 
@@ -72,12 +72,12 @@ MP-35C/D não foram iniciadas.
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe de Propriedades autorizados; administração HTTP de Usuários restrita a Admin e revalidada no SQL; escritas de Propriedade/vínculos continuam pendentes |
 | API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/usuarios`, `/v1/propriedades` e `/v1/notificacoes` validados |
-| Banco | Sete migrations integradas e a `000008` corrigida localmente no worktree, ainda não integrada; nenhum ambiente produtivo implantado |
+| Banco | Oito migrations integradas, incluindo a `000008`; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
-| Testes | Rodada focal integral verde em 2026-08-27: raiz e backend tipados, domínio compatível, 166 unitários/contratos, 33 HTTP e 74 integrações PostgreSQL/PostGIS reais; MP-35B ainda não integrada |
+| Testes | Rodada focal integral verde em 2026-08-27: raiz e backend tipados, domínio compatível, 166 unitários/contratos, 33 HTTP e 74 integrações PostgreSQL/PostGIS reais; reauditoria independente e CI pós-push da MP-35B aprovadas |
 
 ## Corte implementado da MP-33C
 
@@ -105,9 +105,9 @@ O comportamento implementado e seus limites estão congelados no
 - dados sintéticos por Testcontainers e fixture manual protegida somente em
   desenvolvimento/QA, sem seed automático ou produtivo.
 
-Administração HTTP de Usuários e convites está corrigida localmente na MP-35B,
-ainda sem integração. Escritas de Propriedade e vínculos continuam reservadas
-à MP-35C; a integração das telas, à MP-35D. Nenhuma das duas foi iniciada.
+Administração HTTP de Usuários e convites está concluída e integrada na MP-35B.
+Escritas de Propriedade e vínculos continuam reservadas à MP-35C; a integração
+das telas, à MP-35D. Nenhuma das duas foi iniciada.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 
@@ -395,11 +395,11 @@ representativo de duração/bloqueios continuam portões anteriores à produçã
 A MP-35A não altera o aplicativo e não cria novo smoke físico; essa validação
 pertence à MP-35D.
 
-## Correção local e validação final da MP-35B
+## Conclusão e integração da MP-35B
 
-A `000008`, ainda não integrada, revoga o DML administrativo direto herdado e
-retira do runtime o acesso direto à idempotência. Quatro mutações estreitas,
-owned por papel seguro `NOLOGIN` e sem `EXECUTE` de `PUBLIC`, concentram
+A `000008`, integrada no commit `60144c2`, revoga o DML administrativo direto
+herdado e retira do runtime o acesso direto à idempotência. Quatro mutações
+estreitas, owned por papel seguro `NOLOGIN` e sem `EXECUTE` de `PUBLIC`, concentram
 revalidação de sessão/ator/organização, versão, idempotência, regras D1-D13,
 auditoria, convite/outbox, revogação de sessões e recibo atômico. Interfaces
 estreitas próprias preservam os fluxos legados de conta sem restaurar grants
@@ -432,10 +432,10 @@ lock reais para sete corridas, além da expiração do outbox enquanto aguarda o
 lock. A rodada integral posterior às correções passou com 166 testes
 unitários/contratos, 33 HTTP e 74 integrações PostgreSQL/PostGIS, além de
 typecheck, build, smoke ESM, compatibilidade de domínio, manifesto/base e ciclo
-`000008 up/down/up`. O status documental continua em validação final e não é
-promovido a integração ou CI. A MP-35B não cria tela, não implementa
-Propriedade/vínculo e não muda o Demo; o smoke físico administrativo pertence
-à futura MP-35D.
+`000008 up/down/up`. A reauditoria independente aprovou o resultado, que foi
+integrado diretamente no commit `60144c2`, com CI pós-push aprovada. A MP-35B
+não cria tela, não implementa Propriedade/vínculo e não muda o Demo; o smoke
+físico administrativo pertence à futura MP-35D.
 
 ## Próxima etapa
 
@@ -455,10 +455,11 @@ MP-35, o corte corretivo de convergência reutiliza a apresentação aprovada na
 capacidades HTTP existentes, passou no smoke Android físico e foi integrado
 diretamente no commit `e47bb02`, com os três jobs da CI pós-push aprovados.
 A MP-35A também está concluída e integrada diretamente no commit `a51389e`,
-com CI pós-push aprovada e sem antecipar endpoints ou telas. A MP-35B está
-corrigida localmente, não integrada e em validação final. O próximo passo é
-concluir e revisar essa validação; qualquer integração da MP-35B ou início de
-MP-35C/D exige ação posterior e autorização específica.
+com CI pós-push aprovada e sem antecipar endpoints ou telas. A MP-35B foi
+aprovada em reauditoria independente e integrada diretamente no commit
+`60144c2`, com CI pós-push aprovada. O próximo corte funcional possível é a
+MP-35C, ainda não iniciada e dependente de autorização específica; a MP-35D
+permanece igualmente não iniciada.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de

@@ -23,12 +23,13 @@ migrations append-only `000006`/`000007` com versões, limites, estados,
 motivos, proteção do último Admin, idempotência administrativa e snapshot
 nacional IBGE. Não houve tag, deploy, release ou publicação.
 
-A MP-35B está corrigida localmente, não integrada e em validação final. A
-migration ainda não integrada `000008` acrescenta seis operações em
-`/v1/usuarios`, RBAC Admin revalidado no SQL, cursor cifrado e autenticado,
-versão, idempotência, auditoria e convite/outbox atômicos. A emissão antiga em
-`/v1/auth/invitations` foi removida; o aceite público permanece. Ainda não
-houve commit/CI da fase, e MP-35C/D não foram iniciadas.
+A MP-35B foi aprovada em reauditoria independente e integrada diretamente no
+commit `60144c2`, com CI pós-push aprovada. A migration `000008` acrescenta
+seis operações em `/v1/usuarios`, RBAC Admin revalidado no SQL, cursor cifrado
+e autenticado, versão, idempotência, auditoria e convite/outbox atômicos. A
+emissão antiga em `/v1/auth/invitations` foi removida; o aceite público
+permanece. MP-35C/D não foram iniciadas, e não houve tag, deploy, release ou
+publicação da MP-35B.
 
 ## Requisitos
 
@@ -604,9 +605,10 @@ A reauditoria focal acrescenta em
 para Admin, ausência de bearer, sessão stale, Produtor e Colaborador; e em
 `administrative-user-repository.integration.test.ts` a observação dos PIDs e
 `wait_event` reais nas sete corridas exigidas. A rodada integral de 2026-08-27
-passou com 166 testes unitários/contratos, 33 HTTP e 72 integrações
-PostgreSQL/PostGIS, incluindo o ciclo explícito `000008 up/down/up`. A fase
-permanece sem commit, CI, tag, deploy, release ou publicação.
+passou com 166 testes unitários/contratos, 33 HTTP e 74 integrações
+PostgreSQL/PostGIS, incluindo o ciclo explícito `000008 up/down/up`. A fase foi
+integrada diretamente no commit `60144c2`, com CI pós-push aprovada e sem tag,
+deploy, release ou publicação.
 
 A integração usa exclusivamente a URL de um Testcontainer
 `postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando
