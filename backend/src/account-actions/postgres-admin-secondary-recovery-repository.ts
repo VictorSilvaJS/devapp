@@ -113,7 +113,7 @@ export class PostgresAdminSecondaryRecoveryRepository
            AND contato.usuario_id = usuario.id
            AND contato.tipo = 'recuperacao' AND contato.status = 'verificado'
           WHERE usuario.organizacao_id = $1 AND usuario.id = $2
-          FOR UPDATE OF usuario, contato
+          FOR UPDATE OF contato
         `,
         [expected.account.organizationId, expected.account.id],
       );
@@ -519,7 +519,7 @@ export class PostgresAdminSecondaryRecoveryRepository
           WHERE autorizacao.token_hash = $1
             AND autorizacao.finalidade = 'concluir_recuperacao_admin_secundario'
             AND autorizacao.expira_em > $2 AND recuperacao.expira_em > $2
-          FOR UPDATE OF autorizacao, recuperacao, usuario, contato
+          FOR UPDATE OF autorizacao, recuperacao, contato
         `,
         [decodeSha256Hex(input.restrictedTokenSha256), input.completedAt],
       );
@@ -592,12 +592,8 @@ export class PostgresAdminSecondaryRecoveryRepository
       );
       await query(
         client,
-        `
-          UPDATE public.usuarios
-          SET email = $3, versao_autorizacao = versao_autorizacao + 1
-          WHERE organizacao_id = $1 AND id = $2
-        `,
-        [row.organizacao_id, row.id, row.novo_email],
+        'SELECT public.tche_conta_concluir_recuperacao_admin_mp35b($1)',
+        [row.recovery_id],
       );
       await this.#store.revokeAllUserSecurityState(client, {
         organizationId: row.organizacao_id,
@@ -782,7 +778,7 @@ export class PostgresAdminSecondaryRecoveryRepository
          AND contato.id = recuperacao.contato_secundario_id
         WHERE desafio.token_hash = $1
           AND desafio.expira_em > $2 AND recuperacao.expira_em > $2
-        FOR UPDATE OF recuperacao, desafio, usuario, contato
+        FOR UPDATE OF recuperacao, desafio, contato
       `,
       [decodeSha256Hex(tokenSha256), now],
     );

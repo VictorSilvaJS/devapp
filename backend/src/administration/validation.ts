@@ -87,10 +87,13 @@ function requireTrimmedText(
   field: string,
   maximumLength: number,
 ): string {
+  const normalizedLength =
+    typeof value === 'string' ? Array.from(value.normalize('NFC')).length : 0;
   if (
     typeof value !== 'string' ||
     value.trim().length === 0 ||
-    value.length > maximumLength
+    value !== value.trim() ||
+    normalizedLength > maximumLength
   ) {
     throw new TypeError(`${field}: texto preenchido inválido.`);
   }
@@ -111,7 +114,7 @@ function requireEmail(value: unknown, field: string): string {
   if (
     email !== email.trim() ||
     separator <= 0 ||
-    separator >= email.length - 1
+    email.endsWith('@')
   ) {
     throw new TypeError(`${field}: e-mail inválido.`);
   }
@@ -155,11 +158,14 @@ export function validateAdministrativeReason(
     throw new TypeError('reason.code: motivo administrativo inválido.');
   }
   if (reason.detail !== undefined) {
-    requireTrimmedText(
+    const detail = requireTrimmedText(
       reason.detail,
       'reason.detail',
       ADMINISTRATION_LIMITS.reasonDetail,
     );
+    if (/(senha|token|documento|cpf|cnpj)/iu.test(detail.normalize('NFC'))) {
+      throw new TypeError('reason.detail: conteúdo sensível não permitido.');
+    }
   }
   if (reason.code === 'outro' && reason.detail === undefined) {
     throw new TypeError('reason.detail: obrigatório para o motivo outro.');

@@ -17,7 +17,6 @@ const expiresAt = new Date('2026-08-19T12:30:00.000Z');
 
 interface CapturedCalls {
   readonly authenticatedTokens: string[];
-  invitationIssue?: unknown;
   invitationAccept?: unknown;
   primaryRequest?: unknown;
   primaryCurrentConfirmation?: unknown;
@@ -80,10 +79,6 @@ function harness(input: {
         },
       },
       invitationService: {
-        async issueForExistingPendingUser(request) {
-          calls.invitationIssue = request;
-          return { challengeId: 'invitation-1', expiresAt };
-        },
         async accept(request) {
           calls.invitationAccept = request;
           return { userId: 'user-pending', loginRequired: true };
@@ -183,25 +178,6 @@ describe('account-action HTTP plugin', () => {
     const testHarness = harness();
     const app = await buildTestApp(testHarness.options);
 
-    const invitation = await app.inject({
-      method: 'POST',
-      url: '/v1/auth/invitations',
-      headers: bearerHeaders,
-      payload: { usuario_id: 'pending-1' },
-    });
-    assert.equal(invitation.statusCode, 202);
-    assert.deepEqual(invitation.json(), { status: 'aceito' });
-    assert.equal(invitation.headers['cache-control'], 'no-store');
-    assert.equal(invitation.headers.pragma, 'no-cache');
-    assert.equal(invitation.headers['referrer-policy'], 'no-referrer');
-    assert.deepEqual(testHarness.calls.invitationIssue, {
-      organizationId: 'org_tche_fertilidade',
-      actorAdminUserId: 'admin-1',
-      actorSessionId: 'session-1',
-      userId: 'pending-1',
-      requestId: 'req-account-action',
-    });
-
     const secondary = await app.inject({
       method: 'POST',
       url: '/v1/auth/secondary-email/request',
@@ -240,7 +216,6 @@ describe('account-action HTTP plugin', () => {
       requestId: 'req-account-action',
     });
     assert.deepEqual(testHarness.calls.authenticatedTokens, [
-      accessToken,
       accessToken,
       accessToken,
     ]);
@@ -450,14 +425,14 @@ describe('account-action HTTP plugin', () => {
     const missingApp = await buildTestApp(missingHarness.options);
     const missing = await missingApp.inject({
       method: 'POST',
-      url: '/v1/auth/invitations',
-      payload: { usuario_id: 'pending-1' },
+      url: '/v1/auth/secondary-email/request',
+      payload: { novo_email: 'secundario@example.test' },
     });
     assert.equal(missing.statusCode, 401);
     assert.equal(missing.headers['www-authenticate'], 'Bearer');
     assert.equal(missing.headers['cache-control'], 'no-store');
     assert.equal(missing.json().error.code, 'invalid_session');
-    assert.equal(missingHarness.calls.invitationIssue, undefined);
+    assert.equal(missingHarness.calls.secondaryRequest, undefined);
     await missingApp.close();
 
     const producerHarness = harness({
@@ -466,12 +441,12 @@ describe('account-action HTTP plugin', () => {
     const producerApp = await buildTestApp(producerHarness.options);
     const forbiddenInvitation = await producerApp.inject({
       method: 'POST',
-      url: '/v1/auth/invitations',
+      url: '/v1/auth/secondary-email/request',
       headers: bearerHeaders,
-      payload: { usuario_id: 'pending-1' },
+      payload: { novo_email: 'secundario@example.test' },
     });
     assert.equal(forbiddenInvitation.statusCode, 403);
-    assert.equal(producerHarness.calls.invitationIssue, undefined);
+    assert.equal(producerHarness.calls.secondaryRequest, undefined);
     await producerApp.close();
 
     const disabledHarness = harness({ assistedRecoveryEnabled: false });

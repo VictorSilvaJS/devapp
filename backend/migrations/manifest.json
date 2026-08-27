@@ -37,6 +37,11 @@
       "id": "000007",
       "file": "000007-catalogo-ibge-2026-08-25.sql",
       "sha256": "efed85aa268ae74a32395c61f93047208ddf2312a6e80eeb3a46604e4e69a4bc"
+    },
+    {
+      "id": "000008",
+      "file": "000008-administracao-usuarios-mp35b.sql",
+      "sha256": "e02749ccf5dad59cd0ef19664537eb770606b3cc4d678aea987195aa07dd1cb9"
     }
   ]
 }

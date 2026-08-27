@@ -324,43 +324,34 @@ describe('notification writer and purge', () => {
     );
   });
 
-  it('correlates the event deduplication key with the source audit identifier', async () => {
+  it('delegates account delivery and created audit derivation to one database operation', async () => {
     const sourceAuditId = '88888888-8888-4888-8888-888888888888';
+    const attemptId = '77777777-7777-4777-8777-777777777777';
     const eventId = '99999999-9999-4999-8999-999999999999';
     const deliveryId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const calls: QueryConfig[] = [];
-    const responses = [
-      { rows: [], rowCount: 1 },
-      {
-        rows: [
-          {
-            id: eventId,
-            recurso_id: principal.id,
-            autor_id: principal.id,
-            criado_em: new Date('2026-08-24T12:00:00.000Z'),
-          },
-        ],
-        rowCount: 1,
-      },
-      { rows: [], rowCount: 1 },
-      { rows: [{ id: deliveryId, evento_id: eventId }], rowCount: 1 },
-      { rows: [], rowCount: 1 },
-    ];
     const client = {
       async query(config: QueryConfig) {
         calls.push(config);
-        const current = responses.shift() ?? { rows: [], rowCount: 0 };
         return {
           command: 'SELECT',
-          rowCount: current.rowCount,
+          rowCount: 1,
           oid: 0,
           fields: [],
-          rows: current.rows,
+          rows: [{
+            entrega_id: deliveryId,
+            evento_id: eventId,
+            organizacao_id: principal.organizationId,
+            destinatario_usuario_id: principal.id,
+            tipo_evento: 'conta.senha_alterada.v1',
+            autor_usuario_id: principal.id,
+            resultado_tentativa: 'criada',
+            ocorrido_em: new Date('2026-08-24T12:00:00.000Z'),
+          }],
         } as QueryResult;
       },
     } as unknown as PoolClient;
-    const generatedIds = [eventId, deliveryId];
-    const writer = new PostgresAccountNotificationWriter(() => generatedIds.shift()!);
+    const writer = new PostgresAccountNotificationWriter(() => attemptId);
 
     await writer.create(client, {
       organizationId: principal.organizationId,
@@ -370,69 +361,40 @@ describe('notification writer and purge', () => {
       authorUserId: principal.id,
     });
 
-    assert.deepEqual(calls[0]?.values?.slice(0, 6), [
-      eventId,
-      principal.organizationId,
-      'conta.senha_alterada.v1',
-      sourceAuditId,
-      principal.id,
-      principal.id,
-    ]);
-    assert.equal(
-      calls[2]?.values?.[2],
-      `conta.senha_alterada.v1:${sourceAuditId}`,
-    );
-    assert.deepEqual(calls[4]?.values?.slice(0, 6), [
-      principal.organizationId,
-      'notificacao.criada',
-      'usuario',
-      principal.id,
-      principal.id,
-      deliveryId,
-    ]);
-    assert.deepEqual(JSON.parse(String(calls[4]?.values?.[6])), {
-      evento_origem_id: sourceAuditId,
-      tipo_evento: 'conta.senha_alterada.v1',
-    });
+    assert.equal(calls.length, 1);
+    assert.match(calls[0]?.text ?? '', /tche_notificacao_entregar_conta_mp35b/u);
+    assert.deepEqual(calls[0]?.values, [sourceAuditId, attemptId]);
+    assert.doesNotMatch(calls[0]?.text ?? '', /eventos_auditoria|tche_aud_/u);
   });
 
-  it('records an id-only audit event when an identical delivery is deduplicated', async () => {
+  it('accepts a database-derived deduplication outcome without a generic audit call', async () => {
     const sourceAuditId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const attemptId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
     const eventId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
     const deliveryId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
     const calls: QueryConfig[] = [];
-    const responses = [
-      { rows: [], rowCount: 0 },
-      {
-        rows: [
-          {
-            id: eventId,
-            recurso_id: principal.id,
-            autor_id: null,
-            criado_em: new Date('2026-08-24T12:00:00.000Z'),
-          },
-        ],
-        rowCount: 1,
-      },
-      { rows: [], rowCount: 0 },
-      { rows: [{ id: deliveryId, evento_id: eventId }], rowCount: 1 },
-      { rows: [], rowCount: 1 },
-    ];
     const client = {
       async query(config: QueryConfig) {
         calls.push(config);
-        const current = responses.shift() ?? { rows: [], rowCount: 0 };
         return {
           command: 'SELECT',
-          rowCount: current.rowCount,
+          rowCount: 1,
           oid: 0,
           fields: [],
-          rows: current.rows,
+          rows: [{
+            entrega_id: deliveryId,
+            evento_id: eventId,
+            organizacao_id: principal.organizationId,
+            destinatario_usuario_id: principal.id,
+            tipo_evento: 'conta.recuperacao_concluida.v1',
+            autor_usuario_id: null,
+            resultado_tentativa: 'deduplicada',
+            ocorrido_em: new Date('2026-08-24T12:01:00.000Z'),
+          }],
         } as QueryResult;
       },
     } as unknown as PoolClient;
-    const generatedIds = [eventId, randomDeliveryId()];
-    await new PostgresAccountNotificationWriter(() => generatedIds.shift()!).create(
+    await new PostgresAccountNotificationWriter(() => attemptId).create(
       client,
       {
         organizationId: principal.organizationId,
@@ -442,10 +404,10 @@ describe('notification writer and purge', () => {
       },
     );
 
-    assert.equal(calls[4]?.values?.[1], 'notificacao.deduplicada');
-    assert.equal(calls[4]?.values?.[2], 'sistema');
-    assert.equal(calls[4]?.values?.[3], null);
-    assert.equal(calls[4]?.values?.[5], deliveryId);
+    assert.equal(calls.length, 1);
+    assert.match(calls[0]?.text ?? '', /tche_notificacao_entregar_conta_mp35b/u);
+    assert.deepEqual(calls[0]?.values, [sourceAuditId, attemptId]);
+    assert.doesNotMatch(calls[0]?.text ?? '', /eventos_auditoria|tche_aud_/u);
   });
 
   it('retries only transient purge failures with bounded exponential delay', async () => {

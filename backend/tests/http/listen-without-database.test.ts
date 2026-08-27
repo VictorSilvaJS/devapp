@@ -71,6 +71,10 @@ describe('HTTP startup while PostgreSQL is unavailable', () => {
       HOST: '127.0.0.1',
       PORT: String(port),
       LOG_LEVEL: 'silent',
+      ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'http-startup-test-v1',
+      ADMIN_USER_CURSOR_KEYS: JSON.stringify({
+        'http-startup-test-v1': Buffer.alloc(32, 0x44).toString('base64'),
+      }),
     });
 
     try {

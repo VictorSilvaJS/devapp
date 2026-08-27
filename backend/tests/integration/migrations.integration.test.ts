@@ -99,7 +99,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         );
         await runMigrations({
           command: 'down',
-          count: 7,
+          count: 8,
           database: activeMigrationDatabase,
         });
       }
@@ -207,6 +207,132 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       ),
       /imutavel|ck_organizacoes_id_tecnico/i,
     );
+  });
+
+  test('000008 executa up/down/up sem alterar a fundação integrada', async () => {
+    const database = requireMigrationDatabase();
+    const databasePool = requirePool();
+
+    const installed = await databasePool.query<{
+      procedure_name: string | null;
+      runtime_event_insert: boolean;
+      runtime_delivery_insert: boolean;
+      runtime_deduplicated_wrapper: boolean;
+      runtime_denied_wrapper: boolean;
+      runtime_delivery_operation: boolean;
+      runtime_resolution_operation: boolean;
+    }>(
+      `SELECT pg_catalog.to_regprocedure(
+         'public.tche_admin_criar_usuario_mp35b(jsonb)'
+       )::text AS procedure_name,
+       pg_catalog.has_any_column_privilege(
+         'tche_agro_runtime', 'public.notificacao_evento', 'INSERT'
+       ) AS runtime_event_insert,
+       pg_catalog.has_any_column_privilege(
+         'tche_agro_runtime', 'public.notificacao_entrega', 'INSERT'
+       ) AS runtime_delivery_insert,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_aud_notificacao_deduplicada_mp35b(jsonb)', 'EXECUTE'
+       ) AS runtime_deduplicated_wrapper,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_aud_notificacao_destino_negado_mp35b(jsonb)', 'EXECUTE'
+       ) AS runtime_denied_wrapper,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_notificacao_entregar_conta_mp35b(uuid,uuid)', 'EXECUTE'
+       ) AS runtime_delivery_operation,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_notificacao_resolver_destino_mp35b(uuid,uuid,text)',
+         'EXECUTE'
+       ) AS runtime_resolution_operation`,
+    );
+    assert.deepEqual(installed.rows[0], {
+      procedure_name: 'tche_admin_criar_usuario_mp35b(jsonb)',
+      runtime_event_insert: false,
+      runtime_delivery_insert: false,
+      runtime_deduplicated_wrapper: false,
+      runtime_denied_wrapper: false,
+      runtime_delivery_operation: true,
+      runtime_resolution_operation: true,
+    });
+
+    await runMigrations({ command: 'down', count: 1, database });
+    const rolledBack = await databasePool.query<{
+      procedure_name: string | null;
+      users_table: string | null;
+      runtime_event_insert: boolean;
+      runtime_delivery_insert: boolean;
+      delivery_operation: string | null;
+      resolution_operation: string | null;
+    }>(`
+      SELECT
+        pg_catalog.to_regprocedure(
+          'public.tche_admin_criar_usuario_mp35b(jsonb)'
+        )::text AS procedure_name,
+        pg_catalog.to_regclass('public.usuarios')::text AS users_table,
+        pg_catalog.has_any_column_privilege(
+          'tche_agro_runtime', 'public.notificacao_evento', 'INSERT'
+        ) AS runtime_event_insert,
+        pg_catalog.has_any_column_privilege(
+          'tche_agro_runtime', 'public.notificacao_entrega', 'INSERT'
+        ) AS runtime_delivery_insert,
+        pg_catalog.to_regprocedure(
+          'public.tche_notificacao_entregar_conta_mp35b(uuid,uuid)'
+        )::text AS delivery_operation,
+        pg_catalog.to_regprocedure(
+          'public.tche_notificacao_resolver_destino_mp35b(uuid,uuid,text)'
+        )::text AS resolution_operation
+    `);
+    assert.deepEqual(rolledBack.rows[0], {
+      procedure_name: null,
+      users_table: 'usuarios',
+      runtime_event_insert: true,
+      runtime_delivery_insert: true,
+      delivery_operation: null,
+      resolution_operation: null,
+    });
+
+    await runMigrations({ command: 'up', count: 1, database });
+    const reapplied = await databasePool.query<{
+      procedure_name: string | null;
+      runtime_event_insert: boolean;
+      runtime_delivery_insert: boolean;
+      runtime_deduplicated_wrapper: boolean;
+      runtime_denied_wrapper: boolean;
+      runtime_delivery_operation: boolean;
+      runtime_resolution_operation: boolean;
+    }>(
+      `SELECT pg_catalog.to_regprocedure(
+         'public.tche_admin_criar_usuario_mp35b(jsonb)'
+       )::text AS procedure_name,
+       pg_catalog.has_any_column_privilege(
+         'tche_agro_runtime', 'public.notificacao_evento', 'INSERT'
+       ) AS runtime_event_insert,
+       pg_catalog.has_any_column_privilege(
+         'tche_agro_runtime', 'public.notificacao_entrega', 'INSERT'
+       ) AS runtime_delivery_insert,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_aud_notificacao_deduplicada_mp35b(jsonb)', 'EXECUTE'
+       ) AS runtime_deduplicated_wrapper,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_aud_notificacao_destino_negado_mp35b(jsonb)', 'EXECUTE'
+       ) AS runtime_denied_wrapper,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_notificacao_entregar_conta_mp35b(uuid,uuid)', 'EXECUTE'
+       ) AS runtime_delivery_operation,
+       pg_catalog.has_function_privilege(
+         'tche_agro_runtime',
+         'public.tche_notificacao_resolver_destino_mp35b(uuid,uuid,text)',
+         'EXECUTE'
+       ) AS runtime_resolution_operation`,
+    );
+    assert.deepEqual(reapplied.rows[0], installed.rows[0]);
   });
 
   test('MP-35A instala catálogos versionados e motivos administrativos fechados', async () => {
@@ -1005,14 +1131,14 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     try {
       await runtimeClient.query('BEGIN');
       await runtimeClient.query('SET LOCAL ROLE tche_agro_runtime');
-      await runtimeClient.query(
-        "UPDATE usuarios SET status = 'ativo' WHERE id = $1",
-        [pendingId],
+      await assert.rejects(
+        runtimeClient.query(
+          "UPDATE usuarios SET status = 'ativo' WHERE id = $1",
+          [pendingId],
+        ),
+        /permission denied/i,
       );
-      await expectCommitFailure(
-        runtimeClient,
-        /ativar Usuario exige credencial|ativacao_exige_credencial/i,
-      );
+      await runtimeClient.query('ROLLBACK');
     } finally {
       runtimeClient.release();
     }
@@ -1655,11 +1781,12 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         'tche_agro_runtime',
         'tche_agro_outbox_worker',
         'tche_agro_platform_ops',
-        'tche_agro_administration_maintenance'
+        'tche_agro_administration_maintenance',
+        'tche_agro_administration_owner'
       )
       ORDER BY rolname
     `);
-    assert.equal(roleAttributes.rowCount, 4);
+    assert.equal(roleAttributes.rowCount, 5);
     for (const role of roleAttributes.rows) {
       assert.deepEqual(
         {
@@ -1689,8 +1816,20 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       runtime_insert_platform_authorization: boolean;
       runtime_insert_platform_approvers: boolean;
       runtime_insert_users: boolean;
+      runtime_insert_users_table: boolean;
+      runtime_insert_user_status: boolean;
+      runtime_update_user_profile: boolean;
+      runtime_delete_users: boolean;
+      runtime_insert_producers: boolean;
+      runtime_update_producer_status: boolean;
+      runtime_delete_producers: boolean;
+      runtime_select_administrative_commands: boolean;
+      runtime_update_administrative_actor: boolean;
+      runtime_delete_administrative_commands: boolean;
       runtime_update_bootstrap_status: boolean;
       runtime_update_bootstrap_admin: boolean;
+      runtime_insert_audit: boolean;
+      runtime_insert_any_audit_column: boolean;
       platform_insert_users: boolean;
       platform_update_user_email: boolean;
       platform_update_user_status: boolean;
@@ -1727,6 +1866,40 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         has_any_column_privilege(
           'tche_agro_runtime', 'public.usuarios', 'INSERT'
         ) AS runtime_insert_users,
+        has_table_privilege(
+          'tche_agro_runtime', 'public.usuarios', 'INSERT'
+        ) AS runtime_insert_users_table,
+        has_column_privilege(
+          'tche_agro_runtime', 'public.usuarios', 'status', 'INSERT'
+        ) AS runtime_insert_user_status,
+        has_column_privilege(
+          'tche_agro_runtime', 'public.usuarios', 'perfil', 'UPDATE'
+        ) AS runtime_update_user_profile,
+        has_table_privilege(
+          'tche_agro_runtime', 'public.usuarios', 'DELETE'
+        ) AS runtime_delete_users,
+        has_any_column_privilege(
+          'tche_agro_runtime', 'public.produtores', 'INSERT'
+        ) AS runtime_insert_producers,
+        has_column_privilege(
+          'tche_agro_runtime', 'public.produtores', 'status', 'UPDATE'
+        ) AS runtime_update_producer_status,
+        has_table_privilege(
+          'tche_agro_runtime', 'public.produtores', 'DELETE'
+        ) AS runtime_delete_producers,
+        has_table_privilege(
+          'tche_agro_runtime',
+          'public.comandos_administrativos_idempotencia', 'SELECT'
+        ) AS runtime_select_administrative_commands,
+        has_column_privilege(
+          'tche_agro_runtime',
+          'public.comandos_administrativos_idempotencia',
+          'ator_usuario_id', 'UPDATE'
+        ) AS runtime_update_administrative_actor,
+        has_table_privilege(
+          'tche_agro_runtime',
+          'public.comandos_administrativos_idempotencia', 'DELETE'
+        ) AS runtime_delete_administrative_commands,
         has_column_privilege(
           'tche_agro_runtime', 'public.bootstrap_autenticacao',
           'status', 'UPDATE'
@@ -1735,6 +1908,12 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
           'tche_agro_runtime', 'public.bootstrap_autenticacao',
           'usuario_admin_id', 'UPDATE'
         ) AS runtime_update_bootstrap_admin,
+        has_table_privilege(
+          'tche_agro_runtime', 'public.eventos_auditoria', 'INSERT'
+        ) AS runtime_insert_audit,
+        has_any_column_privilege(
+          'tche_agro_runtime', 'public.eventos_auditoria', 'INSERT'
+        ) AS runtime_insert_any_audit_column,
         has_any_column_privilege(
           'tche_agro_platform_ops', 'public.usuarios', 'INSERT'
         ) AS platform_insert_users,
@@ -1800,8 +1979,20 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       runtime_insert_platform_authorization: false,
       runtime_insert_platform_approvers: false,
       runtime_insert_users: false,
+      runtime_insert_users_table: false,
+      runtime_insert_user_status: false,
+      runtime_update_user_profile: false,
+      runtime_delete_users: false,
+      runtime_insert_producers: false,
+      runtime_update_producer_status: false,
+      runtime_delete_producers: false,
+      runtime_select_administrative_commands: false,
+      runtime_update_administrative_actor: false,
+      runtime_delete_administrative_commands: false,
       runtime_update_bootstrap_status: true,
       runtime_update_bootstrap_admin: false,
+      runtime_insert_audit: false,
+      runtime_insert_any_audit_column: false,
       platform_insert_users: true,
       platform_update_user_email: true,
       platform_update_user_status: false,
@@ -1822,6 +2013,85 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       platform_insert_audit: true,
       worker_update_nonce: true,
     });
+
+    const functionAcl = await databasePool.query<{
+      public_trigger_execute: boolean;
+      public_property_trigger_execute: boolean;
+      public_internal_execute: boolean;
+      runtime_admin_execute: boolean;
+      runtime_internal_execute: boolean;
+      no_public_mp35b_execute: boolean;
+    }>(`
+      SELECT
+        has_function_privilege(
+          'public',
+          'public.tche_preservar_comando_administrativo_mp35b()',
+          'EXECUTE'
+        ) AS public_trigger_execute,
+        has_function_privilege(
+          'public',
+          'public.tche_serializar_propriedade_titular_mp35b()',
+          'EXECUTE'
+        ) AS public_property_trigger_execute,
+        has_function_privilege(
+          'public',
+          'public.tche_admin_iniciar_comando_mp35b(jsonb,text)',
+          'EXECUTE'
+        ) AS public_internal_execute,
+        has_function_privilege(
+          'tche_agro_runtime',
+          'public.tche_admin_criar_usuario_mp35b(jsonb)',
+          'EXECUTE'
+        ) AS runtime_admin_execute,
+        has_function_privilege(
+          'tche_agro_runtime',
+          'public.tche_admin_substituir_convite_mp35b(jsonb,text,uuid,uuid,text,text)',
+          'EXECUTE'
+        ) AS runtime_internal_execute,
+        NOT EXISTS (
+          SELECT 1
+          FROM pg_catalog.pg_proc AS procedure
+          JOIN pg_catalog.pg_namespace AS namespace
+            ON namespace.oid = procedure.pronamespace
+          WHERE namespace.nspname = 'public'
+            AND procedure.proname LIKE 'tche%mp35b'
+            AND has_function_privilege('public', procedure.oid, 'EXECUTE')
+        ) AS no_public_mp35b_execute
+    `);
+    assert.deepEqual(functionAcl.rows[0], {
+      public_trigger_execute: false,
+      public_property_trigger_execute: false,
+      public_internal_execute: false,
+      runtime_admin_execute: true,
+      runtime_internal_execute: false,
+      no_public_mp35b_execute: true,
+    });
+
+    const functionOwners = await databasePool.query<{
+      function_name: string;
+      owner_name: string;
+    }>(`
+      SELECT procedure.proname AS function_name, owner.rolname AS owner_name
+      FROM pg_catalog.pg_proc AS procedure
+      JOIN pg_catalog.pg_namespace AS namespace
+        ON namespace.oid = procedure.pronamespace
+      JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner
+      WHERE namespace.nspname = 'public'
+        AND procedure.proname IN (
+          'tche_admin_criar_usuario_mp35b',
+          'tche_admin_atualizar_usuario_mp35b',
+          'tche_admin_alterar_status_usuario_mp35b',
+          'tche_admin_emitir_convite_usuario_mp35b',
+          'tche_serializar_propriedade_titular_mp35b'
+        )
+    `);
+    assert.equal(functionOwners.rowCount, 5);
+    assert.equal(
+      functionOwners.rows.every(
+        (row) => row.owner_name === 'tche_agro_administration_owner',
+      ),
+      true,
+    );
 
     const breakGlassAdminId = randomUUID();
     const unrelatedChallengeId = randomUUID();
@@ -2081,11 +2351,17 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       await runtimeClient.query('SET ROLE tche_agro_runtime');
       const visible = await runtimeClient.query('SELECT 1 FROM usuarios LIMIT 1');
       assert.equal(visible.rowCount, 1);
-      await runtimeClient.query(`
-        INSERT INTO eventos_auditoria (
-          organizacao_id, evento, resultado, ator_tipo, metadados
-        ) VALUES ($1, 'auth.runtime.inseriu', 'sucesso', 'sistema', '{}')
-      `, [ORGANIZATION_ID]);
+      await assert.rejects(
+        runtimeClient.query(`
+          INSERT INTO eventos_auditoria (
+            organizacao_id, evento, resultado, ator_tipo, metadados
+          ) VALUES ($1, 'auth.runtime.inseriu', 'sucesso', 'sistema', '{}')
+        `, [ORGANIZATION_ID]),
+        (error: unknown) => {
+          assert.equal((error as { readonly code?: string }).code, '42501');
+          return true;
+        },
+      );
       await assert.rejects(
         runtimeClient.query(`
           INSERT INTO recuperacoes_assistidas (
@@ -2311,7 +2587,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     assertDestructiveDatabaseTestsAllowed(activeMigrationDatabase.connectionString);
     await runMigrations({
       command: 'down',
-      count: 7,
+      count: 8,
       database: activeMigrationDatabase,
     });
 

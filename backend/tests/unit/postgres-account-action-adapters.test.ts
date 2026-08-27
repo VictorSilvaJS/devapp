@@ -146,21 +146,30 @@ describe('PostgreSQL account-action and outbox adapters', () => {
         actorUserId: '00000000-0000-4000-8000-000000000006',
         actorSessionId: '00000000-0000-4000-8000-000000000007',
         affectedUserId: '00000000-0000-4000-8000-000000000002',
+        resourceType: 'action_challenge',
+        resourceId: '00000000-0000-4000-8000-000000000003',
       },
     });
     assert.equal(accepted, 'accepted');
     const lockingQuery = client.queries.find((candidate) =>
-      candidate.text?.includes('FOR UPDATE OF desafio, convite, usuario'),
+      candidate.text?.includes('FOR UPDATE OF desafio, convite'),
     );
-    assert.ok(lockingQuery?.text?.includes('FOR UPDATE OF desafio, convite, usuario'));
+    assert.ok(lockingQuery?.text?.includes('FOR UPDATE OF desafio, convite'));
+    assert.equal(lockingQuery?.text?.includes('FOR UPDATE OF desafio, convite, usuario'), false);
     assert.ok(lockingQuery?.text?.includes('desafio.expira_em > $2'));
     assert.deepEqual(lockingQuery?.values, [Buffer.from(tokenSha256, 'hex'), now]);
     const auditQuery = client.queries.find((candidate) =>
-      candidate.text?.includes('INSERT INTO public.eventos_auditoria'),
+      candidate.text?.includes('tche_aud_convite_aceito_mp35b'),
     );
-    assert.ok(auditQuery?.text?.includes('sessao_id, usuario_afetado_id'));
-    assert.equal(auditQuery?.values?.[6], '00000000-0000-4000-8000-000000000007');
-    assert.equal(auditQuery?.values?.[7], '00000000-0000-4000-8000-000000000002');
+    const audit = JSON.parse(String(auditQuery?.values?.[0])) as Record<
+      string,
+      unknown
+    >;
+    assert.equal(audit.sessionId, '00000000-0000-4000-8000-000000000007');
+    assert.equal(
+      audit.affectedUserId,
+      '00000000-0000-4000-8000-000000000002',
+    );
     assert.equal(client.queries.at(-1)?.text, 'COMMIT');
   });
 

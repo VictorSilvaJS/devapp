@@ -28,7 +28,7 @@ test('mantém 000001 imutável e sela o manifesto ativo', async () => {
   );
 
   const verified = await verifyMigrationIntegrity({ migrationsDirectory });
-  assert.equal(verified.checkedMigrations, 7);
+  assert.equal(verified.checkedMigrations, 8);
 });
 
 test('DDL de identidade persiste somente PHC e contato secundário verificável', async () => {

@@ -474,6 +474,17 @@ auditoria por item. Criação, deduplicação, leitura, leitura em lote, descart
 resolução negada são eventos auditáveis por código e IDs. A auditoria não copia
 título, resumo ou `dados_apresentacao`.
 
+Na `000008` local da MP-35B, criação/deduplicação e resolução negada deixam de
+ser wrappers isoladas executáveis pelo runtime. A tentativa de entrega recebe
+somente o ID do fato de conta já auditado na transação corrente e um ID opaco
+da tentativa, executa o `INSERT ... ON CONFLICT` e deriva do resultado
+persistido se houve criação ou deduplicação. A resolução recebe somente sessão,
+entrega e `requestId`, revalida a sessão no PostgreSQL e deriva ator,
+organização, destinatário, recurso, resultado e horário. Em ambos os casos, a
+auditoria é efeito interno da operação real, pertence à mesma transação e o
+replay não cria outro evento. O runtime e `PUBLIC` não executam as wrappers
+isoladas nem o escritor genérico interno.
+
 ## Criterios De Aceite Da MP-03
 
 1. Evento e entrega individual possuem contratos distintos.

@@ -27,7 +27,14 @@ publicação. Responsável/agendamento/alertas da purga, credencial e
 segredo de manutenção, validação jurídica/de privacidade dos 90 dias,
 observabilidade, backup/restauração, MFA de Administrador, domínio e associação
 de links, SMTP/segredos, assinatura e validação em ambiente real continuam
-portões produtivos. O Android físico da MP-34 permanece `NÃO EXECUTADO`.
+portões produtivos. O smoke Android físico específico da MP-34 passou em
+2026-08-24, sem representar release produtivo.
+
+A MP-35A está integrada. A MP-35B, administração HTTP de Usuários e convites,
+foi corrigida localmente após auditoria independente, permanece não integrada
+e está em validação final. Ela não acrescenta telas mobile. MP-35C e MP-35D não
+foram iniciadas; não houve commit, push, tag, deploy, release ou publicação da
+MP-35B.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em

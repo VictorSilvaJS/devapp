@@ -59,7 +59,9 @@ describe(
   { timeout: 180_000 },
   () => {
     let testDatabase: StartedPostgisTestDatabase | undefined;
-    let pool: Pool | undefined;
+    let ownerPool: Pool | undefined;
+    let runtimePool: Pool | undefined;
+    let runtimeLoginRole: string | undefined;
     let repository: PostgresAuthRepository | undefined;
     let throttle: PostgresLoginThrottle | undefined;
     let service: DefaultAuthenticationService | undefined;
@@ -92,9 +94,24 @@ describe(
       }
       assertDestructiveDatabaseTestsAllowed(testDatabase.connectionString);
       await runMigrations({ command: 'up', database: testDatabase.database });
-      pool = new Pool(buildPostgresPoolConfig(testDatabase.database));
+      ownerPool = new Pool(buildPostgresPoolConfig(testDatabase.database));
+      runtimeLoginRole =
+        `tche_test_runtime_auth_${randomUUID().replaceAll('-', '')}`;
+      const runtimePassword = randomUUID();
+      await ownerPool.query(
+        `CREATE ROLE ${runtimeLoginRole} LOGIN PASSWORD '${runtimePassword}'`,
+      );
+      await ownerPool.query(`GRANT tche_agro_runtime TO ${runtimeLoginRole}`);
+      const runtimeUrl = new URL(testDatabase.connectionString);
+      runtimeUrl.username = runtimeLoginRole;
+      runtimeUrl.password = runtimePassword;
+      runtimePool = new Pool({
+        ...buildPostgresPoolConfig(testDatabase.database),
+        connectionString: runtimeUrl.toString(),
+        application_name: runtimeLoginRole,
+      });
       repository = createRepository();
-      throttle = new PostgresLoginThrottle({ pool });
+      throttle = new PostgresLoginThrottle({ pool: runtimePool });
       service = new DefaultAuthenticationService({
         config: authConfig,
         repository,
@@ -105,13 +122,22 @@ describe(
     });
 
     after(async () => {
-      await pool?.end();
+      await runtimePool?.end();
+      if (ownerPool !== undefined && runtimeLoginRole !== undefined) {
+        await ownerPool.query(`DROP ROLE IF EXISTS ${runtimeLoginRole}`);
+      }
+      await ownerPool?.end();
       await testDatabase?.container.stop();
     });
 
     function requirePool(): Pool {
-      assert.ok(pool);
-      return pool;
+      assert.ok(ownerPool);
+      return ownerPool;
+    }
+
+    function requireRuntimePool(): Pool {
+      assert.ok(runtimePool);
+      return runtimePool;
     }
 
     function requireRepository(): PostgresAuthRepository {
@@ -133,7 +159,7 @@ describe(
       notificationWriter?: AccountNotificationWriter,
     ): PostgresAuthRepository {
       return new PostgresAuthRepository({
-        pool: requirePool(),
+        pool: requireRuntimePool(),
         emailHmacKey: authConfig.abuseProtection.emailHmacKey,
         recoveryOutboxFactory,
         recoveryActionBaseUrl: 'https://example.test/auth/action',

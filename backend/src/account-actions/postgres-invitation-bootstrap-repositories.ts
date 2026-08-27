@@ -73,6 +73,13 @@ export class PostgresInvitationRepository
       ) {
         return 'not_found';
       }
+      await query(
+        client,
+        `SELECT pg_catalog.pg_advisory_xact_lock(
+           pg_catalog.hashtextextended($1 || ':' || $2::text, 35000035)
+         )`,
+        [input.expectedRecipient.organizationId, input.expectedRecipient.id],
+      );
       const users = await query<AccountRow & { readonly actor_ok: boolean }>(
         client,
         `
@@ -87,7 +94,6 @@ export class PostgresInvitationRepository
                  ) AS actor_ok
           FROM public.usuarios AS recipient
           WHERE recipient.organizacao_id = $1 AND recipient.id = $2
-          FOR UPDATE
         `,
         [
           input.expectedRecipient.organizationId,
@@ -250,7 +256,7 @@ export class PostgresInvitationRepository
           WHERE desafio.token_hash = $1
             AND desafio.finalidade = 'convite'
             AND desafio.expira_em > $2 AND convite.expira_em > $2
-          FOR UPDATE OF desafio, convite, usuario
+          FOR UPDATE OF desafio, convite
         `,
         [tokenHash, input.acceptedAt],
       );
@@ -301,12 +307,8 @@ export class PostgresInvitationRepository
       if (mode === 'activate_bootstrap_admin' || mode === 'activate_user') {
         await query(
           client,
-          `
-            UPDATE public.usuarios
-            SET status = 'ativo', versao_autorizacao = versao_autorizacao + 1
-            WHERE organizacao_id = $1 AND id = $2
-          `,
-          [row.organizacao_id, row.id],
+          'SELECT public.tche_conta_ativar_usuario_por_convite_mp35b($1)',
+          [row.convite_id],
         );
       }
       await query(

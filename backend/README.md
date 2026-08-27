@@ -21,8 +21,14 @@ A MP-35A está concluída tecnicamente e integrada diretamente à branch
 aprovados. Ela não cria endpoints: acrescenta contratos TypeScript e as
 migrations append-only `000006`/`000007` com versões, limites, estados,
 motivos, proteção do último Admin, idempotência administrativa e snapshot
-nacional IBGE. Não houve tag, deploy, release ou publicação. MP-35B/C/D
-permanecem não iniciadas.
+nacional IBGE. Não houve tag, deploy, release ou publicação.
+
+A MP-35B está corrigida localmente, não integrada e em validação final. A
+migration ainda não integrada `000008` acrescenta seis operações em
+`/v1/usuarios`, RBAC Admin revalidado no SQL, cursor cifrado e autenticado,
+versão, idempotência, auditoria e convite/outbox atômicos. A emissão antiga em
+`/v1/auth/invitations` foi removida; o aceite público permanece. Ainda não
+houve commit/CI da fase, e MP-35C/D não foram iniciadas.
 
 ## Requisitos
 
@@ -81,10 +87,14 @@ papéis runtime/plataforma ou runtime/manutenção e validam, por constraints
 diferidas, que a transação termine com Admin pendente, convite, desafio, outbox
 e auditoria coerentes. O proprietário/migrador não é usado para servir HTTP.
 
-O aceite de convite de Produtor não amplia os grants do runtime. A API chama
-`tche_ativar_produtor_por_convite_mp35a(uuid)`, função `SECURITY DEFINER` que
-deriva e trava o agregado a partir do convite válido; `tche_agro_runtime`
-continua sem `UPDATE` em `produtores`.
+O aceite de convite de Produtor e os fluxos legados de conta usam funções
+`SECURITY DEFINER` estreitas que derivam e travam o agregado a partir da prova
+válida. A `000008` revoga do runtime todo `INSERT`, `UPDATE` e `DELETE`
+administrativo direto em `usuarios` e `produtores`, inclusive os grants
+colunares herdados. As quatro mutações HTTP chamam funções transacionais
+owned por `tche_agro_administration_owner`, papel seguro `NOLOGIN`, e somente
+as interfaces operacionais necessárias possuem `EXECUTE` para
+`tche_agro_runtime`; `PUBLIC` não executa nenhuma delas.
 
 Para cada URL existe um CA opcional específico:
 `DATABASE_SSL_CA`, `MIGRATIONS_DATABASE_SSL_CA`,
@@ -139,6 +149,12 @@ Os principais valores são:
 - proteção de login `AUTH_LOGIN_FAILURE_WINDOW_SECONDS`,
   `AUTH_LOGIN_FAILURE_THRESHOLD` e `AUTH_LOGIN_LOCK_SCHEDULE_SECONDS`;
 - `ASSISTED_RECOVERY_ENABLED` e `ASSISTED_RECOVERY_POLICY_VERSION`.
+
+A paginação administrativa de Usuários exige
+`ADMIN_USER_CURSOR_ACTIVE_KEY_ID` e `ADMIN_USER_CURSOR_KEYS`. Esse keyring é
+AES-256-GCM, não possui valor padrão ou fallback e deve ser materialmente
+distinto de todas as chaves de `OUTBOX_ENCRYPTION_KEYS`; configuração ausente,
+malformada, curta ou reutilizada impede o startup.
 
 O carregador aplica os pisos e tetos aprovados; uma variável não pode reduzir
 silenciosamente a segurança abaixo deles. Em produção, recuperação assistida
@@ -371,7 +387,7 @@ Também sob `/v1/auth`:
 
 | Caminho | Comportamento |
 |---|---|
-| `/invitations` e `/invitations/accept` | convite de pendente existente e aceite com definição de senha |
+| `/invitations/accept` | aceite público de convite com definição de senha; responde `204 No Content` |
 | `/email-change/*` | troca autenticada com senha atual e duas confirmações |
 | `/secondary-email/*` | cadastro e confirmação do contato secundário de Admin |
 | `/admin-secondary-recovery/*` | recuperação de Admin pelo contato secundário já verificado, sem login automático |
@@ -390,6 +406,10 @@ fase; o scaffold break-glass não cria caso, token, sessão ou auto-login.
 
 Respostas com segredos usam `Cache-Control: no-store`, `Pragma: no-cache` e
 `Referrer-Policy: no-referrer`. Toda resposta possui `x-request-id`.
+
+A emissão administrativa não fica sob `/v1/auth`: a única rota é
+`POST /v1/usuarios/:id/convites`, autenticada e exclusiva de Admin. A antiga
+`POST /v1/auth/invitations` não existe.
 
 ### Notificações in-app
 
@@ -471,11 +491,18 @@ npm run dev:outbox
 npm run start:outbox
 ```
 
-Ele faz claim concorrente com lease, revalida o desafio, descriptografa o
-payload somente para entrega, usa timeout/backoff/tentativas limitadas e grava
-aceitação SMTP antes de limpar o material sensível. A entrega é pelo menos uma
-vez; desafios são de uso único, tornando repetição inofensiva. `SIGINT` e
-`SIGTERM` encerram o loop e o pool de forma idempotente.
+Ele faz claim concorrente com lease e, depois de obter os locks coordenados,
+consulta novamente o relógio do PostgreSQL e revalida imediatamente antes do
+dispatch a mensagem, o lease, o desafio e o convite aplicável. Só então
+descriptografa o payload para entrega, usa timeout/backoff/tentativas limitadas
+e grava aceitação SMTP antes de limpar o material sensível. A entrega é pelo
+menos uma vez; desafios são de uso único, tornando repetição inofensiva.
+`SIGINT` e `SIGTERM` encerram o loop e o pool de forma idempotente.
+
+O dispatch SMTP ainda ocorre com a transação e o advisory lock da entidade
+abertos para preservar essa fronteira linearizável. Antes de produção, a
+capacidade e a latência precisam ser ensaiadas com SMTP e contenção
+representativos; Testcontainers e Mailpit não dimensionam esse custo.
 
 ## Auditoria
 
@@ -536,13 +563,30 @@ IBGE em runtime. O gerador recusa sobrescrever destino existente, valida
 consistência dos metadados de UF e produz versões publicadas imutáveis; o banco
 permite somente marcar a versão ativa como `substituido`.
 
+Na MP-35B, `000008-administracao-usuarios-mp35b.sql` retira o DML direto de
+Usuários, Produtores e da idempotência administrativa do runtime. Funções
+estreitas reservam e concluem o comando, validam sessão/ator/alvo/versão,
+aplicam mutação, convite/outbox, auditoria e recibo no mesmo commit. Um trigger
+preserva o ciclo e a identidade do recibo; sua função também tem `EXECUTE`
+explicitamente revogado de `PUBLIC`.
+
+A mesma migration revoga do runtime todo `INSERT` direto, de tabela ou coluna,
+em `eventos_auditoria`. Os quatro eventos administrativos são gravados somente
+dentro das respectivas operações `SECURITY DEFINER`, com ator, sessão,
+organização, recurso e ação derivados pelo servidor. Autenticação, ações de
+conta e notificações usam interfaces de evento fixo que exigem a transição de
+domínio na transação corrente; o escritor genérico é interno ao owner `NOLOGIN`
+e não possui `EXECUTE` para runtime nem `PUBLIC`. Plataforma de bootstrap e
+worker de outbox conservam seus escritores separados, já limitados pelas
+triggers transacionais da MP-33B.
+
 ## Testes e validação
 
 | Comando | Cobertura | Dependência externa |
 |---|---|---|
 | `npm run test:unit` | configuração, blocklist/Argon2, serviços, adaptadores, outbox, notificações, purga e contratos estáticos de migration | nenhuma |
-| `npm run test:http` | health/readiness, OpenAPI, autenticação, ações de conta e notificações por injeção Fastify | nenhuma |
-| `npm run test:integration` | migrations, upgrade adversarial MP-35A, duas conexões com barreira de lock, repositórios reais, concorrência, retenção/purga e privilégios dos papéis | Docker |
+| `npm run test:http` | health/readiness, OpenAPI, autenticação, ações de conta, administração de Usuários e notificações por injeção Fastify | nenhuma |
+| `npm run test:integration` | migrations, upgrade adversarial MP-35A, administração MP-35B, duas conexões com barreira de lock, repositórios reais, atomicidade, concorrência, retenção/purga e privilégios dos papéis | Docker |
 
 Na rodada técnica da MP-34 foram confirmados 138 testes unitários/contratos de
 migration, 26 HTTP e 41 cenários reais de integração: 15 de migrations, 8 de
@@ -554,6 +598,15 @@ de upgrade, login runtime real, atomicidade, vínculo ator-sessão, papel mínim
 de purga e concorrência. O corte foi integrado diretamente à branch `backend`
 no commit `a51389e`, e os três jobs executados da CI pós-push foram aprovados.
 Não houve tag, deploy, release ou publicação.
+
+A reauditoria focal acrescenta em
+`administrative-user-e2e.integration.test.ts` a matriz exata das seis rotas
+para Admin, ausência de bearer, sessão stale, Produtor e Colaborador; e em
+`administrative-user-repository.integration.test.ts` a observação dos PIDs e
+`wait_event` reais nas sete corridas exigidas. A rodada integral de 2026-08-27
+passou com 166 testes unitários/contratos, 33 HTTP e 72 integrações
+PostgreSQL/PostGIS, incluindo o ciclo explícito `000008 up/down/up`. A fase
+permanece sem commit, CI, tag, deploy, release ou publicação.
 
 A integração usa exclusivamente a URL de um Testcontainer
 `postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando
@@ -630,6 +683,9 @@ colaterais de startup.
 
 Antes de liberação pública ainda são obrigatórios MFA de Admin, política
 operacional de recuperação assistida, benchmark Argon2id no ambiente real,
+benchmark da busca infixa `ILIKE` de Usuários no volume esperado, ensaio de
+capacidade/latência do SMTP enquanto a transação e o lock do outbox permanecem
+abertos, provisionamento/rotação independente do keyring de cursor,
 SMTP/segredos, observabilidade, backup/restauração, responsável/agendamento e
 alertas da purga, credencial/CA/segredo de manutenção e validação
 jurídica/de privacidade externa da retenção de 90 dias. O Android físico da

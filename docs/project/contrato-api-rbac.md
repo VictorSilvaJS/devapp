@@ -1,6 +1,6 @@
 # Contrato De API Para RBAC/Backend
 
-> Revisão documental: 2026-08-25
+> Revisão documental: 2026-08-26
 
 Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
 2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
@@ -45,7 +45,11 @@ cliente está em `contrato-integracao-app-mp33c.md`.
 
 Revisão em 2026-08-25: D1-D13 e a divisão MP-35A-D foram consolidadas em
 `contrato-administracao-mp35.md`. A MP-35A implementa somente contratos e
-fundação persistente; as rotas abaixo permanecem reservadas para MP-35B/C.
+fundação persistente.
+
+Revisão em 2026-08-26: a MP-35B está corrigida localmente, não integrada e em
+validação final. As seis rotas de Usuários abaixo são executáveis; escritas de
+Propriedades e vínculos permanecem reservadas à MP-35C, e telas à MP-35D.
 
 ## Decisoes De Base
 
@@ -182,6 +186,17 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Acesso negado: `401 Unauthorized`; `403 Forbidden` se nao for admin/papel
   autorizado.
 - Regra de permissao: somente Admin.
+- Ordenação e paginação: cursor estável por nome normalizado e ID; limite
+  padrão 50 e máximo 100. `busca` compara literalmente nome, e-mail ou
+  documento por busca infixa `ILIKE`, cujo custo deve ser medido com volume
+  representativo antes de produção.
+- O cursor de Usuários é AES-256-GCM versionado, confidencial, autenticado,
+  expirável e vinculado ao fingerprint de `busca`, `perfil` e `status`; a
+  chave de ordenação é a expressão `lower(nome)` devolvida pelo PostgreSQL. O
+  keyring `ADMIN_USER_CURSOR_*` é obrigatório, sem fallback, e deve ser
+  criptograficamente distinto do keyring da outbox.
+- Projeção: a lista usa somente `snake_case` e inclui `produtor_id` para o
+  perfil Produtor, sem credencial, token, desafio, outbox ou aliases do mock.
 - Compatibilidade: `ativo` pode ser campo derivado temporario; contrato final
   deve usar `status`.
 
@@ -194,6 +209,8 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Regra de permissao: somente Admin; autoedição continua nos endpoints de conta
   da MP-33B.
 - Compatibilidade: ids legados nao devem ser rota final.
+- A resposta detalhada inclui `versao`, datas e campos cadastrais opcionais;
+  `produtor_id` é nulo para Admin/Colaborador.
 
 ### `POST /v1/usuarios`
 
@@ -214,6 +231,8 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Regra de permissao: somente Admin; o servidor fixa `status=pendente`, cria o
   cadastro Produtor inativo quando aplicável e emite convite sem senha.
 - Idempotência: `Idempotency-Key` obrigatória, retenção de 90 dias.
+- A criação, o cadastro Produtor aplicável, o convite `ativar_usuario`, o
+  desafio, a outbox, a auditoria e o recibo são uma única transação.
 
 ### `PATCH /v1/usuarios/:id`
 
@@ -226,6 +245,9 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Regra de permissao: somente Admin.
 - Idempotência: `Idempotency-Key` obrigatória.
 - Compatibilidade: nao usar `ativo` como fonte final; preferir `status`.
+- Perfil e status não são campos desta rota. E-mail pode mudar somente quando
+  o alvo está `pendente`; a troca substitui convite/desafio/outbox na mesma
+  transação. Conta ativa ou inativa usa os fluxos verificados da MP-33B.
 
 ### `PATCH /v1/usuarios/:id/status`
 
@@ -244,12 +266,16 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
 - Outros erros: `400 Bad Request`; `409 Conflict` para versão, auto-inativação
-  ou proteção do último Admin; `422` para estado semântico inválido.
+  ou proteção do último Admin; `422 validation_error` para estado semântico
+  inválido, inclusive destino `pendente`.
 - Regra de permissao: somente Admin. Ativação sem credencial ativa é proibida;
   Produtor e Propriedades titularizadas devem terminar a transação em estado
   coerente.
 - Idempotência: `Idempotency-Key` obrigatória.
 - Compatibilidade: status futuro substitui booleanos legados.
+- A rota aceita somente origem e destino em `ativo <-> inativo`; alvo
+  `pendente` recebe `422 validation_error`, nunca `409`. O motivo externo usa `motivo` e
+  `motivo_detalhe`, exigido quando `motivo=outro`.
 
 ### `POST /v1/usuarios/:id/convites`
 
@@ -260,7 +286,49 @@ implementado de sucesso `204 No Content`; a MP-35A não o altera para `200`.
 - Aceite cria a credencial e ativa a conta na mesma transação; perfil Produtor
   ativa também `produtores.status`.
 - O aceite existente responde `204 No Content`; os endpoints administrativos
-  desta seção permanecem reservados à MP-35B.
+  desta seção estão implementados localmente na MP-35B.
+- O corpo administrativo contém somente
+  `{ "modo_ativacao": "ativar_usuario" }`. `manter_status` é recusado com
+  `422` e não pode ser emitido novamente.
+- Esta é a única rota administrativa de emissão. A antiga
+  `POST /v1/auth/invitations` é removida na MP-35B; o aceite público em
+  `/v1/auth/invitations/accept` permanece inalterado.
+
+### Recibo seguro das mutações de Usuário
+
+As quatro mutações da MP-35B — criação, atualização, status e convite —
+respondem somente com o recibo persistido e seguro; as outras duas operações
+são leituras:
+
+```json
+{
+  "resultado": "atualizado",
+  "recurso_tipo": "usuario",
+  "recurso_id": "00000000-0000-4000-8000-000000000001",
+  "versao": 2
+}
+```
+
+Convite usa `recurso_tipo=convite`, `resultado=convite_emitido` e não possui
+`versao`. Depois de uma mutação, o cliente relê o detalhe quando precisar da
+representação cadastral. O recibo não contém nome, e-mail, telefone, documento,
+observações, motivo livre, token ou payload.
+
+Para as rotas de Usuários, JSON malformado ou estrutura inválida é
+`400 invalid_request`; sessão ausente/revogada/expirada/stale é
+`401 invalid_session`; perfil ativo sem permissão é `403 forbidden`; recurso
+ausente é `404 not_found`; versão divergente é `409 version_conflict`; chave
+idempotente com corpo diferente é `409 idempotency_conflict`; regra de negócio
+é `409 business_rule_conflict`; enum, valor ou limite D9 semanticamente
+inválido é `422 validation_error`. Todas as respostas usam `snake_case`,
+`Cache-Control: no-store` e não incluem PII ou detalhe PostgreSQL.
+
+Cursor vazio, acima do limite formal, truncado, malformado, adulterado ou com
+versão/chave desconhecida também é sempre `400 invalid_request`. No worker, o
+relógio do banco e os estados de mensagem, lease, desafio e convite são
+revalidados depois dos locks e imediatamente antes do dispatch. O SMTP dentro
+da transação e do lock preserva linearização, mas exige ensaio produtivo de
+capacidade e latência.
 
 ## Propriedades
 
@@ -591,8 +659,8 @@ revogação e sessão da MP-33B estão concluídos tecnicamente. A MP-33C també
 concluiu lista/detalhe, projeção `tipo_acesso`, cursor/filtros e `404`
 indistinguível. Ainda é necessário:
 
-- implementar na MP-35B/C as escritas administrativas, auditoria de vínculos,
-  idempotência, revogação de sessão e o restante do RBAC por ação; a MP-35A
-  entrega somente a fundação persistente;
+- concluir a validação final e integrar separadamente a MP-35B já corrigida;
+  implementar na MP-35C apenas as escritas de Propriedade, auditoria de
+  vínculos, idempotência e o RBAC por ação ainda pertencente a essa fase;
 - transformar em testes executáveis somente as linhas das fases futuras em
   `testes-contrato-api-rbac.md`.

@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-26
+> Revisão documental: 2026-08-27
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -46,6 +46,23 @@ e fundação persistente, foi integrada diretamente à branch `backend` no commi
 `a51389e`; os três jobs executados da CI pós-push foram aprovados. Não há rota,
 tela, tag, deploy, release ou publicação da MP-35A.
 
+Em 2026-08-27, a MP-35B recebeu a correção focal dos achados restantes da
+reauditoria independente e permanece não integrada, em validação final. A API lista,
+detalha, cria e edita Usuários, altera status e emite convites com RBAC Admin,
+versão, idempotência persistida, auditoria e transação atômica. O runtime não
+possui mais DML administrativo direto em Usuários, Produtores ou idempotência;
+as mutações passam por funções estreitas que revalidam a sessão no PostgreSQL.
+A correção focal de notificações também retirou do runtime o `INSERT` direto em
+evento/entrega e o `EXECUTE` das wrappers isoladas de deduplicação e destino
+negado. Deduplicação agora deriva do resultado real da tentativa de inserção, e
+destino negado deriva de uma tentativa autenticada de resolução; ambas gravam
+auditoria internamente, com horário do PostgreSQL e na mesma transação.
+A rota administrativa antiga de emissão em `/v1/auth/invitations` foi
+removida; o aceite público permanece em `/v1/auth/invitations/accept`. O
+aplicativo e as escritas de Propriedade/vínculos não foram alterados. Ainda não
+houve commit, integração, CI, tag, deploy, release ou publicação da MP-35B, e
+MP-35C/D não foram iniciadas.
+
 ## Estado por camada
 
 | Camada | Situação atual |
@@ -53,14 +70,14 @@ tela, tag, deploy, release ou publicação da MP-35A.
 | Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil e notificações reais no padrão visual aprovado; convergência física aprovada e sem release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
-| Autorização | Lista/detalhe de Propriedades autorizados no backend; escritas e demais recursos continuam pendentes |
-| API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/propriedades` e `/v1/notificacoes` validados |
-| Banco | Sete migrations integradas, incluindo a fundação administrativa e o snapshot nacional IBGE da MP-35A; nenhum ambiente produtivo implantado |
+| Autorização | Lista/detalhe de Propriedades autorizados; administração HTTP de Usuários restrita a Admin e revalidada no SQL; escritas de Propriedade/vínculos continuam pendentes |
+| API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/usuarios`, `/v1/propriedades` e `/v1/notificacoes` validados |
+| Banco | Sete migrations integradas e a `000008` corrigida localmente no worktree, ainda não integrada; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
-| Testes | Rodada focalizada aprovada localmente: aplicativo com typecheck e compatibilidade; backend com typecheck/build, 152 unitários/contratos, 26 HTTP, 54 integrações reais e oito cenários adversariais; migrations, up/down/reaplicação, smoke ESM e links ativos aprovados |
+| Testes | Rodada focal integral verde em 2026-08-27: raiz e backend tipados, domínio compatível, 166 unitários/contratos, 33 HTTP e 74 integrações PostgreSQL/PostGIS reais; MP-35B ainda não integrada |
 
 ## Corte implementado da MP-33C
 
@@ -88,10 +105,11 @@ O comportamento implementado e seus limites estão congelados no
 - dados sintéticos por Testcontainers e fixture manual protegida somente em
   desenvolvimento/QA, sem seed automático ou produtivo.
 
-Escritas de Propriedade, administração de Usuários/vínculos e RBAC por ação
-continuam na MP-35B/C; a integração das telas, na MP-35D. A MP-35A não antecipa
-essas capacidades. O segundo e-mail verificado do Administrador e a
-recuperação da MP-33B permanecem válidos.
+Administração HTTP de Usuários e convites está corrigida localmente na MP-35B,
+ainda sem integração. Escritas de Propriedade e vínculos continuam reservadas
+à MP-35C; a integração das telas, à MP-35D. Nenhuma das duas foi iniciada.
+O segundo e-mail verificado do Administrador e a recuperação da MP-33B
+permanecem válidos.
 
 ## Fonte de dados ativa
 
@@ -377,6 +395,48 @@ representativo de duração/bloqueios continuam portões anteriores à produçã
 A MP-35A não altera o aplicativo e não cria novo smoke físico; essa validação
 pertence à MP-35D.
 
+## Correção local e validação final da MP-35B
+
+A `000008`, ainda não integrada, revoga o DML administrativo direto herdado e
+retira do runtime o acesso direto à idempotência. Quatro mutações estreitas,
+owned por papel seguro `NOLOGIN` e sem `EXECUTE` de `PUBLIC`, concentram
+revalidação de sessão/ator/organização, versão, idempotência, regras D1-D13,
+auditoria, convite/outbox, revogação de sessões e recibo atômico. Interfaces
+estreitas próprias preservam os fluxos legados de conta sem restaurar grants
+amplos. O runtime também não possui mais `INSERT` direto, de tabela ou coluna,
+em `eventos_auditoria`: eventos administrativos nascem dentro das quatro
+operações atômicas, e os demais domínios usam funções de evento fixo com prova
+da transição corrente. O escritor genérico permanece interno ao owner
+`NOLOGIN`, sem `EXECUTE` para runtime ou `PUBLIC`.
+
+O mesmo owner `NOLOGIN` contém duas operações de notificação de finalidade
+única. A entrega de fato de conta executa a inserção real e escolhe internamente
+entre `notificacao.criada` e `notificacao.deduplicada`; a resolução revalida a
+sessão e só registra `notificacao.destino_resolucao_negada` depois de concluir
+que a entrega não é acessível. Runtime e `PUBLIC` não executam as wrappers
+isoladas, não escolhem organização, ator, destinatário, recurso, resultado,
+metadados ou horário e não acessam o escritor genérico.
+
+As duas leituras e quatro mutações sob `/v1/usuarios` usam os códigos HTTP do
+contrato. A paginação recebe do PostgreSQL a chave exata de ordenação e a
+protege em cursor autenticado, confidencial, versionado, expirável e vinculado
+contexto de filtros, com keyring dedicado obrigatório e independente da
+outbox. A criação de Admin permanece fechada na composição produtiva
+enquanto não houver MFA.
+
+As provas focais estão nomeadas em
+`administrative-user-e2e.integration.test.ts`, com matriz 6 x 5 atravessando
+bearer, sessão, RBAC, serviço e LOGIN runtime PostgreSQL, e em
+`administrative-user-repository.integration.test.ts`, com PIDs e espera de
+lock reais para sete corridas, além da expiração do outbox enquanto aguarda o
+lock. A rodada integral posterior às correções passou com 166 testes
+unitários/contratos, 33 HTTP e 74 integrações PostgreSQL/PostGIS, além de
+typecheck, build, smoke ESM, compatibilidade de domínio, manifesto/base e ciclo
+`000008 up/down/up`. O status documental continua em validação final e não é
+promovido a integração ou CI. A MP-35B não cria tela, não implementa
+Propriedade/vínculo e não muda o Demo; o smoke físico administrativo pertence
+à futura MP-35D.
+
 ## Próxima etapa
 
 A MP-33A concluiu a fundação do backend e banco, DDL, migrations, OpenAPI,
@@ -395,15 +455,18 @@ MP-35, o corte corretivo de convergência reutiliza a apresentação aprovada na
 capacidades HTTP existentes, passou no smoke Android físico e foi integrado
 diretamente no commit `e47bb02`, com os três jobs da CI pós-push aprovados.
 A MP-35A também está concluída e integrada diretamente no commit `a51389e`,
-com CI pós-push aprovada e sem antecipar endpoints ou telas. A próxima fase é a
-MP-35B, ainda não iniciada e dependente de autorização específica.
+com CI pós-push aprovada e sem antecipar endpoints ou telas. A MP-35B está
+corrigida localmente, não integrada e em validação final. O próximo passo é
+concluir e revisar essa validação; qualquer integração da MP-35B ou início de
+MP-35C/D exige ação posterior e autorização específica.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. Escritas administrativas e o restante do RBAC
-continuam fora da MP-35A e exigem autorização específica para MP-35B/C/D.
+links, assinatura e dispositivo. Escritas de Propriedade/vínculos e integração
+das telas continuam fora da MP-35B e exigem autorização específica para
+MP-35C/D.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da

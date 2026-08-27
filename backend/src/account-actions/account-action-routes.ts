@@ -34,7 +34,7 @@ export interface AccountActionRoutesOptions {
   readonly authenticationService: Pick<AuthenticationService, 'authenticate'>;
   readonly invitationService: Pick<
     InvitationService,
-    'issueForExistingPendingUser' | 'accept'
+    'accept'
   >;
   readonly primaryEmailService: Pick<
     PrimaryEmailChangeService,
@@ -235,43 +235,6 @@ export const accountActionRoutesPlugin: FastifyPluginAsync<
       .code(safeError.statusCode)
       .send(httpErrorBody(safeError, request.id));
   });
-
-  app.post<{ Body: { usuario_id: string } }>(
-    '/invitations',
-    {
-      schema: {
-        operationId: 'postAccountInvitation',
-        summary: 'Convida um usuário pendente existente',
-        tags: ['Ações de conta'],
-        security: [{ bearerAuth: [] }],
-        body: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['usuario_id'],
-          properties: { usuario_id: userIdSchema },
-        },
-        response: {
-          202: acceptedResponseSchema,
-          400: errorResponseSchema,
-          401: errorResponseSchema,
-          403: errorResponseSchema,
-          404: errorResponseSchema,
-          409: errorResponseSchema,
-        },
-      },
-    },
-    async (request, reply) => {
-      const admin = await activeAdminFor(request, options.authenticationService);
-      await options.invitationService.issueForExistingPendingUser({
-        organizationId: admin.organizationId,
-        actorAdminUserId: admin.id,
-        actorSessionId: admin.sessionId,
-        userId: request.body.usuario_id,
-        requestId: request.id,
-      });
-      return reply.code(202).send({ status: 'aceito' });
-    },
-  );
 
   app.post<{ Body: { token: string; senha: string } }>(
     '/invitations/accept',

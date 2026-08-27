@@ -82,7 +82,6 @@ export class PostgresAssistedRecoveryRepository
                  ) AS actor_ok
           FROM public.usuarios AS target
           WHERE target.organizacao_id = $1 AND target.id = $2
-          FOR UPDATE
         `,
         [expected.organizationId, expected.id, input.actorAdminUserId],
       );
@@ -310,7 +309,7 @@ export class PostgresAssistedRecoveryRepository
           WHERE desafio.token_hash = $1 AND recuperacao.origem = 'admin_http'
             AND desafio.finalidade = 'recuperacao_assistida'
             AND desafio.expira_em > $2 AND recuperacao.expira_em > $2
-          FOR UPDATE OF desafio, recuperacao, usuario
+          FOR UPDATE OF desafio, recuperacao
         `,
         [decodeSha256Hex(input.tokenSha256), input.confirmedAt],
       );
@@ -432,7 +431,7 @@ export class PostgresAssistedRecoveryRepository
             AND autorizacao.finalidade = 'concluir_recuperacao_assistida'
             AND recuperacao.origem = 'admin_http'
             AND autorizacao.expira_em > $2 AND recuperacao.expira_em > $2
-          FOR UPDATE OF autorizacao, recuperacao, usuario
+          FOR UPDATE OF autorizacao, recuperacao
         `,
         [decodeSha256Hex(input.restrictedTokenSha256), input.completedAt],
       );
@@ -504,12 +503,8 @@ export class PostgresAssistedRecoveryRepository
       );
       await query(
         client,
-        `
-          UPDATE public.usuarios
-          SET email = $3, versao_autorizacao = versao_autorizacao + 1
-          WHERE organizacao_id = $1 AND id = $2
-        `,
-        [row.organizacao_id, row.id, row.novo_email],
+        'SELECT public.tche_conta_concluir_recuperacao_assistida_mp35b($1)',
+        [row.recovery_id],
       );
       await this.#store.revokeAllUserSecurityState(client, {
         organizationId: row.organizacao_id,

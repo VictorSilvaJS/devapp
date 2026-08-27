@@ -116,16 +116,50 @@ describe('MP-35A upgrade e concorrência adversariais', { timeout: 180_000 }, ()
         email: `upgrade-admin-${randomUUID()}@example.test`,
       });
       adminUserId = initialized.adminUserId;
-      const invitation = new InvitationService({
-        repository: new PostgresInvitationRepository(postgresOptions()),
-        passwordCredentials: credentials,
-        emailOutbox,
-        actionBaseUrl: ACTION_URL,
-      });
-      await invitation.accept({
-        token: await tokenForChallenge(initialized.challengeId),
-        password: 'SenhaUpgrade1',
-      });
+      const acceptedAt = new Date();
+      const bootstrapInvitation = await requirePool().query<{ id: string }>(`
+        SELECT id
+        FROM public.convites_usuario
+        WHERE organizacao_id = $1 AND desafio_id = $2
+      `, [ORGANIZATION_ID, initialized.challengeId]);
+      const bootstrapInvitationId = bootstrapInvitation.rows[0]?.id;
+      assert.ok(bootstrapInvitationId);
+      const bootstrapClient = await requirePool().connect();
+      try {
+        await bootstrapClient.query('BEGIN');
+        await bootstrapClient.query(`
+          INSERT INTO public.credenciais_usuario (
+            organizacao_id, usuario_id, senha_phc, versao_politica_senha,
+            senha_definida_em
+          ) VALUES ($1, $2, $3, 'integration-v1', $4)
+        `, [ORGANIZATION_ID, adminUserId, phcFor('SenhaUpgrade1'), acceptedAt]);
+        await bootstrapClient.query(`
+          UPDATE public.usuarios SET status = 'ativo'
+          WHERE organizacao_id = $1 AND id = $2 AND status = 'pendente'
+        `, [ORGANIZATION_ID, adminUserId]);
+        await bootstrapClient.query(`
+          UPDATE public.desafios_autenticacao
+          SET status = 'consumido', consumido_em = $3
+          WHERE organizacao_id = $1 AND id = $2 AND status = 'ativo'
+        `, [ORGANIZATION_ID, initialized.challengeId, acceptedAt]);
+        await bootstrapClient.query(`
+          UPDATE public.convites_usuario
+          SET status = 'aceito', aceito_em = $3
+          WHERE organizacao_id = $1 AND id = $2 AND status = 'pendente'
+        `, [ORGANIZATION_ID, bootstrapInvitationId, acceptedAt]);
+        await bootstrapClient.query(`
+          UPDATE public.bootstrap_autenticacao
+          SET status = 'concluido', concluido_em = $3
+          WHERE organizacao_id = $1 AND usuario_admin_id = $2
+            AND status = 'convite_pendente'
+        `, [ORGANIZATION_ID, adminUserId, acceptedAt]);
+        await bootstrapClient.query('COMMIT');
+      } catch (error) {
+        await bootstrapClient.query('ROLLBACK');
+        throw error;
+      } finally {
+        bootstrapClient.release();
+      }
     } finally {
       await platform.pool.end();
       await requirePool().query(`DROP ROLE IF EXISTS ${platform.loginRole}`);
@@ -190,7 +224,7 @@ describe('MP-35A upgrade e concorrência adversariais', { timeout: 180_000 }, ()
           id, organizacao_id, titular_id, nome,
           municipio_id, municipio_nome, uf_id, uf_sigla, status
         ) VALUES ($1, $2, $3, 'Propriedade histórica',
-          '4305108', 'Porto Alegre', '43', 'RS', 'ativa')
+          '4314902', 'Porto Alegre', '43', 'RS', 'ativa')
       `, [propertyId, ORGANIZATION_ID, holderId]);
       await seed.query(`
         INSERT INTO public.usuario_propriedade (
@@ -400,16 +434,25 @@ describe('MP-35A upgrade e concorrência adversariais', { timeout: 180_000 }, ()
       },
     );
 
-    const invitation = new InvitationService({
-      repository: new PostgresInvitationRepository(postgresOptions()),
-      passwordCredentials: credentials,
-      emailOutbox,
-      actionBaseUrl: ACTION_URL,
-    });
-    await invitation.accept({
-      token: historicalToken,
-      password: 'SenhaHistorica1',
-    });
+    await runMigrations({ command: 'up', database: testDatabase.database });
+    const runtime = await createLoginPoolForRole('tche_agro_runtime');
+    try {
+      const invitation = new InvitationService({
+        repository: new PostgresInvitationRepository(
+          postgresOptions(runtime.pool),
+        ),
+        passwordCredentials: credentials,
+        emailOutbox,
+        actionBaseUrl: ACTION_URL,
+      });
+      await invitation.accept({
+        token: historicalToken,
+        password: 'SenhaHistorica1',
+      });
+    } finally {
+      await runtime.pool.end();
+      await requirePool().query(`DROP ROLE IF EXISTS ${runtime.loginRole}`);
+    }
     const historical = await requirePool().query<{
       user_status: string;
       invitation_status: string;
@@ -450,13 +493,15 @@ describe('MP-35A upgrade e concorrência adversariais', { timeout: 180_000 }, ()
     try {
       await client.query('BEGIN');
       await client.query('SET LOCAL ROLE tche_agro_runtime');
-      await client.query(
-        "UPDATE public.usuarios SET status = 'ativo' WHERE id = $1",
-        [pendingId],
-      );
       await assert.rejects(
-        client.query('COMMIT'),
-        /Ativar Usuario exige credencial|ativacao_exige_credencial/i,
+        client.query(
+          "UPDATE public.usuarios SET status = 'ativo' WHERE id = $1",
+          [pendingId],
+        ),
+        (error: unknown) => {
+          assert.equal((error as { readonly code?: string }).code, '42501');
+          return true;
+        },
       );
       await rollbackQuietly(client);
     } finally {
@@ -584,7 +629,6 @@ describe('MP-35A upgrade e concorrência adversariais', { timeout: 180_000 }, ()
       await runtimeService.accept({
         token: await tokenForChallenge(producerInvitation.challengeId),
         password: 'SenhaProdutorRuntime1',
-        requestId: 'runtime-producer-acceptance',
       });
 
       const producerState = await requirePool().query<{

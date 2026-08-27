@@ -5,6 +5,11 @@ export type HttpErrorCode =
   | 'forbidden'
   | 'not_found'
   | 'conflict'
+  | 'version_conflict'
+  | 'idempotency_conflict'
+  | 'business_rule_conflict'
+  | 'invalid_semantics'
+  | 'validation_error'
   | 'password_policy_violation'
   | 'invalid_or_expired_challenge'
   | 'rate_limited'
@@ -62,14 +67,31 @@ export function notFound(): HttpError {
   });
 }
 
-export function conflict(message = 'A operação conflita com o estado atual.'): HttpError {
-  return new HttpError({ statusCode: 409, code: 'conflict', message });
+export function conflict(
+  message = 'A operação conflita com o estado atual.',
+  code: Extract<
+    HttpErrorCode,
+    'conflict' | 'version_conflict' | 'idempotency_conflict' | 'business_rule_conflict'
+  > = 'conflict',
+): HttpError {
+  return new HttpError({ statusCode: 409, code, message });
 }
 
 export function unprocessable(message: string): HttpError {
   return new HttpError({
     statusCode: 422,
     code: 'password_policy_violation',
+    message,
+  });
+}
+
+export function unprocessableEntity(
+  message = 'A requisição não é válida para o estado atual.',
+  code: 'invalid_semantics' | 'validation_error' = 'invalid_semantics',
+): HttpError {
+  return new HttpError({
+    statusCode: 422,
+    code,
     message,
   });
 }

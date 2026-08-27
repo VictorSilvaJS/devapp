@@ -29,6 +29,7 @@ export interface EncryptedOutboxMessageDraft {
 export interface ClaimedOutboxMessage {
   readonly id: string;
   readonly organizationId: string;
+  readonly userId?: string;
   readonly messageType: string;
   readonly challengeId?: string;
   readonly payload: EncryptedOutboxPayload;
@@ -38,6 +39,31 @@ export interface ClaimedOutboxMessage {
   /** Unique per claim; all terminal/retry writes must compare this value. */
   readonly leaseToken: string;
 }
+
+export type OutboxDispatchDecision =
+  | Readonly<{
+      status: 'delivered';
+      occurredAt: Date;
+      providerMessageId?: string;
+    }>
+  | Readonly<{
+      status: 'retried';
+      occurredAt: Date;
+      nextAttemptAt: Date;
+      errorCode: string;
+    }>
+  | Readonly<{
+      status: 'failed';
+      occurredAt: Date;
+      errorCode: string;
+    }>;
+
+export type CoordinatedOutboxDispatchResult =
+  | 'delivered'
+  | 'retried'
+  | 'failed'
+  | 'cancelled'
+  | 'stale';
 
 export interface ClaimReadyOutboxInput {
   readonly workerId: string;
@@ -52,6 +78,14 @@ export interface OutboxRepository {
    * A message may be returned to only one live lease at a time.
    */
   claimReady(input: ClaimReadyOutboxInput): Promise<readonly ClaimedOutboxMessage[]>;
+  /**
+   * Mantém o mesmo advisory lock da substituição de convite desde a validação
+   * final até a persistência do resultado do dispatch.
+   */
+  dispatchUnderEntityLock(input: {
+    readonly message: ClaimedOutboxMessage;
+    readonly dispatch: () => Promise<OutboxDispatchDecision>;
+  }): Promise<CoordinatedOutboxDispatchResult>;
   isChallengeActive(input: {
     readonly organizationId: string;
     readonly challengeId: string;

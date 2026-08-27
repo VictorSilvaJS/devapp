@@ -249,27 +249,6 @@ export class OutboxWorker {
       return;
     }
 
-    if (message.challengeId !== undefined) {
-      const challengeActive = await this.#repository.isChallengeActive({
-        organizationId: message.organizationId,
-        challengeId: message.challengeId,
-        now,
-      });
-      if (!challengeActive) {
-        await this.#record(
-          this.#repository.markCancelled({
-            messageId: message.id,
-            leaseToken: message.leaseToken,
-            cancelledAt: this.#clock(),
-            reasonCode: 'challenge_inactive',
-          }),
-          counters,
-          'cancelled',
-        );
-        return;
-      }
-    }
-
     const dispatcher = this.#dispatchers.find((candidate) =>
       candidate.supports(message.messageType),
     );
@@ -287,85 +266,69 @@ export class OutboxWorker {
       return;
     }
 
-    try {
-      const receipt = await dispatcher.dispatch(message);
-      await this.#record(
-        this.#repository.markDelivered({
-          messageId: message.id,
-          leaseToken: message.leaseToken,
-          deliveredAt: this.#clock(),
-          ...(receipt.providerMessageId === undefined
-            ? {}
-            : { providerMessageId: receipt.providerMessageId }),
-        }),
-        counters,
-        'delivered',
-      );
-    } catch (error) {
-      const failure = sanitizedFailure(error);
-      this.#logger?.warn(
-        {
-          event: 'outbox_delivery_failed',
-          message_id: message.id,
-          error_code: failure.code,
-          retryable: failure.retryable,
-        },
-        'Outbox delivery attempt failed.',
-      );
-      const attemptedAt = this.#clock();
-      const attemptsExhausted = message.attempt >= message.maxAttempts;
+    const outcome = await this.#repository.dispatchUnderEntityLock({
+      message,
+      dispatch: async () => {
+        try {
+          const receipt = await dispatcher.dispatch(message);
+          return {
+            status: 'delivered' as const,
+            occurredAt: this.#clock(),
+            ...(receipt.providerMessageId === undefined
+              ? {}
+              : { providerMessageId: receipt.providerMessageId }),
+          };
+        } catch (error) {
+          const failure = sanitizedFailure(error);
+          this.#logger?.warn(
+            {
+              event: 'outbox_delivery_failed',
+              message_id: message.id,
+              error_code: failure.code,
+              retryable: failure.retryable,
+            },
+            'Outbox delivery attempt failed.',
+          );
+          const attemptedAt = this.#clock();
+          const attemptsExhausted = message.attempt >= message.maxAttempts;
+          if (!failure.retryable || attemptsExhausted) {
+            return {
+              status: 'failed' as const,
+              occurredAt: attemptedAt,
+              errorCode: failure.code,
+            };
+          }
 
-      if (!failure.retryable || attemptsExhausted) {
-        await this.#record(
-          this.#repository.markFailed({
-            messageId: message.id,
-            leaseToken: message.leaseToken,
-            failedAt: attemptedAt,
+          const exponential = Math.min(
+            this.#maxBackoffMs,
+            this.#baseBackoffMs * 2 ** Math.max(0, message.attempt - 1),
+          );
+          const jitterValue = this.#jitter();
+          const boundedJitter = Number.isFinite(jitterValue)
+            ? Math.min(1, Math.max(0, jitterValue))
+            : 0.5;
+          const delay = Math.round(
+            exponential * (0.75 + boundedJitter * 0.5),
+          );
+          const nextAttemptAt = new Date(attemptedAt.getTime() + delay);
+          if (nextAttemptAt.getTime() >= message.expiresAt.getTime()) {
+            return {
+              status: 'failed' as const,
+              occurredAt: attemptedAt,
+              errorCode: 'delivery_window_exhausted',
+            };
+          }
+          return {
+            status: 'retried' as const,
+            occurredAt: attemptedAt,
+            nextAttemptAt,
             errorCode: failure.code,
-          }),
-          counters,
-          'failed',
-        );
-        return;
-      }
-
-      const exponential = Math.min(
-        this.#maxBackoffMs,
-        this.#baseBackoffMs * 2 ** Math.max(0, message.attempt - 1),
-      );
-      const jitterValue = this.#jitter();
-      const boundedJitter = Number.isFinite(jitterValue)
-        ? Math.min(1, Math.max(0, jitterValue))
-        : 0.5;
-      const delay = Math.round(exponential * (0.75 + boundedJitter * 0.5));
-      const nextAttemptAt = new Date(attemptedAt.getTime() + delay);
-
-      if (nextAttemptAt.getTime() >= message.expiresAt.getTime()) {
-        await this.#record(
-          this.#repository.markFailed({
-            messageId: message.id,
-            leaseToken: message.leaseToken,
-            failedAt: attemptedAt,
-            errorCode: 'delivery_window_exhausted',
-          }),
-          counters,
-          'failed',
-        );
-        return;
-      }
-
-      await this.#record(
-        this.#repository.reschedule({
-          messageId: message.id,
-          leaseToken: message.leaseToken,
-          attemptedAt,
-          nextAttemptAt,
-          errorCode: failure.code,
-        }),
-        counters,
-        'retried',
-      );
-    }
+          };
+        }
+      },
+    });
+    if (outcome === 'stale') counters.staleLease += 1;
+    else counters[outcome] += 1;
   }
 
   async #record(

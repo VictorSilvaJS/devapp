@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-08-26
+> Revisão documental: 2026-08-27
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A, MP-33B, MP-33C, MP-34 e MP-35A estão concluídas
@@ -57,14 +57,13 @@ estão consolidados em `contrato-notificacoes.md`.
 
 - operar ou liberar produtivamente a MP-34 somente depois de fechar os portões
   de purga, privacidade, segredos, observabilidade e release;
-- planejar e implementar, somente após autorização explícita, a MP-35B de
-  administração HTTP de Usuários/convites;
+- concluir a validação final da correção local da MP-35B; integração posterior
+  exige ação específica e não foi autorizada nesta execução;
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- implementar na MP-35C escritas de Propriedade e deltas de vínculos;
-- integrar na MP-35D as telas administrativas existentes e executar a
-  validação física;
+- manter MP-35C/D não iniciadas; escritas de Propriedade/deltas de vínculos e
+  integração das telas dependem de autorização futura específica;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
@@ -130,6 +129,21 @@ Antes de habilitar a MP-33B em produção pública, fechar:
   append-only quando houver impacto persistido;
 - retenção jurídica, de privacidade e operacional da auditoria;
 - cadastro e confirmação de contato secundário dos Administradores.
+
+### Portões produtivos da administração de Usuários
+
+A MP-35B não deixa decisão funcional D1-D13 em aberto, mas sua liberação
+produtiva ainda exige:
+
+- provisionar e rotacionar `ADMIN_USER_CURSOR_KEYS` sem reutilizar material da
+  outbox e manter o identificador ativo sob gestão operacional;
+- medir a busca infixa literal `ILIKE` de Usuários com distribuição e volume
+  representativos, definindo índice ou limite adicional caso necessário;
+- ensaiar capacidade, latência, timeout e contenção do SMTP enquanto a
+  transação e o advisory lock coordenado do worker permanecem abertos.
+
+Esses itens não autorizam antecipar MP-35C/D e não são substituídos pelos
+testes funcionais locais em Testcontainers/Mailpit.
 
 ### Materiais e arquivos
 

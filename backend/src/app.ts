@@ -9,6 +9,10 @@ import fastify, {
 
 import type { RuntimeConfig } from './config.js';
 import {
+  administrativeUserRoutesPlugin,
+  type AdministrativeUserRoutesOptions,
+} from './administration/user-routes.js';
+import {
   accountActionRoutesPlugin,
   type AccountActionRoutesOptions,
 } from './account-actions/account-action-routes.js';
@@ -65,6 +69,7 @@ export interface BuildAppOptions {
     AccountActionRoutesOptions,
     'authenticationService'
   >;
+  readonly administrativeUserRoutes?: AdministrativeUserRoutesOptions;
   readonly propertyRoutes?: PropertyRoutesOptions;
   readonly notificationRoutes?: NotificationRoutesOptions;
 }
@@ -151,6 +156,10 @@ export async function buildApp(
           description: 'Convites, e-mails verificados e recuperações controladas.',
         },
         {
+          name: 'Administração de Usuários',
+          description: 'Cadastro global, status e convites de Usuários.',
+        },
+        {
           name: 'Propriedades',
           description: 'Consulta de Propriedades dentro do escopo autorizado.',
         },
@@ -187,6 +196,18 @@ export async function buildApp(
     await app.register(propertyRoutesPlugin, {
       prefix: '/v1/propriedades',
       ...options.propertyRoutes,
+    });
+  }
+
+  if (options.administrativeUserRoutes !== undefined) {
+    if (options.authenticationService === undefined) {
+      throw new TypeError(
+        'Administrative user routes require an authentication service.',
+      );
+    }
+    await app.register(administrativeUserRoutesPlugin, {
+      prefix: '/v1/usuarios',
+      ...options.administrativeUserRoutes,
     });
   }
 

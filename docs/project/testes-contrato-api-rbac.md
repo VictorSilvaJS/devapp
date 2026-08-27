@@ -1,7 +1,8 @@
 # Testes De Contrato/API Para RBAC
 
 Status revisado em 2026-08-26:
-`MP-35A concluída e integrada diretamente em a51389e; MP-35B/C/D não iniciadas`. Este documento
+`MP-35A concluída e integrada diretamente em a51389e; MP-35B corrigida
+localmente, não integrada e em validação final; MP-35C/D não iniciadas`. Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
@@ -9,9 +10,10 @@ em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
 Esta matriz orienta a API/backend. Os cenários de autenticação da MP-33B
 possuem automação validada. Os cenários de leitura de Propriedades viraram
-testes executáveis e foram validados na MP-33C; escritas administrativas e o
-restante do RBAC por ação continuam documentação para MP-35B/C. A MP-35A
-implementa somente a fundação persistente aprovada em D1-D13.
+testes executáveis e foram validados na MP-33C; a administração de Usuários e
+convites foi automatizada na MP-35B. As escritas de Propriedades e vínculos
+continuam planejadas para a MP-35C. A MP-35A implementou a fundação persistente
+aprovada em D1-D13.
 
 Separacao obrigatoria:
 
@@ -34,10 +36,11 @@ Separacao obrigatoria:
   area existe, mas nao tem permissao para executar a acao.
 - Usar `404 Not Found` quando o recurso nao existe ou quando revelar sua
   existencia criaria vazamento de escopo.
-- Usar `400 Bad Request` para payload invalido.
-- Usar `409 Conflict` para vinculo duplicado, conflito de regra ou estado
-  incompativel.
-- Usar `422 Unprocessable Entity` para campo semanticamente invalido.
+- Usar `400 invalid_request` para JSON malformado ou estrutura inválida.
+- Usar `409 version_conflict`, `idempotency_conflict` ou
+  `business_rule_conflict`, conforme a fonte do conflito.
+- Usar `422 validation_error` para enum, valor ou limite semanticamente
+  inválido.
 
 Para eliminar ambiguidade, recurso individual fora do escopo usa `404`; acao
 negada sobre recurso conhecido e dentro do escopo usa `403`.
@@ -66,27 +69,36 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 
 | ID | Cenario | Perfil usado | Pre-condicao | Endpoint | Payload minimo | Status esperado | Regra validada | Observacao |
 |---|---|---|---|---|---|---|---|---|
-| API-RBAC-USR-01 | Admin lista usuarios | Admin | Admin ativo | `GET /v1/usuarios` | Filtros opcionais | `200 OK` | Somente Admin gerencia usuarios | MP-35B |
-| API-RBAC-USR-02 | Produtor tenta listar usuarios | Produtor | Produtor autenticado | `GET /v1/usuarios` | Filtros opcionais | `403 Forbidden` | Produtor nao edita usuarios/vinculos | MP-35B |
-| API-RBAC-USR-03 | Nao autenticado lista usuarios | Nao autenticado | Sem sessao | `GET /v1/usuarios` | Filtros opcionais | `401 Unauthorized` | Autenticacao obrigatoria | MP-35B |
-| API-RBAC-USR-04 | Admin abre detalhe de usuario | Admin | Usuario existe | `GET /v1/usuarios/:id` | Nao se aplica | `200 OK` | Admin pode abrir detalhe administrativo | MP-35B |
-| API-RBAC-USR-05 | Usuario inexistente | Admin | Id nao existe | `GET /v1/usuarios/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna 404 | MP-35B |
-| API-RBAC-USR-06 | Admin cria usuario valido | Admin | E-mail nao existe | `POST /v1/usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor" }` | `201 Created` | Servidor cria pendente, sem senha, e emite convite | MP-35B |
-| API-RBAC-USR-07 | Criar usuario com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/usuarios` | `{ "email": "invalido" }` | `400 Bad Request` | Payload invalido e recusado | MP-35B |
-| API-RBAC-USR-08 | Criar usuario com e-mail duplicado | Admin | E-mail ja cadastrado | `POST /v1/usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor" }` | `409 Conflict` | Conflito de regra retorna 409 | MP-35B |
-| API-RBAC-USR-09 | Admin atualiza usuario | Admin | Usuario existe | `PATCH /v1/usuarios/:id` | Campos parciais e `versao` | `200 OK` | Somente Admin atualiza usuario | MP-35B |
-| API-RBAC-USR-10 | Colaborador atualiza usuario sem permissao | Colaborador | Sem papel administrativo | `PATCH /v1/usuarios/:id` | Campos parciais | `403 Forbidden` | Colaborador nao edita usuarios | MP-35B |
-| API-RBAC-USR-11 | Admin altera status | Admin | Usuario existe e regra permite | `PATCH /v1/usuarios/:id/status` | `{ "status": "inativo", "versao": 2, "motivo": "fim_relacao" }` | `200 OK` | Status e controlado por Admin e revoga sessões afetadas | MP-35B |
-| API-RBAC-USR-12 | Inativar Titular de Propriedade ativa isoladamente | Admin | Usuario/Produtor ativo e Propriedade ativa | `PATCH /v1/usuarios/:id/status` | `{ "status": "inativo", "versao": 2, "motivo": "suspensao_operacional" }` | `409 Conflict` | Estado final não pode deixar Propriedade ativa sem Titular habilitado | MP-35B |
+| API-RBAC-USR-01 | Admin lista usuarios | Admin | Admin ativo | `GET /v1/usuarios` | Filtros opcionais | `200 OK` | Somente Admin gerencia usuarios | Automatizado na MP-35B |
+| API-RBAC-USR-02 | Produtor tenta listar usuarios | Produtor | Produtor autenticado | `GET /v1/usuarios` | Filtros opcionais | `403 Forbidden` | Produtor nao edita usuarios/vinculos | Automatizado na MP-35B |
+| API-RBAC-USR-03 | Nao autenticado lista usuarios | Nao autenticado | Sem sessao | `GET /v1/usuarios` | Filtros opcionais | `401 Unauthorized` | Autenticacao obrigatoria | Automatizado na MP-35B |
+| API-RBAC-USR-04 | Admin abre detalhe de usuario | Admin | Usuario existe | `GET /v1/usuarios/:id` | Nao se aplica | `200 OK` | Admin pode abrir detalhe administrativo | Automatizado na MP-35B |
+| API-RBAC-USR-05 | Usuario inexistente | Admin | Id nao existe | `GET /v1/usuarios/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna 404 | Automatizado na MP-35B |
+| API-RBAC-USR-06 | Admin cria usuario valido | Admin | E-mail nao existe | `POST /v1/usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor" }` | `201 Created` | Servidor cria pendente, sem senha, e emite convite | Automatizado na MP-35B |
+| API-RBAC-USR-07 | Criar usuario com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/usuarios` | `{ "email": "invalido" }` | `400 Bad Request` | Payload invalido e recusado | Automatizado na MP-35B |
+| API-RBAC-USR-08 | Criar usuario com e-mail duplicado | Admin | E-mail ja cadastrado | `POST /v1/usuarios` | `{ "nome": "...", "email": "...", "perfil": "produtor" }` | `409 Conflict` | Conflito de regra retorna 409 | Automatizado na MP-35B |
+| API-RBAC-USR-09 | Admin atualiza usuario | Admin | Usuario existe | `PATCH /v1/usuarios/:id` | Campos parciais e `versao` | `200 OK` | Somente Admin atualiza usuario | Automatizado na MP-35B |
+| API-RBAC-USR-10 | Colaborador atualiza usuario sem permissao | Colaborador | Sem papel administrativo | `PATCH /v1/usuarios/:id` | Campos parciais | `403 Forbidden` | Colaborador nao edita usuarios | Automatizado na MP-35B |
+| API-RBAC-USR-11 | Admin altera status | Admin | Usuario existe e regra permite | `PATCH /v1/usuarios/:id/status` | `{ "status": "inativo", "versao": 2, "motivo": "fim_relacao" }` | `200 OK` | Status e controlado por Admin e revoga sessões afetadas | Automatizado na MP-35B |
+| API-RBAC-USR-12 | Inativar Titular de Propriedade ativa isoladamente | Admin | Usuario/Produtor ativo e Propriedade ativa | `PATCH /v1/usuarios/:id/status` | `{ "status": "inativo", "versao": 2, "motivo": "suspensao_operacional" }` | `409 Conflict` | Estado final não pode deixar Propriedade ativa sem Titular habilitado | Automatizado na MP-35B |
 | API-RBAC-USR-13 | Usuario principal inativo tenta acessar como Titular | Produtor inativo | `titular_id` permanece valido | `GET /v1/propriedades` | Nao se aplica | `401 Unauthorized` | Usuario inativo nao obtem acesso apesar da Titularidade cadastral | Automatizado na MP-33C |
 | API-RBAC-USR-14 | Aceitar convite novo de Colaborador | Colaborador pendente | Convite `ativar_usuario`, sem credencial | `POST /v1/auth/invitations/accept` | Token e senha válida | `204 No Content` | Credencial e Usuário ativo no mesmo commit, mesmo com zero vínculos | Automatizado na MP-35A |
 | API-RBAC-USR-15 | Aceitar convite novo de Produtor | Produtor pendente/inativo | Convite `ativar_usuario`, sem credencial | `POST /v1/auth/invitations/accept` | Token e senha válida | `204 No Content` | Usuário, Produtor e credencial ficam ativos atomicamente com login real membro somente de `tche_agro_runtime` | Automatizado na MP-35A |
-| API-RBAC-USR-16 | Emitir modo histórico em fluxo novo | Admin | Usuário pendente | `POST /v1/usuarios/:id/convites` | Tentativa `manter_status` | `422 Unprocessable Entity` | `manter_status` é somente compatibilidade histórica | MP-35B; constraint automatizada na MP-35A |
-| API-RBAC-USR-17 | Retry idempotente de mutação | Admin | Primeira resposta ambígua | Repetir rota mutável | Mesma `Idempotency-Key` e mesmo corpo | Mesmo status/recibo | Nenhuma versão ou efeito avança duas vezes | MP-35B/C |
-| API-RBAC-USR-18 | Reuso conflitante da chave | Admin | Chave já concluída | Repetir rota mutável | Mesma chave e corpo diferente | `409 Conflict` | Hash do pedido vincula a chave ao comando | MP-35B/C |
+| API-RBAC-USR-16 | Emitir modo histórico em fluxo novo | Admin | Usuário pendente | `POST /v1/usuarios/:id/convites` | Tentativa `manter_status` | `422 Unprocessable Entity` | `manter_status` é somente compatibilidade histórica | Automatizado na MP-35B; constraint automatizada na MP-35A |
+| API-RBAC-USR-17 | Retry idempotente de mutação | Admin | Primeira resposta ambígua | Repetir rota mutável | Mesma `Idempotency-Key` e mesmo corpo | Mesmo status/recibo | Nenhuma versão ou efeito avança duas vezes | Automatizado para Usuários na MP-35B; Propriedades na MP-35C |
+| API-RBAC-USR-18 | Reuso conflitante da chave | Admin | Chave já concluída | Repetir rota mutável | Mesma chave e corpo diferente | `409 Conflict` | Hash do pedido vincula a chave ao comando | Automatizado para Usuários na MP-35B; Propriedades na MP-35C |
 | API-RBAC-USR-19 | Ativar Usuário sem credencial | Runtime | Usuário pendente sem credencial ativa | Escrita SQL controlada | Alterar para ativo | Transação rejeitada | Ativação exige credencial ativa mesmo por escrita direta | Automatizado na MP-35A |
 | API-RBAC-USR-20 | Concluir bootstrap e inativar último Admin em corrida | Runtime | Uma conexão conclui bootstrap e outra inativa o Admin | Duas transações com barreira | Não se aplica | No máximo um commit | Proteção do último Admin compartilha o lock singleton | Automatizado na MP-35A |
-| API-RBAC-USR-21 | Alteração futura de autorização | Admin | MP-35B/C implementada | Rota mutável aplicável | Comando válido | Conforme rota | D13 revoga sessões dos Usuários diretamente afetados, inclusive em ampliação | Planejado MP-35B/C |
+| API-RBAC-USR-21 | Alteração de autorização | Admin | MP-35B/C implementada | Rota mutável aplicável | Comando válido | Conforme rota | D13 revoga sessões dos Usuários diretamente afetados, inclusive em ampliação | Status de Usuário automatizado na MP-35B; vínculos planejados para MP-35C |
+| API-RBAC-USR-22 | Login runtime tenta DML administrativo direto | Login membro somente de runtime | `current_user=session_user`, não-superuser e não-owner | SQL direto em Usuários/Produtores/idempotência | `INSERT`/`UPDATE`/`DELETE` adversarial | Permissão negada | Somente funções estreitas podem mutar o agregado | Automatizado na MP-35B |
+| API-RBAC-USR-23 | Cursor confidencial e vinculado | Admin | Mais de 100 nomes, iguais, acentuados e Unicode | `GET /v1/usuarios` | filtros, limite e cursor vazio/excessivo/truncado/malformado/adulterado/versão desconhecida | `200` ou `400 invalid_request` para envelope inválido | Sem PII decodificável, adulteração/troca de filtro recusada, sem omissão/duplicação | Automatizado na MP-35B |
+| API-RBAC-USR-24 | Sessão Admin stale após autenticação | Admin com sessão revogada/versão divergente | Bearer formalmente válido | qualquer leitura administrativa | Não se aplica | `401 invalid_session` | Repositório revalida sessão no SQL | Automatizado na MP-35B |
+| API-RBAC-USR-25 | Limite Unicode N/N+1 | Admin | ASCII, emoji, composto, decomposto e caractere fora do BMP | `POST /v1/usuarios` | nome e e-mail no limite e acima | `201` / `422 validation_error` | Pontos de código após NFC em HTTP/domínio/SQL | Automatizado na MP-35B |
+| API-RBAC-USR-26 | Substituição versus outbox em voo | Admin e worker | Duas conexões e barreira antes do dispatcher | reemitir convite e dispatch | Duas ordens de lock e expiração real durante espera | Um envio anterior termina antes do commit ou o worker observa cancelamento/expiração sem dispatch | Fronteira linearizável e relógio do PostgreSQL consultado após os locks | Automatizado na MP-35B |
+| API-RBAC-USR-27 | Criar Admin em produção sem MFA | Admin | Composição `production`, MFA ainda ausente | `POST /v1/usuarios` | `perfil=admin` | `409 business_rule_conflict` | Portão produtivo permanece fechado | Automatizado no serviço da MP-35B |
+| API-RBAC-USR-28 | Matriz negativa das seis rotas | Admin, não autenticado, stale, Produtor e Colaborador | Bearers e sessões reais | seis rotas de `/v1/usuarios` | payload válido por rota | Admin `2xx`; ausência/stale `401`; Produtor/Colaborador `403` | Autenticação, revalidação SQL e RBAC atravessam o serviço/runtime real | `administrative-user-e2e.integration.test.ts`, matriz 6 x 5 |
+| API-RBAC-USR-29 | Destino pendente na rota de status | Admin | Usuário pendente | `PATCH /v1/usuarios/:id/status` | `{ "status": "pendente", "versao": 2, "motivo": "outro", "motivo_detalhe": "teste" }` | `422 validation_error` | Pendente não é conflito de estado e não transiciona por essa rota | Automatizado em serviço, HTTP e PostgreSQL |
+| API-RBAC-USR-30 | Corridas observáveis no PostgreSQL | Admin/runtime | Duas conexões por cenário | mutações administrativas e ativação de Propriedade | comandos concorrentes coordenados | Estado final serializado; ambos os PIDs observados esperando lock | Mesma chave/corpo, mesma chave/corpo diferente, mesma versão, e-mail, convite, status e Produtor versus Propriedade | `administrative-user-repository.integration.test.ts` |
 
 ## Propriedades
 

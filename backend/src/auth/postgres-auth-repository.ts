@@ -29,6 +29,7 @@ import type { EncryptedEmailOutboxFactory } from '../outbox/email-message.js';
 import type { EncryptedOutboxMessageDraft } from '../outbox/contracts.js';
 import type { AccountNotificationWriter } from '../notifications/contracts.js';
 import { PostgresAccountNotificationWriter } from '../notifications/postgres-account-notification-writer.js';
+import { insertRuntimeAudit } from '../audit/postgres-runtime-audit.js';
 import { normalizeEmail } from './normalization.js';
 
 const DEFAULT_ORGANIZATION_ID = 'org_tche_fertilidade';
@@ -130,34 +131,28 @@ async function appendAudit(
     readonly metadata?: Readonly<Record<string, unknown>>;
   },
 ): Promise<void> {
-  await query(
-    client,
-    `
-      INSERT INTO public.eventos_auditoria (
-        id, organizacao_id, evento, resultado, ator_tipo, ator_usuario_id,
-        sessao_id, usuario_afetado_id, recurso_tipo, recurso_id, request_id,
-        email_hmac, metadados
-      ) VALUES (
-        COALESCE($1::uuid, pg_catalog.gen_random_uuid()),
-        $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb
-      )
-    `,
-    [
-      input.id ?? null,
-      input.organizationId,
-      input.event,
-      input.result ?? 'sucesso',
-      input.actorType,
-      input.actorUserId ?? null,
-      input.sessionId ?? null,
-      input.affectedUserId ?? null,
-      input.resourceType ?? null,
-      input.resourceId ?? null,
-      safeRequestId(input.requestId),
-      input.emailHmac ?? null,
-      JSON.stringify(input.metadata ?? {}),
-    ],
-  );
+  if (input.resourceType === undefined || input.resourceId === undefined) {
+    throw new Error('Runtime audit requires a server-defined resource.');
+  }
+  await insertRuntimeAudit(client, {
+    ...(input.id === undefined ? {} : { id: input.id }),
+    organizationId: input.organizationId,
+    event: input.event,
+    result: input.result ?? 'sucesso',
+    actorType: input.actorType,
+    ...(input.actorUserId === undefined
+      ? {}
+      : { actorUserId: input.actorUserId }),
+    ...(input.sessionId === undefined ? {} : { sessionId: input.sessionId }),
+    ...(input.affectedUserId === undefined
+      ? {}
+      : { affectedUserId: input.affectedUserId }),
+    resourceType: input.resourceType,
+    resourceId: input.resourceId,
+    requestId: safeRequestId(input.requestId),
+    ...(input.emailHmac === undefined ? {} : { emailHmac: input.emailHmac }),
+    metadata: input.metadata ?? {},
+  });
 }
 
 async function revokeSession(
@@ -167,7 +162,7 @@ async function revokeSession(
     readonly sessionId: string;
     readonly reason: string;
   },
-): Promise<void> {
+): Promise<boolean> {
   await query(
     client,
     `
@@ -188,7 +183,7 @@ async function revokeSession(
     `,
     [input.organizationId, input.sessionId, input.reason],
   );
-  await query(
+  const session = await query(
     client,
     `
       UPDATE public.sessoes_autenticacao
@@ -198,6 +193,7 @@ async function revokeSession(
     `,
     [input.organizationId, input.sessionId, input.reason],
   );
+  return session.rowCount === 1;
 }
 
 async function revokeAllUserSessions(
@@ -208,7 +204,7 @@ async function revokeAllUserSessions(
     readonly reason: string;
     readonly exceptSessionId?: string;
   },
-): Promise<void> {
+): Promise<number> {
   const sessionIds = await query<{ id: string }>(
     client,
     `
@@ -220,13 +216,15 @@ async function revokeAllUserSessions(
     `,
     [input.organizationId, input.userId, input.exceptSessionId ?? null],
   );
+  let revoked = 0;
   for (const row of sessionIds.rows) {
-    await revokeSession(client, {
+    if (await revokeSession(client, {
       organizationId: input.organizationId,
       sessionId: row.id,
       reason: input.reason,
-    });
+    })) revoked += 1;
   }
+  return revoked;
 }
 
 function clientLabel(value: string | undefined): string | null {
@@ -444,7 +442,6 @@ export class PostgresAuthRepository implements AuthRepository {
                  NULL::text AS versao_politica_senha
           FROM public.usuarios AS usuario
           WHERE usuario.organizacao_id = $1 AND usuario.id = $2
-          FOR UPDATE
         `,
         [this.#organizationId, input.userId],
       );
@@ -581,7 +578,7 @@ export class PostgresAuthRepository implements AuthRepository {
            AND usuario.id = sessao.usuario_id
           WHERE refresh.token_hash = $1
             AND refresh.organizacao_id = $2
-          FOR UPDATE OF refresh, sessao, usuario
+          FOR UPDATE OF refresh, sessao
         `,
         [currentHash, this.#organizationId],
       );
@@ -826,12 +823,11 @@ export class PostgresAuthRepository implements AuthRepository {
         `
           SELECT id FROM public.usuarios
           WHERE organizacao_id = $1 AND id = $2
-          FOR UPDATE
         `,
         [this.#organizationId, input.userId],
       );
       if (user.rows[0] === undefined) return;
-      await revokeAllUserSessions(client, {
+      const revoked = await revokeAllUserSessions(client, {
         organizationId: this.#organizationId,
         userId: input.userId,
         reason: 'logout_todas_sessoes',
@@ -839,17 +835,19 @@ export class PostgresAuthRepository implements AuthRepository {
           ? {}
           : { exceptSessionId: input.exceptSessionId }),
       });
-      await appendAudit(client, {
-        organizationId: this.#organizationId,
-        event: 'auth.sessao.logout_todas',
-        actorType: 'usuario',
-        actorUserId: input.userId,
-        sessionId: input.actorSessionId,
-        affectedUserId: input.userId,
-        resourceType: 'usuario',
-        resourceId: input.userId,
-        requestId: input.requestId,
-      });
+      if (revoked > 0) {
+        await appendAudit(client, {
+          organizationId: this.#organizationId,
+          event: 'auth.sessao.logout_todas',
+          actorType: 'usuario',
+          actorUserId: input.userId,
+          sessionId: input.actorSessionId,
+          affectedUserId: input.userId,
+          resourceType: 'usuario',
+          resourceId: input.userId,
+          requestId: input.requestId,
+        });
+      }
     });
   }
 
@@ -981,7 +979,7 @@ export class PostgresAuthRepository implements AuthRepository {
             AND acesso.status = 'ativo'
             AND acesso.expira_em > pg_catalog.clock_timestamp()
             AND acesso.versao_autorizacao = usuario.versao_autorizacao
-          FOR UPDATE OF usuario, credencial, sessao, acesso, refresh
+          FOR UPDATE OF credencial, sessao, acesso, refresh
         `,
         [
           this.#organizationId,
@@ -1013,12 +1011,11 @@ export class PostgresAuthRepository implements AuthRepository {
       const version = await query<{ versao_autorizacao: string | number }>(
         client,
         `
-          UPDATE public.usuarios
-          SET versao_autorizacao = versao_autorizacao + 1
-          WHERE organizacao_id = $1 AND id = $2
-          RETURNING versao_autorizacao
+          SELECT public.tche_conta_avancar_autorizacao_sessao_mp35b(
+            $1, $2, $3
+          ) AS versao_autorizacao
         `,
-        [this.#organizationId, input.userId],
+        [this.#organizationId, input.userId, input.currentSessionId],
       );
       const authorizationVersion = databaseInteger(
         version.rows[0]?.versao_autorizacao ?? Number.NaN,
@@ -1172,7 +1169,7 @@ export class PostgresAuthRepository implements AuthRepository {
           WHERE usuario.organizacao_id = $1
             AND lower(usuario.email) = lower($2)
             AND usuario.status = 'ativo'
-          FOR UPDATE OF usuario, credencial
+          FOR UPDATE OF credencial
         `,
         [this.#organizationId, input.normalizedEmail],
       );
@@ -1313,7 +1310,7 @@ export class PostgresAuthRepository implements AuthRepository {
           WHERE desafio.token_hash = $1
             AND desafio.organizacao_id = $2
             AND desafio.finalidade = 'recuperacao_senha'
-          FOR UPDATE OF desafio, usuario, credencial
+          FOR UPDATE OF desafio, credencial
         `,
         [tokenHash, this.#organizationId],
       );
@@ -1366,12 +1363,8 @@ export class PostgresAuthRepository implements AuthRepository {
       );
       await query(
         client,
-        `
-          UPDATE public.usuarios
-          SET versao_autorizacao = versao_autorizacao + 1
-          WHERE organizacao_id = $1 AND id = $2
-        `,
-        [row.organizacao_id, row.usuario_id],
+        'SELECT public.tche_conta_concluir_recuperacao_senha_mp35b($1)',
+        [row.desafio_id],
       );
       await revokeAllUserSessions(client, {
         organizationId: row.organizacao_id,

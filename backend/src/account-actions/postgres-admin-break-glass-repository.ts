@@ -107,7 +107,6 @@ export class PostgresAdminBreakGlassRepository
            AND contato.usuario_id = usuario.id
            AND contato.tipo = 'recuperacao' AND contato.status = 'verificado'
           WHERE usuario.organizacao_id = $1 AND usuario.id = $2
-          FOR UPDATE OF usuario
         `,
         [expected.account.organizationId, expected.account.id],
       );
@@ -351,7 +350,7 @@ export class PostgresAdminBreakGlassRepository
             AND desafio.finalidade = 'recuperacao_assistida'
             AND recuperacao.origem = 'plataforma_cli'
             AND desafio.expira_em > $2 AND recuperacao.expira_em > $2
-          FOR UPDATE OF desafio, recuperacao, usuario
+          FOR UPDATE OF desafio, recuperacao
         `,
         [decodeSha256Hex(input.tokenSha256), input.confirmedAt],
       );
@@ -499,7 +498,7 @@ export class PostgresAdminBreakGlassRepository
             AND autorizacao.finalidade = 'concluir_recuperacao_assistida'
             AND recuperacao.origem = 'plataforma_cli'
             AND autorizacao.expira_em > $2 AND recuperacao.expira_em > $2
-          FOR UPDATE OF autorizacao, recuperacao, usuario, bootstrap
+          FOR UPDATE OF autorizacao, recuperacao, bootstrap
         `,
         [decodeSha256Hex(input.restrictedTokenSha256), input.completedAt],
       );
@@ -572,12 +571,8 @@ export class PostgresAdminBreakGlassRepository
       );
       await query(
         client,
-        `
-          UPDATE public.usuarios
-          SET email = $3, versao_autorizacao = versao_autorizacao + 1
-          WHERE organizacao_id = $1 AND id = $2
-        `,
-        [row.organizacao_id, row.id, row.pending_email],
+        'SELECT public.tche_conta_concluir_recuperacao_assistida_mp35b($1)',
+        [row.recovery_id],
       );
       await this.#store.revokeAllUserSecurityState(client, {
         organizationId: row.organizacao_id,

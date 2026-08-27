@@ -27,6 +27,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-14 | MP-34 | Notificações HTTP self-only, persistência, idempotência e separação Demo/HTTP | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO; PORTÕES PRODUTIVOS PENDENTES |
 | ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO |
 | ATUAL-16 | MP-35A | Upgrade, convites, constraints, concorrência, privilégios, versões e catálogo IBGE | PASSOU AUTOMATIZADO; INTEGRADA EM `a51389e`; PORTÕES PRODUTIVOS PENDENTES |
+| ATUAL-17 | MP-35B | Seis rotas de Usuários, privilégios, cursor, códigos HTTP e concorrência | PASSOU NA RODADA AUTOMATIZADA INTEGRAL LOCAL; EM VALIDAÇÃO FINAL; NÃO INTEGRADA |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -237,6 +238,35 @@ pela automação e não é promovido a evidência física por inferência. O cor
 integrado diretamente à branch `backend` no commit `e47bb02`, e os três jobs da
 CI pós-push foram aprovados. Não houve tag, deploy, release ou publicação.
 
+## Cenários HTTP da MP-35B antes da MP-35D
+
+Com PostgreSQL real, Admin ativo e identidades sintéticas, repetir:
+
+1. listar e detalhar Usuários com filtros, busca literal e cursor, sem expor
+   credencial, token, desafio ou payload da outbox;
+2. criar Produtor e confirmar Usuário pendente, cadastro Produtor inativo,
+   convite/desafio/outbox/auditoria e recibo na mesma transação;
+3. repetir a criação com a mesma `Idempotency-Key` e corpo e obter o mesmo
+   status/recibo; reutilizar a chave com outro corpo e obter `409`;
+4. trocar o e-mail de Usuário pendente e confirmar revogação/cancelamento do
+   convite, desafio e outbox anteriores antes do convite substituto;
+5. tentar trocar e-mail de ativo/inativo, ativar sem credencial, inativar o
+   próprio Admin ou Produtor Titular de Propriedade ativa e confirmar recusa;
+6. inativar outro Usuário ativo e confirmar avanço único da versão e revogação
+   de sessão/access/refresh; reativar somente com credencial ativa;
+7. reemitir convite somente com `modo_ativacao=ativar_usuario`; campo
+   desconhecido retorna `400` e modo histórico retorna `422`;
+8. confirmar que Colaborador/Produtor não acessam `/v1/usuarios`, que a emissão
+   antiga em `/v1/auth/invitations` não existe e que o aceite público continua
+   em `/v1/auth/invitations/accept` com `204`;
+9. provocar falha depois da reserva e confirmar rollback sem Usuário, convite,
+   auditoria ou linha idempotente `processando` órfã.
+
+Os cenários automatizados correspondentes receberam a correção focal e passaram
+na rodada integral de 2026-08-27. A MP-35B não expõe tela na composição HTTP;
+por isso nenhum cenário é promovido a evidência física. A validação Android
+administrativa continua reservada à MP-35D.
+
 ## Cenários de campo de MP-38
 
 - posição dentro de Talhão;
@@ -367,6 +397,43 @@ Como a MP-35A não altera tela, navegação nem artefato mobile, ela não cria n
 teste físico. A validação Android física pertence à MP-35D; o smoke físico
 anterior de convergência permanece como baseline e não é reapresentado como
 evidência da fundação de banco.
+
+### Evidência automatizada da MP-35B em 2026-08-27
+
+A cobertura automatizada focada já executada usa um LOGIN PostgreSQL runtime
+real e confirma `current_user=session_user`, papel não-superuser e não-owner,
+DML administrativo direto recusado e as quatro mutações funcionando apenas
+pelas interfaces estreitas. Ela também confirma criação de Admin, Colaborador
+e Produtor, sincronização de nomes, auditoria com motivo, versão de Produtor
+estável sem alteração real, revogação de sessões, idempotência e rollback
+atômico.
+
+`administrative-user-e2e.integration.test.ts` atravessa bearer, autenticação,
+revalidação de sessão, RBAC, cada uma das seis rotas, serviço e PostgreSQL com
+o login runtime. A matriz focal contém exatamente as seis rotas para Admin,
+ausência de autenticação, sessão stale, Produtor e Colaborador, além de alvo
+inexistente, códigos HTTP, JSON malformado, enum, limite, conflito de versão,
+idempotência e e-mail duplicado. Isolamento entre organizações não se aplica ao
+modelo singleton atual e não é apresentado como automatizado.
+
+`administrative-user-repository.integration.test.ts` observa PIDs e
+`wait_event` em PostgreSQL para as corridas de idempotência com corpo igual e
+diferente, mesma versão de cadastro, e-mail, convite, status e Produtor versus
+ativação da Propriedade. A mesma suíte prova a expiração efetiva enquanto o
+worker espera pelo lock, preservando os dois ordenamentos anteriores. Os testes
+de cursor cobrem vazio, excesso formal, truncamento, malformação, adulteração e
+versão desconhecida; Unicode N/N+1 cobre e-mail e nome após NFC, inclusive
+fora do BMP. A suíte de notificações comprova também ACL do runtime e de
+`PUBLIC`, criação/deduplicação derivadas do `INSERT`, replay sem nova auditoria,
+resolução negada autenticada, sessão inválida, wrappers isoladas recusadas e
+rollback atômico. A rodada integral aprovou typecheck e compatibilidade na raiz;
+manifesto e comparação append-only com `fb7cfb0`; typecheck, build e smoke ESM
+do backend; 166 unitários/contratos, 33 HTTP e 74 integrações
+PostgreSQL/PostGIS; ciclo explícito `000008 up/down/up`; links locais e higiene
+do diff. O status permanece em
+validação final até revisão independente e ação posterior. A MP-35B não possui
+commit ou CI e não autoriza tag, deploy, release ou publicação; MP-35C/D não
+foram iniciadas.
 
 ### Comandos gerais
 

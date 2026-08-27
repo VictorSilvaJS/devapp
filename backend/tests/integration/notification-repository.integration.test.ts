@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 
 import { Pool, type PoolClient, type QueryConfig } from 'pg';
@@ -8,7 +8,6 @@ import { assertDestructiveDatabaseTestsAllowed } from '../../scripts/destructive
 import { runMigrations } from '../../scripts/migrate.js';
 import type { AuthenticatedPrincipal, UserProfile } from '../../src/auth/contracts.js';
 import { buildPostgresPoolConfig } from '../../src/database/pool.js';
-import { PostgresAccountNotificationWriter } from '../../src/notifications/postgres-account-notification-writer.js';
 import { PostgresNotificationRepository } from '../../src/notifications/postgres-notification-repository.js';
 import { PostgresNotificationPurgeRepository } from '../../src/notifications/purge.js';
 import {
@@ -34,6 +33,8 @@ function requestDigest(command: string, targetId?: string): Buffer {
 describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
   let testDatabase: StartedPostgisTestDatabase | undefined;
   let pool: Pool | undefined;
+  let runtimePool: Pool | undefined;
+  let runtimeLoginRole: string | undefined;
   let repository: PostgresNotificationRepository | undefined;
   let fixture: Fixture | undefined;
   let lastDatabaseError: unknown;
@@ -46,9 +47,25 @@ describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
     assertDestructiveDatabaseTestsAllowed(testDatabase.connectionString);
     await runMigrations({ command: 'up', database: testDatabase.database });
     pool = new Pool(buildPostgresPoolConfig(testDatabase.database));
+    fixture = await seedFixture(pool);
+    runtimeLoginRole =
+      `tche_test_runtime_notifications_${randomUUID().replaceAll('-', '')}`;
+    const runtimePassword = randomBytes(24).toString('hex');
+    await pool.query(
+      `CREATE ROLE ${runtimeLoginRole} LOGIN PASSWORD '${runtimePassword}'`,
+    );
+    await pool.query(`GRANT tche_agro_runtime TO ${runtimeLoginRole}`);
+    const runtimeUrl = new URL(testDatabase.connectionString);
+    runtimeUrl.username = runtimeLoginRole;
+    runtimeUrl.password = runtimePassword;
+    runtimePool = new Pool({
+      ...buildPostgresPoolConfig(testDatabase.database),
+      connectionString: runtimeUrl.toString(),
+      application_name: runtimeLoginRole,
+    });
     repository = new PostgresNotificationRepository({
       async connect() {
-        const client = await pool!.connect();
+        const client = await runtimePool!.connect();
         return new Proxy(client, {
           get(target, property) {
             if (property === 'query') {
@@ -67,10 +84,13 @@ describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
         }) as PoolClient;
       },
     });
-    fixture = await seedFixture(pool);
   });
 
   after(async () => {
+    await runtimePool?.end();
+    if (pool !== undefined && runtimeLoginRole !== undefined) {
+      await pool.query(`DROP ROLE IF EXISTS ${runtimeLoginRole}`);
+    }
     await pool?.end();
     await testDatabase?.container.stop();
   });
@@ -78,6 +98,11 @@ describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
   function requirePool(): Pool {
     assert.ok(pool);
     return pool;
+  }
+
+  function requireRuntimePool(): Pool {
+    assert.ok(runtimePool);
+    return runtimePool;
   }
 
   function requireRepository(): PostgresNotificationRepository {
@@ -144,7 +169,7 @@ describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
       .catch((error: unknown) => {
         const databaseMessage =
           lastDatabaseError instanceof Error
-            ? lastDatabaseError.message
+            ? `${lastDatabaseError.message}; ${(lastDatabaseError as { readonly where?: string }).where ?? 'sem contexto SQL'}`
             : String(lastDatabaseError);
         assert.fail(
           `notification command failed (${String(error)}): ${databaseMessage}`,
@@ -358,13 +383,69 @@ describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
       }),
       { resourceType: 'conta', resourceId: actors.producer.id },
     );
+    const deniedRequestId = 'notification-integration-resolve-foreign';
     assert.equal(
       await notifications.resolveDestination({
         principal: actors.admin,
         notificationId: afterCutoff.deliveryId,
-        requestId: 'notification-integration-resolve-foreign',
+        requestId: deniedRequestId,
       }),
       null,
+    );
+    assert.equal(
+      await notifications.resolveDestination({
+        principal: actors.admin,
+        notificationId: afterCutoff.deliveryId,
+        requestId: deniedRequestId,
+      }),
+      null,
+    );
+    const deniedAudit = await database.query<{
+      organizacao_id: string;
+      resultado: string;
+      ator_tipo: string;
+      ator_usuario_id: string;
+      sessao_id: string;
+      usuario_afetado_id: string;
+      recurso_tipo: string;
+      recurso_id: string;
+      request_id: string;
+      metadados: Record<string, never>;
+      ocorrido_em: Date;
+      server_now: Date;
+    }>(
+      `
+        SELECT auditoria.organizacao_id, auditoria.resultado,
+               auditoria.ator_tipo, auditoria.ator_usuario_id,
+               auditoria.sessao_id, auditoria.usuario_afetado_id,
+               auditoria.recurso_tipo, auditoria.recurso_id,
+               auditoria.request_id, auditoria.metadados,
+               auditoria.ocorrido_em,
+               pg_catalog.clock_timestamp() AS server_now
+        FROM public.eventos_auditoria AS auditoria
+        WHERE auditoria.evento = 'notificacao.destino_resolucao_negada'
+          AND auditoria.request_id = $1
+      `,
+      [deniedRequestId],
+    );
+    assert.equal(deniedAudit.rowCount, 1);
+    assert.deepEqual(deniedAudit.rows[0], {
+      organizacao_id: actors.admin.organizationId,
+      resultado: 'negado',
+      ator_tipo: 'usuario',
+      ator_usuario_id: actors.admin.id,
+      sessao_id: actors.admin.sessionId,
+      usuario_afetado_id: actors.admin.id,
+      recurso_tipo: 'notificacao_entrega',
+      recurso_id: afterCutoff.deliveryId,
+      request_id: deniedRequestId,
+      metadados: {},
+      ocorrido_em: deniedAudit.rows[0]?.ocorrido_em,
+      server_now: deniedAudit.rows[0]?.server_now,
+    });
+    assert.ok(
+      deniedAudit.rows[0]!.ocorrido_em.getTime() <=
+        deniedAudit.rows[0]!.server_now.getTime(),
     );
     assert.deepEqual(
       await notifications.list({
@@ -373,6 +454,440 @@ describe('MP-34 notification persistence', { timeout: 180_000 }, () => {
         limit: 20,
       }),
       [],
+    );
+  });
+
+  test('internaliza criação e deduplicação com ACL mínima, replay e rollback atômico', async () => {
+    const database = requirePool();
+    const runtimeDatabase = requireRuntimePool();
+    const actors = requireFixture();
+    const acl = await runtimeDatabase.query<{
+      can_insert_event: boolean;
+      can_insert_event_column: boolean;
+      can_insert_delivery: boolean;
+      can_insert_delivery_column: boolean;
+      can_execute_created_wrapper: boolean;
+      can_execute_deduplicated_wrapper: boolean;
+      can_execute_denied_wrapper: boolean;
+      can_execute_generic_writer: boolean;
+      can_execute_delivery_operation: boolean;
+      can_execute_resolution_operation: boolean;
+    }>(`
+      SELECT
+        pg_catalog.has_table_privilege(
+          current_user, 'public.notificacao_evento', 'INSERT'
+        ) AS can_insert_event,
+        pg_catalog.has_any_column_privilege(
+          current_user, 'public.notificacao_evento', 'INSERT'
+        ) AS can_insert_event_column,
+        pg_catalog.has_table_privilege(
+          current_user, 'public.notificacao_entrega', 'INSERT'
+        ) AS can_insert_delivery,
+        pg_catalog.has_any_column_privilege(
+          current_user, 'public.notificacao_entrega', 'INSERT'
+        ) AS can_insert_delivery_column,
+        pg_catalog.has_function_privilege(
+          current_user,
+          'public.tche_aud_notificacao_criada_mp35b(jsonb)', 'EXECUTE'
+        ) AS can_execute_created_wrapper,
+        pg_catalog.has_function_privilege(
+          current_user,
+          'public.tche_aud_notificacao_deduplicada_mp35b(jsonb)', 'EXECUTE'
+        ) AS can_execute_deduplicated_wrapper,
+        pg_catalog.has_function_privilege(
+          current_user,
+          'public.tche_aud_notificacao_destino_negado_mp35b(jsonb)', 'EXECUTE'
+        ) AS can_execute_denied_wrapper,
+        pg_catalog.has_function_privilege(
+          current_user,
+          'public.tche_auditoria_inserir_interno_mp35b(text,jsonb)', 'EXECUTE'
+        ) AS can_execute_generic_writer,
+        pg_catalog.has_function_privilege(
+          current_user,
+          'public.tche_notificacao_entregar_conta_mp35b(uuid,uuid)', 'EXECUTE'
+        ) AS can_execute_delivery_operation,
+        pg_catalog.has_function_privilege(
+          current_user,
+          'public.tche_notificacao_resolver_destino_mp35b(uuid,uuid,text)',
+          'EXECUTE'
+        ) AS can_execute_resolution_operation
+    `);
+    assert.deepEqual(acl.rows[0], {
+      can_insert_event: false,
+      can_insert_event_column: false,
+      can_insert_delivery: false,
+      can_insert_delivery_column: false,
+      can_execute_created_wrapper: false,
+      can_execute_deduplicated_wrapper: false,
+      can_execute_denied_wrapper: false,
+      can_execute_generic_writer: false,
+      can_execute_delivery_operation: true,
+      can_execute_resolution_operation: true,
+    });
+    const publicAcl = await database.query<{
+      created_wrapper: boolean;
+      deduplicated_wrapper: boolean;
+      denied_wrapper: boolean;
+      generic_writer: boolean;
+      delivery_operation: boolean;
+      resolution_operation: boolean;
+    }>(`
+      SELECT
+        pg_catalog.has_function_privilege(
+          'public', 'public.tche_aud_notificacao_criada_mp35b(jsonb)',
+          'EXECUTE'
+        ) AS created_wrapper,
+        pg_catalog.has_function_privilege(
+          'public', 'public.tche_aud_notificacao_deduplicada_mp35b(jsonb)',
+          'EXECUTE'
+        ) AS deduplicated_wrapper,
+        pg_catalog.has_function_privilege(
+          'public', 'public.tche_aud_notificacao_destino_negado_mp35b(jsonb)',
+          'EXECUTE'
+        ) AS denied_wrapper,
+        pg_catalog.has_function_privilege(
+          'public',
+          'public.tche_auditoria_inserir_interno_mp35b(text,jsonb)',
+          'EXECUTE'
+        ) AS generic_writer,
+        pg_catalog.has_function_privilege(
+          'public',
+          'public.tche_notificacao_entregar_conta_mp35b(uuid,uuid)',
+          'EXECUTE'
+        ) AS delivery_operation,
+        pg_catalog.has_function_privilege(
+          'public',
+          'public.tche_notificacao_resolver_destino_mp35b(uuid,uuid,text)',
+          'EXECUTE'
+        ) AS resolution_operation
+    `);
+    assert.deepEqual(publicAcl.rows[0], {
+      created_wrapper: false,
+      deduplicated_wrapper: false,
+      denied_wrapper: false,
+      generic_writer: false,
+      delivery_operation: false,
+      resolution_operation: false,
+    });
+
+    const sourceAuditId = randomUUID();
+    const firstAttemptId = randomUUID();
+    const secondAttemptId = randomUUID();
+    const client = await runtimeDatabase.connect();
+    let deliveryId = '';
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `
+          UPDATE public.credenciais_usuario
+          SET senha_phc =
+            '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1ub3Zh$aGFzaC1ub3ZhLW5hby1yZWFs',
+              senha_definida_em = pg_catalog.clock_timestamp()
+          WHERE organizacao_id = $1 AND usuario_id = $2
+        `,
+        [ORGANIZATION_ID, actors.producer.id],
+      );
+      await client.query(
+        `SELECT public.tche_aud_senha_alterada_mp35b($1::jsonb)`,
+        [JSON.stringify({
+          id: sourceAuditId,
+          organizationId: ORGANIZATION_ID,
+          result: 'sucesso',
+          actorType: 'usuario',
+          actorUserId: actors.producer.id,
+          sessionId: actors.producer.sessionId,
+          affectedUserId: actors.producer.id,
+          resourceType: 'usuario',
+          resourceId: actors.producer.id,
+          requestId: 'notification-real-source',
+          metadata: {
+            sessao_atual_preservada: true,
+            tokens_girados: true,
+          },
+        })],
+      );
+      const first = await client.query<{
+        entrega_id: string;
+        evento_id: string;
+        organizacao_id: string;
+        destinatario_usuario_id: string;
+        tipo_evento: string;
+        autor_usuario_id: string;
+        resultado_tentativa: string;
+        ocorrido_em: Date;
+      }>(
+        `SELECT * FROM public.tche_notificacao_entregar_conta_mp35b($1, $2)`,
+        [sourceAuditId, firstAttemptId],
+      );
+      assert.equal(first.rowCount, 1);
+      deliveryId = first.rows[0]!.entrega_id;
+      assert.deepEqual(first.rows[0], {
+        entrega_id: deliveryId,
+        evento_id: first.rows[0]?.evento_id,
+        organizacao_id: ORGANIZATION_ID,
+        destinatario_usuario_id: actors.producer.id,
+        tipo_evento: 'conta.senha_alterada.v1',
+        autor_usuario_id: actors.producer.id,
+        resultado_tentativa: 'criada',
+        ocorrido_em: first.rows[0]?.ocorrido_em,
+      });
+      const beforeDedup = await client.query<{ agora: Date }>(
+        'SELECT pg_catalog.clock_timestamp() AS agora',
+      );
+      const second = await client.query<{
+        entrega_id: string;
+        resultado_tentativa: string;
+        ocorrido_em: Date;
+      }>(
+        `SELECT * FROM public.tche_notificacao_entregar_conta_mp35b($1, $2)`,
+        [sourceAuditId, secondAttemptId],
+      );
+      const afterDedup = await client.query<{ agora: Date }>(
+        'SELECT pg_catalog.clock_timestamp() AS agora',
+      );
+      assert.equal(second.rows[0]?.entrega_id, deliveryId);
+      assert.equal(second.rows[0]?.resultado_tentativa, 'deduplicada');
+      assert.ok(
+        second.rows[0]!.ocorrido_em.getTime() >=
+          beforeDedup.rows[0]!.agora.getTime(),
+      );
+      assert.ok(
+        second.rows[0]!.ocorrido_em.getTime() <=
+          afterDedup.rows[0]!.agora.getTime(),
+      );
+      const replay = await client.query<{
+        entrega_id: string;
+        resultado_tentativa: string;
+        ocorrido_em: Date;
+      }>(
+        `SELECT * FROM public.tche_notificacao_entregar_conta_mp35b($1, $2)`,
+        [sourceAuditId, secondAttemptId],
+      );
+      assert.deepEqual(replay.rows[0], second.rows[0]);
+      const persisted = await client.query<{
+        deliveries: string;
+        created_audits: string;
+        deduplicated_audits: string;
+        created_matches_delivery_time: boolean;
+      }>(
+        `
+          SELECT
+            (SELECT count(*)::text
+             FROM public.notificacao_entrega AS entrega
+             JOIN public.notificacao_evento AS evento
+               ON evento.id = entrega.evento_id
+             WHERE evento.chave_origem = $1) AS deliveries,
+            (SELECT count(*)::text FROM public.eventos_auditoria
+             WHERE id = $2 AND evento = 'notificacao.criada') AS created_audits,
+            (SELECT count(*)::text FROM public.eventos_auditoria
+             WHERE id = $3 AND evento = 'notificacao.deduplicada')
+              AS deduplicated_audits,
+            (SELECT auditoria.ocorrido_em = entrega.criada_em
+             FROM public.eventos_auditoria AS auditoria
+             JOIN public.notificacao_entrega AS entrega
+               ON entrega.id::text = auditoria.recurso_id
+             WHERE auditoria.id = $2) AS created_matches_delivery_time
+        `,
+        [sourceAuditId, firstAttemptId, secondAttemptId],
+      );
+      assert.deepEqual(persisted.rows[0], {
+        deliveries: '1',
+        created_audits: '1',
+        deduplicated_audits: '1',
+        created_matches_delivery_time: true,
+      });
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+
+    const auditCountBefore = await database.query<{ count: string }>(
+      `SELECT count(*)::text AS count FROM public.eventos_auditoria
+       WHERE recurso_id = $1`,
+      [deliveryId],
+    );
+    for (const attempt of [
+      () => runtimeDatabase.query(
+        'SELECT public.tche_aud_notificacao_deduplicada_mp35b($1::jsonb)',
+        [JSON.stringify({ resourceId: deliveryId })],
+      ),
+      () => runtimeDatabase.query(
+        'SELECT public.tche_aud_notificacao_criada_mp35b($1::jsonb)',
+        [JSON.stringify({ resourceId: deliveryId })],
+      ),
+      () => runtimeDatabase.query(
+        `SELECT public.tche_auditoria_inserir_interno_mp35b(
+           'notificacao.deduplicada', $1::jsonb
+         )`,
+        [JSON.stringify({ resourceId: deliveryId })],
+      ),
+    ]) {
+      await assert.rejects(attempt(), (error: unknown) =>
+        (error as { readonly code?: string }).code === '42501');
+    }
+    assert.deepEqual(
+      await database.query<{ count: string }>(
+        `SELECT count(*)::text AS count FROM public.eventos_auditoria
+         WHERE recurso_id = $1`,
+        [deliveryId],
+      ).then((result) => result.rows[0]),
+      auditCountBefore.rows[0],
+    );
+
+    const rollbackSourceId = randomUUID();
+    const rollbackAttemptId = randomUUID();
+    const rollbackClient = await runtimeDatabase.connect();
+    try {
+      await rollbackClient.query('BEGIN');
+      await rollbackClient.query(
+        `
+          UPDATE public.credenciais_usuario
+          SET senha_definida_em = pg_catalog.clock_timestamp()
+          WHERE organizacao_id = $1 AND usuario_id = $2
+        `,
+        [ORGANIZATION_ID, actors.producer.id],
+      );
+      await rollbackClient.query(
+        `SELECT public.tche_aud_senha_alterada_mp35b($1::jsonb)`,
+        [JSON.stringify({
+          id: rollbackSourceId,
+          organizationId: ORGANIZATION_ID,
+          result: 'sucesso',
+          actorType: 'usuario',
+          actorUserId: actors.producer.id,
+          sessionId: actors.producer.sessionId,
+          affectedUserId: actors.producer.id,
+          resourceType: 'usuario',
+          resourceId: actors.producer.id,
+          requestId: 'notification-rollback-source',
+          metadata: {
+            sessao_atual_preservada: true,
+            tokens_girados: true,
+          },
+        })],
+      );
+      await rollbackClient.query(
+        `SELECT * FROM public.tche_notificacao_entregar_conta_mp35b($1, $2)`,
+        [rollbackSourceId, rollbackAttemptId],
+      );
+      await rollbackClient.query('ROLLBACK');
+    } catch (error) {
+      await rollbackClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      rollbackClient.release();
+    }
+    const rolledBack = await database.query<{ facts: string }>(
+      `
+        SELECT (
+          (SELECT count(*) FROM public.eventos_auditoria
+           WHERE id IN ($1, $2)) +
+          (SELECT count(*) FROM public.notificacao_evento
+           WHERE chave_origem = $1::text) +
+          (SELECT count(*)
+           FROM public.notificacao_entrega AS entrega
+           JOIN public.notificacao_evento AS evento
+             ON evento.id = entrega.evento_id
+           WHERE evento.chave_origem = $1::text)
+        )::text AS facts
+      `,
+      [rollbackSourceId, rollbackAttemptId],
+    );
+    assert.equal(rolledBack.rows[0]?.facts, '0');
+  });
+
+  test('resolução negada deriva identidade, rejeita sessão inválida e acompanha rollback', async () => {
+    const database = requirePool();
+    const runtimeDatabase = requireRuntimePool();
+    const actors = requireFixture();
+    const target = await createNotification(database, {
+      recipient: actors.producer,
+      eventType: 'conta.recuperacao_concluida.v1',
+    });
+    const invalidRequest = 'notification-invalid-session';
+    await assert.rejects(
+      runtimeDatabase.query(
+        `SELECT * FROM public.tche_notificacao_resolver_destino_mp35b(
+           $1, $2, $3
+         )`,
+        [randomUUID(), target.deliveryId, invalidRequest],
+      ),
+      (error: unknown) =>
+        (error as { readonly code?: string }).code === '42501',
+    );
+    assert.equal(
+      (
+        await database.query(
+          `SELECT 1 FROM public.eventos_auditoria WHERE request_id = $1`,
+          [invalidRequest],
+        )
+      ).rowCount,
+      0,
+    );
+
+    const nonexistentRequest = 'notification-nonexistent-isolated';
+    await assert.rejects(
+      runtimeDatabase.query(
+        'SELECT public.tche_aud_notificacao_destino_negado_mp35b($1::jsonb)',
+        [JSON.stringify({
+          organizationId: ORGANIZATION_ID,
+          actorUserId: actors.admin.id,
+          sessionId: actors.admin.sessionId,
+          resourceId: randomUUID(),
+          requestId: nonexistentRequest,
+        })],
+      ),
+      (error: unknown) =>
+        (error as { readonly code?: string }).code === '42501',
+    );
+    assert.equal(
+      (
+        await database.query(
+          `SELECT 1 FROM public.eventos_auditoria WHERE request_id = $1`,
+          [nonexistentRequest],
+        )
+      ).rowCount,
+      0,
+    );
+
+    const rollbackRequest = 'notification-resolution-rollback';
+    const rollbackClient = await runtimeDatabase.connect();
+    try {
+      await rollbackClient.query('BEGIN');
+      const denied = await rollbackClient.query(
+        `SELECT * FROM public.tche_notificacao_resolver_destino_mp35b(
+           $1, $2, $3
+         )`,
+        [actors.admin.sessionId, target.deliveryId, rollbackRequest],
+      );
+      assert.equal(denied.rowCount, 0);
+      assert.equal(
+        (
+          await rollbackClient.query(
+            `SELECT 1 FROM public.eventos_auditoria WHERE request_id = $1`,
+            [rollbackRequest],
+          )
+        ).rowCount,
+        1,
+      );
+      await rollbackClient.query('ROLLBACK');
+    } catch (error) {
+      await rollbackClient.query('ROLLBACK');
+      throw error;
+    } finally {
+      rollbackClient.release();
+    }
+    assert.equal(
+      (
+        await database.query(
+          `SELECT 1 FROM public.eventos_auditoria WHERE request_id = $1`,
+          [rollbackRequest],
+        )
+      ).rowCount,
+      0,
     );
   });
 
@@ -547,6 +1062,18 @@ async function seedFixture(pool: Pool): Promise<Fixture> {
     );
     await client.query(
       `
+        INSERT INTO public.credenciais_usuario (
+          organizacao_id, usuario_id, senha_phc, versao_politica_senha
+        ) VALUES (
+          $1, $2,
+          '$argon2id$v=19$m=19456,t=2,p=1$c2FsdC1ub3RpZmljYWNhbw$aGFzaC1ub3RpZmljYWNhby1uYW8tcmVhbA',
+          'integration-v1'
+        )
+      `,
+      [ORGANIZATION_ID, producerId],
+    );
+    await client.query(
+      `
         INSERT INTO public.sessoes_autenticacao (
           id, organizacao_id, usuario_id, status, versao_autorizacao,
           expira_inatividade_em, expira_absolutamente_em
@@ -604,27 +1131,33 @@ async function createNotification(
   const sourceKey = randomUUID();
   const eventId = randomUUID();
   const deliveryId = randomUUID();
-  const generatedIds = [eventId, deliveryId];
-  const writer = new PostgresAccountNotificationWriter(() => generatedIds.shift()!);
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    await writer.create(client, {
-      organizationId: input.recipient.organizationId,
-      recipientUserId: input.recipient.id,
-      eventType: input.eventType,
+  await pool.query(
+    `
+      WITH evento AS (
+        INSERT INTO public.notificacao_evento (
+          id, organizacao_id, tipo_evento, chave_origem, recurso_tipo,
+          recurso_id, autor_id, dados_apresentacao
+        ) VALUES ($1, $3, $5, $4, 'conta', $6, $7, '{}'::jsonb)
+        RETURNING criado_em
+      )
+      INSERT INTO public.notificacao_entrega (
+        id, evento_id, destinatario_usuario_id, organizacao_id,
+        prioridade, criada_em, chave_deduplicacao, expira_em
+      )
+      SELECT $2, $1, $6, $3, 'alta', evento.criado_em,
+             $5 || ':' || $4, evento.criado_em + interval '90 days'
+      FROM evento
+    `,
+    [
+      eventId,
+      deliveryId,
+      input.recipient.organizationId,
       sourceKey,
-      ...(input.authorUserId === undefined
-        ? {}
-        : { authorUserId: input.authorUserId }),
-    });
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+      input.eventType,
+      input.recipient.id,
+      input.authorUserId ?? null,
+    ],
+  );
   return { eventId, deliveryId };
 }
 

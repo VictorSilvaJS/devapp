@@ -395,6 +395,19 @@ Toda Propriedade mantém `titular_id`; somente Propriedade ativa exige Titular
 habilitado. Vínculos futuros mudam por delta versionado, e qualquer mudança de
 autorização revoga sessões diretamente afetadas no MVP.
 
+### 53. Auditoria de notificações é efeito da operação real
+
+Runtime e `PUBLIC` não executam wrappers isoladas para declarar deduplicação ou
+resolução de destino negada, nem o escritor genérico interno. A tentativa de
+entrega executa a inserção e deriva criação/deduplicação do resultado real; a
+tentativa de resolução revalida a sessão e deriva a negação da consulta real.
+Organização, ator, destinatário, recurso, resultado, metadados e horário são
+derivados no PostgreSQL. Efeito e auditoria são atômicos e seus IDs de tentativa
+ou `requestId` tornam replay idempotente.
+
+Esta decisão foi aplicada somente à `000008` local, ainda não integrada, e não
+inicia MP-35C/D.
+
 ## Contratos que detalham as decisões
 
 - [Baseline do backend v1](baseline-backend-v1-2026-08.md)

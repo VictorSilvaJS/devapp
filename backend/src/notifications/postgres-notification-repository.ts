@@ -8,6 +8,7 @@ import {
   safeRequestId,
   type AuthPostgresPool,
 } from '../auth/postgres-common.js';
+import { insertRuntimeAudit } from '../audit/postgres-runtime-audit.js';
 import { serviceUnavailable } from '../security/http-error.js';
 import type {
   IdempotentCommandInput,
@@ -93,14 +94,12 @@ async function lockActor(
   client: PoolClient,
   principal: IdempotentCommandInput['principal'],
 ): Promise<boolean> {
-  const locked = await query(
+  const locked = await query<{ locked: boolean }>(
     client,
     `
-      SELECT id
-      FROM public.usuarios
-      WHERE organizacao_id = $1 AND id = $2 AND perfil = $3
-        AND status = 'ativo' AND versao_autorizacao = $4
-      FOR UPDATE
+      SELECT public.tche_notificacao_bloquear_ator_mp35b(
+        $1, $2, $3, $4
+      ) AS locked
     `,
     [
       principal.organizationId,
@@ -109,7 +108,7 @@ async function lockActor(
       principal.authorizationVersion,
     ],
   );
-  return locked.rowCount === 1;
+  return locked.rows[0]?.locked === true;
 }
 
 async function existingCommand(
@@ -121,10 +120,7 @@ async function existingCommand(
     `
       SELECT comando, alvo_entrega_id, hash_requisicao, corte_em,
              resultado_em, resultado_quantidade
-      FROM public.notificacao_comando_idempotencia
-      WHERE organizacao_id = $1 AND usuario_id = $2
-        AND chave_idempotencia_hash = $3
-      FOR UPDATE
+      FROM public.tche_notificacao_obter_comando_mp35b($1, $2, $3)
     `,
     [input.principal.organizationId, input.principal.id, input.idempotencyKeyHash],
   );
@@ -158,29 +154,20 @@ async function insertCommandAudit(
     readonly result?: 'sucesso' | 'negado';
   },
 ): Promise<void> {
-  await query(
-    client,
-    `
-      INSERT INTO public.eventos_auditoria (
-        organizacao_id, evento, resultado, ator_tipo, ator_usuario_id,
-        sessao_id, usuario_afetado_id, recurso_tipo, recurso_id,
-        request_id, metadados, ocorrido_em
-      ) VALUES ($1, $2, $3, 'usuario', $4, $5, $4,
-                $6, $7, $8, $9::jsonb, $10)
-    `,
-    [
-      input.principal.organizationId,
-      input.event,
-      input.result ?? 'sucesso',
-      input.principal.id,
-      input.principal.sessionId,
-      input.resourceType ?? 'notificacao_entrega',
-      input.resourceId,
-      safeRequestId(input.requestId),
-      JSON.stringify(input.metadata ?? {}),
-      input.occurredAt,
-    ],
-  );
+  await insertRuntimeAudit(client, {
+    organizationId: input.principal.organizationId,
+    event: input.event,
+    result: input.result ?? 'sucesso',
+    actorType: 'usuario',
+    actorUserId: input.principal.id,
+    sessionId: input.principal.sessionId,
+    affectedUserId: input.principal.id,
+    resourceType: input.resourceType ?? 'notificacao_entrega',
+    resourceId: input.resourceId,
+    requestId: safeRequestId(input.requestId),
+    metadata: input.metadata ?? {},
+    occurredAt: input.occurredAt,
+  });
 }
 
 export class PostgresNotificationRepository implements NotificationRepository {
@@ -551,51 +538,31 @@ export class PostgresNotificationRepository implements NotificationRepository {
     readonly requestId: string;
   }): Promise<Readonly<{ resourceType: 'conta'; resourceId: string }> | null> {
     return inTransaction(this.#pool, async (client) => {
-      const result = await query<{ recurso_id: string }>(
+      const result = await query<{
+        recurso_tipo: string;
+        recurso_id: string;
+      }>(
         client,
         `
-          WITH ator AS (
-            SELECT id, organizacao_id
-            FROM public.usuarios
-            WHERE organizacao_id = $1 AND id = $2 AND perfil = $3
-              AND status = 'ativo' AND versao_autorizacao = $4
-          )
-          SELECT evento.recurso_id
-          FROM ator
-          JOIN public.notificacao_entrega AS entrega ON true
-          JOIN public.notificacao_evento AS evento
-            ON evento.organizacao_id = entrega.organizacao_id
-           AND evento.id = entrega.evento_id
-          WHERE ${VISIBLE_NOTIFICATION} AND entrega.id = $5
-          LIMIT 1
+          SELECT recurso_tipo, recurso_id
+          FROM public.tche_notificacao_resolver_destino_mp35b($1, $2, $3)
         `,
         [
-          input.principal.organizationId,
-          input.principal.id,
-          input.principal.profile,
-          input.principal.authorizationVersion,
+          input.principal.sessionId,
           input.notificationId,
+          safeRequestId(input.requestId),
         ],
       );
       const row = result.rows[0];
-      if (row !== undefined) {
-        return { resourceType: 'conta' as const, resourceId: row.recurso_id };
+      if (row === undefined) return null;
+      if (
+        result.rowCount !== 1 ||
+        row.recurso_tipo !== 'conta' ||
+        row.recurso_id !== input.principal.id
+      ) {
+        throw serviceUnavailable();
       }
-      const now = await query<{ agora: Date }>(
-        client,
-        'SELECT pg_catalog.clock_timestamp() AS agora',
-      );
-      const occurredAt = now.rows[0]?.agora;
-      if (occurredAt === undefined) throw new Error('Server timestamp unavailable.');
-      await insertCommandAudit(client, {
-        principal: input.principal,
-        event: 'notificacao.destino_resolucao_negada',
-        requestId: input.requestId,
-        resourceId: input.notificationId,
-        occurredAt,
-        result: 'negado',
-      });
-      return null;
+      return { resourceType: 'conta' as const, resourceId: row.recurso_id };
     });
   }
 }

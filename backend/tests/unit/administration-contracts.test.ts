@@ -132,6 +132,65 @@ test('motivo e contexto rejeitam campos desconhecidos e material sensível', () 
   assert.doesNotThrow(() =>
     validateAdministrativeReason({ code: 'fim_relacao' }),
   );
+  for (const sensitive of ['senha temporária', 'TOKEN copiado', 'CPF informado']) {
+    assert.throws(
+      () => validateAdministrativeReason({ code: 'outro', detail: sensitive }),
+      /sensível não permitido/,
+    );
+  }
+});
+
+test('limites D9 contam pontos de código após normalização NFC', () => {
+  const validateName = (name: string) => validateCreateAdministrativeUserCommand({
+    context: creationContext,
+    name,
+    email: 'unicode@example.test',
+    profile: 'colaborador',
+  });
+  for (const name of [
+    'a'.repeat(200),
+    '😀'.repeat(200),
+    'é'.repeat(200),
+    'é'.repeat(200),
+  ]) {
+    assert.doesNotThrow(() => validateName(name));
+  }
+  for (const name of [
+    'a'.repeat(201),
+    '😀'.repeat(201),
+    'é'.repeat(201),
+    'é'.repeat(201),
+  ]) {
+    assert.throws(() => validateName(name), /texto preenchido inválido/);
+  }
+});
+
+test('limite de e-mail conta N/N+1 pontos de código após NFC', () => {
+  const suffix = '@x.io';
+  for (const [label, unit] of [
+    ['ascii', 'a'],
+    ['emoji', '😀'],
+    ['composto', 'é'],
+    ['decomposto', 'é'],
+    ['fora-bmp', '𐐷'],
+  ] as const) {
+    const atLimit = `${unit.repeat(254 - suffix.length)}${suffix}`;
+    const aboveLimit = `${unit.repeat(255 - suffix.length)}${suffix}`;
+    assert.equal(Array.from(atLimit.normalize('NFC')).length, 254, label);
+    assert.equal(Array.from(aboveLimit.normalize('NFC')).length, 255, label);
+    assert.doesNotThrow(() => validateCreateAdministrativeUserCommand({
+      context: creationContext,
+      name: `E-mail ${label}`,
+      email: atLimit,
+      profile: 'colaborador',
+    }));
+    assert.throws(() => validateCreateAdministrativeUserCommand({
+      context: creationContext,
+      name: `E-mail ${label}`,
+      email: aboveLimit,
+      profile: 'colaborador',
+    }), /texto preenchido inválido/);
+  }
 });
 
 test('validadores de Usuário rejeitam campos desconhecidos, IDs inválidos e no-op', () => {

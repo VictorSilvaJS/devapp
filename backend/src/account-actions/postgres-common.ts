@@ -7,6 +7,7 @@ import {
   safeRequestId,
   type AuthPostgresPool,
 } from '../auth/postgres-common.js';
+import { insertRuntimeAudit } from '../audit/postgres-runtime-audit.js';
 import type { EncryptedOutboxMessageDraft } from '../outbox/contracts.js';
 import type {
   AccountNotificationDraft,
@@ -132,7 +133,9 @@ function restrictedPurpose(input: RestrictedAuthorizationDraft): {
   }
 }
 
-function auditResult(value: AuditEventDraft['result']): string {
+function auditResult(
+  value: AuditEventDraft['result'],
+): 'sucesso' | 'negado' | 'falha' {
   switch (value) {
     case 'success':
       return 'sucesso';
@@ -392,37 +395,74 @@ export class AccountActionPostgresStore {
         : draft.eventType.includes('break_glass')
           ? 'plataforma'
           : 'sistema');
-    await query(
-      client,
-      `
-        INSERT INTO public.eventos_auditoria (
-          id, organizacao_id, evento, resultado, ator_tipo, ator_usuario_id,
-          sessao_id, usuario_afetado_id, recurso_tipo, recurso_id, motivo_categoria,
-          referencia_externa_hmac, request_id, metadados, ocorrido_em
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15
-        )
-      `,
-      [
-        draft.id,
-        draft.organizationId,
-        draft.eventType,
-        auditResult(draft.result),
-        resolvedActorType,
-        resolvedActorType === 'usuario' ? draft.actorUserId ?? null : null,
-        resolvedActorType === 'usuario' ? draft.actorSessionId ?? null : null,
-        draft.affectedUserId ?? null,
-        draft.resourceType ?? null,
-        draft.resourceId ?? null,
-        safeCategory(draft.reasonCode),
-        draft.externalCaseReference === undefined
-          ? null
-          : this.externalReferenceHmac(draft.externalCaseReference),
-        safeAuditRequestId(draft.requestId),
-        JSON.stringify(draft.metadata ?? {}),
-        draft.occurredAt,
-      ],
-    );
+    if (actorType === 'plataforma') {
+      await query(
+        client,
+        `
+          INSERT INTO public.eventos_auditoria (
+            id, organizacao_id, evento, resultado, ator_tipo, ator_usuario_id,
+            sessao_id, usuario_afetado_id, recurso_tipo, recurso_id,
+            motivo_categoria, referencia_externa_hmac, request_id, metadados,
+            ocorrido_em
+          ) VALUES (
+            $1, $2, $3, $4, $5, NULL, NULL, $6, $7, $8, $9, $10, $11,
+            $12::jsonb, $13
+          )
+        `,
+        [
+          draft.id,
+          draft.organizationId,
+          draft.eventType,
+          auditResult(draft.result),
+          resolvedActorType,
+          draft.affectedUserId ?? null,
+          draft.resourceType ?? null,
+          draft.resourceId ?? null,
+          safeCategory(draft.reasonCode),
+          draft.externalCaseReference === undefined
+            ? null
+            : this.externalReferenceHmac(draft.externalCaseReference),
+          safeAuditRequestId(draft.requestId),
+          JSON.stringify(draft.metadata ?? {}),
+          draft.occurredAt,
+        ],
+      );
+      return;
+    }
+    if (draft.resourceType === undefined || draft.resourceId === undefined) {
+      throw new Error('Runtime audit requires a server-defined resource.');
+    }
+    const reasonCategory = safeCategory(draft.reasonCode);
+    const requestId = safeAuditRequestId(draft.requestId);
+    await insertRuntimeAudit(client, {
+      id: draft.id,
+      organizationId: draft.organizationId,
+      event: draft.eventType,
+      result: auditResult(draft.result),
+      actorType: resolvedActorType,
+      ...(resolvedActorType === 'usuario' && draft.actorUserId !== undefined
+        ? { actorUserId: draft.actorUserId }
+        : {}),
+      ...(resolvedActorType === 'usuario' && draft.actorSessionId !== undefined
+        ? { sessionId: draft.actorSessionId }
+        : {}),
+      ...(draft.affectedUserId === undefined
+        ? {}
+        : { affectedUserId: draft.affectedUserId }),
+      resourceType: draft.resourceType,
+      resourceId: draft.resourceId,
+      ...(reasonCategory === null ? {} : { reasonCategory }),
+      ...(draft.externalCaseReference === undefined
+        ? {}
+        : {
+            externalReferenceHmac: this.externalReferenceHmac(
+              draft.externalCaseReference,
+            ),
+          }),
+      ...(requestId === null ? {} : { requestId }),
+      metadata: draft.metadata ?? {},
+      occurredAt: draft.occurredAt,
+    });
   }
 
   public insertAccountNotification(

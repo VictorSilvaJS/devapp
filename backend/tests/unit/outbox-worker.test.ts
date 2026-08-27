@@ -60,6 +60,29 @@ class FakeOutboxRepository implements OutboxRepository {
     return this.challengeActive;
   }
 
+  async dispatchUnderEntityLock(
+    input: Parameters<OutboxRepository['dispatchUnderEntityLock']>[0],
+  ): ReturnType<OutboxRepository['dispatchUnderEntityLock']> {
+    if (input.message.challengeId !== undefined && !this.challengeActive) {
+      this.cancelled.push(input.message.id);
+      return 'cancelled';
+    }
+    const decision = await input.dispatch();
+    if (decision.status === 'delivered') {
+      this.delivered.push(input.message.id);
+      return 'delivered';
+    }
+    if (decision.status === 'retried') {
+      this.retried.push({
+        id: input.message.id,
+        nextAttemptAt: decision.nextAttemptAt,
+      });
+      return 'retried';
+    }
+    this.failed.push(input.message.id);
+    return 'failed';
+  }
+
   async markDelivered(input: { readonly messageId: string }): Promise<boolean> {
     this.delivered.push(input.messageId);
     return true;

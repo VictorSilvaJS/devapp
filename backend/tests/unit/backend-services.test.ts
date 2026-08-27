@@ -7,6 +7,19 @@ import type { Pool } from 'pg';
 import { buildApp } from '../../src/app.js';
 import { createBackendSecurityServices } from '../../src/backend-services.js';
 import { loadRuntimeConfig } from '../../src/config.js';
+import { ConfigurationError } from '../../src/config.js';
+
+const OUTBOX_KEY = Buffer.alloc(32, 0x42).toString('base64');
+const CURSOR_KEY = Buffer.alloc(32, 0x43).toString('base64');
+
+function cursorEnvironment() {
+  return {
+    ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
+    ADMIN_USER_CURSOR_KEYS: JSON.stringify({
+      'test-admin-cursor-v1': CURSOR_KEY,
+    }),
+  } as const;
+}
 
 describe('MP-33B production composition', () => {
   it('loads security assets and publishes the complete route set without querying PostgreSQL', async () => {
@@ -26,6 +39,7 @@ describe('MP-33B production composition', () => {
       NODE_ENV: 'test',
       DATABASE_URL:
         'postgresql://runtime:local@127.0.0.1:5432/tche_agro_test',
+      ...cursorEnvironment(),
     } as const;
     const runtimeConfig = loadRuntimeConfig(environment);
     const securityServices = await createBackendSecurityServices({
@@ -47,6 +61,10 @@ describe('MP-33B production composition', () => {
     );
     assert.equal(typeof securityServices.propertyRoutes.service.list, 'function');
     assert.equal(typeof securityServices.notificationRoutes.service.list, 'function');
+    assert.equal(
+      typeof securityServices.administrativeUserRoutes.service.create,
+      'function',
+    );
 
     const app = await buildApp({
       config: runtimeConfig,
@@ -72,6 +90,25 @@ describe('MP-33B production composition', () => {
             };
             post?: {
               security?: readonly Record<string, readonly string[]>[];
+              parameters?: readonly {
+                in?: string;
+                name?: string;
+                required?: boolean;
+              }[];
+              requestBody?: {
+                content?: Record<
+                  string,
+                  {
+                    schema?: {
+                      required?: readonly string[];
+                      properties?: Record<
+                        string,
+                        { enum?: readonly string[] }
+                      >;
+                    };
+                  }
+                >;
+              };
               responses?: Record<
                 string,
                 {
@@ -89,6 +126,21 @@ describe('MP-33B production composition', () => {
                 }
               >;
             };
+            patch?: {
+              security?: readonly Record<string, readonly string[]>[];
+              parameters?: readonly {
+                in?: string;
+                name?: string;
+                required?: boolean;
+              }[];
+              requestBody?: {
+                content?: Record<
+                  string,
+                  { schema?: { required?: readonly string[] } }
+                >;
+              };
+              responses?: Record<string, unknown>;
+            };
             delete?: {
               security?: readonly Record<string, readonly string[]>[];
             };
@@ -100,7 +152,7 @@ describe('MP-33B production composition', () => {
         '/v1/auth/login',
         '/v1/auth/refresh',
         '/v1/auth/me',
-        '/v1/auth/invitations',
+        '/v1/auth/invitations/accept',
         '/v1/auth/email-change/request',
         '/v1/auth/secondary-email/request',
         '/v1/auth/admin-secondary-recovery/request',
@@ -109,6 +161,10 @@ describe('MP-33B production composition', () => {
         '/v1/auth/assisted-recovery',
         '/v1/propriedades',
         '/v1/propriedades/{id}',
+        '/v1/usuarios',
+        '/v1/usuarios/{id}',
+        '/v1/usuarios/{id}/status',
+        '/v1/usuarios/{id}/convites',
         '/v1/notificacoes',
         '/v1/notificacoes/contador-nao-lidas',
         '/v1/notificacoes/{id}/leitura',
@@ -125,7 +181,7 @@ describe('MP-33B production composition', () => {
       });
       const bearerProtectedOperations = Object.entries(document.paths)
         .flatMap(([path, operations]) =>
-          (['get', 'post', 'delete'] as const).flatMap((method) => {
+          (['get', 'post', 'patch', 'delete'] as const).flatMap((method) => {
             const operation = operations[method];
             if (operation?.security === undefined) return [];
             assert.deepEqual(operation.security, [{ bearerAuth: [] }]);
@@ -142,9 +198,12 @@ describe('MP-33B production composition', () => {
         'GET /v1/notificacoes/contador-nao-lidas',
         'GET /v1/propriedades',
         'GET /v1/propriedades/{id}',
+        'GET /v1/usuarios',
+        'GET /v1/usuarios/{id}',
+        'PATCH /v1/usuarios/{id}',
+        'PATCH /v1/usuarios/{id}/status',
         'POST /v1/auth/assisted-recovery',
         'POST /v1/auth/email-change/request',
-        'POST /v1/auth/invitations',
         'POST /v1/auth/logout',
         'POST /v1/auth/logout-all',
         'POST /v1/auth/password/change',
@@ -152,6 +211,8 @@ describe('MP-33B production composition', () => {
         'POST /v1/notificacoes/leituras',
         'POST /v1/notificacoes/{id}/leitura',
         'POST /v1/notificacoes/{id}/resolver-destino',
+        'POST /v1/usuarios',
+        'POST /v1/usuarios/{id}/convites',
       ]);
       assert.deepEqual(document.paths['/v1/propriedades']?.get?.security, [
         { bearerAuth: [] },
@@ -185,10 +246,151 @@ describe('MP-33B production composition', () => {
         );
       }
       assert.equal(document.paths['/v1/auth/admin-break-glass'], undefined);
+      assert.equal(document.paths['/v1/auth/invitations'], undefined);
+      const invitationAcceptance =
+        document.paths['/v1/auth/invitations/accept']?.post;
+      assert.ok(invitationAcceptance?.responses?.['204']);
+      assert.equal(invitationAcceptance?.security, undefined);
+
+      const administrativeMutations = [
+        document.paths['/v1/usuarios']?.post,
+        document.paths['/v1/usuarios/{id}']?.patch,
+        document.paths['/v1/usuarios/{id}/status']?.patch,
+        document.paths['/v1/usuarios/{id}/convites']?.post,
+      ];
+      for (const operation of administrativeMutations) {
+        assert.ok(operation);
+        const idempotencyKey = operation.parameters?.find(
+          (parameter) =>
+            parameter.in === 'header'
+            && parameter.name?.toLowerCase() === 'idempotency-key',
+        );
+        assert.equal(idempotencyKey?.required, true);
+        for (const status of ['400', '401', '403', '404', '409', '422']) {
+          assert.ok(operation.responses?.[status]);
+        }
+      }
+      for (const operation of [
+        document.paths['/v1/usuarios/{id}']?.patch,
+        document.paths['/v1/usuarios/{id}/status']?.patch,
+      ]) {
+        const required = operation?.requestBody?.content?.['application/json']
+          ?.schema?.required;
+        assert.ok(required?.includes('versao'));
+      }
+      const invitationMode =
+        document.paths['/v1/usuarios/{id}/convites']?.post
+          ?.requestBody?.content?.['application/json']?.schema
+          ?.properties?.modo_ativacao?.enum;
+      assert.deepEqual(invitationMode, ['ativar_usuario']);
+
+      const administrativeReads = [
+        document.paths['/v1/usuarios']?.get,
+        document.paths['/v1/usuarios/{id}']?.get,
+      ];
+      for (const operation of administrativeReads) {
+        for (const status of ['400', '401', '403']) {
+          assert.ok(operation?.responses?.[status]);
+        }
+      }
+      assert.ok(document.paths['/v1/usuarios']?.get?.responses?.['422']);
+      assert.ok(document.paths['/v1/usuarios/{id}']?.get?.responses?.['404']);
       await SwaggerParser.validate(JSON.parse(response.payload));
       assert.equal(databaseCalls, 0);
     } finally {
       await app.close();
     }
+  });
+
+  it('falha no startup sem keyring administrativo, com configuração inválida ou chave curta', async () => {
+    const database = {
+      connect() {
+        throw new Error('composition must not connect');
+      },
+      query() {
+        throw new Error('composition must not query');
+      },
+      async end() {},
+    } as unknown as Pool;
+    const base = {
+      NODE_ENV: 'test',
+      DATABASE_URL:
+        'postgresql://runtime:local@127.0.0.1:5432/tche_agro_test',
+    } as const;
+    const runtimeConfig = loadRuntimeConfig(base);
+
+    for (const environment of [
+      base,
+      {
+        ...base,
+        ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
+        ADMIN_USER_CURSOR_KEYS: '{invalid-json',
+      },
+      {
+        ...base,
+        ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
+        ADMIN_USER_CURSOR_KEYS: JSON.stringify({
+          'test-admin-cursor-v1': 'not-a-base64-key',
+        }),
+      },
+      {
+        ...base,
+        ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
+        ADMIN_USER_CURSOR_KEYS: JSON.stringify({
+          'test-admin-cursor-v1': Buffer.alloc(31, 0x43).toString('base64'),
+        }),
+      },
+    ]) {
+      await assert.rejects(
+        createBackendSecurityServices({ database, runtimeConfig, environment }),
+        ConfigurationError,
+      );
+    }
+  });
+
+  it('aceita keyring administrativo exclusivo e não aceita a chave da outbox como substituto', async () => {
+    const database = {
+      connect() {
+        throw new Error('composition must not connect');
+      },
+      query() {
+        throw new Error('composition must not query');
+      },
+      async end() {},
+    } as unknown as Pool;
+    const base = {
+      NODE_ENV: 'test',
+      DATABASE_URL:
+        'postgresql://runtime:local@127.0.0.1:5432/tche_agro_test',
+      OUTBOX_ACTIVE_KEY_ID: 'test-outbox-v1',
+      OUTBOX_ENCRYPTION_KEYS: JSON.stringify({ 'test-outbox-v1': OUTBOX_KEY }),
+    } as const;
+    const runtimeConfig = loadRuntimeConfig(base);
+
+    await assert.rejects(
+      createBackendSecurityServices({ database, runtimeConfig, environment: base }),
+      ConfigurationError,
+    );
+    await assert.rejects(
+      createBackendSecurityServices({
+        database,
+        runtimeConfig,
+        environment: {
+          ...base,
+          ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
+          ADMIN_USER_CURSOR_KEYS: JSON.stringify({
+            'test-admin-cursor-v1': OUTBOX_KEY,
+          }),
+        },
+      }),
+      ConfigurationError,
+    );
+    await assert.doesNotReject(
+      createBackendSecurityServices({
+        database,
+        runtimeConfig,
+        environment: { ...base, ...cursorEnvironment() },
+      }),
+    );
   });
 });

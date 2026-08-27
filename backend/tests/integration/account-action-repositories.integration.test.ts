@@ -80,6 +80,7 @@ interface OutboxPayloadRow extends QueryResultRow {
 describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
   let testDatabase: StartedPostgisTestDatabase | undefined;
   let pool: Pool | undefined;
+  let runtimeAdapter: { readonly pool: Pool; readonly loginRole: string } | undefined;
   let bootstrapAdminUserId: string | undefined;
   const cipher = new OutboxPayloadCipher({
     activeKeyId: 'integration-action-key',
@@ -288,6 +289,7 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
     }
     assert.ok(initialized);
     assert.ok(corrected);
+    runtimeAdapter = await createLoginPoolForRole('tche_agro_runtime');
     const invitation = new InvitationService({
       repository: new PostgresInvitationRepository(postgresOptions()),
       passwordCredentials: credentials,
@@ -302,6 +304,10 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
   });
 
   after(async () => {
+    await runtimeAdapter?.pool.end();
+    if (runtimeAdapter !== undefined) {
+      await pool?.query(`DROP ROLE IF EXISTS ${runtimeAdapter.loginRole}`);
+    }
     await pool?.end();
     await testDatabase?.container.stop();
   });
@@ -311,7 +317,9 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
     return pool;
   }
 
-  function postgresOptions(databasePool: Pool = requirePool()) {
+  function postgresOptions(
+    databasePool: Pool = runtimeAdapter?.pool ?? requirePool(),
+  ) {
     return { pool: databasePool, ...repositoryKeys };
   }
 
@@ -572,6 +580,82 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
     }
   });
 
+  test('fluxo legado depende somente da interface estreita de auditoria runtime', async () => {
+    assert.ok(runtimeAdapter);
+    const admin = await seedUser({ profile: 'admin' });
+    const adminSessionId = await seedSession(admin.id);
+    const pending = await seedUser({
+      profile: 'colaborador',
+      status: 'pendente',
+      withCredential: false,
+    });
+    const service = new InvitationService({
+      repository: new PostgresInvitationRepository(postgresOptions()),
+      passwordCredentials: credentials,
+      emailOutbox,
+      actionBaseUrl: ACTION_URL,
+    });
+
+    await requirePool().query(
+      'REVOKE EXECUTE ON FUNCTION public.tche_aud_convite_criado_mp35b(jsonb) FROM tche_agro_runtime',
+    );
+    try {
+      await assert.rejects(
+        service.issueForExistingPendingUser({
+          organizationId: ORGANIZATION_ID,
+          actorAdminUserId: admin.id,
+          actorSessionId: adminSessionId,
+          userId: pending.id,
+          requestId: 'audit-interface-revoked',
+        }),
+        (error: unknown) => {
+          assert.equal(
+            (error as { readonly code?: string }).code,
+            'service_unavailable',
+          );
+          return true;
+        },
+      );
+      const rolledBack = await requirePool().query<{
+        challenges: string;
+        invitations: string;
+        audits: string;
+      }>(`
+        SELECT
+          (SELECT count(*)::text FROM public.desafios_autenticacao
+           WHERE usuario_id = $1) AS challenges,
+          (SELECT count(*)::text FROM public.convites_usuario
+           WHERE usuario_id = $1) AS invitations,
+          (SELECT count(*)::text FROM public.eventos_auditoria
+           WHERE usuario_afetado_id = $1
+             AND evento = 'auth.convite.criado') AS audits
+      `, [pending.id]);
+      assert.deepEqual(rolledBack.rows[0], {
+        challenges: '0',
+        invitations: '0',
+        audits: '0',
+      });
+    } finally {
+      await requirePool().query(
+        'GRANT EXECUTE ON FUNCTION public.tche_aud_convite_criado_mp35b(jsonb) TO tche_agro_runtime',
+      );
+    }
+
+    const issued = await service.issueForExistingPendingUser({
+      organizationId: ORGANIZATION_ID,
+      actorAdminUserId: admin.id,
+      actorSessionId: adminSessionId,
+      userId: pending.id,
+      requestId: 'audit-interface-restored',
+    });
+    assert.ok(issued.challengeId);
+    const audit = await requirePool().query<{ count: string }>(`
+      SELECT count(*)::text AS count FROM public.eventos_auditoria
+      WHERE usuario_afetado_id = $1 AND evento = 'auth.convite.criado'
+    `, [pending.id]);
+    assert.equal(audit.rows[0]?.count, '1');
+  });
+
   test('invitation is atomic and the same token is accepted once under concurrency', async () => {
     const admin = await seedUser({ profile: 'admin' });
     const adminSessionId = await seedSession(admin.id);
@@ -690,6 +774,28 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
   });
 
   test('primary e-mail change requires both addresses and revokes all active grants', async () => {
+    const notificationPrivileges = await (runtimeAdapter?.pool ?? requirePool()).query<{
+      can_select_event: boolean;
+      can_insert_event: boolean;
+      can_select_delivery: boolean;
+      can_insert_delivery: boolean;
+    }>(`
+      SELECT
+        has_table_privilege(current_user, 'public.notificacao_evento', 'SELECT')
+          AS can_select_event,
+        has_table_privilege(current_user, 'public.notificacao_evento', 'INSERT')
+          AS can_insert_event,
+        has_table_privilege(current_user, 'public.notificacao_entrega', 'SELECT')
+          AS can_select_delivery,
+        has_table_privilege(current_user, 'public.notificacao_entrega', 'INSERT')
+          AS can_insert_delivery
+    `);
+    assert.deepEqual(notificationPrivileges.rows[0], {
+      can_select_event: true,
+      can_insert_event: false,
+      can_select_delivery: true,
+      can_insert_delivery: false,
+    });
     const user = await seedUser({ profile: 'colaborador' });
     const sessionId = await seedSession(user.id);
     const repository = new PostgresPrimaryEmailChangeRepository(postgresOptions());
@@ -925,7 +1031,9 @@ describe('account-action PostgreSQL adapters', { timeout: 180_000 }, () => {
       const start = new AdminBreakGlassCliService({
         enabled: true,
         verifier,
-        repository: new PostgresAdminBreakGlassRepository(postgresOptions()),
+        repository: new PostgresAdminBreakGlassRepository(
+          postgresOptions(requirePool()),
+        ),
         passwordCredentials: credentials,
         emailOutbox,
         actionBaseUrl: ACTION_URL,

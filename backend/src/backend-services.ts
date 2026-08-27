@@ -19,6 +19,14 @@ import { SecondaryEmailService } from './account-actions/secondary-email-service
 import { loadAuthenticationRuntimeConfig } from './auth/config.js';
 import { createPostgresAuthenticationRuntime } from './auth/runtime.js';
 import type { AuthenticationService } from './auth/service.js';
+import { PostgresAdministrativeUserRepository } from './administration/postgres-user-repository.js';
+import { DefaultAdministrativeUserService } from './administration/user-service.js';
+import { createAdministrativeUserCursorCodecFromBase64KeyRing } from './administration/user-cursor.js';
+import {
+  assertAdministrativeUserCursorKeysAreIndependent,
+  loadAdministrativeUserCursorRuntimeConfig,
+} from './administration/config.js';
+import type { AdministrativeUserRoutesOptions } from './administration/user-routes.js';
 import type { RuntimeConfig } from './config.js';
 import { loadEmailRuntimeConfig } from './email/config.js';
 import { createOutboxPayloadCipherFromBase64KeyRing } from './outbox/crypto.js';
@@ -37,6 +45,7 @@ export interface BackendSecurityServices {
     AccountActionRoutesOptions,
     'authenticationService'
   >;
+  readonly administrativeUserRoutes: AdministrativeUserRoutesOptions;
   readonly propertyRoutes: Readonly<{ service: PropertyService }>;
   readonly notificationRoutes: Readonly<{ service: NotificationService }>;
 }
@@ -56,6 +65,12 @@ export async function createBackendSecurityServices(input: {
   const emailConfig = loadEmailRuntimeConfig(
     input.runtimeConfig.nodeEnv,
     environment,
+  );
+  const administrativeCursorConfig =
+    loadAdministrativeUserCursorRuntimeConfig(environment);
+  assertAdministrativeUserCursorKeysAreIndependent(
+    administrativeCursorConfig,
+    emailConfig.outboxKeyRing.keys,
   );
   const outboxCipher = createOutboxPayloadCipherFromBase64KeyRing(
     emailConfig.outboxKeyRing,
@@ -83,6 +98,22 @@ export async function createBackendSecurityServices(input: {
 
   return Object.freeze({
     authenticationService,
+    administrativeUserRoutes: Object.freeze({
+      service: new DefaultAdministrativeUserService({
+        authentication: authenticationService,
+        adminCreationEnabled: input.runtimeConfig.nodeEnv !== 'production',
+        cursorCodec: createAdministrativeUserCursorCodecFromBase64KeyRing(
+          administrativeCursorConfig,
+        ),
+        repository: new PostgresAdministrativeUserRepository({
+          ...commonAccountRepositoryOptions,
+          emailOutbox,
+          actionBaseUrl: emailConfig.actionBaseUrl,
+          invitationTtlMs:
+            authenticationConfig.challenges.inviteTtlSeconds * 1_000,
+        }),
+      }),
+    }),
     propertyRoutes: Object.freeze({
       service: new DefaultPropertyService({
         authentication: authenticationService,

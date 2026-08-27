@@ -7,15 +7,19 @@ export class InvalidEmailError extends Error {
 
 /** Product login identifiers are case-insensitive and stored in NFC. */
 export function normalizeEmail(value: string): string {
-  const normalized = value.normalize('NFC').trim().toLowerCase();
+  const normalized = value
+    .normalize('NFC')
+    .trim()
+    .toLowerCase()
+    .normalize('NFC');
   const atIndex = normalized.indexOf('@');
+  const codePointLength = Array.from(normalized).length;
 
   if (
-    normalized.length === 0 ||
-    normalized.length > 254 ||
+    codePointLength > 254 ||
     atIndex <= 0 ||
     atIndex !== normalized.lastIndexOf('@') ||
-    atIndex >= normalized.length - 1 ||
+    normalized.endsWith('@') ||
     /\s/u.test(normalized)
   ) {
     throw new InvalidEmailError();

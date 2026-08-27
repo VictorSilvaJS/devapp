@@ -1,6 +1,6 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A concluída e integrada; MP-35B/C/D não iniciadas`
+> Status: `MP-35A concluída e integrada; MP-35B corrigida localmente, não integrada e em validação final; MP-35C/D não iniciadas`
 >
 > Definido em: 2026-08-25
 >
@@ -14,7 +14,7 @@
 | Fase | Conteúdo | Estado |
 |---|---|---|
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
-| MP-35B | administração HTTP de Usuários e convites | não iniciada |
+| MP-35B | administração HTTP de Usuários e convites | corrigida localmente; não integrada; em validação final |
 | MP-35C | escritas HTTP de Propriedades e deltas de vínculos | não iniciada |
 | MP-35D | integração das telas administrativas existentes e validação física | não iniciada |
 
@@ -111,6 +111,11 @@ externa em runtime.
 | Detalhe de motivo | 300 caracteres |
 | IDs por delta de vínculos | 100 |
 
+Os limites textuais contam pontos de código Unicode depois de normalização NFC.
+HTTP e domínio normalizam antes da persistência; PostgreSQL usa `char_length`
+sobre o valor canônico, e o cursor conserva exatamente a chave calculada pelo
+SQL. Unidades UTF-16 não são a métrica do contrato.
+
 ### D10 — motivos administrativos
 
 O catálogo único é `fim_relacao`, `mudanca_responsabilidade`,
@@ -182,7 +187,43 @@ esse modo, qualquer ambiente que o tenha consumido deve tratar o downgrade como
 incompatível: o esquema anterior não representa fielmente o histórico e a
 operação deve falhar com segurança em vez de reescrever ou apagar convites.
 
-## Contratos HTTP reservados para MP-35B e MP-35C
+## Contratos HTTP da MP-35B local e reservados para MP-35C
+
+### Precisões de execução da MP-35B
+
+- mutações de Usuário respondem com recibo seguro composto somente por
+  `resultado`, `recurso_tipo`, `recurso_id` e, quando aplicável, `versao`;
+  a repetição idempotente devolve exatamente o mesmo status e recibo, sem
+  persistir PII ou reconstruir uma representação possivelmente mais nova;
+- a projeção administrativa de Usuário expõe `produtor_id` somente quando o
+  perfil for Produtor. Esse ID canônico permite que a MP-35C selecione o
+  `titular_id` sem confundir Usuário e Produtor;
+- a edição administrativa do e-mail principal é aceita somente para Usuário
+  `pendente`. A mesma transação revoga convite, desafio e outbox anteriores e
+  emite substituto para o novo endereço. Usuários ativos ou inativos usam os
+  fluxos verificados de conta/recuperação da MP-33B;
+- `PATCH /v1/usuarios/:id/status` opera somente `ativo <-> inativo`.
+  `pendente` pertence exclusivamente à criação e ao aceite do convite e, como
+  destino dessa rota, retorna `422 validation_error`, nunca conflito `409`;
+- a emissão administrativa canônica passa a ser
+  `POST /v1/usuarios/:id/convites`. A antiga emissão em
+  `POST /v1/auth/invitations` é removida para não conservar uma escrita
+  paralela sem a idempotência D11. O aceite público continua exclusivamente
+  em `POST /v1/auth/invitations/accept` e preserva `204 No Content`;
+- a resposta de leitura usa `snake_case`; lista e detalhe não incluem senha,
+  credencial, token, hash, desafio, payload da outbox ou aliases do mock.
+- o runtime não possui `INSERT`, `UPDATE` ou `DELETE` administrativo direto em
+  `usuarios`, `produtores` ou na tabela de idempotência. As quatro mutações
+  usam funções transacionais estreitas, owned por papel seguro `NOLOGIN`, com
+  `EXECUTE` removido de `PUBLIC` e concedido somente ao papel operacional;
+- criação de Admin fica fechada na composição de produção enquanto o portão de
+  MFA não estiver implementado. Testes e ambientes não produtivos podem criar
+  Admin pendente para validar D1, sem converter isso em autorização produtiva;
+- lista usa cursor AES-256-GCM versionado, confidencial, autenticado, expirável
+  e vinculado ao fingerprint canônico de `busca`, `perfil` e `status`. A chave
+  de ordenação vem diretamente de `lower(nome)` no PostgreSQL. O keyring
+  dedicado `ADMIN_USER_CURSOR_*` é obrigatório no startup, não possui fallback
+  e não pode reutilizar material criptográfico da outbox;
 
 | Método e rota | Fase | Ação | RBAC |
 |---|---|---|---|
@@ -206,19 +247,41 @@ altera vínculos e não define Titular. O acesso operacional já existente em
 
 ## Concorrência, erros e privacidade
 
-- mutações versionadas com versão divergente retornam `409`;
-- chave idempotente reutilizada com outro corpo retorna `409`;
-- payload ou estado semântico inválido retorna `422`; sintaxe inválida retorna
-  `400`;
-- recurso administrativo inexistente retorna `404`; autenticação e perfil
-  inválidos retornam `401` e `403` conforme o contrato vigente;
-- listas usam cursor estável por nome e ID, nunca offset como contrato público;
+- mutações versionadas com versão divergente retornam
+  `409 version_conflict`;
+- chave idempotente reutilizada com outro corpo retorna
+  `409 idempotency_conflict`;
+- regra de negócio retorna `409 business_rule_conflict`;
+- JSON malformado ou estrutura inválida retorna `400 invalid_request`; valor,
+  enum ou limite D9 semanticamente inválido retorna `422 validation_error`;
+- recurso administrativo inexistente retorna `404 not_found`; sessão ausente,
+  revogada, expirada ou stale retorna `401 invalid_session`; perfil ativo sem
+  permissão retorna `403 forbidden`;
+- listas usam cursor confidencial e autenticado por nome/ID, nunca offset como
+  contrato público; valor vazio, acima do limite formal, truncado, malformado,
+  adulterado, expirado, com chave/versão desconhecida ou trocado entre filtros
+  falha com `400 invalid_request`;
 - todas as mutações administrativas usam `Idempotency-Key`; comandos
   versionados também exigem a versão-base;
 - e-mail, telefone, documento, detalhe de motivo e conteúdo do comando não são
   copiados para logs nem para a chave idempotente;
 - auditoria registra ator, sessão, recurso, resultado, motivo, correlação e
   Usuários afetados sem armazenar segredo ou token.
+- lista de Usuários usa cursor opaco estável por nome normalizado e ID, com
+  limite padrão 50 e máximo 100; `busca` compara literalmente nome, e-mail ou
+  documento depois do escopo Admin e nunca concede autorização. A busca infixa
+  com `ILIKE` exige benchmark no volume produtivo esperado antes da liberação;
+- o corpo HTTP de alteração de status usa `motivo` como código D10 e
+  `motivo_detalhe` opcional; `outro` exige detalhe;
+- `POST /v1/usuarios/:id/convites` recebe somente
+  `modo_ativacao=ativar_usuario`; modo histórico bem formado é erro semântico
+  `422` e campo desconhecido é erro estrutural `400`;
+- a reserva idempotente, o efeito, a auditoria e o recibo pertencem à mesma
+  transação. Falha anterior ao commit não conserva linha `processando`;
+- o worker obtém o horário corrente do PostgreSQL depois dos locks coordenados
+  e revalida mensagem, lease, desafio e convite imediatamente antes do envio.
+  O SMTP ocorre com transação e lock abertos; capacidade e latência sob carga
+  representativa são portão produtivo explícito.
 
 ## Critérios de aceite por fase
 
@@ -227,6 +290,16 @@ válidos, snapshot com 27 UFs/5.571 Municípios, constraints e contratos
 automatizados, preflight/concorrência/privilégios exercitados em PostgreSQL com
 duas conexões e barreira explícita, documentação coerente e nenhuma rota
 administrativa nova.
+
+MP-35B termina somente com E2E das seis rotas usando bearer, autenticação e
+login runtime real, incluindo matriz 6 x 5 para Admin, ausência de autenticação,
+sessão stale, Produtor e Colaborador; DML adversarial negado; criação dos três
+perfis; erros HTTP exatos; paginação acima de 100; as sete corridas da
+reauditoria observadas em `pg_stat_activity`/`wait_event` com duas conexões;
+outbox em voo linearizável, inclusive expiração enquanto espera pelo lock;
+compatibilidade dos fluxos de conta; OpenAPI e documentação validados.
+Isolamento entre organizações é não aplicável ao modelo singleton atual e não
+justifica inventar uma segunda organização.
 
 ## Portões operacionais anteriores à produção
 
@@ -254,11 +327,16 @@ direto na tabela. Continuam como portões produtivos:
 - executar no ambiente de ensaio `npm run migrations:verify` e
   `npm run migrate:up`, registrar tempos pelo orquestrador e consultar
   `pg_stat_activity`/`pg_locks` durante a execução. Testcontainers locais são
-  evidência funcional, não representam o volume nem a contenção produtivos.
+  evidência funcional, não representam o volume nem a contenção produtivos;
+- provisionar e rotacionar o keyring dedicado de cursor sem compartilhar chave
+  com a outbox, medir a busca infixa `ILIKE` no volume esperado e ensaiar a
+  capacidade/latência do SMTP com a transação e o lock do worker abertos.
 
-MP-35B/C deverão acrescentar domínio, repositórios, transações, RBAC, auditoria,
-revogação de sessões, idempotência e testes HTTP/integrados. MP-35D conectará as
-telas existentes sem redesenho não necessário e exigirá teste Android físico.
+A MP-35B local acrescenta domínio, repositórios, transações, RBAC, auditoria,
+revogação de sessões, idempotência e testes HTTP/integrados para Usuários. A
+MP-35C deverá fazer o equivalente apenas para Propriedades e vínculos. A
+MP-35D conectará as telas existentes sem redesenho não necessário e exigirá
+teste Android físico.
 
 ## Fora de escopo
 

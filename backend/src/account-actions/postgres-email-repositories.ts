@@ -155,7 +155,7 @@ export class PostgresPrimaryEmailChangeRepository
             ON credencial.organizacao_id = usuario.organizacao_id
            AND credencial.usuario_id = usuario.id AND credencial.status = 'ativa'
           WHERE usuario.organizacao_id = $1 AND usuario.id = $2
-          FOR UPDATE OF usuario, credencial
+          FOR UPDATE OF credencial
         `,
         [expected.organizationId, expected.id, input.authenticatedSessionId],
       );
@@ -294,7 +294,7 @@ export class PostgresPrimaryEmailChangeRepository
           WHERE desafio.token_hash = $1
             AND desafio.finalidade = 'confirmacao_email_atual'
             AND desafio.expira_em > $2 AND solicitacao.expira_em > $2
-          FOR UPDATE OF solicitacao, desafio, usuario
+          FOR UPDATE OF solicitacao, desafio
         `,
         [decodeSha256Hex(input.currentTokenSha256), input.confirmedAt],
       );
@@ -399,7 +399,7 @@ export class PostgresPrimaryEmailChangeRepository
           WHERE desafio.token_hash = $1
             AND desafio.finalidade = 'confirmacao_email_novo'
             AND desafio.expira_em > $2 AND solicitacao.expira_em > $2
-          FOR UPDATE OF solicitacao, desafio, usuario
+          FOR UPDATE OF solicitacao, desafio
         `,
         [decodeSha256Hex(input.tokenSha256), input.confirmedAt],
       );
@@ -450,12 +450,8 @@ export class PostgresPrimaryEmailChangeRepository
       );
       await query(
         client,
-        `
-          UPDATE public.usuarios
-          SET email = $3, versao_autorizacao = versao_autorizacao + 1
-          WHERE organizacao_id = $1 AND id = $2
-        `,
-        [row.organizacao_id, row.id, row.email_novo],
+        'SELECT public.tche_conta_concluir_alteracao_email_mp35b($1)',
+        [row.request_id],
       );
       await this.#store.revokeAllUserSecurityState(client, {
         organizationId: row.organizacao_id,
@@ -573,7 +569,7 @@ export class PostgresSecondaryEmailRepository
           SELECT id, organizacao_id, nome, email, perfil, status,
                  xmin::text AS version
           FROM public.usuarios
-          WHERE organizacao_id = $1 AND id = $2 FOR UPDATE
+          WHERE organizacao_id = $1 AND id = $2
         `,
         [expected.organizationId, expected.id],
       );
@@ -668,7 +664,7 @@ export class PostgresSecondaryEmailRepository
           WHERE desafio.token_hash = $1
             AND desafio.finalidade = 'confirmacao_email_recuperacao'
             AND desafio.expira_em > $2
-          FOR UPDATE OF desafio, usuario, contato
+          FOR UPDATE OF desafio, contato
         `,
         [hash, input.confirmedAt],
       );
