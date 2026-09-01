@@ -1,14 +1,20 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A/B integradas; MP-35C corrigida localmente, não integrada e
-> em validação final; MP-35D não iniciada`
+> Status: `MP-35A/B/C integradas; MP-35C integrada em e6789bf, com CI pós-push
+> aprovada e auditoria independente pós-correção ainda não registrada; MP-35D
+> não iniciada`
 >
 > Definido em: 2026-08-25
+>
+> Revisão: 2026-09-01
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
 > Integração da MP-35B: 2026-08-27, commit `60144c2`, reauditoria independente
 > e CI pós-push aprovadas
+>
+> Integração da MP-35C: 2026-09-01, commit `e6789bf`, CI pós-push aprovada;
+> auditoria independente pós-correção ainda não registrada
 >
 > Escopo deste documento: contrato consolidado de Usuários, Propriedades,
 > vínculos, concorrência e fundação persistente da MP-35.
@@ -19,7 +25,7 @@
 |---|---|---|
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
-| MP-35C | Propriedades, vínculos e Localidades no backend | corrigida localmente; não integrada; em validação final |
+| MP-35C | Propriedades, vínculos e Localidades no backend | concluída e integrada diretamente em `e6789bf`; CI pós-push aprovada; auditoria independente pós-correção ainda não registrada |
 | MP-35D | integração das telas administrativas existentes e validação física | não iniciada |
 
 A MP-35A não cria handlers, serviços ou grants de escrita do runtime para os
@@ -346,12 +352,13 @@ direto na tabela. Continuam como portões produtivos:
   com a outbox, medir a busca infixa `ILIKE` no volume esperado e ensaiar a
   capacidade/latência do SMTP com a transação e o lock do worker abertos.
 
-A MP-35C local acrescenta a migration append-only `000009`, quatro operações
+A MP-35C acrescenta a migration append-only `000009`, quatro operações
 transacionais estreitas, as sete rotas Admin-only, cursores exclusivos,
 Localidades versionadas, RBAC, auditoria, revogação de sessões, idempotência e
-testes HTTP/PostgreSQL para Propriedades e vínculos. Ela está corrigida
-localmente, ainda não foi integrada e está em validação final. A MP-35D
-continua não iniciada.
+testes HTTP/PostgreSQL para Propriedades e vínculos. Ela foi concluída e
+integrada diretamente em `e6789bf`, com CI pós-push aprovada; a auditoria
+independente pós-correção ainda não está registrada. A MP-35D continua não
+iniciada.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de

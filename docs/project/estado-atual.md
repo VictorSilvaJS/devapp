@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-08-31
+> Revisão documental: 2026-09-01
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -60,9 +60,10 @@ destino negado deriva de uma tentativa autenticada de resolução; ambas gravam
 auditoria internamente, com horário do PostgreSQL e na mesma transação.
 A rota administrativa antiga de emissão em `/v1/auth/invitations` foi
 removida; o aceite público permanece em `/v1/auth/invitations/accept`. O
-aplicativo não foi alterado. A MP-35C foi implementada somente no backend
-local, sem integração, tag, deploy, release ou publicação; a MP-35D não foi
-iniciada.
+aplicativo não foi alterado. Em 2026-09-01, a MP-35C foi concluída e integrada
+diretamente à branch `backend` no commit `e6789bf`, com CI pós-push aprovada.
+A auditoria independente pós-correção ainda não está registrada. Não houve
+tag, deploy, release ou publicação; a MP-35D não foi iniciada.
 
 ## Estado por camada
 
@@ -71,14 +72,14 @@ iniciada.
 | Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil e notificações reais no padrão visual aprovado; convergência física aprovada e sem release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
-| Autorização | Lista/detalhe operacional preservados; sete rotas locais de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
+| Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
 | API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/usuarios`, `/v1/propriedades`, `/v1/localidades` e `/v1/notificacoes` validados localmente |
-| Banco | Oito migrations integradas e a `000009` append-only somente local; nenhum ambiente produtivo implantado |
+| Banco | Nove migrations integradas, incluindo a `000009` append-only da MP-35C; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
 | Notificações | Mock local somente no Demo; vertical HTTP in-app persistida, individual, online-only e sem push |
-| Testes | Rodada integral verde em 2026-08-31: typecheck da raiz e do backend, compatibilidade de domínio, 186 testes unitários/contratos, 40 HTTP e 100 integrações, incluindo PostgreSQL/PostGIS, decimal exato com fim absoluto e terminadores LF/CR/CRLF/U+2028/U+2029, decoder pré-COMMIT, containers multiprocesso com portas dinâmicas, OpenAPI, D13, cursores, up/down/up e concorrência observável; sob rejeições estritas passaram 20/20 execuções do teste focal, 5/5 da suíte MP-35C com 61/61 por rodada e 3/3 da integração completa com 100/100 por rodada, sem rerun corretivo; a MP-35C permanece não integrada e em validação final |
+| Testes | Rodada integral verde em 2026-08-31: typecheck da raiz e do backend, compatibilidade de domínio, 186 testes unitários/contratos, 40 HTTP e 100 integrações, incluindo PostgreSQL/PostGIS, decimal exato com fim absoluto e terminadores LF/CR/CRLF/U+2028/U+2029, decoder pré-COMMIT, containers multiprocesso com portas dinâmicas, OpenAPI, D13, cursores, up/down/up e concorrência observável; sob rejeições estritas passaram 20/20 execuções do teste focal, 5/5 da suíte MP-35C com 61/61 por rodada e 3/3 da integração completa com 100/100 por rodada, sem rerun corretivo; a MP-35C foi integrada em `e6789bf` e a CI pós-push foi aprovada |
 
 ## Corte implementado da MP-33C
 
@@ -107,9 +108,10 @@ O comportamento implementado e seus limites estão congelados no
   desenvolvimento/QA, sem seed automático ou produtivo.
 
 Administração HTTP de Usuários e convites está concluída e integrada na MP-35B.
-Propriedades, vínculos e Localidades estão corrigidos localmente na MP-35C e
-prontos para auditoria independente, ainda sem integração. A integração das
-telas continua reservada à MP-35D, que não foi iniciada.
+Propriedades, vínculos e Localidades estão concluídos e integrados na MP-35C
+pelo commit `e6789bf`, com CI pós-push aprovada; a auditoria independente
+pós-correção ainda não está registrada. A integração das telas continua
+reservada à MP-35D, que não foi iniciada.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 

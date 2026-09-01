@@ -1,12 +1,12 @@
 # Próximos Passos
 
-> Atualizado em: 2026-08-31
+> Atualizado em: 2026-09-01
 >
-> Tarefa atual: auditoria independente da MP-35C corrigida localmente — sem iniciar MP-35D
+> Tarefa atual: registrar a auditoria independente pós-correção da MP-35C integrada — sem iniciar MP-35D
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
-> D1-D13 APROVADAS; MP-35A/B INTEGRADAS; MP-35C CORRIGIDA LOCALMENTE, NÃO INTEGRADA E EM VALIDAÇÃO FINAL; MP-35D NÃO INICIADA; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35C INTEGRADA EM `e6789bf`, COM CI PÓS-PUSH APROVADA E AUDITORIA INDEPENDENTE PÓS-CORREÇÃO AINDA NÃO REGISTRADA; MP-35D NÃO INICIADA; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -58,8 +58,10 @@ deduplicação e destino negado do runtime: a primeira nasce somente do resultad
 real de `INSERT ... ON CONFLICT`, e a segunda somente da resolução autenticada;
 identidade, organização, recurso, resultado e horário são derivados no banco e
 persistidos na mesma transação. A MP-35C foi corrigida localmente somente no
-backend, permanece não integrada e em validação final; a MP-35D e as telas não
-foram iniciadas. Não houve tag, deploy, release ou publicação da MP-35B/C.
+backend e depois integrada diretamente no commit `e6789bf`, com CI pós-push
+aprovada. A auditoria independente pós-correção ainda não está registrada. A
+MP-35D e as telas não foram iniciadas. Não houve tag, deploy, release ou
+publicação da MP-35B/C.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -228,7 +230,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 34.1 | Convergência visual pré-MP-35 | Reutilizar no HTTP a interface aprovada para capacidades já conectadas | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e47bb02`; CI PÓS-PUSH APROVADA |
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
-| 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CORRIGIDA LOCALMENTE; NÃO INTEGRADA; EM VALIDAÇÃO FINAL |
+| 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH APROVADA; AUDITORIA INDEPENDENTE PÓS-CORREÇÃO AINDA NÃO REGISTRADA |
 | 35D | MP-35D | Integração das telas administrativas existentes e teste físico | NÃO INICIADA; FORA DO CORTE ATUAL |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
@@ -320,11 +322,12 @@ jobs da CI pós-push foram aprovados. Não houve tag, deploy, release ou
 publicação. A arquitetura D1-D13 foi aprovada em 2026-08-25. A MP-35A foi
 integrada diretamente no commit `a51389e`, com CI pós-push aprovada. A MP-35B
 foi integrada diretamente no commit `60144c2`, com reauditoria independente e
-CI pós-push aprovadas. A MP-35C está corrigida localmente, não integrada e em
-validação final; a MP-35D permanece fora do corte atual.
+CI pós-push aprovadas. A MP-35C foi integrada diretamente no commit `e6789bf`,
+com CI pós-push aprovada; a auditoria independente pós-correção ainda não está
+registrada. A MP-35D permanece fora do corte atual.
 
-O passo atual é submeter a MP-35C local a nova auditoria independente antes de
-qualquer decisão de integração. Somente depois de
+O passo atual é concluir e registrar a auditoria independente pós-correção da
+MP-35C já integrada. Somente depois de
 autorização própria, a MP-35D poderá integrar as
 telas administrativas já existentes. MP-36 e MP-37
 repetem o padrão

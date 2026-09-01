@@ -1,9 +1,9 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-08-27
+> Revisão documental: 2026-09-01
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
-e da MP-35A. MP-33A, MP-33B, MP-33C, MP-34 e MP-35A estão concluídas
+e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
 tecnicamente e integradas. A MP-33C entrou na
 branch `backend` pelo PR #2 no commit `cc78a9f`, e a CI pós-merge foi aprovada.
 A MP-34 entrou diretamente na mesma branch pelo commit `e787707`, sem pull
@@ -12,7 +12,10 @@ release ou publicação dessa fase. Os itens abaixo são portões produtivos ou
 implementações de fases posteriores. D1-D13 da MP-35 estão decididas; não são
 pendências arquiteturais. A MP-35A entrou diretamente na branch `backend` no
 commit `a51389e`, com os três jobs executados da CI pós-push aprovados e sem
-tag, deploy, release ou publicação.
+tag, deploy, release ou publicação. A MP-35B entrou no commit `60144c2`, com
+reauditoria independente e CI pós-push aprovadas. A MP-35C entrou no commit
+`e6789bf`, com CI pós-push aprovada; a auditoria independente pós-correção
+ainda não está registrada.
 
 ## Convergência da interface antes da MP-35
 
@@ -60,9 +63,9 @@ estão consolidados em `contrato-notificacoes.md`.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- submeter a MP-35C corrigida localmente a auditoria independente antes de
-  qualquer integração; manter a MP-35D não iniciada até autorização futura
-  própria para integração das telas;
+- concluir e registrar a auditoria independente pós-correção da MP-35C já
+  integrada; manter a MP-35D não iniciada até autorização futura própria para
+  integração das telas;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;

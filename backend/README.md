@@ -28,9 +28,10 @@ commit `60144c2`, com CI pós-push aprovada. A migration `000008` acrescenta
 seis operações em `/v1/usuarios`, RBAC Admin revalidado no SQL, cursor cifrado
 e autenticado, versão, idempotência, auditoria e convite/outbox atômicos. A
 emissão antiga em `/v1/auth/invitations` foi removida; o aceite público
-permanece. A MP-35C está corrigida apenas localmente, não integrada e em
-validação final; a MP-35D não foi iniciada. Não houve tag, deploy,
-release ou publicação.
+permanece. A MP-35C foi concluída e integrada diretamente à branch `backend`
+no commit `e6789bf`, com CI pós-push aprovada; a auditoria independente
+pós-correção ainda não está registrada. A MP-35D não foi iniciada. Não houve
+tag, deploy, release ou publicação.
 
 ## Requisitos
 
@@ -621,7 +622,8 @@ unitários/contratos, 40 HTTP e 100 integrações PostgreSQL/PostGIS. A integra�
 completa passou 100/100 em três execuções consecutivas, incluindo decimal
 textual exato, decoder anterior ao `COMMIT`, rollback real, `000009` up/down/up,
 roles/ACLs, D13, concorrência de domínio e três containers iniciados em
-processos simultâneos com portas dinâmicas. A fase continua não integrada.
+processos simultâneos com portas dinâmicas. A fase foi integrada diretamente
+no commit `e6789bf`, com CI pós-push aprovada.
 
 A correção focal adicional validou `area_total` com fim absoluto, sem `$`,
 contra LF, CR, CRLF, U+2028 e U+2029 nas fronteiras HTTP, TypeScript e SQL. Sob

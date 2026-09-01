@@ -1,6 +1,6 @@
 # Contrato De API Para RBAC/Backend
 
-> Revisão documental: 2026-08-31
+> Revisão documental: 2026-09-01
 
 Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
 2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
@@ -47,10 +47,11 @@ Revisão em 2026-08-25: D1-D13 e a divisão MP-35A-D foram consolidadas em
 `contrato-administracao-mp35.md`. A MP-35A implementa somente contratos e
 fundação persistente.
 
-Revisão em 2026-08-31: a MP-35C está corrigida localmente, não integrada e em
-validação final. As sete rotas de Propriedades, vínculos e
-Localidades abaixo são executáveis no backend local; telas continuam
-reservadas à MP-35D, que não foi iniciada.
+Revisão em 2026-09-01: a MP-35C foi concluída e integrada diretamente à branch
+`backend` no commit `e6789bf`, com CI pós-push aprovada. A auditoria
+independente pós-correção ainda não está registrada. As sete rotas de
+Propriedades, vínculos e Localidades abaixo são executáveis no backend; telas
+continuam reservadas à MP-35D, que não foi iniciada.
 
 ## Decisoes De Base
 
