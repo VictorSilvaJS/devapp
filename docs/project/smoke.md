@@ -28,7 +28,7 @@ rodadas anteriores foram movidas para docs/archive.
 | ATUAL-15 | Interface HTTP | Login, Propriedades, Perfil e Notificações no padrão visual aprovado | PASSOU AUTOMATIZADO E NO ANDROID FÍSICO |
 | ATUAL-16 | MP-35A | Upgrade, convites, constraints, concorrência, privilégios, versões e catálogo IBGE | PASSOU AUTOMATIZADO; INTEGRADA EM `a51389e`; PORTÕES PRODUTIVOS PENDENTES |
 | ATUAL-17 | MP-35B | Seis rotas de Usuários, privilégios, cursor, códigos HTTP e concorrência | PASSOU NA RODADA AUTOMATIZADA INTEGRAL; REAUDITORIA INDEPENDENTE APROVADA; INTEGRADA EM `60144c2`; CI PÓS-PUSH APROVADA |
-| ATUAL-18 | MP-35C | Sete rotas de Propriedades, vínculos e Localidades, privilégios, cursores, D13 e concorrência | PASSOU NA RODADA AUTOMATIZADA INTEGRAL; INTEGRADA EM `e6789bf`; CI PÓS-PUSH APROVADA; AUDITORIA INDEPENDENTE PÓS-CORREÇÃO AINDA NÃO REGISTRADA |
+| ATUAL-18 | MP-35C | Sete rotas de Propriedades, vínculos e Localidades, privilégios, cursores, D13 e concorrência | PASSOU NA RODADA AUTOMATIZADA INTEGRAL; AUDITADA INDEPENDENTEMENTE; INTEGRADA EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
 
 Em 2026-08-17, uma nova evidência física confirmou que o ponto do Caderno era
 persistido com latitude, longitude, precisão e horário corretos, mas a primeira
@@ -434,10 +434,10 @@ PostgreSQL/PostGIS; ciclo explícito `000008 up/down/up`; links locais e higiene
 do diff. A reauditoria independente aprovou o resultado, integrado diretamente
 no commit `60144c2`, com CI pós-push aprovada. Isso não autoriza tag, deploy,
 release ou publicação. A MP-35C foi integrada diretamente no commit `e6789bf`,
-com CI pós-push aprovada. A auditoria independente pós-correção ainda não está
-registrada; a MP-35D não foi iniciada.
+com CI pós-push aprovada, foi auditada independentemente e recebeu confirmação
+pós-integração aprovada; a MP-35D não foi iniciada.
 
-### MP-35C integrada no backend
+### MP-35C concluída, auditada e integrada no backend
 
 Validar as sete rotas Admin-only, os dois cursores exclusivos, a migration
 `000009` em ciclo up/down/up, DML adversarial com login runtime real,
@@ -463,8 +463,8 @@ três processos de Testcontainers iniciaram de forma sobreposta, obtiveram
 portas, bancos e containers distintos e encerraram sem `EADDRINUSE`. Cada ordem
 da corrida de domínio repetiu três vezes, com espera `Lock:advisory` observada
 em `pg_stat_activity`. A implementação foi integrada no commit `e6789bf`, com
-CI pós-push aprovada. A auditoria independente pós-correção ainda não está
-registrada.
+CI pós-push aprovada. A auditoria independente e a confirmação pós-integração
+foram aprovadas.
 
 Correção focal de 2026-08-31: a gramática TypeScript/OpenAPI passou a usar
 fim absoluto `(?![\s\S])`, sem `$`, `trim` ou limpeza prévia. Domínio, HTTP e

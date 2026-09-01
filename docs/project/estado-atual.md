@@ -62,8 +62,17 @@ A rota administrativa antiga de emissão em `/v1/auth/invitations` foi
 removida; o aceite público permanece em `/v1/auth/invitations/accept`. O
 aplicativo não foi alterado. Em 2026-09-01, a MP-35C foi concluída e integrada
 diretamente à branch `backend` no commit `e6789bf`, com CI pós-push aprovada.
-A auditoria independente pós-correção ainda não está registrada. Não houve
-tag, deploy, release ou publicação; a MP-35D não foi iniciada.
+Ela foi auditada independentemente, e a confirmação pós-integração foi
+aprovada. Não houve tag, deploy, release ou publicação; a MP-35D não foi
+iniciada.
+
+Estado formal da sequência administrativa:
+
+- MP-35A: integrada.
+- MP-35B: integrada.
+- MP-35C: concluída, auditada independentemente e integrada.
+- Confirmação pós-integração: aprovada.
+- MP-35D: não iniciada.
 
 ## Estado por camada
 
@@ -109,9 +118,9 @@ O comportamento implementado e seus limites estão congelados no
 
 Administração HTTP de Usuários e convites está concluída e integrada na MP-35B.
 Propriedades, vínculos e Localidades estão concluídos e integrados na MP-35C
-pelo commit `e6789bf`, com CI pós-push aprovada; a auditoria independente
-pós-correção ainda não está registrada. A integração das telas continua
-reservada à MP-35D, que não foi iniciada.
+pelo commit `e6789bf`, com CI pós-push, auditoria independente e confirmação
+pós-integração aprovadas. A integração das telas continua reservada à MP-35D,
+que não foi iniciada.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 
@@ -461,17 +470,16 @@ diretamente no commit `e47bb02`, com os três jobs da CI pós-push aprovados.
 A MP-35A também está concluída e integrada diretamente no commit `a51389e`,
 com CI pós-push aprovada e sem antecipar endpoints ou telas. A MP-35B foi
 aprovada em reauditoria independente e integrada diretamente no commit
-`60144c2`, com CI pós-push aprovada. A MP-35C foi autorizada, implementada e
-corrigida localmente em 2026-08-31, mas não foi integrada e está em validação
-final; a MP-35D permanece não iniciada.
+`60144c2`, com CI pós-push aprovada. A MP-35C foi concluída, auditada
+independentemente e integrada diretamente no commit `e6789bf`; sua confirmação
+pós-integração foi aprovada. A MP-35D permanece não iniciada.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. A integração da MP-35C e qualquer tela ou
-trabalho da MP-35D continuam fora do corte local atual e exigem autorização
-específica.
+links, assinatura e dispositivo. Qualquer tela ou trabalho da MP-35D continua
+fora do corte atual e exige autorização específica.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da

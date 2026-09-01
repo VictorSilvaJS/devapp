@@ -30,8 +30,8 @@ e autenticado, versão, idempotência, auditoria e convite/outbox atômicos. A
 emissão antiga em `/v1/auth/invitations` foi removida; o aceite público
 permanece. A MP-35C foi concluída e integrada diretamente à branch `backend`
 no commit `e6789bf`, com CI pós-push aprovada; a auditoria independente
-pós-correção ainda não está registrada. A MP-35D não foi iniciada. Não houve
-tag, deploy, release ou publicação.
+pós-correção foi aprovada, assim como a confirmação pós-integração. A MP-35D
+não foi iniciada. Não houve tag, deploy, release ou publicação.
 
 ## Requisitos
 

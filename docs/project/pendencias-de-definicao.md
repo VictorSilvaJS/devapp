@@ -14,8 +14,8 @@ pendências arquiteturais. A MP-35A entrou diretamente na branch `backend` no
 commit `a51389e`, com os três jobs executados da CI pós-push aprovados e sem
 tag, deploy, release ou publicação. A MP-35B entrou no commit `60144c2`, com
 reauditoria independente e CI pós-push aprovadas. A MP-35C entrou no commit
-`e6789bf`, com CI pós-push aprovada; a auditoria independente pós-correção
-ainda não está registrada.
+`e6789bf`, com CI pós-push aprovada; ela foi auditada independentemente, e a
+confirmação pós-integração foi aprovada. A MP-35D não foi iniciada.
 
 ## Convergência da interface antes da MP-35
 
@@ -63,9 +63,8 @@ estão consolidados em `contrato-notificacoes.md`.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- concluir e registrar a auditoria independente pós-correção da MP-35C já
-  integrada; manter a MP-35D não iniciada até autorização futura própria para
-  integração das telas;
+- manter a MP-35D não iniciada até autorização futura própria para integração
+  das telas;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
@@ -144,7 +143,7 @@ produtiva ainda exige:
 - ensaiar capacidade, latência, timeout e contenção do SMTP enquanto a
   transação e o advisory lock coordenado do worker permanecem abertos.
 
-Esses itens não autorizam integrar a MP-35C nem antecipar a MP-35D e não são
+Esses itens não reabrem a MP-35C nem autorizam antecipar a MP-35D e não são
 substituídos pelos testes funcionais locais em Testcontainers/Mailpit.
 
 ### Materiais e arquivos

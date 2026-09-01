@@ -1,8 +1,8 @@
 # Matriz Tecnica De RBAC/Backend
 
 Status revisado em 2026-09-01:
-`MP-35A/B/C integradas; MP-35C integrada em e6789bf, com CI pós-push aprovada
-e auditoria independente pós-correção ainda não registrada; MP-35D não iniciada`.
+`MP-35A/B integradas; MP-35C concluída, auditada independentemente e integrada
+em e6789bf; confirmação pós-integração aprovada; MP-35D não iniciada`.
 Este documento
 transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
 de aceite. A regra segue as decisões consolidadas anteriores e D1-D13 da

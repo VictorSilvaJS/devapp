@@ -48,10 +48,10 @@ Revisão em 2026-08-25: D1-D13 e a divisão MP-35A-D foram consolidadas em
 fundação persistente.
 
 Revisão em 2026-09-01: a MP-35C foi concluída e integrada diretamente à branch
-`backend` no commit `e6789bf`, com CI pós-push aprovada. A auditoria
-independente pós-correção ainda não está registrada. As sete rotas de
-Propriedades, vínculos e Localidades abaixo são executáveis no backend; telas
-continuam reservadas à MP-35D, que não foi iniciada.
+`backend` no commit `e6789bf`, com CI pós-push aprovada. Ela foi auditada
+independentemente, e a confirmação pós-integração foi aprovada. As sete rotas
+de Propriedades, vínculos e Localidades abaixo são executáveis no backend;
+telas continuam reservadas à MP-35D, que não foi iniciada.
 
 ## Decisoes De Base
 
@@ -679,9 +679,9 @@ As decisões de fundação estão encerradas na baseline v1. Autenticação, ref
 revogação e sessão da MP-33B estão concluídos tecnicamente. A MP-33C também
 concluiu lista/detalhe, projeção `tipo_acesso`, cursor/filtros e `404`
 indistinguível. A MP-35B concluiu e integrou a administração HTTP de Usuários e
-convites. Ainda é necessário:
+convites. A MP-35C concluiu e integrou Propriedades, vínculos e Localidades,
+passou pela auditoria independente e recebeu confirmação pós-integração. Ainda
+é necessário:
 
-- auditar independentemente e integrar a implementação local da MP-35C sem
-  antecipar a MP-35D;
 - transformar em testes executáveis somente as linhas das fases futuras em
   `testes-contrato-api-rbac.md`.

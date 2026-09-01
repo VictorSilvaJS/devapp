@@ -1,8 +1,8 @@
 # Testes De Contrato/API Para RBAC
 
 Status revisado em 2026-09-01:
-`MP-35A/B/C integradas; MP-35C integrada em e6789bf, com CI pós-push aprovada
-e auditoria independente pós-correção ainda não registrada; MP-35D não iniciada`.
+`MP-35A/B integradas; MP-35C concluída, auditada independentemente e integrada
+em e6789bf; confirmação pós-integração aprovada; MP-35D não iniciada`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.

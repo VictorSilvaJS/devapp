@@ -35,8 +35,9 @@ foi aprovada em reauditoria independente e integrada diretamente no commit
 `60144c2`, com CI pós-push aprovada. Ela não acrescenta telas mobile. MP-35C e
 MP-35D permanecem fora do aplicativo: a MP-35C foi concluída e integrada
 diretamente à branch `backend` no commit `e6789bf`, com CI pós-push aprovada;
-a auditoria independente pós-correção ainda não está registrada. A MP-35D não
-foi iniciada. Não houve tag, deploy, release ou publicação da MP-35C.
+ela foi auditada independentemente, e a confirmação pós-integração foi
+aprovada. A MP-35D não foi iniciada. Não houve tag, deploy, release ou
+publicação da MP-35C.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em

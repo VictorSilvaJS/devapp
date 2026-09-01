@@ -1,8 +1,7 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A/B/C integradas; MP-35C integrada em e6789bf, com CI pós-push
-> aprovada e auditoria independente pós-correção ainda não registrada; MP-35D
-> não iniciada`
+> Status: `MP-35A/B integradas; MP-35C concluída, auditada independentemente e
+> integrada em e6789bf; confirmação pós-integração aprovada; MP-35D não iniciada`
 >
 > Definido em: 2026-08-25
 >
@@ -13,8 +12,8 @@
 > Integração da MP-35B: 2026-08-27, commit `60144c2`, reauditoria independente
 > e CI pós-push aprovadas
 >
-> Integração da MP-35C: 2026-09-01, commit `e6789bf`, CI pós-push aprovada;
-> auditoria independente pós-correção ainda não registrada
+> Integração da MP-35C: 2026-09-01, commit `e6789bf`, CI pós-push, auditoria
+> independente e confirmação pós-integração aprovadas
 >
 > Escopo deste documento: contrato consolidado de Usuários, Propriedades,
 > vínculos, concorrência e fundação persistente da MP-35.
@@ -25,7 +24,7 @@
 |---|---|---|
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
-| MP-35C | Propriedades, vínculos e Localidades no backend | concluída e integrada diretamente em `e6789bf`; CI pós-push aprovada; auditoria independente pós-correção ainda não registrada |
+| MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
 | MP-35D | integração das telas administrativas existentes e validação física | não iniciada |
 
 A MP-35A não cria handlers, serviços ou grants de escrita do runtime para os
