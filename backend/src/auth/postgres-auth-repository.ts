@@ -433,6 +433,13 @@ export class PostgresAuthRepository implements AuthRepository {
     const inactivityTtl = safeDurationSeconds(input.inactivityTtlSeconds);
 
     return inTransaction(this.#pool, async (client) => {
+      await query(
+        client,
+        `SELECT pg_catalog.pg_advisory_xact_lock(
+           pg_catalog.hashtextextended($1 || ':' || $2::text, 35000035)
+         )`,
+        [this.#organizationId, input.userId],
+      );
       const user = await query<SubjectRow>(
         client,
         `
@@ -448,11 +455,11 @@ export class PostgresAuthRepository implements AuthRepository {
       const row = user.rows[0];
       if (
         row === undefined ||
-        row.status !== 'ativo' ||
-        databaseInteger(row.versao_autorizacao) !== input.authorizationVersion
+        row.status !== 'ativo'
       ) {
         return { status: 'denied' as const };
       }
+      const authorizationVersion = databaseInteger(row.versao_autorizacao);
 
       const session = await query<{
         id: string;
@@ -477,7 +484,7 @@ export class PostgresAuthRepository implements AuthRepository {
         [
           this.#organizationId,
           input.userId,
-          input.authorizationVersion,
+          authorizationVersion,
           clientLabel(input.clientLabel),
           inactivityTtl,
           absoluteTtl,
@@ -504,7 +511,7 @@ export class PostgresAuthRepository implements AuthRepository {
           this.#organizationId,
           sessionId,
           accessHash,
-          input.authorizationVersion,
+          authorizationVersion,
           accessTtl,
         ],
       );
@@ -536,6 +543,7 @@ export class PostgresAuthRepository implements AuthRepository {
       return {
         status: 'created' as const,
         sessionId,
+        authorizationVersion,
         issuedAt: accessRow.emitido_em,
         accessExpiresAt: accessRow.expira_em,
         inactivityExpiresAt: sessionRow.expira_inatividade_em,

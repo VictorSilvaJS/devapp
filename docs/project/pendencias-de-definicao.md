@@ -60,9 +60,9 @@ estão consolidados em `contrato-notificacoes.md`.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- delimitar e autorizar especificamente a MP-35C antes de iniciar escritas de
-  Propriedade/deltas de vínculos; manter a MP-35D não iniciada até autorização
-  futura própria para integração das telas;
+- submeter a MP-35C corrigida localmente a auditoria independente antes de
+  qualquer integração; manter a MP-35D não iniciada até autorização futura
+  própria para integração das telas;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
@@ -141,8 +141,8 @@ produtiva ainda exige:
 - ensaiar capacidade, latência, timeout e contenção do SMTP enquanto a
   transação e o advisory lock coordenado do worker permanecem abertos.
 
-Esses itens não autorizam antecipar MP-35C/D e não são substituídos pelos
-testes funcionais locais em Testcontainers/Mailpit.
+Esses itens não autorizam integrar a MP-35C nem antecipar a MP-35D e não são
+substituídos pelos testes funcionais locais em Testcontainers/Mailpit.
 
 ### Materiais e arquivos
 

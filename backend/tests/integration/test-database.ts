@@ -2,7 +2,7 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
-import { createServer } from 'node:net';
+import { randomUUID } from 'node:crypto';
 
 import {
   buildDatabaseConfig,
@@ -13,55 +13,16 @@ export interface StartedPostgisTestDatabase {
   container: StartedPostgreSqlContainer;
   connectionString: string;
   database: DatabaseConfig;
-}
-
-async function reserveAvailableHostPort(): Promise<number> {
-  const server = createServer();
-
-  return new Promise<number>((resolve, reject) => {
-    server.once('error', reject);
-    server.listen({ host: '127.0.0.1', port: 0, exclusive: true }, () => {
-      const address = server.address();
-      if (address === null || typeof address === 'string') {
-        server.close(() => reject(new Error('Nao foi possivel reservar uma porta TCP local.')));
-        return;
-      }
-
-      server.close((error) => {
-        if (error !== undefined) {
-          reject(error);
-          return;
-        }
-        resolve(address.port);
-      });
-    });
-  });
-}
-
-async function ensureExplicitRyukPort(): Promise<void> {
-  if (
-    process.env.TESTCONTAINERS_RYUK_DISABLED === 'true' ||
-    process.env.TESTCONTAINERS_RYUK_PORT !== undefined
-  ) {
-    return;
-  }
-
-  process.env.TESTCONTAINERS_RYUK_PORT = String(
-    await reserveAvailableHostPort(),
-  );
+  hostPort: number;
 }
 
 export async function startPostgisTestDatabase(): Promise<StartedPostgisTestDatabase> {
-  // Docker Desktop 4.47 / Engine 28 pode manter HostPort="0" sem publicar a
-  // porta. Um binding explicito preserva o isolamento do Testcontainer e evita
-  // que a suite recorra a qualquer DATABASE_URL do ambiente.
-  await ensureExplicitRyukPort();
-  const hostPort = await reserveAvailableHostPort();
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 12);
   const container = await new PostgreSqlContainer('postgis/postgis:17-3.5')
-    .withDatabase('tche_agro_test')
-    .withUsername('tche_agro_test_user')
+    .withDatabase(`tche_agro_${suffix}_test`)
+    .withUsername(`tche_test_${suffix}`)
     .withPassword('testcontainer_only_password')
-    .withExposedPorts({ container: 5432, host: hostPort })
+    .withExposedPorts(5432)
     .withStartupTimeout(120_000)
     .start();
   const connectionString = container.getConnectionUri();
@@ -69,6 +30,7 @@ export async function startPostgisTestDatabase(): Promise<StartedPostgisTestData
   return {
     container,
     connectionString,
+    hostPort: container.getMappedPort(5432),
     database: buildDatabaseConfig({
       nodeEnv: 'test',
       databaseUrl: connectionString,

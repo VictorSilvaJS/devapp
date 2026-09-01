@@ -23,10 +23,16 @@ import { PostgresAdministrativeUserRepository } from './administration/postgres-
 import { DefaultAdministrativeUserService } from './administration/user-service.js';
 import { createAdministrativeUserCursorCodecFromBase64KeyRing } from './administration/user-cursor.js';
 import {
-  assertAdministrativeUserCursorKeysAreIndependent,
+  assertAdministrativeCursorKeysArePairwiseIndependent,
+  loadAdministrativeLinkCursorRuntimeConfig,
+  loadAdministrativeMunicipalityCursorRuntimeConfig,
   loadAdministrativeUserCursorRuntimeConfig,
 } from './administration/config.js';
 import type { AdministrativeUserRoutesOptions } from './administration/user-routes.js';
+import { DefaultMp35cService } from './administration/mp35c-service.js';
+import type { Mp35cRoutesOptions } from './administration/mp35c-routes.js';
+import { PostgresMp35cRepository } from './administration/postgres-mp35c-repository.js';
+import { SecureAdministrativeCursorCodec } from './administration/secure-cursor.js';
 import type { RuntimeConfig } from './config.js';
 import { loadEmailRuntimeConfig } from './email/config.js';
 import { createOutboxPayloadCipherFromBase64KeyRing } from './outbox/crypto.js';
@@ -46,6 +52,7 @@ export interface BackendSecurityServices {
     'authenticationService'
   >;
   readonly administrativeUserRoutes: AdministrativeUserRoutesOptions;
+  readonly mp35cRoutes: Mp35cRoutesOptions;
   readonly propertyRoutes: Readonly<{ service: PropertyService }>;
   readonly notificationRoutes: Readonly<{ service: NotificationService }>;
 }
@@ -68,10 +75,15 @@ export async function createBackendSecurityServices(input: {
   );
   const administrativeCursorConfig =
     loadAdministrativeUserCursorRuntimeConfig(environment);
-  assertAdministrativeUserCursorKeysAreIndependent(
-    administrativeCursorConfig,
-    emailConfig.outboxKeyRing.keys,
-  );
+  const linkCursorConfig = loadAdministrativeLinkCursorRuntimeConfig(environment);
+  const municipalityCursorConfig =
+    loadAdministrativeMunicipalityCursorRuntimeConfig(environment);
+  assertAdministrativeCursorKeysArePairwiseIndependent({
+    user: administrativeCursorConfig,
+    link: linkCursorConfig,
+    municipality: municipalityCursorConfig,
+    outbox: emailConfig.outboxKeyRing.keys,
+  });
   const outboxCipher = createOutboxPayloadCipherFromBase64KeyRing(
     emailConfig.outboxKeyRing,
   );
@@ -91,6 +103,7 @@ export async function createBackendSecurityServices(input: {
   } as const;
 
   const authenticationService = authenticationRuntime.service;
+  const mp35cRepository = new PostgresMp35cRepository(input.database);
 
   const actionTtlMs = authenticationConfig.challenges.actionTtlSeconds * 1_000;
   const restrictedAuthorizationTtlMs =
@@ -111,6 +124,19 @@ export async function createBackendSecurityServices(input: {
           actionBaseUrl: emailConfig.actionBaseUrl,
           invitationTtlMs:
             authenticationConfig.challenges.inviteTtlSeconds * 1_000,
+        }),
+      }),
+    }),
+    mp35cRoutes: Object.freeze({
+      service: new DefaultMp35cService({
+        authentication: authenticationService,
+        repository: mp35cRepository,
+        linkCursor: new SecureAdministrativeCursorCodec({
+          namespace: 'administrative-links', config: linkCursorConfig,
+        }),
+        municipalityCursor: new SecureAdministrativeCursorCodec({
+          namespace: 'administrative-municipalities',
+          config: municipalityCursorConfig,
         }),
       }),
     }),

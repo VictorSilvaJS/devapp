@@ -1,6 +1,7 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A/B concluídas e integradas; MP-35C/D não iniciadas`
+> Status: `MP-35A/B integradas; MP-35C corrigida localmente, não integrada e
+> em validação final; MP-35D não iniciada`
 >
 > Definido em: 2026-08-25
 >
@@ -18,7 +19,7 @@
 |---|---|---|
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
-| MP-35C | escritas HTTP de Propriedades e deltas de vínculos | não iniciada |
+| MP-35C | Propriedades, vínculos e Localidades no backend | corrigida localmente; não integrada; em validação final |
 | MP-35D | integração das telas administrativas existentes e validação física | não iniciada |
 
 A MP-35A não cria handlers, serviços ou grants de escrita do runtime para os
@@ -139,6 +140,12 @@ organização. O recibo aceita somente resultado, tipo/ID do recurso e a versão
 obrigatória para recursos versionados; convite não aceita versão. Não entram
 PII, senha, token ou payload arbitrário.
 
+A unicidade persistente é exclusivamente organização + ator + hash da
+`Idempotency-Key`. `actorSessionId` é obrigatório, deve estar ativo e vinculado
+ao mesmo ator/organização e é auditado, mas não participa da unicidade. Assim,
+outra sessão válida do mesmo ator recebe o replay exato sem novo efeito,
+auditoria, versão ou revogação; outro ator possui escopo idempotente distinto.
+
 ### D12 — notificações
 
 A MP-35 não cria eventos de notificação. Auditoria e revogação de sessão cobrem
@@ -190,7 +197,7 @@ esse modo, qualquer ambiente que o tenha consumido deve tratar o downgrade como
 incompatível: o esquema anterior não representa fielmente o histórico e a
 operação deve falhar com segurança em vez de reescrever ou apagar convites.
 
-## Contratos HTTP implementados na MP-35B e reservados para MP-35C
+## Contratos HTTP implementados nas MP-35B e MP-35C
 
 ### Precisões de execução da MP-35B
 
@@ -270,6 +277,10 @@ altera vínculos e não define Titular. O acesso operacional já existente em
   copiados para logs nem para a chave idempotente;
 - auditoria registra ator, sessão, recurso, resultado, motivo, correlação e
   Usuários afetados sem armazenar segredo ou token.
+- cada item de delta registra exatamente um evento interno `criado`,
+  `reativado` ou `inativado`, com estado anterior/posterior, tipo derivado,
+  motivo D10/detalhe permitido e horário do PostgreSQL; rollback e replay não
+  deixam eventos adicionais;
 - lista de Usuários usa cursor opaco estável por nome normalizado e ID, com
   limite padrão 50 e máximo 100; `busca` compara literalmente nome, e-mail ou
   documento depois do escopo Admin e nunca concede autorização. A busca infixa
@@ -335,11 +346,70 @@ direto na tabela. Continuam como portões produtivos:
   com a outbox, medir a busca infixa `ILIKE` no volume esperado e ensaiar a
   capacidade/latência do SMTP com a transação e o lock do worker abertos.
 
-A MP-35B integrada acrescenta domínio, repositórios, transações, RBAC, auditoria,
-revogação de sessões, idempotência e testes HTTP/integrados para Usuários. A
-MP-35C deverá fazer o equivalente apenas para Propriedades e vínculos. A
-MP-35D conectará as telas existentes sem redesenho não necessário e exigirá
-teste Android físico.
+A MP-35C local acrescenta a migration append-only `000009`, quatro operações
+transacionais estreitas, as sete rotas Admin-only, cursores exclusivos,
+Localidades versionadas, RBAC, auditoria, revogação de sessões, idempotência e
+testes HTTP/PostgreSQL para Propriedades e vínculos. Ela está corrigida
+localmente, ainda não foi integrada e está em validação final. A MP-35D
+continua não iniciada.
+
+- as quatro operações estreitas validam o tipo JSON original, presença,
+  nulabilidade e formato de cada entrada antes de contexto, reserva de
+  idempotência, locks ou qualquer efeito; coerções por `->>` não constituem
+  validação de fronteira;
+- a classificação HTTP é específica por rota: `titular_id` é válido na criação,
+  `status` é válido somente na rota de status e `tipo_vinculo` é derivado. Erro
+  estrutural prevalece como `400`; campo semanticamente proibido, quando a
+  estrutura é válida, retorna `422`;
+- o `versao` recebido nas mutações versionadas é somente a precondição de
+  concorrência otimista. No `PATCH` cadastral de Propriedade ele nunca é
+  atribuído como dado; `titular_id`, `status`, timestamps e campos territoriais
+  derivados são recusados como campos do patch;
+- o cursor de vínculos é AES-256-GCM, confidencial, autenticado e vinculado ao
+  `usuario_id` e aos filtros. O cursor de Municípios autentica a versão imutável
+  escolhida na primeira página e é vinculado a `uf_id` e `busca`;
+- `ADMIN_LINK_CURSOR_*` e `ADMIN_MUNICIPALITY_CURSOR_*` são keyrings exclusivos
+  e materialmente distintos entre si, de `ADMIN_USER_CURSOR_*` e da outbox;
+- todas as respostas das sete rotas usam `snake_case` e
+  `Cache-Control: no-store`.
+- UUID administrativo canônico é UUID v4 hifenizado, minúsculo e com variante
+  RFC (`8`, `9`, `a` ou `b`). O inventário de migrations, fixtures, seeds e
+  contratos ativos confirmou compatibilidade; forma malformada é estrutural
+  `400`, enquanto versão ou variante inválida em forma UUID é semântica `422`;
+- nas mutações, `area_total` é decimal exato em string de formato simples, sem
+  expoente, sinal, whitespace ou zero à esquerda. Deve ser maior que zero, ter
+  até dez dígitos inteiros, no máximo quatro casas e máximo
+  `9999999999.9999`. A correspondência cobre o lexema inteiro com fim absoluto,
+  sem depender de `$`: LF, CR, CRLF, U+2028, U+2029, tab, espaço ou qualquer
+  caractere adicional são recusados antes da canonicalização. Não há `trim`
+  nem limpeza de whitespace. Somente depois dessa validação o backend remove
+  zeros fracionários finais e envia o valor ao PostgreSQL, sem `Number`,
+  aproximação ou arredondamento. Número JSON e tipos estruturais incompatíveis
+  retornam `400`; string decimal fora do domínio, inclusive com terminador
+  escapado em JSON válido, retorna `422`; JSON com LF bruto dentro da string é
+  malformado e retorna `400`; `null` existe somente como limpeza no PATCH;
+- o executor transacional único das quatro mutações executa `BEGIN`, chama a
+  função SQL, valida cardinalidade, linha, resultado, HTTP e recibo completo e
+  coerente, e somente então executa `COMMIT`. Qualquer resposta inesperada
+  produz `ROLLBACK`, `503 service_unavailable` e nenhum efeito persistido;
+- Testcontainers expõe apenas a porta interna `5432` e usa a porta dinâmica
+  atribuída pelo Docker após o `start`, com banco e role únicos por processo.
+  Não há reserva manual de porta, mutex em arquivo nem recuperação
+  `stat`/`unlink`;
+- TypeScript, MP-35B e MP-35C compartilham a política sensível
+  `senha`, `password`, `token`, `documento`, `cpf`, `cnpj`, `segredo`,
+  `credential`, `authorization` e `cookie`; a igualdade exata das
+  representações TS/SQL é teste de integração;
+- somente `SQLSTATE 22023` identificado por
+  `ck_mp35c_input_validation` é traduzido localmente para
+  `422 validation_error`. Qualquer erro PostgreSQL não allowlisted permanece
+  fail-closed como `503 service_unavailable`;
+- a corrida Titular × ativação possui dois ordenamentos válidos e testados com
+  dois PIDs reais. Se a ativação obtiver os locks primeiro, ela conclui e a
+  inativação retorna `active_holder_conflict`; se a inativação obtiver primeiro,
+  ela conclui e a ativação retorna `invalid_holder`. Cada caso exige um único
+  efeito concluído, sem reserva `processando`, sem deadlock e com versões,
+  auditoria e revogação coerentes.
 
 ## Fora de escopo
 

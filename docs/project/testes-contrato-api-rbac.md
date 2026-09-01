@@ -1,9 +1,8 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-08-27:
-`MP-35A concluída e integrada diretamente em a51389e; MP-35B concluída e
-integrada diretamente em 60144c2, com reauditoria independente e CI pós-push
-aprovadas; MP-35C/D não iniciadas`. Este documento
+Status revisado em 2026-08-31:
+`MP-35A/B integradas; MP-35C corrigida localmente, não integrada e em validação
+final; MP-35D não iniciada`. Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
@@ -12,9 +11,9 @@ em D1-D13, distinguindo o corte já executável das linhas planejadas.
 Esta matriz orienta a API/backend. Os cenários de autenticação da MP-33B
 possuem automação validada. Os cenários de leitura de Propriedades viraram
 testes executáveis e foram validados na MP-33C; a administração de Usuários e
-convites foi automatizada na MP-35B. As escritas de Propriedades e vínculos
-continuam planejadas para a MP-35C. A MP-35A implementou a fundação persistente
-aprovada em D1-D13.
+convites foi automatizada na MP-35B. As sete rotas de Propriedades, vínculos e
+Localidades foram automatizadas localmente na MP-35C. A MP-35A implementou a
+fundação persistente aprovada em D1-D13.
 
 Separacao obrigatoria:
 
@@ -90,7 +89,7 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-USR-18 | Reuso conflitante da chave | Admin | Chave já concluída | Repetir rota mutável | Mesma chave e corpo diferente | `409 Conflict` | Hash do pedido vincula a chave ao comando | Automatizado para Usuários na MP-35B; Propriedades na MP-35C |
 | API-RBAC-USR-19 | Ativar Usuário sem credencial | Runtime | Usuário pendente sem credencial ativa | Escrita SQL controlada | Alterar para ativo | Transação rejeitada | Ativação exige credencial ativa mesmo por escrita direta | Automatizado na MP-35A |
 | API-RBAC-USR-20 | Concluir bootstrap e inativar último Admin em corrida | Runtime | Uma conexão conclui bootstrap e outra inativa o Admin | Duas transações com barreira | Não se aplica | No máximo um commit | Proteção do último Admin compartilha o lock singleton | Automatizado na MP-35A |
-| API-RBAC-USR-21 | Alteração de autorização | Admin | MP-35B/C implementada | Rota mutável aplicável | Comando válido | Conforme rota | D13 revoga sessões dos Usuários diretamente afetados, inclusive em ampliação | Status de Usuário automatizado na MP-35B; vínculos planejados para MP-35C |
+| API-RBAC-USR-21 | Alteração de autorização | Admin | MP-35B/C implementada | Rota mutável aplicável | Comando válido | Conforme rota | D13 revoga sessões dos Usuários diretamente afetados, inclusive em ampliação | Status de Usuário automatizado na MP-35B; vínculos e status de Propriedade automatizados localmente na MP-35C |
 | API-RBAC-USR-22 | Login runtime tenta DML administrativo direto | Login membro somente de runtime | `current_user=session_user`, não-superuser e não-owner | SQL direto em Usuários/Produtores/idempotência | `INSERT`/`UPDATE`/`DELETE` adversarial | Permissão negada | Somente funções estreitas podem mutar o agregado | Automatizado na MP-35B |
 | API-RBAC-USR-23 | Cursor confidencial e vinculado | Admin | Mais de 100 nomes, iguais, acentuados e Unicode | `GET /v1/usuarios` | filtros, limite e cursor vazio/excessivo/truncado/malformado/adulterado/versão desconhecida | `200` ou `400 invalid_request` para envelope inválido | Sem PII decodificável, adulteração/troca de filtro recusada, sem omissão/duplicação | Automatizado na MP-35B |
 | API-RBAC-USR-24 | Sessão Admin stale após autenticação | Admin com sessão revogada/versão divergente | Bearer formalmente válido | qualquer leitura administrativa | Não se aplica | `401 invalid_session` | Repositório revalida sessão no SQL | Automatizado na MP-35B |
@@ -113,7 +112,7 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-PROP-06 | Produtor tenta abrir Propriedade de outro titular | Produtor | Sem vinculo ativo | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Produtor nao acessa outro titular nem confirma sua existencia | Automatizado na MP-33C |
 | API-RBAC-PROP-07 | Colaborador sem vinculo tenta abrir Propriedade | Colaborador | Sem `usuario_propriedade` ativo | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Vinculo direto ativo e obrigatorio | Automatizado na MP-33C |
 | API-RBAC-PROP-08 | Recurso inexistente | Admin | Id inexistente | `GET /v1/propriedades/:id` | Nao se aplica | `404 Not Found` | Recurso inexistente retorna o mesmo 404 do fora de escopo | Automatizado na MP-33C |
-| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /v1/propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "area_total": 120.5, "status": "ativa" }` | `201 Created` | Cliente envia só Município; Admin grava a Titularidade somente em `titular_id`; backend deriva UF, nome e sigla | MP-35C |
+| API-RBAC-PROP-09 | Admin cria Propriedade | Admin | Payload valido | `POST /v1/propriedades` | `{ "nome": "...", "titular_id": "...", "municipio_id": "...", "area_total": "120.5", "status": "ativa" }` | `201 Created` | Cliente envia só Município e decimal exato textual; Admin grava a Titularidade somente em `titular_id`; backend deriva UF, nome e sigla | MP-35C |
 | API-RBAC-PROP-10 | Criar Propriedade com payload invalido | Admin | Campo obrigatorio ausente | `POST /v1/propriedades` | `{ "nome": "..." }` | `400 Bad Request` | Payload invalido e recusado | MP-35C |
 | API-RBAC-PROP-11 | Conflito de Titularidade | Admin | Regra estrutural de Titularidade conflita | `POST /v1/propriedades` | Payload valido formalmente | `409 Conflict` | Conflito de regra retorna 409 sem depender de vinculo `titular` | MP-35C |
 | API-RBAC-PROP-12 | Admin edita Propriedade | Admin | Propriedade existe | `PATCH /v1/propriedades/:id` | Campos parciais e `versao` | `200 OK` | Admin edita cadastro sem transferir Titularidade | MP-35C |
@@ -127,8 +126,14 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 | API-RBAC-PROP-20 | Endpoint pessoal duplicado ausente | Perfil autenticado | Sessao valida | `GET /v1/me/propriedades` | Nao se aplica | `404 Not Found` | Coleção canônica é somente `/v1/propriedades` | Automatizado na MP-33C |
 | API-RBAC-PROP-21 | Colaborador com vínculo inativo | Colaborador | Somente vínculo inativo | `GET /v1/propriedades` | Nao se aplica | `200 OK` vazio | Vínculo inativo não concede escopo | Automatizado na MP-33C |
 | API-RBAC-PROP-22 | Produtor/Colaborador tenta listar Propriedade inativa | Produtor ou Colaborador | Escopo estrutural existente, Propriedade inativa | `GET /v1/propriedades` | `status=inativa` | `200 OK` vazio | Perfis não administrativos recebem somente Propriedades ativas | Automatizado na MP-33C |
-| API-RBAC-PROP-23 | Campo territorial derivado em escrita | Admin | Propriedade existente | `PATCH /v1/propriedades/:id` | `uf_id`, `uf_sigla` ou `municipio_nome` | `422 Unprocessable Entity` | Escrita externa aceita somente `municipio_id`; backend deriva os demais campos | MP-35C; validador automatizado na MP-35A |
-| API-RBAC-PROP-24 | Alterar Titular no PATCH ordinário | Admin | Propriedade existente | `PATCH /v1/propriedades/:id` | `titular_id` | `422 Unprocessable Entity` | Titular é obrigatório na criação e transferência fica fora da MP-35 | MP-35C; validador automatizado na MP-35A |
+| API-RBAC-PROP-23 | Campo territorial derivado em escrita | Admin | Propriedade existente | `PATCH /v1/propriedades/:id` | `uf_id`, `uf_sigla` ou `municipio_nome` | `422 validation_error` | Escrita externa aceita somente `municipio_id`; backend deriva os demais campos | Automatizado localmente na MP-35C |
+| API-RBAC-PROP-24 | Alterar Titular no PATCH ordinário | Admin | Propriedade existente | `PATCH /v1/propriedades/:id` | `titular_id` | `422 validation_error` | Titular é obrigatório na criação e transferência fica fora da MP-35 | Automatizado localmente na MP-35C |
+| API-RBAC-PROP-25 | Tipo estrutural inválido junto de campo proibido | Admin | Sessão válida | Rota mutável de Propriedade | Campo aceito com tipo inválido e campo semanticamente proibido | `400 bad_request` | Erro estrutural prevalece sobre a classificação semântica específica da rota | Automatizado localmente na MP-35C |
+| API-RBAC-PROP-26 | UUID com versão/variante inválida | Admin | Sessão válida | Rota mutável de Propriedade | UUID hifenizado fora de v4/RFC | `422 validation_error` | HTTP, domínio e SQL aplicam o mesmo UUID canônico; forma malformada continua `400` | Automatizado localmente na MP-35C |
+| API-RBAC-PROP-27 | Área textual fora de `numeric(14,4)` | Admin | Sessão válida | `POST` ou `PATCH /v1/propriedades` | `"0"`, negativo, cinco casas, expoente, zero à esquerda, whitespace ou acima de `"9999999999.9999"` | `422 validation_error` | Nenhuma coerção IEEE-754 ou arredondamento chega ao PostgreSQL | Automatizado em HTTP, domínio e SQL na MP-35C |
+| API-RBAC-PROP-28 | Precedência de campo proibido | Admin | Sessão válida | `PATCH /v1/propriedades/:id` | `titular_id`/`status` válido com `versao` ausente ou par de tipo incorreto | `400 invalid_request` | A estrutura completa é validada antes da proibição semântica; payload completo retorna `422` | Automatizado localmente na MP-35C |
+| API-RBAC-PROP-29 | Área com tipo estrutural inválido | Admin | Sessão válida | `POST` ou `PATCH /v1/propriedades` | número JSON, booleano, array ou objeto | `400 invalid_request` | Escrita aceita somente string decimal exata; criação com `null` é `422`, e PATCH com `null` limpa | Automatizado em HTTP, domínio e SQL na MP-35C |
+| API-RBAC-PROP-30 | Área textual exata válida | Admin | Sessão válida | `POST` ou `PATCH /v1/propriedades` | `"0.0001"`, `"1"`, `"1.0"`, `"1.2345"`, `"9999999999.9999"` | `200` ou `201` | Backend canonicaliza zeros fracionários finais sem conversão binária; SQL converte para `numeric` só após validar o texto | Automatizado em HTTP, domínio e SQL na MP-35C |
 
 ## Localidades
 
@@ -145,17 +150,41 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 |---|---|---|---|---|---|---|---|---|
 | API-RBAC-VINC-01 | Admin lista Propriedades vinculadas ao usuario | Admin | Usuario existe | `GET /v1/usuarios/:id/propriedades` | Nao se aplica | `200 OK` | Admin consulta vinculos diretos | MP-35C |
 | API-RBAC-VINC-02 | Produtor tenta listar vinculos de outro usuario | Produtor | Sem permissao administrativa | `GET /v1/usuarios/:id/propriedades` | Nao se aplica | `403 Forbidden` | Produtor não administra vínculos | MP-35C |
-| API-RBAC-VINC-03 | Admin aplica delta de vínculos | Admin | Payload valido | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": [{ "propriedade_id": "prop_1", "tipo_vinculo": "colaborador" }], "remover": [] }` | `200 OK` | Delta persistente, versionado e auditável | MP-35C |
+| API-RBAC-VINC-03 | Admin aplica delta de vínculos | Admin | Payload valido | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": ["UUID da Propriedade"], "remover": [] }` | `200 OK` | Backend deriva o tipo pelo perfil; delta persistente, versionado e auditável | Automatizado localmente na MP-35C |
 | API-RBAC-VINC-04 | Delta com vínculo duplicado | Admin | Payload duplica vínculo ativo | `PATCH /v1/usuarios/:id/propriedades` | Delta com duplicidade | `409 Conflict` | Duplicidade retorna conflito | MP-35C |
 | API-RBAC-VINC-05 | Payload invalido de vinculo | Admin | Falta `propriedade_id` | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": [{}], "remover": [] }` | `400 Bad Request` | Payload invalido e recusado | MP-35C |
 | API-RBAC-VINC-06 | Admin filtra Propriedades para atribuicao | Admin | Propriedades cadastradas | `GET /v1/propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao auxilia selecao, sem conceder acesso | Automatizado backend/API |
 | API-RBAC-VINC-07 | Admin atribui lote filtrado | Admin | Selecao confirmada e payload valido | `PATCH /v1/usuarios/:id/propriedades` | Delta com IDs selecionados | `200 OK` | Cada item gera vínculo direto persistente e auditável | MP-35C |
 | API-RBAC-VINC-08 | Propriedade inexistente no lote | Admin | Um `propriedade_id` nao existe | `PATCH /v1/usuarios/:id/propriedades` | Delta com ID inexistente | `404 Not Found` | Nao criar vinculo para recurso invalido | MP-35C |
 | API-RBAC-VINC-09 | Colaborador tenta alterar vinculos | Colaborador | Sem papel administrativo | `PATCH /v1/usuarios/:id/propriedades` | Payload valido | `403 Forbidden` | Colaborador nao administra vinculos | MP-35C |
-| API-RBAC-VINC-10 | Admin tenta persistir vinculo titular | Admin | Usuario e Propriedade existem | `PATCH /v1/usuarios/:id/propriedades` | Delta com `tipo_vinculo=titular` | `422 Unprocessable Entity` | `titular` nao e valor aceito em `usuario_propriedade` | MP-35C |
-| API-RBAC-VINC-11 | Delta vazio | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | `adicionar=[]`, `remover=[]` | `422 Unprocessable Entity` | Comando sem efeito é inválido | MP-35C; validador automatizado na MP-35A |
+| API-RBAC-VINC-10 | Cliente tenta escolher tipo do vínculo | Admin | Usuario e Propriedade existem | `PATCH /v1/usuarios/:id/propriedades` | Campo `tipo_vinculo` | `422 validation_error` | Tipo é derivado pelo backend; Titularidade nunca é persistida no vínculo | Automatizado localmente na MP-35C |
+| API-RBAC-VINC-11 | Delta vazio | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | `adicionar=[]`, `remover=[]` | `409 business_rule_conflict` | Comando sem alteração efetiva é conflito de negócio | Automatizado localmente na MP-35C |
 | API-RBAC-VINC-12 | Delta duplicado ou sobreposto | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | ID repetido ou em adicionar/remover | `422 Unprocessable Entity` | Um ID aparece no máximo uma vez no delta | MP-35C; validador automatizado na MP-35A |
 | API-RBAC-VINC-13 | Delta acima do limite | Admin | Usuário existente | `PATCH /v1/usuarios/:id/propriedades` | Mais de 100 IDs somados | `422 Unprocessable Entity` | Limite D9 é global ao delta | MP-35C; validador automatizado na MP-35A |
+
+A fronteira PostgreSQL da MP-35C também é exercitada por LOGIN runtime real com
+`null`, número, booleano, string, array, objeto, UUID, hashes, metadados,
+`versao`, patch, status, motivo, detalhe e arrays do delta incompatíveis. Todas
+as rejeições ocorrem antes de contexto, idempotência, auditoria ou mutação, com
+snapshot posterior sem efeitos. O catálogo sensível de dez termos é comparado
+integralmente entre TS e SQL e consumido pelas fronteiras MP-35B/MP-35C. Erros
+controlados usam `22023` + `ck_mp35c_input_validation` e viram `422` somente no
+repositório MP-35C; falha induzida não allowlisted continua `503`.
+
+O executor único das quatro mutações valida cardinalidade, colunas, resultado,
+HTTP e recibo antes do `COMMIT`. Testes com executor falso e PostgreSQL real
+adulteram deliberadamente a resposta após uma escrita, observam `ROLLBACK` e
+confirmam ausência de mutação, recibo e auditoria persistidos. O helper de
+Testcontainers usa mapeamento dinâmico de `5432`, banco/role exclusivos e é
+exercitado por três processos simultâneos, sem mutex ou arquivo global de lock.
+
+As corridas Titular × ativação são dois testes separados. Com ativação primeiro,
+o resultado é `completed`/`active_holder_conflict`, Propriedade ativa e Titular
+habilitado. Com inativação primeiro, é `completed`/`invalid_holder`, Propriedade
+inativa e Titular inativo. Cada ordenamento usa duas conexões/PIDs, barreira
+advisory observada em `pg_stat_activity`, verifica exatamente um recibo e uma
+auditoria, revogação, versões, nenhuma reserva `processando` e nenhum deadlock;
+cada teste executa três repetições internas.
 
 ## Permissao E Escopo
 

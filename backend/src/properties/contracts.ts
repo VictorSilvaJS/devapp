@@ -24,6 +24,9 @@ export interface PropertyView {
   readonly mainCrop: string | null;
   readonly status: PropertyStatus;
   readonly accessType: PropertyAccessType;
+  readonly version: number;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 export interface PropertyCursor {

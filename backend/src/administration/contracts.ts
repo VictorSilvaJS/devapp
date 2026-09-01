@@ -2,10 +2,7 @@ import type { UserProfile, UserStatus } from '../auth/contracts.js';
 export type {
   PersistedInvitationActivationMode as InvitationActivationMode,
 } from '../account-actions/contracts.js';
-import type {
-  PropertyAccessType,
-  PropertyStatus,
-} from '../properties/contracts.js';
+import type { PropertyStatus } from '../properties/contracts.js';
 
 export type { PropertyStatus } from '../properties/contracts.js';
 
@@ -29,6 +26,27 @@ export const ADMINISTRATIVE_REASON_CODES = Object.freeze([
   'suspensao_operacional',
   'outro',
 ] as const);
+
+export const ADMINISTRATIVE_SENSITIVE_TERMS = Object.freeze([
+  'senha',
+  'password',
+  'token',
+  'documento',
+  'cpf',
+  'cnpj',
+  'segredo',
+  'credential',
+  'authorization',
+  'cookie',
+] as const);
+
+export const ADMINISTRATIVE_AREA_TOTAL = Object.freeze({
+  maximum: '9999999999.9999',
+  integerDigits: 10,
+  fractionDigits: 4,
+} as const);
+
+export type AdministrativeAreaDecimal = string;
 
 export type AdministrativeReasonCode =
   (typeof ADMINISTRATIVE_REASON_CODES)[number];
@@ -58,10 +76,7 @@ export type AdministrativeCommandType =
 
 export type AdministrativeCommandState = 'processando' | 'concluido';
 export type ProducerStatus = 'ativo' | 'inativo';
-export type AdditionalPropertyAccessType = Extract<
-  PropertyAccessType,
-  'usuario_autorizado' | 'colaborador'
->;
+export type AdditionalPropertyAccessType = 'usuario_autorizado' | 'colaborador';
 
 export interface AdministrativeCommandContext {
   readonly organizationId: 'org_tche_fertilidade';
@@ -112,7 +127,6 @@ export interface IssueAdministrativeInvitationCommand {
 
 export interface PropertyLinkDeltaItem {
   readonly propertyId: string;
-  readonly accessType: AdditionalPropertyAccessType;
 }
 
 export type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
@@ -146,7 +160,7 @@ export interface CreateAdministrativePropertyCommand {
   readonly name: string;
   readonly holderId: string;
   readonly municipalityId: string;
-  readonly totalArea?: number;
+  readonly totalArea?: AdministrativeAreaDecimal;
   readonly mainCrop?: string;
   readonly status: PropertyStatus;
 }
@@ -158,7 +172,7 @@ export interface UpdateAdministrativePropertyCommand {
   readonly propertyId: string;
   readonly name?: string;
   readonly municipalityId?: string;
-  readonly totalArea?: number | null;
+  readonly totalArea?: AdministrativeAreaDecimal | null;
   readonly mainCrop?: string | null;
 }
 

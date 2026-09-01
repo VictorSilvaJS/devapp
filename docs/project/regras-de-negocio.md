@@ -72,6 +72,11 @@ Titularidade. `usuario_propriedade` aceita somente `usuario_autorizado` e
 derivado por Propriedade, Produtor Titular e Usuario principal. A API
 projeta `tipo_acesso=titular`, mas nao duplica esse fato no banco.
 
+Na escrita administrativa de Propriedade, `area_total` entra como string
+decimal simples e exata. Nao se aceita numero JSON, expoente, arredondamento ou
+coercao IEEE-754; o backend canonicaliza o texto antes da conversao SQL para
+`numeric(14,4)`. `null` serve apenas para limpar o campo no PATCH cadastral.
+
 A MP-33A armazena somente o Titular atual. Transferencia e historico exigem
 contrato transacional e de auditoria posterior. A conta do Usuario principal
 pode ser inativada sem desfazer a Titularidade cadastral e sem bloqueio por

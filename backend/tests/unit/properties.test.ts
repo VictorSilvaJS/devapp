@@ -47,8 +47,11 @@ function property(index: number): PropertyView {
     totalArea: 10.5,
     mainCrop: 'Soja',
     status: 'ativa',
-    accessType: 'colaborador',
-  };
+  accessType: 'colaborador',
+  version: 1,
+  createdAt: new Date('2026-08-25T12:00:00.000Z'),
+  updatedAt: new Date('2026-08-25T12:00:00.000Z'),
+};
 }
 
 class FakePropertyRepository implements PropertyRepository {

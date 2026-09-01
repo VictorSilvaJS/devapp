@@ -9,6 +9,9 @@ import { runMigrations } from '../../scripts/migrate.js';
 import { AdministrativeUserCursorCodec } from '../../src/administration/user-cursor.js';
 import { PostgresAdministrativeUserRepository } from '../../src/administration/postgres-user-repository.js';
 import { DefaultAdministrativeUserService } from '../../src/administration/user-service.js';
+import { DefaultMp35cService } from '../../src/administration/mp35c-service.js';
+import { PostgresMp35cRepository } from '../../src/administration/postgres-mp35c-repository.js';
+import { SecureAdministrativeCursorCodec } from '../../src/administration/secure-cursor.js';
 import { buildApp } from '../../src/app.js';
 import { loadAuthenticationRuntimeConfig } from '../../src/auth/config.js';
 import type { AuthenticationPasswordCredentialService } from '../../src/auth/password-credential.js';
@@ -59,6 +62,11 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
   let app: Awaited<ReturnType<typeof buildApp>> | undefined;
   let requestSequence = 0;
   let activeTargetUserId: string | undefined;
+  let mp35cHolderId: string | undefined;
+  let mp35cUpdatePropertyId: string | undefined;
+  let mp35cStatusPropertyId: string | undefined;
+  let mp35cLinkPropertyId: string | undefined;
+  let mp35cLinkUserId: string | undefined;
   const tokens = new Map<'admin' | 'colaborador' | 'produtor' | 'stale_admin', string>();
 
   const authenticationConfig = loadAuthenticationRuntimeConfig({
@@ -171,17 +179,50 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
       stale: true,
     });
     activeTargetUserId = randomUUID();
+    const mp35cHolderUserId = randomUUID();
+    mp35cHolderId = randomUUID();
+    mp35cUpdatePropertyId = randomUUID();
+    mp35cStatusPropertyId = randomUUID();
+    mp35cLinkPropertyId = randomUUID();
+    mp35cLinkUserId = randomUUID();
     await ownerPool.query(
       `
         INSERT INTO public.usuarios (
           id, organizacao_id, nome, email, perfil, status
-        ) VALUES ($1, $2, 'Alvo ativo E2E', $3, 'colaborador', 'ativo')
+        ) VALUES
+          ($1, $2, 'Alvo ativo E2E', $3, 'colaborador', 'ativo'),
+          ($4, $2, 'Titular MP35C E2E', $5, 'produtor', 'ativo'),
+          ($6, $2, 'Vínculo MP35C E2E', $7, 'colaborador', 'ativo')
       `,
       [
         activeTargetUserId,
         ORGANIZATION_ID,
         `e2e-target-${activeTargetUserId}@example.test`,
+        mp35cHolderUserId,
+        `e2e-holder-${mp35cHolderUserId}@example.test`,
+        mp35cLinkUserId,
+        `e2e-link-${mp35cLinkUserId}@example.test`,
       ],
+    );
+    await ownerPool.query(
+      `INSERT INTO public.produtores
+        (id, organizacao_id, usuario_id, nome, status)
+       VALUES ($1, $2, $3, 'Titular MP35C E2E', 'ativo')`,
+      [mp35cHolderId, ORGANIZATION_ID, mp35cHolderUserId],
+    );
+    await ownerPool.query(
+      `INSERT INTO public.propriedades
+        (id, organizacao_id, titular_id, nome, localidades_versao_id,
+         municipio_id, municipio_nome, uf_id, uf_sigla, status)
+       VALUES
+        ($1,$4,$5,'Atualizável MP35C E2E','ibge-localidades-2026-08-25',
+         '4305108','Caxias do Sul','43','RS','inativa'),
+        ($2,$4,$5,'Status MP35C E2E','ibge-localidades-2026-08-25',
+         '4305108','Caxias do Sul','43','RS','inativa'),
+        ($3,$4,$5,'Vínculo MP35C E2E','ibge-localidades-2026-08-25',
+         '4305108','Caxias do Sul','43','RS','ativa')`,
+      [mp35cUpdatePropertyId, mp35cStatusPropertyId, mp35cLinkPropertyId,
+        ORGANIZATION_ID, mp35cHolderId],
     );
 
     assert.ok(runtimePool);
@@ -213,6 +254,23 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
         actionBaseUrl: ACTION_URL,
       }),
     });
+    const cursorConfig = {
+      activeKeyId: 'mp35c-e2e-key',
+      keys: { 'mp35c-e2e-key': Buffer.alloc(32, 0x63).toString('base64') },
+    } as const;
+    const mp35cService = new DefaultMp35cService({
+      authentication: authenticationService,
+      repository: new PostgresMp35cRepository(runtimePool),
+      linkCursor: new SecureAdministrativeCursorCodec({
+        namespace: 'administrative-links', config: cursorConfig,
+      }),
+      municipalityCursor: new SecureAdministrativeCursorCodec({
+        namespace: 'administrative-municipalities',
+        config: { activeKeyId: 'mp35c-locality-e2e-key', keys: {
+          'mp35c-locality-e2e-key': Buffer.alloc(32, 0x64).toString('base64'),
+        } },
+      }),
+    });
     const runtimeConfig: RuntimeConfig = {
       nodeEnv: 'test',
       host: '127.0.0.1',
@@ -231,6 +289,7 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
       },
       authenticationService,
       administrativeUserRoutes: { service: administrativeService },
+      mp35cRoutes: { service: mp35cService },
     });
   });
 
@@ -942,5 +1001,71 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
     assert.ok(collectedNames.includes('LoteCursor caixa'));
     assert.ok(collectedNames.includes('LoteCursor CAIXA'));
     assert.ok(collectedNames.includes('LoteCursor zzz concorrente'));
+  });
+
+  test('matriz E2E MP-35C cobre sete rotas e cinco estados com LOGIN runtime real', async () => {
+    const targetApp = requireApp();
+    assert.ok(mp35cHolderId);
+    assert.ok(mp35cUpdatePropertyId);
+    assert.ok(mp35cStatusPropertyId);
+    assert.ok(mp35cLinkPropertyId);
+    assert.ok(mp35cLinkUserId);
+
+    type Actor = 'admin' | 'anonymous' | 'stale_admin' | 'produtor' | 'colaborador';
+    const actors = [
+      { actor: 'admin' as const, statusCode: 200 },
+      { actor: 'anonymous' as const, statusCode: 401, errorCode: 'invalid_session' },
+      { actor: 'stale_admin' as const, statusCode: 401, errorCode: 'invalid_session' },
+      { actor: 'produtor' as const, statusCode: 403, errorCode: 'forbidden' },
+      { actor: 'colaborador' as const, statusCode: 403, errorCode: 'forbidden' },
+    ] satisfies readonly { actor: Actor; statusCode: number; errorCode?: string }[];
+    const routes = [
+      { name: 'POST /v1/propriedades', method: 'POST' as const,
+        url: '/v1/propriedades', adminStatus: 201,
+        payload: { nome: 'Criada pela matriz MP35C', titular_id: mp35cHolderId,
+          municipio_id: '4305108', status: 'inativa' } },
+      { name: 'PATCH /v1/propriedades/:id', method: 'PATCH' as const,
+        url: `/v1/propriedades/${mp35cUpdatePropertyId}`, adminStatus: 200,
+        payload: { versao: 1, nome: 'Atualizada pela matriz MP35C' } },
+      { name: 'PATCH /v1/propriedades/:id/status', method: 'PATCH' as const,
+        url: `/v1/propriedades/${mp35cStatusPropertyId}/status`, adminStatus: 200,
+        payload: { versao: 1, status: 'ativa', motivo: 'correcao_administrativa' } },
+      { name: 'GET /v1/usuarios/:id/propriedades', method: 'GET' as const,
+        url: `/v1/usuarios/${mp35cLinkUserId}/propriedades?limite=10`, adminStatus: 200 },
+      { name: 'PATCH /v1/usuarios/:id/propriedades', method: 'PATCH' as const,
+        url: `/v1/usuarios/${mp35cLinkUserId}/propriedades`, adminStatus: 200,
+        payload: { versao: 1, adicionar: [mp35cLinkPropertyId], remover: [],
+          motivo: 'correcao_administrativa' } },
+      { name: 'GET /v1/localidades/ufs', method: 'GET' as const,
+        url: '/v1/localidades/ufs', adminStatus: 200 },
+      { name: 'GET /v1/localidades/municipios', method: 'GET' as const,
+        url: '/v1/localidades/municipios?uf_id=43&limite=2', adminStatus: 200 },
+    ] as const;
+
+    const evidence: Array<{ route: string; actor: Actor; statusCode: number }> = [];
+    for (const route of routes) {
+      for (const scenario of actors) {
+        const authenticatedHeaders = scenario.actor === 'anonymous' ? {} : bearer(scenario.actor);
+        const mutationHeaders = route.method === 'GET' ? {} : {
+          'idempotency-key': `mp35c-e2e-${routes.indexOf(route)}-${scenario.actor}`,
+        };
+        const response = await targetApp.inject({
+          method: route.method,
+          url: route.url,
+          headers: { ...authenticatedHeaders, ...mutationHeaders },
+          ...('payload' in route ? { payload: route.payload } : {}),
+        });
+        const expected = scenario.actor === 'admin' ? route.adminStatus : scenario.statusCode;
+        assert.equal(response.statusCode, expected, `${route.name} / ${scenario.actor}`);
+        assert.equal(response.headers['cache-control'], 'no-store');
+        if (scenario.errorCode !== undefined) {
+          assert.equal(response.json().error.code, scenario.errorCode);
+        }
+        evidence.push({ route: route.name, actor: scenario.actor,
+          statusCode: response.statusCode });
+      }
+    }
+    assert.equal(evidence.length, 35);
+    assert.equal(new Set(evidence.map((item) => `${item.route}:${item.actor}`)).size, 35);
   });
 });

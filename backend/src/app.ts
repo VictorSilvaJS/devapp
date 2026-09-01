@@ -9,6 +9,10 @@ import fastify, {
 
 import type { RuntimeConfig } from './config.js';
 import {
+  mp35cRoutesPlugin,
+  type Mp35cRoutesOptions,
+} from './administration/mp35c-routes.js';
+import {
   administrativeUserRoutesPlugin,
   type AdministrativeUserRoutesOptions,
 } from './administration/user-routes.js';
@@ -70,6 +74,7 @@ export interface BuildAppOptions {
     'authenticationService'
   >;
   readonly administrativeUserRoutes?: AdministrativeUserRoutesOptions;
+  readonly mp35cRoutes?: Mp35cRoutesOptions;
   readonly propertyRoutes?: PropertyRoutesOptions;
   readonly notificationRoutes?: NotificationRoutesOptions;
 }
@@ -160,6 +165,18 @@ export async function buildApp(
           description: 'Cadastro global, status e convites de Usuários.',
         },
         {
+          name: 'Administração de Propriedades',
+          description: 'Cadastro e status globais de Propriedades.',
+        },
+        {
+          name: 'Administração de Vínculos',
+          description: 'Titularidades derivadas e vínculos diretos.',
+        },
+        {
+          name: 'Localidades',
+          description: 'Catálogo IBGE versionado para administração.',
+        },
+        {
           name: 'Propriedades',
           description: 'Consulta de Propriedades dentro do escopo autorizado.',
         },
@@ -209,6 +226,13 @@ export async function buildApp(
       prefix: '/v1/usuarios',
       ...options.administrativeUserRoutes,
     });
+  }
+
+  if (options.mp35cRoutes !== undefined) {
+    if (options.authenticationService === undefined) {
+      throw new TypeError('MP-35C routes require an authentication service.');
+    }
+    await app.register(mp35cRoutesPlugin, options.mp35cRoutes);
   }
 
   if (options.notificationRoutes !== undefined) {

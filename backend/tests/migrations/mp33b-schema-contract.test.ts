@@ -28,7 +28,7 @@ test('mantém 000001 imutável e sela o manifesto ativo', async () => {
   );
 
   const verified = await verifyMigrationIntegrity({ migrationsDirectory });
-  assert.equal(verified.checkedMigrations, 8);
+  assert.equal(verified.checkedMigrations, 9);
 });
 
 test('DDL de identidade persiste somente PHC e contato secundário verificável', async () => {
@@ -200,4 +200,48 @@ test('todas as novas chaves estrangeiras declaram política de exclusão', async
   for (const foreignKey of foreignKeys) {
     assert.match(foreignKey, /ON DELETE (?:RESTRICT|NO ACTION)/);
   }
+});
+
+test('MP-35C deriva ator e organização exclusivamente da sessão operacional', async () => {
+  const sql = await migration('000009-administracao-propriedades-vinculos-mp35c.sql');
+  assert.match(sql, /tche_admin_contexto_mp35c\([^)]*uuid[^)]*\)/i);
+  const up = sql.split('-- Down Migration')[0] ?? sql;
+  for (const functionName of [
+    'tche_admin_criar_propriedade_mp35c',
+    'tche_admin_atualizar_propriedade_mp35c',
+    'tche_admin_alterar_status_propriedade_mp35c',
+    'tche_admin_alterar_vinculos_usuario_mp35c',
+  ]) {
+    const body = up.match(new RegExp(
+      `CREATE FUNCTION public\\.${functionName}\\(entrada jsonb\\)[\\s\\S]*?\\n\\$\\$;`,
+      'i',
+    ))?.[0];
+    assert.ok(body, `função ${functionName} ausente`);
+    assert.doesNotMatch(body, /entrada\s*->>\s*'ator_usuario_id'/i);
+    assert.doesNotMatch(body, /entrada\s*->>\s*'organizacao_id'/i);
+    assert.doesNotMatch(body, /entrada\s*->>\s*'ator_versao_autorizacao'/i);
+    const validation = body.indexOf('tche_admin_validar_entrada_mp35c');
+    const context = body.indexOf('tche_admin_contexto_mp35c');
+    assert.ok(validation >= 0 && validation < context,
+      `função ${functionName} deve validar JSON antes do contexto/idempotência`);
+  }
+  assert.match(up, /jsonb_typeof\(entrada\s*->\s*'versao'\)\s+IS DISTINCT FROM 'number'/i);
+  assert.match(up, /texto\s*!~\s*'\^\[1-9\]\[0-9\]\*\$'/i);
+  assert.match(up, /tche_admin_validar_entrada_mp35c\(jsonb, text\)[\s\S]*?FROM PUBLIC/i);
+  assert.match(up,
+    /\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-4\[0-9a-f\]\{3\}-\[89ab\]\[0-9a-f\]\{3\}-\[0-9a-f\]\{12\}\$/i);
+  assert.match(up,
+    /jsonb_typeof\(valor\)\s+IS DISTINCT FROM 'string'/i);
+  assert.match(up,
+    /\^\(0\|\[1-9\]\[0-9\]\{0,9\}\)\(\[\.\]\[0-9\]\{1,4\}\)\?\$/i);
+  assert.doesNotMatch(up,
+    /jsonb_typeof\(valor\)\s+IN\s*\([^)]*'number'/i);
+  assert.match(up, /area\s*<=\s*9999999999\.9999::numeric/i);
+  assert.match(up, /area\s*=\s*pg_catalog\.trunc\(area,\s*4\)/i);
+  assert.match(up, /CONSTRAINT\s*=\s*'ck_mp35c_input_validation'/i);
+  assert.match(up, /tche_admin_alterar_status_usuario_mp35b_base000008/i);
+  assert.match(up,
+    /REVOKE EXECUTE ON FUNCTION\s+public\.tche_admin_alterar_status_usuario_mp35b_base000008\(jsonb\)[\s\S]*?FROM tche_agro_runtime, PUBLIC/i);
+  assert.match(up,
+    /tche_admin_alterar_status_usuario_mp35b\(entrada jsonb\)[\s\S]*?tche_admin_validar_motivo_mp35c/i);
 });

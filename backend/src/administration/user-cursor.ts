@@ -98,14 +98,17 @@ export class AdministrativeUserCursorCodec {
   }) {
     if (!SAFE_KEY_ID.test(input.activeKeyId)) throw new TypeError('Invalid cursor keyring.');
     const keys = new Map<string, Buffer>();
+    const sourceKeys: Buffer[] = [];
     for (const candidate of input.keys) {
       if (
         !SAFE_KEY_ID.test(candidate.id)
         || candidate.key.byteLength !== KEY_BYTES
         || keys.has(candidate.id)
+        || sourceKeys.some((source) => source.equals(Buffer.from(candidate.key)))
       ) {
         throw new TypeError('Invalid cursor keyring.');
       }
+      sourceKeys.push(Buffer.from(candidate.key));
       const derived = hkdfSync(
         'sha256',
         Buffer.from(candidate.key),

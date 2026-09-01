@@ -1,7 +1,9 @@
 import {
   ADMINISTRATION_LIMITS,
+  ADMINISTRATIVE_AREA_TOTAL,
   ADMINISTRATIVE_COMMAND_TYPES,
   ADMINISTRATIVE_REASON_CODES,
+  ADMINISTRATIVE_SENSITIVE_TERMS,
   type AdministrativeCommandContext,
   type AdministrativeCommandType,
   type AdministrativeIdempotencyReceipt,
@@ -18,8 +20,12 @@ import {
 } from './contracts.js';
 
 const SAFE_OPAQUE_IDENTIFIER = /^[A-Za-z0-9._:/-]{1,128}$/;
-const CANONICAL_UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+export const CANONICAL_UUID_V4_PATTERN_SOURCE =
+  '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$';
+const CANONICAL_UUID = new RegExp(CANONICAL_UUID_V4_PATTERN_SOURCE, 'u');
+export const ADMINISTRATIVE_AREA_PATTERN_SOURCE =
+  '^(?:0|[1-9][0-9]{0,9})(?:\\.[0-9]{1,4})?(?![\\s\\S])';
+const ADMINISTRATIVE_AREA = new RegExp(ADMINISTRATIVE_AREA_PATTERN_SOURCE, 'u');
 const IBGE_MUNICIPALITY_ID = /^[0-9]{7}$/;
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60_000;
 
@@ -54,11 +60,36 @@ function rejectUnknownFields(
   }
 }
 
-function requireCanonicalUuid(value: unknown, field: string): string {
-  if (typeof value !== 'string' || !CANONICAL_UUID.test(value)) {
+export function requireCanonicalUuid(value: unknown, field: string): string {
+  if (!isCanonicalUuid(value)) {
     throw new TypeError(`${field}: UUID canônico inválido.`);
   }
   return value;
+}
+
+export function isCanonicalUuid(value: unknown): value is string {
+  return typeof value === 'string' && CANONICAL_UUID.test(value);
+}
+
+export function normalizeAdministrativeArea(value: unknown, field: string): string {
+  if (typeof value !== 'string' || !ADMINISTRATIVE_AREA.test(value)) {
+    throw new TypeError(`${field}: decimal textual simples inválido.`);
+  }
+  const [integer = '', fraction = ''] = value.split('.');
+  if (
+    integer.length > ADMINISTRATIVE_AREA_TOTAL.integerDigits
+    || fraction.length > ADMINISTRATIVE_AREA_TOTAL.fractionDigits
+    || (integer.length === ADMINISTRATIVE_AREA_TOTAL.integerDigits
+      && `${integer}.${fraction.padEnd(ADMINISTRATIVE_AREA_TOTAL.fractionDigits, '0')}`
+        > ADMINISTRATIVE_AREA_TOTAL.maximum)
+  ) {
+    throw new TypeError(`${field}: área fora de numeric(14,4).`);
+  }
+  if (integer === '0' && (fraction.length === 0 || /^0+$/u.test(fraction))) {
+    throw new TypeError(`${field}: área positiva obrigatória.`);
+  }
+  const canonicalFraction = fraction.replace(/0+$/u, '');
+  return canonicalFraction.length === 0 ? integer : `${integer}.${canonicalFraction}`;
 }
 
 function requireSafeIdentifier(value: unknown, field: string): string {
@@ -129,13 +160,7 @@ function requireMunicipalityId(value: unknown, field: string): string {
 }
 
 function validateOptionalArea(value: unknown, field: string): void {
-  if (
-    typeof value !== 'number' ||
-    !Number.isFinite(value) ||
-    value <= 0
-  ) {
-    throw new TypeError(`${field}: área positiva obrigatória.`);
-  }
+  normalizeAdministrativeArea(value, field);
 }
 
 function assertDenseArray(value: readonly unknown[], field: string): void {
@@ -163,7 +188,8 @@ export function validateAdministrativeReason(
       'reason.detail',
       ADMINISTRATION_LIMITS.reasonDetail,
     );
-    if (/(senha|token|documento|cpf|cnpj)/iu.test(detail.normalize('NFC'))) {
+    const folded = detail.normalize('NFC').toLowerCase();
+    if (ADMINISTRATIVE_SENSITIVE_TERMS.some((term) => folded.includes(term))) {
       throw new TypeError('reason.detail: conteúdo sensível não permitido.');
     }
   }
@@ -322,14 +348,8 @@ function validateDeltaItem(
   field: string,
 ): asserts value is PropertyLinkDeltaItem {
   const item = requireRecord(value, field);
-  rejectUnknownFields(item, new Set(['propertyId', 'accessType']), field);
+  rejectUnknownFields(item, new Set(['propertyId']), field);
   requireCanonicalUuid(item.propertyId, `${field}.propertyId`);
-  if (
-    item.accessType !== 'usuario_autorizado' &&
-    item.accessType !== 'colaborador'
-  ) {
-    throw new TypeError(`${field}.accessType: tipo de acesso inválido.`);
-  }
 }
 
 export function validatePropertyLinkDeltaCommand(
@@ -381,8 +401,7 @@ export function validatePropertyLinkDeltaCommand(
     }
     removed.add(item.propertyId);
   }
-  if (command.remove.length > 0) validateAdministrativeReason(command.reason);
-  else if (command.reason !== undefined) validateAdministrativeReason(command.reason);
+  validateAdministrativeReason(command.reason);
 }
 
 export function validateCreateAdministrativePropertyCommand(

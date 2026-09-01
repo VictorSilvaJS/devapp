@@ -56,6 +56,9 @@ const propertyResponseSchema = {
     'cultura_principal',
     'status',
     'tipo_acesso',
+    'versao',
+    'criado_em',
+    'atualizado_em',
   ],
   properties: {
     id: { type: 'string', format: 'uuid' },
@@ -82,6 +85,9 @@ const propertyResponseSchema = {
       type: 'string',
       enum: ['admin', 'titular', 'usuario_autorizado', 'colaborador'],
     },
+    versao: { type: 'integer', minimum: 1 },
+    criado_em: { type: 'string', format: 'date-time' },
+    atualizado_em: { type: 'string', format: 'date-time' },
   },
 } as const;
 
@@ -110,6 +116,9 @@ function externalProperty(property: PropertyView) {
     cultura_principal: property.mainCrop,
     status: property.status,
     tipo_acesso: property.accessType,
+    versao: property.version,
+    criado_em: property.createdAt.toISOString(),
+    atualizado_em: property.updatedAt.toISOString(),
   };
 }
 

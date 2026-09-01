@@ -28,8 +28,9 @@ commit `60144c2`, com CI pós-push aprovada. A migration `000008` acrescenta
 seis operações em `/v1/usuarios`, RBAC Admin revalidado no SQL, cursor cifrado
 e autenticado, versão, idempotência, auditoria e convite/outbox atômicos. A
 emissão antiga em `/v1/auth/invitations` foi removida; o aceite público
-permanece. MP-35C/D não foram iniciadas, e não houve tag, deploy, release ou
-publicação da MP-35B.
+permanece. A MP-35C está corrigida apenas localmente, não integrada e em
+validação final; a MP-35D não foi iniciada. Não houve tag, deploy,
+release ou publicação.
 
 ## Requisitos
 
@@ -156,6 +157,11 @@ A paginação administrativa de Usuários exige
 AES-256-GCM, não possui valor padrão ou fallback e deve ser materialmente
 distinto de todas as chaves de `OUTBOX_ENCRYPTION_KEYS`; configuração ausente,
 malformada, curta ou reutilizada impede o startup.
+
+A MP-35C exige também `ADMIN_LINK_CURSOR_ACTIVE_KEY_ID`/
+`ADMIN_LINK_CURSOR_KEYS` e `ADMIN_MUNICIPALITY_CURSOR_ACTIVE_KEY_ID`/
+`ADMIN_MUNICIPALITY_CURSOR_KEYS`. Os três keyrings de cursor devem ser
+distintos entre si e das chaves da outbox.
 
 O carregador aplica os pisos e tetos aprovados; uma variável não pode reduzir
 silenciosamente a segurança abaixo deles. Em produção, recuperação assistida
@@ -587,7 +593,7 @@ triggers transacionais da MP-33B.
 |---|---|---|
 | `npm run test:unit` | configuração, blocklist/Argon2, serviços, adaptadores, outbox, notificações, purga e contratos estáticos de migration | nenhuma |
 | `npm run test:http` | health/readiness, OpenAPI, autenticação, ações de conta, administração de Usuários e notificações por injeção Fastify | nenhuma |
-| `npm run test:integration` | migrations, upgrade adversarial MP-35A, administração MP-35B, duas conexões com barreira de lock, repositórios reais, atomicidade, concorrência, retenção/purga e privilégios dos papéis | Docker |
+| `npm run test:integration` | migrations, upgrade adversarial MP-35A, administração MP-35B/C, duas conexões com barreira de lock, repositórios reais, atomicidade, concorrência, retenção/purga e privilégios dos papéis | Docker |
 
 Na rodada técnica da MP-34 foram confirmados 138 testes unitários/contratos de
 migration, 26 HTTP e 41 cenários reais de integração: 15 de migrations, 8 de
@@ -610,9 +616,26 @@ PostgreSQL/PostGIS, incluindo o ciclo explícito `000008 up/down/up`. A fase foi
 integrada diretamente no commit `60144c2`, com CI pós-push aprovada e sem tag,
 deploy, release ou publicação.
 
+A validação final local da MP-35C em 2026-08-31 passou com 186 testes
+unitários/contratos, 40 HTTP e 100 integrações PostgreSQL/PostGIS. A integração
+completa passou 100/100 em três execuções consecutivas, incluindo decimal
+textual exato, decoder anterior ao `COMMIT`, rollback real, `000009` up/down/up,
+roles/ACLs, D13, concorrência de domínio e três containers iniciados em
+processos simultâneos com portas dinâmicas. A fase continua não integrada.
+
+A correção focal adicional validou `area_total` com fim absoluto, sem `$`,
+contra LF, CR, CRLF, U+2028 e U+2029 nas fronteiras HTTP, TypeScript e SQL. Sob
+`--unhandled-rejections=strict`, passaram 20/20 execuções do teste focal, 5/5
+da suíte MP-35C com 61/61 testes por rodada e 3/3 da integração completa com
+100/100 por rodada, sem warning, cancelamento ou rerun corretivo.
+
 A integração usa exclusivamente a URL de um Testcontainer
 `postgis/postgis:17-3.5`, com banco terminado em `_test`, ignorando
-`DATABASE_URL` do ambiente. O hook `pretest:integration` verifica o manifesto.
+`DATABASE_URL` do ambiente. Cada processo usa banco e role exclusivos; Docker
+escolhe atomicamente a porta do host para a porta interna `5432`, e o teste lê
+o mapeamento somente depois do `start`. Não existe reserva manual de porta,
+arquivo global de lock ou recuperação artesanal por `stat`/`unlink`. O hook
+`pretest:integration` verifica o manifesto.
 
 Testes destrutivos só prosseguem com as três travas simultâneas:
 

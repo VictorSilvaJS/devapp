@@ -1,6 +1,6 @@
 # Contrato De API Para RBAC/Backend
 
-> Revisão documental: 2026-08-26
+> Revisão documental: 2026-08-31
 
 Este documento registra endpoints, payloads mínimos e respostas esperadas. Em
 2026-06-03 (Fase 14G), todo o conteúdo era contrato futuro. Em 2026-08-21,
@@ -47,10 +47,10 @@ Revisão em 2026-08-25: D1-D13 e a divisão MP-35A-D foram consolidadas em
 `contrato-administracao-mp35.md`. A MP-35A implementa somente contratos e
 fundação persistente.
 
-Revisão em 2026-08-27: a MP-35B foi aprovada em reauditoria independente e
-integrada diretamente no commit `60144c2`, com CI pós-push aprovada. As seis
-rotas de Usuários abaixo são executáveis; escritas de Propriedades e vínculos
-permanecem reservadas à MP-35C, e telas à MP-35D.
+Revisão em 2026-08-31: a MP-35C está corrigida localmente, não integrada e em
+validação final. As sete rotas de Propriedades, vínculos e
+Localidades abaixo são executáveis no backend local; telas continuam
+reservadas à MP-35D, que não foi iniciada.
 
 ## Decisoes De Base
 
@@ -109,6 +109,11 @@ como desempate. Toda mutação administrativa exige `Idempotency-Key`;
 transições versionadas e comandos concorrentes que avançam ou substituem a
 versão do recurso exigem a versão-base. Erros incluem `request_id` e não
 retornam detalhes sensíveis.
+
+Para mutações administrativas, a identidade idempotente persistente é
+organização + ator + hash da chave. A sessão do ator é obrigatória, revalidada
+e auditada, mas fica fora da unicidade; uma segunda sessão válida do mesmo ator
+pode receber o replay exato sem repetir efeitos.
 
 A exceção é restrita à leitura individual, leitura em lote e descarte de
 notificações da MP-34. Esses comandos são monotônicos, não aceitam `version` nem
@@ -408,7 +413,7 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
   "nome": "Propriedade Exemplo",
   "titular_id": "0c57bed2-b18a-45c4-aeca-4cb5696716d7",
   "municipio_id": "4306106",
-  "area_total": 120.5,
+  "area_total": "120.5",
   "status": "ativa"
 }
 ```
@@ -430,15 +435,24 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 ### `PATCH /v1/propriedades/:id`
 
 - Objetivo: atualizar cadastro de Propriedade.
-- Payload minimo: campos parciais permitidos e `versao` esperada; Titularidade
-  não pode ser transferida por esta rota.
+- Payload minimo: campos parciais permitidos e `versao` esperada como
+  precondição de concorrência, nunca como valor atribuível; Titularidade não
+  pode ser transferida por esta rota.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
-- Outros erros: `400 Bad Request`; `409 Conflict` para titularidade ou estado
-  conflitante.
+- Outros erros: `400 Bad Request`; `409 Conflict` para versão ou estado
+  conflitante; `422 validation_error` para campo conhecido, porém proibido nesta
+  operação, depois de a estrutura completa passar.
 - Regra de permissao: somente Admin.
 - Localização: quando alterada, recebe somente `municipio_id`; o backend deriva
   todos os campos de UF/nome. `titular_id` não é aceito no `PATCH` ordinário.
+- UUIDs administrativos são v4 hifenizados, minúsculos e com variante RFC.
+  Em mutações, `area_total` é string decimal simples exata, entre `"0.0001"` e
+  `"9999999999.9999"`, com até quatro casas, sem expoente, coerção ou
+  arredondamento; o backend a canonicaliza antes do SQL. Número JSON e outros
+  tipos incompatíveis retornam `400`; string fora da precisão, escala, faixa ou
+  formato retorna `422`; `null` apenas limpa no PATCH. A representação de
+  leitura permanece numérica para compatibilidade com a MP-33C.
 - Fase: MP-35C.
 - Compatibilidade: preservar leitura dupla enquanto `fazenda_id` existir.
 
@@ -455,11 +469,16 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 
 ### `GET /v1/usuarios/:id/propriedades`
 
-- Objetivo: listar vinculos diretos usuario-Propriedade.
+- Objetivo: listar, no mesmo snapshot PostgreSQL, Titularidade derivada e
+  vínculos diretos ativos/inativos do Usuário, junto da versão do Usuário.
 - Payload minimo: `id` canonico do usuario.
 - Resposta de sucesso: `200 OK`.
 - Acesso negado: `401 Unauthorized`, `403 Forbidden` ou `404 Not Found`.
 - Regra de permissao: somente Admin.
+- Campos de cada item: `origem_acesso`, `tipo_vinculo`, `status_vinculo`,
+  `versao_vinculo` e `editavel`; Titularidade usa
+  `origem_acesso=titularidade`, `tipo_vinculo=titular` e `editavel=false`, sem
+  linha em `usuario_propriedade`.
 - Compatibilidade: corresponde ao futuro real de `usuario_propriedade`.
 
 ### `PATCH /v1/usuarios/:id/propriedades`
@@ -471,12 +490,7 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 ```json
 {
   "versao": 4,
-  "adicionar": [
-    {
-      "propriedade_id": "prop_1",
-      "tipo_vinculo": "colaborador"
-    }
-  ],
+  "adicionar": ["00000000-0000-4000-8000-000000000001"],
   "remover": [],
   "motivo": "mudanca_responsabilidade"
 }
@@ -487,10 +501,14 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 - Outros erros: `400 Bad Request`; `409 Conflict` para vinculo duplicado ou
   regra conflitante.
 - Regra de permissao: somente Admin.
-- Regra de validacao: `tipo_vinculo=titular` e rejeitado; somente
-  `usuario_autorizado` e `colaborador` podem ser persistidos; o total do delta
-  é limitado a 100 IDs e remover o último acesso é permitido.
+- Regra de validação: o cliente nunca envia `tipo_vinculo`. O backend deriva
+  `usuario_autorizado` para Produtor e `colaborador` para Colaborador; Admin
+  não recebe vínculo direto. Titularidade é derivada e não é persistida em
+  `usuario_propriedade`. O total do delta é limitado a 100 IDs.
 - Idempotência: `Idempotency-Key` obrigatória.
+- Auditoria: cada item alterado produz exatamente um evento que distingue
+  criação, reativação ou inativação, com antes/depois, tipo derivado, motivo,
+  ator, sessão, organização, request/correlation e horário do PostgreSQL.
 - Compatibilidade: `propriedades_atribuidas` deve migrar para vinculos
   persistentes, auditaveis e com status.
 
@@ -506,8 +524,9 @@ possua acesso adicional à mesma Propriedade, `titular` tem precedência.
 
 ### `GET /v1/localidades/municipios`
 
-- Objetivo: listar Municípios da versão ativa, exigindo filtro `uf_id` e usando
-  `busca`, `limite` e cursor estável por nome/ID.
+- Objetivo: listar Municípios, exigindo filtro `uf_id` e usando `busca`,
+  `limite` e cursor autenticado por nome/ID. A primeira página escolhe a versão
+  ativa; páginas seguintes permanecem na mesma versão imutável autenticada.
 - Regra de permissão: somente Admin autenticado.
 - Resposta: `200 OK`; `400` para UF/cursor inválido.
 - Fase: MP-35C.
@@ -661,7 +680,7 @@ concluiu lista/detalhe, projeção `tipo_acesso`, cursor/filtros e `404`
 indistinguível. A MP-35B concluiu e integrou a administração HTTP de Usuários e
 convites. Ainda é necessário:
 
-- implementar na MP-35C apenas as escritas de Propriedade, auditoria de
-  vínculos, idempotência e o RBAC por ação ainda pertencente a essa fase;
+- auditar independentemente e integrar a implementação local da MP-35C sem
+  antecipar a MP-35D;
 - transformar em testes executáveis somente as linhas das fases futuras em
   `testes-contrato-api-rbac.md`.

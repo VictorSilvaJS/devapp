@@ -4,12 +4,15 @@ import { test } from 'node:test';
 import { invitationAcceptanceModeFromPersisted } from '../../src/account-actions/contracts.js';
 import {
   ADMINISTRATION_LIMITS,
+  ADMINISTRATIVE_AREA_TOTAL,
   ADMINISTRATIVE_COMMAND_TYPES,
   ADMINISTRATIVE_REASON_CODES,
+  ADMINISTRATIVE_SENSITIVE_TERMS,
   administrativeReasonRequiresDetail,
   type InvitationActivationMode,
 } from '../../src/administration/contracts.js';
 import {
+  ADMINISTRATIVE_AREA_PATTERN_SOURCE,
   validateAdministrativeCommandContext,
   validateAdministrativeIdempotencyReceipt,
   validateAdministrativeReason,
@@ -19,6 +22,8 @@ import {
   validateCreateAdministrativeUserCommand,
   validateIssueAdministrativeInvitationCommand,
   validatePropertyLinkDeltaCommand,
+  normalizeAdministrativeArea,
+  requireCanonicalUuid,
   validateUpdateAdministrativePropertyCommand,
   validateUpdateAdministrativeUserCommand,
 } from '../../src/administration/validation.js';
@@ -73,6 +78,53 @@ test('catálogo D10 exige detalhe apenas para outro', () => {
   ]);
   assert.equal(administrativeReasonRequiresDetail('outro'), true);
   assert.equal(administrativeReasonRequiresDetail('fim_relacao'), false);
+});
+
+test('catálogo sensível e área numeric(14,4) possuem contrato canônico único', () => {
+  assert.deepEqual(ADMINISTRATIVE_SENSITIVE_TERMS, [
+    'senha', 'password', 'token', 'documento', 'cpf', 'cnpj', 'segredo',
+    'credential', 'authorization', 'cookie',
+  ]);
+  assert.deepEqual(ADMINISTRATIVE_AREA_TOTAL, {
+    maximum: '9999999999.9999', integerDigits: 10, fractionDigits: 4,
+  });
+  for (const term of ADMINISTRATIVE_SENSITIVE_TERMS) {
+    assert.throws(
+      () => validateAdministrativeReason({ code: 'outro', detail: `valor ${term} informado` }),
+      /sensível não permitido/,
+    );
+  }
+});
+
+test('UUID administrativo canônico é v4 minúsculo com variante RFC', () => {
+  assert.equal(requireCanonicalUuid(USER_ID, 'userId'), USER_ID);
+  for (const value of [
+    'b604b7aa-7e51-0e73-8636-6e5518536a37',
+    'b604b7aa-7e51-4e73-7636-6e5518536a37',
+    'B604B7AA-7E51-4E73-8636-6E5518536A37',
+    'b604b7aa7e514e7386366e5518536a37',
+  ]) {
+    assert.throws(() => requireCanonicalUuid(value, 'userId'), /UUID canônico inválido/);
+  }
+});
+
+test('área administrativa usa decimal textual exato sem passagem por Number', () => {
+  assert.doesNotMatch(normalizeAdministrativeArea.toString(),
+    /\b(?:Number|parseFloat|parseInt)\b/u);
+  assert.doesNotMatch(ADMINISTRATIVE_AREA_PATTERN_SOURCE, /\$/u);
+  for (const [value, canonical] of [
+    ['0.0001', '0.0001'], ['1', '1'], ['1.0', '1'], ['1.2345', '1.2345'],
+    ['1.2300', '1.23'], ['9999999999.9999', '9999999999.9999'],
+  ] as const) {
+    assert.equal(normalizeAdministrativeArea(value, 'areaTotal'), canonical);
+  }
+  for (const value of [1, 0, -1, Number.NaN, Number.POSITIVE_INFINITY,
+    '0', '-1', '0.00001', '1.00000000000000001', '9999999999.99999',
+    '10000000000', '01.25', ' 1.25 ', ' 1', '1 ', '1\t', '0\n', '1\n',
+    '1.0\n', '1\r', '1\r\n', '1\u2028', '1\u2029', 'NaN', 'Infinity', '1e-4',
+    '.25', '1.', true, [], {}, null]) {
+    assert.throws(() => normalizeAdministrativeArea(value, 'areaTotal'), /área|numeric|decimal/);
+  }
 });
 
 test('catálogo de comandos cobre somente a administração prevista na MP-35', () => {
@@ -275,7 +327,7 @@ test('delta rejeita vazio, IDs inválidos, esparsidade, campos desconhecidos e d
       }),
     /delta vazio/,
   );
-  const link = { propertyId: PROPERTY_ID, accessType: 'colaborador' };
+  const link = { propertyId: PROPERTY_ID };
   assert.throws(
     () =>
       validatePropertyLinkDeltaCommand({
@@ -323,7 +375,7 @@ test('delta rejeita vazio, IDs inválidos, esparsidade, campos desconhecidos e d
       validatePropertyLinkDeltaCommand({
         context,
         userId: USER_ID,
-        add: [{ propertyId: '', accessType: 'colaborador' }],
+        add: [{ propertyId: '' }],
         remove: [],
       }),
     /UUID canônico inválido/,
@@ -338,7 +390,6 @@ test('delta rejeita vazio, IDs inválidos, esparsidade, campos desconhecidos e d
             index === 0
               ? PROPERTY_ID
               : `00000000-0000-0000-0000-${String(index).padStart(12, '0')}`,
-          accessType: 'colaborador',
         })),
         remove: [],
       }),
@@ -349,9 +400,7 @@ test('delta rejeita vazio, IDs inválidos, esparsidade, campos desconhecidos e d
       context,
       userId: USER_ID,
       add: [link],
-      remove: [
-        { propertyId: SECOND_PROPERTY_ID, accessType: 'usuario_autorizado' },
-      ],
+      remove: [{ propertyId: SECOND_PROPERTY_ID }],
       reason: { code: 'mudanca_responsabilidade' },
     }),
   );

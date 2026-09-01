@@ -388,6 +388,17 @@ Em D8, o DTO externo de escrita recebe somente `municipio_id`; o backend
 deriva UF, nome e sigla do snapshot ativo. `titular_id` é obrigatório na criação
 de Propriedade e não pode ser alterado pelo `PATCH` cadastral ordinário.
 
+Nas mutações da MP-35C, `area_total` é decimal exato em string simples, sem
+expoente nem passagem por representação binária. O backend valida precisão,
+escala e faixa, canonicaliza zeros fracionários finais e só então permite a
+conversão SQL para `numeric(14,4)`; a leitura MP-33C preserva seu contrato.
+
+As quatro mutações compartilham um executor que decodifica e valida
+integralmente o retorno SQL antes do `COMMIT`; resposta incompatível exige
+`ROLLBACK` e falha fechada. A integração usa porta de host dinâmica escolhida
+pelo Docker, nomes de banco/role exclusivos e nenhum mutex artesanal em
+arquivo.
+
 Usuário ativo significa conta habilitada, não existência de Propriedade.
 Colaborador continua restrito a vínculo direto ativo e Propriedade ativa.
 Produtor pode permanecer ativo com zero acessos e não administra estrutura.

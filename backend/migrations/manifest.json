@@ -42,6 +42,11 @@
       "id": "000008",
       "file": "000008-administracao-usuarios-mp35b.sql",
       "sha256": "e02749ccf5dad59cd0ef19664537eb770606b3cc4d678aea987195aa07dd1cb9"
+    },
+    {
+      "id": "000009",
+      "file": "000009-administracao-propriedades-vinculos-mp35c.sql",
+      "sha256": "954bc367a07f3bc0eb7bd4b58bd785e1910c315b07fa93f12bbc7d2434ce3b7f"
     }
   ]
 }

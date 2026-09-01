@@ -99,7 +99,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         );
         await runMigrations({
           command: 'down',
-          count: 8,
+          count: 9,
           database: activeMigrationDatabase,
         });
       }
@@ -209,6 +209,144 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     );
   });
 
+  test('000009 executa up/down/up e preserva a fronteira MP-35B', async () => {
+    const database = requireMigrationDatabase();
+    const databasePool = requirePool();
+    const installed = await databasePool.query(`SELECT
+      pg_catalog.to_regprocedure(
+        'public.tche_admin_criar_propriedade_mp35c(jsonb)'
+      )::text AS operation,
+      pg_catalog.has_function_privilege(
+        'tche_agro_runtime',
+        'public.tche_admin_criar_propriedade_mp35c(jsonb)', 'EXECUTE'
+      ) AS runtime_execute,
+      pg_catalog.has_function_privilege(
+        'tche_agro_runtime',
+        'public.tche_admin_alterar_status_usuario_mp35b(jsonb)', 'EXECUTE'
+      ) AS runtime_mp35b_wrapper,
+      pg_catalog.has_function_privilege(
+        'tche_agro_runtime',
+        'public.tche_admin_alterar_status_usuario_mp35b_base000008(jsonb)', 'EXECUTE'
+      ) AS runtime_mp35b_base`);
+    assert.deepEqual(installed.rows[0], {
+      operation: 'tche_admin_criar_propriedade_mp35c(jsonb)',
+      runtime_execute: true,
+      runtime_mp35b_wrapper: true,
+      runtime_mp35b_base: false,
+    });
+
+    await runMigrations({ command: 'down', count: 1, database });
+    const rolledBack = await databasePool.query(`SELECT
+      pg_catalog.to_regprocedure(
+        'public.tche_admin_criar_propriedade_mp35c(jsonb)'
+      )::text AS operation,
+      pg_catalog.to_regprocedure(
+        'public.tche_admin_criar_usuario_mp35b(jsonb)'
+      )::text AS mp35b_operation,
+      pg_catalog.to_regprocedure(
+        'public.tche_admin_alterar_status_usuario_mp35b_base000008(jsonb)'
+      )::text AS mp35b_base`);
+    assert.deepEqual(rolledBack.rows[0], {
+      operation: null,
+      mp35b_operation: 'tche_admin_criar_usuario_mp35b(jsonb)',
+      mp35b_base: null,
+    });
+
+    await runMigrations({ command: 'up', count: 1, database });
+    const reapplied = await databasePool.query(`SELECT
+      pg_catalog.to_regprocedure(
+        'public.tche_admin_alterar_vinculos_usuario_mp35c(jsonb)'
+      )::text AS operation`);
+    assert.deepEqual(reapplied.rows[0], {
+      operation: 'tche_admin_alterar_vinculos_usuario_mp35c(jsonb)',
+    });
+  });
+
+  test('000009 isolada faz rollback atômico e conserva catálogo, owners e ACLs em up/down/up', async () => {
+    const isolated = await startPostgisTestDatabase();
+    assertDestructiveDatabaseTestsAllowed(isolated.connectionString);
+    const isolatedPool = new Pool(buildPostgresPoolConfig(isolated.database));
+    const snapshot = async () => {
+      const functions = await isolatedPool.query(`SELECT
+        p.oid::pg_catalog.regprocedure::text AS signature,
+        pg_catalog.pg_get_userbyid(p.proowner) AS owner,
+        p.prosecdef AS security_definer,
+        p.proconfig,
+        p.proacl::text AS acl,
+        pg_catalog.pg_get_functiondef(p.oid) AS definition,
+        COALESCE((SELECT bool_or(acl.grantee=0 AND acl.privilege_type='EXECUTE')
+          FROM pg_catalog.aclexplode(COALESCE(p.proacl,
+            pg_catalog.acldefault('f',p.proowner))) acl),false) AS public_execute
+        FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+        WHERE n.nspname='public' AND p.proname IN (
+          'tche_admin_iniciar_comando_mp35b','tche_admin_contexto_mp35c',
+          'tche_admin_termos_sensiveis_mp35c','tche_admin_detalhe_sensivel_mp35c',
+          'tche_admin_area_total_valida_mp35c',
+          'tche_admin_validar_motivo_mp35c','tche_admin_validar_entrada_mp35c',
+          'tche_admin_alterar_status_usuario_mp35b',
+          'tche_admin_alterar_status_usuario_mp35b_base000008',
+          'tche_admin_revogar_usuarios_mp35c',
+          'tche_admin_criar_propriedade_mp35c','tche_admin_atualizar_propriedade_mp35c',
+          'tche_admin_alterar_status_propriedade_mp35c',
+          'tche_admin_alterar_vinculos_usuario_mp35c')
+        ORDER BY signature`);
+      const index = await isolatedPool.query(`SELECT pg_catalog.pg_get_indexdef(c.oid) AS definition
+        FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace
+        WHERE n.nspname='public' AND c.relname='ix_usuario_propriedade_administracao_mp35c'`);
+      const privileges = await isolatedPool.query(`SELECT
+        pg_catalog.has_table_privilege('tche_agro_runtime','public.propriedades','INSERT,UPDATE,DELETE')
+          AS runtime_property_dml,
+        pg_catalog.has_table_privilege('tche_agro_runtime','public.usuario_propriedade','INSERT,UPDATE,DELETE')
+          AS runtime_link_dml,
+        pg_catalog.has_table_privilege('tche_agro_runtime','public.eventos_auditoria','INSERT')
+          AS runtime_audit_insert,
+        pg_catalog.has_table_privilege('tche_agro_runtime',
+          'public.comandos_administrativos_idempotencia','SELECT,INSERT,UPDATE,DELETE')
+          AS runtime_idempotency_dml`);
+      return { functions: functions.rows, index: index.rows,
+        privileges: privileges.rows[0] };
+    };
+    try {
+      await runMigrations({ command: 'up', count: 8, database: isolated.database });
+      const before = await snapshot();
+      assert.equal(before.functions.length, 2);
+      await isolatedPool.query(`CREATE FUNCTION public.tche_admin_contexto_mp35c(
+        uuid,text,text,text,text) RETURNS jsonb LANGUAGE sql AS $$ SELECT '{}'::jsonb $$`);
+      await assert.rejects(runMigrations({ command: 'up', count: 1,
+        database: isolated.database }), /already exists|ja existe/i);
+      const failed = await snapshot();
+      assert.equal(failed.index.length, 0);
+      assert.deepEqual(failed.functions.filter((item) =>
+        !item.signature.startsWith('tche_admin_contexto_mp35c')), before.functions);
+      assert.deepEqual(failed.privileges, before.privileges);
+      await isolatedPool.query(`DROP FUNCTION public.tche_admin_contexto_mp35c(
+        uuid,text,text,text,text)`);
+
+      await runMigrations({ command: 'up', count: 1, database: isolated.database });
+      const up = await snapshot();
+      assert.equal(up.functions.length, 14);
+      assert.equal(up.index.length, 1);
+      for (const operation of up.functions) {
+        assert.equal(operation.owner, 'tche_agro_administration_owner');
+        assert.equal(operation.security_definer, true);
+        assert.deepEqual(operation.proconfig, ['search_path=pg_catalog, public']);
+        assert.equal(operation.public_execute, false);
+      }
+      assert.deepEqual(up.privileges, { runtime_property_dml: false,
+        runtime_link_dml: false, runtime_audit_insert: false,
+        runtime_idempotency_dml: false });
+
+      await runMigrations({ command: 'down', count: 1, database: isolated.database });
+      const down = await snapshot();
+      assert.deepEqual(down, before);
+      await runMigrations({ command: 'up', count: 1, database: isolated.database });
+      assert.deepEqual(await snapshot(), up);
+    } finally {
+      await isolatedPool.end();
+      await isolated.container.stop();
+    }
+  });
+
   test('000008 executa up/down/up sem alterar a fundação integrada', async () => {
     const database = requireMigrationDatabase();
     const databasePool = requirePool();
@@ -259,7 +397,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       runtime_resolution_operation: true,
     });
 
-    await runMigrations({ command: 'down', count: 1, database });
+    await runMigrations({ command: 'down', count: 2, database });
     const rolledBack = await databasePool.query<{
       procedure_name: string | null;
       users_table: string | null;
@@ -295,7 +433,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       resolution_operation: null,
     });
 
-    await runMigrations({ command: 'up', count: 1, database });
+    await runMigrations({ command: 'up', count: 2, database });
     const reapplied = await databasePool.query<{
       procedure_name: string | null;
       runtime_event_insert: boolean;
@@ -2587,7 +2725,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     assertDestructiveDatabaseTestsAllowed(activeMigrationDatabase.connectionString);
     await runMigrations({
       command: 'down',
-      count: 8,
+      count: 9,
       database: activeMigrationDatabase,
     });
 

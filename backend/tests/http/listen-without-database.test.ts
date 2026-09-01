@@ -75,6 +75,14 @@ describe('HTTP startup while PostgreSQL is unavailable', () => {
       ADMIN_USER_CURSOR_KEYS: JSON.stringify({
         'http-startup-test-v1': Buffer.alloc(32, 0x44).toString('base64'),
       }),
+      ADMIN_LINK_CURSOR_ACTIVE_KEY_ID: 'http-link-test-v1',
+      ADMIN_LINK_CURSOR_KEYS: JSON.stringify({
+        'http-link-test-v1': Buffer.alloc(32, 0x45).toString('base64'),
+      }),
+      ADMIN_MUNICIPALITY_CURSOR_ACTIVE_KEY_ID: 'http-municipality-test-v1',
+      ADMIN_MUNICIPALITY_CURSOR_KEYS: JSON.stringify({
+        'http-municipality-test-v1': Buffer.alloc(32, 0x46).toString('base64'),
+      }),
     });
 
     try {

@@ -256,7 +256,7 @@ export class DefaultAuthenticationService implements AuthenticationService {
       accessToken: accessToken.value,
       refreshToken: refreshToken.value,
       sessionId: created.sessionId,
-      subject,
+      subject: { ...subject, authorizationVersion: created.authorizationVersion },
       accessTtlSeconds: this.#config.tokens.accessTtlSeconds,
       issuedAt: created.issuedAt,
       accessExpiresAt: created.accessExpiresAt,

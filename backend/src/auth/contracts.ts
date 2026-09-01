@@ -66,6 +66,7 @@ export interface IssuedTokenWindow {
 export interface CreateSessionResult extends IssuedTokenWindow {
   readonly status: 'created';
   readonly sessionId: string;
+  readonly authorizationVersion: number;
 }
 
 export type RotateRefreshResult =

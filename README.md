@@ -33,8 +33,9 @@ portões produtivos. O smoke Android físico específico da MP-34 passou em
 A MP-35A está integrada. A MP-35B, administração HTTP de Usuários e convites,
 foi aprovada em reauditoria independente e integrada diretamente no commit
 `60144c2`, com CI pós-push aprovada. Ela não acrescenta telas mobile. MP-35C e
-MP-35D não foram iniciadas; não houve tag, deploy, release ou publicação da
-MP-35B.
+MP-35D permanecem fora do aplicativo: a MP-35C está corrigida localmente no
+backend, não integrada e em validação final; a MP-35D não foi iniciada. Não
+houve tag, deploy, release ou publicação da MP-35C.
 
 Leia a fotografia completa em
 [Estado atual](docs/project/estado-atual.md) e a fila em

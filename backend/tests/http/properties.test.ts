@@ -28,7 +28,10 @@ const sampleProperty: PropertyView = {
   totalArea: 125.5,
   mainCrop: 'Soja',
   status: 'ativa',
-  accessType: 'titular',
+      accessType: 'titular',
+      version: 1,
+      createdAt: new Date('2026-08-25T12:00:00.000Z'),
+      updatedAt: new Date('2026-08-25T12:00:00.000Z'),
 };
 
 class FakePropertyService implements PropertyService {
@@ -104,6 +107,9 @@ describe('property HTTP plugin', () => {
           cultura_principal: sampleProperty.mainCrop,
           status: sampleProperty.status,
           tipo_acesso: sampleProperty.accessType,
+          versao: sampleProperty.version,
+          criado_em: sampleProperty.createdAt.toISOString(),
+          atualizado_em: sampleProperty.updatedAt.toISOString(),
         },
       ],
       paginacao: { proximo_cursor: 'cursor-seguinte' },

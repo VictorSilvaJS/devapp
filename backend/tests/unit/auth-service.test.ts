@@ -140,6 +140,7 @@ class FakeRepository implements AuthRepository {
     return {
       status: 'created' as const,
       sessionId: 'session-created',
+      authorizationVersion: input.authorizationVersion,
       ...issuedTokenWindow,
     };
   }

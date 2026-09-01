@@ -28,6 +28,9 @@ interface PropertyRow extends QueryResultRow {
   cultura_principal: string | null;
   status: string;
   tipo_acesso: string;
+  versao: string | number;
+  criado_em: Date;
+  atualizado_em: Date;
 }
 
 const ACTOR_CTE = `
@@ -54,6 +57,7 @@ const PROPERTY_PROJECTION = `
          propriedade.municipio_nome, propriedade.uf_id,
          propriedade.uf_sigla, propriedade.area_total,
          propriedade.cultura_principal, propriedade.status,
+         propriedade.versao, propriedade.criado_em, propriedade.atualizado_em,
          CASE ator.perfil
            WHEN 'admin' THEN 'admin'
            WHEN 'colaborador' THEN 'colaborador'
@@ -146,6 +150,9 @@ function mapProperty(row: PropertyRow): PropertyView {
     mainCrop: row.cultura_principal,
     status: mapStatus(row.status),
     accessType: mapAccessType(row.tipo_acesso),
+    version: Number(row.versao),
+    createdAt: row.criado_em,
+    updatedAt: row.atualizado_em,
   };
 }
 

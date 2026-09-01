@@ -82,7 +82,8 @@ export class OutboxPayloadCipher {
 
     for (const candidate of input.keys) {
       assertSafeIdentifier(candidate.id);
-      if (candidate.key.byteLength !== KEY_BYTES || keys.has(candidate.id)) {
+      if (candidate.key.byteLength !== KEY_BYTES || keys.has(candidate.id)
+        || [...keys.values()].some((key) => key.equals(Buffer.from(candidate.key)))) {
         throw new OutboxPayloadCryptoError('invalid_keyring');
       }
       keys.set(candidate.id, Buffer.from(candidate.key));

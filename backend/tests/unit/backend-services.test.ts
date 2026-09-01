@@ -11,12 +11,22 @@ import { ConfigurationError } from '../../src/config.js';
 
 const OUTBOX_KEY = Buffer.alloc(32, 0x42).toString('base64');
 const CURSOR_KEY = Buffer.alloc(32, 0x43).toString('base64');
+const LINK_CURSOR_KEY = Buffer.alloc(32, 0x44).toString('base64');
+const MUNICIPALITY_CURSOR_KEY = Buffer.alloc(32, 0x45).toString('base64');
 
 function cursorEnvironment() {
   return {
     ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
     ADMIN_USER_CURSOR_KEYS: JSON.stringify({
       'test-admin-cursor-v1': CURSOR_KEY,
+    }),
+    ADMIN_LINK_CURSOR_ACTIVE_KEY_ID: 'test-link-cursor-v1',
+    ADMIN_LINK_CURSOR_KEYS: JSON.stringify({
+      'test-link-cursor-v1': LINK_CURSOR_KEY,
+    }),
+    ADMIN_MUNICIPALITY_CURSOR_ACTIVE_KEY_ID: 'test-municipality-cursor-v1',
+    ADMIN_MUNICIPALITY_CURSOR_KEYS: JSON.stringify({
+      'test-municipality-cursor-v1': MUNICIPALITY_CURSOR_KEY,
     }),
   } as const;
 }
@@ -65,6 +75,7 @@ describe('MP-33B production composition', () => {
       typeof securityServices.administrativeUserRoutes.service.create,
       'function',
     );
+    assert.equal(typeof securityServices.mp35cRoutes.service.createProperty, 'function');
 
     const app = await buildApp({
       config: runtimeConfig,
@@ -161,8 +172,12 @@ describe('MP-33B production composition', () => {
         '/v1/auth/assisted-recovery',
         '/v1/propriedades',
         '/v1/propriedades/{id}',
+        '/v1/propriedades/{id}/status',
+        '/v1/localidades/ufs',
+        '/v1/localidades/municipios',
         '/v1/usuarios',
         '/v1/usuarios/{id}',
+        '/v1/usuarios/{id}/propriedades',
         '/v1/usuarios/{id}/status',
         '/v1/usuarios/{id}/convites',
         '/v1/notificacoes',
@@ -194,13 +209,19 @@ describe('MP-33B production composition', () => {
         'DELETE /v1/notificacoes/{id}',
         'GET /v1/auth/me',
         'GET /v1/auth/sessions',
+        'GET /v1/localidades/municipios',
+        'GET /v1/localidades/ufs',
         'GET /v1/notificacoes',
         'GET /v1/notificacoes/contador-nao-lidas',
         'GET /v1/propriedades',
         'GET /v1/propriedades/{id}',
         'GET /v1/usuarios',
         'GET /v1/usuarios/{id}',
+        'GET /v1/usuarios/{id}/propriedades',
+        'PATCH /v1/propriedades/{id}',
+        'PATCH /v1/propriedades/{id}/status',
         'PATCH /v1/usuarios/{id}',
+        'PATCH /v1/usuarios/{id}/propriedades',
         'PATCH /v1/usuarios/{id}/status',
         'POST /v1/auth/assisted-recovery',
         'POST /v1/auth/email-change/request',
@@ -211,6 +232,7 @@ describe('MP-33B production composition', () => {
         'POST /v1/notificacoes/leituras',
         'POST /v1/notificacoes/{id}/leitura',
         'POST /v1/notificacoes/{id}/resolver-destino',
+        'POST /v1/propriedades',
         'POST /v1/usuarios',
         'POST /v1/usuarios/{id}/convites',
       ]);
@@ -377,9 +399,54 @@ describe('MP-33B production composition', () => {
         runtimeConfig,
         environment: {
           ...base,
+          ...cursorEnvironment(),
           ADMIN_USER_CURSOR_ACTIVE_KEY_ID: 'test-admin-cursor-v1',
           ADMIN_USER_CURSOR_KEYS: JSON.stringify({
             'test-admin-cursor-v1': OUTBOX_KEY,
+          }),
+        },
+      }),
+      ConfigurationError,
+    );
+    await assert.rejects(
+      createBackendSecurityServices({
+        database,
+        runtimeConfig,
+        environment: {
+          ...base,
+          ...cursorEnvironment(),
+          OUTBOX_ENCRYPTION_KEYS: JSON.stringify({
+            'test-outbox-v1': OUTBOX_KEY,
+            'test-outbox-v2': OUTBOX_KEY,
+          }),
+        },
+      }),
+      ConfigurationError,
+    );
+    await assert.rejects(
+      createBackendSecurityServices({
+        database,
+        runtimeConfig,
+        environment: {
+          ...base,
+          ...cursorEnvironment(),
+          ADMIN_LINK_CURSOR_KEYS: JSON.stringify({
+            'test-link-cursor-v1': CURSOR_KEY,
+          }),
+        },
+      }),
+      ConfigurationError,
+    );
+    await assert.rejects(
+      createBackendSecurityServices({
+        database,
+        runtimeConfig,
+        environment: {
+          ...base,
+          ...cursorEnvironment(),
+          ADMIN_USER_CURSOR_KEYS: JSON.stringify({
+            'test-admin-cursor-v1': CURSOR_KEY,
+            'test-admin-cursor-v2': CURSOR_KEY,
           }),
         },
       }),

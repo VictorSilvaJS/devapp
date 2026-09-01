@@ -1,6 +1,6 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-08-26
+> Atualizado em: 2026-08-31
 >
 > Última execução física registrada: 2026-08-24
 
@@ -432,7 +432,46 @@ do backend; 166 unitários/contratos, 33 HTTP e 74 integrações
 PostgreSQL/PostGIS; ciclo explícito `000008 up/down/up`; links locais e higiene
 do diff. A reauditoria independente aprovou o resultado, integrado diretamente
 no commit `60144c2`, com CI pós-push aprovada. Isso não autoriza tag, deploy,
-release ou publicação; MP-35C/D não foram iniciadas.
+release ou publicação. A MP-35C está corrigida localmente, não integrada e em
+validação final; a MP-35D não foi iniciada.
+
+### MP-35C local
+
+Validar as sete rotas Admin-only, os dois cursores exclusivos, a migration
+`000009` em ciclo up/down/up, DML adversarial com login runtime real,
+idempotência, rollback atômico, concorrência observável, D13, revogação de
+sessões/tokens, OpenAPI e regressão completa. Não executar MP-35D, aplicativo,
+deploy ou publicação neste corte.
+
+No corte focal, validar ainda: precedência estrutural `400` antes da semântica
+`422`; UUID v4 minúsculo/RFC em HTTP e SQL; catálogo sensível idêntico em TS,
+MP-35B e MP-35C; `area_total` como string decimal exata em HTTP, domínio e SQL,
+incluindo a matriz de tipos/formato/faixa e LF, CR, CRLF, U+2028 e U+2029;
+decoder integral antes do `COMMIT`
+com rollback real; Testcontainers em processos simultâneos com portas
+dinâmicas e sem lock global; `22023` allowlisted como `422` e falha inesperada
+como `503`; e os dois ordenamentos Titular × ativação.
+Cada ordenamento deve repetir três vezes com dois PIDs e espera advisory
+observada antes de liberar a barreira.
+
+Rodada integral de 2026-08-31: esses itens possuem evidência verde, incluindo
+186 testes unitários/contratos, 40 HTTP e 100 integrações. A suíte PostgreSQL
+completa passou 100/100 em três execuções consecutivas; em cada execução, os
+três processos de Testcontainers iniciaram de forma sobreposta, obtiveram
+portas, bancos e containers distintos e encerraram sem `EADDRINUSE`. Cada ordem
+da corrida de domínio repetiu três vezes, com espera `Lock:advisory` observada
+em `pg_stat_activity`. A implementação permanece sem integração e em validação
+final.
+
+Correção focal de 2026-08-31: a gramática TypeScript/OpenAPI passou a usar
+fim absoluto `(?![\s\S])`, sem `$`, `trim` ou limpeza prévia. Domínio, HTTP e
+PostgreSQL rejeitaram LF, CR, CRLF, U+2028 e U+2029, com snapshots sem reserva,
+recibo, mutação, versão, auditoria ou revogação. O teste que inicia duas
+operações rejeitadas agora associa ambos os `assert.rejects` no mesmo turno por
+`Promise.all`. Sob `NODE_OPTIONS=--unhandled-rejections=strict`, passaram 20/20
+execuções consecutivas do teste PostgreSQL focal, 5/5 da suíte MP-35C com
+61/61 testes por rodada e 3/3 da integração completa com 100/100 por rodada,
+sem falha, cancelamento, warning de Promise ou rerun corretivo.
 
 ### Comandos gerais
 
