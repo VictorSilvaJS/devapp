@@ -69,6 +69,32 @@ export interface PropertyProjection {
   readonly tipo_acesso: PropertyAccessType;
 }
 
+/** Versioned view; the current read contract still exposes area_total as a JSON number. */
+export interface AdministrativePropertyProjection extends PropertyProjection {
+  readonly versao: number;
+  readonly criado_em: string;
+  readonly atualizado_em: string;
+}
+
+export type AdministrativeReceipt =
+  | Readonly<{
+      resultado: 'criado' | 'atualizado' | 'status_alterado';
+      recurso_tipo: 'usuario' | 'propriedade';
+      recurso_id: string;
+      versao: number;
+    }>
+  | Readonly<{
+      resultado: 'vinculos_alterados';
+      recurso_tipo: 'vinculo';
+      recurso_id: string;
+      versao: number;
+    }>
+  | Readonly<{
+      resultado: 'convite_emitido';
+      recurso_tipo: 'convite';
+      recurso_id: string;
+    }>;
+
 export interface PropertyPage {
   readonly itens: readonly PropertyProjection[];
   readonly paginacao: {
@@ -151,16 +177,63 @@ export type ApiErrorCode =
   | 'forbidden'
   | 'not_found'
   | 'conflict'
+  | 'version_conflict'
+  | 'idempotency_conflict'
+  | 'business_rule_conflict'
+  | 'invalid_semantics'
+  | 'validation_error'
   | 'password_policy_violation'
   | 'invalid_or_expired_challenge'
   | 'rate_limited'
   | 'service_unavailable';
 
+export type ApiFailureCode = ApiErrorCode | 'unexpected_response';
+
+export type ApiErrorDetailField =
+  | 'nome'
+  | 'email'
+  | 'perfil'
+  | 'telefone'
+  | 'documento'
+  | 'observacoes'
+  | 'versao'
+  | 'status'
+  | 'motivo'
+  | 'motivo_detalhe'
+  | 'modo_ativacao'
+  | 'titular_id'
+  | 'municipio_id'
+  | 'area_total'
+  | 'cultura_principal'
+  | 'adicionar'
+  | 'remover'
+  | 'busca'
+  | 'limite'
+  | 'cursor'
+  | 'uf_id'
+  | 'tipo_acesso'
+  | 'status_vinculo';
+
+export type ApiErrorDetailCode =
+  | 'required'
+  | 'invalid'
+  | 'unsupported'
+  | 'out_of_range'
+  | 'too_short'
+  | 'too_long'
+  | 'duplicate'
+  | 'conflict';
+
+export interface ApiErrorDetail {
+  readonly current_version?: number;
+  readonly field?: ApiErrorDetailField;
+  readonly code?: ApiErrorDetailCode;
+}
+
 export interface ApiErrorPayload {
   readonly code: ApiErrorCode;
-  readonly message: string;
-  readonly request_id: string;
-  readonly details: readonly Record<string, unknown>[];
+  readonly request_id?: string;
+  readonly details?: readonly ApiErrorDetail[];
 }
 
 export interface AcceptedResponse {

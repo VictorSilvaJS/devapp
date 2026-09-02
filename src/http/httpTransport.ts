@@ -1,5 +1,5 @@
 export interface HttpTransportRequest {
-  readonly method: 'GET' | 'POST' | 'DELETE';
+  readonly method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   readonly url: string;
   readonly accessToken?: string;
   readonly idempotencyKey?: string;

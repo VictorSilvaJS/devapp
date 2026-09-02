@@ -1,6 +1,11 @@
 import type {
   AcceptedResponse,
+  AdministrativePropertyProjection,
+  AdministrativeReceipt,
   ApiErrorCode,
+  ApiErrorDetail,
+  ApiErrorDetailCode,
+  ApiErrorDetailField,
   ApiErrorPayload,
   HttpScope,
   HttpSessionIdentity,
@@ -29,12 +34,67 @@ export class InvalidBackendResponseError extends Error {
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const UUID_V4_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const SAFE_REQUEST_ID_PATTERN =
+  /^req_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const ISO_UTC_TIMESTAMP_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z$/;
+const ADMINISTRATIVE_CURSOR_MAX_LENGTH = 2_048;
+
+const API_ERROR_DETAIL_FIELDS = [
+  'nome',
+  'email',
+  'perfil',
+  'telefone',
+  'documento',
+  'observacoes',
+  'versao',
+  'status',
+  'motivo',
+  'motivo_detalhe',
+  'modo_ativacao',
+  'titular_id',
+  'municipio_id',
+  'area_total',
+  'cultura_principal',
+  'adicionar',
+  'remover',
+  'busca',
+  'limite',
+  'cursor',
+  'uf_id',
+  'tipo_acesso',
+  'status_vinculo',
+] as const satisfies readonly ApiErrorDetailField[];
+
+const API_ERROR_DETAIL_CODES = [
+  'required',
+  'invalid',
+  'unsupported',
+  'out_of_range',
+  'too_short',
+  'too_long',
+  'duplicate',
+  'conflict',
+] as const satisfies readonly ApiErrorDetailCode[];
 
 function record(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new InvalidBackendResponseError();
   }
   return value as Record<string, unknown>;
+}
+
+function exactKeys(
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+): void {
+  const keys = Object.keys(value);
+  if (
+    keys.length !== allowed.length ||
+    keys.some((key) => !allowed.includes(key))
+  ) {
+    throw new InvalidBackendResponseError();
+  }
 }
 
 function requiredString(value: unknown): string {
@@ -73,6 +133,67 @@ function dateTime(value: unknown): string {
     throw new InvalidBackendResponseError();
   }
   return decoded;
+}
+
+export function decodeTimestamp(value: unknown): string {
+  const decoded = requiredString(value);
+  const match = ISO_UTC_TIMESTAMP_PATTERN.exec(decoded);
+  if (match === null) {
+    throw new InvalidBackendResponseError();
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [
+    31,
+    leapYear ? 29 : 28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
+  ];
+  if (
+    year === 0 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > (daysInMonth[month - 1] ?? 0) ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return decoded;
+}
+
+export function decodePositiveVersion(value: unknown): number {
+  return positiveInteger(value);
+}
+
+export function decodeOpaqueCursor(
+  value: unknown,
+  maximumLength = ADMINISTRATIVE_CURSOR_MAX_LENGTH,
+): string | null {
+  if (value === null) return null;
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > maximumLength
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return value;
 }
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[]): T {
@@ -174,19 +295,112 @@ export function decodeApiError(
   value: unknown,
   allowedCodes: readonly ApiErrorCode[],
 ): ApiErrorPayload {
-  const input = record(record(value).error);
+  const envelope = record(value);
+  const input = record(envelope.error);
   const code = oneOf(input.code, allowedCodes);
-  const details = input.details;
-  if (!Array.isArray(details) || details.some((item) => {
-    return typeof item !== 'object' || item === null || Array.isArray(item);
-  })) {
-    throw new InvalidBackendResponseError();
-  }
+  const requestId = typeof input.request_id === 'string' &&
+      SAFE_REQUEST_ID_PATTERN.test(input.request_id)
+    ? input.request_id
+    : undefined;
+  const details = decodeApiErrorDetails(code, input.details);
   return {
     code,
-    message: requiredString(input.message),
-    request_id: requiredString(input.request_id),
-    details: details as Record<string, unknown>[],
+    ...(requestId === undefined ? {} : { request_id: requestId }),
+    ...(details === undefined ? {} : { details }),
+  };
+}
+
+function decodeApiErrorDetails(
+  code: ApiErrorCode,
+  value: unknown,
+): readonly ApiErrorDetail[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const details = value
+    .map((item) => decodeApiErrorDetail(code, item))
+    .filter((item): item is ApiErrorDetail => item !== undefined);
+  return details.length === 0 ? undefined : Object.freeze(details);
+}
+
+function decodeApiErrorDetail(
+  code: ApiErrorCode,
+  value: unknown,
+): ApiErrorDetail | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+  const input = value as Record<string, unknown>;
+  if (code === 'version_conflict') {
+    const currentVersion = input.current_version;
+    if (
+      typeof currentVersion !== 'number' ||
+      !Number.isSafeInteger(currentVersion) ||
+      currentVersion < 1
+    ) {
+      return undefined;
+    }
+    return Object.freeze({ current_version: currentVersion });
+  }
+  if (
+    code !== 'invalid_request' &&
+    code !== 'invalid_semantics' &&
+    code !== 'validation_error' &&
+    code !== 'password_policy_violation'
+  ) {
+    return undefined;
+  }
+  const field = typeof input.field === 'string' &&
+      API_ERROR_DETAIL_FIELDS.includes(input.field as ApiErrorDetailField)
+    ? input.field as ApiErrorDetailField
+    : undefined;
+  const detailCode = typeof input.code === 'string' &&
+      API_ERROR_DETAIL_CODES.includes(input.code as ApiErrorDetailCode)
+    ? input.code as ApiErrorDetailCode
+    : undefined;
+  if (field === undefined && detailCode === undefined) return undefined;
+  return Object.freeze({
+    ...(field === undefined ? {} : { field }),
+    ...(detailCode === undefined ? {} : { code: detailCode }),
+  });
+}
+
+export function decodeAdministrativeReceipt(
+  value: unknown,
+): AdministrativeReceipt {
+  const input = record(value);
+  const outcome = oneOf(input.resultado, [
+    'criado',
+    'atualizado',
+    'status_alterado',
+    'vinculos_alterados',
+    'convite_emitido',
+  ] as const);
+  const resourceId = uuidV4(input.recurso_id);
+
+  if (outcome === 'convite_emitido') {
+    exactKeys(input, ['resultado', 'recurso_tipo', 'recurso_id']);
+    return {
+      resultado: outcome,
+      recurso_tipo: oneOf(input.recurso_tipo, ['convite'] as const),
+      recurso_id: resourceId,
+    };
+  }
+
+  exactKeys(input, ['resultado', 'recurso_tipo', 'recurso_id', 'versao']);
+  const version = positiveInteger(input.versao);
+  if (outcome === 'vinculos_alterados') {
+    return {
+      resultado: outcome,
+      recurso_tipo: oneOf(input.recurso_tipo, ['vinculo'] as const),
+      recurso_id: resourceId,
+      versao: version,
+    };
+  }
+  return {
+    resultado: outcome,
+    recurso_tipo: oneOf(input.recurso_tipo, ['usuario', 'propriedade'] as const),
+    recurso_id: resourceId,
+    versao: version,
   };
 }
 
@@ -236,14 +450,48 @@ export function decodeProperty(value: unknown): PropertyProjection {
   };
 }
 
+export function decodeAdministrativeProperty(
+  value: unknown,
+): AdministrativePropertyProjection {
+  const input = record(value);
+  exactKeys(input, [
+    'id',
+    'organizacao_id',
+    'titular_id',
+    'titular',
+    'nome',
+    'municipio_id',
+    'municipio_nome',
+    'uf_id',
+    'uf_sigla',
+    'area_total',
+    'cultura_principal',
+    'status',
+    'tipo_acesso',
+    'versao',
+    'criado_em',
+    'atualizado_em',
+  ]);
+  exactKeys(record(input.titular), ['id', 'nome']);
+  const property = decodeProperty(input);
+  const createdAt = decodeTimestamp(input.criado_em);
+  const updatedAt = decodeTimestamp(input.atualizado_em);
+  if (updatedAt < createdAt) {
+    throw new InvalidBackendResponseError();
+  }
+  return {
+    ...property,
+    versao: positiveInteger(input.versao),
+    criado_em: createdAt,
+    atualizado_em: updatedAt,
+  };
+}
+
 export function decodePropertyPage(value: unknown): PropertyPage {
   const input = record(value);
   if (!Array.isArray(input.itens)) throw new InvalidBackendResponseError();
   const pagination = record(input.paginacao);
-  const cursor = pagination.proximo_cursor;
-  if (cursor !== null && (typeof cursor !== 'string' || cursor.length === 0)) {
-    throw new InvalidBackendResponseError();
-  }
+  const cursor = decodeOpaqueCursor(pagination.proximo_cursor, 32_768);
   return {
     itens: input.itens.map(decodeProperty),
     paginacao: { proximo_cursor: cursor as string | null },

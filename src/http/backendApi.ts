@@ -1,6 +1,8 @@
 import type {
   AcceptedResponse,
   ApiErrorCode,
+  ApiErrorDetail,
+  ApiFailureCode,
   HttpSessionIdentity,
   NotificationDestination,
   NotificationDiscardResult,
@@ -41,23 +43,30 @@ import type {
 
 export class ApiResponseError extends Error {
   readonly status: number;
-  readonly code: string;
+  readonly code: ApiFailureCode;
   readonly requestId?: string;
-  readonly retryAfterSeconds?: number;
+  readonly details?: readonly ApiErrorDetail[];
 
   constructor(input: {
     readonly status: number;
-    readonly code: string;
-    readonly message: string;
+    readonly code: ApiFailureCode;
     readonly requestId?: string;
-    readonly retryAfterSeconds?: number;
+    readonly details?: readonly ApiErrorDetail[];
   }) {
-    super(input.message);
+    super(
+      input.status === 401
+        ? 'Sua sessão não é mais válida.'
+        : input.status === 503
+          ? 'Serviço temporariamente indisponível.'
+          : 'Não foi possível concluir a solicitação.',
+    );
     this.name = 'ApiResponseError';
     this.status = input.status;
     this.code = input.code;
     this.requestId = input.requestId;
-    this.retryAfterSeconds = input.retryAfterSeconds;
+    this.details = input.details === undefined
+      ? undefined
+      : Object.freeze(input.details.map((detail) => Object.freeze({ ...detail })));
   }
 }
 
@@ -68,8 +77,17 @@ const ERROR_CODES_BY_STATUS: Readonly<Record<number, readonly ApiErrorCode[]>> =
   401: ['invalid_session'],
   403: ['forbidden'],
   404: ['not_found'],
-  409: ['conflict'],
-  422: ['password_policy_violation'],
+  409: [
+    'conflict',
+    'version_conflict',
+    'idempotency_conflict',
+    'business_rule_conflict',
+  ],
+  422: [
+    'invalid_semantics',
+    'validation_error',
+    'password_policy_violation',
+  ],
   429: ['rate_limited'],
   503: ['service_unavailable'],
 };
@@ -90,9 +108,8 @@ function safeError(
     return new ApiResponseError({
       status: response.status,
       code: decoded.code,
-      message: 'A solicitação HTTP falhou.',
       requestId: decoded.request_id,
-      retryAfterSeconds: response.retryAfterSeconds,
+      details: decoded.details,
     });
   } catch {
     return new ApiResponseError({
@@ -102,12 +119,6 @@ function safeError(
         : response.status === 503
           ? 'service_unavailable'
           : 'unexpected_response',
-      message: response.status === 503
-        ? 'Serviço temporariamente indisponível.'
-        : response.status === 401
-          ? 'Sua sessão não é mais válida.'
-          : 'Não foi possível concluir a solicitação.',
-      retryAfterSeconds: response.retryAfterSeconds,
     });
   }
 }

@@ -48,6 +48,8 @@
     "test:native-graph:mp33c": "node scripts/verifyMp33cNativeGraph.js",
     "pretest:mp34": "node scripts/cleanMp34Output.js",
     "test:mp34": "tsc -p tsconfig.mp34-tests.json && node tests/mp34Contracts.test.js && node tests/mp34Repository.test.js && node tests/mp34Architecture.test.js",
+    "pretest:mp35d1": "node scripts/cleanMp35d1Output.js",
+    "test:mp35d1": "tsc -p tsconfig.mp35d1-tests.json && node tests/mp35d1Contracts.test.js && node tests/mp35d1Coordinator.test.js && node tests/mp35d1Architecture.test.js",
     "test:interface-convergence": "node tests/httpInterfaceConvergence.test.js"
   },
   "expo": {

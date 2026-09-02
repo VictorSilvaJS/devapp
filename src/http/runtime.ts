@@ -1,4 +1,5 @@
 import { BackendApi } from './backendApi';
+import { AdministrativeCommandCoordinator } from './administrativeCommandCoordinator';
 import type { HttpRuntimeConfig } from './config';
 import { FetchHttpTransport, type HttpTransport } from './httpTransport';
 import {
@@ -19,6 +20,7 @@ export interface HttpRuntime {
   readonly config: HttpRuntimeConfig;
   readonly api: BackendApi;
   readonly session: SessionCoordinator;
+  readonly administrativeCommands: AdministrativeCommandCoordinator;
   readonly properties: PropertyRepository;
   readonly notifications: NotificationRepository;
 }
@@ -43,10 +45,16 @@ export function createHttpRuntime(
     monotonicNow: dependencies.monotonicNow,
     wallClockNow: dependencies.wallClockNow,
   });
+  const administrativeCommands = new AdministrativeCommandCoordinator({ session });
+  administrativeCommands.synchronizeSession(session.snapshot, session.epoch);
+  session.subscribe((snapshot) => {
+    administrativeCommands.synchronizeSession(snapshot, session.epoch);
+  });
   return {
     config,
     api,
     session,
+    administrativeCommands,
     properties: new HttpPropertyRepository(api, session),
     notifications: new HttpNotificationRepository(api, session),
   };
