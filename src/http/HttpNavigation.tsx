@@ -13,6 +13,7 @@ import { useAccountAction } from './AccountActionContext';
 import { actionNavigationTarget } from './actionNavigation';
 import { parseAccountActionLink } from './actionLinks';
 import { useHttpSession } from './HttpSessionContext';
+import { buildAdministrativeUserNavigationDefinition } from './administrativeUserNavigationDefinition';
 import {
   HttpNotificationProvider,
   useHttpNotifications,
@@ -44,15 +45,27 @@ import {
   HttpPropertyDetailScreen,
 } from './screens/HttpPropertyScreens';
 import { HttpNotificationScreen } from './screens/HttpNotificationScreen';
+import {
+  HttpAdministrativeUserDetailScreen,
+  HttpAdministrativeUsersScreen,
+} from './screens/HttpAdministrativeUserScreens';
 import { colors } from '../theme';
 import { resolveBottomTabSafeArea } from '../navigation/bottomTabSafeArea';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
-const navigationRef = createNavigationContainerRef<any>();
+export const httpNavigationRef = createNavigationContainerRef<any>();
 
 function HttpTabsNavigator() {
   const { unreadCount } = useHttpNotifications();
+  const { snapshot } = useHttpSession();
+  const administrativeUsers = buildAdministrativeUserNavigationDefinition(
+    snapshot,
+    {
+      list: HttpAdministrativeUsersScreen,
+      detail: HttpAdministrativeUserDetailScreen,
+    },
+  );
   const { bottom } = useSafeAreaInsets();
   const safeAreaLayout = React.useMemo(
     () => resolveBottomTabSafeArea(bottom),
@@ -85,6 +98,8 @@ function HttpTabsNavigator() {
             name={
               route.name === 'Properties'
                 ? 'business-outline'
+                : route.name === 'Users'
+                  ? 'people-outline'
                 : route.name === 'Notifications'
                   ? 'notifications-outline'
                   : 'person-outline'
@@ -100,6 +115,13 @@ function HttpTabsNavigator() {
         component={HttpPropertiesScreen}
         options={{ title: 'Propriedades' }}
       />
+      {administrativeUsers.tab ? (
+        <Tabs.Screen
+          name={administrativeUsers.tab.name}
+          component={administrativeUsers.tab.surface}
+          options={{ title: 'Usuários' }}
+        />
+      ) : null}
       <Tabs.Screen
         name="Notifications"
         component={HttpNotificationScreen}
@@ -148,6 +170,13 @@ export function HttpNavigation() {
   const queuedTarget = React.useRef<string | null>(null);
   const statusRef = React.useRef(status);
   const liveLinkGeneration = React.useRef(0);
+  const administrativeUsers = buildAdministrativeUserNavigationDefinition(
+    snapshot,
+    {
+      list: HttpAdministrativeUsersScreen,
+      detail: HttpAdministrativeUserDetailScreen,
+    },
+  );
 
   React.useEffect(() => {
     statusRef.current = status;
@@ -159,11 +188,11 @@ export function HttpNavigation() {
     const target = actionNavigationTarget(parsed);
     setPendingAction(parsed);
     if (
-      navigationRef.isReady() &&
+      httpNavigationRef.isReady() &&
       (statusRef.current === 'anonymous' ||
         statusRef.current === 'authenticated')
     ) {
-      navigationRef.navigate(target.name);
+      httpNavigationRef.navigate(target.name);
     } else {
       queuedTarget.current = target.name;
     }
@@ -208,18 +237,18 @@ export function HttpNavigation() {
   React.useEffect(() => {
     if (
       queuedTarget.current !== null &&
-      navigationRef.isReady() &&
+      httpNavigationRef.isReady() &&
       (status === 'anonymous' || status === 'authenticated')
     ) {
       const target = queuedTarget.current;
       queuedTarget.current = null;
-      navigationRef.navigate(target);
+      httpNavigationRef.navigate(target);
     }
   }, [status]);
 
   return (
     <NavigationContainer
-      ref={navigationRef}
+      ref={httpNavigationRef}
       onReady={() => {
         if (
           queuedTarget.current &&
@@ -228,7 +257,7 @@ export function HttpNavigation() {
         ) {
           const target = queuedTarget.current;
           queuedTarget.current = null;
-          navigationRef.navigate(target);
+          httpNavigationRef.navigate(target);
         }
       }}
     >
@@ -243,6 +272,13 @@ export function HttpNavigation() {
           <Stack.Group navigationKey={identityKey}>
             <Stack.Screen name="Main" component={HttpTabs} options={{ headerShown: false }} />
             <Stack.Screen name="PropertyDetail" component={HttpPropertyDetailScreen} options={{ headerShown: false }} />
+            {administrativeUsers.detail ? (
+              <Stack.Screen
+                name={administrativeUsers.detail.name}
+                component={administrativeUsers.detail.surface}
+                options={{ headerShown: false }}
+              />
+            ) : null}
             <Stack.Screen name="ChangePassword" component={HttpChangePasswordScreen} options={{ title: 'Trocar senha' }} />
             <Stack.Screen name="RequestPrimaryEmailChange" component={HttpPrimaryEmailChangeScreen} options={{ title: 'Trocar e-mail' }} />
             <Stack.Screen name="RequestSecondaryEmail" component={HttpSecondaryEmailScreen} options={{ title: 'Segundo e-mail' }} />

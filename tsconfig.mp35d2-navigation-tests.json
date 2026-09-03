@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "outDir": ".tmp-mp35d2-navigation",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "tests/mp33c-globals.d.ts",
+    "src/http/HttpNavigation.tsx",
+    "src/http/screens/HttpAdministrativeUserScreens.tsx"
+  ]
+}

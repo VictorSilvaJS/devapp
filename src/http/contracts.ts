@@ -28,6 +28,40 @@ export interface HttpSessionIdentity {
   readonly escopo: HttpScope;
 }
 
+export interface AdministrativeUserListItem {
+  readonly id: string;
+  readonly nome: string;
+  readonly email: string;
+  readonly perfil: HttpProfile;
+  readonly status: HttpUserStatus;
+  readonly versao: number;
+  readonly produtor_id?: string;
+}
+
+export interface AdministrativeUserDetail extends AdministrativeUserListItem {
+  readonly organizacao_id: 'org_tche_fertilidade';
+  readonly telefone: string | null;
+  readonly documento: string | null;
+  readonly observacoes: string | null;
+  readonly criado_em: string;
+  readonly atualizado_em: string;
+}
+
+export interface AdministrativeUserPage {
+  readonly itens: readonly AdministrativeUserListItem[];
+  readonly paginacao: Readonly<{
+    proximo_cursor: string | null;
+  }>;
+}
+
+export interface AdministrativeUserFilters {
+  readonly busca?: string;
+  readonly perfil?: HttpProfile;
+  readonly status?: HttpUserStatus;
+  readonly limite?: number;
+  readonly cursor?: string;
+}
+
 export interface TokenResponse extends HttpSessionIdentity {
   readonly access_token: string;
   readonly refresh_token: string;

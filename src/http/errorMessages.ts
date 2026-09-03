@@ -1,4 +1,5 @@
-import { ApiResponseError } from './backendApi';
+import { ApiResponseError, InvalidApiRequestError } from './backendApi';
+import { AdministrativeUserAccessDeniedError } from './administrativeUserRepository';
 import { InvalidBackendResponseError } from './decoders';
 import { ApiTransportError } from './httpTransport';
 import { SessionRequiredError, SessionStorageError } from './sessionCoordinator';
@@ -20,6 +21,8 @@ function apiMessage(error: ApiResponseError): string {
 
 export function safeClientErrorMessage(error: unknown): string {
   if (error instanceof ApiResponseError) return apiMessage(error);
+  if (error instanceof InvalidApiRequestError) return error.message;
+  if (error instanceof AdministrativeUserAccessDeniedError) return error.message;
   if (error instanceof ApiTransportError) return 'Não foi possível conectar ao serviço.';
   if (error instanceof InvalidBackendResponseError) {
     return 'O serviço retornou uma resposta incompatível.';

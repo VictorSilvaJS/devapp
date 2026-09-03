@@ -2,14 +2,19 @@ import type {
   AcceptedResponse,
   AdministrativePropertyProjection,
   AdministrativeReceipt,
+  AdministrativeUserDetail,
+  AdministrativeUserListItem,
+  AdministrativeUserPage,
   ApiErrorCode,
   ApiErrorDetail,
   ApiErrorDetailCode,
   ApiErrorDetailField,
   ApiErrorPayload,
   HttpScope,
+  HttpProfile,
   HttpSessionIdentity,
   HttpUser,
+  HttpUserStatus,
   NotificationDestination,
   NotificationDiscardResult,
   NotificationPage,
@@ -115,15 +120,39 @@ function positiveInteger(value: unknown): number {
   return decoded;
 }
 
+function boundedString(value: unknown, maximumLength: number): string {
+  const decoded = requiredString(value);
+  if (
+    [...decoded].length > maximumLength ||
+    decoded.normalize('NFC') !== decoded
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return decoded;
+}
+
+function nullableBoundedString(
+  value: unknown,
+  maximumLength: number,
+): string | null {
+  return value === null ? null : boundedString(value, maximumLength);
+}
+
 function nonNegativeInteger(value: unknown): number {
   const decoded = requiredInteger(value);
   if (decoded < 0) throw new InvalidBackendResponseError();
   return decoded;
 }
 
+export function isCanonicalUuidV4(value: unknown): value is string {
+  return typeof value === 'string' &&
+    value.length === 36 &&
+    UUID_V4_PATTERN.test(value);
+}
+
 function uuidV4(value: unknown): string {
   const decoded = requiredString(value);
-  if (!UUID_V4_PATTERN.test(decoded)) throw new InvalidBackendResponseError();
+  if (!isCanonicalUuidV4(decoded)) throw new InvalidBackendResponseError();
   return decoded;
 }
 
@@ -194,6 +223,16 @@ export function decodeOpaqueCursor(
     throw new InvalidBackendResponseError();
   }
   return value;
+}
+
+export function decodeAdministrativeUserProfile(value: unknown): HttpProfile {
+  return oneOf(value, ['admin', 'colaborador', 'produtor'] as const);
+}
+
+export function decodeAdministrativeUserStatus(
+  value: unknown,
+): HttpUserStatus {
+  return oneOf(value, ['pendente', 'ativo', 'inativo'] as const);
 }
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[]): T {
@@ -402,6 +441,108 @@ export function decodeAdministrativeReceipt(
     recurso_id: resourceId,
     versao: version,
   };
+}
+
+const ADMINISTRATIVE_USER_REQUIRED_KEYS = [
+  'id',
+  'organizacao_id',
+  'produtor_id',
+  'nome',
+  'email',
+  'perfil',
+  'status',
+  'telefone',
+  'documento',
+  'observacoes',
+  'versao',
+  'criado_em',
+  'atualizado_em',
+] as const;
+
+function decodeAdministrativeUserWire(value: unknown): AdministrativeUserDetail {
+  const input = record(value);
+  exactKeys(input, ADMINISTRATIVE_USER_REQUIRED_KEYS);
+  const profile = decodeAdministrativeUserProfile(input.perfil);
+  const producerValue = input.produtor_id;
+  const producerId = producerValue === null
+    ? undefined
+    : uuidV4(producerValue);
+  if (producerId !== undefined && profile !== 'produtor') {
+    throw new InvalidBackendResponseError();
+  }
+  const createdAt = decodeTimestamp(input.criado_em);
+  const updatedAt = decodeTimestamp(input.atualizado_em);
+  if (updatedAt < createdAt) throw new InvalidBackendResponseError();
+
+  return Object.freeze({
+    id: uuidV4(input.id),
+    organizacao_id: oneOf(
+      input.organizacao_id,
+      ['org_tche_fertilidade'] as const,
+    ),
+    nome: boundedString(input.nome, 200),
+    email: boundedString(input.email, 254),
+    perfil: profile,
+    status: decodeAdministrativeUserStatus(input.status),
+    telefone: nullableBoundedString(input.telefone, 32),
+    documento: nullableBoundedString(input.documento, 64),
+    observacoes: nullableBoundedString(input.observacoes, 2_000),
+    versao: decodePositiveVersion(input.versao),
+    criado_em: createdAt,
+    atualizado_em: updatedAt,
+    ...(producerId === undefined ? {} : { produtor_id: producerId }),
+  });
+}
+
+export function decodeAdministrativeUserListItem(
+  value: unknown,
+): AdministrativeUserListItem {
+  const user = decodeAdministrativeUserWire(value);
+  return Object.freeze({
+    id: user.id,
+    nome: user.nome,
+    email: user.email,
+    perfil: user.perfil,
+    status: user.status,
+    versao: user.versao,
+    ...(user.produtor_id === undefined
+      ? {}
+      : { produtor_id: user.produtor_id }),
+  });
+}
+
+export function decodeAdministrativeUserDetail(
+  value: unknown,
+): AdministrativeUserDetail {
+  return decodeAdministrativeUserWire(value);
+}
+
+export function decodeAdministrativeUserPage(
+  value: unknown,
+  maximumItems = 100,
+): AdministrativeUserPage {
+  if (
+    !Number.isInteger(maximumItems) ||
+    maximumItems < 1 ||
+    maximumItems > 100
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  const input = record(value);
+  exactKeys(input, ['itens', 'paginacao']);
+  if (!Array.isArray(input.itens)) throw new InvalidBackendResponseError();
+  if (input.itens.length > maximumItems) throw new InvalidBackendResponseError();
+  const pagination = record(input.paginacao);
+  exactKeys(pagination, ['proximo_cursor']);
+  const items = Object.freeze(input.itens.map(decodeAdministrativeUserListItem));
+  const nextCursor = decodeOpaqueCursor(pagination.proximo_cursor);
+  if (items.length === 0 && nextCursor !== null) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({
+    itens: items,
+    paginacao: Object.freeze({ proximo_cursor: nextCursor }),
+  });
 }
 
 export function decodeProperty(value: unknown): PropertyProjection {

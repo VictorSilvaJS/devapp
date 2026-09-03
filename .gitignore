@@ -8,6 +8,8 @@ dist/
 .tmp-mp33c/
 .tmp-mp34/
 .tmp-mp35d1/
+.tmp-mp35d2/
+.tmp-mp35d2-navigation/
 coverage/
 .vscode/
 .DS_Store

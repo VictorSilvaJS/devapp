@@ -50,6 +50,8 @@
     "test:mp34": "tsc -p tsconfig.mp34-tests.json && node tests/mp34Contracts.test.js && node tests/mp34Repository.test.js && node tests/mp34Architecture.test.js",
     "pretest:mp35d1": "node scripts/cleanMp35d1Output.js",
     "test:mp35d1": "tsc -p tsconfig.mp35d1-tests.json && node tests/mp35d1Contracts.test.js && node tests/mp35d1Coordinator.test.js && node tests/mp35d1Architecture.test.js",
+    "pretest:mp35d2": "node scripts/cleanMp35d2Output.js",
+    "test:mp35d2": "tsc -p tsconfig.mp35d2-tests.json && tsc -p tsconfig.mp35d2-navigation-tests.json && node tests/mp35d2Contracts.test.js && node tests/mp35d2RealSession.test.js && node tests/mp35d2ListController.test.js && node tests/mp35d2Boundary.test.js && node tests/mp35d2DetailAndAccess.test.js && node tests/mp35d2RenderedNavigation.test.js && node tests/mp35d2Architecture.test.js",
     "test:interface-convergence": "node tests/httpInterfaceConvergence.test.js"
   },
   "expo": {
@@ -97,6 +99,7 @@
     "@expo/ngrok": "^4.1.3",
     "@types/react": "~19.2.14",
     "babel-preset-expo": "~56.0.0",
+    "react-test-renderer": "19.2.3",
     "typescript": "~6.0.3"
   }
 }

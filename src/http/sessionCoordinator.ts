@@ -27,6 +27,11 @@ class StaleSessionOperationError extends Error {}
 
 export type SessionListener = (snapshot: SessionSnapshot | null) => void;
 
+export interface AuthenticatedSessionContext {
+  readonly snapshot: SessionSnapshot;
+  readonly epoch: number;
+}
+
 const REFRESH_EARLY_MS = 5_000;
 
 export class SessionCoordinator {
@@ -425,7 +430,10 @@ export class SessionCoordinator {
   }
 
   async #authenticatedCore<T>(
-    operation: (accessToken: string) => Promise<T>,
+    operation: (
+      accessToken: string,
+      context: AuthenticatedSessionContext,
+    ) => Promise<T>,
     rotationHeld = false,
     onStaleResult?: (result: T) => Promise<void>,
   ): Promise<T> {
@@ -442,13 +450,21 @@ export class SessionCoordinator {
         await this.#refresh(undefined, operationEpoch);
       }
     }
-    if (this.#epoch !== operationEpoch || this.#accessToken === null) {
+    if (
+      this.#epoch !== operationEpoch ||
+      this.#accessToken === null ||
+      this.#snapshot === null
+    ) {
       throw new SessionRequiredError();
     }
 
     const attemptedAccessToken = this.#accessToken;
+    const attemptedContext = Object.freeze({
+      snapshot: this.#snapshot,
+      epoch: operationEpoch,
+    });
     try {
-      const result = await operation(attemptedAccessToken);
+      const result = await operation(attemptedAccessToken, attemptedContext);
       if (this.#epoch !== operationEpoch) {
         if (onStaleResult !== undefined) await onStaleResult(result);
         throw new SessionRequiredError();
@@ -483,12 +499,21 @@ export class SessionCoordinator {
         );
       }
     }
-    if (this.#epoch !== operationEpoch || this.#accessToken === null) {
+    if (
+      this.#epoch !== operationEpoch ||
+      this.#accessToken === null ||
+      this.#snapshot === null
+    ) {
       throw new SessionRequiredError();
     }
 
+    const retryAccessToken = this.#accessToken;
+    const retryContext = Object.freeze({
+      snapshot: this.#snapshot,
+      epoch: operationEpoch,
+    });
     try {
-      const result = await operation(this.#accessToken);
+      const result = await operation(retryAccessToken, retryContext);
       if (this.#epoch !== operationEpoch) {
         if (onStaleResult !== undefined) await onStaleResult(result);
         throw new SessionRequiredError();
@@ -508,7 +533,10 @@ export class SessionCoordinator {
   }
 
   async authenticated<T>(
-    operation: (accessToken: string) => Promise<T>,
+    operation: (
+      accessToken: string,
+      context: AuthenticatedSessionContext,
+    ) => Promise<T>,
   ): Promise<T> {
     return this.#authenticatedCore(operation);
   }

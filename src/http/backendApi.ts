@@ -1,5 +1,8 @@
 import type {
   AcceptedResponse,
+  AdministrativeUserDetail,
+  AdministrativeUserFilters,
+  AdministrativeUserPage,
   ApiErrorCode,
   ApiErrorDetail,
   ApiFailureCode,
@@ -20,6 +23,8 @@ import type {
 } from './contracts';
 import {
   decodeAcceptedResponse,
+  decodeAdministrativeUserDetail,
+  decodeAdministrativeUserPage,
   decodeApiError,
   decodeNotificationDestination,
   decodeNotificationDiscardResult,
@@ -34,6 +39,7 @@ import {
   decodeSessionIdentity,
   decodeTokenResponse,
   InvalidBackendResponseError,
+  isCanonicalUuidV4,
 } from './decoders';
 import type {
   HttpTransport,
@@ -70,7 +76,85 @@ export class ApiResponseError extends Error {
   }
 }
 
+export class InvalidApiRequestError extends Error {
+  readonly status = 400;
+  readonly code = 'invalid_request' as const;
+
+  constructor(message = 'A solicitação informada é inválida.') {
+    super(message);
+    this.name = 'InvalidApiRequestError';
+  }
+}
+
 const INVALID_JSON = Symbol.for('tche.invalid-json');
+
+const ADMINISTRATIVE_USER_FILTER_KEYS = Object.freeze([
+  'busca',
+  'perfil',
+  'status',
+  'limite',
+  'cursor',
+]);
+
+function administrativeUserFilters(input: unknown): Readonly<{
+  filters: AdministrativeUserFilters;
+  limit: number;
+}> {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    throw new InvalidApiRequestError();
+  }
+  const value = input as Record<string, unknown>;
+  if (Object.keys(value).some((key) => !ADMINISTRATIVE_USER_FILTER_KEYS.includes(key))) {
+    throw new InvalidApiRequestError();
+  }
+  const has = (key: string) => Object.prototype.hasOwnProperty.call(value, key);
+  const limitValue = has('limite') ? value.limite : 50;
+  if (
+    typeof limitValue !== 'number' ||
+    !Number.isInteger(limitValue) ||
+    !Number.isFinite(limitValue) ||
+    limitValue < 1 ||
+    limitValue > 100
+  ) {
+    throw new InvalidApiRequestError('O limite deve ser um inteiro entre 1 e 100.');
+  }
+  if (
+    has('busca') &&
+    (typeof value.busca !== 'string' || value.busca.length === 0)
+  ) {
+    throw new InvalidApiRequestError();
+  }
+  if (
+    has('perfil') &&
+    !['admin', 'colaborador', 'produtor'].includes(value.perfil as string)
+  ) {
+    throw new InvalidApiRequestError();
+  }
+  if (
+    has('status') &&
+    !['pendente', 'ativo', 'inativo'].includes(value.status as string)
+  ) {
+    throw new InvalidApiRequestError();
+  }
+  if (
+    has('cursor') &&
+    (typeof value.cursor !== 'string' ||
+      value.cursor.length === 0 ||
+      value.cursor.length > 2_048)
+  ) {
+    throw new InvalidApiRequestError();
+  }
+  return Object.freeze({
+    filters: Object.freeze({
+      ...(has('busca') ? { busca: value.busca as string } : {}),
+      ...(has('perfil') ? { perfil: value.perfil as AdministrativeUserFilters['perfil'] } : {}),
+      ...(has('status') ? { status: value.status as AdministrativeUserFilters['status'] } : {}),
+      limite: limitValue,
+      ...(has('cursor') ? { cursor: value.cursor as string } : {}),
+    }),
+    limit: limitValue,
+  });
+}
 
 const ERROR_CODES_BY_STATUS: Readonly<Record<number, readonly ApiErrorCode[]>> = {
   400: ['invalid_request', 'invalid_or_expired_challenge'],
@@ -487,6 +571,43 @@ export class BackendApi {
       accessToken,
     });
     return decodeProperty(response.body);
+  }
+
+  async listAdministrativeUsers(
+    accessToken: string,
+    filters: AdministrativeUserFilters = {},
+  ): Promise<AdministrativeUserPage> {
+    const validated = administrativeUserFilters(filters);
+    const query = new URLSearchParams();
+    if (validated.filters.busca) query.set('busca', validated.filters.busca);
+    if (validated.filters.perfil) query.set('perfil', validated.filters.perfil);
+    if (validated.filters.status) query.set('status', validated.filters.status);
+    query.set('limite', String(validated.limit));
+    if (validated.filters.cursor) query.set('cursor', validated.filters.cursor);
+    const serialized = query.toString();
+    const response = await this.#send({
+      method: 'GET',
+      path: `/v1/usuarios${serialized ? `?${serialized}` : ''}`,
+      expectedStatus: 200,
+      accessToken,
+    });
+    return decodeAdministrativeUserPage(response.body, validated.limit);
+  }
+
+  async getAdministrativeUser(
+    accessToken: string,
+    userId: string,
+  ): Promise<AdministrativeUserDetail> {
+    if (!isCanonicalUuidV4(userId)) {
+      throw new InvalidApiRequestError('O ID do Usuário é inválido.');
+    }
+    const response = await this.#send({
+      method: 'GET',
+      path: `/v1/usuarios/${encodeURIComponent(userId)}`,
+      expectedStatus: 200,
+      accessToken,
+    });
+    return decodeAdministrativeUserDetail(response.body);
   }
 
   async listNotifications(
