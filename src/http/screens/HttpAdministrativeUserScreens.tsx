@@ -75,7 +75,7 @@ const INVALID_ID_FAILURE: AdministrativeUserReadFailure = Object.freeze({
   retryable: false,
 });
 
-function useControllerDisposal(controller: Readonly<{ dispose(): void }>) {
+export function useControllerDisposal(controller: Readonly<{ dispose(): void }>) {
   const lifecycle = React.useRef<Readonly<{
     controller: Readonly<{ dispose(): void }>;
     generation: number;
@@ -126,7 +126,7 @@ function useAdministrativeUserList(
   return { controller, current };
 }
 
-function useAdministrativeUserDetail(
+export function useAdministrativeUserDetail(
   controllerFactory: AdministrativeUserControllerFactory,
   repository: AdministrativeUserRepository,
   boundary: AdministrativeUserDataBoundary,
@@ -398,6 +398,12 @@ function HttpAdministrativeUsersAdminSurface({ navigation }: any) {
           style={styles.filterButton}
         />
       </LinearGradient>
+      <View style={styles.createAction}>
+        <HttpButton
+          title="Novo Usuário"
+          onPress={() => navigation.navigate('AdministrativeUserCreate')}
+        />
+      </View>
 
       {current.loading ? (
         <View style={styles.loading}>
@@ -587,6 +593,31 @@ function HttpAdministrativeUserDetailAdminSurface({
               <DetailRow label="Criado em" value={formatTimestamp(user.criado_em)} />
               <DetailRow label="Atualizado em" value={formatTimestamp(user.atualizado_em)} last />
             </SectionCard>
+
+            <SectionCard
+              title="Ações administrativas"
+              subtitle="Ações incompatíveis com o status atual permanecem ocultas."
+            >
+              <View style={styles.detailActions}>
+                <HttpButton
+                  title="Editar cadastro"
+                  variant="secondary"
+                  onPress={() => navigation.navigate('AdministrativeUserEdit', { id: user.id })}
+                />
+                {user.status === 'pendente' ? (
+                  <HttpButton
+                    title="Reemitir convite"
+                    onPress={() => navigation.navigate('AdministrativeUserInvitation', { id: user.id })}
+                  />
+                ) : (
+                  <HttpButton
+                    title={user.status === 'ativo' ? 'Inativar Usuário' : 'Reativar Usuário'}
+                    variant={user.status === 'ativo' ? 'danger' : 'primary'}
+                    onPress={() => navigation.navigate('AdministrativeUserStatus', { id: user.id })}
+                  />
+                )}
+              </View>
+            </SectionCard>
           </ScrollView>
         </LinearGradient>
       ) : null}
@@ -628,6 +659,11 @@ const styles = StyleSheet.create({
   },
   searchBar: { flex: 1, ...shadows.sm },
   filterButton: { width: 112 },
+  createAction: {
+    paddingHorizontal: spacing.screen,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.background,
+  },
   list: {
     flexGrow: 1,
     padding: spacing.screen,
@@ -728,4 +764,5 @@ const styles = StyleSheet.create({
   detailLabel: { color: colors.muted, fontSize: typography.fontBody - 1, fontWeight: typography.weightSemibold },
   detailValue: { flex: 1, color: colors.text, fontSize: typography.fontBody - 1, fontWeight: typography.weightBold, textAlign: 'right' },
   notes: { color: colors.text, fontSize: typography.fontBody, lineHeight: 22 },
+  detailActions: { gap: spacing.sm },
 });

@@ -1,8 +1,8 @@
 # Matriz Tecnica De RBAC/Backend
 
-Status revisado em 2026-09-01:
-`MP-35A/B integradas; MP-35C concluída, auditada independentemente e integrada
-em e6789bf; confirmação pós-integração aprovada; MP-35D não iniciada`.
+Status revisado em 2026-09-03:
+`MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
+implementada localmente e em validação independente; MP-35D-4 não iniciada`.
 Este documento
 transforma o contrato de RBAC/backend em matriz tecnica de testes e criterios
 de aceite. A regra segue as decisões consolidadas anteriores e D1-D13 da
@@ -41,7 +41,7 @@ v2 ativo usa vinculo direto e nao deve voltar a autorizar por texto.
   consulta antes de filtros e paginação.
 - A MP-35A implementou contratos e fundação persistente; a MP-35B integrada
   implementa a administração HTTP de Usuários e convites. A MP-35C integrada
-  implementa Propriedades, vínculos e Localidades; a MP-35D integrará as telas
+  implementa Propriedades, vínculos e Localidades; a MP-35D integra as telas
   existentes somente após autorização própria.
 
 ### Fora do escopo deste corte

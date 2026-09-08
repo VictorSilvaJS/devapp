@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-01
+> Revisão documental: 2026-09-03
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -63,8 +63,10 @@ removida; o aceite público permanece em `/v1/auth/invitations/accept`. O
 aplicativo não foi alterado. Em 2026-09-01, a MP-35C foi concluída e integrada
 diretamente à branch `backend` no commit `e6789bf`, com CI pós-push aprovada.
 Ela foi auditada independentemente, e a confirmação pós-integração foi
-aprovada. Não houve tag, deploy, release ou publicação; a MP-35D não foi
-iniciada.
+aprovada. Não houve tag, deploy, release ou publicação. Na branch
+`feat/mp-35d`, os cortes MP-35D-1 e MP-35D-2 foram concluídos na feature. O
+MP-35D-3 está implementado localmente e em validação independente, sem commit
+ou push nesta rodada; o MP-35D-4 não foi iniciado.
 
 Estado formal da sequência administrativa:
 
@@ -72,13 +74,14 @@ Estado formal da sequência administrativa:
 - MP-35B: integrada.
 - MP-35C: concluída, auditada independentemente e integrada.
 - Confirmação pós-integração: aprovada.
-- MP-35D: não iniciada.
+- MP-35D: D-1/D-2 concluídas na `feat/mp-35d`; D-3 implementada localmente e
+  em validação independente; D-4 não iniciada.
 
 ## Estado por camada
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil e notificações reais no padrão visual aprovado; convergência física aprovada e sem release produtivo |
+| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil, notificações e administração D-3 de Usuários; D-3 em validação independente, sem teste Android físico ou release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
@@ -119,8 +122,11 @@ O comportamento implementado e seus limites estão congelados no
 Administração HTTP de Usuários e convites está concluída e integrada na MP-35B.
 Propriedades, vínculos e Localidades estão concluídos e integrados na MP-35C
 pelo commit `e6789bf`, com CI pós-push, auditoria independente e confirmação
-pós-integração aprovadas. A integração das telas continua reservada à MP-35D,
-que não foi iniciada.
+pós-integração aprovadas. A integração do aplicativo avançou somente até o
+MP-35D-3: fundação D-1 e leitura administrativa D-2 integradas na
+`feat/mp-35d`, e comandos de Usuário D-3 implementados localmente.
+Propriedades administrativas, vínculos, Localidades e validação física D-4
+continuam fora.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 
@@ -448,7 +454,7 @@ typecheck, build, smoke ESM, compatibilidade de domínio, manifesto/base e ciclo
 `000008 up/down/up`. A reauditoria independente aprovou o resultado, que foi
 integrado diretamente no commit `60144c2`, com CI pós-push aprovada. A MP-35B
 não cria tela, não implementa Propriedade/vínculo e não muda o Demo; o smoke
-físico administrativo pertence à futura MP-35D.
+físico administrativo permanece pendente no corte MP-35D-4.
 
 ## Próxima etapa
 
@@ -472,14 +478,18 @@ com CI pós-push aprovada e sem antecipar endpoints ou telas. A MP-35B foi
 aprovada em reauditoria independente e integrada diretamente no commit
 `60144c2`, com CI pós-push aprovada. A MP-35C foi concluída, auditada
 independentemente e integrada diretamente no commit `e6789bf`; sua confirmação
-pós-integração foi aprovada. A MP-35D permanece não iniciada.
+pós-integração foi aprovada. Na `feat/mp-35d`, D-1/D-2 estão concluídas e D-3
+está implementada localmente e em validação independente, sem commit/push;
+D-4 permanece não
+iniciada.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. Qualquer tela ou trabalho da MP-35D continua
-fora do corte atual e exige autorização específica.
+links, assinatura e dispositivo. Propriedades administrativas, vínculos,
+Localidades, validação física D-4 e qualquer fase posterior continuam fora do
+corte atual e exigem autorização específica.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da

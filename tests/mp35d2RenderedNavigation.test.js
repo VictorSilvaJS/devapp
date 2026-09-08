@@ -20,6 +20,13 @@ console.error = (...args) => {
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 global.document = { title: '' };
+let uuidSequence = 0;
+global.expo = {
+  uuidv4() {
+    uuidSequence += 1;
+    return `${uuidSequence.toString(16).padStart(8, '0')}-7777-4777-8777-777777777777`;
+  },
+};
 const browserListeners = new Map();
 const browserLocation = { hash: '', pathname: '/', search: '' };
 const browserHistory = {
@@ -355,7 +362,7 @@ function tokenWire(profile, sequence) {
   };
 }
 
-function administrativeUserWire() {
+function administrativeUserWire(overrides = {}) {
   return {
     id: USER_ID,
     organizacao_id: 'org_tche_fertilidade',
@@ -370,6 +377,7 @@ function administrativeUserWire() {
     versao: 1,
     criado_em: '2026-09-01T12:00:00.000Z',
     atualizado_em: '2026-09-02T12:00:00.000Z',
+    ...overrides,
   };
 }
 
@@ -446,6 +454,10 @@ function renderedFixture({
   initialProfile = 'admin',
   failInitial = false,
   deferDetail = false,
+  deferMutation = false,
+  deferCommandRead = false,
+  commandFailure = null,
+  userStatus = 'ativo',
   initialUrl = null,
 } = {}) {
   linkingControl.reset(initialUrl);
@@ -456,9 +468,18 @@ function renderedFixture({
     list: 0,
     notifications: 0,
     properties: 0,
+    create: 0,
+    edit: 0,
+    status: 0,
+    invitation: 0,
   };
   const pendingDetails = [];
   const pendingList = [];
+  const pendingMutations = [];
+  const pendingCommandReads = [];
+  const commandRequests = [];
+  let commandStarted = false;
+  let currentUser = administrativeUserWire({ status: userStatus });
   const counters = controllerCounters();
   const store = {
     value: null,
@@ -469,6 +490,51 @@ function renderedFixture({
   const transport = {
     async send(request) {
       const url = new URL(request.url);
+      const commandResponse = (kind, outcome, status) => {
+        calls[kind] += 1;
+        calls.administrativeHttp += 1;
+        commandStarted = true;
+        commandRequests.push(request);
+        if (commandFailure !== null) return commandFailure;
+        const nextVersion = currentUser.versao + 1;
+        if (kind === 'create') {
+          currentUser = administrativeUserWire({
+            nome: request.body.nome,
+            email: request.body.email,
+            perfil: request.body.perfil,
+            produtor_id: request.body.perfil === 'produtor' ? PRODUCER_ID : null,
+            status: 'pendente',
+            versao: nextVersion,
+          });
+        } else if (kind === 'edit') {
+          currentUser = administrativeUserWire({
+            ...currentUser,
+            ...Object.fromEntries(Object.entries(request.body).filter(([key]) => key !== 'versao')),
+            versao: nextVersion,
+          });
+        } else if (kind === 'status') {
+          currentUser = administrativeUserWire({
+            ...currentUser,
+            status: request.body.status,
+            versao: nextVersion,
+          });
+        } else {
+          currentUser = administrativeUserWire({ ...currentUser, versao: nextVersion });
+        }
+        const response = {
+          status,
+          body: {
+            resultado: outcome,
+            recurso_tipo: 'usuario',
+            recurso_id: USER_ID,
+            versao: nextVersion,
+          },
+        };
+        if (!deferMutation) return response;
+        const gate = deferred();
+        pendingMutations.push({ ...gate, response });
+        return gate.promise;
+      };
       if (url.pathname === '/v1/auth/login') {
         loginSequence += 1;
         const email = String(request.body.email);
@@ -486,6 +552,9 @@ function renderedFixture({
           body: { itens: [], paginacao: { proximo_cursor: null } },
         };
       }
+      if (url.pathname === '/v1/usuarios' && request.method === 'POST') {
+        return commandResponse('create', 'criado', 201);
+      }
       if (url.pathname === '/v1/usuarios') {
         calls.list += 1;
         calls.administrativeHttp += 1;
@@ -499,11 +568,34 @@ function renderedFixture({
         pendingList.push(gate);
         return gate.promise;
       }
+      if (
+        url.pathname === `/v1/usuarios/${USER_ID}/status` &&
+        request.method === 'PATCH'
+      ) {
+        return commandResponse('status', 'status_alterado', 200);
+      }
+      if (
+        url.pathname === `/v1/usuarios/${USER_ID}/convites` &&
+        request.method === 'POST'
+      ) {
+        return commandResponse('invitation', 'convite_emitido', 201);
+      }
+      if (
+        url.pathname === `/v1/usuarios/${USER_ID}` &&
+        request.method === 'PATCH'
+      ) {
+        return commandResponse('edit', 'atualizado', 200);
+      }
       if (url.pathname === `/v1/usuarios/${USER_ID}`) {
         calls.detail += 1;
         calls.administrativeHttp += 1;
+        if (commandStarted && deferCommandRead) {
+          const gate = deferred();
+          pendingCommandReads.push(gate);
+          return gate.promise;
+        }
         if (!deferDetail) {
-          return { status: 200, body: administrativeUserWire() };
+          return { status: 200, body: currentUser };
         }
         const gate = deferred();
         pendingDetails.push(gate);
@@ -581,6 +673,11 @@ function renderedFixture({
     get sessionUi() { return sessionUi; },
     pendingDetails,
     pendingList,
+    pendingMutations,
+    pendingCommandReads,
+    commandRequests,
+    get currentUser() { return currentUser; },
+    setCurrentUser(next) { currentUser = administrativeUserWire(next); },
     runtime,
     StrictListApp,
   };
@@ -713,6 +810,14 @@ test('React Navigation real registra Admin, abre detalhe e volta para a lista', 
 
   assert.equal(currentRouteName(), 'Properties');
   assert.ok(rootState().routeNames.includes('AdministrativeUserDetail'));
+  for (const routeName of [
+    'AdministrativeUserCreate',
+    'AdministrativeUserEdit',
+    'AdministrativeUserStatus',
+    'AdministrativeUserInvitation',
+  ]) {
+    assert.ok(rootState().routeNames.includes(routeName));
+  }
   assert.ok(tabState().routeNames.includes('Users'));
   assert.equal(context.counters.list.created, 0);
   assert.equal(context.counters.detail.created, 0);
@@ -754,6 +859,26 @@ test('React Navigation real registra Admin, abre detalhe e volta para a lista', 
   assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 0);
 });
 
+test('React Navigation real registra e abre Novo Usuário somente para Admin', async () => {
+  const context = renderedFixture();
+  const renderer = await mountFixture(context);
+
+  await act(async () => {
+    httpNavigationRef.navigate('AdministrativeUserCreate');
+  });
+  await waitFor(
+    () => currentRouteName() === 'AdministrativeUserCreate',
+    'formulário conectado de Novo Usuário focado',
+  );
+  const rendered = textContent(renderer);
+  assert.match(rendered, /Novo Usuário/);
+  assert.match(rendered, /Produtor/);
+  assert.match(rendered, /Colaborador/);
+  assert.doesNotMatch(rendered, /Senha inicial|Excluir Usuário|Vínculos com Propriedades/);
+
+  await unmount(renderer);
+});
+
 async function assertNonAdminNavigation(profile) {
   const administrativeUrl = `https://app.tcheagro.example/usuarios/${USER_ID}`;
   const context = renderedFixture({ initialProfile: profile, initialUrl: administrativeUrl });
@@ -761,6 +886,14 @@ async function assertNonAdminNavigation(profile) {
 
   assert.equal(currentRouteName(), 'Properties');
   assert.equal(rootState().routeNames.includes('AdministrativeUserDetail'), false);
+  for (const routeName of [
+    'AdministrativeUserCreate',
+    'AdministrativeUserEdit',
+    'AdministrativeUserStatus',
+    'AdministrativeUserInvitation',
+  ]) {
+    assert.equal(rootState().routeNames.includes(routeName), false);
+  }
   assert.equal(tabState().routeNames.includes('Users'), false);
   assert.equal(context.counters.list.created, 0);
   assert.equal(context.counters.detail.created, 0);
@@ -1036,3 +1169,22 @@ test('deep-link administrativo é formalmente não aplicável ao produto atual',
     /AdministrativeUserDetail[\s\S]*?(?:path|prefix|linking)/,
   );
 });
+
+module.exports = {
+  USER_ID,
+  React,
+  TestRenderer,
+  act,
+  administrativeUserWire,
+  currentRouteName,
+  deferred,
+  flush,
+  httpNavigationRef,
+  mountFixture,
+  pressableWithText,
+  renderedFixture,
+  rootState,
+  textContent,
+  unmount,
+  waitFor,
+};

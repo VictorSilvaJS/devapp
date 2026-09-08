@@ -2,9 +2,14 @@ import type {
   AcceptedResponse,
   AdministrativePropertyProjection,
   AdministrativeReceipt,
+  AdministrativeUserCreatedReceipt,
   AdministrativeUserDetail,
+  AdministrativeUserInvitationIssuedReceipt,
+  AdministrativeUserInvitationCommandReceipt,
   AdministrativeUserListItem,
   AdministrativeUserPage,
+  AdministrativeUserStatusChangedReceipt,
+  AdministrativeUserUpdatedReceipt,
   ApiErrorCode,
   ApiErrorDetail,
   ApiErrorDetailCode,
@@ -443,6 +448,90 @@ export function decodeAdministrativeReceipt(
   };
 }
 
+export function decodeAdministrativeUserCreatedReceipt(
+  value: unknown,
+): AdministrativeUserCreatedReceipt {
+  const receipt = decodeAdministrativeReceipt(value);
+  if (
+    receipt.resultado !== 'criado' ||
+    receipt.recurso_tipo !== 'usuario'
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({
+    resultado: 'criado',
+    recurso_tipo: 'usuario',
+    recurso_id: receipt.recurso_id,
+    versao: receipt.versao,
+  });
+}
+
+export function decodeAdministrativeUserUpdatedReceipt(
+  value: unknown,
+): AdministrativeUserUpdatedReceipt {
+  const receipt = decodeAdministrativeReceipt(value);
+  if (
+    receipt.resultado !== 'atualizado' ||
+    receipt.recurso_tipo !== 'usuario'
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({
+    resultado: 'atualizado',
+    recurso_tipo: 'usuario',
+    recurso_id: receipt.recurso_id,
+    versao: receipt.versao,
+  });
+}
+
+export function decodeAdministrativeUserStatusChangedReceipt(
+  value: unknown,
+): AdministrativeUserStatusChangedReceipt {
+  const receipt = decodeAdministrativeReceipt(value);
+  if (
+    receipt.resultado !== 'status_alterado' ||
+    receipt.recurso_tipo !== 'usuario'
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({
+    resultado: 'status_alterado',
+    recurso_tipo: 'usuario',
+    recurso_id: receipt.recurso_id,
+    versao: receipt.versao,
+  });
+}
+
+export function decodeAdministrativeUserInvitationIssuedReceipt(
+  value: unknown,
+): AdministrativeUserInvitationIssuedReceipt {
+  const receipt = decodeAdministrativeReceipt(value);
+  if (
+    receipt.resultado !== 'convite_emitido' ||
+    receipt.recurso_tipo !== 'convite'
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({
+    resultado: 'convite_emitido',
+    recurso_tipo: 'convite',
+    recurso_id: receipt.recurso_id,
+  });
+}
+
+export function decodeAdministrativeUserInvitationCommandReceipt(
+  value: unknown,
+): AdministrativeUserInvitationCommandReceipt {
+  const input = record(value);
+  exactKeys(input, ['resultado', 'recurso_tipo', 'recurso_id', 'versao']);
+  return Object.freeze({
+    resultado: oneOf(input.resultado, ['convite_emitido'] as const),
+    recurso_tipo: oneOf(input.recurso_tipo, ['usuario'] as const),
+    recurso_id: uuidV4(input.recurso_id),
+    versao: positiveInteger(input.versao),
+  });
+}
+
 const ADMINISTRATIVE_USER_REQUIRED_KEYS = [
   'id',
   'organizacao_id',
@@ -467,7 +556,7 @@ function decodeAdministrativeUserWire(value: unknown): AdministrativeUserDetail 
   const producerId = producerValue === null
     ? undefined
     : uuidV4(producerValue);
-  if (producerId !== undefined && profile !== 'produtor') {
+  if ((producerId !== undefined) !== (profile === 'produtor')) {
     throw new InvalidBackendResponseError();
   }
   const createdAt = decodeTimestamp(input.criado_em);

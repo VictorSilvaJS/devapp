@@ -1,12 +1,26 @@
+import type { AdministrativeUserDetail } from './contracts';
+
 export type AdministrativeUserBoundaryInvalidation =
   | 'partition_changed'
   | 'invalid_session'
-  | 'forbidden';
+  | 'forbidden'
+  | 'reconciliation_failed';
+
+export type AdministrativeUserBoundaryMutation =
+  | Readonly<{
+      readonly kind: 'authoritative_user';
+      readonly user: AdministrativeUserDetail;
+    }>
+  | Readonly<{
+      readonly kind: 'user_not_found';
+      readonly userId: string;
+    }>;
 
 export interface AdministrativeUserBoundarySnapshot {
   readonly partitionKey: string | null;
   readonly generation: number;
   readonly invalidation: AdministrativeUserBoundaryInvalidation | null;
+  readonly mutation: AdministrativeUserBoundaryMutation | null;
 }
 
 export interface AdministrativeUserReadLease {
@@ -20,14 +34,16 @@ interface LeaseRecord {
   readonly partitionKey: string | null;
   readonly generation: number;
   readonly allowInitialRestore: boolean;
+  revoked: boolean;
 }
 
 function snapshot(
   partitionKey: string | null,
   generation: number,
   invalidation: AdministrativeUserBoundaryInvalidation | null,
+  mutation: AdministrativeUserBoundaryMutation | null = null,
 ): AdministrativeUserBoundarySnapshot {
-  return Object.freeze({ partitionKey, generation, invalidation });
+  return Object.freeze({ partitionKey, generation, invalidation, mutation });
 }
 
 export class AdministrativeUserDataBoundary {
@@ -76,6 +92,7 @@ export class AdministrativeUserDataBoundary {
       allowInitialRestore:
         options.allowInitialRestore === true &&
         this.#snapshot.partitionKey === null,
+      revoked: false,
     });
     return lease;
   }
@@ -86,9 +103,17 @@ export class AdministrativeUserDataBoundary {
   ): boolean {
     const record = this.#leases.get(lease);
     return record !== undefined &&
+      !record.revoked &&
       record.partitionKey === expectedPartitionKey &&
       record.partitionKey === this.#snapshot.partitionKey &&
       record.generation === this.#snapshot.generation;
+  }
+
+  revokeLease(lease: AdministrativeUserReadLease): boolean {
+    const record = this.#leases.get(lease);
+    if (record === undefined || record.revoked) return false;
+    record.revoked = true;
+    return true;
   }
 
   resolveAfterInitialRestore(
@@ -119,6 +144,47 @@ export class AdministrativeUserDataBoundary {
       this.#snapshot.partitionKey,
       this.#snapshot.generation + 1,
       reason,
+    );
+    this.#notify();
+    return true;
+  }
+
+  invalidateReconciliation(lease: AdministrativeUserReadLease): boolean {
+    if (!this.isLeaseCurrent(lease)) return false;
+    this.#snapshot = snapshot(
+      this.#snapshot.partitionKey,
+      this.#snapshot.generation + 1,
+      'reconciliation_failed',
+    );
+    this.#notify();
+    return true;
+  }
+
+  publishAuthoritativeUser(
+    lease: AdministrativeUserReadLease,
+    user: AdministrativeUserDetail,
+  ): boolean {
+    if (!this.isLeaseCurrent(lease)) return false;
+    this.#snapshot = snapshot(
+      this.#snapshot.partitionKey,
+      this.#snapshot.generation + 1,
+      null,
+      Object.freeze({ kind: 'authoritative_user', user }),
+    );
+    this.#notify();
+    return true;
+  }
+
+  publishUserNotFound(
+    lease: AdministrativeUserReadLease,
+    userId: string,
+  ): boolean {
+    if (!this.isLeaseCurrent(lease)) return false;
+    this.#snapshot = snapshot(
+      this.#snapshot.partitionKey,
+      this.#snapshot.generation + 1,
+      null,
+      Object.freeze({ kind: 'user_not_found', userId }),
     );
     this.#notify();
     return true;

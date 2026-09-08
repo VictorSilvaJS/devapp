@@ -10,6 +10,7 @@ dist/
 .tmp-mp35d1/
 .tmp-mp35d2/
 .tmp-mp35d2-navigation/
+.tmp-mp35d3/
 coverage/
 .vscode/
 .DS_Store

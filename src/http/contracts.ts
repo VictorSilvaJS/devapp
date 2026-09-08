@@ -62,6 +62,45 @@ export interface AdministrativeUserFilters {
   readonly cursor?: string;
 }
 
+export type AdministrativeUserWritableProfile = 'colaborador' | 'produtor';
+
+export type AdministrativeReasonCode =
+  | 'fim_relacao'
+  | 'mudanca_responsabilidade'
+  | 'cadastro_duplicado'
+  | 'correcao_administrativa'
+  | 'suspensao_operacional'
+  | 'outro';
+
+export interface CreateAdministrativeUserPayload {
+  readonly nome: string;
+  readonly email: string;
+  readonly perfil: AdministrativeUserWritableProfile;
+  readonly telefone?: string;
+  readonly documento?: string;
+  readonly observacoes?: string;
+}
+
+export interface PatchAdministrativeUserPayload {
+  readonly versao: number;
+  readonly nome?: string;
+  readonly email?: string;
+  readonly telefone?: string | null;
+  readonly documento?: string | null;
+  readonly observacoes?: string | null;
+}
+
+export interface ChangeAdministrativeUserStatusPayload {
+  readonly versao: number;
+  readonly status: Extract<HttpUserStatus, 'ativo' | 'inativo'>;
+  readonly motivo: AdministrativeReasonCode;
+  readonly motivo_detalhe?: string;
+}
+
+export interface IssueAdministrativeUserInvitationPayload {
+  readonly modo_ativacao: 'ativar_usuario';
+}
+
 export interface TokenResponse extends HttpSessionIdentity {
   readonly access_token: string;
   readonly refresh_token: string;
@@ -127,7 +166,48 @@ export type AdministrativeReceipt =
       resultado: 'convite_emitido';
       recurso_tipo: 'convite';
       recurso_id: string;
+    }>
+  | Readonly<{
+      resultado: 'convite_emitido';
+      recurso_tipo: 'usuario';
+      recurso_id: string;
+      versao: number;
     }>;
+
+export type AdministrativeUserCreatedReceipt = Readonly<{
+  resultado: 'criado';
+  recurso_tipo: 'usuario';
+  recurso_id: string;
+  versao: number;
+}>;
+
+export type AdministrativeUserUpdatedReceipt = Readonly<{
+  resultado: 'atualizado';
+  recurso_tipo: 'usuario';
+  recurso_id: string;
+  versao: number;
+}>;
+
+export type AdministrativeUserStatusChangedReceipt = Readonly<{
+  resultado: 'status_alterado';
+  recurso_tipo: 'usuario';
+  recurso_id: string;
+  versao: number;
+}>;
+
+export type AdministrativeUserInvitationIssuedReceipt = Readonly<{
+  resultado: 'convite_emitido';
+  recurso_tipo: 'convite';
+  recurso_id: string;
+}>;
+
+/** Recibo correlacionável exigido pela integração de comandos MP-35D-3. */
+export type AdministrativeUserInvitationCommandReceipt = Readonly<{
+  resultado: 'convite_emitido';
+  recurso_tipo: 'usuario';
+  recurso_id: string;
+  versao: number;
+}>;
 
 export interface PropertyPage {
   readonly itens: readonly PropertyProjection[];

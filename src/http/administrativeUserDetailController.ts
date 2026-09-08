@@ -22,6 +22,12 @@ export interface AdministrativeUserDetailState {
   readonly failure: AdministrativeUserReadFailure | null;
 }
 
+const USER_NOT_FOUND_FAILURE: AdministrativeUserReadFailure = Object.freeze({
+  kind: 'not_found',
+  message: 'O Usuário não foi encontrado.',
+  retryable: false,
+});
+
 type Listener = () => void;
 
 function state(input: AdministrativeUserDetailState): AdministrativeUserDetailState {
@@ -212,6 +218,40 @@ export class AdministrativeUserDetailController {
     if (this.#disposed) return;
     this.#invalidateRequests();
     const boundary = this.#boundary.current;
+    if (boundary.mutation?.kind === 'authoritative_user') {
+      if (boundary.mutation.user.id === this.#state.requestedUserId) {
+        this.#publish({
+          partitionKey: boundary.partitionKey,
+          requestedUserId: boundary.mutation.user.id,
+          loadedForUserId: boundary.mutation.user.id,
+          user: boundary.mutation.user,
+          loading: false,
+          failure: null,
+        });
+      } else {
+        const requestedUserId = this.#state.requestedUserId;
+        this.#publish({ ...this.#state, loading: false });
+        if (requestedUserId !== null && this.#state.user === null) {
+          queueMicrotask(() => { void this.load(requestedUserId); });
+        }
+      }
+      return;
+    }
+    if (boundary.mutation?.kind === 'user_not_found') {
+      if (boundary.mutation.userId === this.#state.requestedUserId) {
+        this.#publish({
+          partitionKey: boundary.partitionKey,
+          requestedUserId: boundary.mutation.userId,
+          loadedForUserId: null,
+          user: null,
+          loading: false,
+          failure: USER_NOT_FOUND_FAILURE,
+        });
+      } else {
+        this.#publish({ ...this.#state, loading: false });
+      }
+      return;
+    }
     this.#publish({
       partitionKey: boundary.partitionKey,
       requestedUserId: null,

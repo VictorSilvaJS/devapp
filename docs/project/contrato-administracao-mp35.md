@@ -1,11 +1,12 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A/B integradas; MP-35C concluída, auditada independentemente e
-> integrada em e6789bf; confirmação pós-integração aprovada; MP-35D não iniciada`
+> Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
+> MP-35D-3 implementada localmente e em validação independente, sem commit/push;
+> MP-35D-4 não iniciada`
 >
 > Definido em: 2026-08-25
 >
-> Revisão: 2026-09-01
+> Revisão: 2026-09-03
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
@@ -25,7 +26,35 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | não iniciada |
+| MP-35D | integração das telas administrativas existentes e validação física | D-1 e D-2 concluídas na `feat/mp-35d`; D-3 implementada localmente e em validação independente; D-4 não iniciada |
+
+### Estado da integração no aplicativo
+
+Os cortes MP-35D-1 e MP-35D-2 foram concluídos na branch
+`feat/mp-35d`, respectivamente nos commits `3e2bc2e` e `cf3b4fa`. O corte
+MP-35D-3 implementa localmente somente os quatro comandos administrativos de
+Usuário: criação de Produtor/Colaborador, edição cadastral, transição explícita
+`ativo`/`inativo` e emissão ou reemissão de convite no modo fixo
+`ativar_usuario`.
+
+A composição HTTP reutiliza o coordenador idempotente D-1 e a fronteira de
+dados D-2. Todo recibo válido é seguido por releitura de detalhe, que atualiza
+coordenadamente lista e detalhe e invalida respostas anteriores. Rascunhos e
+intenções permanecem apenas em memória e são limpos com a partição da sessão.
+O corte não cria Admin, senha, exclusão, edição de perfil, vínculos,
+Propriedades, Localidades, fila offline ou dependência do Demo/mock.
+
+A validação desta rodada é exclusivamente automatizada. Ela não constitui
+teste Android físico, commit, push, merge na `backend`, deploy, auditoria
+independente concluída, integração ou autorização para iniciar a MP-35D-4.
+
+A correção auditada da D-3 exige que também o recibo de convite identifique o
+Usuário alvo e informe sua versão, para que a releitura possa ser correlacionada
+sem inferência. O cliente falha fechado diante do recibo histórico
+`recurso_tipo=convite` sem `versao`. O backend permanece intocado neste corte;
+como a seção de contrato HTTP abaixo ainda registra esse recibo histórico, o
+alinhamento do contrato de convite é uma pendência bloqueante para aprovar a
+D-3, não uma autorização implícita para alterar a MP-35B.
 
 A MP-35A não cria handlers, serviços ou grants de escrita do runtime para os
 comandos das fases seguintes. MP-36 e as verticais posteriores permanecem fora.
@@ -142,8 +171,10 @@ diferente retorna `409`. A purga usa papel separado e remove somente registros
 expirados. Cada reserva registra `sessao_id`, `request_id` e `correlation_id`;
 uma referência composta garante que a sessão pertence ao mesmo ator e à mesma
 organização. O recibo aceita somente resultado, tipo/ID do recurso e a versão
-obrigatória para recursos versionados; convite não aceita versão. Não entram
-PII, senha, token ou payload arbitrário.
+obrigatória para recursos versionados. No contrato HTTP vigente da MP-35B, o
+recibo de convite identifica o próprio convite e não aceita versão; a exigência
+adicional e bloqueante da integração D-3 está registrada no início deste
+documento. Não entram PII, senha, token ou payload arbitrário.
 
 A unicidade persistente é exclusivamente organização + ator + hash da
 `Idempotency-Key`. `actorSessionId` é obrigatório, deve estar ativo e vinculado
@@ -355,9 +386,10 @@ A MP-35C acrescenta a migration append-only `000009`, quatro operações
 transacionais estreitas, as sete rotas Admin-only, cursores exclusivos,
 Localidades versionadas, RBAC, auditoria, revogação de sessões, idempotência e
 testes HTTP/PostgreSQL para Propriedades e vínculos. Ela foi concluída e
-integrada diretamente em `e6789bf`, com CI pós-push aprovada; a auditoria
-independente pós-correção ainda não está registrada. A MP-35D continua não
-iniciada.
+integrada diretamente em `e6789bf`, com CI pós-push, auditoria independente e
+confirmação pós-integração aprovadas. Na MP-35D, os cortes D-1/D-2 estão
+concluídos na `feat/mp-35d`, o D-3 está implementado localmente e em validação
+independente, e o D-4 continua não iniciado.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de

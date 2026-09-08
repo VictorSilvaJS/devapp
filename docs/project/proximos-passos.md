@@ -1,12 +1,17 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-01
+> Atualizado em: 2026-09-03
 >
-> Tarefa atual: MP-35C formalmente encerrada — MP-35D não iniciada
+> Tarefa atual: MP-35D-3 implementada localmente e em validação independente;
+> MP-35D-4 não iniciada
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
-> D1-D13 APROVADAS; MP-35A/B INTEGRADAS; MP-35C CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA EM `e6789bf`; CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADA; MP-35D NÃO INICIADA; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES PRODUTIVOS PENDENTES
+> D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
+> `feat/mp-35d`; MP-35D-3 IMPLEMENTADA LOCALMENTE E EM VALIDAÇÃO INDEPENDENTE,
+> SEM COMMIT/PUSH;
+> MP-35D-4 NÃO INICIADA; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
+> PRODUTIVOS PENDENTES
 
 ## Ponto de partida
 
@@ -60,8 +65,11 @@ identidade, organização, recurso, resultado e horário são derivados no banco
 persistidos na mesma transação. A MP-35C foi corrigida localmente somente no
 backend e depois integrada diretamente no commit `e6789bf`, com CI pós-push
 aprovada. Ela foi auditada independentemente, e a confirmação pós-integração
-foi aprovada. A MP-35D e as telas não foram iniciadas. Não houve tag, deploy,
-release ou publicação da MP-35B/C.
+foi aprovada. Depois disso, MP-35D-1 e MP-35D-2 foram concluídas na
+`feat/mp-35d`; MP-35D-3 foi implementada localmente somente para comandos
+administrativos de Usuário e está em validação independente. Não houve
+commit/push desta rodada, merge na `backend`, teste Android físico, tag, deploy,
+release ou publicação.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -231,7 +239,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | NÃO INICIADA; FORA DO CORTE ATUAL |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | D-1/D-2 CONCLUÍDAS NA `feat/mp-35d`; D-3 IMPLEMENTADA LOCALMENTE E EM VALIDAÇÃO INDEPENDENTE; D-4 NÃO INICIADA |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
@@ -324,10 +332,14 @@ integrada diretamente no commit `a51389e`, com CI pós-push aprovada. A MP-35B
 foi integrada diretamente no commit `60144c2`, com reauditoria independente e
 CI pós-push aprovadas. A MP-35C foi integrada diretamente no commit `e6789bf`,
 com CI pós-push aprovada, foi auditada independentemente e recebeu confirmação
-pós-integração aprovada. A MP-35D permanece fora do corte atual e não iniciada.
+pós-integração aprovada. Na MP-35D, D-1/D-2 estão concluídas na
+`feat/mp-35d`; D-3 está implementada localmente e em validação independente;
+D-4 permanece fora
+do corte atual e não iniciada.
 
-O fechamento formal da MP-35C está concluído. Somente depois de autorização
-própria, a MP-35D poderá integrar as telas administrativas já existentes.
+O fechamento formal da MP-35C está concluído. O próximo passo recomendado é a
+auditoria independente e integração do MP-35D-3. A MP-35D-4 depende de
+autorização própria e não é iniciada automaticamente.
 MP-36 e MP-37
 repetem o padrão
 para Caderno e GeoJSON/Talhões. Visitas, Materiais e agregados do Dashboard

@@ -8,6 +8,7 @@ import { AdministrativeUserDataBoundary } from './administrativeUserDataBoundary
 import { AdministrativeUserDetailController } from './administrativeUserDetailController';
 import { AdministrativeUserListController } from './administrativeUserListController';
 import { AdministrativeCommandCoordinator } from './administrativeCommandCoordinator';
+import { AdministrativeUserCommandService } from './administrativeUserCommands';
 import type { HttpRuntimeConfig } from './config';
 import { FetchHttpTransport, type HttpTransport } from './httpTransport';
 import {
@@ -29,6 +30,7 @@ export interface HttpRuntime {
   readonly api: BackendApi;
   readonly session: SessionCoordinator;
   readonly administrativeCommands: AdministrativeCommandCoordinator;
+  readonly administrativeUserCommands: AdministrativeUserCommandService;
   readonly administrativeUserData: AdministrativeUserDataBoundary;
   readonly administrativeUsers: AdministrativeUserRepository;
   readonly administrativeUserControllers: AdministrativeUserControllerFactory;
@@ -102,6 +104,12 @@ export function createHttpRuntime(
     api,
     session,
     administrativeCommands,
+    administrativeUserCommands: new AdministrativeUserCommandService({
+      api,
+      session,
+      coordinator: administrativeCommands,
+      boundary: administrativeUserData,
+    }),
     administrativeUserData,
     administrativeUsers: new HttpAdministrativeUserRepository(
       api,

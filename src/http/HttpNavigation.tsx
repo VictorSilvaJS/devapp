@@ -14,6 +14,7 @@ import { actionNavigationTarget } from './actionNavigation';
 import { parseAccountActionLink } from './actionLinks';
 import { useHttpSession } from './HttpSessionContext';
 import { buildAdministrativeUserNavigationDefinition } from './administrativeUserNavigationDefinition';
+import { buildAdministrativeUserCommandNavigationDefinition } from './administrativeUserCommandNavigationDefinition';
 import {
   HttpNotificationProvider,
   useHttpNotifications,
@@ -49,6 +50,12 @@ import {
   HttpAdministrativeUserDetailScreen,
   HttpAdministrativeUsersScreen,
 } from './screens/HttpAdministrativeUserScreens';
+import {
+  HttpAdministrativeUserCreateScreen,
+  HttpAdministrativeUserEditScreen,
+  HttpAdministrativeUserInvitationScreen,
+  HttpAdministrativeUserStatusScreen,
+} from './screens/HttpAdministrativeUserCommandScreens';
 import { colors } from '../theme';
 import { resolveBottomTabSafeArea } from '../navigation/bottomTabSafeArea';
 
@@ -177,6 +184,15 @@ export function HttpNavigation() {
       detail: HttpAdministrativeUserDetailScreen,
     },
   );
+  const administrativeUserCommands = buildAdministrativeUserCommandNavigationDefinition(
+    snapshot,
+    {
+      create: HttpAdministrativeUserCreateScreen,
+      edit: HttpAdministrativeUserEditScreen,
+      status: HttpAdministrativeUserStatusScreen,
+      invitation: HttpAdministrativeUserInvitationScreen,
+    },
+  );
 
   React.useEffect(() => {
     statusRef.current = status;
@@ -276,6 +292,34 @@ export function HttpNavigation() {
               <Stack.Screen
                 name={administrativeUsers.detail.name}
                 component={administrativeUsers.detail.surface}
+                options={{ headerShown: false }}
+              />
+            ) : null}
+            {administrativeUserCommands.create ? (
+              <Stack.Screen
+                name={administrativeUserCommands.create.name}
+                component={administrativeUserCommands.create.surface}
+                options={{ headerShown: false }}
+              />
+            ) : null}
+            {administrativeUserCommands.edit ? (
+              <Stack.Screen
+                name={administrativeUserCommands.edit.name}
+                component={administrativeUserCommands.edit.surface}
+                options={{ headerShown: false }}
+              />
+            ) : null}
+            {administrativeUserCommands.status ? (
+              <Stack.Screen
+                name={administrativeUserCommands.status.name}
+                component={administrativeUserCommands.status.surface}
+                options={{ headerShown: false }}
+              />
+            ) : null}
+            {administrativeUserCommands.invitation ? (
+              <Stack.Screen
+                name={administrativeUserCommands.invitation.name}
+                component={administrativeUserCommands.invitation.surface}
                 options={{ headerShown: false }}
               />
             ) : null}

@@ -10,6 +10,7 @@ import {
 } from './administrativeUserDataBoundary';
 import type {
   AdministrativeUserFilters,
+  AdministrativeUserDetail,
   AdministrativeUserListItem,
   AdministrativeUserPage,
 } from './contracts';
@@ -160,6 +161,54 @@ function countNewAdministrativeUsers(
     added += 1;
   }
   return added;
+}
+
+function administrativeUserListItem(
+  user: AdministrativeUserDetail,
+): AdministrativeUserListItem {
+  return Object.freeze({
+    id: user.id,
+    nome: user.nome,
+    email: user.email,
+    perfil: user.perfil,
+    status: user.status,
+    versao: user.versao,
+    ...(user.produtor_id === undefined
+      ? {}
+      : { produtor_id: user.produtor_id }),
+  });
+}
+
+function matchesAdministrativeUserFilters(
+  user: AdministrativeUserDetail,
+  filters: AdministrativeUserFilters,
+): boolean {
+  if (filters.perfil !== undefined && filters.perfil !== user.perfil) return false;
+  if (filters.status !== undefined && filters.status !== user.status) return false;
+  if (filters.busca === undefined) return true;
+  const search = filters.busca.normalize('NFC').toLocaleLowerCase('pt-BR');
+  return [user.nome, user.email, user.documento ?? ''].some((value) => (
+    value.normalize('NFC').toLocaleLowerCase('pt-BR').includes(search)
+  ));
+}
+
+function mergeAuthoritativeAdministrativeUser(
+  current: readonly AdministrativeUserListItem[],
+  user: AdministrativeUserDetail,
+  filters: AdministrativeUserFilters,
+): readonly AdministrativeUserListItem[] {
+  const withoutTarget = current.filter((item) => item.id !== user.id);
+  if (!matchesAdministrativeUserFilters(user, filters)) {
+    return Object.freeze(withoutTarget);
+  }
+  const merged = [...withoutTarget, administrativeUserListItem(user)];
+  merged.sort((left, right) => {
+    const byName = left.nome.localeCompare(right.nome, 'pt-BR', {
+      sensitivity: 'base',
+    });
+    return byName === 0 ? left.id.localeCompare(right.id) : byName;
+  });
+  return Object.freeze(merged);
 }
 
 function normalizeFilters(
@@ -550,6 +599,43 @@ export class AdministrativeUserListController {
     if (this.#disposed) return;
     this.#invalidateRequests();
     const boundary = this.#boundary.current;
+    if (boundary.mutation?.kind === 'authoritative_user') {
+      this.#publish({
+        ...this.#state,
+        partitionKey: boundary.partitionKey,
+        items: mergeAuthoritativeAdministrativeUser(
+          this.#state.items,
+          boundary.mutation.user,
+          this.#state.filters,
+        ),
+        nextCursor: null,
+        loading: false,
+        refreshing: false,
+        loadingMore: false,
+        failure: null,
+        nextPageFailure: null,
+      });
+      return;
+    }
+    if (boundary.mutation?.kind === 'user_not_found') {
+      const userId = boundary.mutation.userId;
+      this.#publish({
+        ...this.#state,
+        partitionKey: boundary.partitionKey,
+        items: Object.freeze(
+          this.#state.items.filter(
+            (item) => item.id !== userId,
+          ),
+        ),
+        nextCursor: null,
+        loading: false,
+        refreshing: false,
+        loadingMore: false,
+        failure: null,
+        nextPageFailure: null,
+      });
+      return;
+    }
     this.#publish({
       ...this.#state,
       partitionKey: boundary.partitionKey,

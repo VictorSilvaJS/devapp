@@ -52,6 +52,8 @@
     "test:mp35d1": "tsc -p tsconfig.mp35d1-tests.json && node tests/mp35d1Contracts.test.js && node tests/mp35d1Coordinator.test.js && node tests/mp35d1Architecture.test.js",
     "pretest:mp35d2": "node scripts/cleanMp35d2Output.js",
     "test:mp35d2": "tsc -p tsconfig.mp35d2-tests.json && tsc -p tsconfig.mp35d2-navigation-tests.json && node tests/mp35d2Contracts.test.js && node tests/mp35d2RealSession.test.js && node tests/mp35d2ListController.test.js && node tests/mp35d2Boundary.test.js && node tests/mp35d2DetailAndAccess.test.js && node tests/mp35d2RenderedNavigation.test.js && node tests/mp35d2Architecture.test.js",
+    "pretest:mp35d3": "node scripts/cleanMp35d3Output.js",
+    "test:mp35d3": "tsc -p tsconfig.mp35d3-tests.json && tsc -p tsconfig.mp35d2-navigation-tests.json && node tests/mp35d3Contracts.test.js && node tests/mp35d3Commands.test.js && node tests/mp35d3BoundaryLifecycle.test.js && node tests/mp35d3RenderedNavigation.test.js && node tests/mp35d3Architecture.test.js",
     "test:interface-convergence": "node tests/httpInterfaceConvergence.test.js"
   },
   "expo": {

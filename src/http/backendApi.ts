@@ -2,7 +2,11 @@ import type {
   AcceptedResponse,
   AdministrativeUserDetail,
   AdministrativeUserFilters,
+  AdministrativeUserCreatedReceipt,
+  AdministrativeUserInvitationCommandReceipt,
   AdministrativeUserPage,
+  AdministrativeUserStatusChangedReceipt,
+  AdministrativeUserUpdatedReceipt,
   ApiErrorCode,
   ApiErrorDetail,
   ApiFailureCode,
@@ -24,7 +28,11 @@ import type {
 import {
   decodeAcceptedResponse,
   decodeAdministrativeUserDetail,
+  decodeAdministrativeUserCreatedReceipt,
+  decodeAdministrativeUserInvitationCommandReceipt,
   decodeAdministrativeUserPage,
+  decodeAdministrativeUserStatusChangedReceipt,
+  decodeAdministrativeUserUpdatedReceipt,
   decodeApiError,
   decodeNotificationDestination,
   decodeNotificationDiscardResult,
@@ -695,5 +703,87 @@ export class BackendApi {
       accessToken,
     });
     return decodeNotificationDestination(response.body);
+  }
+
+  async createAdministrativeUser(
+    accessToken: string,
+    idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>,
+  ): Promise<AdministrativeUserCreatedReceipt> {
+    const response = await this.#send({
+      method: 'POST',
+      path: '/v1/usuarios',
+      expectedStatus: 201,
+      accessToken,
+      idempotencyKey,
+      body,
+    });
+    return decodeAdministrativeUserCreatedReceipt(response.body);
+  }
+
+  async updateAdministrativeUser(
+    accessToken: string,
+    userId: string,
+    idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>,
+  ): Promise<AdministrativeUserUpdatedReceipt> {
+    if (!isCanonicalUuidV4(userId)) {
+      throw new InvalidApiRequestError('O ID do Usuário é inválido.');
+    }
+    const response = await this.#send({
+      method: 'PATCH',
+      path: `/v1/usuarios/${encodeURIComponent(userId)}`,
+      expectedStatus: 200,
+      accessToken,
+      idempotencyKey,
+      body,
+    });
+    const receipt = decodeAdministrativeUserUpdatedReceipt(response.body);
+    if (receipt.recurso_id !== userId) throw new InvalidBackendResponseError();
+    return receipt;
+  }
+
+  async changeAdministrativeUserStatus(
+    accessToken: string,
+    userId: string,
+    idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>,
+  ): Promise<AdministrativeUserStatusChangedReceipt> {
+    if (!isCanonicalUuidV4(userId)) {
+      throw new InvalidApiRequestError('O ID do Usuário é inválido.');
+    }
+    const response = await this.#send({
+      method: 'PATCH',
+      path: `/v1/usuarios/${encodeURIComponent(userId)}/status`,
+      expectedStatus: 200,
+      accessToken,
+      idempotencyKey,
+      body,
+    });
+    const receipt = decodeAdministrativeUserStatusChangedReceipt(response.body);
+    if (receipt.recurso_id !== userId) throw new InvalidBackendResponseError();
+    return receipt;
+  }
+
+  async issueAdministrativeUserInvitation(
+    accessToken: string,
+    userId: string,
+    idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>,
+  ): Promise<AdministrativeUserInvitationCommandReceipt> {
+    if (!isCanonicalUuidV4(userId)) {
+      throw new InvalidApiRequestError('O ID do Usuário é inválido.');
+    }
+    const response = await this.#send({
+      method: 'POST',
+      path: `/v1/usuarios/${encodeURIComponent(userId)}/convites`,
+      expectedStatus: 201,
+      accessToken,
+      idempotencyKey,
+      body,
+    });
+    const receipt = decodeAdministrativeUserInvitationCommandReceipt(response.body);
+    if (receipt.recurso_id !== userId) throw new InvalidBackendResponseError();
+    return receipt;
   }
 }

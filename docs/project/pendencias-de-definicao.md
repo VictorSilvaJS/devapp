@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-01
+> Revisão documental: 2026-09-03
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -15,7 +15,9 @@ commit `a51389e`, com os três jobs executados da CI pós-push aprovados e sem
 tag, deploy, release ou publicação. A MP-35B entrou no commit `60144c2`, com
 reauditoria independente e CI pós-push aprovadas. A MP-35C entrou no commit
 `e6789bf`, com CI pós-push aprovada; ela foi auditada independentemente, e a
-confirmação pós-integração foi aprovada. A MP-35D não foi iniciada.
+confirmação pós-integração foi aprovada. MP-35D-1/2 foram concluídas na
+`feat/mp-35d`; MP-35D-3 está implementada localmente e em validação
+independente; MP-35D-4 não foi iniciada.
 
 ## Convergência da interface antes da MP-35
 
@@ -63,8 +65,14 @@ estão consolidados em `contrato-notificacoes.md`.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- manter a MP-35D não iniciada até autorização futura própria para integração
-  das telas;
+- auditar e integrar o corte MP-35D-3 sem ampliar para Propriedades,
+  Localidades ou vínculos; manter MP-35D-4 não iniciada até autorização futura
+  própria;
+- alinhar, em corte de backend explicitamente autorizado, o recibo de
+  `POST /v1/usuarios/:id/convites`: a correlação D-3 exige
+  `recurso_tipo=usuario`, `recurso_id` igual ao alvo e `versao`, enquanto o
+  contrato/backend MP-35B atual ainda emite `recurso_tipo=convite` sem versão;
+  até lá, o cliente D-3 rejeita essa resposta sem inventar ID ou versão;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
