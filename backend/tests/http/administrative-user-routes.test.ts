@@ -102,8 +102,9 @@ function harness() {
         httpStatus: 201,
         receipt: {
           outcome: 'convite_emitido',
-          resourceType: 'convite',
-          resourceId: '50000000-0000-4000-8000-000000000001',
+          resourceType: 'usuario',
+          resourceId: USER_ID,
+          version: 2,
         },
       };
     },
@@ -269,10 +270,11 @@ describe('administrative user HTTP plugin', () => {
       assert.equal(invitation.statusCode, 201);
       assert.deepEqual(invitation.json(), {
         resultado: 'convite_emitido',
-        recurso_tipo: 'convite',
-        recurso_id: '50000000-0000-4000-8000-000000000001',
+        recurso_tipo: 'usuario',
+        recurso_id: USER_ID,
+        versao: 2,
       });
-      assert.equal(Object.hasOwn(invitation.json(), 'versao'), false);
+      assert.equal(Object.hasOwn(invitation.json(), 'versao'), true);
       assert.deepEqual(
         (target.calls.status as { body: unknown }).body,
         {

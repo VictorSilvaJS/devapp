@@ -488,6 +488,15 @@ test('recibo idempotente exige status, recurso, versão e campos coerentes', () 
     expiresAt,
   };
   assert.doesNotThrow(() => validateAdministrativeIdempotencyReceipt(valid));
+  const invitation = { ...valid, command: 'usuario.emitir_convite',
+    receipt: { ...valid.receipt, outcome: 'convite_emitido' } };
+  assert.doesNotThrow(() => validateAdministrativeIdempotencyReceipt(invitation));
+  for (const version of [undefined, null, 0, -1, 1.5, '1', Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => validateAdministrativeIdempotencyReceipt({ ...invitation,
+      receipt: { ...invitation.receipt, version } }));
+  }
+  assert.throws(() => validateAdministrativeIdempotencyReceipt({ ...invitation,
+    receipt: { outcome: 'convite_emitido', resourceType: 'convite', resourceId: USER_ID } }));
   assert.throws(
     () =>
       validateAdministrativeIdempotencyReceipt({
@@ -524,7 +533,7 @@ test('recibo idempotente exige status, recurso, versão e campos coerentes', () 
           version: 1,
         },
       }),
-    /version.*não permitida|não permitida para convite/,
+    /recurso incoerente/,
   );
   assert.throws(
     () =>

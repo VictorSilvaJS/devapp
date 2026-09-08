@@ -552,10 +552,10 @@ const RECEIPT_CONTRACT_BY_COMMAND: Readonly<
     versionRequired: true,
   },
   'usuario.emitir_convite': {
-    resourceType: 'convite',
+    resourceType: 'usuario',
     outcome: 'convite_emitido',
     httpStatus: 201,
-    versionRequired: false,
+    versionRequired: true,
   },
   'propriedade.criar': {
     resourceType: 'propriedade',

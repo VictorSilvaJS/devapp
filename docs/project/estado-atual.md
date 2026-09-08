@@ -77,6 +77,24 @@ Estado formal da sequência administrativa:
 - MP-35D: D-1/D-2 concluídas na `feat/mp-35d`; D-3 implementada localmente e
   em validação independente; D-4 não iniciada.
 
+## Correção focal local do backend — 2026-09-08
+
+Sobre `origin/backend` (`c40e8fa`), a branch `fix/mp35b-recibo-convite` alinha
+o recibo de convite exigido pela MP-35D-3: `201`, recurso Usuário da rota e
+versão corrente sem incremento artificial. A migration append-only `000010`
+preserva privilégios e bloqueia a troca de contrato quando há comandos de
+emissão retidos. O aceite público permanece `204`.
+
+São nove migrations integradas e uma correção local adicional, sem commit,
+push, deploy ou publicação. Passaram 189 unitários/contratos, 40 HTTP e 107
+integrações PostgreSQL/PostGIS, além dos demais checks em [smoke](smoke.md).
+O corte requer revisão independente e integração autorizada.
+
+O trabalho da MP-35D-3 em sua branch foi preservado; nenhum arquivo do
+aplicativo foi alterado e MP-35D-4 não foi iniciada. A fotografia das fases
+integradas abaixo refere-se à base backend, sem incorporar os arquivos da
+branch do aplicativo.
+
 ## Estado por camada
 
 | Camada | Situação atual |

@@ -7,6 +7,7 @@ import {
   conflict,
   forbidden,
   notFound,
+  serviceUnavailable,
   unauthorized,
   unprocessableEntity,
 } from '../security/http-error.js';
@@ -578,12 +579,19 @@ export class DefaultAdministrativeUserService
         modo_ativacao: command.activationMode,
       },
     });
-    return mutationResult(
+    const result = mutationResult(
       await this.#repository.issueInvitation({
         principal,
         identity: { ...identity, command: 'usuario.emitir_convite' },
         userId: command.userId,
       }),
     );
+    if (result.httpStatus !== 201 || result.receipt.outcome !== 'convite_emitido'
+      || result.receipt.resourceType !== 'usuario'
+      || result.receipt.resourceId !== command.userId
+      || !Number.isSafeInteger(result.receipt.version) || result.receipt.version < 1) {
+      throw serviceUnavailable();
+    }
+    return result;
   }
 }

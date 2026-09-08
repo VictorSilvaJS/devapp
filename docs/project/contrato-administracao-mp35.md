@@ -235,6 +235,41 @@ operação deve falhar com segurança em vez de reescrever ou apagar convites.
 
 ## Contratos HTTP implementados nas MP-35B e MP-35C
 
+### Correção focal do recibo de convite — 2026-09-08
+
+A divergência identificada durante a MP-35D-3 foi corrigida localmente no
+backend, na branch `fix/mp35b-recibo-convite` sobre `origin/backend`, sem
+alterar o aplicativo, iniciar MP-35D-4 ou reabrir D1-D13. A migration `000010`
+substitui somente `tche_admin_emitir_convite_usuario_mp35b(jsonb)` e a
+constraint do recibo. A rota permanece `201` e responde exatamente:
+
+```json
+{
+  "resultado": "convite_emitido",
+  "recurso_tipo": "usuario",
+  "recurso_id": "00000000-0000-4000-8000-000000000001",
+  "versao": 2
+}
+```
+
+O ID é o Usuário da rota, e a versão é lida ao final dos efeitos, sob lock,
+sem incremento artificial. A auditoria dessa operação também referencia o
+Usuário. Convite, desafio, token e outbox continuam internos. O repositório
+valida o recibo e sua correlação com o alvo antes do COMMIT; serviço e schema
+HTTP exigem o mesmo contrato. As outras rotas MP-35B/C e o aceite `204` ficam
+preservados.
+
+Recibos antigos guardavam o ID do convite, sem a versão histórica do Usuário;
+nem o hash do pedido nem o estado atual permitem recuperá-la sem ambiguidade.
+O preflight bloqueia atomicamente se houver qualquer comando de emissão
+retido, inclusive expirado ainda não purgado. Isso cobre os 90 dias e a
+consulta atual de replay. O down restaura explicitamente função e constraint
+anteriores, sob a mesma restrição para recibos novos. Nenhum comando é
+reescrito, excluído ou exposto em dois formatos. O
+[procedimento operacional](../../backend/README.md) não autoriza purga
+antecipada. O corte passou na validação local e requer revisão independente
+e integração autorizada.
+
 ### Precisões de execução da MP-35B
 
 - mutações de Usuário respondem com recibo seguro composto somente por

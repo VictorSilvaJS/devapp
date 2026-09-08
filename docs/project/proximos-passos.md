@@ -355,6 +355,16 @@ semântica e a concorrência, não dimensionam esses riscos operacionais.
 MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.
 
+## Próximo passo da correção focal de convite
+
+Revisar independentemente o corte local `fix/mp35b-recibo-convite` e a
+`000010`, com o [contrato final](contrato-administracao-mp35.md) e o
+[smoke](smoke.md). Depois, mediante autorização própria, integrar a correção
+na backend e repetir a reconciliação da MP-35D-3. Antes de aplicar em banco
+persistente, executar o preflight de recibos retidos conforme o
+[README do backend](../../backend/README.md). MP-35D-4 continua fora deste
+trabalho; nenhum commit, push ou publicação foi realizado.
+
 ## Como iniciar cada tarefa
 
 Antes de alterar código:

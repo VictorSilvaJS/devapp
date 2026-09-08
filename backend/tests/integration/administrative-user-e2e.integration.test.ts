@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 
 import { Pool } from 'pg';
+import { InvitationService, PostgresInvitationRepository } from '../../src/account-actions/index.js';
 
 import { assertDestructiveDatabaseTestsAllowed } from '../../scripts/destructive-database-test-guard.js';
 import { runMigrations } from '../../scripts/migrate.js';
@@ -31,6 +32,7 @@ import {
 
 const ORGANIZATION_ID = 'org_tche_fertilidade' as const;
 const ACTION_URL = 'https://example.test/auth/action';
+async function unused(): Promise<never> { throw new Error('Rota fora do cenário'); }
 
 function phcFor(password: string): string {
   return `$argon2id$v=19$m=19456,p=1,t=2$c2FsdC1maXh0dXJl$${Buffer.from(
@@ -72,12 +74,11 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
   const authenticationConfig = loadAuthenticationRuntimeConfig({
     NODE_ENV: 'test',
   });
-  const emailOutbox = new EncryptedEmailOutboxFactory(
-    new OutboxPayloadCipher({
+  const cipher = new OutboxPayloadCipher({
       activeKeyId: 'mp35b-e2e-key',
       keys: [{ id: 'mp35b-e2e-key', key: Buffer.alloc(32, 0x35) }],
-    }),
-  );
+    });
+  const emailOutbox = new EncryptedEmailOutboxFactory(cipher);
 
   before(async () => {
     assertDestructiveDatabaseTestsAllowed(
@@ -288,6 +289,24 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
         return `req_mp35b_e2e_${requestSequence}`;
       },
       authenticationService,
+      accountActionRoutes: {
+        invitationService: new InvitationService({
+          repository: new PostgresInvitationRepository({ pool: runtimePool,
+            emailHmacKey: authenticationConfig.abuseProtection.emailHmacKey,
+            externalReferenceHmacKey: authenticationConfig.abuseProtection.externalReferenceHmacKey }),
+          passwordCredentials: new FixturePasswordCredentials(), emailOutbox,
+          actionBaseUrl: ACTION_URL,
+        }),
+        // Dependências de rotas fora deste cenário falham se forem acionadas.
+        primaryEmailService: { request: unused, confirmCurrentAddress: unused, confirmNewAddress: unused },
+        secondaryEmailService: { requestVerification: unused, confirm: unused },
+        adminSecondaryRecoveryService: { request: unused, confirmSecondaryAddress: unused,
+          confirmNewPrimaryAddress: unused, complete: unused, cancel: unused },
+        adminBreakGlassContinuationService: { confirmNewEmail: unused, complete: unused },
+        assistedRecoveryService: { startByAdministrator: unused, confirmNewEmail: unused,
+          complete: unused, cancel: unused },
+        assistedRecoveryEnabled: false,
+      },
       administrativeUserRoutes: { service: administrativeService },
       mp35cRoutes: { service: mp35cService },
     });
@@ -313,6 +332,149 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
     assert.ok(token);
     return { authorization: `Bearer ${token}` };
   }
+
+  async function pendingInvitationUser() {
+    assert.ok(ownerPool);
+    const id = randomUUID();
+    await ownerPool.query(`INSERT INTO public.usuarios
+      (id,organizacao_id,nome,email,perfil,status) VALUES
+      ($1,$2,'Recibo convite',$3,'produtor','pendente')`,
+    [id, ORGANIZATION_ID, `receipt-${id}@example.test`]);
+    await ownerPool.query(`INSERT INTO public.produtores
+      (organizacao_id,usuario_id,nome,status) VALUES ($1,$2,'Recibo convite','inativo')`,
+    [ORGANIZATION_ID, id]);
+    await ownerPool.query(`UPDATE public.usuarios SET telefone='123' WHERE id=$1`, [id]);
+    return id;
+  }
+
+  async function invitationSnapshot(id: string) {
+    assert.ok(ownerPool);
+    return (await ownerPool.query(`SELECT
+      (SELECT row_to_json(u) FROM public.usuarios u WHERE id=$1) AS usuario,
+      (SELECT jsonb_agg(to_jsonb(c) ORDER BY id) FROM public.convites_usuario c
+        WHERE usuario_id=$1) AS convites,
+      (SELECT jsonb_agg(to_jsonb(d) ORDER BY id) FROM public.desafios_autenticacao d
+        WHERE usuario_id=$1) AS desafios,
+      (SELECT jsonb_agg(to_jsonb(o) ORDER BY id) FROM public.outbox_email o
+        WHERE desafio_id IN (SELECT id FROM public.desafios_autenticacao WHERE usuario_id=$1)) AS outbox,
+      (SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM public.eventos_auditoria a
+        WHERE usuario_afetado_id=$1) AS auditoria,
+      (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM public.comandos_administrativos_idempotencia i) AS recibos`,
+    [id])).rows[0];
+  }
+
+  test('000010 emite/substitui, reconcilia GET, preserva replay e aceita publicamente com runtime LOGIN', async () => {
+    assert.ok(ownerPool && runtimePool);
+    assert.equal((await runtimePool.query('SELECT SESSION_USER AS role')).rows[0].role, runtimeLoginRole);
+    const id = await pendingInvitationUser();
+    const target = requireApp();
+    const send = (key: string, userId: string = id) => target.inject({ method: 'POST',
+      url: `/v1/usuarios/${userId}/convites`,
+      headers: { ...bearer('admin'), 'idempotency-key': key },
+      payload: { modo_ativacao: 'ativar_usuario' } });
+    let originalPayload = '';
+    for (const key of ['receipt-first', 'receipt-replacement']) {
+      const response = await send(key);
+      assert.equal(response.statusCode, 201);
+      assert.equal(response.headers['cache-control'], 'no-store');
+      assert.deepEqual(response.json(), { resultado: 'convite_emitido', recurso_tipo: 'usuario',
+        recurso_id: id, versao: 2 });
+      originalPayload = response.payload;
+      const detail = await target.inject({ method: 'GET', url: `/v1/usuarios/${id}`,
+        headers: bearer('admin') });
+      assert.equal(detail.statusCode, 200);
+      assert.equal(detail.json().id, response.json().recurso_id);
+      assert.equal(detail.json().versao, response.json().versao);
+      const beforeReplay = await invitationSnapshot(id);
+      const replay = await send(key);
+      assert.equal(replay.statusCode, 201);
+      assert.equal(replay.payload, response.payload);
+      assert.deepEqual(await invitationSnapshot(id), beforeReplay);
+    }
+    const invitations = (await ownerPool.query(`SELECT id,status,modo_ativacao,desafio_id
+      FROM public.convites_usuario WHERE usuario_id=$1 ORDER BY criado_em`, [id])).rows;
+    assert.equal(invitations.length, 2);
+    assert.deepEqual(invitations.map(c => c.status), ['revogado', 'pendente']);
+    assert.ok(invitations.every(c => c.modo_ativacao === 'ativar_usuario'));
+    const audit = (await ownerPool.query(`SELECT recurso_tipo,recurso_id,metadados
+      FROM public.eventos_auditoria WHERE usuario_afetado_id=$1`, [id])).rows;
+    assert.equal(audit.length, 2);
+    assert.ok(audit.every(a => a.recurso_tipo === 'usuario' && a.recurso_id === id));
+    assert.ok(audit.every(a => JSON.stringify(a.metadados) === '{"activation_mode":"ativar_usuario"}'));
+    const stateBeforeConflict = await invitationSnapshot(id);
+    const otherTarget = await send('receipt-replacement', activeTargetUserId);
+    assert.equal(otherTarget.statusCode, 409);
+    assert.equal(otherTarget.json().error.code, 'idempotency_conflict');
+    // Convite só aceita um corpo semântico. Um outro comando válido com corpo
+    // diferente também usa a mesma unicidade organização + ator + chave.
+    const changedBody = await target.inject({ method: 'POST', url: '/v1/usuarios',
+      headers: { ...bearer('admin'), 'idempotency-key': 'receipt-replacement' },
+      payload: { nome: 'Outro pedido', email: 'different-receipt@example.test', perfil: 'colaborador' } });
+    assert.equal(changedBody.statusCode, 409);
+    assert.equal(changedBody.json().error.code, 'idempotency_conflict');
+    assert.deepEqual(await invitationSnapshot(id), stateBeforeConflict);
+
+    const outbox = (await ownerPool.query(`SELECT * FROM public.outbox_email WHERE desafio_id=$1`,
+      [invitations[1].desafio_id])).rows[0];
+    const decoded = cipher.decrypt({ version: 1, algorithm: 'aes-256-gcm', keyId: outbox.chave_id,
+      iv: outbox.nonce.toString('base64url'), ciphertext: outbox.payload_cifrado.toString('base64url'),
+      authenticationTag: outbox.tag_autenticacao.toString('base64url') },
+    { organizationId: ORGANIZATION_ID, messageId: outbox.id, messageType: outbox.tipo_mensagem });
+    assert.equal(typeof decoded.text, 'string');
+    const match = /[?&#]token=([A-Za-z0-9_-]{43})(?:&|\s|$)/u.exec(decoded.text as string);
+    assert.ok(match?.[1]);
+    const accepted = await target.inject({ method: 'POST', url: '/v1/auth/invitations/accept',
+      payload: { token: match[1], senha: 'SenhaRecibo1' } });
+    assert.equal(accepted.statusCode, 204);
+    assert.equal(accepted.payload, '');
+    const afterAcceptance = await target.inject({ method: 'GET', url: `/v1/usuarios/${id}`,
+      headers: bearer('admin') });
+    assert.equal(afterAcceptance.json().status, 'ativo');
+    assert.ok(afterAcceptance.json().versao > 2);
+    const beforeLateReplay = await invitationSnapshot(id);
+    const lateReplay = await send('receipt-replacement');
+    assert.equal(lateReplay.statusCode, 201);
+    assert.equal(lateReplay.payload, originalPayload);
+    assert.deepEqual(await invitationSnapshot(id), beforeLateReplay);
+
+    const openapi = (await target.inject({ method: 'GET', url: '/v1/openapi.json' })).json();
+    const schema = openapi.paths['/v1/usuarios/{id}/convites'].post.responses['201'].content['application/json'].schema;
+    assert.deepEqual(schema.required, ['resultado', 'recurso_tipo', 'recurso_id', 'versao']);
+    assert.deepEqual(schema.properties.recurso_tipo.enum, ['usuario']);
+    assert.deepEqual(schema.properties.resultado.enum, ['convite_emitido']);
+    assert.equal(schema.properties.versao.minimum, 1);
+    assert.equal(schema.additionalProperties, false);
+  });
+
+  test('000010 falha no COMMIT e desfaz substituição, desafio, outbox, auditoria e recibo', async () => {
+    assert.ok(ownerPool);
+    const id = await pendingInvitationUser();
+    const send = (key: string) => requireApp().inject({ method: 'POST',
+      url: `/v1/usuarios/${id}/convites`, headers: { ...bearer('admin'), 'idempotency-key': key },
+      payload: { modo_ativacao: 'ativar_usuario' } });
+    assert.equal((await send('rollback-original')).statusCode, 201);
+    const beforeFailure = await invitationSnapshot(id);
+    await ownerPool.query(`CREATE FUNCTION public.test_fail_receipt_commit() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        IF NEW.request_id IS NOT NULL AND NEW.comando='usuario.emitir_convite' THEN
+          RAISE EXCEPTION 'Falha deliberada no commit';
+        END IF;
+        RETURN NEW;
+      END $$;
+      CREATE CONSTRAINT TRIGGER test_fail_receipt_commit
+      AFTER INSERT ON public.comandos_administrativos_idempotencia
+      DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.test_fail_receipt_commit()`);
+    try {
+      const failed = await send('rollback-replacement');
+      assert.equal(failed.statusCode, 503);
+      assert.equal(failed.json().error.code, 'service_unavailable');
+      assert.deepEqual(await invitationSnapshot(id), beforeFailure);
+    } finally {
+      await ownerPool.query(`DROP TRIGGER test_fail_receipt_commit ON public.comandos_administrativos_idempotencia;
+        DROP FUNCTION public.test_fail_receipt_commit()`);
+    }
+    assert.equal((await send('rollback-replacement')).statusCode, 201);
+  });
 
   test('executa as seis rotas via bearer, autenticação, serviço e runtime PostgreSQL', async () => {
     const targetApp = requireApp();
@@ -472,7 +634,8 @@ describe('administração HTTP de Usuários E2E', { timeout: 180_000 }, () => {
       payload: { modo_ativacao: 'ativar_usuario' },
     });
     assert.equal(invitation.statusCode, 201);
-    assert.equal(invitation.json().recurso_tipo, 'convite');
+    assert.deepEqual(invitation.json(), { resultado: 'convite_emitido',
+      recurso_tipo: 'usuario', recurso_id: createdUserId, versao: 2 });
 
     assert.ok(activeTargetUserId);
     const changedStatus = await targetApp.inject({

@@ -498,6 +498,10 @@ export class PostgresAdministrativeUserRepository
         if (error instanceof TypeError) throw serviceUnavailable();
         throw error;
       }
+      if (identity.command === 'usuario.emitir_convite'
+        && envelope.receipt.resourceId !== payload.usuario_id) {
+        throw serviceUnavailable();
+      }
       return {
         status: row.status,
         httpStatus: envelope.httpStatus,

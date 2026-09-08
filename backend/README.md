@@ -588,6 +588,59 @@ e não possui `EXECUTE` para runtime nem `PUBLIC`. Plataforma de bootstrap e
 worker de outbox conservam seus escritores separados, já limitados pelas
 triggers transacionais da MP-33B.
 
+### Migration 000010 — recibo administrativo de convite
+
+`000010-alinhar-recibo-convite-administrativo.sql` corrige a emissão para
+retornar `201`, `resultado=convite_emitido`, `recurso_tipo=usuario`, ID do
+Usuário da rota e sua versão autoritativa ao final da transação. A emissão
+não atualiza o Usuário nem incrementa sua versão. Sua auditoria também passa
+a referenciar o Usuário, sem ID de convite ou desafio. As outras rotas e o
+aceite público `204` permanecem inalterados; `000001–000009` são preservadas.
+
+O `CREATE OR REPLACE` conserva OID, owner
+`tche_agro_administration_owner` (`NOLOGIN`), `SECURITY DEFINER`,
+`search_path=pg_catalog, public` e ACLs existentes. `PUBLIC` continua sem
+`EXECUTE`; runtime mantém acesso à operação estreita, sem DML administrativo
+direto ou acesso aos helpers internos.
+
+O recibo antigo não contém a versão histórica do Usuário. Não é seguro
+reconstruí-la usando a versão atual. Upgrade e downgrade bloqueiam com
+SQLSTATE `23514` se houver qualquer comando `usuario.emitir_convite` retido.
+Incluem-se expirados ainda não purgados, pois o executor atual permite replay
+enquanto a linha existir. Não há backfill, exclusão, purga automática nem
+conversão da auditoria histórica.
+
+Procedimento para uma futura aplicação autorizada, não executado em banco
+persistente nesta correção:
+
+1. Suspender emissões e coordenar a migration com a versão do backend,
+   evitando processos antigos e novos simultâneos durante a troca de contrato.
+2. Com a credencial de migration, inspecionar somente contagens:
+
+   ```sql
+   SELECT count(*) AS retidos,
+          count(*) FILTER (WHERE expira_em > clock_timestamp()) AS na_retencao
+   FROM public.comandos_administrativos_idempotencia
+   WHERE comando = 'usuario.emitir_convite';
+   ```
+
+3. Se `retidos > 0`, interromper a troca e preservar a versão compatível do
+   backend. Aguardar a retenção e a purga operacional autorizada pelo papel
+   exclusivo `tche_agro_administration_maintenance`. Não apagar recibos,
+   trocar chaves ou usar a versão atual como versão histórica.
+4. Com contagem zero, verificar manifesto/base e executar `migrate:up`.
+   O preflight repete a inspeção sob `ACCESS EXCLUSIVE`, cobrindo corridas.
+   Publicação do backend exige autorização própria.
+5. Downgrade exige suspensão equivalente e ausência de comandos de emissão
+   retidos. O down restaura explicitamente função e constraint integradas;
+   recibos novos retidos bloqueiam a reversão sem perder dados.
+
+As falhas usam `ck_mp35b_recibo_convite_upgrade` e
+`ck_mp35b_recibo_convite_downgrade`, sem revelar IDs ou segredos. Se um backend
+novo encontrar recibo legado, falha com `503` antes do COMMIT, sem devolver o
+formato antigo ao cliente. O replay novo preserva o recibo original mesmo
+após edição ou aceite do Usuário.
+
 ## Testes e validação
 
 | Comando | Cobertura | Dependência externa |
