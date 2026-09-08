@@ -47,6 +47,11 @@
       "id": "000009",
       "file": "000009-administracao-propriedades-vinculos-mp35c.sql",
       "sha256": "954bc367a07f3bc0eb7bd4b58bd785e1910c315b07fa93f12bbc7d2434ce3b7f"
+    },
+    {
+      "id": "000010",
+      "file": "000010-alinhar-recibo-convite-administrativo.sql",
+      "sha256": "b46325e4acd773f18f7c5a5fba7790251ceda812a6459c82f8cf8c86e27352cf"
     }
   ]
 }

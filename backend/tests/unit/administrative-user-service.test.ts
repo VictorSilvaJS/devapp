@@ -146,6 +146,25 @@ async function expectHttpStatus(
 }
 
 describe('DefaultAdministrativeUserService', () => {
+  it('convite preserva recibo/replay do Usuário e falha fechado diante de retorno incompatível', async () => {
+    const repository = new RepositoryStub();
+    const target = service({ repository });
+    const receipt = { outcome: 'convite_emitido' as const, resourceType: 'usuario' as const,
+      resourceId: USER_ID, version: 7 };
+    const input = { authorization: `Bearer ${TOKEN}`, userId: USER_ID,
+      requestId: 'req-invitation', idempotencyKey: 'invite-1',
+      body: { modo_ativacao: 'ativar_usuario' as const } };
+    for (const status of ['completed', 'replayed'] as const) {
+      repository.result = { status, httpStatus: 201, receipt };
+      assert.deepEqual(await target.issueInvitation(input), { httpStatus: 201, receipt });
+    }
+    for (const change of [{ resourceId: ADMIN_ID }, { resourceType: 'convite' },
+      { version: undefined }, { version: 0 }, { version: 1.5 }, { outcome: 'criado' }]) {
+      repository.result = { status: 'completed', httpStatus: 201,
+        receipt: { ...receipt, ...change } } as AdministrativeCommandResult;
+      await expectHttpStatus(() => target.issueInvitation(input), 503);
+    }
+  });
   it('aplica escopo Admin, limite+1 e cursor estável nome+ID', async () => {
     const repository = new RepositoryStub();
     repository.rows = [

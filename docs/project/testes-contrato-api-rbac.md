@@ -7,6 +7,29 @@ Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
+## Recibo de convite — correção focal 000010
+
+| Cenário | Resultado exigido | Teste automatizado |
+|---|---|---|
+| Emissão e substituição com bearer e LOGIN runtime | 201, usuario, ID da rota e versão igual ao banco, sem incremento artificial | administrative-user-e2e.integration.test.ts |
+| Recibo seguido de GET | Mesmo ID e versão relida igual ou superior | administrative-user-e2e.integration.test.ts |
+| Replay imediato e após aceite | Recibo idêntico e nenhum novo convite, desafio, outbox ou auditoria | administrative-user-e2e.integration.test.ts |
+| Mesma chave com outro alvo/pedido válido | 409 idempotency_conflict | administrative-user-e2e.integration.test.ts |
+| Falha no COMMIT da substituição | Estado anterior preservado; retry da mesma chave conclui | administrative-user-e2e.integration.test.ts |
+| Convite ativar_usuario e aceite público | 204 e conta ativada | administrative-user-e2e.integration.test.ts |
+| Recibo legado, sem versão, de outro alvo ou com segredo/ID interno | 503 e ROLLBACK antes do COMMIT | invitation-receipt-repository.test.ts |
+| Legados retidos há 1, 89 ou 91 dias | Upgrade bloqueado atomicamente e replay antigo intacto | invitation-receipt-migration.integration.test.ts |
+| Recibo novo retido e down | Downgrade bloqueado e replay novo intacto | invitation-receipt-migration.integration.test.ts |
+| Up/down/up e falha após DDL | Definições, OIDs, owners, ACLs e constraint preservados/revertidos | invitation-receipt-migration.integration.test.ts |
+| Menor privilégio e PUBLIC | Runtime sem DML administrativo direto; PUBLIC sem EXECUTE; helper negado | invitation-receipt-migration.integration.test.ts |
+| OpenAPI e privacidade | Quatro campos exatos; usuario e versao obrigatórios; auditoria referencia Usuário | administrative-user-e2e.integration.test.ts |
+
+O corpo do convite só admite `ativar_usuario`; modo histórico continua `422`
+e campo desconhecido continua `400`. O cenário de pedido diferente cobre
+outro alvo e outro comando com corpo válido na mesma unicidade de chave,
+preservando o contrato de validação. A regressão completa MP-35B/C e seus
+resultados estão em [smoke.md](smoke.md).
+
 ## Escopo Da Matriz
 
 Esta matriz orienta a API/backend. Os cenários de autenticação da MP-33B

@@ -56,6 +56,17 @@ na mesma transação, `outbox_email` separada, destino somente `conta`, nenhum
 cache persistente, nenhum push e nenhum token de dispositivo. Esses limites
 estão consolidados em `contrato-notificacoes.md`.
 
+## Correção focal do recibo de convite
+
+A implementação local da `000010` e do recibo do agregado Usuário passou na
+validação automatizada e depende de revisão independente e integração
+autorizada. Não há nova decisão D1-D13. Um futuro upgrade/downgrade deve
+confirmar ausência de comandos de emissão retidos; recibos legados não contêm
+versão histórica recuperável com segurança. O
+[preflight operacional](../../backend/README.md) bloqueia dados incompatíveis
+sem exclusão silenciosa. Nenhum banco persistente foi inspecionado ou migrado
+nesta correção; a evidência PostgreSQL usa exclusivamente Testcontainers.
+
 ## Implementação por fase
 
 - operar ou liberar produtivamente a MP-34 somente depois de fechar os portões

@@ -99,7 +99,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
         );
         await runMigrations({
           command: 'down',
-          count: 9,
+          count: 10,
           database: activeMigrationDatabase,
         });
       }
@@ -235,7 +235,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       runtime_mp35b_base: false,
     });
 
-    await runMigrations({ command: 'down', count: 1, database });
+    await runMigrations({ command: 'down', count: 2, database });
     const rolledBack = await databasePool.query(`SELECT
       pg_catalog.to_regprocedure(
         'public.tche_admin_criar_propriedade_mp35c(jsonb)'
@@ -252,7 +252,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       mp35b_base: null,
     });
 
-    await runMigrations({ command: 'up', count: 1, database });
+    await runMigrations({ command: 'up', count: 2, database });
     const reapplied = await databasePool.query(`SELECT
       pg_catalog.to_regprocedure(
         'public.tche_admin_alterar_vinculos_usuario_mp35c(jsonb)'
@@ -397,7 +397,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       runtime_resolution_operation: true,
     });
 
-    await runMigrations({ command: 'down', count: 2, database });
+    await runMigrations({ command: 'down', count: 3, database });
     const rolledBack = await databasePool.query<{
       procedure_name: string | null;
       users_table: string | null;
@@ -433,7 +433,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
       resolution_operation: null,
     });
 
-    await runMigrations({ command: 'up', count: 2, database });
+    await runMigrations({ command: 'up', count: 3, database });
     const reapplied = await databasePool.query<{
       procedure_name: string | null;
       runtime_event_insert: boolean;
@@ -2725,7 +2725,7 @@ describe('migration inicial PostgreSQL/PostGIS', { timeout: 180_000 }, () => {
     assertDestructiveDatabaseTestsAllowed(activeMigrationDatabase.connectionString);
     await runMigrations({
       command: 'down',
-      count: 9,
+      count: 10,
       database: activeMigrationDatabase,
     });
 

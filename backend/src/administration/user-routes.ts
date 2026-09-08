@@ -96,6 +96,16 @@ const receiptResponseSchema = {
   },
 } as const;
 
+const invitationReceiptResponseSchema = {
+  ...receiptResponseSchema,
+  required: ['resultado', 'recurso_tipo', 'recurso_id', 'versao'],
+  properties: {
+    ...receiptResponseSchema.properties,
+    resultado: { type: 'string', enum: ['convite_emitido'] },
+    recurso_tipo: { type: 'string', enum: ['usuario'] },
+  },
+} as const;
+
 const idParamsSchema = {
   type: 'object',
   additionalProperties: false,
@@ -616,7 +626,7 @@ export const administrativeUserRoutesPlugin: FastifyPluginAsync<
             modo_ativacao: { type: 'string', enum: ['ativar_usuario'] },
           },
         },
-        response: { 201: receiptResponseSchema, ...commonMutationResponses },
+        response: { 201: invitationReceiptResponseSchema, ...commonMutationResponses },
       },
     },
     async (request, reply) => {

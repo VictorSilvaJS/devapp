@@ -316,9 +316,16 @@ são leituras:
 }
 ```
 
-Convite usa `recurso_tipo=convite`, `resultado=convite_emitido` e não possui
-`versao`. Depois de uma mutação, o cliente relê o detalhe quando precisar da
-representação cadastral. O recibo não contém nome, e-mail, telefone, documento,
+Convite responde `201` com `resultado=convite_emitido`, `recurso_tipo=usuario`,
+`recurso_id` igual ao Usuário da rota e `versao` inteira positiva do Usuário ao
+final da transação. A emissão não incrementa `usuarios.versao`: lê o valor
+autoritativo sob lock depois dos efeitos. O cliente relê `GET /v1/usuarios/:id`,
+exigindo o mesmo ID e versão igual ou superior à do recibo. Replay preserva a
+versão original, mesmo após outras alterações. A migration append-only
+`000010` bloqueia upgrade/downgrade diante de comandos de emissão retidos;
+não converte nem apaga recibos. Procedimento no
+[README do backend](../../backend/README.md).
+O recibo não contém nome, e-mail, telefone, documento,
 observações, motivo livre, token ou payload.
 
 Para as rotas de Usuários, JSON malformado ou estrutura inválida é

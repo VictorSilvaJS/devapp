@@ -207,9 +207,9 @@ export type AdministrativeSafeReceipt =
     }>
   | Readonly<{
       outcome: 'convite_emitido';
-      resourceType: 'convite';
+      resourceType: 'usuario';
       resourceId: string;
-      version?: never;
+      version: number;
     }>;
 
 interface AdministrativeIdempotencyReceiptBase {
@@ -233,11 +233,8 @@ type CompletedAdministrativeIdempotencyReceipt<
 };
 
 type VersionedReceipt<
-  Outcome extends Exclude<AdministrativeReceiptOutcome, 'convite_emitido'>,
-  Resource extends Exclude<
-    AdministrativeSafeReceipt['resourceType'],
-    'convite'
-  >,
+  Outcome extends AdministrativeReceiptOutcome,
+  Resource extends AdministrativeSafeReceipt['resourceType'],
 > = Readonly<{
   outcome: Outcome;
   resourceType: Resource;
@@ -274,12 +271,7 @@ export type AdministrativeIdempotencyReceipt =
   | CompletedAdministrativeIdempotencyReceipt<
       'usuario.emitir_convite',
       201,
-      Readonly<{
-        outcome: 'convite_emitido';
-        resourceType: 'convite';
-        resourceId: string;
-        version?: never;
-      }>
+      VersionedReceipt<'convite_emitido', 'usuario'>
     >
   | CompletedAdministrativeIdempotencyReceipt<
       'propriedade.criar',

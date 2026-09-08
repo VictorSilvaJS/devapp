@@ -239,6 +239,69 @@ pela automação e não é promovido a evidência física por inferência. O cor
 integrado diretamente à branch `backend` no commit `e47bb02`, e os três jobs da
 CI pós-push foram aprovados. Não houve tag, deploy, release ou publicação.
 
+## Correção focal do recibo de convite — 2026-09-08
+
+Executada em `fix/mp35b-recibo-convite`, base `origin/backend` em `c40e8fa`,
+com Node.js 24.19.0 no backend, Node.js 22.20.0 na raiz e PostgreSQL/PostGIS
+real `postgis/postgis:17-3.5` via Testcontainers. Somente bancos efêmeros
+`_test`, com as três travas de teste destrutivo; nenhum banco persistente foi
+inspecionado ou migrado. Nenhum arquivo do aplicativo foi alterado.
+
+| Validação | Resultado |
+|---|---|
+| migrations:verify | 10/10 |
+| migrations:verify-base -- --base-ref origin/backend | 10/10; 000001–000009 intactas |
+| Backend typecheck, build, smoke:dist | PASSOU |
+| Unitários e contratos | 189/189 |
+| HTTP e OpenAPI | 40/40 |
+| Integração completa PostgreSQL/PostGIS | 107/107; zero skips/cancelamentos |
+| Raiz typecheck e test:domain-compat | PASSOU |
+| git diff --check | PASSOU |
+| Links locais do núcleo ativo e READMEs | 87/87 em 30 arquivos; zero quebrados |
+
+A suíte real inclui emissão inicial e substituição com bearer e LOGIN
+runtime, `201`, os quatro campos exatos do recibo do Usuário, versão corrente
+sem incremento, GET com mesmo ID/versão, auditoria referenciando Usuário,
+replay sem efeitos adicionais, outro pedido com a mesma chave em `409`,
+aceite público em `204` e replay preservado depois da ativação. Uma falha
+diferida no COMMIT confirma rollback de substituição, desafio, outbox,
+auditoria e recibo, seguido por retry bem-sucedido da mesma chave.
+
+`000010` passou por up/down/up real e falha induzida após DDL; OIDs, owners,
+SECURITY DEFINER, search_path e ACLs foram comparados. PUBLIC permanece sem
+EXECUTE e LOGIN runtime sem DML administrativo direto. Os preflights
+bloqueiam legados de 1, 89 e 91 dias e downgrade com recibo novo retido,
+preservando exatamente dados e replay. A regressão completa MP-35B/C inclui
+RBAC, sessões, concorrência, outbox e as migrations anteriores.
+
+Durante a implementação foram corrigidos a importação da guarda do serviço,
+o tipo UUID do helper, a sintaxe da constraint nova e o campo do teste de
+aceite (`senha`). As validações correspondentes foram reexecutadas e passaram.
+O runner inicialmente recebeu `spawn EPERM` no sandbox; os testes passaram
+na execução autorizada com acesso ao Docker e aos subprocessos. A primeira
+tentativa de verify-base não iniciou por nome de log inválido no Windows;
+a execução explícita contra `origin/backend` passou.
+
+O corte permanece local, pronto para revisão independente. Não houve commit,
+push, deploy ou publicação; MP-35D-4 não foi iniciada. O procedimento futuro
+para recibos incompatíveis está no [README do backend](../../backend/README.md).
+
+SHA-256 da `000010` (UTF-8/LF):
+`b46325e4acd773f18f7c5a5fba7790251ceda812a6459c82f8cf8c86e27352cf`.
+
+Arquivos deste corte (23):
+
+| Diretório | Arquivos alterados ou criados |
+|---|---|
+| `backend/` | `README.md` |
+| `backend/migrations/` | `000010-alinhar-recibo-convite-administrativo.sql` (novo), `manifest.json` |
+| `backend/src/administration/` | `contracts.ts`, `postgres-user-repository.ts`, `user-routes.ts`, `user-service.ts`, `validation.ts` |
+| `backend/tests/http/` | `administrative-user-routes.test.ts` |
+| `backend/tests/integration/` | `administrative-user-e2e.integration.test.ts`, `migrations.integration.test.ts`, `invitation-receipt-migration.integration.test.ts` (novo) |
+| `backend/tests/migrations/` | `mp33b-schema-contract.test.ts` |
+| `backend/tests/unit/` | `administration-contracts.test.ts`, `administrative-user-service.test.ts`, `invitation-receipt-repository.test.ts` (novo) |
+| `docs/project/` | `contrato-administracao-mp35.md`, `contrato-api-rbac.md`, `estado-atual.md`, `pendencias-de-definicao.md`, `proximos-passos.md`, `smoke.md`, `testes-contrato-api-rbac.md` |
+
 ## Cenários HTTP da MP-35B antes da MP-35D
 
 Com PostgreSQL real, Admin ativo e identidades sintéticas, repetir:
