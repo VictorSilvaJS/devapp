@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-03
+> Revisão documental: 2026-09-10
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -16,8 +16,9 @@ tag, deploy, release ou publicação. A MP-35B entrou no commit `60144c2`, com
 reauditoria independente e CI pós-push aprovadas. A MP-35C entrou no commit
 `e6789bf`, com CI pós-push aprovada; ela foi auditada independentemente, e a
 confirmação pós-integração foi aprovada. MP-35D-1/2 foram concluídas na
-`feat/mp-35d`; MP-35D-3 está implementada localmente e em validação
-independente; MP-35D-4 não foi iniciada.
+`feat/mp-35d`; MP-35D-3 recebeu correções obrigatórias, implementadas e aprovadas
+na auditoria independente final para commit, sem achado obrigatório remanescente.
+MP-35D segue em andamento; MP-35D-4 não foi iniciada.
 
 ## Convergência da interface antes da MP-35
 
@@ -58,16 +59,40 @@ na mesma transação, `outbox_email` separada, destino somente `conta`, nenhum
 cache persistente, nenhum push e nenhum token de dispositivo. Esses limites
 estão consolidados em `contrato-notificacoes.md`.
 
-## Correção focal do recibo de convite
+## Portão operacional da migration do recibo de convite
 
-A implementação local da `000010` e do recibo do agregado Usuário passou na
-validação automatizada e depende de revisão independente e integração
-autorizada. Não há nova decisão D1-D13. Um futuro upgrade/downgrade deve
-confirmar ausência de comandos de emissão retidos; recibos legados não contêm
-versão histórica recuperável com segurança. O
+A migration `000010` e o recibo do agregado Usuário foram integrados na
+`backend` pelo commit `7c5256e` e incorporados à `feat/mp-35d` pelo merge
+`963eb0f`. Não há nova decisão D1-D13 nem pendência de compatibilidade para a
+MP-35D-3. Um futuro upgrade/downgrade deve confirmar ausência de comandos de
+emissão retidos; recibos legados não contêm versão histórica recuperável com
+segurança. O
 [preflight operacional](../../backend/README.md) bloqueia dados incompatíveis
 sem exclusão silenciosa. Nenhum banco persistente foi inspecionado ou migrado
 nesta correção; a evidência PostgreSQL usa exclusivamente Testcontainers.
+
+## MP-35D — pendências após aprovação independente da D-3
+
+A primeira auditoria independente desta sequência apontou **CORREÇÕES OBRIGATÓRIAS** na
+persistência de conflitos de edição entre rebases consecutivos e na exibição
+da falha de GET após comando confirmado. As correções estão implementadas,
+com regressões permanentes de domínio e telas com React Navigation real,
+descritas em [testes de contrato](testes-contrato-api-rbac.md).
+
+As reauditorias aprovaram esses dois reparos, as garantias de recibo/conclusão
+única e a retomada sequencial após `403`, com e sem GET incidental. Uma rodada posterior
+reproduziu dois achados obrigatórios: `/me` concorrente descartava B válida
+(Admin ou redução para Produtor/Colaborador), e Cancelar de uma tela descartada
+navegava sobre nova criação. As correções de ordenação da sessão e validade da
+instância/rota estão implementadas, com 106 testes D-3 e oito novos testes de
+sessão MP-33C. O parecer independente final posterior aprovou HEAD + worktree
+para commit da D-3, sem achado obrigatório remanescente ou evidência crítica
+pendente, preservando e verificando todas as correções anteriores.
+
+A reauditoria da D-3 deixou de ser pendência. Permanecem MP-35D em andamento,
+D-4 não iniciada e integração final na `backend` posterior. Não houve smoke
+Android físico, build de release ou validação produtiva. O fechamento não
+libera produção/release, não reabre D1-D13 e não inicia MP-35D-4.
 
 ## Implementação por fase
 
@@ -76,14 +101,10 @@ nesta correção; a evidência PostgreSQL usa exclusivamente Testcontainers.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- auditar e integrar o corte MP-35D-3 sem ampliar para Propriedades,
-  Localidades ou vínculos; manter MP-35D-4 não iniciada até autorização futura
-  própria;
-- alinhar, em corte de backend explicitamente autorizado, o recibo de
-  `POST /v1/usuarios/:id/convites`: a correlação D-3 exige
-  `recurso_tipo=usuario`, `recurso_id` igual ao alvo e `versao`, enquanto o
-  contrato/backend MP-35B atual ainda emite `recurso_tipo=convite` sem versão;
-  até lá, o cliente D-3 rejeita essa resposta sem inventar ID ou versão;
+- manter MP-35D-4 não iniciada até autorização futura própria; a D-3 está
+  aprovada para commit na `feat/mp-35d`, e a integração final da MP-35D na
+  `backend` permanece posterior; não ampliar este fechamento para Propriedades,
+  Localidades ou vínculos;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;

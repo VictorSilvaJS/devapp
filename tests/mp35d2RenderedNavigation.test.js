@@ -472,12 +472,14 @@ function renderedFixture({
     edit: 0,
     status: 0,
     invitation: 0,
+    me: 0,
   };
   const pendingDetails = [];
   const pendingList = [];
   const pendingMutations = [];
   const pendingCommandReads = [];
   const commandRequests = [];
+  const pendingRevalidations = [];
   let commandStarted = false;
   let currentUser = administrativeUserWire({ status: userStatus });
   const counters = controllerCounters();
@@ -545,6 +547,13 @@ function renderedFixture({
             : 'admin';
         return { status: 200, body: tokenWire(profile, loginSequence) };
       }
+      if (url.pathname === '/v1/auth/me') {
+        calls.me += 1;
+        const gate = deferred();
+        pendingRevalidations.push(gate);
+        return gate.promise;
+      }
+      if (url.pathname === '/v1/auth/logout') return { status: 204 };
       if (url.pathname === '/v1/propriedades') {
         calls.properties += 1;
         return {
@@ -676,6 +685,11 @@ function renderedFixture({
     pendingMutations,
     pendingCommandReads,
     commandRequests,
+    pendingRevalidations,
+    sessionIdentityWire(overrides = {}) {
+      const snapshot = runtime.session.snapshot;
+      return { sessao: { id: snapshot.id }, usuario: snapshot.usuario, escopo: snapshot.escopo, ...overrides };
+    },
     get currentUser() { return currentUser; },
     setCurrentUser(next) { currentUser = administrativeUserWire(next); },
     runtime,

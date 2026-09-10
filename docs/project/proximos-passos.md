@@ -1,15 +1,14 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-03
+> Atualizado em: 2026-09-10
 >
-> Tarefa atual: MP-35D-3 implementada localmente e em validação independente;
+> Tarefa atual: fechamento controlado da MP-35D-3, aprovada para commit na auditoria independente final;
 > MP-35D-4 não iniciada
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
 > D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
-> `feat/mp-35d`; MP-35D-3 IMPLEMENTADA LOCALMENTE E EM VALIDAÇÃO INDEPENDENTE,
-> SEM COMMIT/PUSH;
+> `feat/mp-35d`; MP-35D-3 APROVADA PARA COMMIT NA AUDITORIA INDEPENDENTE FINAL; MP-35D EM ANDAMENTO;
 > MP-35D-4 NÃO INICIADA; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
 
@@ -66,10 +65,19 @@ persistidos na mesma transação. A MP-35C foi corrigida localmente somente no
 backend e depois integrada diretamente no commit `e6789bf`, com CI pós-push
 aprovada. Ela foi auditada independentemente, e a confirmação pós-integração
 foi aprovada. Depois disso, MP-35D-1 e MP-35D-2 foram concluídas na
-`feat/mp-35d`; MP-35D-3 foi implementada localmente somente para comandos
-administrativos de Usuário e está em validação independente. Não houve
-commit/push desta rodada, merge na `backend`, teste Android físico, tag, deploy,
-release ou publicação.
+`feat/mp-35d`; MP-35D-3 foi implementada somente para comandos administrativos
+de Usuário. A primeira auditoria independente desta sequência exigiu correções no rebase
+consecutivo e na recuperação da releitura após recibo; elas passaram na
+reauditoria posterior. A reauditoria seguinte aprovou também a retomada sequencial
+após `403`, com e sem GET incidental, e reproduziu concorrência de `/me` que
+descartava B válida e Cancelar antigo que perdia o draft de nova criação.
+Essas duas correções foram implementadas, preservadas e verificadas com as
+anteriores. O parecer independente final aprovou HEAD + worktree para commit
+da D-3, sem achado obrigatório remanescente ou evidência crítica pendente.
+A correção do recibo de convite
+foi integrada na `backend` no commit `7c5256e` e incorporada à feature pelo
+merge `963eb0f`. Não houve teste Android físico, tag, deploy, release ou
+publicação.
 
 ## MP-33A — Fundação do backend e banco
 
@@ -239,7 +247,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | D-1/D-2 CONCLUÍDAS NA `feat/mp-35d`; D-3 IMPLEMENTADA LOCALMENTE E EM VALIDAÇÃO INDEPENDENTE; D-4 NÃO INICIADA |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-1/D-2 CONCLUÍDAS NA `feat/mp-35d`; D-3 APROVADA NA AUDITORIA INDEPENDENTE FINAL PARA COMMIT; D-4 NÃO INICIADA; INTEGRAÇÃO FINAL NA `backend` POSTERIOR |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
@@ -333,13 +341,19 @@ foi integrada diretamente no commit `60144c2`, com reauditoria independente e
 CI pós-push aprovadas. A MP-35C foi integrada diretamente no commit `e6789bf`,
 com CI pós-push aprovada, foi auditada independentemente e recebeu confirmação
 pós-integração aprovada. Na MP-35D, D-1/D-2 estão concluídas na
-`feat/mp-35d`; D-3 está implementada localmente e em validação independente;
+`feat/mp-35d`; D-3 está aprovada na auditoria independente final para commit;
 D-4 permanece fora
 do corte atual e não iniciada.
 
-O fechamento formal da MP-35C está concluído. O próximo passo recomendado é a
-auditoria independente e integração do MP-35D-3. A MP-35D-4 depende de
-autorização própria e não é iniciada automaticamente.
+O fechamento formal da MP-35C está concluído. A D-3 recebeu o parecer
+**APROVADA PARA COMMIT DO MP-35D-3**, sem achado obrigatório remanescente.
+As correções e regressões anteriores foram preservadas e verificadas pelo
+auditor independente, incluindo os 106 testes D-3. O fechamento controlado
+mantém código e testes aprovados, com registro documental da aprovação.
+MP-35D permanece em andamento; sua integração final na `backend` será posterior.
+A MP-35D-4 depende de autorização própria e não foi iniciada. Não houve smoke
+Android físico, build de release ou validação produtiva; produção/release não
+estão liberados por este fechamento.
 MP-36 e MP-37
 repetem o padrão
 para Caderno e GeoJSON/Talhões. Visitas, Materiais e agregados do Dashboard
@@ -355,15 +369,18 @@ semântica e a concorrência, não dimensionam esses riscos operacionais.
 MP-38 não bloqueia MP-33A. Ele depende de ambiente de campo e deve permanecer
 como portão próprio.
 
-## Próximo passo da correção focal de convite
+## Estado da correção focal de convite
 
-Revisar independentemente o corte local `fix/mp35b-recibo-convite` e a
-`000010`, com o [contrato final](contrato-administracao-mp35.md) e o
-[smoke](smoke.md). Depois, mediante autorização própria, integrar a correção
-na backend e repetir a reconciliação da MP-35D-3. Antes de aplicar em banco
-persistente, executar o preflight de recibos retidos conforme o
+A migration `000010` foi integrada na `backend` em `7c5256e` e incorporada à
+`feat/mp-35d` em `963eb0f`. O contrato final está alinhado com a correlação já
+implementada no aplicativo. O fix backend não aguarda integração; as correções
+focais do aplicativo MP-35D-3 estão aprovadas na auditoria independente final
+para commit. A integração final da MP-35D na `backend` permanece posterior.
+Antes de aplicar a migration em banco persistente, permanece
+obrigatório o preflight de recibos retidos descrito no
 [README do backend](../../backend/README.md). MP-35D-4 continua fora deste
-trabalho; nenhum commit, push ou publicação foi realizado.
+trabalho; a validação anterior do fix de recibo não realizou novo commit, push
+ou publicação.
 
 ## Como iniciar cada tarefa
 

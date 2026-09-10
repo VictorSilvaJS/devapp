@@ -331,6 +331,65 @@ na rodada integral de 2026-08-27. A MP-35B não expõe tela na composição HTTP
 por isso nenhum cenário é promovido a evidência física. A validação Android
 administrativa continua reservada à MP-35D.
 
+## Retomada administrativa após 403 — MP-35D-3, 2026-09-10
+
+Cenário permanente com tela e React Navigation reais: criar Usuário, aceitar
+recibo, falhar o GET, receber `403` na recuperação, revalidar Admin por
+`/v1/auth/me` na mesma partição, desmontar e abrir nova criação com dados novos.
+Executar com e sem GET administrativo incidental. O novo submit deve levar o
+total de POSTs de um para dois, usando chave idempotente nova, e concluir/navegar
+uma vez. Callbacks e respostas antigos permanecem inertes depois da retomada e
+da conclusão nova; montagem antes da revalidação não restaura acesso.
+
+Resultado automatizado da rodada anterior: **PASSOU**, após reprodução de `1 !== 2`
+nas duas variantes. A suíte D-3 passou em 86/86, incluindo rotina sem limpeza
+indevida, dois ciclos de retomada e casos negativos de sessão/concorrência.
+Detalhes e composição estão na [matriz de testes](testes-contrato-api-rbac.md).
+
+A reauditoria daquela rodada aprovou essa retomada sequencial, com e sem GET incidental.
+Os 86 casos são a referência anterior. Naquele momento D-3 não estava formalmente aprovada;
+D-4 não foi iniciada. Smoke Android físico,
+build de release e liberação produtiva: **NÃO EXECUTADOS** nesta rodada.
+
+### Concorrência de /me e Cancelar antigo — nova rodada de 2026-09-10
+
+Repetir o cenário acima iniciando `/me` A antes do `403` e B após ele. Entregar
+A e B nas duas ordens, com B Admin, Produtor e Colaborador. A nunca deve retomar
+acesso; B Admin válida libera nova criação na mesma partição, com e sem GET
+incidental, sem terceiro `/me`. B Produtor/Colaborador deve retirar rotas, dados
+e drafts administrativos. Nova invalidação após capturar B deve impedir retomada.
+
+Capturar Cancelar antes de descartar a criação antiga; após a retomada, preencher
+nova criação e invocar o callback antigo. A chave da nova rota, seu draft e o
+total de requisições devem permanecer intactos. Cancelar atual deve navegar
+normalmente, inclusive após recibo confirmado. Cobrir o Cancelar da edição e
+Voltar das quatro telas do componente, inclusive com origem ainda montada sob
+outra criação de chave distinta.
+
+Resultado automatizado: **PASSOU**, com sessão, runtime e React Navigation reais
+e respostas deferred. Os achados falharam antes do reparo e passaram depois;
+D-3 agora soma 106/106. Composição e demais checks estão na
+[matriz de testes](testes-contrato-api-rbac.md).
+Estado ao término daquela implementação: **Correções de concorrência de /me e
+Cancelar implementadas, aguardando reauditoria independente**. Naquele momento
+D-3 estava sem aprovação formal; D-4 não iniciada. Smoke
+Android físico, build de release e liberação produtiva: **NÃO EXECUTADOS**.
+
+### Parecer independente final da MP-35D-3 — 2026-09-10
+
+**APROVADA PARA COMMIT DO MP-35D-3**, cobrindo HEAD + worktree e as correções
+anteriores, preservadas e verificadas. Nenhum achado obrigatório remanescente
+ou evidência crítica pendente nesse parecer.
+
+Executado pelo auditor independente: typecheck passou; MP-35D-1 52/52;
+MP-35D-2 85/85; MP-35D-3 106/106; MP-33C 46/46; domain-compat e
+`git diff --check` passaram. Essas execuções pertencem à auditoria; o fechamento
+documental não as repete nem altera código/testes aprovados.
+
+MP-35D segue em andamento; D-4 não iniciada; integração final na `backend`
+posterior. Smoke Android físico, build de release e validação produtiva:
+**NÃO EXECUTADOS**. O fechamento da D-3 não libera produção ou release.
+
 ## Cenários de campo de MP-38
 
 - posição dentro de Talhão;

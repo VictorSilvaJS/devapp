@@ -1,11 +1,158 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-09-03:
+Status revisado em 2026-09-10:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
-implementada localmente e em validação independente; MP-35D-4 não iniciada`.
+aprovada na auditoria independente final para commit; MP-35D em andamento; MP-35D-4 não iniciada`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
+
+## MP-35D-3 — regressões permanentes das correções focais
+
+A primeira auditoria independente desta sequência resultou em **CORREÇÕES OBRIGATÓRIAS**.
+Naquela etapa, as correções implementadas aguardavam reauditoria independente.
+O script existente `npm run test:mp35d3` inclui as suítes permanentes
+abaixo; as telas são exercitadas com React Navigation real.
+
+| Cenário | Resultado exigido | Suíte permanente |
+|---|---|---|
+| Rebase v1 → v2 → v3 com conflito pendente de nome e alteração remota somente no documento | Conflito preservado, intenção local intacta e documento intocado atualizado pelo servidor | [mp35d3Contracts.test.js](../../tests/mp35d3Contracts.test.js) |
+| Resolver explicitamente o conflito após rebase consecutivo | Opções existentes coerentes com baseline, draft e dirtyFields; próximo comando necessário usa a versão autoritativa atual | [mp35d3Contracts.test.js](../../tests/mp35d3Contracts.test.js) |
+| Rebase consecutivo na tela real de edição | Conflito visível, Salvar desabilitado e nenhum PATCH antes da resolução explícita | [mp35d3RenderedNavigation.test.js](../../tests/mp35d3RenderedNavigation.test.js) |
+| Recibo válido seguido de falha de GET em edição, status e convite | Mensagens distinguem comando em andamento e confirmado; falha visível com recuperação explícita, sem spinner quando não há leitura em curso; submit normal não contorna reconciliação | [mp35d3RenderedNavigation.test.js](../../tests/mp35d3RenderedNavigation.test.js) |
+| Recuperar a leitura, falhar novamente e depois concluir | Cada recuperação solicita somente GET; uma única mutação, mesmo recurso e versão relida igual ou superior ao recibo; conclusão consumida uma vez | [mp35d3RenderedNavigation.test.js](../../tests/mp35d3RenderedNavigation.test.js) |
+| Criação com falha de releitura após recibo | Recuperação por GET preservada, sem duplicar criação nem concluir antes da reconciliação | [mp35d3RenderedNavigation.test.js](../../tests/mp35d3RenderedNavigation.test.js) |
+| Invalidação por falha de reconciliação no controller | Detalhe e leitura anterior limpos; projeção sem carregamento fictício e sem GET adicional após publicação reconciliada | [mp35d3BoundaryLifecycle.test.js](../../tests/mp35d3BoundaryLifecycle.test.js) |
+| Identidade ou lifecycle interrompido durante recuperação | Callback antigo não solicita GET nem publica/navega após troca de identidade, redução de perfil ou dispose | [mp35d3RenderedNavigation.test.js](../../tests/mp35d3RenderedNavigation.test.js) |
+| `401`/`403` durante recuperação de recibo confirmado nos quatro comandos | Falha fecha o acesso e impede nova recuperação, publicação ou mutação | [mp35d3Commands.test.js](../../tests/mp35d3Commands.test.js) |
+
+As suítes existentes de comandos, lifecycle e arquitetura complementam esses
+casos com duplo submit, correlação de recibo, `401`/`403`, troca de identidade,
+redução de perfil, dispose e isolamento HTTP/Demo. A recuperação não desativa a
+invalidação de dados e não concede acesso por conta própria. Esta rodada não
+altera backend nem migrations e não substitui reauditoria independente, smoke
+Android físico ou validação produtiva.
+
+Validação da rodada anterior, em 2026-09-10: `npm run typecheck`,
+`npm run test:mp35d1`, `npm run test:mp35d2`, `npm run test:mp35d3` e
+`npm run test:domain-compat` concluíram com código de saída zero. A
+compatibilidade de domínio incluiu os scripts encadeados MP-33C, MP-34 e
+convergência de interface. A MP-35D-3 passou em 68 casos: 13 de contratos,
+11 de comandos, 8 de lifecycle, 30 de navegação e 6 de arquitetura; 15 casos
+foram acrescentados nesta correção.
+
+Antes da correção, os novos testes reproduziram quatro falhas de domínio,
+duas de rebase nas telas, quatro de recuperação nas telas e uma de projeção
+do detalhe. A recuperação da criação também detectou mutação duplicada por
+callback antigo; edição, status e convite reproduziram o spinner. Os casos
+passaram na versão corrigida. Esta evidência automatizada não constitui
+aprovação independente das correções.
+
+### Rodada posterior — retomada após 403
+
+A reauditoria aprovou os reparos de rebase consecutivo e recuperação somente
+por GET, além da correlação de recibo e conclusão/navegação únicas. Encontrou
+um novo P2: nova criação habilitada sem POST após Admin revalidado na mesma
+partição. A correção sequencial passou na reauditoria seguinte, com e sem GET
+incidental; naquele momento D-3 não estava formalmente aprovada e D-4 não iniciada.
+
+| Cenário permanente acrescentado | Evidência exigida | Suíte |
+|---|---|---|
+| Dois ciclos 403 → `/me` aceito na mesma partição | Novo lifecycle executa comando e leitura; leases, callbacks, start e remontagem dos cancelados continuam inválidos | [Fronteira/lifecycle](../../tests/mp35d3BoundaryLifecycle.test.js) |
+| Revalidação pendente, 503, transporte, 200 malformado, conta inativa, 403, Produtor, Colaborador ou identidade divergente | Nenhum POST administrativo indevido | [Fronteira/lifecycle](../../tests/mp35d3BoundaryLifecycle.test.js) |
+| `/me` anterior a nova invalidação, respostas concorrentes e troca de identidade/dispose | Nenhuma restauração por resposta obsoleta; identidade mais recente preservada | [Fronteira/lifecycle](../../tests/mp35d3BoundaryLifecycle.test.js) |
+| Criação confirmada → GET falho → recuperação 403 → Admin aceito → nova criação, com e sem GET incidental | Um POST passa a dois somente no novo submit; payload novo, chave idempotente distinta e uma navegação/conclusão | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) |
+| Callbacks e respostas antigas 200/403 após retomada e após conclusão nova | Nenhum comando, leitura, publicação, alteração do novo draft ou navegação antiga | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) |
+| Montagem bloqueada e revalidação rotineira sem 403 | Bloqueio visível sem submit silencioso; validação rotineira preserva draft e comando legítimos | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) |
+
+Antes de alterar o código funcional, `npm run test:mp35d3` reproduziu a falha
+principal nas duas variantes: botão habilitado, `esperado: 2` POSTs e
+`obtido: 1`. Após o reparo, ambas passaram. O teste adicional de 403 tardio
+detectou o empréstimo indevido de lease novo pelo serviço; o ajuste passou na
+mesma regressão, preservando os casos anteriores.
+
+A composição da rodada anterior de `test:mp35d3` foi **86/86**: 13 de contratos, 11 de
+comandos, 20 de fronteira/lifecycle, 36 de navegação (incluindo os 11 casos
+D-2 importados pela fixture) e 6 de arquitetura. Foram acrescentados 18 casos
+nesta rodada: 12 de fronteira/lifecycle e 6 de navegação. O runtime, os decoders,
+a sessão, as telas e React Navigation são reais; transporte e primitivas
+nativas são controlados. Os testes não limpam `forbidden` para simular retomada.
+
+Validações desta rodada: `npm run typecheck`, `npm run test:mp35d1` (52/52),
+`npm run test:mp35d2` (85/85), `npm run test:mp35d3` (86/86) e
+`npm run test:domain-compat` passaram. A compatibilidade inclui MP-33C, MP-34 e
+convergência da interface. `git diff --check` e links documentais alterados
+foram verificados. Não houve smoke Android físico, build de release ou
+liberação produtiva; esta evidência do implementador não é aprovação
+independente.
+
+### Rodada anterior — concorrência de /me e Cancelar antigo, 2026-09-10
+
+A reauditoria daquela rodada aprovou a retomada sequencial, mas reproduziu descarte de
+B válida após A substituir o objeto de snapshot, e Cancelar preexistente de uma
+tela descartada navegando sobre nova criação. Ambos foram corrigidos e, ao fim
+da implementação, aguardavam reauditoria independente. A prioridade de `/me` segue a ordem de início,
+com epoch, identidade e token da tentativa efetiva preservados; retomar exige
+também o lease atual da fronteira. A saída da tela verifica instância montada e
+chave da rota atual, separadamente da confirmação de mutações.
+
+| Regressão permanente adicionada | Evidência | Suíte |
+|---|---|---|
+| B Admin/Produtor/Colaborador, entregas A-B e B-A | Só B publica/notifica aceitação; A não sobrepõe B; duas chamadas e nenhum refresh incidental | [Sessão MP-33C](../../tests/mp33cSession.test.js) — 6 casos |
+| Rotação posterior à tentativa e refresh necessário antes da tentativa | Resposta anterior à rotação descartada; identidade da tentativa com token renovado aceita | [Sessão MP-33C](../../tests/mp33cSession.test.js) — 2 casos |
+| A antes do 403, B depois, três perfis e duas ordens | A não retoma; B Admin libera comandos/leituras na mesma partição; B não Admin impede POST; lifecycle antigo permanece cancelado | [Runtime/fronteira](../../tests/mp35d3BoundaryLifecycle.test.js) — 6 casos |
+| Nova invalidação após a captura de B | Mesmo com A e B Admin, B não restaura acesso e novos lifecycles continuam bloqueados | [Runtime/fronteira](../../tests/mp35d3BoundaryLifecycle.test.js) — 1 caso |
+| Recibo → GET falho → A pendente → recuperação 403 → B → A-B Admin, com/sem GET incidental | Nova criação leva POSTs de um para dois, payload novo, chave distinta, conclusão/navegação únicas e nenhuma terceira revalidação | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) — 2 casos |
+| B Produtor/Colaborador, A-B e B-A | Perfil aceito; rotas, dados e draft administrativos removidos; callbacks antigos inertes | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) — 4 casos |
+| Cancelar capturado de criação/edição descartada após retomada | Nova chave de rota e draft intactos, zero navegação/requisição antiga; Cancelar atual navega de fato | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) — 2 casos |
+| Cancelar atual após recibo confirmado e GET falho | Saída legítima preservada, sem repetir POST | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) — 1 caso |
+| Voltar capturado das quatro telas sob nova criação | Mesmo ainda montada, a origem não navega sobre outra chave; Voltar atual funciona | [Tela/React Navigation](../../tests/mp35d3RenderedNavigation.test.js) — 4 casos |
+
+Antes do código funcional, falharam os três casos A-B de sessão, os três de
+runtime/fronteira, as duas retomadas Admin em tela, as duas reduções A-B, os dois
+Cancelar descartados e os quatro Voltar equivalentes. As entregas B-A e o
+Cancelar legítimo já passavam. Depois, todos passaram. Os testes usam respostas
+deferred e sessão/runtime/React Navigation reais; não limpam `forbidden` na
+fixture nem substituem `goBack` por um mock sem efeito. Foram preservadas as
+regressões anteriores de recibo, recuperação só por GET, rebases consecutivos,
+erros tardios, troca de identidade, logout/dispose e StrictMode.
+
+Validação do implementador naquela rodada, com saída zero: `npm run typecheck`, `npm run test:mp35d1`
+(52/52), `npm run test:mp35d2` (85/85, incluindo 5 de sessão real),
+`npm run test:mp35d3` (**106/106**) e `npm run test:domain-compat`. D-3 contém
+13 contratos, 11 comandos, 27 fronteira/lifecycle, 49 navegação (incluindo os
+11 D-2 importados) e 6 arquitetura: **20 casos novos**, 7 de fronteira e 13 de
+navegação. MP-33C passou isoladamente e encadeada pela compatibilidade em
+46/46: 8 contratos, **33 sessão (8 novos)** e 5 arquitetura. A compatibilidade
+também executou MP-34 (35/35) e convergência da interface (7/7).
+
+Estado ao término daquela implementação: **CORREÇÕES DE CONCORRÊNCIA /me E
+CALLBACK CANCELAR IMPLEMENTADAS — AGUARDANDO REAUDITORIA INDEPENDENTE**.
+Naquele momento D-3 estava sem aprovação formal; D-4 não
+iniciada. Não houve smoke Android físico, release ou liberação produtiva.
+
+### Auditoria independente final — aprovação para commit, 2026-09-10
+
+Parecer: **APROVADA PARA COMMIT DO MP-35D-3**. O auditor independente cobriu
+HEAD `963eb0f673d5f51e369d574f9210a8b690f486dc` + worktree aprovado de 20
+arquivos (`+1918/-164`), incluindo todas as correções anteriores, preservadas e
+verificadas. Não restaram achados obrigatórios ou evidências críticas pendentes.
+
+| Validação executada pelo auditor independente | Resultado |
+|---|---|
+| typecheck | Passou |
+| MP-35D-1 | 52/52 |
+| MP-35D-2 | 85/85 |
+| MP-35D-3 | 106/106 |
+| MP-33C | 46/46 |
+| domain-compat | Passou |
+| git diff --check | Passou |
+
+Esses resultados pertencem ao parecer independente e não são novas execuções
+do fechamento documental. Código, testes, dependências, configuração e contratos
+aprovados são preservados. MP-35D permanece em andamento; D-4 não iniciada e
+integração final na `backend` posterior. Não houve smoke Android físico, build
+de release ou validação produtiva; este fechamento não libera produção/release.
 
 ## Recibo de convite — correção focal 000010
 

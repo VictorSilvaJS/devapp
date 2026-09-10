@@ -1,12 +1,12 @@
 # Contrato de Administração da MP-35
 
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
-> MP-35D-3 implementada localmente e em validação independente, sem commit/push;
+> MP-35D-3 aprovada na auditoria independente final para commit;
 > MP-35D-4 não iniciada`
 >
 > Definido em: 2026-08-25
 >
-> Revisão: 2026-09-03
+> Revisão: 2026-09-10
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
@@ -15,6 +15,9 @@
 >
 > Integração da MP-35C: 2026-09-01, commit `e6789bf`, CI pós-push, auditoria
 > independente e confirmação pós-integração aprovadas
+>
+> Correção do recibo administrativo de convite: commit `7c5256e` integrado na
+> `backend` e incorporado à `feat/mp-35d` pelo merge `963eb0f`
 >
 > Escopo deste documento: contrato consolidado de Usuários, Propriedades,
 > vínculos, concorrência e fundação persistente da MP-35.
@@ -26,14 +29,15 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | D-1 e D-2 concluídas na `feat/mp-35d`; D-3 implementada localmente e em validação independente; D-4 não iniciada |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1 e D-2 concluídas na `feat/mp-35d`; D-3 aprovada na auditoria independente final para commit; D-4 não iniciada; integração final na `backend` posterior |
 
 ### Estado da integração no aplicativo
 
 Os cortes MP-35D-1 e MP-35D-2 foram concluídos na branch
 `feat/mp-35d`, respectivamente nos commits `3e2bc2e` e `cf3b4fa`. O corte
-MP-35D-3 implementa localmente somente os quatro comandos administrativos de
-Usuário: criação de Produtor/Colaborador, edição cadastral, transição explícita
+MP-35D-3, registrado no commit `a92d6d6`, implementa somente os quatro
+comandos administrativos de Usuário: criação de Produtor/Colaborador, edição
+cadastral, transição explícita
 `ativo`/`inativo` e emissão ou reemissão de convite no modo fixo
 `ativar_usuario`.
 
@@ -44,17 +48,76 @@ intenções permanecem apenas em memória e são limpos com a partição da sess
 O corte não cria Admin, senha, exclusão, edição de perfil, vínculos,
 Propriedades, Localidades, fila offline ou dependência do Demo/mock.
 
-A validação desta rodada é exclusivamente automatizada. Ela não constitui
-teste Android físico, commit, push, merge na `backend`, deploy, auditoria
-independente concluída, integração ou autorização para iniciar a MP-35D-4.
+A primeira auditoria independente desta sequência da MP-35D-3 resultou em **CORREÇÕES
+OBRIGATÓRIAS**: conflito pendente descartado em rebase consecutivo e falha de
+releitura após recibo ocultada por carregamento indefinido. As correções focais
+preservam conflitos até escolha explícita, atualizam campos intocados e mantêm
+Salvar bloqueado enquanto houver conflito. Edição, status e convite exibem a
+falha após comando confirmado e permitem recuperar somente o GET autoritativo,
+sem repetir a mutação. A conclusão exige o mesmo `recurso_id` e
+`versao_relida >= versao_recibo`, com autorização e lifecycle revalidados.
 
-A correção auditada da D-3 exige que também o recibo de convite identifique o
-Usuário alvo e informe sua versão, para que a releitura possa ser correlacionada
-sem inferência. O cliente falha fechado diante do recibo histórico
-`recurso_tipo=convite` sem `versao`. O backend permanece intocado neste corte;
-como a seção de contrato HTTP abaixo ainda registra esse recibo histórico, o
-alinhamento do contrato de convite é uma pendência bloqueante para aprovar a
-D-3, não uma autorização implícita para alterar a MP-35B.
+Estado ao término daquela correção: **CORREÇÕES IMPLEMENTADAS — AGUARDANDO REAUDITORIA
+INDEPENDENTE**. A validação da correção é automatizada e não constitui
+aprovação independente, fechamento da D-3, teste Android físico, build de
+release, integração ou autorização para iniciar a MP-35D-4. As regressões
+permanentes estão descritas em [testes de contrato](testes-contrato-api-rbac.md).
+
+Na reauditoria posterior, os defeitos de rebase consecutivo e recuperação
+somente por GET passaram, assim como correlação de recibo, bloqueio de callback
+após confirmação e conclusão/navegação únicas. O novo bloqueador P2 foi a
+permanência de `forbidden` após revalidação aceita do Admin na mesma partição.
+A correção focal distingue acesso compartilhado de validade da operação:
+`SessionCoordinator` notifica a aceitação validada de `/v1/auth/me`, e a
+fronteira usa um lease capturado antes da requisição para restaurar o acesso
+somente na geração/partição atuais. Respostas obsoletas não restauram acesso;
+revalidação rotineira não limpa drafts ou cancela comandos válidos.
+
+Lifecycles afetados por perda de acesso permanecem cancelados, inclusive depois
+da retomada e de `start`/remontagem. Um 403 tardio não pode usar lease novo para
+invalidar a operação atual. Novos fluxos autorizados podem executar comandos e
+leituras; o fluxo bloqueado exibe feedback no padrão existente. Isso não altera
+contratos backend, idempotência, recibos ou D1-D13.
+
+A reauditoria seguinte aprovou a retomada sequencial, com e sem GET incidental,
+validada na rodada anterior com 86 testes D-3. Identificou dois achados
+obrigatórios adicionais, reproduzidos e corrigidos nesta rodada:
+
+- Concorrência de `/me`: A iniciada antes do `403` substituía o objeto de
+  snapshot, descartando B iniciada após a invalidação por igualdade referencial.
+  A regra local passa a ser a ordem de início das revalidações: só a mais recente
+  iniciada pode publicar e notificar aceitação. Epoch, identidade ativa e token
+  da tentativa efetiva, incluindo refresh/retry, continuam necessários; rotação
+  posterior torna a resposta obsoleta. A ordem de chegada não define prioridade.
+  B aplica Admin, Produtor ou Colaborador nas duas ordens de entrega. Retomar
+  administração ainda exige Admin autorizado e lease da fronteira atual; nova
+  invalidação após a captura de B bloqueia a retomada. Não há terceiro `/me`
+  automático nem dependência de GET incidental.
+- Cancelar antigo: o callback preexistente podia executar `goBack` depois do
+  descarte e perder o draft de nova criação. A navegação de saída exige a
+  instância montada e sua chave como rota atual, independentemente da guarda de
+  mutações. A proteção cobre também Voltar, reproduzido nas quatro telas do
+  mesmo componente, inclusive quando a rota de origem ainda está montada sob
+  outra criação. Cancelar atual continua válido após confirmação do comando.
+
+Estado ao término daquela implementação: **CORREÇÕES DE CONCORRÊNCIA /me E CALLBACK CANCELAR IMPLEMENTADAS —
+AGUARDANDO REAUDITORIA INDEPENDENTE**. A implementação e os 106 testes D-3 não
+constituem aprovação independente ou fechamento formal da D-3. D-4 permanece
+não iniciada; não houve smoke Android físico, release ou liberação produtiva.
+
+O parecer independente final posterior emitiu **APROVADA PARA COMMIT DO
+MP-35D-3**, cobrindo HEAD + worktree e todas as correções anteriores, preservadas
+e verificadas, sem achado obrigatório remanescente ou evidência crítica pendente.
+As [validações do auditor](testes-contrato-api-rbac.md) passaram. O registro desta
+aprovação não altera contratos. MP-35D segue em andamento; D-4 não iniciada e
+integração final na `backend` posterior. Produção e release não estão liberados;
+não houve smoke Android físico, build de release ou validação produtiva.
+
+A correção integrada em `7c5256e` faz o recibo de convite identificar o Usuário
+alvo e informar sua versão, permitindo a correlação sem inferência exigida pela
+D-3. O decoder e o fluxo móvel já exigem exatamente esse contrato e continuam
+falhando fechados diante de formato legado ou incompatível. Esta validação não
+altera novamente o backend.
 
 A MP-35A não cria handlers, serviços ou grants de escrita do runtime para os
 comandos das fases seguintes. MP-36 e as verticais posteriores permanecem fora.
@@ -171,10 +234,9 @@ diferente retorna `409`. A purga usa papel separado e remove somente registros
 expirados. Cada reserva registra `sessao_id`, `request_id` e `correlation_id`;
 uma referência composta garante que a sessão pertence ao mesmo ator e à mesma
 organização. O recibo aceita somente resultado, tipo/ID do recurso e a versão
-obrigatória para recursos versionados. No contrato HTTP vigente da MP-35B, o
-recibo de convite identifica o próprio convite e não aceita versão; a exigência
-adicional e bloqueante da integração D-3 está registrada no início deste
-documento. Não entram PII, senha, token ou payload arbitrário.
+obrigatória para recursos versionados. Desde a migration `000010`, o recibo
+administrativo de convite identifica o Usuário da rota e inclui sua versão
+autoritativa. Não entram PII, senha, token ou payload arbitrário.
 
 A unicidade persistente é exclusivamente organização + ator + hash da
 `Idempotency-Key`. `actorSessionId` é obrigatório, deve estar ativo e vinculado
@@ -235,10 +297,10 @@ operação deve falhar com segurança em vez de reescrever ou apagar convites.
 
 ## Contratos HTTP implementados nas MP-35B e MP-35C
 
-### Correção focal do recibo de convite — 2026-09-08
+### Correção integrada do recibo de convite — 2026-09-08
 
-A divergência identificada durante a MP-35D-3 foi corrigida localmente no
-backend, na branch `fix/mp35b-recibo-convite` sobre `origin/backend`, sem
+A divergência identificada durante a MP-35D-3 foi corrigida na `backend` pelo
+commit `7c5256e` e incorporada à `feat/mp-35d` pelo merge `963eb0f`, sem
 alterar o aplicativo, iniciar MP-35D-4 ou reabrir D1-D13. A migration `000010`
 substitui somente `tche_admin_emitir_convite_usuario_mp35b(jsonb)` e a
 constraint do recibo. A rota permanece `201` e responde exatamente:
@@ -267,8 +329,10 @@ consulta atual de replay. O down restaura explicitamente função e constraint
 anteriores, sob a mesma restrição para recibos novos. Nenhum comando é
 reescrito, excluído ou exposto em dois formatos. O
 [procedimento operacional](../../backend/README.md) não autoriza purga
-antecipada. O corte passou na validação local e requer revisão independente
-e integração autorizada.
+antecipada. O fix backend está integrado e incorporado à feature nos commits
+acima. As correções focais do aplicativo MP-35D-3 foram aprovadas na auditoria
+independente final para commit. A integração final da MP-35D na `backend`
+permanece posterior; o fix de recibo já está integrado.
 
 ### Precisões de execução da MP-35B
 
@@ -423,8 +487,9 @@ Localidades versionadas, RBAC, auditoria, revogação de sessões, idempotência
 testes HTTP/PostgreSQL para Propriedades e vínculos. Ela foi concluída e
 integrada diretamente em `e6789bf`, com CI pós-push, auditoria independente e
 confirmação pós-integração aprovadas. Na MP-35D, os cortes D-1/D-2 estão
-concluídos na `feat/mp-35d`, o D-3 está implementado localmente e em validação
-independente, e o D-4 continua não iniciado.
+concluídos na `feat/mp-35d`; o D-3 recebeu correções obrigatórias, implementadas
+e aprovadas na auditoria independente final para commit; o D-4 continua não
+iniciado e a MP-35D como um todo permanece em andamento.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de

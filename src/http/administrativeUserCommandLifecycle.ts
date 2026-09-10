@@ -10,6 +10,7 @@ import type {
 export interface AdministrativeUserOperationContext {
   readonly boundaryLease: AdministrativeUserReadLease;
   isCurrent(): boolean;
+  confirmMutation(): void;
 }
 
 export class AdministrativeUserOperationCancelledError extends Error {
@@ -27,6 +28,7 @@ export type AdministrativeUserLifecycleOutcome<T> =
 export interface AdministrativeUserCommandLifecycleState {
   readonly active: boolean;
   readonly submitting: boolean;
+  readonly mutationConfirmed: boolean;
   readonly resetVersion: number;
 }
 
@@ -40,8 +42,9 @@ function state(
   active: boolean,
   submitting: boolean,
   resetVersion: number,
+  mutationConfirmed = false,
 ): AdministrativeUserCommandLifecycleState {
-  return Object.freeze({ active, submitting, resetVersion });
+  return Object.freeze({ active, submitting, resetVersion, mutationConfirmed });
 }
 
 function withLeadership<T>(
@@ -67,6 +70,7 @@ export class AdministrativeUserCommandLifecycle {
   }> | null = null;
   #state = state(false, false, 0);
   #mounted = false;
+  #cancelled = false;
 
   constructor(input: Readonly<{
     boundary: AdministrativeUserDataBoundary;
@@ -89,7 +93,8 @@ export class AdministrativeUserCommandLifecycle {
   start(): boolean {
     if (this.#mounted) return false;
     this.#mounted = true;
-    this.#boundaryLease = this.#boundary.issueLease();
+    this.#cancelled ||= this.#accessInvalidated();
+    this.#boundaryLease = this.#cancelled ? null : this.#boundary.issueLease();
     this.#unsubscribeBoundary = this.#boundary.subscribe(() => {
       const boundary = this.#boundary.current;
       if (
@@ -102,7 +107,7 @@ export class AdministrativeUserCommandLifecycle {
       }
       this.#replaceBoundaryLease();
     });
-    this.#publish(state(true, false, this.#state.resetVersion));
+    this.#publish(state(!this.#cancelled, false, this.#state.resetVersion));
     return true;
   }
 
@@ -117,7 +122,10 @@ export class AdministrativeUserCommandLifecycle {
       context: AdministrativeUserOperationContext,
     ) => Promise<T>,
   ): Promise<AdministrativeUserLifecycleOutcome<T>> {
-    if (!this.#mounted || this.#boundaryLease === null) {
+    if (
+      !this.#mounted || this.#cancelled || this.#boundaryLease === null ||
+      this.#state.mutationConfirmed || this.#accessInvalidated()
+    ) {
       return Promise.resolve(Object.freeze({ current: false, leader: false, ok: false }));
     }
     if (this.#activeOperation !== null) {
@@ -143,7 +151,7 @@ export class AdministrativeUserCommandLifecycle {
   runRead<T>(
     operation: (context: AdministrativeUserOperationContext) => Promise<T>,
   ): Promise<AdministrativeUserLifecycleOutcome<T>> {
-    if (!this.#mounted || this.#boundaryLease === null) {
+    if (!this.#mounted || this.#cancelled || this.#boundaryLease === null || this.#accessInvalidated()) {
       return Promise.resolve(Object.freeze({ current: false, leader: false, ok: false }));
     }
     if (this.#activeOperation !== null) {
@@ -153,7 +161,7 @@ export class AdministrativeUserCommandLifecycle {
   }
 
   restartIntent(): boolean {
-    if (!this.#mounted || this.#state.submitting) return false;
+    if (!this.#mounted || this.#cancelled || this.#state.submitting || this.#state.mutationConfirmed) return false;
     this.#generation += 1;
     if (this.#intentId !== null) this.#discardIntent(this.#intentId);
     this.#intentId = null;
@@ -196,10 +204,17 @@ export class AdministrativeUserCommandLifecycle {
         this.#activeOperation?.token === operationToken &&
         this.#boundary.isLeaseCurrent(boundaryLease)
       ),
+      confirmMutation: () => {
+        if (!context.isCurrent()) throw new AdministrativeUserOperationCancelledError();
+        this.#publish(state(true, true, this.#state.resetVersion, true));
+      },
     });
-    this.#publish(state(true, true, this.#state.resetVersion));
+    this.#publish(state(true, true, this.#state.resetVersion, this.#state.mutationConfirmed));
     const run = Promise.resolve()
-      .then(() => operation(context))
+      .then(() => {
+        if (!context.isCurrent()) throw new AdministrativeUserOperationCancelledError();
+        return operation(context);
+      })
       .then<SharedOutcome<T>>((value) => {
         if (!this.#isOperationCurrent(generation, operationToken)) {
           return Object.freeze({ current: false, ok: false });
@@ -222,7 +237,7 @@ export class AdministrativeUserCommandLifecycle {
     const promise = run.finally(() => {
       if (this.#isOperationCurrent(generation, operationToken)) {
         this.#activeOperation = null;
-        this.#publish(state(true, false, this.#state.resetVersion));
+        this.#publish(state(true, false, this.#state.resetVersion, this.#state.mutationConfirmed));
       }
     });
     this.#activeOperation = Object.freeze({
@@ -247,7 +262,7 @@ export class AdministrativeUserCommandLifecycle {
   }
 
   #replaceBoundaryLease(): void {
-    if (!this.#mounted) return;
+    if (!this.#mounted || this.#cancelled) return;
     const previous = this.#boundaryLease;
     this.#boundaryLease = this.#boundary.issueLease();
     if (previous !== null) this.#boundary.revokeLease(previous);
@@ -255,20 +270,26 @@ export class AdministrativeUserCommandLifecycle {
 
   #resetSensitiveState(): void {
     if (!this.#mounted) return;
+    this.#cancelled = true;
     this.#generation += 1;
     const lease = this.#boundaryLease;
-    this.#boundaryLease = this.#boundary.issueLease();
+    this.#boundaryLease = null;
     if (lease !== null) this.#boundary.revokeLease(lease);
     if (this.#intentId !== null) this.#discardIntent(this.#intentId);
     this.#intentId = null;
     this.#activeOperation = null;
-    this.#publish(state(true, false, this.#state.resetVersion + 1));
+    this.#publish(state(false, false, this.#state.resetVersion + 1));
   }
 
   #isOperationCurrent(generation: number, token: object): boolean {
     return this.#mounted &&
       this.#generation === generation &&
       this.#activeOperation?.token === token;
+  }
+
+  #accessInvalidated(): boolean {
+    const invalidation = this.#boundary.current.invalidation;
+    return invalidation === 'invalid_session' || invalidation === 'forbidden';
   }
 
   #publish(next: AdministrativeUserCommandLifecycleState): void {

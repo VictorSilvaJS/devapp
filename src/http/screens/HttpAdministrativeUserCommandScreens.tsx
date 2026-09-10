@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRoute } from '@react-navigation/native';
 import {
   ActivityIndicator,
   ScrollView,
@@ -16,6 +17,7 @@ import SegmentedChips from '../../components/SegmentedChips';
 import { colors, spacing, typography } from '../../theme';
 import {
   AdministrativeUserCommandLifecycle,
+  type AdministrativeUserCommandLifecycleState,
 } from '../administrativeUserCommandLifecycle';
 import {
   AdministrativeUserConflictError,
@@ -86,6 +88,25 @@ const EMPTY_STATUS_DRAFT: AdministrativeUserStatusDraft = Object.freeze({
   motivo: 'correcao_administrativa',
   motivo_detalhe: '',
 });
+
+function useCommandNavigation(navigation: any) {
+  const route = useRoute();
+  const mounted = React.useRef(false);
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+  return React.useMemo(() => ({
+    ...navigation,
+    goBack: () => {
+      if (!mounted.current) return;
+      const current = navigation.getState();
+      if (current.routes[current.index]?.key !== route.key) return;
+      // Leaving a live route is independent of mutation confirmation/access.
+      navigation.goBack();
+    },
+  }), [navigation, route.key]);
+}
 
 function useCommandLifecycle() {
   const { runtime } = useHttpSession();
@@ -183,9 +204,11 @@ function fieldError(
 function ReviewGate({
   failure,
   onReview,
+  disabled = false,
 }: Readonly<{
   failure: AdministrativeUserCommandFailure | null;
   onReview: () => void;
+  disabled?: boolean;
 }>) {
   if (!failure?.reviewRequired) return null;
   return (
@@ -195,6 +218,7 @@ function ReviewGate({
         : 'Revisar e preparar nova intenção'}
       variant="secondary"
       onPress={onReview}
+      disabled={disabled}
     />
   );
 }
@@ -206,7 +230,62 @@ function CommandFeedback({
   return <HttpFeedback message={failure.message} />;
 }
 
-export function HttpAdministrativeUserCreateScreen({ navigation }: any) {
+function CommandProgress({ state }: Readonly<{
+  state: AdministrativeUserCommandLifecycleState;
+}>) {
+  if (!state.submitting) return null;
+  return <InfoBox message={state.mutationConfirmed
+    ? 'Comando confirmado. Carregando versão atual...'
+    : 'Processando solicitação...'} />;
+}
+
+function ConfirmedCommandRecovery({
+  title, navigation, lifecycle, lifecycleState, pending, onReconciled,
+}: Readonly<{
+  title: string;
+  navigation: any;
+  lifecycle: AdministrativeUserCommandLifecycle;
+  lifecycleState: AdministrativeUserCommandLifecycleState;
+  pending: Extract<AdministrativeUserCommandResult, {
+    kind: 'mutation_confirmed_reconciliation_failed';
+  }>;
+  onReconciled: (user: AdministrativeUserDetail) => void;
+}>) {
+  const { runtime } = useHttpSession();
+  const invalidation = runtime.administrativeUserData.current.invalidation;
+  if (
+    invalidation === 'invalid_session' || invalidation === 'forbidden'
+  ) {
+    return <InvalidTarget title={title} navigation={navigation} message="O acesso administrativo precisa ser validado novamente." />;
+  }
+  const reload = async () => {
+    const outcome = await lifecycle.runRead((context) => (
+      runtime.administrativeUserCommands.reloadAdministrativeUser(
+        context, pending.expectedUserId, pending.minimumVersion,
+      )
+    ));
+    if (!outcome.current || !outcome.leader) return;
+    if (outcome.ok) onReconciled(outcome.value);
+  };
+  return (
+    <View style={styles.container}>
+      <HttpDetailHeader title={title} navigation={navigation} />
+      <View style={styles.content}>
+        <CommandFeedback failure={confirmedReconciliationFailure()} />
+        <CommandProgress state={lifecycleState} />
+        <HttpButton
+          title="Tentar carregar versão atual"
+          variant="secondary"
+          disabled={!lifecycleState.active || lifecycleState.submitting}
+          onPress={() => { void reload(); }}
+        />
+      </View>
+    </View>
+  );
+}
+
+export function HttpAdministrativeUserCreateScreen({ navigation: routeNavigation }: any) {
+  const navigation = useCommandNavigation(routeNavigation);
   const { snapshot } = useHttpSession();
   if (!administrativeUserNavigationCapabilities(snapshot).usersTab) {
     return (
@@ -244,7 +323,7 @@ function HttpAdministrativeUserCreateAdminSurface({ navigation }: any) {
     field: K,
     value: AdministrativeUserCreateDraft[K],
   ) => {
-    if (lifecycleState.submitting || failure?.reloadRequired) return;
+    if (!lifecycle.snapshot.active || lifecycleState.submitting || failure?.reloadRequired) return;
     lifecycle.restartIntent();
     setFailure(null);
     setDraft((current) => Object.freeze({ ...current, [field]: value }));
@@ -285,6 +364,10 @@ function HttpAdministrativeUserCreateAdminSurface({ navigation }: any) {
     navigation.replace('AdministrativeUserDetail', { id: outcome.value.id });
   };
 
+  if (!lifecycleState.active) {
+    return <InvalidTarget title="Novo Usuário" navigation={navigation} message="O acesso administrativo precisa ser validado novamente. Depois da validação, abra uma nova operação." />;
+  }
+
   return (
     <View style={styles.container}>
       <HttpDetailHeader title="Novo Usuário" navigation={navigation} />
@@ -293,6 +376,7 @@ function HttpAdministrativeUserCreateAdminSurface({ navigation }: any) {
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
+        <CommandProgress state={lifecycleState} />
         <InfoBox
           title="Cadastro conectado"
           message="O Usuário nasce Pendente e recebe convite para definir a própria credencial. A confirmação usa uma releitura autoritativa do servidor."
@@ -361,6 +445,7 @@ function HttpAdministrativeUserCreateAdminSurface({ navigation }: any) {
         <CommandFeedback failure={failure} />
         <ReviewGate
           failure={failure}
+          disabled={!lifecycleState.active || lifecycleState.submitting}
           onReview={() => {
             if (failure?.reloadRequired) {
               void reload();
@@ -385,7 +470,8 @@ function HttpAdministrativeUserCreateAdminSurface({ navigation }: any) {
   );
 }
 
-export function HttpAdministrativeUserEditScreen({ route, navigation }: any) {
+export function HttpAdministrativeUserEditScreen({ route, navigation: routeNavigation }: any) {
+  const navigation = useCommandNavigation(routeNavigation);
   const { snapshot } = useHttpSession();
   if (!administrativeUserNavigationCapabilities(snapshot).userDetail) {
     return (
@@ -415,12 +501,10 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
       kind: 'mutation_confirmed_reconciliation_failed';
     }> | null
   >(null);
-  const [targetUser, setTargetUser] = React.useState<AdministrativeUserDetail | null>(null);
   const lastReset = React.useRef(lifecycleState.resetVersion);
 
   React.useEffect(() => {
     if (current.user === null) return;
-    setTargetUser(current.user);
     setModel((existing) => {
       if (existing === null || existing.userId !== current.user?.id) {
         return createAdministrativeUserEditModel(current.user!);
@@ -437,14 +521,21 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
     if (lastReset.current === lifecycleState.resetVersion) return;
     lastReset.current = lifecycleState.resetVersion;
     setModel(null);
-    setTargetUser(null);
     setFailure(null);
     setPendingReconciliation(null);
   }, [lifecycleState.resetVersion]);
 
-  const availableUser = current.user ?? (
-    pendingReconciliation === null ? null : targetUser
-  );
+  if (!lifecycleState.active) {
+    return <InvalidTarget title="Editar Usuário" navigation={navigation} message="O acesso administrativo precisa ser validado novamente. Depois da validação, abra uma nova operação." />;
+  }
+  if (pendingReconciliation !== null) {
+    return <ConfirmedCommandRecovery
+      title="Editar Usuário" navigation={navigation}
+      lifecycle={lifecycle} lifecycleState={lifecycleState}
+      pending={pendingReconciliation} onReconciled={() => navigation.goBack()}
+    />;
+  }
+  const availableUser = current.user;
   if (current.loading || (availableUser !== null && model === null)) {
     return <TargetLoading title="Editar Usuário" navigation={navigation} />;
   }
@@ -465,7 +556,7 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
     field: AdministrativeUserEditField,
     value: string,
   ) => {
-    if (lifecycleState.submitting) return;
+    if (!lifecycle.snapshot.active || lifecycleState.submitting) return;
     lifecycle.restartIntent();
     if (!failure?.reloadRequired) setFailure(null);
     setModel((currentModel) => currentModel === null
@@ -504,10 +595,8 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
     const outcome = await lifecycle.runRead((context) => (
       runtime.administrativeUserCommands.reloadAdministrativeUser(
         context,
-        pendingReconciliation?.expectedUserId ?? model.userId,
-        pendingReconciliation?.minimumVersion ??
-          failure?.currentVersion ??
-          model.baselineVersion,
+        model.userId,
+        failure?.currentVersion ?? model.baselineVersion,
       )
     ));
     if (!outcome.current || !outcome.leader) return;
@@ -516,7 +605,6 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
       ? currentModel
       : rebaseAdministrativeUserEditModel(currentModel, outcome.value));
     setFailure(null);
-    setPendingReconciliation(null);
   };
 
   return (
@@ -527,6 +615,7 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
       >
+        <CommandProgress state={lifecycleState} />
         <InfoBox message="O detalhe autoritativo foi carregado antes da edição. Perfil e status não pertencem a este formulário." />
         <SectionCard title="Dados cadastrais">
           <FormField
@@ -609,6 +698,7 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
         <CommandFeedback failure={failure} />
         <ReviewGate
           failure={failure}
+          disabled={!lifecycleState.active || lifecycleState.submitting}
           onReview={() => {
             if (failure?.reloadRequired) {
               void reload();
@@ -636,7 +726,8 @@ function HttpAdministrativeUserEditAdminSurface({ id, navigation }: Readonly<{
   );
 }
 
-export function HttpAdministrativeUserStatusScreen({ route, navigation }: any) {
+export function HttpAdministrativeUserStatusScreen({ route, navigation: routeNavigation }: any) {
+  const navigation = useCommandNavigation(routeNavigation);
   const { snapshot } = useHttpSession();
   if (!administrativeUserNavigationCapabilities(snapshot).userDetail) {
     return (
@@ -666,7 +757,6 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
       kind: 'mutation_confirmed_reconciliation_failed';
     }> | null
   >(null);
-  const [targetUser, setTargetUser] = React.useState<AdministrativeUserDetail | null>(null);
   const [confirmVisible, setConfirmVisible] = React.useState(false);
   const lastReset = React.useRef(lifecycleState.resetVersion);
 
@@ -679,14 +769,18 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
     setConfirmVisible(false);
   }, [lifecycleState.resetVersion]);
 
-  React.useEffect(() => {
-    if (current.user !== null) setTargetUser(current.user);
-  }, [current.user]);
-
+  if (!lifecycleState.active) {
+    return <InvalidTarget title="Alterar status" navigation={navigation} message="O acesso administrativo precisa ser validado novamente. Depois da validação, abra uma nova operação." />;
+  }
+  if (pendingReconciliation !== null) {
+    return <ConfirmedCommandRecovery
+      title="Alterar status" navigation={navigation}
+      lifecycle={lifecycle} lifecycleState={lifecycleState}
+      pending={pendingReconciliation} onReconciled={() => navigation.goBack()}
+    />;
+  }
   if (current.loading) return <TargetLoading title="Alterar status" navigation={navigation} />;
-  const availableUser = current.user ?? (
-    pendingReconciliation === null ? null : targetUser
-  );
+  const availableUser = current.user;
   if (current.failure || availableUser === null) {
     return <InvalidTarget title="Alterar status" navigation={navigation} message={current.failure?.message ?? 'O Usuário não foi encontrado.'} />;
   }
@@ -696,7 +790,7 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
   }
   const targetStatus = user.status === 'ativo' ? 'inativo' : 'ativo';
   const updateDraft = (next: AdministrativeUserStatusDraft) => {
-    if (lifecycleState.submitting || failure?.reloadRequired) return;
+    if (!lifecycle.snapshot.active || lifecycleState.submitting || failure?.reloadRequired) return;
     lifecycle.restartIntent();
     setFailure(null);
     setDraft(Object.freeze(next));
@@ -719,17 +813,15 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
     navigation.goBack();
   };
   const reload = async () => {
-    const expected = pendingReconciliation;
     const outcome = await lifecycle.runRead((context) => (
       runtime.administrativeUserCommands.reloadAdministrativeUser(
         context,
-        expected?.expectedUserId ?? user.id,
-        expected?.minimumVersion ?? failure?.currentVersion ?? user.versao,
+        user.id,
+        failure?.currentVersion ?? user.versao,
       )
     ));
     if (!outcome.current || !outcome.leader) return;
     if (outcome.ok === false) return;
-    setPendingReconciliation(null);
     setFailure(null);
   };
 
@@ -737,6 +829,7 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
     <View style={styles.container}>
       <HttpDetailHeader title="Alterar status" navigation={navigation} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <CommandProgress state={lifecycleState} />
         <InfoBox message={`A única transição disponível é ${STATUS_LABELS[user.status]} → ${STATUS_LABELS[targetStatus]}. Sessões afetadas seguem a revogação aplicada pelo servidor.`} />
         <SectionCard title="Motivo administrativo">
           <SegmentedChips<AdministrativeReasonCode>
@@ -765,6 +858,7 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
         <CommandFeedback failure={failure} />
         <ReviewGate
           failure={failure}
+          disabled={!lifecycleState.active || lifecycleState.submitting}
           onReview={() => {
             if (failure?.reloadRequired) {
               void reload();
@@ -801,7 +895,8 @@ function HttpAdministrativeUserStatusAdminSurface({ id, navigation }: Readonly<{
   );
 }
 
-export function HttpAdministrativeUserInvitationScreen({ route, navigation }: any) {
+export function HttpAdministrativeUserInvitationScreen({ route, navigation: routeNavigation }: any) {
+  const navigation = useCommandNavigation(routeNavigation);
   const { snapshot } = useHttpSession();
   if (!administrativeUserNavigationCapabilities(snapshot).userDetail) {
     return (
@@ -830,7 +925,6 @@ function HttpAdministrativeUserInvitationAdminSurface({ id, navigation }: Readon
       kind: 'mutation_confirmed_reconciliation_failed';
     }> | null
   >(null);
-  const [targetUser, setTargetUser] = React.useState<AdministrativeUserDetail | null>(null);
   const [confirmVisible, setConfirmVisible] = React.useState(false);
   const lastReset = React.useRef(lifecycleState.resetVersion);
 
@@ -842,14 +936,18 @@ function HttpAdministrativeUserInvitationAdminSurface({ id, navigation }: Readon
     setConfirmVisible(false);
   }, [lifecycleState.resetVersion]);
 
-  React.useEffect(() => {
-    if (current.user !== null) setTargetUser(current.user);
-  }, [current.user]);
-
+  if (!lifecycleState.active) {
+    return <InvalidTarget title="Reemitir convite" navigation={navigation} message="O acesso administrativo precisa ser validado novamente. Depois da validação, abra uma nova operação." />;
+  }
+  if (pendingReconciliation !== null) {
+    return <ConfirmedCommandRecovery
+      title="Reemitir convite" navigation={navigation}
+      lifecycle={lifecycle} lifecycleState={lifecycleState}
+      pending={pendingReconciliation} onReconciled={() => navigation.goBack()}
+    />;
+  }
   if (current.loading) return <TargetLoading title="Reemitir convite" navigation={navigation} />;
-  const availableUser = current.user ?? (
-    pendingReconciliation === null ? null : targetUser
-  );
+  const availableUser = current.user;
   if (current.failure || availableUser === null) {
     return <InvalidTarget title="Reemitir convite" navigation={navigation} message={current.failure?.message ?? 'O Usuário não foi encontrado.'} />;
   }
@@ -875,17 +973,15 @@ function HttpAdministrativeUserInvitationAdminSurface({ id, navigation }: Readon
     navigation.goBack();
   };
   const reload = async () => {
-    const expected = pendingReconciliation;
     const outcome = await lifecycle.runRead((context) => (
       runtime.administrativeUserCommands.reloadAdministrativeUser(
         context,
-        expected?.expectedUserId ?? user.id,
-        expected?.minimumVersion ?? failure?.currentVersion ?? user.versao,
+        user.id,
+        failure?.currentVersion ?? user.versao,
       )
     ));
     if (!outcome.current || !outcome.leader) return;
     if (outcome.ok === false) return;
-    setPendingReconciliation(null);
     setFailure(null);
   };
 
@@ -893,10 +989,11 @@ function HttpAdministrativeUserInvitationAdminSurface({ id, navigation }: Readon
     <View style={styles.container}>
       <HttpDetailHeader title="Reemitir convite" navigation={navigation} />
       <ScrollView contentContainerStyle={styles.content}>
-            <InfoBox
-              title="Ativação do Usuário"
-              message="O modo é fixo em ativar_usuario. A emissão substitui o convite pendente conforme o servidor."
-            />
+        <CommandProgress state={lifecycleState} />
+        <InfoBox
+          title="Ativação do Usuário"
+          message="O modo é fixo em ativar_usuario. A emissão substitui o convite pendente conforme o servidor."
+        />
         <SectionCard title="Destinatário">
           <Text style={styles.title}>{user.nome}</Text>
           <Text style={styles.muted}>{user.email}</Text>
@@ -905,6 +1002,7 @@ function HttpAdministrativeUserInvitationAdminSurface({ id, navigation }: Readon
         <CommandFeedback failure={failure} />
         <ReviewGate
           failure={failure}
+          disabled={!lifecycleState.active || lifecycleState.submitting}
           onReview={() => {
             if (failure?.reloadRequired) {
               void reload();

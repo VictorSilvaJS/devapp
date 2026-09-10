@@ -391,6 +391,43 @@ test('401/403 durante releitura de conflito limpam a fronteira sem repetir muta�
   }
 });
 
+test('401/403 na recuperação de recibo confirmado limpam dados e bloqueiam callbacks antigos', async () => {
+  for (const command of COMMANDS) {
+    for (const [status, code] of [[401, 'invalid_session'], [403, 'forbidden']]) {
+      const context = harness([
+        { status: command.status, body: receipt(command) },
+        new ApiTransportError(),
+        { status, body: { error: { code } } },
+      ]);
+      try {
+        const confirmed = await runCommand(context, command);
+        assert.equal(confirmed.ok, true, command.action);
+        assert.equal(confirmed.value.kind, 'mutation_confirmed_reconciliation_failed');
+        const pending = confirmed.value;
+        const recovery = await context.lifecycle.runRead((operation) => (
+          context.service.reloadAdministrativeUser(operation, pending.expectedUserId, pending.minimumVersion)
+        ));
+        assert.equal(recovery.current, false);
+        assert.equal(context.boundary.current.invalidation, code);
+        assert.equal(context.boundary.current.mutation, null);
+        assert.equal(context.requests.filter((request) => request.method !== 'GET').length, 1);
+        assert.equal(context.requests.filter((request) => request.method === 'GET').length, 2);
+
+        let staleReads = 0;
+        const staleSubmit = await runCommand(context, command);
+        const staleRecovery = await context.lifecycle.runRead(async () => { staleReads += 1; });
+        assert.equal(staleSubmit.current, false);
+        assert.equal(staleRecovery.current, false);
+        assert.equal(staleReads, 0, 'callback de recuperação não executa após perda de acesso');
+        assert.equal(context.requests.length, 3, 'nenhum GET ou comando após 401/403');
+        assert.equal(context.coordinator.size, 0);
+      } finally {
+        context.lifecycle.dispose();
+      }
+    }
+  }
+});
+
 test('400, 403, 404, três 409 e 422 atravessam cada fluxo real sem mutação automática', async () => {
   const errors = [
     [400, 'invalid_request'],

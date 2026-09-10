@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-03
+> Revisão documental: 2026-09-10
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -65,8 +65,15 @@ diretamente à branch `backend` no commit `e6789bf`, com CI pós-push aprovada.
 Ela foi auditada independentemente, e a confirmação pós-integração foi
 aprovada. Não houve tag, deploy, release ou publicação. Na branch
 `feat/mp-35d`, os cortes MP-35D-1 e MP-35D-2 foram concluídos na feature. O
-MP-35D-3 está implementado localmente e em validação independente, sem commit
-ou push nesta rodada; o MP-35D-4 não foi iniciado.
+MP-35D-3 teve as correções de rebase consecutivo, recuperação somente por GET
+e retomada sequencial após `403` aprovadas nas reauditorias. Uma rodada posterior encontrou
+dois achados obrigatórios: concorrência de `/me` e Cancelar antigo afetando
+nova criação. Ambos foram corrigidos. A auditoria independente final aprovou
+HEAD + worktree para commit da D-3, sem achado obrigatório remanescente ou
+evidência crítica pendente, preservando e verificando as correções anteriores.
+A correção backend do
+recibo de convite, commit `7c5256e`, foi incorporada à feature pelo merge
+`963eb0f`; o MP-35D-4 não foi iniciado.
 
 Estado formal da sequência administrativa:
 
@@ -74,37 +81,123 @@ Estado formal da sequência administrativa:
 - MP-35B: integrada.
 - MP-35C: concluída, auditada independentemente e integrada.
 - Confirmação pós-integração: aprovada.
-- MP-35D: D-1/D-2 concluídas na `feat/mp-35d`; D-3 implementada localmente e
-  em validação independente; D-4 não iniciada.
+- MP-35D: em andamento; D-1/D-2 concluídas na `feat/mp-35d`; D-3 aprovada
+  na auditoria independente final para commit; D-4 não iniciada. A integração
+  final da MP-35D na `backend` permanece posterior.
 
-## Correção focal local do backend — 2026-09-08
+## Correção focal integrada no backend — 2026-09-08
 
-Sobre `origin/backend` (`c40e8fa`), a branch `fix/mp35b-recibo-convite` alinha
-o recibo de convite exigido pela MP-35D-3: `201`, recurso Usuário da rota e
-versão corrente sem incremento artificial. A migration append-only `000010`
-preserva privilégios e bloqueia a troca de contrato quando há comandos de
-emissão retidos. O aceite público permanece `204`.
+O commit `7c5256e`, integrado na `backend` e incorporado à `feat/mp-35d` pelo
+merge `963eb0f`, alinha o recibo de convite exigido pela MP-35D-3: `201`,
+recurso Usuário da rota e versão corrente sem incremento artificial. A
+migration append-only `000010` preserva privilégios e bloqueia a troca de
+contrato quando há comandos de emissão retidos. O aceite público permanece
+`204`.
 
-São nove migrations integradas e uma correção local adicional, sem commit,
-push, deploy ou publicação. Passaram 189 unitários/contratos, 40 HTTP e 107
-integrações PostgreSQL/PostGIS, além dos demais checks em [smoke](smoke.md).
-O corte requer revisão independente e integração autorizada.
+São dez migrations integradas. Na validação da correção passaram 189
+unitários/contratos, 40 HTTP e 107 integrações PostgreSQL/PostGIS, além dos
+demais checks em [smoke](smoke.md). Não houve deploy ou publicação.
 
-O trabalho da MP-35D-3 em sua branch foi preservado; nenhum arquivo do
-aplicativo foi alterado e MP-35D-4 não foi iniciada. A fotografia das fases
-integradas abaixo refere-se à base backend, sem incorporar os arquivos da
-branch do aplicativo.
+O trabalho da MP-35D-3 foi preservado e já estava compatível com o contrato
+integrado. Na validação do fix backend, não foi necessário alterar arquivos
+do aplicativo. MP-35D-4 não foi iniciada.
+
+## Correções focais da MP-35D-3 — 2026-09-10
+
+A primeira auditoria independente desta sequência resultou em **CORREÇÕES OBRIGATÓRIAS** para
+dois defeitos do aplicativo: perda de conflito pendente em rebases consecutivos
+e spinner sem GET em andamento após falha de releitura de comando confirmado.
+
+As correções preservam o conflito até resolução explícita, a intenção local e a
+atualização autoritativa dos campos intocados. Edição, status e convite passam
+a apresentar a falha de releitura e recuperação somente por GET, mantendo a
+criação, a invalidação dos dados, a correlação do recibo, o bloqueio de submit
+e as proteções de identidade, autorização e lifecycle. O código e as regressões
+permanentes estão descritos no
+[contrato administrativo](contrato-administracao-mp35.md) e na
+[matriz de testes](testes-contrato-api-rbac.md).
+
+Estado ao término daquela rodada: **CORREÇÕES IMPLEMENTADAS — AGUARDANDO
+REAUDITORIA INDEPENDENTE**. Naquele momento a D-3 não estava aprovada.
+MP-35D-4 não foi iniciada; não houve
+smoke Android físico, build de release ou liberação produtiva nesta correção.
+
+### Retomada após 403 — rodada posterior da mesma data
+
+A reauditoria confirmou os dois reparos anteriores e também a correlação de
+recibo, a inércia de callback após confirmação e a conclusão/navegação únicas.
+Encontrou um novo bloqueador P2: mesmo após `/v1/auth/me` aceitar Admin na mesma
+partição, uma nova criação habilitava o botão e não enviava POST nem feedback.
+
+A fronteira agora reconhece a revalidação aceita por meio do lease capturado
+antes de `/me`; uma invalidação posterior torna esse lease obsoleto. A retomada
+avança a geração local e libera novos fluxos, mantendo cancelados os anteriores.
+Falhas tardias também respeitam o lease original. A tela bloqueada apresenta
+feedback e exige abrir uma nova operação após validar a sessão.
+
+O cenário real de tela e React Navigation falhou antes do reparo com um POST em
+vez de dois, com e sem GET administrativo incidental. Após o reparo, a nova
+intenção envia exatamente o segundo POST, com dados e chave idempotente novos.
+Foram validados 86 casos D-3, além das regressões D-1/D-2 e da compatibilidade;
+composição e demais controles estão na [matriz de testes](testes-contrato-api-rbac.md).
+
+A reauditoria daquela rodada aprovou a retomada sequencial acima, com e sem GET
+incidental. Os 86 casos são a referência dessa rodada anterior.
+
+### Concorrência de /me e Cancelar antigo — nova rodada da mesma data
+
+Foram reproduzidos os dois achados obrigatórios daquela reauditoria. Uma
+revalidação A anterior ao `403` publicava outro objeto de snapshot e fazia B,
+iniciada após a invalidação, ser descartada por referência: Admin não retomava
+e reduções para Produtor/Colaborador eram perdidas. O Cancelar preexistente de
+uma criação descartada executava `goBack` sobre outra criação e perdia seu draft.
+
+O coordenador agora ordena `/me` pelo início: somente a revalidação mais recente
+iniciada pode publicar, mantendo as guardas de epoch, identidade e token da
+tentativa efetiva. A fronteira continua exigindo seu lease atual. A não restaura
+acesso; B válida aplica o perfil nas duas ordens de entrega. Admin libera novos
+fluxos sem terceira revalidação ou GET incidental; Produtor/Colaborador removem
+a administração. Invalidação posterior impede retomada por B, e lifecycles
+cancelados continuam cancelados.
+
+Cancelar e as ocorrências equivalentes de Voltar nas quatro telas do mesmo
+componente exigem instância montada e chave da rota atual. O Cancelar legítimo
+continua funcionando, inclusive após recibo confirmado e falha de releitura.
+
+As regressões falharam antes da correção e passaram depois. A suíte D-3 está em
+106/106; a sessão MP-33C recebeu oito casos, com composição e evidências na
+[matriz de testes](testes-contrato-api-rbac.md).
+Estado ao término daquela implementação: **CORREÇÕES DE CONCORRÊNCIA /me E
+CALLBACK CANCELAR IMPLEMENTADAS — AGUARDANDO REAUDITORIA INDEPENDENTE**.
+Naquele momento a D-3 seguia sem aprovação formal; D-4 não foi iniciada.
+Não houve smoke Android físico, release ou liberação produtiva.
+
+### Aprovação independente final e fechamento controlado — 2026-09-10
+
+Parecer final: **APROVADA PARA COMMIT DO MP-35D-3**. A auditoria independente
+cobriu HEAD `963eb0f673d5f51e369d574f9210a8b690f486dc` + worktree (20 arquivos,
+`+1918/-164`), sem achados obrigatórios ou evidência crítica pendentes.
+As correções anteriores foram preservadas e verificadas.
+
+Validações executadas pelo auditor independente: typecheck passou; MP-35D-1
+52/52; MP-35D-2 85/85; MP-35D-3 106/106; MP-33C 46/46; domain-compat e
+`git diff --check` passaram. O fechamento altera somente registros documentais
+de aprovação e preserva código, testes, dependências, configuração e contratos.
+
+MP-35D permanece em andamento; D-4 não iniciada. A integração final da MP-35D
+na `backend` será posterior. Não houve smoke Android físico, build de release
+ou validação produtiva; este fechamento não libera produção ou release.
 
 ## Estado por camada
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil, notificações e administração D-3 de Usuários; D-3 em validação independente, sem teste Android físico ou release produtivo |
+| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil, notificações e administração D-3 de Usuários; D-3 aprovada na auditoria independente final para commit; MP-35D em andamento e D-4 não iniciada, sem teste Android físico ou release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
 | API | Health, readiness, OpenAPI, `/v1/auth`, `/v1/usuarios`, `/v1/propriedades`, `/v1/localidades` e `/v1/notificacoes` validados localmente |
-| Banco | Nove migrations integradas, incluindo a `000009` append-only da MP-35C; nenhum ambiente produtivo implantado |
+| Banco | Dez migrations integradas, incluindo a `000010` append-only que alinha o recibo administrativo de convite; nenhum ambiente produtivo implantado |
 | E-mail | Outbox e worker SMTP validados localmente; Mailpit somente local, sem provedor produtivo definido |
 | Arquivos | Importação, consulta e exportação locais; sem storage remoto |
 | Offline | Demo mantém leitura local por fluxo; composição HTTP é online-only e não possui fila de sincronização |
@@ -142,7 +235,8 @@ Propriedades, vínculos e Localidades estão concluídos e integrados na MP-35C
 pelo commit `e6789bf`, com CI pós-push, auditoria independente e confirmação
 pós-integração aprovadas. A integração do aplicativo avançou somente até o
 MP-35D-3: fundação D-1 e leitura administrativa D-2 integradas na
-`feat/mp-35d`, e comandos de Usuário D-3 implementados localmente.
+`feat/mp-35d`, e comandos de Usuário D-3 registrados no commit `a92d6d6`, com
+correções focais aprovadas na auditoria independente final para commit.
 Propriedades administrativas, vínculos, Localidades e validação física D-4
 continuam fora.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
@@ -494,12 +588,14 @@ diretamente no commit `e47bb02`, com os três jobs da CI pós-push aprovados.
 A MP-35A também está concluída e integrada diretamente no commit `a51389e`,
 com CI pós-push aprovada e sem antecipar endpoints ou telas. A MP-35B foi
 aprovada em reauditoria independente e integrada diretamente no commit
-`60144c2`, com CI pós-push aprovada. A MP-35C foi concluída, auditada
-independentemente e integrada diretamente no commit `e6789bf`; sua confirmação
-pós-integração foi aprovada. Na `feat/mp-35d`, D-1/D-2 estão concluídas e D-3
-está implementada localmente e em validação independente, sem commit/push;
-D-4 permanece não
-iniciada.
+`60144c2`, com CI pós-push aprovada. A correção do recibo administrativo de
+convite foi integrada na `backend` em `7c5256e`. A MP-35C foi concluída,
+auditada independentemente e integrada diretamente no commit `e6789bf`; sua
+confirmação pós-integração foi aprovada. Na `feat/mp-35d`, D-1/D-2 estão
+concluídas e D-3 recebeu correções obrigatórias, implementadas e aprovadas na
+auditoria independente final para commit, sem achado obrigatório remanescente.
+MP-35D segue em andamento; D-4 não iniciada e integração final na `backend`
+posterior.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de

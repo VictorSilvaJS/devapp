@@ -99,6 +99,16 @@ export function createHttpRuntime(
       administrativeUserSessionPartition(snapshot, session.epoch),
     );
   });
+  session.subscribeRevalidation(() => {
+    const lease = administrativeUserData.issueLease();
+    return (snapshot) => {
+      if (snapshot.usuario.perfil !== 'admin' || snapshot.usuario.status !== 'ativo') return;
+      administrativeUserData.acceptSessionRevalidation(
+        lease,
+        administrativeUserSessionPartition(snapshot, session.epoch),
+      );
+    };
+  });
   return {
     config,
     api,

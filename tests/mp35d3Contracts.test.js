@@ -205,6 +205,83 @@ test('nome, telefone, documento, observações e e-mail têm resolução explíc
   }
 });
 
+test('rebase consecutivo v1→v2→v3 preserva conflito pendente com servidor estável e adota campo intocado', () => {
+  let model = createAdministrativeUserEditModel(detail({ nome: 'A' }));
+  model = updateAdministrativeUserEditField(model, 'nome', 'Operador');
+  model = rebaseAdministrativeUserEditModel(model, detail({ nome: 'Servidor', versao: 2 }));
+  assert.deepEqual(model.fieldConflicts.nome, {
+    serverValue: 'Servidor',
+    operatorValue: 'Operador',
+  });
+  assert.throws(() => buildPatchAdministrativeUserPayload(model), /Resolva os conflitos/);
+
+  const latest = detail({ nome: 'Servidor', documento: 'DOC-3', versao: 3 });
+  for (const authoritative of [latest, latest]) {
+    model = rebaseAdministrativeUserEditModel(model, authoritative);
+    assert.equal(model.baselineVersion, 3);
+    assert.equal(model.baselineValues.nome, 'Servidor');
+    assert.equal(model.baselineValues.documento, 'DOC-3');
+    assert.equal(model.draftValues.nome, 'Operador');
+    assert.equal(model.draftValues.documento, 'DOC-3');
+    assert.deepEqual(model.dirtyFields, ['nome']);
+    assert.deepEqual(model.fieldConflicts.nome, {
+      serverValue: 'Servidor',
+      operatorValue: 'Operador',
+    });
+    assert.throws(() => buildPatchAdministrativeUserPayload(model), /Resolva os conflitos/);
+  }
+});
+
+for (const resolution of ['server', 'operator']) {
+  test(`resolução ${resolution} após rebases consecutivos preserva dirtyFields e usa a versão autoritativa atual`, () => {
+    let model = createAdministrativeUserEditModel(detail({ nome: 'A' }));
+    model = updateAdministrativeUserEditField(model, 'nome', 'Operador');
+    model = updateAdministrativeUserEditField(model, 'telefone', 'Telefone operador');
+    model = rebaseAdministrativeUserEditModel(model, detail({ nome: 'Servidor', versao: 2 }));
+    model = rebaseAdministrativeUserEditModel(model, detail({
+      nome: 'Servidor', documento: 'DOC-3', versao: 3,
+    }));
+    assert.ok(model.fieldConflicts.nome);
+
+    model = resolveAdministrativeUserEditConflict(model, 'nome', resolution);
+    assert.equal(model.baselineVersion, 3);
+    assert.equal(model.baselineValues.nome, 'Servidor');
+    assert.equal(model.draftValues.nome, resolution === 'server' ? 'Servidor' : 'Operador');
+    assert.equal(model.draftValues.documento, 'DOC-3');
+    assert.deepEqual(model.fieldConflicts, {});
+    assert.deepEqual(model.dirtyFields, resolution === 'server' ? ['telefone'] : ['nome', 'telefone']);
+    assert.deepEqual(buildPatchAdministrativeUserPayload(model), {
+      versao: 3,
+      ...(resolution === 'operator' ? { nome: 'Operador' } : {}),
+      telefone: 'Telefone operador',
+    });
+  });
+}
+
+test('conflito pendente acompanha o valor autoritativo sem resolução silenciosa quando servidor converge ao draft', () => {
+  let model = createAdministrativeUserEditModel(detail({ nome: 'A' }));
+  model = updateAdministrativeUserEditField(model, 'nome', 'Operador');
+  model = rebaseAdministrativeUserEditModel(model, detail({ nome: 'Servidor', versao: 2 }));
+
+  for (const [versao, nome] of [[3, 'Servidor v3'], [4, 'Operador'], [5, 'Operador']]) {
+    model = rebaseAdministrativeUserEditModel(model, detail({ nome, versao }));
+    assert.equal(model.baselineVersion, versao);
+    assert.equal(model.baselineValues.nome, nome);
+    assert.equal(model.draftValues.nome, 'Operador');
+    assert.deepEqual(model.dirtyFields, nome === 'Operador' ? [] : ['nome']);
+    assert.deepEqual(model.fieldConflicts.nome, { serverValue: nome, operatorValue: 'Operador' });
+    assert.throws(() => buildPatchAdministrativeUserPayload(model), /Resolva os conflitos/);
+  }
+  for (const resolution of ['server', 'operator']) {
+    const resolved = resolveAdministrativeUserEditConflict(model, 'nome', resolution);
+    assert.equal(resolved.baselineVersion, 5);
+    assert.equal(resolved.draftValues.nome, 'Operador');
+    assert.deepEqual(resolved.fieldConflicts, {});
+    assert.deepEqual(resolved.dirtyFields, []);
+    assert.throws(() => buildPatchAdministrativeUserPayload(resolved), /Nenhuma alteração/);
+  }
+});
+
 test('mudança pendente→ativo durante conflito bloqueia e-mail administrativo', () => {
   let model = createAdministrativeUserEditModel(detail());
   model = updateAdministrativeUserEditField(model, 'email', 'operador@example.test');

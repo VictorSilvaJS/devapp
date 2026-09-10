@@ -252,6 +252,21 @@ export class AdministrativeUserDetailController {
       }
       return;
     }
+    if (boundary.invalidation === 'reconciliation_failed') {
+      this.#publish({
+        partitionKey: boundary.partitionKey,
+        requestedUserId: this.#state.requestedUserId,
+        loadedForUserId: null,
+        user: null,
+        loading: false,
+        failure: Object.freeze({
+          kind: 'unavailable',
+          message: 'Os dados do Usuário precisam ser carregados novamente.',
+          retryable: true,
+        }),
+      });
+      return;
+    }
     this.#publish({
       partitionKey: boundary.partitionKey,
       requestedUserId: null,

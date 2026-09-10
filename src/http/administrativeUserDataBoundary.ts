@@ -79,6 +79,21 @@ export class AdministrativeUserDataBoundary {
     return true;
   }
 
+  acceptSessionRevalidation(
+    lease: AdministrativeUserReadLease,
+    partitionKey: string | null,
+  ): boolean {
+    if (
+      partitionKey === null ||
+      !this.isLeaseCurrent(lease, partitionKey) ||
+      this.#snapshot.invalidation !== 'forbidden'
+    ) return false;
+    // Restore shared access, never the generation/leases invalidated by 403.
+    this.#snapshot = snapshot(partitionKey, this.#snapshot.generation + 1, null);
+    this.#notify();
+    return true;
+  }
+
   issueLease(
     options: Readonly<{ allowInitialRestore?: boolean }> = {},
   ): AdministrativeUserReadLease {

@@ -27,6 +27,10 @@ class StaleSessionOperationError extends Error {}
 
 export type SessionListener = (snapshot: SessionSnapshot | null) => void;
 
+// Observers capture their local context before /me and only receive an identity
+// after the coordinator has validated and accepted it in the current session.
+export type SessionRevalidationObserver = () => (snapshot: SessionSnapshot) => void;
+
 export interface AuthenticatedSessionContext {
   readonly snapshot: SessionSnapshot;
   readonly epoch: number;
@@ -40,9 +44,11 @@ export class SessionCoordinator {
   readonly #monotonicNow: () => number;
   readonly #wallClockNow: () => number;
   readonly #listeners = new Set<SessionListener>();
+  readonly #revalidationObservers = new Set<SessionRevalidationObserver>();
   #accessToken: string | null = null;
   #snapshot: SessionSnapshot | null = null;
   #epoch = 0;
+  #revalidationSequence = 0;
   #storeTail: Promise<void> = Promise.resolve();
   #rotationTail: Promise<void> = Promise.resolve();
   #refreshInFlight: {
@@ -74,6 +80,11 @@ export class SessionCoordinator {
   subscribe(listener: SessionListener): () => void {
     this.#listeners.add(listener);
     return () => this.#listeners.delete(listener);
+  }
+
+  subscribeRevalidation(observer: SessionRevalidationObserver): () => void {
+    this.#revalidationObservers.add(observer);
+    return () => this.#revalidationObservers.delete(observer);
   }
 
   #publish(snapshot: SessionSnapshot | null): void {
@@ -543,12 +554,24 @@ export class SessionCoordinator {
 
   async revalidate(): Promise<SessionSnapshot> {
     const validationEpoch = this.#epoch;
+    const validationSequence = ++this.#revalidationSequence;
+    const acceptedObservers = Array.from(this.#revalidationObservers, (observer) => observer());
+    let attemptedAccessToken: string | null = null;
+    const superseded = () => (
+      validationSequence !== this.#revalidationSequence ||
+      (attemptedAccessToken !== null && attemptedAccessToken !== this.#accessToken)
+    );
     let identity: HttpSessionIdentity;
     try {
       identity = await this.#authenticatedCore((accessToken) => {
+        // Capture the actual attempt, including refresh/retry already accepted.
+        attemptedAccessToken = accessToken;
         return this.#api.me(accessToken);
       });
     } catch (error) {
+      if (
+        this.#epoch === validationEpoch && this.#snapshot !== null && superseded()
+      ) return this.#snapshot;
       if (
         error instanceof InvalidBackendResponseError ||
         (error instanceof ApiResponseError &&
@@ -562,7 +585,17 @@ export class SessionCoordinator {
       }
       throw error;
     }
-    return this.#applyIdentity(identity, validationEpoch);
+    if (this.#epoch !== validationEpoch) throw new SessionRequiredError();
+    // The latest STARTED validation owns publication, independently of arrival
+    // order or snapshot object replacement. A later token rotation also retires
+    // the attempt. Neither case may notify observers with a discarded reply.
+    if (this.#snapshot !== null && superseded()) return this.#snapshot;
+    const accepted = await this.#applyIdentity(identity, validationEpoch);
+    for (const observer of acceptedObservers) {
+      if (this.#epoch !== validationEpoch || superseded() || this.#snapshot !== accepted) break;
+      observer(accepted);
+    }
+    return accepted;
   }
 
   async #applyIdentity(

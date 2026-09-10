@@ -22,11 +22,343 @@ const {
 const { ApiResponseError } = require('../.tmp-mp35d3/src/http/backendApi');
 const { InvalidBackendResponseError } = require('../.tmp-mp35d3/src/http/decoders');
 const { ApiTransportError } = require('../.tmp-mp35d3/src/http/httpTransport');
+const {
+  AdministrativeUserDetailController,
+  administrativeUserDetailStateForTarget,
+} = require('../.tmp-mp35d3/src/http/administrativeUserDetailController');
 
 const USER_ID = '11111111-1111-4111-8111-111111111111';
 const PRODUCER_ID = '22222222-2222-4222-8222-222222222222';
 const INTENT_A = createAdministrativeIntentId(() => '33333333-3333-4333-8333-333333333333');
 const ACCESS_TOKEN = 'A'.repeat(43);
+global.expo = { uuidv4: require('node:crypto').randomUUID };
+
+// The D-3 script also compiles the real runtime used by the navigation suite.
+// Only the native storage module is replaced; session, decoders and wiring are real.
+const Module = require('node:module');
+const originalLoad = Module._load;
+let createRecoveryRuntime;
+try {
+  Module._load = function(request, parent, isMain) {
+    if (request === 'expo-secure-store') return { WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'test' };
+    return originalLoad.call(this, request, parent, isMain);
+  };
+  createRecoveryRuntime = require('../.tmp-mp35d2-navigation/src/http/runtime').createHttpRuntime;
+} finally {
+  Module._load = originalLoad;
+}
+const { AdministrativeUserCommandLifecycle: RecoveryLifecycle } =
+  require('../.tmp-mp35d2-navigation/src/http/administrativeUserCommandLifecycle');
+
+async function recoveryFixture() {
+  const requests = [];
+  const pendingMe = [];
+  const pendingReads = [];
+  const store = {
+    value: null,
+    async read() { return this.value; },
+    async write(value) { this.value = value; },
+    async clear() { this.value = null; },
+  };
+  const runtime = createRecoveryRuntime({ apiBaseUrl: 'https://api.example.test' }, {
+    refreshTokenStore: store,
+    monotonicNow: () => 0,
+    wallClockNow: () => Date.parse('2026-09-01T12:00:00.000Z'),
+    transport: {
+      async send(request) {
+        requests.push(request);
+        if (request.url.endsWith('/v1/auth/login')) return { status: 200, body: {
+          access_token: ACCESS_TOKEN, refresh_token: 'B'.repeat(43), token_type: 'Bearer', expires_in: 900,
+          emitido_em: '2026-09-01T12:00:00.000Z', access_expira_em: '2026-09-01T12:15:00.000Z',
+          sessao: { id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+            expira_inatividade_em: '2026-09-15T12:00:00.000Z',
+            expira_absolutamente_em: '2026-10-01T12:00:00.000Z' },
+          usuario: { ...user(), perfil: 'admin', status: 'ativo', versao_autorizacao: 1 },
+          escopo: { modo: 'organizacao', versao: 1 },
+        } };
+        if (request.url.endsWith('/v1/auth/me')) {
+          const gate = deferred(); pendingMe.push(gate); return gate.promise;
+        }
+        if (request.url.endsWith('/v1/auth/logout')) return { status: 204 };
+        if (request.method === 'POST') return { status: 201, body: {
+          resultado: 'criado', recurso_tipo: 'usuario', recurso_id: USER_ID, versao: 1,
+        } };
+        if (request.url.endsWith(`/v1/usuarios/${USER_ID}`)) {
+          const gate = deferred(); pendingReads.push(gate); return gate.promise;
+        }
+        throw new Error(`HTTP inesperado: ${request.url}`);
+      },
+    },
+  });
+  await runtime.session.login('admin@example.test', 'Senha 123');
+  const lifecycles = [];
+  const context = {
+    ...runtime, requests, pendingMe, pendingReads,
+    lifecycle() {
+      const lifecycle = new RecoveryLifecycle({
+        boundary: runtime.administrativeUserData,
+        discardIntent: (id) => runtime.administrativeUserCommands.discardIntent(id),
+        createIntent: () => createAdministrativeIntentId(() => require('node:crypto').randomUUID()),
+      });
+      lifecycle.start(); lifecycles.push(lifecycle); return lifecycle;
+    },
+    identity(overrides = {}) {
+      const current = runtime.session.snapshot;
+      return { sessao: { id: current.id }, usuario: current.usuario, escopo: current.escopo, ...overrides };
+    },
+    async revalidate(response) {
+      const pending = runtime.session.revalidate();
+      const observed = pending.then((value) => ({ value }), (error) => ({ error }));
+      await new Promise((resolve) => setImmediate(resolve));
+      pendingMe.at(-1).resolve(response ?? { status: 200, body: context.identity() });
+      return observed;
+    },
+    async forbid(lifecycle = context.lifecycle()) {
+      const pending = lifecycle.runRead((operation) => runtime.administrativeUserCommands.reloadAdministrativeUser(operation, USER_ID));
+      await new Promise((resolve) => setImmediate(resolve));
+      pendingReads.at(-1).resolve({ status: 403, body: { error: { code: 'forbidden' } } });
+      assert.equal((await pending).current, false);
+      assert.equal(runtime.administrativeUserData.current.invalidation, 'forbidden');
+      return lifecycle;
+    },
+    dispose() { for (const lifecycle of lifecycles) lifecycle.dispose(); },
+  };
+  return context;
+}
+
+test('runtime real: dois ciclos 403/revalidação na mesma partição liberam novos comandos/leituras e nunca lifecycles antigos', async () => {
+  const context = await recoveryFixture();
+  try {
+    const boundary = context.administrativeUserData;
+    const partition = boundary.current.partitionKey;
+    const cancelled = [];
+    for (let cycle = 0; cycle < 2; cycle += 1) {
+      const old = context.lifecycle();
+      const oldLease = old.currentLease;
+      await context.forbid(old);
+      cancelled.push(old);
+      const blocked = context.lifecycle();
+      cancelled.push(blocked);
+      assert.equal(boundary.synchronizePartition(partition), false);
+      let forbiddenCalls = 0;
+      await blocked.run(async () => { forbiddenCalls += 1; });
+      await blocked.runRead(async () => { forbiddenCalls += 1; });
+      assert.equal(forbiddenCalls, 0, 'montagem não restaura autorização');
+      assert.equal((await context.revalidate()).error, undefined);
+      assert.equal(boundary.current.partitionKey, partition);
+      assert.equal(boundary.current.invalidation, null);
+      assert.equal(boundary.current.mutation, null);
+      assert.equal(boundary.isLeaseCurrent(oldLease), false);
+      for (const lifecycle of cancelled) {
+        lifecycle.start();
+        assert.equal(lifecycle.restartIntent(), false);
+        await lifecycle.run(async () => { forbiddenCalls += 1; });
+        await lifecycle.runRead(async () => { forbiddenCalls += 1; });
+        lifecycle.dispose(); lifecycle.start();
+        await lifecycle.run(async () => { forbiddenCalls += 1; });
+      }
+      assert.equal(forbiddenCalls, 0, 'retomada não revive callbacks/start/remount antigos');
+      const next = context.lifecycle();
+      const read = next.runRead((operation) => context.administrativeUserCommands.reloadAdministrativeUser(operation, USER_ID));
+      await new Promise((resolve) => setImmediate(resolve));
+      context.pendingReads.at(-1).resolve({ status: 200, body: user() });
+      assert.equal((await read).ok, true);
+      const command = next.run((intent, operation) => context.administrativeUserCommands.create(intent, {
+        nome: `Nova intenção ${cycle}`, email: `nova${cycle}@example.test`, perfil: 'produtor',
+      }, operation));
+      await new Promise((resolve) => setImmediate(resolve));
+      context.pendingReads.at(-1).resolve({ status: 200, body: user() });
+      const commandResult = await command;
+      assert.equal(commandResult.ok, true, String(commandResult.error));
+      assert.equal(context.requests.filter((request) => request.url.endsWith('/v1/usuarios') && request.method === 'POST').length, cycle + 1);
+    }
+  } finally { context.dispose(); }
+});
+
+for (const failure of ['503', 'transport', 'malformed', 'inactive', 'forbidden', 'produtor', 'colaborador', 'identity']) {
+  test(`revalidação ${failure} não retoma acesso administrativo`, async () => {
+    const context = await recoveryFixture();
+    try {
+      const old = await context.forbid();
+      const pending = context.session.revalidate();
+      const observed = pending.then((value) => ({ value }), (error) => ({ error }));
+      await new Promise((resolve) => setImmediate(resolve));
+      const gate = context.pendingMe.at(-1);
+      const blocked = context.lifecycle();
+      let calls = 0;
+      await blocked.run(async () => { calls += 1; });
+      await blocked.runRead(async () => { calls += 1; });
+      assert.equal(calls, 0, 'revalidação pendente');
+      const identity = context.identity();
+      if (failure === 'transport') gate.reject(new Error('offline'));
+      else if (failure === '503') gate.resolve({ status: 503, body: { error: { code: 'service_unavailable' } } });
+      else if (failure === 'forbidden') gate.resolve({ status: 403, body: { error: { code: 'forbidden' } } });
+      else if (failure === 'malformed') gate.resolve({ status: 200, body: {} });
+      else {
+        const usuario = { ...identity.usuario };
+        let escopo = identity.escopo;
+        if (failure === 'inactive') usuario.status = 'inativo';
+        else if (failure === 'identity') usuario.id = PRODUCER_ID;
+        else { usuario.perfil = failure; escopo = { ...escopo, modo: 'vinculos_propriedade' }; }
+        gate.resolve({ status: 200, body: { ...identity, usuario, escopo } });
+      }
+      const outcome = await observed;
+      if (failure === 'produtor' || failure === 'colaborador') assert.equal(outcome.value.usuario.perfil, failure);
+      else assert.ok(outcome.error);
+      await old.run(async () => { calls += 1; });
+      await blocked.runRead(async () => { calls += 1; });
+      assert.equal(calls, 0);
+      const next = context.lifecycle();
+      const creation = await next.run((intent, operation) => context.administrativeUserCommands.create(intent, {
+        nome: 'Não autorizado', email: 'negado@example.test', perfil: 'produtor',
+      }, operation));
+      assert.equal(creation.ok, false);
+      assert.equal(context.requests.filter((request) => request.method === 'POST' && request.url.endsWith('/v1/usuarios')).length, 0);
+    } finally { context.dispose(); }
+  });
+}
+
+test('revalidação iniciada antes de uma invalidação mais recente não restaura acesso', async () => {
+  const context = await recoveryFixture();
+  try {
+    const old = await context.forbid();
+    const pending = context.session.revalidate();
+    await new Promise((resolve) => setImmediate(resolve));
+    // Outro 403 observado pela fronteira depois do início desta revalidação.
+    const boundary = context.administrativeUserData;
+    boundary.invalidateAccess(boundary.issueLease(), 'forbidden');
+    const invalidated = boundary.current;
+    context.pendingMe.at(-1).resolve({ status: 200, body: context.identity() });
+    await pending;
+    assert.strictEqual(boundary.current, invalidated);
+    assert.equal(old.snapshot.active, false);
+    assert.equal((await context.revalidate()).error, undefined);
+    assert.equal(boundary.current.invalidation, null);
+    assert.equal(old.snapshot.active, false);
+  } finally { context.dispose(); }
+});
+
+test('resposta /me concorrente antiga não desfaz redução de perfil aceita', async () => {
+  for (const lateResponse of ['admin', 'malformed', 'forbidden']) {
+    const context = await recoveryFixture();
+    try {
+      await context.forbid();
+      const identity = context.identity();
+      const old = context.session.revalidate();
+      await new Promise((resolve) => setImmediate(resolve));
+      const newer = await context.revalidate({ status: 200, body: {
+        ...identity, usuario: { ...identity.usuario, perfil: 'produtor' },
+        escopo: { modo: 'vinculos_propriedade', versao: 1 },
+      } });
+      assert.equal(newer.value.usuario.perfil, 'produtor');
+      context.pendingMe[0].resolve(lateResponse === 'forbidden'
+        ? { status: 403, body: { error: { code: 'forbidden' } } }
+        : { status: 200, body: lateResponse === 'admin' ? identity : {} });
+      assert.strictEqual(await old, newer.value, 'resposta descartada preserva a sessão já aceita');
+      assert.equal(context.session.snapshot.usuario.perfil, 'produtor');
+    } finally { context.dispose(); }
+  }
+});
+
+for (const profile of ['admin', 'produtor', 'colaborador']) {
+  for (const order of ['A-B', 'B-A']) {
+    test(`A antes de 403, B=${profile} depois: runtime aceita B com entrega ${order}`, async () => {
+      const context = await recoveryFixture();
+      try {
+        const boundary = context.administrativeUserData;
+        const partition = boundary.current.partitionKey;
+        const identity = context.identity();
+        const a = context.session.revalidate();
+        assert.equal(context.pendingMe.length, 1);
+        const old = await context.forbid();
+        const invalidated = boundary.current;
+        const b = context.session.revalidate();
+        assert.equal(context.pendingMe.length, 2);
+        if (order === 'A-B') {
+          context.pendingMe[0].resolve({ status: 200, body: identity });
+          await a;
+          assert.strictEqual(boundary.current, invalidated, 'A não restaura acesso após o 403');
+        }
+        context.pendingMe[1].resolve({ status: 200, body: {
+          ...identity, usuario: { ...identity.usuario, perfil: profile },
+          escopo: { ...identity.escopo, modo: profile === 'admin' ? 'organizacao' : 'vinculos_propriedade' },
+        } });
+        assert.equal((await b).usuario.perfil, profile);
+        const afterB = boundary.current;
+        if (order === 'B-A') {
+          context.pendingMe[0].resolve({ status: 200, body: identity });
+          await a;
+          assert.strictEqual(boundary.current, afterB, 'A tardia não publica nem restaura Admin');
+        }
+        assert.equal(context.session.snapshot.usuario.perfil, profile);
+        assert.equal(old.snapshot.active, false);
+        let oldCalls = 0;
+        await old.run(async () => { oldCalls += 1; });
+        await old.runRead(async () => { oldCalls += 1; });
+        assert.equal(oldCalls, 0);
+        assert.equal(boundary.current.mutation, null);
+        if (profile === 'admin') {
+          assert.equal(boundary.current.partitionKey, partition);
+          assert.equal(boundary.current.invalidation, null);
+          const next = context.lifecycle();
+          assert.equal((await next.run(async () => 'novo comando')).value, 'novo comando');
+          assert.equal((await next.runRead(async () => 'nova leitura')).value, 'nova leitura');
+        } else {
+          assert.notEqual(boundary.current.partitionKey, partition);
+          assert.equal(boundary.current.invalidation, 'partition_changed');
+          const next = context.lifecycle();
+          const outcome = await next.run((intent, operation) => context.administrativeUserCommands.create(intent, {
+            nome: 'Negado', email: 'negado@example.test', perfil: 'produtor',
+          }, operation));
+          assert.equal(outcome.ok, false);
+          assert.equal(context.requests.some((request) => request.url.endsWith('/v1/usuarios')), false);
+        }
+        assert.equal(context.pendingMe.length, 2, 'sem terceira revalidação');
+      } finally { context.dispose(); }
+    });
+  }
+}
+
+test('invalidação posterior à captura de B impede retomada mesmo com duas respostas Admin', async () => {
+  const context = await recoveryFixture();
+  try {
+    const identity = context.identity();
+    const a = context.session.revalidate();
+    const old = await context.forbid();
+    const b = context.session.revalidate();
+    const boundary = context.administrativeUserData;
+    boundary.invalidateAccess(boundary.issueLease(), 'forbidden');
+    const invalidated = boundary.current;
+    context.pendingMe[0].resolve({ status: 200, body: identity }); await a;
+    context.pendingMe[1].resolve({ status: 200, body: identity }); await b;
+    assert.strictEqual(boundary.current, invalidated);
+    assert.equal(old.snapshot.active, false);
+    assert.equal(context.lifecycle().snapshot.active, false);
+    assert.equal(context.pendingMe.length, 2);
+  } finally { context.dispose(); }
+});
+
+test('troca de identidade ou dispose durante /me mantém callbacks e leases antigos inertes', async () => {
+  for (const interruption of ['login', 'dispose']) {
+    const context = await recoveryFixture();
+    try {
+      const old = await context.forbid();
+      const identity = context.identity();
+      const pending = context.session.revalidate().then((value) => ({ value }), (error) => ({ error }));
+      await new Promise((resolve) => setImmediate(resolve));
+      if (interruption === 'login') await context.session.login('admin@example.test', 'Senha 123');
+      else old.dispose();
+      context.pendingMe[0].resolve({ status: 200, body: identity });
+      const result = await pending;
+      if (interruption === 'login') assert.ok(result.error);
+      let calls = 0;
+      await old.run(async () => { calls += 1; });
+      await old.runRead(async () => { calls += 1; });
+      assert.equal(calls, 0);
+      assert.equal(old.snapshot.active, false);
+    } finally { context.dispose(); }
+  }
+});
 
 function user(overrides = {}) {
   return {
@@ -108,6 +440,52 @@ test('nenhum submit inicia antes de start', async () => {
   const outcome = await lifecycle.run(async () => { calls += 1; });
   assert.deepEqual(outcome, { current: false, leader: false, ok: false });
   assert.equal(calls, 0);
+});
+
+test('reconciliação falha limpa detalhe e leitura antiga sem inventar carregamento', async () => {
+  const boundary = new AdministrativeUserDataBoundary('admin-A');
+  const oldRead = deferred();
+  let reads = 0;
+  const controller = new AdministrativeUserDetailController({
+    getById() {
+      reads += 1;
+      return reads === 1 ? Promise.resolve(user()) : oldRead.promise;
+    },
+  }, boundary);
+  const unsubscribe = controller.subscribe(() => {});
+  try {
+    await controller.load(USER_ID);
+    const pending = controller.load(USER_ID);
+    await Promise.resolve();
+    boundary.invalidateReconciliation(boundary.issueLease());
+    const cleared = controller.snapshot;
+    assert.equal(cleared.requestedUserId, USER_ID);
+    assert.equal(cleared.loadedForUserId, null);
+    assert.equal(cleared.user, null);
+    assert.equal(cleared.loading, false);
+    assert.equal(cleared.failure.kind, 'unavailable');
+    assert.strictEqual(
+      administrativeUserDetailStateForTarget(cleared, USER_ID, 'admin-A'),
+      cleared,
+    );
+    oldRead.resolve(user({ versao: 1 }));
+    await pending;
+    assert.strictEqual(controller.snapshot, cleared);
+    boundary.publishAuthoritativeUser(boundary.issueLease(), user({ versao: 3 }));
+    assert.equal(controller.snapshot.user.versao, 3);
+    assert.equal(controller.snapshot.failure, null);
+    assert.equal(controller.snapshot.loading, false);
+    assert.equal(reads, 2, 'a publicação reconciliada não inicia um GET adicional');
+    boundary.invalidateAccess(boundary.issueLease(), 'forbidden');
+    assert.equal(controller.snapshot.requestedUserId, null);
+    assert.equal(controller.snapshot.user, null);
+    assert.equal(controller.snapshot.failure.kind, 'forbidden');
+  } finally {
+    oldRead.resolve(user());
+    unsubscribe();
+    controller.dispose();
+  }
+  assert.equal(boundary.activeSubscriptionCount, 0);
 });
 
 const COMMANDS = [

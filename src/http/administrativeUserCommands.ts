@@ -438,12 +438,18 @@ export function rebaseAdministrativeUserEditModel(
   >> = {};
   const dirty = new Set(model.dirtyFields);
   for (const field of EDIT_FIELD_NAMES) {
-    if (!dirty.has(field)) {
-      nextDraft[field] = nextBaseline[field];
-      continue;
-    }
     const operatorValue = model.draftValues[field];
     const serverValue = nextBaseline[field];
+    if (model.fieldConflicts[field] !== undefined) {
+      // Outra leitura atualiza a opção autoritativa, mas não escolhe pelo operador.
+      conflicts[field] = Object.freeze({ serverValue, operatorValue });
+      if (operatorValue !== serverValue) nextDirty.add(field);
+      continue;
+    }
+    if (!dirty.has(field)) {
+      nextDraft[field] = serverValue;
+      continue;
+    }
     if (serverValue === model.baselineValues[field]) {
       if (operatorValue !== serverValue) nextDirty.add(field);
       continue;
@@ -1000,6 +1006,7 @@ export class AdministrativeUserCommandService {
           let minimumVersion = 1;
           try {
             minimumVersion = correlatedReceiptVersion(receipt, userId);
+            input.context.confirmMutation();
             assertOperationCurrent(input.context);
             const user = await this.#api.getAdministrativeUser(
               accessToken,
@@ -1068,6 +1075,7 @@ export class AdministrativeUserCommandService {
       return error;
     }
     if (error instanceof ApiResponseError && error.status === 403) {
+      if (!this.#boundary.isLeaseCurrent(lease)) return error;
       this.#invalidateAccessForCurrentPartition(lease, 'forbidden');
       void this.#session.revalidate().catch(() => {
         // A revalidação publica a identidade válida ou encerra a sessão.
@@ -1182,8 +1190,7 @@ export class AdministrativeUserCommandService {
     lease: AdministrativeUserReadLease,
     reason: 'invalid_session' | 'forbidden',
   ): void {
-    if (this.#boundary.invalidateAccess(lease, reason)) return;
-    if (lease.issuedPartitionKey !== this.#boundary.current.partitionKey) return;
-    this.#boundary.invalidateAccess(this.#boundary.issueLease(), reason);
+    // A late failure must not borrow a lease from the resumed generation.
+    this.#boundary.invalidateAccess(lease, reason);
   }
 }

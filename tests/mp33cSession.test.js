@@ -145,6 +145,81 @@ function apiError(status, code) {
   });
 }
 
+for (const profile of ['admin', 'produtor', 'colaborador']) {
+  for (const order of ['A-B', 'B-A']) {
+    test(`/me concorrente aplica B=${profile} pela ordem de início, entrega ${order}`, async () => {
+      const requests = [];
+      const api = fakeApi({
+        me() { const gate = deferred(); requests.push(gate); return gate.promise; },
+      });
+      const session = coordinator(api, new MemoryRefreshStore());
+      await session.login('usuario@example.com', 'senha-valida');
+      const identityA = await fakeApi().me();
+      const identityB = {
+        ...identityA,
+        usuario: { ...identityA.usuario, perfil: profile, nome: 'Identidade de B' },
+        escopo: { ...identityA.escopo, modo: profile === 'admin' ? 'organizacao' : 'vinculos_propriedade' },
+      };
+      let started = 0;
+      const accepted = [];
+      session.subscribeRevalidation(() => {
+        const sequence = ++started;
+        return (snapshot) => accepted.push({ sequence, snapshot });
+      });
+      const a = session.revalidate();
+      const b = session.revalidate();
+      assert.equal(requests.length, 2);
+      if (order === 'A-B') { requests[0].resolve(identityA); await a; }
+      requests[1].resolve(identityB);
+      const acceptedB = await b;
+      if (order === 'B-A') { requests[0].resolve(identityA); await a; }
+      assert.equal(session.snapshot.usuario.perfil, profile);
+      assert.equal(session.snapshot.usuario.nome, 'Identidade de B');
+      assert.strictEqual(session.snapshot, acceptedB);
+      assert.deepEqual(accepted.map((entry) => entry.sequence), [2]);
+      assert.equal(api.calls.refresh, 0);
+      assert.equal(requests.length, 2);
+    });
+  }
+}
+
+test('/me iniciado antes de rotação de token não sobrepõe a identidade da rotação', async () => {
+  const gate = deferred();
+  const clock = { now: 0 };
+  const rotated = tokenResponse({ accessToken: ACCESS_B, refreshToken: REFRESH_B });
+  rotated.usuario.nome = 'Identidade da rotação';
+  const session = coordinator(fakeApi({
+    me() { return gate.promise; },
+    async refresh() { return rotated; },
+  }), new MemoryRefreshStore(), clock);
+  await session.login('usuario@example.com', 'senha-valida');
+  let accepted = 0;
+  session.subscribeRevalidation(() => () => { accepted += 1; });
+  const old = session.revalidate();
+  clock.now = 900_000;
+  await session.authenticated(async () => undefined);
+  const current = session.snapshot;
+  gate.resolve(await fakeApi().me());
+  assert.strictEqual(await old, current);
+  assert.equal(session.snapshot.usuario.nome, 'Identidade da rotação');
+  assert.equal(accepted, 0);
+});
+
+test('/me que precisa renovar o token aplica a identidade usando o contexto da tentativa real', async () => {
+  const clock = { now: 0 };
+  const identity = await fakeApi().me();
+  identity.usuario.nome = 'Identidade após refresh';
+  const api = fakeApi({ async me() { return identity; } });
+  const session = coordinator(api, new MemoryRefreshStore(), clock);
+  await session.login('usuario@example.com', 'senha-valida');
+  clock.now = 900_000;
+  let accepted = 0;
+  session.subscribeRevalidation(() => () => { accepted += 1; });
+  assert.equal((await session.revalidate()).usuario.nome, 'Identidade após refresh');
+  assert.equal(api.calls.refresh, 1);
+  assert.equal(accepted, 1);
+});
+
 test('single-flight renova uma vez e repete cada operação no máximo uma vez', async () => {
   const refreshGate = deferred();
   const api = fakeApi({
