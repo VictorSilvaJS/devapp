@@ -1,5 +1,5 @@
 const ADMINISTRATIVE_AREA_PATTERN =
-  /^(?:0|[1-9][0-9]{0,9})(?:\.[0-9]{1,4})?$/;
+  /^(?:0|[1-9][0-9]{0,9})(?:\.[0-9]{1,4})?(?![\s\S])/;
 const ADMINISTRATIVE_AREA_MAXIMUM = '9999999999.9999';
 
 declare const administrativeAreaBrand: unique symbol;
@@ -47,6 +47,18 @@ export function validateAdministrativeAreaTotal(
     throw new InvalidAdministrativeAreaError();
   }
   return value as AdministrativeAreaTotal;
+}
+
+/** Canonical read value; transport validation never trims or rounds input. */
+export function normalizeAdministrativeAreaTotal(
+  value: unknown,
+): AdministrativeAreaTotal {
+  const validated = validateAdministrativeAreaTotal(value);
+  const [integer, fraction = ''] = validated.split('.');
+  const canonicalFraction = fraction.replace(/0+$/, '');
+  return (canonicalFraction.length === 0
+    ? integer
+    : `${integer}.${canonicalFraction}`) as AdministrativeAreaTotal;
 }
 
 export function prepareCreateAdministrativeAreaTotal(

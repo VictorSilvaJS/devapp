@@ -400,11 +400,23 @@ Representação mínima comum à lista e ao detalhe:
   "uf_id": "43",
   "uf_sigla": "RS",
   "area_total": 120.5,
+  "area_total_decimal": "120.5",
   "cultura_principal": "Soja",
   "status": "ativa",
   "tipo_acesso": "titular"
 }
 ```
+
+O pré-requisito decimal da MP-35D-4 preserva o campo numérico `area_total` e
+acrescenta `area_total_decimal`, textual, somente de leitura e autoritativo
+administrativo. Ambos vêm da mesma coluna, sendo ambos `null` na ausência.
+O novo campo é obrigatório nas respostas ampliadas de lista e detalhe, sem
+alteração de RBAC. Escritas continuam em `area_total`; o nome
+`area_total_decimal` é desconhecido no POST/PATCH e retorna `400`. A leitura
+administrativa exige texto válido e não o reconstrói pelo número. Implementado
+na feature e aprovado para commit na auditoria independente, sem achado
+obrigatório remanescente; compatibilidade do leitor anterior comprovada. Detalhes no
+[contrato de administração](contrato-administracao-mp35.md).
 
 `tipo_acesso` aceita `admin`, `titular`, `usuario_autorizado` ou
 `colaborador`. Métricas dependentes do conjunto completo não fazem parte deste

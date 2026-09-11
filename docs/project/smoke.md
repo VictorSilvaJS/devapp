@@ -1,11 +1,50 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-09-01
+> Atualizado em: 2026-09-11
 >
 > Última execução física registrada: 2026-08-24
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## MP-35D-4 — smoke focal do pré-requisito decimal
+
+Executado automaticamente em 2026-09-11, sobre `92bba62` + worktree:
+
+1. Persistir no Testcontainer null, `0.0001`, `1.2345`, `1.2300`, `1` e
+   `9999999999.9999`; listar e detalhar com mesmo JSON, texto canonicalizado,
+   número legado, versão, timestamps e acesso calculado preservados: passou.
+2. Impedir o uso do parser numeric na conexão de leitura e verificar o texto
+   proveniente de `area_total::text`: passou.
+3. Executar leitor operacional congelado do commit base com contratos anterior
+   e ampliado; exigir texto válido no decoder administrativo e erro controlado
+   quando ausente/corrompido: passou.
+4. Recusar terminadores e demais formatos decimais inválidos sem trim; recusar
+   `area_total_decimal` na escrita com 400; preservar 400/422, omissão/null de
+   `area_total` e PATCH omitido no PostgreSQL: passou.
+5. Revalidar suites D-1/D-2/D-3, domain-compat, backend unit/HTTP, integração
+   focal, typechecks, manifesto de migrations, build e smoke ESM: passou.
+
+Comandos, contagens, arquivos de teste e ocorrências estão em
+[testes de contrato](testes-contrato-api-rbac.md). O cenário PostgreSQL usou
+somente bancos descartáveis documentados; não houve smoke Android físico ou
+fluxo de formulário D-4. Estado ao término da implementação: pré-requisito
+implementado, aguardando auditoria independente.
+
+Parecer independente posterior: **APROVADO PARA COMMIT DO PRÉ-REQUISITO DECIMAL
+DA MP-35D-4**, sem achado obrigatório ou evidência crítica pendente.
+Executado pelo auditor: typechecks mobile/backend; D-1 55/55, D-2 85/85,
+D-3 106/106; domain-compat com MP-33C 46/46, MP-34 35/35 e convergência 7/7;
+backend unit 190/190, HTTP 42/42, integração focal 32/32, dez migrations
+íntegras, build backend e smoke ESM; diff check, 79 links locais e probes
+independentes de compatibilidade e ligação ao decoder passaram.
+Esses resultados não são novas execuções do fechamento documental.
+
+A integração PostgreSQL foi focal; o probe com identidade injetada não equivale
+a novo E2E de autenticação. Nenhum Android físico, build mobile de release ou
+validação produtiva. D-3 concluída; MP-35D/D-4 em andamento. Demais fluxos exigem
+próxima autorização; integração final na `backend` e revisão geral do OpenAPI
+de escrita, preservando `400`/`422`, permanecem posteriores.
 
 ## Matriz atual
 

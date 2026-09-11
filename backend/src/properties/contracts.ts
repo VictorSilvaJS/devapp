@@ -21,6 +21,7 @@ export interface PropertyView {
   readonly stateId: string;
   readonly stateCode: string;
   readonly totalArea: number | null;
+  readonly totalAreaDecimal: string | null;
   readonly mainCrop: string | null;
   readonly status: PropertyStatus;
   readonly accessType: PropertyAccessType;

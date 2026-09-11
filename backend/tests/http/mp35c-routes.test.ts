@@ -49,6 +49,29 @@ async function appFor(service: Mp35cService) {
 }
 
 describe('MP-35C HTTP routes', () => {
+  it('rejeita area_total_decimal como escrita com 400 e não chama comandos', async () => {
+    const service = new FakeMp35cService(); const app = await appFor(service);
+    try {
+      for (const area of ['1.23', null]) {
+        for (const request of [
+          { method: 'POST', url: '/v1/propriedades', payload: {
+            nome: 'Propriedade', titular_id: USER_ID, municipio_id: '4305108', status: 'ativa',
+          } },
+          { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}`, payload: { versao: 1 } },
+        ] as const) {
+          for (const legacy of [{}, { area_total: '1.23' }]) {
+            const response = await app.inject({ method: request.method, url: request.url,
+              headers: { authorization: 'Bearer opaque', 'idempotency-key': 'read-only-area' },
+              payload: { ...request.payload, ...legacy, area_total_decimal: area } });
+            assert.equal(response.statusCode, 400);
+            assert.equal(response.json().error.code, 'invalid_request');
+          }
+        }
+      }
+      assert.deepEqual(service.calls, []);
+    } finally { await app.close(); }
+  });
+
   it('publica as sete rotas, snake_case e no-store', async () => {
     const service = new FakeMp35cService(); const app = await appFor(service);
     const requests = [

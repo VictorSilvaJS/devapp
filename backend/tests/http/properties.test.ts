@@ -2,6 +2,7 @@ import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 
 import fastify from 'fastify';
+import swagger from '@fastify/swagger';
 
 import type { PropertyView } from '../../src/properties/contracts.js';
 import { propertyRoutesPlugin } from '../../src/properties/routes.js';
@@ -26,6 +27,7 @@ const sampleProperty: PropertyView = {
   stateId: '43',
   stateCode: 'RS',
   totalArea: 125.5,
+  totalAreaDecimal: '125.5',
   mainCrop: 'Soja',
   status: 'ativa',
       accessType: 'titular',
@@ -58,6 +60,8 @@ class FakePropertyService implements PropertyService {
 
 async function buildTestApp(service: PropertyService) {
   const app = fastify({ logger: false, genReqId: () => 'req-property-test' });
+  await app.register(swagger, { openapi: { info: { title: 'test', version: '1' },
+    components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } } } } });
   await app.register(propertyRoutesPlugin, {
     prefix: '/v1/propriedades',
     service,
@@ -66,6 +70,38 @@ async function buildTestApp(service: PropertyService) {
 }
 
 describe('property HTTP plugin', () => {
+  it('lista e detalhe publicam o mesmo decimal somente de leitura no JSON e no OpenAPI', async () => {
+    const app = await buildTestApp(new FakePropertyService());
+    try {
+      const headers = { authorization: `Bearer ${issueOpaqueToken().value}` };
+      const list = await app.inject({ url: '/v1/propriedades', headers });
+      const detail = await app.inject({ url: `/v1/propriedades/${sampleProperty.id}`, headers });
+      assert.equal(list.statusCode, 200);
+      assert.equal(detail.statusCode, 200);
+      assert.deepEqual(list.json().itens[0], detail.json());
+      const paths = app.swagger().paths ?? {};
+      const listSchema = (paths['/v1/propriedades']?.get?.responses?.['200'] as unknown as {
+        content: { 'application/json': { schema: { properties: { itens: { items: unknown } } } } };
+      }).content['application/json'].schema.properties.itens.items;
+      const detailSchema = (paths['/v1/propriedades/{id}']?.get?.responses?.['200'] as unknown as {
+        content: { 'application/json': { schema: {
+          required: string[]; properties: Record<string, { readOnly?: boolean; anyOf: { type: string; pattern?: string }[] }>;
+        } } };
+      }).content['application/json'].schema;
+      assert.deepEqual(listSchema, detailSchema);
+      assert.ok(detailSchema.required.includes('area_total_decimal'));
+      assert.deepEqual(detailSchema.properties.area_total?.anyOf, [{ type: 'number' }, { type: 'null' }]);
+      const decimal = detailSchema.properties.area_total_decimal;
+      assert.equal(decimal?.readOnly, true);
+      assert.deepEqual(decimal?.anyOf.map((item) => item.type), ['string', 'null']);
+      const pattern = new RegExp(decimal?.anyOf[0]?.pattern ?? '(?!)');
+      for (const valid of ['0.0001', '1', '1.2345', '1.23', '9999999999.9999']) assert.ok(pattern.test(valid));
+      for (const invalid of ['0', '0.0000', '-1', '1.2300', '1.00001', '1\n', '10000000000']) assert.ok(!pattern.test(invalid));
+    } finally {
+      await app.close();
+    }
+  });
+
   it('serves the exact no-slash collection path with snake_case and no-store', async () => {
     const service = new FakePropertyService();
     const app = await buildTestApp(service);
@@ -104,6 +140,7 @@ describe('property HTTP plugin', () => {
           uf_id: sampleProperty.stateId,
           uf_sigla: sampleProperty.stateCode,
           area_total: sampleProperty.totalArea,
+          area_total_decimal: sampleProperty.totalAreaDecimal,
           cultura_principal: sampleProperty.mainCrop,
           status: sampleProperty.status,
           tipo_acesso: sampleProperty.accessType,

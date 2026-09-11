@@ -45,6 +45,7 @@ function property(index: number): PropertyView {
     stateId: '43',
     stateCode: 'RS',
     totalArea: 10.5,
+    totalAreaDecimal: '10.5',
     mainCrop: 'Soja',
     status: 'ativa',
   accessType: 'colaborador',
@@ -176,6 +177,61 @@ describe('Property service and cursor', () => {
 });
 
 describe('PostgresPropertyRepository query contract', () => {
+  it('exige decimal textual do banco e deriva separadamente a representação numérica', async (context) => {
+    let area: unknown = null;
+    const queries: QueryConfig[] = [];
+    const client = {
+      async query(config: QueryConfig) {
+        queries.push(config);
+        return { rows: [{
+          id: property(1).id, organizacao_id: principal.organizationId,
+          titular_id: property(1).holderId, titular_nome: 'Titular', nome: 'Propriedade',
+          municipio_id: '4306106', municipio_nome: 'Cruz Alta', uf_id: '43', uf_sigla: 'RS',
+          area_total: area, cultura_principal: null, status: 'ativa', tipo_acesso: 'colaborador',
+          versao: '7', criado_em: property(1).createdAt, atualizado_em: property(1).updatedAt,
+        }] };
+      },
+      release() {},
+    } as unknown as PoolClient;
+    const repository = new PostgresPropertyRepository({ async connect() { return client; } });
+    for (const [stored, expected] of [
+      [null, null], ['0.0001', '0.0001'], ['1.2345', '1.2345'], ['1.2300', '1.23'],
+      ['1.0000', '1'], ['9999999999.9999', '9999999999.9999'],
+    ]) {
+      area = stored;
+      const rows = await repository.list({ principal, limit: 2 });
+      const detail = await repository.findById({ principal, propertyId: property(1).id });
+      assert.deepEqual(rows[0], detail);
+      assert.equal(detail?.totalAreaDecimal, expected);
+      assert.equal(detail?.totalArea, expected === null ? null : Number(expected));
+      assert.equal(detail?.version, 7);
+      assert.equal(detail?.accessType, 'colaborador');
+    }
+    area = '9999999999.9999';
+    // Fault injection: perturb only the legacy conversion; authoritative text must not change.
+    const numericConversion = context.mock.method(globalThis, 'Number', new Proxy(Number, {
+      apply(target, thisArg, args) {
+        return args[0] === '9999999999.9999' ? 42 : Reflect.apply(target, thisArg, args);
+      },
+    }));
+    try {
+      const detail = await repository.findById({ principal, propertyId: property(1).id });
+      assert.equal(detail?.totalArea, 42);
+      assert.equal(detail?.totalAreaDecimal, '9999999999.9999');
+    } finally {
+      numericConversion.mock.restore();
+    }
+    for (const invalid of [undefined, 1.23, '0', '-1', '1e3', '1.00001', '1\n', '10000000000']) {
+      area = invalid;
+      const safeError = (error: unknown) => error instanceof HttpError && error.statusCode === 503;
+      await assert.rejects(repository.list({ principal, limit: 2 }), safeError);
+      await assert.rejects(repository.findById({ principal, propertyId: property(1).id }), safeError);
+    }
+    for (const query of queries) {
+      assert.match(query.text, /propriedade\.area_total::text AS area_total/u);
+    }
+  });
+
   it('escapes %, _ and backslash as literals before ILIKE', async () => {
     const queries: QueryConfig[] = [];
     const client = {

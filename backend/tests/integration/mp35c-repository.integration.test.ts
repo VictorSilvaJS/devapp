@@ -881,8 +881,8 @@ describe('PostgresMp35cRepository', { timeout: 180_000 }, () => {
   });
 
   test('PATCH comum deriva novamente o território e recusa atualização sem efeito', async () => {
-    assert.ok(owner); const current = await owner.query<{ id: string; versao: string }>(
-      `SELECT id,versao FROM public.propriedades WHERE nome='Propriedade MP35C'`);
+    assert.ok(owner); const current = await owner.query<{ id: string; versao: string; area_total: string }>(
+      `SELECT id,versao,area_total::text FROM public.propriedades WHERE nome='Propriedade MP35C'`);
     const row = current.rows[0]; assert.ok(row);
     const updateIdentity = identity('propriedade.atualizar', 'territory-update');
     const changed = await repo().updateProperty({ principal: actor(),
@@ -892,6 +892,10 @@ describe('PostgresMp35cRepository', { timeout: 180_000 }, () => {
     assert.equal(changed.status, 'completed');
     if (changed.status !== 'completed') return;
     const changedVersion = changed.receipt.version; assert.ok(changedVersion);
+    const preservedArea = await owner.query<{ area_total: string }>(
+      'SELECT area_total::text FROM public.propriedades WHERE id=$1', [row.id]);
+    assert.equal(row.area_total, '42.5000');
+    assert.equal(preservedArea.rows[0]?.area_total, row.area_total, 'PATCH sem área preserva o decimal');
     const territory = await owner.query(`SELECT municipio_id,municipio_nome,uf_id,uf_sigla,
       localidades_versao_id FROM public.propriedades WHERE id=$1`, [row.id]);
     assert.deepEqual(territory.rows[0], { municipio_id: '4303004', municipio_nome: 'Cachoeira do Sul',

@@ -53,6 +53,7 @@ const propertyResponseSchema = {
     'uf_id',
     'uf_sigla',
     'area_total',
+    'area_total_decimal',
     'cultura_principal',
     'status',
     'tipo_acesso',
@@ -79,6 +80,17 @@ const propertyResponseSchema = {
     uf_id: { type: 'string' },
     uf_sigla: { type: 'string', pattern: '^[A-Z]{2}$' },
     area_total: nullableNumberSchema,
+    area_total_decimal: {
+      readOnly: true,
+      description: 'Área decimal textual autoritativa administrativa, derivada da mesma coluna de area_total. Positiva, até dez dígitos inteiros e quatro fracionários, sem zeros fracionários finais; null indica ausência. Escritas usam somente area_total.',
+      anyOf: [
+        {
+          type: 'string',
+          pattern: '^(?:[1-9][0-9]{0,9}(?:\\.[0-9]{0,3}[1-9])?|0\\.[0-9]{0,3}[1-9])(?![\\s\\S])',
+        },
+        { type: 'null' },
+      ],
+    },
     cultura_principal: nullableStringSchema,
     status: { type: 'string', enum: ['ativa', 'inativa'] },
     tipo_acesso: {
@@ -113,6 +125,7 @@ function externalProperty(property: PropertyView) {
     uf_id: property.stateId,
     uf_sigla: property.stateCode,
     area_total: property.totalArea,
+    area_total_decimal: property.totalAreaDecimal,
     cultura_principal: property.mainCrop,
     status: property.status,
     tipo_acesso: property.accessType,

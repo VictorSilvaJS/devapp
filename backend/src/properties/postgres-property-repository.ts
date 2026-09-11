@@ -1,5 +1,6 @@
 import type { QueryResultRow } from 'pg';
 
+import { normalizeAdministrativeArea } from '../administration/validation.js';
 import {
   query,
   safeDatabaseRead,
@@ -24,7 +25,7 @@ interface PropertyRow extends QueryResultRow {
   municipio_nome: string;
   uf_id: string;
   uf_sigla: string;
-  area_total: string | number | null;
+  area_total: string | null;
   cultura_principal: string | null;
   status: string;
   tipo_acesso: string;
@@ -55,7 +56,7 @@ const PROPERTY_PROJECTION = `
          propriedade.titular_id, titular.nome AS titular_nome,
          propriedade.nome, propriedade.municipio_id,
          propriedade.municipio_nome, propriedade.uf_id,
-         propriedade.uf_sigla, propriedade.area_total,
+         propriedade.uf_sigla, propriedade.area_total::text AS area_total,
          propriedade.cultura_principal, propriedade.status,
          propriedade.versao, propriedade.criado_em, propriedade.atualizado_em,
          CASE ator.perfil
@@ -128,14 +129,17 @@ function mapAccessType(value: string): PropertyAccessType {
   return value;
 }
 
-function mapArea(value: string | number | null): number | null {
+function mapAreaDecimal(value: string | null): string | null {
   if (value === null) return null;
-  const parsed = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) throw serviceUnavailable();
-  return parsed;
+  try {
+    return normalizeAdministrativeArea(value, 'area_total');
+  } catch {
+    throw serviceUnavailable();
+  }
 }
 
 function mapProperty(row: PropertyRow): PropertyView {
+  const totalAreaDecimal = mapAreaDecimal(row.area_total);
   return {
     id: row.id,
     organizationId: row.organizacao_id,
@@ -146,7 +150,9 @@ function mapProperty(row: PropertyRow): PropertyView {
     municipalityName: row.municipio_nome,
     stateId: row.uf_id,
     stateCode: row.uf_sigla,
-    totalArea: mapArea(row.area_total),
+    // Numeric conversion serves only the existing operational representation.
+    totalArea: totalAreaDecimal === null ? null : Number(totalAreaDecimal),
+    totalAreaDecimal,
     mainCrop: row.cultura_principal,
     status: mapStatus(row.status),
     accessType: mapAccessType(row.tipo_acesso),

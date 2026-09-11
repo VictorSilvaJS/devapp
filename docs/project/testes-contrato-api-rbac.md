@@ -1,11 +1,102 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-09-10:
+Status revisado em 2026-09-11:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
-aprovada na auditoria independente final para commit; MP-35D em andamento; MP-35D-4 não iniciada`.
+concluída, auditada e enviada em 92bba62; MP-35D em andamento;
+pré-requisito decimal MP-35D-4 aprovado para commit na auditoria independente; D-4 em andamento`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
+
+## MP-35D-4 — regressões do pré-requisito de leitura decimal
+
+Escopo executado em 2026-09-11: leitura aditiva de área, decoder administrativo
+e fim absoluto do validador mobile. Não é cobertura integral da D-4.
+
+| Cenário | Evidência permanente |
+|---|---|
+| A: leitor operacional base com resposta numérica; B: mesmo leitor com resposta ampliada, lista/detalhe, null, limites e cursor | [MP-35D-1 contratos](../../tests/mp35d1Contracts.test.js) executa [snapshot do leitor base](../../tests/fixtures/mp35d4-base-property-reader.ts.txt), com SHA-256 fixado |
+| C: novo leitor administrativo com texto válido/canonicalizado; D: ausência/corrupção/nulabilidade divergente | MP-35D-1 contratos exige texto e `InvalidBackendResponseError`, sem reconstrução numérica; mantém versão, timestamps e chaves fechadas |
+| Domínio textual e fim absoluto: zero, negativos, sinais, expoentes, separadores, cinco casas, excesso de faixa, tipos não textuais, whitespace e LF/CR/CRLF/U+2028/U+2029/tab | MP-35D-1 contratos valida sem trim; omissão da criação/PATCH, null na criação e null no PATCH permanecem distintos |
+| Texto obrigatório no resultado do banco, sem aceitar número como fonte; canonicalização e mesmo mapeamento em lista/detalhe | [Unit de Propriedades](../../backend/tests/unit/properties.test.ts); injeção de falha na conversão numérica altera somente o campo legado, preservando o texto; fonte numérica ou textual inválida falha com 503 seguro |
+| JSON e OpenAPI de lista/detalhe iguais; número legado preservado e texto obrigatório `readOnly` | [HTTP de Propriedades](../../backend/tests/http/properties.test.ts) |
+| `area_total_decimal` desconhecido em POST/PATCH, sozinho ou junto de `area_total`, string ou null | [HTTP MP-35C](../../backend/tests/http/mp35c-routes.test.ts) exige 400 sem chamada ao comando; matriz anterior preserva 400/422 e nulabilidade |
+| PostgreSQL/PostGIS real → repositório → serialização → JSON: null, mínimo, máximo, quatro casas e padding | [Integração de Propriedades](../../backend/tests/integration/property-repository.integration.test.ts), com parser do OID numeric configurado para lançar erro caso usado |
+| PATCH sem área preserva exatamente o texto persistido; escritas exatas/null e regras de acesso existentes | [Integração MP-35C](../../backend/tests/integration/mp35c-repository.integration.test.ts) e suíte de Propriedades, incluindo três perfis, vínculos, escopo, 404, status e versão de autorização |
+
+O snapshot foi extraído de `git show
+92bba628f43719216a28f73bec81348a0c3a4643:src/http/decoders.ts` antes de alterar o
+código. Contém literalmente `decodeProperty`, `decodePropertyPage` e suas
+declarações dependentes, sem importar o decoder atual; registra o hash do fonte
+integral e tem seu próprio hash verificado em teste. A/B também foram
+executados antes da implementação. A inspeção dos consumidores confirmou que
+`BackendApi.listProperties/getProperty` usam esses leitores operacionais. O
+decoder administrativo anterior era estrito e rejeitaria o campo adicional,
+mas ainda não tinha consumidor no aplicativo: era fundação D-1 exercitada
+somente em testes. Ele é explicitamente atualizado para exigir o novo contrato;
+nenhum leitor operacional foi relaxado.
+
+Resultados executados pelo implementador antes da auditoria, todos com saída zero:
+
+- Node 22.20.0: `npm run typecheck`, `npm run test:mp35d1` (55),
+  `npm run test:mp35d2` (85), `npm run test:mp35d3` (106) e
+  `npm run test:domain-compat`; este encadeou MP-33C (46), MP-34 e convergência.
+- Node 24.19.0 no backend: `npm run typecheck`, `npm run test:unit` (190),
+  `npm run test:http` (42), `npm run migrations:verify` (dez migrations),
+  `npm run build` e `npm run smoke:dist`.
+- Integração focal: após `migrations:verify`,
+  `node --import=tsx --test tests/integration/property-repository.integration.test.ts tests/integration/mp35c-repository.integration.test.ts`
+  passou 32/32, sem falhas, cancelamentos ou skips. Usou `NODE_ENV=test` e
+  `ALLOW_DESTRUCTIVE_DATABASE_TESTS=true`, exclusivamente URLs de Testcontainers
+  `postgis/postgis:17-3.5` com bancos `_test`; nenhum banco de trabalho foi usado.
+
+Ocorrências corrigidas durante o desenvolvimento: o novo teste de integração
+tinha uma asserção de tipo quebrada por newline (TS1434); o teste OpenAPI
+precisou declarar `bearerAuth` no app de teste e explicitar a conversão do tipo
+de resposta OpenAPI (TS2352). As mesmas validações passaram após as correções.
+O sandbox bloqueou subprocessos Node com EPERM e o acesso inicial ao Docker;
+as suítes backend foram executadas com permissão de execução fora do sandbox.
+Isso não foi registrado como aprovação antes da execução real.
+
+Revisão documental: `git diff --check` passou; 79 links locais nos nove
+documentos alterados apontam para arquivos existentes. A comparação adicional
+contra o objeto Git confirmou as onze declarações congeladas, o hash do fonte
+integral e os decoders operacionais atuais sem alteração.
+
+Limites: integração backend focal, não suíte PostgreSQL integral; smoke ESM e
+contratos automatizados, não execução Android física ou fluxo de formulário.
+Não houve release, CI remota, commit/push ou integração na branch backend
+naquela etapa. Ao término da implementação, a auditoria independente estava
+pendente; D-3 concluída, formulários e demais fluxos D-4 não implementados.
+
+### Aprovação independente do pré-requisito decimal — 2026-09-11
+
+**APROVADO PARA COMMIT DO PRÉ-REQUISITO DECIMAL DA MP-35D-4**. O parecer cobre
+HEAD `92bba628f43719216a28f73bec81348a0c3a4643` + worktree (21 arquivos,
+`+569/-58`) + snapshot novo de 121 linhas, sem achado obrigatório ou evidência
+crítica pendente. SHA-256 do snapshot aprovado:
+`c18aec16e83fdbc90306586277ea1c30a86d0d5cca76d83f655a99391bdd981d`.
+Contrato aditivo, escrita exclusivamente em `area_total` e compatibilidade
+do leitor anterior foram preservados e comprovados.
+
+| Executado pelo auditor independente | Resultado |
+|---|---|
+| Mobile typecheck; D-1; D-2; D-3 | Passou; 55/55; 85/85; 106/106 |
+| domain-compat, incluindo MP-33C, MP-34 e convergência | Passou; 46/46; 35/35; 7/7 |
+| Backend typecheck; unit; HTTP | Passou; 190/190; 42/42 |
+| Integração PostgreSQL focal; integridade das migrations | 32/32; dez íntegras |
+| Build backend e smoke ESM | Passaram |
+| git diff --check; links locais | Passou; 79 válidos |
+| Probes independentes de compatibilidade e ligação ao decoder | Passaram |
+
+O fechamento documental herda esses resultados, sem repetir as suítes ou
+alterar código, testes, snapshot, schemas, dependências e configurações.
+Integração PostgreSQL focal não equivale à suíte integral; identidade injetada
+no probe não equivale a novo E2E de autenticação. Nenhum Android físico, build
+mobile de release ou validação produtiva. D-3 concluída; MP-35D/D-4 em andamento.
+Formulários, seletores, comandos mobile e navegação dependem da próxima
+autorização. Integração final na `backend` e revisão geral do OpenAPI de escrita
+continuam posteriores, preservando `400`/`422`.
 
 ## MP-35D-3 — regressões permanentes das correções focais
 

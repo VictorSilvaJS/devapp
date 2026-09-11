@@ -1,0 +1,121 @@
+// Operational reader extracted verbatim from src/http/decoders.ts
+// Base: 92bba628f43719216a28f73bec81348a0c3a4643
+// Full source SHA-256: 11d1f9dd929080beac12a361a5511d4b33076ab1355826c2c9e06675e5709822
+// Only declarations needed by decodeProperty/decodePropertyPage are included.
+
+export class InvalidBackendResponseError extends Error {
+  constructor() {
+    super('A resposta do serviço é inválida. Tente novamente mais tarde.');
+    this.name = 'InvalidBackendResponseError';
+  }
+}
+
+const UUID_V4_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+const ADMINISTRATIVE_CURSOR_MAX_LENGTH = 2_048;
+
+function record(value: unknown): Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new InvalidBackendResponseError();
+  }
+  return value as Record<string, unknown>;
+}
+
+function requiredString(value: unknown): string {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new InvalidBackendResponseError();
+  }
+  return value;
+}
+
+export function isCanonicalUuidV4(value: unknown): value is string {
+  return typeof value === 'string' &&
+    value.length === 36 &&
+    UUID_V4_PATTERN.test(value);
+}
+
+function uuidV4(value: unknown): string {
+  const decoded = requiredString(value);
+  if (!isCanonicalUuidV4(decoded)) throw new InvalidBackendResponseError();
+  return decoded;
+}
+
+export function decodeOpaqueCursor(
+  value: unknown,
+  maximumLength = ADMINISTRATIVE_CURSOR_MAX_LENGTH,
+): string | null {
+  if (value === null) return null;
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > maximumLength
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  return value;
+}
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[]): T {
+  if (typeof value !== 'string' || !allowed.includes(value as T)) {
+    throw new InvalidBackendResponseError();
+  }
+  return value as T;
+}
+
+export function decodeProperty(value: unknown): PropertyProjection {
+  const input = record(value);
+  const owner = record(input.titular);
+  const area = input.area_total;
+  const crop = input.cultura_principal;
+  const ownerId = uuidV4(owner.id);
+  const titularId = uuidV4(input.titular_id);
+  if (ownerId !== titularId) throw new InvalidBackendResponseError();
+  if (
+    area !== null &&
+    (typeof area !== 'number' || !Number.isFinite(area) || area <= 0)
+  ) {
+    throw new InvalidBackendResponseError();
+  }
+  if (crop !== null && (typeof crop !== 'string' || crop.length === 0)) {
+    throw new InvalidBackendResponseError();
+  }
+  return {
+    id: uuidV4(input.id),
+    organizacao_id: requiredString(input.organizacao_id),
+    titular_id: titularId,
+    titular: {
+      id: ownerId,
+      nome: requiredString(owner.nome),
+    },
+    nome: requiredString(input.nome),
+    municipio_id: requiredString(input.municipio_id),
+    municipio_nome: requiredString(input.municipio_nome),
+    uf_id: requiredString(input.uf_id),
+    uf_sigla: oneOf(input.uf_sigla, [
+      'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT',
+      'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO',
+      'RR', 'SC', 'SP', 'SE', 'TO',
+    ] as const),
+    area_total: area as number | null,
+    cultura_principal: crop as string | null,
+    status: oneOf(input.status, ['ativa', 'inativa'] as const),
+    tipo_acesso: oneOf(input.tipo_acesso, [
+      'admin',
+      'titular',
+      'usuario_autorizado',
+      'colaborador',
+    ] as const),
+  };
+}
+
+export function decodePropertyPage(value: unknown): PropertyPage {
+  const input = record(value);
+  if (!Array.isArray(input.itens)) throw new InvalidBackendResponseError();
+  const pagination = record(input.paginacao);
+  const cursor = decodeOpaqueCursor(pagination.proximo_cursor, 32_768);
+  return {
+    itens: input.itens.map(decodeProperty),
+    paginacao: { proximo_cursor: cursor as string | null },
+  };
+}

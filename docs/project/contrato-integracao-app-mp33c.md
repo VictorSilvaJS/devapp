@@ -138,11 +138,23 @@ Uma Propriedade possui, no mínimo:
   "uf_id": "43",
   "uf_sigla": "RS",
   "area_total": 120.5,
+  "area_total_decimal": "120.5",
   "cultura_principal": "Soja",
   "status": "ativa",
   "tipo_acesso": "titular"
 }
 ```
+
+Ampliação aditiva implementada no pré-requisito MP-35D-4 em 2026-09-11,
+aprovada para commit na auditoria independente, sem achado obrigatório
+remanescente: lista e detalhe preservam `area_total: number | null`
+e acrescentam `area_total_decimal: string | null`, somente de leitura. Ambos
+derivam da mesma coluna, com texto obtido sem passar por `Number`; o texto é
+autoritativo para administração. O leitor operacional anterior ignora o campo
+adicional e segue aceitando respostas numéricas anteriores. O decoder
+administrativo exige o novo campo, sem reconstrução numérica quando ausente
+ou inválido. Escritas permanecem em `area_total`; ver
+[contrato administrativo](contrato-administracao-mp35.md).
 
 `tipo_acesso` é uma projeção calculada e aceita `admin`, `titular`,
 `usuario_autorizado` ou `colaborador`. O valor `titular` nunca cria uma linha

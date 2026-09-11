@@ -1,16 +1,32 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-10
+> Atualizado em: 2026-09-11
 >
-> Tarefa atual: fechamento controlado da MP-35D-3, aprovada para commit na auditoria independente final;
-> MP-35D-4 não iniciada
+> Tarefa atual: fechamento controlado do pré-requisito decimal da MP-35D-4, aprovado para commit;
+> D-3 concluída, auditada e enviada em `92bba62`; demais fluxos D-4 ainda não implementados
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
 > D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
-> `feat/mp-35d`; MP-35D-3 APROVADA PARA COMMIT NA AUDITORIA INDEPENDENTE FINAL; MP-35D EM ANDAMENTO;
-> MP-35D-4 NÃO INICIADA; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
+> `feat/mp-35d`; MP-35D-3 CONCLUÍDA; MP-35D EM ANDAMENTO;
+> PRÉ-REQUISITO DECIMAL D-4 APROVADO NA AUDITORIA INDEPENDENTE; D-4 EM ANDAMENTO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
+
+## Próximo passo delimitado da MP-35D-4
+
+O parecer independente aprovou para commit somente o pré-requisito decimal,
+sobre `92bba628f43719216a28f73bec81348a0c3a4643` + worktree + snapshot novo,
+sem achado obrigatório ou evidência crítica pendente. Foram comprovados o campo
+numérico preservado, o texto autoritativo da mesma coluna, a compatibilidade do
+leitor anterior e as escritas exclusivamente em `area_total`. O fechamento
+preserva integralmente código, testes e snapshot. As validações do auditor estão em
+[testes de contrato](testes-contrato-api-rbac.md).
+
+Não antecipar formulários, comandos mobile, seletores ou navegação D-4. A
+integração desses fluxos exige autorização própria e deve tratar a pendência
+documental/OpenAPI de escrita sem modificar inadvertidamente `400`/`422`.
+D-3 permanece concluída; MP-35D e D-4 continuam em andamento. A integração final
+na `backend` é posterior. Não há renumeração de D-5/D-6/D-7 ou alteração de D1-D13.
 
 ## Ponto de partida
 
@@ -247,7 +263,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-1/D-2 CONCLUÍDAS NA `feat/mp-35d`; D-3 APROVADA NA AUDITORIA INDEPENDENTE FINAL PARA COMMIT; D-4 NÃO INICIADA; INTEGRAÇÃO FINAL NA `backend` POSTERIOR |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-1/D-2/D-3 CONCLUÍDAS NA `feat/mp-35d`; PRÉ-REQUISITO DECIMAL D-4 APROVADO PARA COMMIT NA AUDITORIA INDEPENDENTE; D-4 EM ANDAMENTO; DEMAIS FLUXOS E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |

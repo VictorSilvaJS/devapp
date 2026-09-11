@@ -1,3 +1,5 @@
+import type { AdministrativeAreaTotal } from './administrativeArea';
+
 export type HttpProfile = 'admin' | 'colaborador' | 'produtor';
 export type HttpUserStatus = 'pendente' | 'ativo' | 'inativo';
 export type PropertyStatus = 'ativa' | 'inativa';
@@ -142,8 +144,9 @@ export interface PropertyProjection {
   readonly tipo_acesso: PropertyAccessType;
 }
 
-/** Versioned view; the current read contract still exposes area_total as a JSON number. */
+/** Administrative reads require exact decimal text; the numeric field remains operational. */
 export interface AdministrativePropertyProjection extends PropertyProjection {
+  readonly area_total_decimal: AdministrativeAreaTotal | null;
   readonly versao: number;
   readonly criado_em: string;
   readonly atualizado_em: string;

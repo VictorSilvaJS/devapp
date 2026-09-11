@@ -393,6 +393,19 @@ expoente nem passagem por representação binária. O backend valida precisão,
 escala e faixa, canonicaliza zeros fracionários finais e só então permite a
 conversão SQL para `numeric(14,4)`; a leitura MP-33C preserva seu contrato.
 
+Complemento aprovado em 2026-09-11 para o pré-requisito da MP-35D-4: preservar
+`area_total: number | null` nas leituras e acrescentar
+`area_total_decimal: string | null`, autoritativo para administração e somente
+de leitura. Ambos derivam da mesma coluna, com projeção SQL textual e
+canonicalização antes da conversão isolada do campo numérico. Escritas continuam
+em `area_total`. Esta ampliação mantém o histórico da decisão e o leitor
+operacional; não aprova substituir diretamente o tipo legado. Não há prazo de
+retirada: eventual remoção exige decisão própria de compatibilidade. A
+implementação deste pré-requisito foi aprovada para commit na auditoria
+independente, sem achado obrigatório remanescente, com compatibilidade do leitor
+anterior comprovada. MP-35D/D-4 continuam em andamento; os demais fluxos exigem
+próxima autorização. Este fechamento não altera D1-D13.
+
 As quatro mutações compartilham um executor que decodifica e valida
 integralmente o retorno SQL antes do `COMMIT`; resposta incompatível exige
 `ROLLBACK` e falha fechada. A integração usa porta de host dinâmica escolhida

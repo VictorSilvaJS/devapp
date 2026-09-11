@@ -1,10 +1,15 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
+const { createHash } = require('node:crypto');
+const { readFileSync } = require('node:fs');
+const { join } = require('node:path');
+const ts = require('typescript');
 
 const {
   prepareCreateAdministrativeAreaTotal,
   preparePatchAdministrativeAreaTotal,
   validateAdministrativeAreaTotal,
+  normalizeAdministrativeAreaTotal,
   InvalidAdministrativeAreaError,
 } = require('../.tmp-mp35d1/src/http/administrativeArea');
 const {
@@ -13,6 +18,8 @@ const {
 } = require('../.tmp-mp35d1/src/http/backendApi');
 const {
   decodeAdministrativeProperty,
+  decodeProperty,
+  decodePropertyPage,
   decodeAdministrativeReceipt,
   decodeOpaqueCursor,
   decodePositiveVersion,
@@ -40,6 +47,7 @@ function administrativeProperty(overrides = {}) {
     uf_id: '43',
     uf_sigla: 'RS',
     area_total: 1.2300,
+    area_total_decimal: '1.23',
     cultura_principal: 'Soja',
     status: 'ativa',
     tipo_acesso: 'admin',
@@ -73,8 +81,18 @@ function apiReturning(status, body, capture) {
   });
 }
 
+const invalidAreas = [
+  undefined, null, 1.25, true, [], {}, NaN, Infinity,
+  '', '0', '0.0000', '-1', '+1', '01', '.25', '1.', '1,25', '1_000',
+  '1 000', '1.00000', '9999999999.99999', '10000000000',
+  ' 1.25', '1.25 ', '1e3', '1E-4', 'NaN', 'Infinity',
+  ...['\n', '\r', '\r\n', '\u2028', '\u2029', '\t'].flatMap(
+    (ending) => [`1${ending}`, `1.0${ending}`, `0${ending}`, `${ending}1`, `1${ending}2`],
+  ),
+];
+
 test('area_total de escrita permanece decimal textual exato e null só limpa PATCH', () => {
-  for (const value of ['0.0001', '1', '1.2300', '9999999999.9999']) {
+  for (const value of ['0.0001', '1', '1.2345', '1.2300', '9999999999.9999']) {
     assert.equal(validateAdministrativeAreaTotal(value), value);
   }
   assert.equal(prepareCreateAdministrativeAreaTotal(undefined), undefined);
@@ -84,16 +102,7 @@ test('area_total de escrita permanece decimal textual exato e null só limpa PAT
     () => prepareCreateAdministrativeAreaTotal(null),
     InvalidAdministrativeAreaError,
   );
-  for (const invalid of [
-    1.25,
-    '0',
-    '0.0000',
-    '01',
-    '1.00000',
-    '10000000000',
-    ' 1.25',
-    '1e3',
-  ]) {
+  for (const invalid of invalidAreas) {
     assert.throws(
       () => validateAdministrativeAreaTotal(invalid),
       InvalidAdministrativeAreaError,
@@ -101,12 +110,13 @@ test('area_total de escrita permanece decimal textual exato e null só limpa PAT
   }
 });
 
-test('decoder administrativo exige versão e timestamps sem fingir decimal exato de leitura', () => {
+test('decoder administrativo exige decimal textual, versão e timestamps', () => {
   const property = decodeAdministrativeProperty(administrativeProperty());
   assert.equal(property.versao, 7);
   assert.equal(property.criado_em, '2026-08-31T12:00:00.000Z');
   assert.equal(property.atualizado_em, '2026-09-01T12:00:00.000Z');
   assert.equal(typeof property.area_total, 'number');
+  assert.equal(property.area_total_decimal, '1.23');
 
   assert.throws(
     () => decodeAdministrativeProperty(administrativeProperty({ versao: 0 })),
@@ -122,6 +132,60 @@ test('decoder administrativo exige versão e timestamps sem fingir decimal exato
     })),
     InvalidBackendResponseError,
   );
+});
+
+test('leitor operacional do commit base aceita A: contrato numérico e B: ampliação aditiva', () => {
+  // Frozen declarations from git show, not the decoder being changed in this delivery.
+  const source = readFileSync(join(__dirname, 'fixtures/mp35d4-base-property-reader.ts.txt'), 'utf8')
+    .replace(/\r\n/g, '\n');
+  assert.equal(createHash('sha256').update(source).digest('hex'),
+    'c18aec16e83fdbc90306586277ea1c30a86d0d5cca76d83f655a99391bdd981d');
+  const previous = {};
+  new Function('exports', ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS },
+  }).outputText)(previous);
+  for (const text of [null, '0.0001', '1.2345', '1.23', '9999999999.9999']) {
+    const expanded = administrativeProperty({ area_total: text === null ? null : Number(text),
+      area_total_decimal: text });
+    const { area_total_decimal, ...original } = expanded;
+    const expected = previous.decodeProperty(original);
+    assert.equal(expected.area_total, original.area_total);
+    assert.deepEqual(previous.decodeProperty(expanded), expected);
+    assert.deepEqual(decodeProperty(original), expected);
+    assert.deepEqual(decodeProperty(expanded), expected);
+    for (const proximo_cursor of [null, 'opaque-next-page']) {
+      const page = (item) => ({ itens: [item], paginacao: { proximo_cursor } });
+      assert.deepEqual(previous.decodePropertyPage(page(expanded)), previous.decodePropertyPage(page(original)));
+      assert.deepEqual(decodePropertyPage(page(original)), previous.decodePropertyPage(page(original)));
+    }
+  }
+});
+
+test('C: leitura administrativa canonicaliza texto exato e mantém ausência nas duas representações', () => {
+  for (const [input, expected] of [
+    [null, null], ['0.0001', '0.0001'], ['1.2345', '1.2345'],
+    ['1.2300', '1.23'], ['1.0000', '1'], ['9999999999.9999', '9999999999.9999'],
+  ]) {
+    const wire = administrativeProperty({ area_total: input === null ? null : Number(input),
+      area_total_decimal: input });
+    const decoded = decodeAdministrativeProperty(JSON.parse(JSON.stringify(wire)));
+    assert.equal(decoded.area_total_decimal, expected);
+    assert.equal(decoded.area_total, wire.area_total);
+    if (expected !== null) assert.equal(normalizeAdministrativeAreaTotal(expected), expected);
+  }
+});
+
+test('D: leitura administrativa rejeita texto ausente/corrompido sem reconstruir do número', () => {
+  const { area_total_decimal, ...original } = administrativeProperty();
+  assert.throws(() => decodeAdministrativeProperty(original), InvalidBackendResponseError);
+  for (const invalid of invalidAreas) {
+    assert.throws(() => decodeAdministrativeProperty(administrativeProperty({
+      area_total_decimal: invalid,
+    })), InvalidBackendResponseError);
+  }
+  assert.throws(() => decodeAdministrativeProperty(administrativeProperty({
+    area_total: null, area_total_decimal: '1.23',
+  })), InvalidBackendResponseError);
 });
 
 test('recibos administrativos aceitam somente combinações e campos fechados', () => {

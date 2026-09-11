@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-10
+> Revisão documental: 2026-09-11
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -73,7 +73,10 @@ HEAD + worktree para commit da D-3, sem achado obrigatório remanescente ou
 evidência crítica pendente, preservando e verificando as correções anteriores.
 A correção backend do
 recibo de convite, commit `7c5256e`, foi incorporada à feature pelo merge
-`963eb0f`; o MP-35D-4 não foi iniciado.
+`963eb0f`. A D-3 foi concluída, auditada e enviada na `feat/mp-35d` no commit
+`92bba628f43719216a28f73bec81348a0c3a4643`. Em 2026-09-11, somente o
+pré-requisito de leitura decimal da D-4 foi implementado e aprovado para commit
+na auditoria independente, sem achado obrigatório ou evidência crítica pendente.
 
 Estado formal da sequência administrativa:
 
@@ -81,9 +84,50 @@ Estado formal da sequência administrativa:
 - MP-35B: integrada.
 - MP-35C: concluída, auditada independentemente e integrada.
 - Confirmação pós-integração: aprovada.
-- MP-35D: em andamento; D-1/D-2 concluídas na `feat/mp-35d`; D-3 aprovada
-  na auditoria independente final para commit; D-4 não iniciada. A integração
-  final da MP-35D na `backend` permanece posterior.
+- MP-35D: em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`; somente o
+  pré-requisito decimal da D-4 aprovado para commit na auditoria independente. Formulários
+  e demais fluxos D-4 ainda não implementados nesta etapa. A integração final
+  da MP-35D na `backend` permanece posterior.
+
+## MP-35D-4 — pré-requisito de leitura decimal — 2026-09-11
+
+Lista e detalhe de Propriedade preservam `area_total: number | null` e
+acrescentam `area_total_decimal: string | null`, somente de leitura e
+autoritativo para administração. Ambos derivam de `propriedades.area_total`:
+SQL projeta `::text`, o repositório valida/canonicaliza sem conversão binária e
+somente a representação numérica legada recebe `Number`. Não há migration,
+armazenamento paralelo, mudança de endpoint ou RBAC. Escritas continuam em
+`area_total`, com omissão na criação, rejeição de `null` na criação e
+preservação por omissão/limpeza por `null` no PATCH.
+
+O leitor operacional extraído do commit base aceita a resposta anterior e a
+ampliada sem alterar a área numérica. O novo leitor administrativo exige o
+texto; ausência, tipo/domínio inválido ou nulabilidade divergente produzem
+`InvalidBackendResponseError`, sem reconstrução pelo número. O validador mobile
+agora exige fim absoluto, inclusive diante dos terminadores identificados.
+
+Validação executada: typechecks mobile/backend; MP-35D-1 (55), D-2 (85), D-3
+(106); domain-compat com MP-33C, MP-34 e convergência; backend unit (190), HTTP
+(42), integridade das dez migrations, integrações focadas de Propriedades e
+MP-35C (32), build e smoke ESM. O percurso PostgreSQL/PostGIS → repositório →
+JSON foi executado em Testcontainers descartáveis, incluindo parser numérico
+configurado para falhar se usado. Detalhes e limitações em
+[testes de contrato](testes-contrato-api-rbac.md).
+
+Estado ao término da implementação: **ALINHAMENTO DE LEITURA DECIMAL IMPLEMENTADO — AGUARDANDO AUDITORIA
+INDEPENDENTE**. Naquela etapa, sem commit/push ou integração na branch backend,
+sem formulário, comando mobile, seletor, navegação nova ou teste Android físico.
+
+Parecer independente posterior: **APROVADO PARA COMMIT DO PRÉ-REQUISITO DECIMAL
+DA MP-35D-4**, cobrindo HEAD + worktree + snapshot novo, sem achado obrigatório
+ou evidência crítica pendente. Contrato aditivo e compatibilidade do leitor
+anterior comprovados; escrita exclusivamente em `area_total` preservada.
+Os [resultados do auditor](testes-contrato-api-rbac.md) são herdados neste
+fechamento, que altera somente documentação. MP-35D e D-4 continuam em andamento;
+formulários, seletores, comandos mobile e navegação exigem próxima autorização.
+A integração final na `backend` e a revisão geral do OpenAPI de escrita,
+preservando `400`/`422`, permanecem posteriores. Nenhum Android físico, build
+mobile de release ou validação produtiva; build backend não equivale a release mobile.
 
 ## Correção focal integrada no backend — 2026-09-08
 
@@ -184,7 +228,7 @@ Validações executadas pelo auditor independente: typecheck passou; MP-35D-1
 `git diff --check` passaram. O fechamento altera somente registros documentais
 de aprovação e preserva código, testes, dependências, configuração e contratos.
 
-MP-35D permanece em andamento; D-4 não iniciada. A integração final da MP-35D
+Naquele fechamento, MP-35D permanecia em andamento e D-4 não iniciada. A integração final da MP-35D
 na `backend` será posterior. Não houve smoke Android físico, build de release
 ou validação produtiva; este fechamento não libera produção ou release.
 
@@ -192,7 +236,7 @@ ou validação produtiva; este fechamento não libera produção ou release.
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil, notificações e administração D-3 de Usuários; D-3 aprovada na auditoria independente final para commit; MP-35D em andamento e D-4 não iniciada, sem teste Android físico ou release produtivo |
+| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil, notificações e administração D-3 de Usuários concluída; pré-requisito decimal D-4 aprovado para commit na auditoria independente; MP-35D/D-4 em andamento, sem formulários, teste Android físico ou release produtivo |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
@@ -594,8 +638,9 @@ auditada independentemente e integrada diretamente no commit `e6789bf`; sua
 confirmação pós-integração foi aprovada. Na `feat/mp-35d`, D-1/D-2 estão
 concluídas e D-3 recebeu correções obrigatórias, implementadas e aprovadas na
 auditoria independente final para commit, sem achado obrigatório remanescente.
-MP-35D segue em andamento; D-4 não iniciada e integração final na `backend`
-posterior.
+MP-35D segue em andamento; a D-3 foi concluída e enviada em `92bba62`.
+Somente o pré-requisito decimal da D-4 está implementado e aprovado para commit;
+demais fluxos D-4 e integração final na `backend` permanecem posteriores.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de

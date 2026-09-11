@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
 import fastify from 'fastify';
 
 import { assertDestructiveDatabaseTestsAllowed } from '../../scripts/destructive-database-test-guard.js';
@@ -403,6 +403,59 @@ describe('PostgresPropertyRepository', { timeout: 180_000 }, () => {
       throw error;
     } finally {
       restoreClient.release();
+    }
+  });
+
+  test('decimal persistido chega exato ao JSON da lista e detalhe sem parser numérico', async () => {
+    assert.ok(testDatabase);
+    const fixture = requireIds();
+    // A numeric OID parser must never supply the authoritative text, even if customized.
+    const textPool = new Pool({ ...buildPostgresPoolConfig(testDatabase.database), types: {
+      getTypeParser: (oid: number) => oid === 1700
+        ? () => { throw new Error('A leitura decimal não pode depender do parser numeric'); }
+        : types.getTypeParser(oid),
+    } });
+    const decimalRepository = new PostgresPropertyRepository(textPool);
+    const authentication = {
+      async authenticate() { return principal(fixture.admin, 'admin'); },
+    } as unknown as AuthenticationService;
+    const app = fastify({ logger: false });
+    try {
+      await app.register(propertyRoutesPlugin, { prefix: '/v1/propriedades',
+        service: new DefaultPropertyService({ authentication, repository: decimalRepository }) });
+      const headers = { authorization: `Bearer ${issueOpaqueToken().value}` };
+      for (const [input, stored, expected] of [
+        [null, null, null], ['0.0001', '0.0001', '0.0001'],
+        ['1.2345', '1.2345', '1.2345'], ['1.2300', '1.2300', '1.23'],
+        ['1', '1.0000', '1'], ['9999999999.9999', '9999999999.9999', '9999999999.9999'],
+      ] as const) {
+        const id = randomUUID();
+        const persisted = await requirePool().query(`INSERT INTO public.propriedades
+          (id, organizacao_id, titular_id, nome, municipio_id, municipio_nome,
+           uf_id, uf_sigla, area_total, status)
+          VALUES ($1,$2,$3,$4,'4306106','Cruz Alta','43','RS',$5::numeric,'inativa')
+          RETURNING area_total::text, versao, criado_em, atualizado_em`,
+        [id, ORGANIZATION_ID, fixture.titularProducer, `Decimal ${id}`, input]);
+        assert.equal(persisted.rows[0].area_total, stored);
+        const view = await decimalRepository.findById({ principal: principal(fixture.admin, 'admin'), propertyId: id });
+        assert.equal(view?.totalAreaDecimal, expected);
+        const list = await app.inject({ url: `/v1/propriedades?busca=${id}`, headers });
+        const detail = await app.inject({ url: `/v1/propriedades/${id}`, headers });
+        assert.equal(list.statusCode, 200);
+        assert.equal(detail.statusCode, 200);
+        assert.deepEqual(list.json().itens, [detail.json()]);
+        const body = detail.json();
+        assert.equal(body.area_total_decimal, expected);
+        assert.equal(body.area_total, expected === null ? null : Number(expected));
+        assert.equal(body.versao, Number(persisted.rows[0].versao));
+        assert.equal(body.criado_em, persisted.rows[0].criado_em.toISOString());
+        assert.equal(body.atualizado_em, persisted.rows[0].atualizado_em.toISOString());
+        assert.equal(body.status, 'inativa');
+        assert.equal(body.tipo_acesso, 'admin');
+      }
+    } finally {
+      await app.close();
+      await textPool.end();
     }
   });
 

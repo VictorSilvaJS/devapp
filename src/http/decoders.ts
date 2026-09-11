@@ -1,3 +1,4 @@
+import { normalizeAdministrativeAreaTotal } from './administrativeArea';
 import type {
   AcceptedResponse,
   AdministrativePropertyProjection,
@@ -695,6 +696,7 @@ export function decodeAdministrativeProperty(
     'uf_id',
     'uf_sigla',
     'area_total',
+    'area_total_decimal',
     'cultura_principal',
     'status',
     'tipo_acesso',
@@ -704,6 +706,17 @@ export function decodeAdministrativeProperty(
   ]);
   exactKeys(record(input.titular), ['id', 'nome']);
   const property = decodeProperty(input);
+  let areaDecimal: AdministrativePropertyProjection['area_total_decimal'];
+  try {
+    areaDecimal = input.area_total_decimal === null
+      ? null
+      : normalizeAdministrativeAreaTotal(input.area_total_decimal);
+  } catch {
+    throw new InvalidBackendResponseError();
+  }
+  if ((property.area_total === null) !== (areaDecimal === null)) {
+    throw new InvalidBackendResponseError();
+  }
   const createdAt = decodeTimestamp(input.criado_em);
   const updatedAt = decodeTimestamp(input.atualizado_em);
   if (updatedAt < createdAt) {
@@ -711,6 +724,7 @@ export function decodeAdministrativeProperty(
   }
   return {
     ...property,
+    area_total_decimal: areaDecimal,
     versao: positiveInteger(input.versao),
     criado_em: createdAt,
     atualizado_em: updatedAt,

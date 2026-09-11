@@ -1,12 +1,12 @@
 # Contrato de Administração da MP-35
 
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
-> MP-35D-3 aprovada na auditoria independente final para commit;
-> MP-35D-4 não iniciada`
+> MP-35D-3 concluída, auditada e enviada em 92bba62;
+> pré-requisito decimal da MP-35D-4 aprovado para commit na auditoria independente; MP-35D/D-4 em andamento`
 >
 > Definido em: 2026-08-25
 >
-> Revisão: 2026-09-10
+> Revisão: 2026-09-11
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
@@ -29,7 +29,46 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1 e D-2 concluídas na `feat/mp-35d`; D-3 aprovada na auditoria independente final para commit; D-4 não iniciada; integração final na `backend` posterior |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`; pré-requisito decimal da D-4 aprovado para commit na auditoria independente; D-4 em andamento; demais fluxos D-4 e integração final na `backend` posteriores |
+
+### Leitura decimal administrativa — pré-requisito da MP-35D-4
+
+Em 2026-09-11, o worktree da `feat/mp-35d`, sobre `92bba62`, implementa somente
+o alinhamento aditivo de `GET /v1/propriedades` e `GET /v1/propriedades/:id`:
+
+| Campo de resposta | Tipo | Uso |
+|---|---|---|
+| `area_total` | `number` ou `null` | representação operacional existente, preservada por compatibilidade |
+| `area_total_decimal` | `string` ou `null` | representação textual autoritativa administrativa, obrigatória nas novas respostas e somente de leitura |
+
+Ambos vêm da única coluna `propriedades.area_total`, `numeric(14,4)`.
+`area_total::text` evita o parser numérico do driver; o repositório valida o
+texto positivo de até dez dígitos inteiros e quatro fracionários e remove
+somente zeros fracionários finais. Exemplos: `1.2300` → `1.23`, `1.0000` → `1`,
+`0.0001` e `9999999999.9999` preservados. Ausência produz `null` nos dois campos.
+Somente o campo legado é convertido para número, depois da canonicalização.
+
+O decoder operacional continua aceitando também a resposta anterior sem o
+novo campo. O administrativo exige o texto e valida sua nulabilidade junto à
+área legada; texto ausente/inválido falha com `InvalidBackendResponseError`,
+sem baseline reconstruído do número. Não há trim, arredondamento, formatação
+visual ou fallback para Demo. O schema de resposta/OpenAPI anuncia o campo
+como `readOnly` e compartilha a mesma definição em lista e detalhe.
+
+POST/PATCH continuam recebendo somente `area_total` textual: criação aceita
+omissão e rejeita `null` com `422`; PATCH omitido preserva e `null` limpa.
+`area_total_decimal` na escrita é campo desconhecido, rejeitado com `400`,
+mesmo junto de `area_total`. Schemas de escrita e classificação estrutural/
+semântica permanecem preservados; sua revisão documental segue pendente para
+a integração dos comandos D-4.
+
+A D-3 está concluída, auditada e enviada. Este pré-requisito recebeu o parecer
+**APROVADO PARA COMMIT DO PRÉ-REQUISITO DECIMAL DA MP-35D-4**, sem achado
+obrigatório ou evidência crítica pendente, cobrindo HEAD + worktree + snapshot.
+A compatibilidade do leitor anterior foi comprovada. MP-35D/D-4 continuam em
+andamento; a próxima autorização delimitará os demais fluxos. O corte não inclui
+formulários, comandos mobile de Propriedade,
+seletores de Titular/Localidades, novos fluxos de navegação, migration ou RBAC.
 
 ### Estado da integração no aplicativo
 
@@ -109,8 +148,8 @@ O parecer independente final posterior emitiu **APROVADA PARA COMMIT DO
 MP-35D-3**, cobrindo HEAD + worktree e todas as correções anteriores, preservadas
 e verificadas, sem achado obrigatório remanescente ou evidência crítica pendente.
 As [validações do auditor](testes-contrato-api-rbac.md) passaram. O registro desta
-aprovação não altera contratos. MP-35D segue em andamento; D-4 não iniciada e
-integração final na `backend` posterior. Produção e release não estão liberados;
+aprovação não alterava contratos. Naquele momento, D-4 não estava iniciada e a
+integração final na `backend` era posterior. Produção e release não estão liberados;
 não houve smoke Android físico, build de release ou validação produtiva.
 
 A correção integrada em `7c5256e` faz o recibo de convite identificar o Usuário

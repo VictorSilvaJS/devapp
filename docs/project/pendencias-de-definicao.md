@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-10
+> Revisão documental: 2026-09-11
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -18,7 +18,30 @@ reauditoria independente e CI pós-push aprovadas. A MP-35C entrou no commit
 confirmação pós-integração foi aprovada. MP-35D-1/2 foram concluídas na
 `feat/mp-35d`; MP-35D-3 recebeu correções obrigatórias, implementadas e aprovadas
 na auditoria independente final para commit, sem achado obrigatório remanescente.
-MP-35D segue em andamento; MP-35D-4 não foi iniciada.
+O fechamento da D-3 foi concluído e enviado em `92bba62`. MP-35D segue em
+andamento, assim como D-4; somente o pré-requisito decimal está implementado e
+aprovado para commit na auditoria independente, sem achado obrigatório remanescente.
+
+## MP-35D-4 — pendências após o pré-requisito decimal
+
+- auditoria independente focal do alinhamento aditivo concluída, sem achado
+  obrigatório ou evidência crítica pendente; os demais itens abaixo permanecem abertos;
+- formulários e comandos mobile de Propriedade, seletores de Titular/Localidades
+  e navegação correspondente: ainda não implementados nesta etapa e dependentes
+  de autorização própria;
+- na integração dos comandos, revisar a documentação/OpenAPI de escrita que
+  enumera campos semanticamente proibidos e admite `null` na criação para
+  produzir `422`. Não remover esses campos/tipos sem preservar a distinção de
+  `400` estrutural e `422` semântico com testes explícitos;
+- validação funcional Android física da futura integração D-4 e integração
+  final da MP-35D na branch `backend`, posteriores.
+
+A representação já foi decidida: `area_total` numérico permanece e
+`area_total_decimal` textual é adicional, somente de leitura e autoritativo
+administrativo, derivado da mesma coluna. Escritas permanecem em `area_total`.
+Não há decisão pendente de substituição direta nem prazo de retirada do campo
+numérico; eventual remoção exigirá decisão própria. D1-D13 e o fechamento D-3
+permanecem preservados.
 
 ## Convergência da interface antes da MP-35
 
@@ -89,10 +112,11 @@ sessão MP-33C. O parecer independente final posterior aprovou HEAD + worktree
 para commit da D-3, sem achado obrigatório remanescente ou evidência crítica
 pendente, preservando e verificando todas as correções anteriores.
 
-A reauditoria da D-3 deixou de ser pendência. Permanecem MP-35D em andamento,
-D-4 não iniciada e integração final na `backend` posterior. Não houve smoke
-Android físico, build de release ou validação produtiva. O fechamento não
-libera produção/release, não reabre D1-D13 e não inicia MP-35D-4.
+A reauditoria e o fechamento da D-3 deixaram de ser pendências; a D-3 foi enviada
+em `92bba62`. A autorização posterior delimitou a D-4 ao pré-requisito decimal
+descrito acima. Demais fluxos D-4 e integração final na `backend` permanecem
+posteriores. Não houve smoke Android físico, build de release ou validação
+produtiva; o fechamento não libera produção/release nem reabre D1-D13.
 
 ## Implementação por fase
 
@@ -101,10 +125,9 @@ libera produção/release, não reabre D1-D13 e não inicia MP-35D-4.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- manter MP-35D-4 não iniciada até autorização futura própria; a D-3 está
-  aprovada para commit na `feat/mp-35d`, e a integração final da MP-35D na
-  `backend` permanece posterior; não ampliar este fechamento para Propriedades,
-  Localidades ou vínculos;
+- preservar a aprovação independente do pré-requisito decimal da D-4; a D-3 está
+  concluída na `feat/mp-35d`. Demais fluxos D-4 exigem autorização própria, e a
+  integração final da MP-35D na `backend` permanece posterior;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
