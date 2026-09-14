@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-11
+> Revisão documental: 2026-09-14
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -19,22 +19,26 @@ confirmação pós-integração foi aprovada. MP-35D-1/2 foram concluídas na
 `feat/mp-35d`; MP-35D-3 recebeu correções obrigatórias, implementadas e aprovadas
 na auditoria independente final para commit, sem achado obrigatório remanescente.
 O fechamento da D-3 foi concluído e enviado em `92bba62`. MP-35D segue em
-andamento, assim como D-4; somente o pré-requisito decimal está implementado e
-aprovado para commit na auditoria independente, sem achado obrigatório remanescente.
+andamento, assim como D-4. O pré-requisito decimal foi fechado e enviado em
+`dab3ac4`. A integração HTTP administrativa de Propriedades está implementada
+e aprovada independentemente após reprodução, correção e reauditoria focal de F1,
+sem achado obrigatório remanescente. O corte está autorizado para fechamento Git.
 
-## MP-35D-4 — pendências após o pré-requisito decimal
+## MP-35D-4 — pendências após a integração HTTP administrativa
 
 - auditoria independente focal do alinhamento aditivo concluída, sem achado
-  obrigatório ou evidência crítica pendente; os demais itens abaixo permanecem abertos;
-- formulários e comandos mobile de Propriedade, seletores de Titular/Localidades
-  e navegação correspondente: ainda não implementados nesta etapa e dependentes
-  de autorização própria;
-- na integração dos comandos, revisar a documentação/OpenAPI de escrita que
-  enumera campos semanticamente proibidos e admite `null` na criação para
-  produzir `422`. Não remover esses campos/tipos sem preservar a distinção de
-  `400` estrutural e `422` semântico com testes explícitos;
+  obrigatório ou evidência crítica pendente;
+- reauditoria independente da integração HTTP administrativa concluída e
+  aprovada, incluindo F1; não resta achado obrigatório. Pendente somente o
+  fechamento Git autorizado na `feat/mp-35d`, com confirmação do hash remoto;
+- formulários de Propriedade, seletores de Titular/Localidades e navegação
+  correspondente: ainda não implementados nesta etapa;
+- a revisão documental/OpenAPI dos três comandos foi implementada sem remoção
+  de campos/tipos reconhecidos para produzir `422`; regressão explícita preserva
+  `400` estrutural e `422` semântico. A revisão pertence à auditoria deste corte;
 - validação funcional Android física da futura integração D-4 e integração
-  final da MP-35D na branch `backend`, posteriores.
+  final da MP-35D na branch `backend`, posteriores;
+- vínculos e transferência de Titularidade continuam fora desta entrega.
 
 A representação já foi decidida: `area_total` numérico permanece e
 `area_total_decimal` textual é adicional, somente de leitura e autoritativo
@@ -125,9 +129,9 @@ produtiva; o fechamento não libera produção/release nem reabre D1-D13.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- preservar a aprovação independente do pré-requisito decimal da D-4; a D-3 está
-  concluída na `feat/mp-35d`. Demais fluxos D-4 exigem autorização própria, e a
-  integração final da MP-35D na `backend` permanece posterior;
+- preservar D-3 fechada em `92bba62`, decimal fechado em `dab3ac4` e aprovação
+  independente da integração HTTP administrativa de Propriedades, incluindo F1.
+  Seletores, formulários, navegação e integração final na `backend` são posteriores;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;

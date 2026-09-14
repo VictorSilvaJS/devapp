@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-11
+> Revisão documental: 2026-09-14
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -78,16 +78,72 @@ recibo de convite, commit `7c5256e`, foi incorporada à feature pelo merge
 pré-requisito de leitura decimal da D-4 foi implementado e aprovado para commit
 na auditoria independente, sem achado obrigatório ou evidência crítica pendente.
 
+O pré-requisito decimal foi fechado e enviado em `dab3ac4`. Em 2026-09-14,
+a integração HTTP administrativa de Propriedades foi implementada sobre esse
+commit; F1 da primeira auditoria foi reproduzido, corrigido e aprovado na
+reauditoria independente, sem achado obrigatório remanescente. O corte está
+autorizado para fechamento Git e oferece leitura, comandos,
+modelos e lifecycle internos, sem formulários, seletores ou navegação D-4.
+
 Estado formal da sequência administrativa:
 
 - MP-35A: integrada.
 - MP-35B: integrada.
 - MP-35C: concluída, auditada independentemente e integrada.
 - Confirmação pós-integração: aprovada.
-- MP-35D: em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`; somente o
-  pré-requisito decimal da D-4 aprovado para commit na auditoria independente. Formulários
-  e demais fluxos D-4 ainda não implementados nesta etapa. A integração final
-  da MP-35D na `backend` permanece posterior.
+- MP-35D: em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`;
+  pré-requisito decimal fechado e enviado em `dab3ac4`; integração HTTP
+  administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`.
+  Seletores, formulários e navegação D-4 ainda não implementados. A integração
+  final da MP-35D na `backend` permanece posterior.
+
+## MP-35D-4 — integração HTTP administrativa de Propriedades — 2026-09-14
+
+`BackendApi` consome lista/detalhe administrativos completos e versionados e
+os três comandos existentes: criação, PATCH cadastral parcial e status separado.
+O decoder operacional MP-33C permanece intacto. A área administrativa continua
+textual, autoritativa e sem reconstrução do número; escritas usam `area_total`.
+
+`AdministrativePropertyCommandService` cria intenções imutáveis, executadas
+pelo `AdministrativePropertyCommandLifecycle` com o coordenador idempotente D-1.
+Recibo válido confirma a mutação antes do GET; somente ID correlacionado e
+versão igual/superior ao recibo permitem publicação e conclusão única.
+Falhas posteriores preservam confirmação e recuperação exclusivamente por GET.
+O modelo de edição mantém baseline, draft, dirtyFields e conflitos explícitos,
+incluindo rebases consecutivos, decimal equivalente e seleção municipal inteira.
+
+`AdministrativePropertyDataBoundary` guarda detalhes/listas apenas em memória,
+preserva filtros ao invalidar projeções e descarta leituras antigas. O runtime
+usa os observers/leases de sessão existentes; perda de autorização encerra
+fluxos antigos definitivamente, e revalidação aceita libera novos. D13 invalida
+projeções administrativas de Usuários pelo mecanismo existente, sem inferir IDs.
+
+OpenAPI recebeu somente descrições nos três comandos; campos/tipos que
+classificam erros continuam iguais, com regressão explícita de `400`/`422`.
+Não há mudança funcional de serviço backend, SQL, migrations ou RBAC.
+Composição e resultados da suíte própria `test:mp35d4` estão em
+[testes de contrato](testes-contrato-api-rbac.md); smoke automatizado em
+[smoke](smoke.md).
+
+A auditoria independente encontrou somente F1: o lifecycle cancelado ainda
+retinha intenção e dados administrativos. A reprodução permanente falhou antes
+da correção funcional. O armazenamento privado agora é descartado no
+cancelamento definitivo, inclusive dispose sem submit; novos setups criam
+novas instâncias. Recovery de recibo confirmado continua somente GET enquanto
+o fluxo permanece válido. A suíte D-4 passou 131/131 após a correção.
+
+A reauditoria focal aprovou F1 e o corte para commit, sem achado obrigatório
+remanescente. O auditor executou D-4 131/131 (35 contratos, 29 modelos,
+26 comandos, 36 lifecycle e 5 arquitetura), além das regressões e probes
+registrados em [testes de contrato](testes-contrato-api-rbac.md). Essas evidências
+não são novas execuções deste fechamento, que preserva código/testes/configuração.
+
+Estado: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE PROPRIEDADES — APROVADA E EM
+FECHAMENTO NA feat/mp-35d**. D-4 permanece em andamento. Sem seletores,
+formulários, botões ou rotas visuais novos; Demo preservado. Vínculos e
+transferência de Titularidade continuam fora. Android físico não executado,
+CI remota não consultada, sem release ou integração na `backend`. Commit/push
+somente para `feat/mp-35d` estão autorizados; conclusão depende de confirmação remota.
 
 ## MP-35D-4 — pré-requisito de leitura decimal — 2026-09-11
 
@@ -122,12 +178,13 @@ Parecer independente posterior: **APROVADO PARA COMMIT DO PRÉ-REQUISITO DECIMAL
 DA MP-35D-4**, cobrindo HEAD + worktree + snapshot novo, sem achado obrigatório
 ou evidência crítica pendente. Contrato aditivo e compatibilidade do leitor
 anterior comprovados; escrita exclusivamente em `area_total` preservada.
-Os [resultados do auditor](testes-contrato-api-rbac.md) são herdados neste
-fechamento, que altera somente documentação. MP-35D e D-4 continuam em andamento;
-formulários, seletores, comandos mobile e navegação exigem próxima autorização.
-A integração final na `backend` e a revisão geral do OpenAPI de escrita,
-preservando `400`/`422`, permanecem posteriores. Nenhum Android físico, build
-mobile de release ou validação produtiva; build backend não equivale a release mobile.
+Os [resultados do auditor](testes-contrato-api-rbac.md) foram herdados naquele
+fechamento documental, posteriormente enviado em `dab3ac4`. Naquele corte,
+formulários, seletores, comandos mobile e navegação exigiam próxima autorização.
+A autorização de 2026-09-14 delimitou somente a integração HTTP descrita acima
+e a documentação dos três comandos, preservando `400`/`422`.
+Nenhum Android físico, build mobile de release ou validação produtiva;
+build backend não equivale a release mobile.
 
 ## Correção focal integrada no backend — 2026-09-08
 
@@ -236,7 +293,7 @@ ou validação produtiva; este fechamento não libera produção ou release.
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo local preservado; HTTP com sessão, Propriedades, Perfil, notificações e administração D-3 de Usuários concluída; pré-requisito decimal D-4 aprovado para commit na auditoria independente; MP-35D/D-4 em andamento, sem formulários, teste Android físico ou release produtivo |
+| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal fechado em `dab3ac4`; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`; D-4 sem seletores, formulários ou navegação, sem novo Android físico ou release |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
@@ -277,12 +334,12 @@ O comportamento implementado e seus limites estão congelados no
 Administração HTTP de Usuários e convites está concluída e integrada na MP-35B.
 Propriedades, vínculos e Localidades estão concluídos e integrados na MP-35C
 pelo commit `e6789bf`, com CI pós-push, auditoria independente e confirmação
-pós-integração aprovadas. A integração do aplicativo avançou somente até o
-MP-35D-3: fundação D-1 e leitura administrativa D-2 integradas na
-`feat/mp-35d`, e comandos de Usuário D-3 registrados no commit `a92d6d6`, com
-correções focais aprovadas na auditoria independente final para commit.
-Propriedades administrativas, vínculos, Localidades e validação física D-4
-continuam fora.
+pós-integração aprovadas. D-1/D-2/D-3 estão concluídas na `feat/mp-35d`,
+com D-3 fechada em `92bba62` e pré-requisito decimal em `dab3ac4`.
+O corte HTTP interno de Propriedades administrativas está implementado e
+aprovado independentemente após correção de F1, em fechamento na `feat/mp-35d`.
+Seletores de Localidades/Titular, formulários,
+navegação D-4, vínculos e validação física continuam posteriores.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 
@@ -639,16 +696,17 @@ confirmação pós-integração foi aprovada. Na `feat/mp-35d`, D-1/D-2 estão
 concluídas e D-3 recebeu correções obrigatórias, implementadas e aprovadas na
 auditoria independente final para commit, sem achado obrigatório remanescente.
 MP-35D segue em andamento; a D-3 foi concluída e enviada em `92bba62`.
-Somente o pré-requisito decimal da D-4 está implementado e aprovado para commit;
-demais fluxos D-4 e integração final na `backend` permanecem posteriores.
+O pré-requisito decimal está fechado e enviado em `dab3ac4`; a integração HTTP
+administrativa de Propriedades foi aprovada independentemente, com F1 encerrado,
+e está em fechamento na `feat/mp-35d`.
+Seletores, formulários, navegação e integração final na `backend` são posteriores.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. Propriedades administrativas, vínculos,
-Localidades, validação física D-4 e qualquer fase posterior continuam fora do
-corte atual e exigem autorização específica.
+links, assinatura e dispositivo. Vínculos, seletores de Localidades/Titular,
+formulários, navegação e validação física D-4 continuam fora do corte atual.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da

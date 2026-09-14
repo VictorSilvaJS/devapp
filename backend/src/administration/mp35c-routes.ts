@@ -210,6 +210,13 @@ export const mp35cRoutesPlugin: FastifyPluginAsync<Mp35cRoutesOptions> = async (
       assertRawArea(body, 'area_total', false);
     },
       schema: { operationId: 'postAdministrativeProperty', summary: 'Cria Propriedade',
+        description: 'Somente Admin. Campos permitidos: nome, titular_id (ID de Produtor, nunca usuario_id), '
+          + 'municipio_id, status inicial (ativa/inativa), area_total opcional e cultura_principal opcional. '
+          + 'Titular inicial é definido somente aqui; não há transferência de Titularidade nem vínculo titular adicional. '
+          + 'Localização autoritativa usa somente municipio_id; UF e rótulos são derivados. Sem versao na criação. '
+          + 'area_total é decimal textual exato; omissão é permitida, null é rejeitado com 422. '
+          + 'area_total_decimal é readOnly e desconhecido na escrita (400). Idempotency-Key obrigatória. '
+          + 'Campos derivados reconhecidos no schema são proibidos semanticamente (422); tipos/estrutura inválidos retornam 400.',
         tags: ['Administração de Propriedades'], security: [{ bearerAuth: [] }],
         headers: idempotencyHeaders, body: { type: 'object', additionalProperties: false,
           required: ['nome', 'titular_id', 'municipio_id', 'status'], properties: {
@@ -254,6 +261,13 @@ export const mp35cRoutesPlugin: FastifyPluginAsync<Mp35cRoutesOptions> = async (
       assertRawText(body, 'cultura_principal', 120);
     },
       schema: { operationId: 'patchAdministrativeProperty', summary: 'Atualiza cadastro da Propriedade',
+        description: 'Somente Admin. PATCH plano com versao positiva e ao menos uma alteração cadastral: '
+          + 'nome, municipio_id, area_total ou cultura_principal. Omissão preserva; null limpa somente área/cultura. '
+          + 'area_total é decimal textual exato; area_total_decimal é readOnly e desconhecido na escrita (400). '
+          + 'Não aceita transferência de Titularidade, titular_id, status, UF, rótulos derivados ou timestamps. '
+          + 'Status usa PATCH /v1/propriedades/:id/status. Localização autoritativa usa somente municipio_id. '
+          + 'Idempotency-Key e versão-base obrigatórias. Campos proibidos reconhecidos no schema preservam '
+          + '422 semântico; estrutura/tipo inválido continua 400.',
         tags: ['Administração de Propriedades'], security: [{ bearerAuth: [] }], headers: idempotencyHeaders,
         params: idParams, body: { type: 'object', additionalProperties: false, required: ['versao'], properties: {
           versao: { type: 'integer', minimum: 1 }, nome: { type: 'string', minLength: 1, maxLength: 200 },
@@ -288,6 +302,11 @@ export const mp35cRoutesPlugin: FastifyPluginAsync<Mp35cRoutesOptions> = async (
       assertRawText(body, 'motivo_detalhe', 300);
     },
       schema: { operationId: 'patchAdministrativePropertyStatus', summary: 'Muda status da Propriedade com motivo',
+        description: 'Somente Admin. Payload exclusivo: versao, status destino (ativa/inativa), motivo D10 e '
+          + 'motivo_detalhe opcional, obrigatório quando motivo=outro. Idempotency-Key e versão-base obrigatórias. '
+          + 'Nenhum campo cadastral, titular_id ou localização é aceito nesta rota. '
+          + 'Estrutura/tipo inválido retorna 400; valor/regra semanticamente inválido retorna 422 ou conflito 409. '
+          + 'Após recibo, reler GET /v1/propriedades/:id; Admin também pode consultar Propriedade inativa.',
         tags: ['Administração de Propriedades'], security: [{ bearerAuth: [] }], headers: idempotencyHeaders,
         params: idParams, body: { type: 'object', additionalProperties: false,
           required: ['versao', 'status', 'motivo'], properties: { versao: { type: 'integer', minimum: 1 },

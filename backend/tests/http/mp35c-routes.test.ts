@@ -49,6 +49,37 @@ async function appFor(service: Mp35cService) {
 }
 
 describe('MP-35C HTTP routes', () => {
+  it('D4 documenta somente os três comandos sem mudar a classificação estrutural/semântica', async () => {
+    const service = new FakeMp35cService(); const app = await appFor(service);
+    try {
+      await app.ready();
+      const paths = app.swagger().paths ?? {};
+      assert.match(paths['/v1/propriedades']?.post?.description ?? '', /ID de Produtor, nunca usuario_id/u);
+      assert.match(paths['/v1/propriedades']?.post?.description ?? '', /null é rejeitado com 422/u);
+      assert.match(paths['/v1/propriedades/{id}']?.patch?.description ?? '', /Não aceita transferência de Titularidade/u);
+      assert.match(paths['/v1/propriedades/{id}/status']?.patch?.description ?? '', /motivo=outro/u);
+      const headers = { authorization: 'Bearer opaque', 'idempotency-key': 'd4-openapi' };
+      const post = { nome: 'Propriedade', titular_id: USER_ID, municipio_id: '4305108', status: 'ativa' };
+      for (const current of [
+        { method: 'POST', url: '/v1/propriedades', payload: { ...post, area_total: null }, status: 422 },
+        { method: 'POST', url: '/v1/propriedades', payload: { ...post, area_total: 1 }, status: 400 },
+        { method: 'POST', url: '/v1/propriedades', payload: { ...post, uf_id: '43' }, status: 422 },
+        { method: 'POST', url: '/v1/propriedades', payload: { ...post, uf_id: 43 }, status: 400 },
+        { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}`, payload: { versao: 1, titular_id: USER_ID }, status: 422 },
+        { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}`, payload: { versao: 1, titular_id: 1 }, status: 400 },
+        { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}`, payload: { versao: 1, status: 'inativa' }, status: 422 },
+        { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}/status`, payload: { versao: 1, status: 'inativa', motivo: 'inexistente' }, status: 422 },
+        { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}/status`, payload: { versao: 1, status: 'inativa', motivo: 1 }, status: 400 },
+        { method: 'PATCH', url: `/v1/propriedades/${PROPERTY_ID}/status`, payload: { versao: 1, status: 'inativa', motivo: 'fim_relacao', nome: 'Proibido' }, status: 400 },
+      ] as const) {
+        const response = await app.inject({ method: current.method, url: current.url, headers, payload: current.payload });
+        assert.equal(response.statusCode, current.status);
+        assert.equal(response.json().error.code, current.status === 400 ? 'invalid_request' : 'validation_error');
+      }
+      assert.deepEqual(service.calls, []);
+    } finally { await app.close(); }
+  });
+
   it('rejeita area_total_decimal como escrita com 400 e não chama comandos', async () => {
     const service = new FakeMp35cService(); const app = await appFor(service);
     try {

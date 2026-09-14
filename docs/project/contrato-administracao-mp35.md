@@ -2,11 +2,11 @@
 
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
 > MP-35D-3 concluída, auditada e enviada em 92bba62;
-> pré-requisito decimal da MP-35D-4 aprovado para commit na auditoria independente; MP-35D/D-4 em andamento`
+> pré-requisito decimal fechado e enviado em dab3ac4; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na feat/mp-35d; MP-35D/D-4 em andamento`
 >
 > Definido em: 2026-08-25
 >
-> Revisão: 2026-09-11
+> Revisão: 2026-09-14
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
@@ -29,7 +29,93 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`; pré-requisito decimal da D-4 aprovado para commit na auditoria independente; D-4 em andamento; demais fluxos D-4 e integração final na `backend` posteriores |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal fechado em `dab3ac4`; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`; seletores, formulários, navegação D-4 e integração final na `backend` posteriores |
+
+### Integração HTTP administrativa de Propriedades — 2026-09-14
+
+Implementada na `feat/mp-35d`, sobre `dab3ac4`; auditoria independente encontrou
+F1, reproduzido e corrigido focalmente. A reauditoria aprovou a correção e a
+integração HTTP interna para commit, sem achado obrigatório remanescente.
+Estado: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE PROPRIEDADES — APROVADA E EM
+FECHAMENTO NA feat/mp-35d**. Código e testes aprovados são preservados;
+resultados do auditor e limites estão nos [testes de contrato](testes-contrato-api-rbac.md).
+D-3 permanece fechada em `92bba62`; o pré-requisito decimal foi fechado e enviado
+em `dab3ac4`. Não há nova capacidade visual neste corte.
+
+| Porta BackendApi | Método/rota | Contrato |
+|---|---|---|
+| `listAdministrativeProperties` | `GET /v1/propriedades` | filtros/cursor existentes; itens administrativos completos |
+| `getAdministrativeProperty` | `GET /v1/propriedades/:id` | representação administrativa completa, inclusive inativa para Admin |
+| `createAdministrativeProperty` | `POST /v1/propriedades` | nome, titular_id de Produtor, municipio_id, status; área/cultura opcionais; sem versão |
+| `updateAdministrativeProperty` | `PATCH /v1/propriedades/:id` | versao e somente alterações de nome, municipio_id, area_total, cultura_principal |
+| `changeAdministrativePropertyStatus` | `PATCH /v1/propriedades/:id/status` | versao, status, motivo D10, motivo_detalhe obrigatório para outro |
+
+Comandos exigem `Idempotency-Key`. Recibos contêm exatamente `resultado`,
+`recurso_tipo=propriedade`, `recurso_id` UUID v4 canônico e `versao` inteira
+positiva; resultados: `criado`, `atualizado`, `status_alterado`. PATCH/status
+exigem ID alvo; na criação o ID nasce exclusivamente no recibo. O leitor
+administrativo exige decimal/versão/timestamps, sem preenchimento operacional.
+`decodeProperty` e `decodePropertyPage` permanecem intactos.
+
+`AdministrativePropertyCommandService.create/update/changeStatus` devolvem um
+`AdministrativePropertyCommandLifecycle`. Construção e `start()` não enviam
+comandos. `submit()` executa a intenção imutável pelo coordenador D-1; duplo
+submit compartilha operação. Transporte ambíguo conserva chave/payload/versão.
+Falha definitiva ou conflito exige revisão e nova intenção explícita.
+
+Recibo válido confirma a mutação antes do GET, fora da chamada autenticada da
+mutação: refresh após `401` do GET nunca repete POST/PATCH. A reconciliação
+exige mesmo ID e `versao >= versao_recibo`; campos concorrentes posteriores são
+aceitos. Só então há publicação e uma emissão de `onCompleted`.
+`confirmed_reconciliation_failed` preserva recibo/confirmação, bloqueia submit
+e permite `retryReconciliation()` somente por GET, inclusive após novas falhas.
+
+`AdministrativePropertyDataBoundary` possui partição, geração de dados, geração
+de autorização e leases próprios. Detalhes/listas ficam em memória; invalidação
+conserva filtros, sem inserir/remover itens pelo draft. Leituras antigas da mesma
+consulta são descartadas. `dispose`, perda de autorização, identidade nova e
+logout limpam dados e tornam fluxos antigos inertes. O runtime captura leases
+no observer de `/me` existente; retomada aceita libera novos fluxos e nunca
+revive os anteriores. Após F1, o lifecycle mantém a intenção em um único campo
+privado anulável; o cancelamento zera esse armazenamento antes de notificar
+observadores, descarta a referência à operação pendente e limpa callbacks.
+`intent` retorna `null` e o snapshot cancelado não expõe body, baseline/draft,
+conflitos ou resultado. Referências externas já guardadas pelo chamador não são
+mutadas. `dispose()` é definitivo inclusive sem submit; cada novo setup, também
+em StrictMode, cria outra instância. `confirmed_reconciliation_failed` ainda
+válido conserva intenção/recibo e permite recuperação exclusivamente por GET.
+Não há alteração no algoritmo de concorrência de sessão D-3.
+
+Modelos puros em `administrativePropertyModels.ts`:
+
+- criação recebe `{ produtor_id }`, sem aceitar `{ usuario_id }`; o servidor
+  valida existência/habilitação. Titular e município são obrigatórios;
+- edição mantém `baseline`, `draft`, `dirtyFields` e `fieldConflicts`;
+  Titular fica no baseline de leitura e status usa modelo separado;
+- área parte de `area_total_decimal`; equivalência canônica textual remove
+  dirty. Omissão preserva e `null` no PATCH significa limpeza explícita;
+- conflito de versão relê detalhe e devolve modelo rebaseado para revisão:
+  campos intocados adotam o servidor; intenção local e conflitos sobrevivem
+  a rebases consecutivos até resolução explícita;
+- seleção municipal mantém ID, nome, UF e sigla juntos; somente ID é enviado.
+  NFC/limites D9/whitespace seguem o HTTP e decimal usa o normalizador existente.
+
+D13: criação/status invalidam projeções administrativas de Usuários por
+`AdministrativeUserDataBoundary.invalidateReconciliation`, com lease capturado
+antes da mutação. Nenhum ID afetado é inventado; dados dos domínios continuam
+separados. Edição cadastral preserva as projeções de Usuários.
+
+OpenAPI recebeu somente descrições dos três comandos. Schemas ainda reconhecem
+campos proibidos e `null` na criação para preservar `422` semântico; estrutura/
+tipo inválido segue `400`. `area_total_decimal` continua `readOnly` na resposta
+e desconhecido na escrita. Sem transferência de Titularidade, mudança de SQL,
+migration, serviço MP-35C ou RBAC. Teste HTTP explícito cobre essa distinção.
+
+Suíte própria e resultados em [testes de contrato](testes-contrato-api-rbac.md).
+Seletores, formulários, navegação, vínculos e transferência continuam fora.
+Android físico não executado; CI remota não consultada; integração final na
+`backend` é posterior. A aprovação independente cobre somente este corte HTTP
+interno e F1; não conclui toda a D-4 nem libera release ou produção.
 
 ### Leitura decimal administrativa — pré-requisito da MP-35D-4
 
@@ -58,15 +144,15 @@ como `readOnly` e compartilha a mesma definição em lista e detalhe.
 POST/PATCH continuam recebendo somente `area_total` textual: criação aceita
 omissão e rejeita `null` com `422`; PATCH omitido preserva e `null` limpa.
 `area_total_decimal` na escrita é campo desconhecido, rejeitado com `400`,
-mesmo junto de `area_total`. Schemas de escrita e classificação estrutural/
-semântica permanecem preservados; sua revisão documental segue pendente para
-a integração dos comandos D-4.
+mesmo junto de `area_total`. Naquele corte, schemas de escrita e classificação
+estrutural/semântica foram preservados; a revisão documental dos três comandos
+foi realizada na integração HTTP de 2026-09-14 descrita acima.
 
 A D-3 está concluída, auditada e enviada. Este pré-requisito recebeu o parecer
 **APROVADO PARA COMMIT DO PRÉ-REQUISITO DECIMAL DA MP-35D-4**, sem achado
 obrigatório ou evidência crítica pendente, cobrindo HEAD + worktree + snapshot.
-A compatibilidade do leitor anterior foi comprovada. MP-35D/D-4 continuam em
-andamento; a próxima autorização delimitará os demais fluxos. O corte não inclui
+A compatibilidade do leitor anterior foi comprovada e o pré-requisito foi fechado
+e enviado em `dab3ac4`. Naquela etapa, o corte não incluía
 formulários, comandos mobile de Propriedade,
 seletores de Titular/Localidades, novos fluxos de navegação, migration ou RBAC.
 
@@ -526,16 +612,18 @@ Localidades versionadas, RBAC, auditoria, revogação de sessões, idempotência
 testes HTTP/PostgreSQL para Propriedades e vínculos. Ela foi concluída e
 integrada diretamente em `e6789bf`, com CI pós-push, auditoria independente e
 confirmação pós-integração aprovadas. Na MP-35D, os cortes D-1/D-2 estão
-concluídos na `feat/mp-35d`; o D-3 recebeu correções obrigatórias, implementadas
-e aprovadas na auditoria independente final para commit; o D-4 continua não
-iniciado e a MP-35D como um todo permanece em andamento.
+concluídos na `feat/mp-35d`; D-3 foi fechada em `92bba62` e o pré-requisito
+decimal em `dab3ac4`. A integração HTTP administrativa de Propriedades está
+aprovada independentemente, com F1 encerrado, e em fechamento na `feat/mp-35d`;
+MP-35D/D-4 seguem em andamento.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de
   idempotência, locks ou qualquer efeito; coerções por `->>` não constituem
   validação de fronteira;
 - a classificação HTTP é específica por rota: `titular_id` é válido na criação,
-  `status` é válido somente na rota de status e `tipo_vinculo` é derivado. Erro
+  `status` inicial é válido no POST e a alteração posterior somente na rota
+  de status; `tipo_vinculo` é derivado. Erro
   estrutural prevalece como `400`; campo semanticamente proibido, quando a
   estrutura é válida, retorna `422`;
 - o `versao` recebido nas mutações versionadas é somente a precondição de

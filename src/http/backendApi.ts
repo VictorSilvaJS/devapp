@@ -1,4 +1,12 @@
+import {
+  validateCreateAdministrativePropertyPayload,
+  validatePatchAdministrativePropertyPayload,
+  validateChangeAdministrativePropertyStatusPayload,
+} from './administrativePropertyModels';
 import type {
+  AdministrativePropertyPage,
+  AdministrativePropertyProjection,
+  AdministrativePropertyReceipt,
   AcceptedResponse,
   AdministrativeUserDetail,
   AdministrativeUserFilters,
@@ -28,6 +36,9 @@ import type {
 import {
   decodeAcceptedResponse,
   decodeAdministrativeUserDetail,
+  decodeAdministrativeProperty,
+  decodeAdministrativePropertyPage,
+  decodeAdministrativePropertyReceipt,
   decodeAdministrativeUserCreatedReceipt,
   decodeAdministrativeUserInvitationCommandReceipt,
   decodeAdministrativeUserPage,
@@ -579,6 +590,66 @@ export class BackendApi {
       accessToken,
     });
     return decodeProperty(response.body);
+  }
+
+  async listAdministrativeProperties(
+    accessToken: string,
+    filters: PropertyFilters = {},
+  ): Promise<AdministrativePropertyPage> {
+    const query = new URLSearchParams();
+    for (const key of ['busca', 'status', 'uf', 'municipio', 'limite', 'cursor'] as const) {
+      const value = filters[key];
+      if (value !== undefined) query.set(key, String(value));
+    }
+    const serialized = query.toString();
+    const response = await this.#send({ method: 'GET',
+      path: `/v1/propriedades${serialized ? `?${serialized}` : ''}`,
+      expectedStatus: 200, accessToken });
+    return decodeAdministrativePropertyPage(response.body);
+  }
+
+  async getAdministrativeProperty(accessToken: string, propertyId: string): Promise<AdministrativePropertyProjection> {
+    if (!isCanonicalUuidV4(propertyId)) throw new InvalidApiRequestError('O ID da Propriedade é inválido.');
+    const response = await this.#send({ method: 'GET', path: `/v1/propriedades/${propertyId}`,
+      expectedStatus: 200, accessToken });
+    const property = decodeAdministrativeProperty(response.body);
+    if (property.id !== propertyId) throw new InvalidBackendResponseError();
+    return property;
+  }
+
+  async createAdministrativeProperty(accessToken: string, idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>): Promise<AdministrativePropertyReceipt> {
+    this.#assertPropertyIdempotencyKey(idempotencyKey);
+    const response = await this.#send({ method: 'POST', path: '/v1/propriedades',
+      expectedStatus: 201, accessToken, idempotencyKey,
+      body: validateCreateAdministrativePropertyPayload(body) });
+    return decodeAdministrativePropertyReceipt(response.body, 'criado');
+  }
+
+  async updateAdministrativeProperty(accessToken: string, propertyId: string, idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>): Promise<AdministrativePropertyReceipt> {
+    this.#assertPropertyIdempotencyKey(idempotencyKey);
+    if (!isCanonicalUuidV4(propertyId)) throw new InvalidApiRequestError('O ID da Propriedade é inválido.');
+    const response = await this.#send({ method: 'PATCH', path: `/v1/propriedades/${propertyId}`,
+      expectedStatus: 200, accessToken, idempotencyKey,
+      body: validatePatchAdministrativePropertyPayload(body) });
+    return decodeAdministrativePropertyReceipt(response.body, 'atualizado', propertyId);
+  }
+
+  async changeAdministrativePropertyStatus(accessToken: string, propertyId: string, idempotencyKey: string,
+    body: Readonly<Record<string, unknown>>): Promise<AdministrativePropertyReceipt> {
+    this.#assertPropertyIdempotencyKey(idempotencyKey);
+    if (!isCanonicalUuidV4(propertyId)) throw new InvalidApiRequestError('O ID da Propriedade é inválido.');
+    const response = await this.#send({ method: 'PATCH', path: `/v1/propriedades/${propertyId}/status`,
+      expectedStatus: 200, accessToken, idempotencyKey,
+      body: validateChangeAdministrativePropertyStatusPayload(body) });
+    return decodeAdministrativePropertyReceipt(response.body, 'status_alterado', propertyId);
+  }
+
+  #assertPropertyIdempotencyKey(value: unknown): void {
+    if (typeof value !== 'string' || !/^[A-Za-z0-9._:/-]{1,128}(?![\s\S])/u.test(value)) {
+      throw new InvalidApiRequestError('A chave idempotente é obrigatória e deve ser válida.');
+    }
   }
 
   async listAdministrativeUsers(

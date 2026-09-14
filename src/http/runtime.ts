@@ -9,6 +9,9 @@ import { AdministrativeUserDetailController } from './administrativeUserDetailCo
 import { AdministrativeUserListController } from './administrativeUserListController';
 import { AdministrativeCommandCoordinator } from './administrativeCommandCoordinator';
 import { AdministrativeUserCommandService } from './administrativeUserCommands';
+import { AdministrativePropertyDataBoundary } from './administrativePropertyDataBoundary';
+import { AdministrativePropertyCommandService } from './administrativePropertyCommands';
+import { HttpAdministrativePropertyRepository } from './administrativePropertyRepository';
 import type { HttpRuntimeConfig } from './config';
 import { FetchHttpTransport, type HttpTransport } from './httpTransport';
 import {
@@ -35,6 +38,9 @@ export interface HttpRuntime {
   readonly administrativeUsers: AdministrativeUserRepository;
   readonly administrativeUserControllers: AdministrativeUserControllerFactory;
   readonly properties: PropertyRepository;
+  readonly administrativePropertyData: AdministrativePropertyDataBoundary;
+  readonly administrativeProperties: HttpAdministrativePropertyRepository;
+  readonly administrativePropertyCommands: AdministrativePropertyCommandService;
   readonly notifications: NotificationRepository;
 }
 
@@ -89,6 +95,8 @@ export function createHttpRuntime(
   });
   const administrativeCommands = new AdministrativeCommandCoordinator({ session });
   const administrativeUserData = new AdministrativeUserDataBoundary();
+  const administrativePropertyData = new AdministrativePropertyDataBoundary();
+  const administrativeProperties = new HttpAdministrativePropertyRepository(api, session, administrativePropertyData);
   administrativeCommands.synchronizeSession(session.snapshot, session.epoch);
   administrativeUserData.synchronizePartition(
     administrativeUserSessionPartition(session.snapshot, session.epoch),
@@ -98,15 +106,25 @@ export function createHttpRuntime(
     administrativeUserData.synchronizePartition(
       administrativeUserSessionPartition(snapshot, session.epoch),
     );
+    administrativePropertyData.synchronizePartition(
+      administrativeUserSessionPartition(snapshot, session.epoch),
+      snapshot?.usuario.perfil === 'admin' && snapshot.usuario.status === 'ativo',
+    );
   });
   session.subscribeRevalidation(() => {
     const lease = administrativeUserData.issueLease();
+    const propertyLease = administrativePropertyData.issueLease();
     return (snapshot) => {
       if (snapshot.usuario.perfil !== 'admin' || snapshot.usuario.status !== 'ativo') return;
       administrativeUserData.acceptSessionRevalidation(
         lease,
         administrativeUserSessionPartition(snapshot, session.epoch),
       );
+      administrativePropertyData.acceptSessionRevalidation(
+        propertyLease,
+        administrativeUserSessionPartition(snapshot, session.epoch),
+      );
+      administrativePropertyData.revokeLease(propertyLease);
     };
   });
   return {
@@ -121,6 +139,17 @@ export function createHttpRuntime(
       boundary: administrativeUserData,
     }),
     administrativeUserData,
+    administrativePropertyData,
+    administrativeProperties,
+    administrativePropertyCommands: new AdministrativePropertyCommandService({
+      api, session, coordinator: administrativeCommands, boundary: administrativePropertyData,
+      repository: administrativeProperties,
+      captureAuthorizationEffects: () => {
+        // D13 does not enumerate affected Users. Invalidate existing projections as a whole.
+        const lease = administrativeUserData.issueLease();
+        return () => { administrativeUserData.invalidateReconciliation(lease); };
+      },
+    }),
     administrativeUsers: new HttpAdministrativeUserRepository(
       api,
       session,

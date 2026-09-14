@@ -2,6 +2,8 @@ import { normalizeAdministrativeAreaTotal } from './administrativeArea';
 import type {
   AcceptedResponse,
   AdministrativePropertyProjection,
+  AdministrativePropertyPage,
+  AdministrativePropertyReceipt,
   AdministrativeReceipt,
   AdministrativeUserCreatedReceipt,
   AdministrativeUserDetail,
@@ -719,7 +721,7 @@ export function decodeAdministrativeProperty(
   }
   const createdAt = decodeTimestamp(input.criado_em);
   const updatedAt = decodeTimestamp(input.atualizado_em);
-  if (updatedAt < createdAt) {
+  if (updatedAt < createdAt || createdAt.length !== 24 || updatedAt.length !== 24) {
     throw new InvalidBackendResponseError();
   }
   return {
@@ -740,6 +742,44 @@ export function decodePropertyPage(value: unknown): PropertyPage {
     itens: input.itens.map(decodeProperty),
     paginacao: { proximo_cursor: cursor as string | null },
   };
+}
+
+export function decodeAdministrativePropertyPage(
+  value: unknown,
+): AdministrativePropertyPage {
+  const input = record(value);
+  exactKeys(input, ['itens', 'paginacao']);
+  if (!Array.isArray(input.itens) || input.itens.length > 100) {
+    throw new InvalidBackendResponseError();
+  }
+  const pagination = record(input.paginacao);
+  exactKeys(pagination, ['proximo_cursor']);
+  const items = input.itens.map(decodeAdministrativeProperty);
+  if (new Set(items.map((item) => item.id)).size !== items.length) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({
+    itens: Object.freeze(items),
+    paginacao: Object.freeze({
+      proximo_cursor: decodeOpaqueCursor(pagination.proximo_cursor, 32_768),
+    }),
+  });
+}
+
+export function decodeAdministrativePropertyReceipt(
+  value: unknown,
+  outcome: AdministrativePropertyReceipt['resultado'],
+  targetId?: string,
+): AdministrativePropertyReceipt {
+  const input = record(value);
+  exactKeys(input, ['resultado', 'recurso_tipo', 'recurso_id', 'versao']);
+  const id = uuidV4(input.recurso_id);
+  if (input.resultado !== outcome || input.recurso_tipo !== 'propriedade' ||
+    (targetId !== undefined && id !== targetId)) {
+    throw new InvalidBackendResponseError();
+  }
+  return Object.freeze({ resultado: outcome, recurso_tipo: 'propriedade',
+    recurso_id: id, versao: positiveInteger(input.versao) });
 }
 
 export function decodeNotification(value: unknown): NotificationProjection {

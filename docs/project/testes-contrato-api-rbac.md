@@ -1,12 +1,235 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-09-11:
+Status revisado em 2026-09-14:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
 concluída, auditada e enviada em 92bba62; MP-35D em andamento;
-pré-requisito decimal MP-35D-4 aprovado para commit na auditoria independente; D-4 em andamento`.
+pré-requisito decimal fechado e enviado em dab3ac4; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na feat/mp-35d; D-4 em andamento`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
+
+## MP-35D-4 — aprovação independente e fechamento controlado — 2026-09-14
+
+Parecer final recebido: **APROVADA PARA COMMIT DA INTEGRAÇÃO HTTP
+ADMINISTRATIVA DE PROPRIEDADES**. A primeira auditoria encontrou somente F1;
+a correção focal foi reproduzida, implementada e aprovada na reauditoria.
+Nenhum achado obrigatório remanescente. O objeto aprovado é HEAD `dab3ac4`
+mais os 27 arquivos do corte: 14 modificados e 13 novos, index inicialmente
+vazio e diff rastreado `+582/-67`.
+
+### Validações executadas pelo auditor na reauditoria
+
+Estes resultados pertencem ao auditor independente e não foram reexecutados
+no fechamento documental:
+
+| Validação do auditor | Resultado |
+|---|---|
+| typecheck | Passou |
+| test:mp35d4 | 131/131 |
+| test:mp35d3 | 106/106 |
+| test:mp35d2 | 85/85 |
+| test:domain-compat | Passou |
+| Probes F1 originais | 2/2 |
+| Descarte/identidade/erros/conflitos | 19/19 |
+| StrictMode/dispose | 9/9 |
+| Recovery/operações tardias | 90/90 |
+| Retomada Admin | 4/4 |
+
+Composição D-4: **35 contratos, 29 modelos, 26 comandos, 36 lifecycle e
+5 arquitetura = 131/131**. A reauditoria cobriu criação/edição/status,
+reduções Admin → Produtor/Colaborador, dispose/StrictMode, identidade/logout,
+401/403, recovery pós-recibo, operações/GETs tardios e retomada com nova instância.
+
+Observação preservada do auditor: dois probes exploratórios tentaram exigir
+neutralização por dispose de um `403` ainda pertencente à mesma geração
+compartilhada. Isso não foi classificado como regressão F1. Após substituição
+real da geração, os testes de resposta tardia passaram. Não há bug aberto
+decorrente desses probes.
+
+Backend/PostgreSQL não foram reexecutados na reauditoria porque não foram
+alterados. Implementação, primeira auditoria e reauditoria são evidências
+distintas: a implementação inicial passou 122 D-4; a primeira auditoria exigiu
+F1; a correção passou 131 D-4 e as regressões próprias descritas abaixo;
+a reauditoria executou a tabela acima e aprovou o objeto final.
+
+### Preservação funcional no fechamento
+
+Somente os seis documentos ativos já pertencentes ao corte são atualizados.
+Os 21 arquivos não documentais abaixo tiveram SHA-256 registrado antes da
+edição documental e comparado depois: **21/21 iguais byte a byte**.
+A comparação é repetida antes do commit e após hooks. Código, testes, scripts
+e configuração aprovados não recebem regeneração, formatação ou refatoração.
+
+| Arquivo preservado | SHA-256 antes = depois da atualização documental |
+|---|---|
+| `.gitignore` | `9a9c2cbf944ba15add1326126fd60e8dc19e7d64ccf9ca0a53f6b84e0f7a88a7` |
+| `backend/src/administration/mp35c-routes.ts` | `811f9671b9e15e0b00f28b0ab4694bfa15e2bd2a233623117570d134636be495` |
+| `backend/tests/http/mp35c-routes.test.ts` | `27180f3ab14260ec24abeabd6ea554988b4bde6a67bb420cc287f7dc59cb5d8d` |
+| `package.json` | `a48ce3b7c86761df046f3054ea39153c1353e57af6250e5a5477b5e400eb350e` |
+| `scripts/cleanMp35d4Output.js` | `275c499171c975a7e2fe12ffc96968206ab0c86dc2e494b8ed512ffc2583b414` |
+| `src/http/administrativePropertyCommandLifecycle.ts` | `5f805768e7d3f5fb894d9cd65a761767d908f1c9e8a53c0ca554f60c2cbfb76a` |
+| `src/http/administrativePropertyCommands.ts` | `3189b8b0affec0eae2ac2c151e382732dc1545b39bd7ba6239e970543fca47fd` |
+| `src/http/administrativePropertyDataBoundary.ts` | `a02d18a766b4d6c3fa634b06686a485ca0b74f1aeac26a5f28d31390ab1dc995` |
+| `src/http/administrativePropertyModels.ts` | `691ee089daf5a59dbbe04a739afada2a906a2560f1c60c2564e56d149c65e835` |
+| `src/http/administrativePropertyRepository.ts` | `e50d99de476be89df3d1cd4474526838747ef813aeb9b326b7a09c0ebe6f759f` |
+| `src/http/backendApi.ts` | `826dc98fd2bd72e686262000e91339f299aa4c45b3d5f34dc08ecadf78d2f75d` |
+| `src/http/contracts.ts` | `bc8652b423a2d91f2ff92a890a1bab10682ab694f549a615a0899a861abd6a4e` |
+| `src/http/decoders.ts` | `c8098204f69a468ef00443f73f0c62b6118a162cec1181fa8d827a371afb450b` |
+| `src/http/runtime.ts` | `2dd49ecd901af45392b1a8ef1883633616bde9b671343e891d8e1a37617d21fb` |
+| `tests/fixtures/mp35d4.js` | `7897c05eb844938d99c25da83aa8a3e239cc26d6f822789e31fa77753aad7d0e` |
+| `tests/mp35d4Architecture.test.js` | `43006b022ce93654dbb23044fb096331681498ead302f849161b42acf916533d` |
+| `tests/mp35d4Commands.test.js` | `06030dd917284b31520d27e0c0703972aba208574f72c150adf7e0dd1086dc2b` |
+| `tests/mp35d4Contracts.test.js` | `27797f7180da9bb3fd3f24a98d65ebe76d29ed3d417ea65d33f7990170f99d30` |
+| `tests/mp35d4Lifecycle.test.js` | `375130438b3a5eb946fa0174c57bbbeed04648943c96c0cb06e747206c0aab47` |
+| `tests/mp35d4Models.test.js` | `976a5d5c0b747187397a54fbbbf2f4d9ce8284ae87d1a5cb45ddb21e34f07319` |
+| `tsconfig.mp35d4-tests.json` | `8284c38b366e117962d3bcd1ece8d24fe45c0f59b60cbc828361c81901ad92d4` |
+
+Manifesto dos 21 pares acima, na ordem da tabela, com cada linha formada por
+`caminho + TAB + SHA256 maiúsculo + LF`, em UTF-8:
+`SHA256 = 9bd30bc886997c5ab2d04c492a98a3548b80653a7ac9da97130305abef8db204`.
+A igualdade dos hashes individuais é a prova de preservação; o manifesto
+permite conferir o conjunto sem confundi-lo com um hash de commit.
+
+Estado registrado neste snapshot: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE
+PROPRIEDADES — APROVADA E EM FECHAMENTO NA feat/mp-35d**.
+O fechamento Git está autorizado para esses 27 caminhos, com revisão do
+índice, commit e push somente para `feat/mp-35d`, sem tags. Sua conclusão
+exige hash local igual ao remoto e worktree limpo; não é antecipada neste
+registro anterior ao commit. Nenhuma suíte integral é repetida neste fechamento:
+as verificações são hashes, links, diffs, índice e remoto.
+
+Conferência documental deste fechamento: `git diff --check` passou;
+76 links locais dos seis documentos foram validados, sem destinos ausentes.
+
+D-3 permanece fechada em `92bba62` e o pré-requisito decimal em `dab3ac4`.
+A aprovação cobre o corte HTTP interno, não toda a D-4. Seletores, formulários
+e navegação permanecem pendentes; sem UI D-4, Android físico desta etapa,
+consulta à CI remota, integração final na `backend`, release ou produção.
+Os probes ignorados permanecem fora do commit.
+
+## MP-35D-4 — correção focal F1 — 2026-09-14
+
+A auditoria independente devolveu **CORREÇÕES OBRIGATÓRIAS**, com um único
+achado: F1, lifecycle cancelado conservando intenção e dados administrativos.
+Base da correção: `feat/mp-35d`, HEAD/origin em `dab3ac4`, 14 modificados,
+13 novos, index vazio e diff rastreado `+492/-67`; worktree auditado preservado.
+
+Reprodução permanente executada antes de alterar código funcional:
+`npm.cmd run test:mp35d4` terminou com saída 1. Contratos 35/35, modelos 29/29
+e comandos 26/26 passaram; lifecycle executou 36 casos, com 19 passando e
+17 falhando; arquitetura não executou porque o encadeamento parou na falha.
+Os nove cenários novos falharam, junto de oito cenários existentes reforçados.
+Nas duas reduções Admin → Produtor/Colaborador, SessionCoordinator/runtime
+reais revalidaram `/v1/auth/me`; o fluxo de edição iniciado sem submit ficou
+`cancelled` e a fronteira foi limpa, mas `flow.intent` ainda continha body,
+baseline/draft, Titular, Município, área/cultura e intenção local. A asserção
+de descarte falhou; nenhuma fixture limpou manualmente esses dados.
+Dispose sem submit também falhou por deixar a instância em `idle` reutilizável.
+
+Correção funcional restrita a `administrativePropertyCommandLifecycle.ts`:
+armazenamento único `#intent: AdministrativePropertyIntent | null`, retornado
+diretamente pelo getter, recebe `null` em `#cancel()` antes dos callbacks;
+nenhuma cópia integral é mantida. Somente o ID escalar é usado para descartar
+a entrada do coordenador. A referência à operação pendente e os callbacks
+também são liberados. Dispose é definitivo antes ou depois de start/submit;
+o teste StrictMode usa nova instância no novo setup. Referências externas do
+chamador não são apagadas. `confirmed_reconciliation_failed` válido mantém
+intenção/recibo, sem transformar recovery em novo comando.
+
+Nove cenários adicionados em `mp35d4Lifecycle.test.js`: edição sem submit com
+redução para cada perfil e retomada Admin com fluxo independente (2), criação
+com logout (1), status com dispose da fronteira (1), dispose antes de submit
+com/sem start (2), nova identidade e resposta tardia (1), recovery válido até
+invalidação (1), cancelamento após version_conflict com rebase/conflitos (1).
+Asserções existentes foram reforçadas em dispose durante mutação/GET, 401/403,
+recovery pendente e setup/cleanup/setup. A prova usa o runtime real e a única
+referência privada efetivamente zerada, sem limpeza artificial da fixture.
+
+Composição atual executada após a correção: **35 contratos + 29 modelos +
+26 comandos + 36 lifecycle + 5 arquitetura = 131/131**, sem falhas ou skips.
+
+Execuções desta correção, todas com saída zero após a reprodução negativa:
+`npm.cmd run typecheck`; `npm.cmd run test:mp35d4` (131/131);
+`npm.cmd run test:mp35d1` (55/55); `npm.cmd run test:mp35d2` (85/85);
+`npm.cmd run test:mp35d3` (106/106); `npm.cmd run test:domain-compat`, incluindo
+MP-33C (46/46), MP-34 (35/35) e convergência (7/7).
+Nenhum resultado de auditoria foi reutilizado como execução desta correção.
+
+Backend, OpenAPI, decoders, contratos decimais, serviço, runtime, imports e
+dependências não foram alterados por F1. Sem nova execução backend/PostgreSQL
+ou gates nativo/bundle: a correção não muda grafo/imports/composição; os testes
+de arquitetura D-4 e das regressões compartilhadas passaram. Probes ignorados
+da auditoria foram preservados. Sem formulário, seletor, navegação, vínculo,
+transferência, AsyncStorage, fila offline, fallback ou alteração Demo.
+
+Estado ao término da correção: **F1 CORRIGIDO — INTEGRAÇÃO HTTP ADMINISTRATIVA DE PROPRIEDADES
+AGUARDANDO REAUDITORIA INDEPENDENTE**. Naquele momento não havia aprovação da
+integração ou liberação de fechamento Git. D-3 fechada em `92bba62`; decimal fechado em `dab3ac4`;
+Android físico não executado, CI remota não consultada e integração final na
+`backend` posterior. Sem add, commit ou push.
+
+## MP-35D-4 — integração HTTP administrativa — 2026-09-14
+
+Registro da implementação anterior à auditoria F1; execuções e contagens
+abaixo pertencem àquela rodada, não à correção focal acima.
+
+Base registrada antes das alterações: `feat/mp-35d`, HEAD e
+`origin/feat/mp-35d` em `dab3ac494ef3d42b4cc4893d21e5a3e5f21d199c`, mensagem
+`feat: alinhar leitura decimal administrativa da MP-35D-4`; worktree limpo,
+index vazio, diffs normal/cached vazios e `git diff --check` sem ocorrência.
+O log de oito commits confirmou D-3 em `92bba62` e merge de convite em `963eb0f`.
+Nenhuma divergência da base solicitada. Sem add, commit ou push nesta entrega.
+
+Suíte própria `npm run test:mp35d4`: TypeScript estrito com
+`tsconfig.mp35d4-tests.json`, limpeza dedicada e cinco arquivos JS, sem testes
+TSX de telas D-4. Usa BackendApi, SessionCoordinator, runtime e coordenador
+reais com transporte de teste; somente o módulo nativo SecureStore é substituído.
+Não equivale a um ensaio E2E PostgreSQL ou Android físico.
+
+| Responsabilidade | Arquivo | Casos aprovados |
+|---|---|---:|
+| Contratos: campos obrigatórios, decimal, versão/timestamps, operacional preservado, recibos/rotas/chave | [mp35d4Contracts.test.js](../../tests/mp35d4Contracts.test.js) | 35 |
+| Modelos: POST, PATCH parcial, limpezas, equivalência decimal, município, rebase/conflitos consecutivos, D10 | [mp35d4Models.test.js](../../tests/mp35d4Models.test.js) | 29 |
+| Comandos: payloads, correlação, retry idempotente, recuperação só GET, refresh após recibo, D13 e listas | [mp35d4Commands.test.js](../../tests/mp35d4Commands.test.js) | 26 |
+| Fronteira/lifecycle: StrictMode, dispose, identidade, 401/403, reduções, /me concorrente e respostas antigas | [mp35d4Lifecycle.test.js](../../tests/mp35d4Lifecycle.test.js) | 27 |
+| Arquitetura: grafo HTTP, ausência de UI D-4, isolamento Demo/dados, coordenador existente | [mp35d4Architecture.test.js](../../tests/mp35d4Architecture.test.js) | 5 |
+| **Total D-4 deste corte HTTP** | | **122** |
+
+Execuções novas desta rodada, todas concluídas com saída zero após tratar as
+ocorrências de ambiente descritas abaixo:
+
+- Node 22.20.0, raiz: `npm run typecheck`; `npm run test:mp35d1` 55/55;
+  `npm run test:mp35d2` 85/85; `npm run test:mp35d3` 106/106;
+  `npm run test:mp35d4` 122/122; `npm run test:domain-compat`, incluindo
+  MP-33C 46/46, MP-34 35/35 e convergência 7/7;
+- `npm run test:native-graph:mp33c` e `npm run test:bundle:mp33c`: passaram;
+  exports Android HTTP/Demo inspecionados, HTTP sem marcadores mock/AsyncStorage;
+- Node 24.19.0, backend: `npm run typecheck`; `npm run test:unit` 190/190;
+  `npm run test:http` 43/43; `npm run migrations:verify` dez migrations íntegras;
+  `npm run build`; `npm run smoke:dist`.
+
+Novo teste HTTP em [mp35c-routes.test.ts](../../backend/tests/http/mp35c-routes.test.ts)
+inspeciona as três descrições OpenAPI e dez entradas de precedência `400`/`422`.
+Schemas executáveis, campos/tipos reconhecidos, SQL, migrations e serviço MP-35C
+continuam iguais. Nenhuma integração PostgreSQL foi necessária ou executada.
+
+Ocorrências da execução: `node --test` inicial foi bloqueado por `spawn EPERM`;
+a nova suíte adotou o padrão existente de executar arquivos diretamente.
+Backend HTTP/unit e gates Expo usaram permissão para subprocessos fora do
+sandbox. O wrapper `npm.ps1` falhou ao capturar saída (`Unknown command: pm`);
+as execuções registradas usam `npm.cmd`, com os mesmos scripts. O primeiro gate
+de bundle encontrou `ENOENT` porque a limpeza de `test:domain-compat` removeu
+a pasta compartilhada `.tmp-mp33c`; o mesmo gate foi reexecutado isoladamente e
+passou. Essas tentativas falhas não são contadas como testes aprovados.
+
+Revisão final: `git diff --check` passou e os 73 links locais dos seis
+documentos alterados apontam para arquivos existentes. O index permanece
+vazio; não houve `git add`, commit ou push. O diff e os arquivos novos não
+incluem coverage, logs, probes, builds, temporários, segredos ou `.env`.
+
+Limites: auditoria independente pendente; sem seletores, formulários, navegação
+D-4, vínculos ou transferência. Android físico não executado; CI remota não
+consultada; sem release, publicação ou integração final na `backend`.
 
 ## MP-35D-4 — regressões do pré-requisito de leitura decimal
 

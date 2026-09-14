@@ -1,4 +1,5 @@
 import type { AdministrativeAreaTotal } from './administrativeArea';
+export type { CreateAdministrativePropertyPayload, PatchAdministrativePropertyPayload } from './administrativeArea';
 
 export type HttpProfile = 'admin' | 'colaborador' | 'produtor';
 export type HttpUserStatus = 'pendente' | 'ativo' | 'inativo';
@@ -150,6 +151,25 @@ export interface AdministrativePropertyProjection extends PropertyProjection {
   readonly versao: number;
   readonly criado_em: string;
   readonly atualizado_em: string;
+}
+
+export interface AdministrativePropertyPage {
+  readonly itens: readonly AdministrativePropertyProjection[];
+  readonly paginacao: Readonly<{ proximo_cursor: string | null }>;
+}
+
+export type AdministrativePropertyReceipt = Readonly<{
+  resultado: 'criado' | 'atualizado' | 'status_alterado';
+  recurso_tipo: 'propriedade';
+  recurso_id: string;
+  versao: number;
+}>;
+
+export interface ChangeAdministrativePropertyStatusPayload {
+  readonly versao: number;
+  readonly status: PropertyStatus;
+  readonly motivo: AdministrativeReasonCode;
+  readonly motivo_detalhe?: string;
 }
 
 export type AdministrativeReceipt =

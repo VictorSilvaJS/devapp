@@ -1,15 +1,16 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-11
+> Atualizado em: 2026-09-14
 >
-> Tarefa atual: fechamento controlado do pré-requisito decimal da MP-35D-4, aprovado para commit;
-> D-3 concluída, auditada e enviada em `92bba62`; demais fluxos D-4 ainda não implementados
+> Tarefa atual: integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`, incluindo F1;
+> D-3 fechada em `92bba62`; pré-requisito decimal fechado e enviado em `dab3ac4`;
+> seletores, formulários e navegação D-4 ainda não implementados
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
 > D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
 > `feat/mp-35d`; MP-35D-3 CONCLUÍDA; MP-35D EM ANDAMENTO;
-> PRÉ-REQUISITO DECIMAL D-4 APROVADO NA AUDITORIA INDEPENDENTE; D-4 EM ANDAMENTO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
+> PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; INTEGRAÇÃO HTTP DE PROPRIEDADES APROVADA E EM FECHAMENTO; D-4 EM ANDAMENTO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
 
 ## Próximo passo delimitado da MP-35D-4
@@ -22,11 +23,22 @@ leitor anterior e as escritas exclusivamente em `area_total`. O fechamento
 preserva integralmente código, testes e snapshot. As validações do auditor estão em
 [testes de contrato](testes-contrato-api-rbac.md).
 
-Não antecipar formulários, comandos mobile, seletores ou navegação D-4. A
-integração desses fluxos exige autorização própria e deve tratar a pendência
-documental/OpenAPI de escrita sem modificar inadvertidamente `400`/`422`.
-D-3 permanece concluída; MP-35D e D-4 continuam em andamento. A integração final
-na `backend` é posterior. Não há renumeração de D-5/D-6/D-7 ou alteração de D1-D13.
+O pré-requisito foi fechado e enviado em `dab3ac4`. A autorização seguinte
+delimitou a integração HTTP administrativa de Propriedades, implementada em
+2026-09-14: leituras versionadas, três comandos, modelos puros, fronteira própria,
+lifecycle e recuperação por GET, com suíte `test:mp35d4`. As descrições OpenAPI
+dos três comandos foram esclarecidas sem mudar schemas ou `400`/`422`.
+
+A auditoria desse corte encontrou somente F1, reproduzido e corrigido no
+descarte de intenção do lifecycle cancelado. A reauditoria aprovou a correção,
+sem achado obrigatório remanescente. O corte está autorizado para fechamento
+Git: registrar o parecer, preservar código/testes, revisar os 27 caminhos no
+índice, commitar e enviar somente para `feat/mp-35d`, confirmando o hash remoto.
+Não há autorização automática para outra etapa. Seletores de Titular/UF/Município,
+formulários e navegação continuam não implementados; vínculos e transferência
+de Titularidade permanecem fora. Android físico não executado nesta rodada;
+CI remota não consultada. D-3 permanece concluída; MP-35D e D-4 continuam em
+andamento. Integração final na `backend` é posterior, sem renumeração de D-5/D-6/D-7.
 
 ## Ponto de partida
 
@@ -263,7 +275,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-1/D-2/D-3 CONCLUÍDAS NA `feat/mp-35d`; PRÉ-REQUISITO DECIMAL D-4 APROVADO PARA COMMIT NA AUDITORIA INDEPENDENTE; D-4 EM ANDAMENTO; DEMAIS FLUXOS E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; INTEGRAÇÃO HTTP DE PROPRIEDADES APROVADA E EM FECHAMENTO NA `feat/mp-35d`; SELETORES, FORMULÁRIOS, NAVEGAÇÃO E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
@@ -358,8 +370,8 @@ CI pós-push aprovadas. A MP-35C foi integrada diretamente no commit `e6789bf`,
 com CI pós-push aprovada, foi auditada independentemente e recebeu confirmação
 pós-integração aprovada. Na MP-35D, D-1/D-2 estão concluídas na
 `feat/mp-35d`; D-3 está aprovada na auditoria independente final para commit;
-D-4 permanece fora
-do corte atual e não iniciada.
+naquele corte D-4 ainda não estava iniciada. A sequência atual está descrita
+no início deste documento.
 
 O fechamento formal da MP-35C está concluído. A D-3 recebeu o parecer
 **APROVADA PARA COMMIT DO MP-35D-3**, sem achado obrigatório remanescente.
@@ -367,7 +379,7 @@ As correções e regressões anteriores foram preservadas e verificadas pelo
 auditor independente, incluindo os 106 testes D-3. O fechamento controlado
 mantém código e testes aprovados, com registro documental da aprovação.
 MP-35D permanece em andamento; sua integração final na `backend` será posterior.
-A MP-35D-4 depende de autorização própria e não foi iniciada. Não houve smoke
+Naquele fechamento, a MP-35D-4 dependia de autorização própria e não havia sido iniciada. Não houve smoke
 Android físico, build de release ou validação produtiva; produção/release não
 estão liberados por este fechamento.
 MP-36 e MP-37

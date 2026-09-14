@@ -1,11 +1,57 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-09-11
+> Atualizado em: 2026-09-14
 >
 > Última execução física registrada: 2026-08-24
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## MP-35D-4 — integração HTTP administrativa — 2026-09-14
+
+Smoke automatizado nesta rodada, sobre `dab3ac4` + worktree:
+
+1. Criar com Produtor/Município fornecidos diretamente, editar somente campos
+   dirty e alterar status pela rota própria: payloads exatos, recibo + GET,
+   ID autoritativo da criação e leitura Admin de inativa passaram.
+2. Falhar GET após confirmação, falhar novamente e recuperar: uma mutação,
+   somente GETs posteriores, correlação de ID/versão e conclusão única passaram.
+3. Rebase com campos distintos, conflito no mesmo campo e segundo rebase:
+   intenção local, decimal exato e município coerente preservados, sem retry automático.
+4. Runtime real com `/me` concorrente, 401/403, retomada, Admin → Produtor/
+   Colaborador, troca de identidade, logout, dispose e StrictMode sem UI:
+   novos fluxos autorizados funcionam e fluxos antigos permanecem inertes.
+   Regressão F1: edição iniciada sem submit perde body/baseline/draft após
+   redução; criação/status também descartam intenção. Dispose é definitivo
+   antes de submit/start; o novo setup usa nova instância. Identidade nova,
+   401/403 e respostas tardias não restauram dados. Recovery válido conserva
+   intenção/recibo até concluir somente por GET ou sofrer invalidação definitiva.
+5. Listas filtradas invalidadas conservam consulta e recarregam do servidor;
+   respostas antigas não restauram dados. Grafo/bundle HTTP continua isolado do Demo.
+
+`test:mp35d4` passou 131/131 após correção de F1; os nove casos novos falharam
+antes da alteração funcional. Regressões e comandos completos em
+[testes de contrato](testes-contrato-api-rbac.md). Na implementação anterior à
+correção F1, backend HTTP incluiu prova
+explícita de preservação `400`/`422` após descrições OpenAPI. O gate de bundle
+passou na execução isolada após colisão de limpeza da pasta temporária; detalhes
+da ocorrência estão na mesma matriz.
+
+D-3 fechada em `92bba62`; pré-requisito decimal fechado e enviado em `dab3ac4`.
+Auditoria independente encontrou somente F1, reproduzido e corrigido;
+reauditoria focal aprovou F1 e a integração HTTP interna para commit, sem
+achado obrigatório remanescente. Estado: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE
+PROPRIEDADES — APROVADA E EM FECHAMENTO NA feat/mp-35d**.
+O auditor executou D-4 131/131, D-3 106/106, D-2 85/85, typecheck,
+domain-compat e probes focais. A composição D-4 é 35 contratos, 29 modelos,
+26 comandos, 36 lifecycle e 5 arquitetura; detalhes e a distinção dos dois
+probes exploratórios de 403 estão nos [testes de contrato](testes-contrato-api-rbac.md).
+Esses resultados são do auditor. Neste fechamento somente documental não se
+reexecutam suítes integrais; backend/PostgreSQL também não foram reexecutados
+na reauditoria porque permaneceram inalterados.
+Seletores, formulários e navegação D-4 ainda não implementados; vínculos e
+transferência fora. Android físico não executado nesta etapa; CI remota não
+consultada; integração final na `backend` posterior. Nenhuma liberação produtiva.
 
 ## MP-35D-4 — smoke focal do pré-requisito decimal
 
