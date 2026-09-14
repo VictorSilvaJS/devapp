@@ -33,11 +33,14 @@ Git concluído em `37a8790`, somente na `feat/mp-35d`, com hash remoto confirmad
 
 N1 foi reproduzido, corrigido e aprovado na reauditoria independente: 20/20
 critérios e 14/14 probes. Nenhum achado obrigatório permanece. Formulários HTTP
-e navegação mínima estão aprovados para commit; fechamento Git autorizado.
+e navegação mínima foram fechados em `e5db497`, com hash remoto confirmado.
+
+Status visual aprovado independentemente: 38/38 critérios, 33/33 probes e
+nenhum achado obrigatório. Fechamento Git autorizado; auditoria deixou de ser
+pendência. F1/N1, edição cadastral sem status e Demo preservados.
 
 Permanecem pendentes:
 
-- fluxo visual de alteração de status de Propriedade existente, em corte próprio;
 - validação funcional Android física da D-4 e integração final da MP-35D na
   branch `backend`, posteriores;
 - vínculos e transferência de Titularidade continuam fora desta entrega.

@@ -25,14 +25,14 @@ function scenario(options = {}) {
     if (request.method !== 'GET') {
       f.afterMutation = true;
       if (f.handlers.mutate) return f.handlers.mutate(request);
-      const { versao, ...fields } = request.body;
+      const { versao, motivo, motivo_detalhe, ...fields } = request.body;
       const municipality = [BA, ITA, SP, RS].find(item => item.id === fields.municipio_id);
       f.detail = property({ ...f.detail, ...fields, versao: f.detail.versao + 1,
         ...(Object.hasOwn(fields, 'area_total') ? { area_total: fields.area_total === null ? null : Number(fields.area_total), area_total_decimal: fields.area_total } : {}),
         ...(municipality ? { municipio_nome: municipality.nome, uf_id: municipality.uf_id, uf_sigla: { '29': 'BA', '35': 'SP', '43': 'RS' }[municipality.uf_id] } : {}) });
-      return { status: request.method === 'POST' ? 201 : 200, body: { resultado: request.method === 'POST' ? 'criado' : 'atualizado', recurso_tipo: 'propriedade', recurso_id: ID, versao: f.detail.versao } };
+      return { status: request.method === 'POST' ? 201 : 200, body: { resultado: request.method === 'POST' ? 'criado' : path.endsWith('/status') ? 'status_alterado' : 'atualizado', recurso_tipo: 'propriedade', recurso_id: ID, versao: f.detail.versao } };
     }
-    if (path === '/v1/propriedades') return ok({ itens: [f.detail], paginacao: { proximo_cursor: null } });
+    if (path === '/v1/propriedades') return f.handlers.list?.(request) ?? ok({ itens: [f.detail], paginacao: { proximo_cursor: null } });
     if (path === `/v1/propriedades/${ID}`) return f.handlers.detail?.(request) ?? ok(f.detail);
     throw new Error(`Unexpected test route ${path}`);
   };
@@ -594,3 +594,5 @@ for (const [status, code, message] of [[422, 'validation_error', /servidor recus
     assert.doesNotMatch(texts(root), /PostgreSQL|segredo|11111111/); assert.equal(f.mutations().length, 1);
   });
 }
+
+require('./mp35d4RenderedStatus.test')({ nav, data, load, scenario, mount, navigate, texts, propertyStack, button, press, input, field, choose });

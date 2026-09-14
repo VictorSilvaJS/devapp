@@ -1,4 +1,5 @@
 import React from 'react';
+import { HttpPropertyStatusAction } from './HttpPropertyStatusAction';
 import { useFocusEffect } from '@react-navigation/native';
 import { canAdministerProperties, useAdministrativePropertyAccess } from '../administrativePropertyFormAccess';
 import {
@@ -447,6 +448,8 @@ export function HttpPropertyDetailScreen({ route, navigation }: any) {
                 <InfoBox message="Esta consulta usa dados reais e autorização do servidor. Talhões, mapas, Visitas e Caderno aparecerão nesta interface somente quando suas verticais HTTP estiverem conectadas." />
               </>
             ) : null}
+            {administrative ? <HttpPropertyStatusAction key={`${id}:${propertyState.authorizationGeneration}`}
+              property={propertyState.details[id] ?? null} /> : null}
           </ScrollView>
         </LinearGradient>
       )}

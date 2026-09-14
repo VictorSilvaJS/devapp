@@ -59,6 +59,18 @@ Métricas de Propriedades permanecem ocultas porque a API ainda não possui
 agregado autorizado. Talhões, mapas, Visitas, Caderno, Materiais e Dashboard
 não aparecem como dados reais nem como botões ativos neste corte.
 
+## Status visual separado da MP-35D-4 — 2026-09-14
+
+Sobre `e5db497`, o detalhe HTTP agora oferece modal local de ativar/inativar,
+somente para Admin. Reutiliza SectionCard, SelectField, FormField, InfoBox e
+botões textuais existentes, sem extrair ou alterar código Demo/PropertyForm.
+O modal contém motivo/detalhe e confirmação; não edita campos cadastrais.
+Dados vêm da boundary e comandos do serviço/lifecycle aprovados, sem storage,
+fetch direto, nova dependência ou fallback. O detalhe conserva sua rota/key.
+Aprovado independentemente para commit: 38/38 critérios e 33/33 probes, sem
+achado obrigatório. F1/N1 e Demo preservados; fechamento Git autorizado.
+Android físico pendente.
+
 ## Corte visual administrativo MP-35D-4 — 2026-09-14
 
 Criação/edição de Propriedade e navegação mínima implementadas sobre `37a8790`,
@@ -76,8 +88,8 @@ mesma Propriedade. A correção fica na navegação HTTP: origem por key/identid
 retorno ao detalhe válido e destino canônico na entrada direta/origem inválida.
 A apresentação compartilhada, SelectField e o Demo foram preservados por hash.
 Reauditoria: 20/20 critérios, 14/14 probes; nenhum achado obrigatório remanescente.
-Formulários HTTP e navegação mínima aprovados para commit; fechamento Git autorizado.
-Status visual existente e integração final na `backend` permanecem posteriores.
+Formulários HTTP e navegação mínima fechados em `e5db497`. O status visual
+separado está descrito acima; integração final na `backend` posterior.
 
 ## Obrigação Das Próximas Verticais
 

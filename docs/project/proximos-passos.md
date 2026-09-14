@@ -2,9 +2,9 @@
 
 > Atualizado em: 2026-09-14
 >
-> Tarefa atual: fechamento Git autorizado dos formulários HTTP e navegação mínima, com N1 aprovado;
+> Tarefa atual: fechamento Git autorizado do fluxo visual separado de status de Propriedade;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
-> Titular/Localidades fechados em `37a8790`; status visual e Android físico pendentes
+> Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`; Android físico pendente
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
@@ -46,8 +46,13 @@ Titular/Localidades foram fechados em `37a8790`. A autorização seguinte delimi
 formulários de criação/edição e navegação mínima. A primeira auditoria encontrou somente N1, duplicação do detalhe ao salvar edição.
 O achado foi reproduzido por regressão permanente antes da correção e corrigido
 focalmente; a reauditoria aprovou N1, sem achado obrigatório remanescente.
-O próximo passo autorizado é o fechamento Git: revisão, staging explícito,
-um commit e push somente para `feat/mp-35d`, com confirmação do hash remoto. Alteração visual de status exige o próximo corte próprio.
+O fechamento dos formulários/navegação foi concluído em `e5db497`, com hash
+remoto confirmado. O corte seguinte implementou modal local de status no detalhe
+HTTP, separado da edição cadastral, com motivo/confirmar/recibo/GET e recovery.
+Auditoria independente: 38/38 critérios e 33/33 probes; nenhum achado obrigatório.
+Próximo passo autorizado: revisão, staging explícito, commit e push somente para
+`feat/mp-35d`, com confirmação do hash remoto. Android físico e integração final
+continuam posteriores; nenhuma nova funcionalidade autorizada.
 Evidências em [testes de contrato](testes-contrato-api-rbac.md).
 Vínculos e transferência permanecem fora.
 Android físico não executado; CI remota não consultada. MP-35D/D-4 continuam em
@@ -288,7 +293,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; FORMULÁRIOS DE CRIAÇÃO/EDIÇÃO E NAVEGAÇÃO MÍNIMA APROVADOS PARA COMMIT APÓS REAUDITORIA DE N1; STATUS VISUAL, ANDROID FÍSICO E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; FORMULÁRIOS/NAVEGAÇÃO FECHADOS EM `e5db497`; STATUS VISUAL APROVADO INDEPENDENTEMENTE PARA COMMIT; ANDROID FÍSICO E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |

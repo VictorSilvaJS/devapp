@@ -31,10 +31,12 @@ test('grafo HTTP alcança D4 sem src/api, mock, seed Demo, storage de negócio o
     assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /AsyncStorage|mockV2DemoSeed|offlineQueue|fallbackToMock/);
   }
 });
-test('capacidade visual D4 expõe somente criação e edição administrativas autorizadas', () => {
+test('capacidade visual D4 expõe criação/edição e status local autorizados, sem vínculos/transferência', () => {
   const files = ['src/http/HttpNavigation.tsx', ...fs.readdirSync(path.join(root, 'src/http/screens'))
     .filter((file) => /\.tsx$/.test(file)).map((file) => `src/http/screens/${file}`)];
-  for (const file of files) assert.doesNotMatch(read(file), /AdministrativeProperty(?:Status|Transfer|Links)/);
+  for (const file of files) assert.doesNotMatch(read(file), /AdministrativeProperty(?:Transfer|Links)/);
+  assert.match(read('src/http/screens/HttpPropertyScreens.tsx'), /administrative \? <HttpPropertyStatusAction/);
+  assert.doesNotMatch(read('src/http/HttpNavigation.tsx'), /name="AdministrativePropertyStatus"/);
   assert.match(read('src/http/HttpNavigation.tsx'), /propertyAccess.allowed \? <Stack.Group/);
   assert.match(read('src/http/HttpNavigation.tsx'), /name="AdministrativePropertyCreate"/);
   assert.match(read('src/http/HttpNavigation.tsx'), /name="AdministrativePropertyEdit"/);

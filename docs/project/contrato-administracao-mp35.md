@@ -3,7 +3,7 @@
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
 > MP-35D-3 concluída, auditada e enviada em 92bba62;
 > decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-> Titular/Localidades fechados em 37a8790; formulários HTTP aprovados para commit após reauditoria de N1; MP-35D/D-4 em andamento`
+> Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status visual aprovado independentemente para commit; MP-35D/D-4 em andamento`
 >
 > Definido em: 2026-08-25
 >
@@ -30,13 +30,54 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; criação/edição e navegação mínima aprovados para commit após reauditoria de N1; status visual, Android físico e integração final na `backend` posteriores |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status visual aprovado independentemente para commit; Android físico e integração final na `backend` posteriores |
+
+## MP-35D-4 — fluxo visual de status — 2026-09-14
+
+Implementado sobre formulários/navegação fechados em `e5db497`, **aprovado independentemente para commit**, sem achado obrigatório.
+Fechamento Git autorizado somente na `feat/mp-35d`. O detalhe HTTP abre modal local
+somente para Admin ativo, com projeção autoritativa e UUID válido. Não há rota
+nova ou deep link; edição cadastral e seu PATCH continuam sem status.
+
+Destino fixo: ativa → inativa ou inativa → ativa. Motivos usam o catálogo D10
+com rótulos amigáveis; detalhe é opcional, exceto em Outro, com validação NFC e
+300 pontos de código pelo modelo puro existente. Ausência é omitida. Confirmação
+explícita antecede `administrativePropertyCommands.changeStatus`, que reutiliza
+coordenador, recibo, sessão e lifecycle. Corpo exclusivo: `versao`, `status`,
+`motivo` e `motivo_detalhe?`. Backend decide elegibilidade do Titular.
+
+Recibo não encerra a UI: GET com mesmo ID e versão >= recibo publica a boundary;
+então fecha o modal, preservando o detalhe/key e N1. Duplo Confirmar é uma
+mutação; transporte ambíguo preserva chave/corpo/versão, mesmo com GET incidental.
+Falha após recibo oferece Tentar atualizar → `retryReconciliation()` somente GET.
+Conflito atualiza o estado autoritativo e exige Nova decisão de status, novo
+motivo e confirmação; se a releitura falhar, nova decisão fica bloqueada.
+Erro de regra usa mensagem controlada, sem expor detalhes internos.
+
+Cancelar antes do comando não envia PATCH; após recibo a saída chama Fechar e
+não promete rollback. Desmontagem, perda de Admin/401/403 e troca de identidade
+aposentam a instância. Callbacks antigos verificam instância, token do modal e
+key ativa. StrictMode cria instância nova, sem envio automático.
+
+Sem mudanças em Demo, componentes compartilhados, modelos/serviços aprovados,
+backend, RBAC ou persistência. D-4 permanece em andamento: Android físico,
+fechamento e integração final na `backend` posteriores. D-3 `92bba62`, decimal
+`dab3ac4`, HTTP `27df733`, Titular/Localidades `37a8790` preservados.
+Validações em [testes de contrato](testes-contrato-api-rbac.md).
+
+Auditoria do status visual: **38/38 critérios e 33/33 probes independentes**;
+D-4 **340/340**. Inativação/reativação, motivos D10, recovery somente GET,
+business_rule_conflict seguro e version_conflict sem retry automático aprovados.
+F1/N1, edição cadastral sem status e Demo preservados. Evidências herdadas da
+implementação/auditoria em [testes de contrato](testes-contrato-api-rbac.md);
+suítes não reexecutadas neste fechamento exclusivamente documental/Git.
 
 ## MP-35D-4 — formulários HTTP de Propriedade e navegação mínima — 2026-09-14
 
 Implementados sobre `37a87909e10e50baa8b13201c1c7c5f8c86bd131`, na
 `feat/mp-35d`. **FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA —
-APROVADOS PARA COMMIT**. Fechamento Git autorizado após reauditoria de N1.
+APROVADOS PARA COMMIT** foi o parecer pré-commit após reauditoria de N1.
+Fechamento concluído na `feat/mp-35d` em `e5db497`, com hash remoto confirmado.
 D-3 fechada em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`
 e Titular/Localidades em `37a8790`, com F1/A1 encerrados nos cortes anteriores.
 

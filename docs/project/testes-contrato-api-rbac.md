@@ -4,10 +4,105 @@ Status revisado em 2026-09-14:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
 concluída, auditada e enviada em 92bba62; MP-35D em andamento;
 decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-Titular/Localidades fechados em 37a8790; formulários HTTP aprovados para commit após reauditoria de N1; D-4 em andamento`.
+Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status visual aprovado independentemente para commit; D-4 em andamento`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
+
+## MP-35D-4 — aprovação independente do status visual — 2026-09-14
+
+**FLUXO VISUAL DE STATUS DE PROPRIEDADE — APROVADO PARA COMMIT**.
+Parecer independente final comunicado no fechamento: nenhum achado obrigatório
+remanescente. Autorizados somente documentação, índice explícito, commit e push
+para `feat/mp-35d`, com confirmação do hash remoto. Este registro pré-commit não
+antecipa o sucesso do envio; o relatório final registra a confirmação Git.
+
+| Origem da evidência herdada | Resultado |
+|---|---|
+| Implementação | D-4 340/340 e regressões gerais aprovadas |
+| Auditoria independente | 38/38 critérios; 33/33 probes independentes; nenhum achado obrigatório |
+| Suítes na auditoria | D-4 340/340; D-3 106/106; D-2 85/85; D-1 55/55 |
+| Demais checks da auditoria | typecheck, domain-compat, propriedadeNavigationCompat, propriedadeRouteFlowCompat, native graph e bundles HTTP/Demo aprovados |
+
+Composição preservada: 296 anteriores + 38 renderizados + 6 arquitetura = 340.
+São 44 casos novos do status; os 11 D-2 reutilizados já pertencem aos 296.
+Os 33 probes independentes não são novos casos permanentes da suíte.
+
+Inativação/reativação e motivos D10 aprovados: destino fixo oposto ao status atual,
+corpo exclusivo `versao`, `status`, `motivo`, `motivo_detalhe?`; recibo seguido de
+GET autoritativo obrigatório. Recovery somente GET, version_conflict com releitura
+e nova decisão sem retry automático, business_rule_conflict seguro sem otimismo.
+F1/N1 preservados; edição cadastral continua sem status e Demo permanece intacto.
+
+Verificações deste fechamento: oito arquivos não documentais derivados do Git,
+SHA-256 individual antes da documentação e comparação após documentação, staging
+e commit; diff check, links locais, revisão documental, objeto exato e remoto.
+Somente os sete documentos já pertencentes ao corte recebem mudanças. Não se
+reexecutam suítes, PostgreSQL, Android físico ou bundles/grafos por ritual.
+
+D-3 `92bba62`, decimal `dab3ac4`, HTTP `27df733`, Titular/Localidades `37a8790`
+e formulários/navegação `e5db497` preservados. D-4 ainda em andamento: smoke
+Android físico completo, fechamento final e integração da MP-35D na `backend`
+posteriores. Sem release, deploy, produção, vínculos, transferência, exclusão,
+offline/AsyncStorage administrativo ou fallback Demo. CI remota não consultada.
+
+## MP-35D-4 — status visual separado — implementação de 2026-09-14
+
+Base fechada: `e5db497baf6a4b1c35115c1d4a3aa8f9e5d1093c`; worktree/index limpos,
+origin no mesmo commit antes da implementação. Corte aprovado independentemente para commit, sem achado obrigatório.
+Fechamento Git autorizado; Android físico não executado.
+
+`mp35d4RenderedStatus.test.js` registra 38 casos no runner renderizado existente.
+Assim o harness de React Navigation real importa D-2 uma única vez: são 84 casos
+renderizados executados (35 próprios anteriores + 38 status + 11 D-2 reutilizados).
+O novo `mp35d4StatusArchitecture.test.js` acrescenta 6 gates. Composição total:
+**296 anteriores + 38 renderizados status + 6 arquitetura status = 340/340**.
+São 44 casos novos neste corte; os 11 D-2 já pertencem aos 296, não são novos.
+Nenhum caso anterior foi removido. O gate que vedava status passou a exigir
+modal local Admin, mantendo proibição de rota pública, vínculos e transferência.
+
+Cobertura: inativar/reativar com corpo exato capturado no transporte, motivo D10,
+Outro obrigatório, detalhe opcional/NFC/300 pontos de código, confirmação,
+cancelamento antes do comando e na confirmação, duplo submit, GET igual/superior
+ao recibo, ID/versão inválidos, GET mais novo com status diferente do solicitado,
+recovery nos dois destinos (um PATCH, três GETs, duas falhas), retry ambíguo com
+mesma chave/corpo/versão inclusive após GET incidental, version_conflict com
+estado já alterado ou ainda original, nova intenção/chave após decisão explícita,
+falha da leitura de conflito, business_rule_conflict sem dados internos,
+indisponibilidade, Admin/perfis finais, ID inválido, ausência de rota/deep link,
+redução de perfil, 401/403 antes/durante PATCH/GET, respostas tardias, callbacks
+A após retomada em B, StrictMode, conclusão repetida, saída após recibo, lista
+ativa removendo/reexibindo item somente por consulta e edição cadastral sem status.
+As sete regressões N1 anteriores continuam passando, com keys/pilha reais.
+
+Execuções herdadas da implementação (PowerShell, `npm.cmd`), não repetidas no fechamento:
+
+| Comando | Resultado |
+|---|---|
+| `npm run typecheck` | passou |
+| `npm run test:mp35d4` | 340/340 |
+| `npm run test:mp35d3` | 106/106 |
+| `npm run test:mp35d2` | 85/85 |
+| `npm run test:mp35d1` | 55/55 |
+| `npm run test:domain-compat` | passou |
+| `node tests/propriedadeNavigationCompat.test.js` | passou |
+| `node tests/propriedadeRouteFlowCompat.test.js` | passou |
+| `npm run test:native-graph:mp33c` | grafos HTTP/Demo aprovados |
+| `npm run test:bundle:mp33c` | exportações HTTP/Demo aprovadas, sem mock/AsyncStorage no HTTP |
+
+As primeiras asserções focais foram corrigidas para usar a versão efetiva da
+fixture e os cartões renderizados (o host FlatList não conserva `data` no harness).
+Na revisão final foi acrescentada a guarda que impede GET incidental de trocar
+a intenção ainda ambígua, com regressão ampliada; typecheck, D-4 e bundle foram
+reexecutados após esse ajuste. Não houve flexibilização de modelos/decoders.
+
+Demo/PropertyForm/SelectField, edição cadastral, navegação N1, runtime,
+SessionCoordinator, boundary, serviço, modelo e lifecycle aprovados não mudaram.
+Backend intacto; PostgreSQL não reexecutado. Grafos/bundles exigiram subprocessos
+Expo fora do sandbox e não equivalem a instalação, release ou Android físico.
+Marcos: D-3 `92bba62`, decimal `dab3ac4`, HTTP `27df733`, Titular/Localidades
+`37a8790`, formulários/navegação `e5db497`. D-4 em andamento, auditoria deste
+corte aprovada; Android físico pendente e integração final na `backend` posterior.
 
 ## MP-35D-4 — aprovação independente e fechamento controlado — 2026-09-14
 

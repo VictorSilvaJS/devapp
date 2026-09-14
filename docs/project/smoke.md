@@ -7,6 +7,35 @@
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
 
+## MP-35D-4 — smoke automatizado do status visual — 2026-09-14
+
+Sobre `e5db497`, com componentes e React Navigation reais; transporte e
+primitivas nativas controlados. Não é Android físico nem backend implantado.
+
+1. Admin abre detalhe ativo e Inativar Propriedade.
+2. Seleciona motivo, revisa a alteração e confirma explicitamente a inativação.
+3. PATCH de status recebe recibo; GET autoritativo publica estado inativo.
+4. Modal fecha e o detalhe original permanece, com a mesma key e estado inativo.
+5. Abre Reativar Propriedade, informa motivo e confirma.
+6. PATCH + GET publicam estado ativo no mesmo detalhe, sem duplicação N1.
+
+Complementos permanentes: Outro sem/com detalhe, limite/NFC, cancelamento,
+payload exato, duplo Confirmar, versão GET igual/superior ao recibo, ID/versão
+incompatíveis, recovery com duas falhas e terceiro GET bem-sucedido nos dois
+destinos, transporte ambíguo e GET incidental, version/business conflicts,
+lista ativa recarregada, 401/403 antes/durante PATCH/GET, redução de perfil,
+callbacks antigos após retomada, respostas tardias, StrictMode e edição sem
+status. Fechar após recibo não oferece cancelamento/rollback do comando aceito.
+
+Auditoria independente: 38/38 critérios e 33/33 probes; nenhum achado obrigatório.
+Inativação/reativação, D10, recovery GET, conflitos seguros, F1/N1 e Demo aprovados.
+Evidências herdadas, sem nova execução funcional no fechamento Git autorizado.
+
+38 casos renderizados novos e 6 de arquitetura; D-4 **340/340** incluindo os
+296 anteriores. Composição e comandos em [testes de contrato](testes-contrato-api-rbac.md).
+Status visual **aprovado independentemente para commit**; D-4 continua
+em andamento, Android físico e integração final na `backend` posteriores.
+
 Reauditoria independente dos formulários HTTP: **20/20 critérios e 14/14 probes
 aprovados**, incluindo estado reconciliado com versão GET superior ao recibo.
 N1 encerrado; criação/edição e navegação mínima aprovadas para commit. Evidência

@@ -85,7 +85,8 @@ reauditoria independente, sem achado obrigatório remanescente. O corte foi
 fechado e enviado em `27df7335efd4ab352245c48f6b022da1d99f0987`, com hash remoto
 confirmado. A etapa seguinte implementa Titular e Localidades internamente,
 com A1 corrigido e encerrado na reauditoria independente, fechada em `37a8790`.
-O corte visual seguinte entrega criação/edição e navegação mínima; N1 encerrado na reauditoria, corte aprovado para commit.
+Criação/edição e navegação mínima foram fechadas em `e5db497`, com N1 encerrado.
+O status visual separado foi aprovado independentemente para commit, sem achado obrigatório.
 
 Estado formal da sequência administrativa:
 
@@ -97,14 +98,54 @@ Estado formal da sequência administrativa:
   pré-requisito decimal fechado e enviado em `dab3ac4`; integração HTTP
   administrativa de Propriedades fechada em `27df733` na `feat/mp-35d`.
   Titular/Localidades internos fechados em `37a8790`, com A1 encerrado.
-  Formulários de criação/edição e navegação mínima implementados; N1 encerrado na reauditoria, corte aprovado para commit. A integração
+  Formulários/navegação fechados em `e5db497`, N1 encerrado; status visual separado
+  aprovado independentemente para commit. A integração
   final da MP-35D na `backend` permanece posterior.
+
+## MP-35D-4 — fluxo visual separado de status — 2026-09-14
+
+Implementado sobre `e5db497baf6a4b1c35115c1d4a3aa8f9e5d1093c`, com worktree
+inicial limpo e origin no mesmo commit. **FLUXO VISUAL DE STATUS DE PROPRIEDADE
+— APROVADO PARA COMMIT**. Nenhum achado obrigatório; fechamento Git autorizado.
+
+Admin ativo abre Inativar/Reativar Propriedade em modal local do detalhe HTTP.
+Não existe rota ou deep link de status. A ação exige detalhe administrativo
+autoritativo e ID válido; perfis finais não possuem ação/modal. Destino é o
+oposto do estado atual, com motivo D10, detalhe D9 e confirmação textual.
+O modelo puro, serviço e lifecycle existentes constroem/validam o comando;
+não há consulta adicional de Titular, payload manual ou idempotência paralela.
+
+PATCH confirmado exige GET do mesmo ID com versão igual/superior ao recibo.
+Recovery repete somente GET, inclusive após falha repetida. O fechamento
+automático exige reconciliação; o detalhe mantém a mesma key e observa a boundary.
+Conflito relê o estado e exige nova decisão, sem repetir PATCH. Transporte
+ambíguo conserva a intenção/chave/corpo/versão, inclusive diante de GET incidental.
+Perda de Admin, 401/403 e saída descartam o fluxo. StrictMode cria instância
+nova; callbacks antigos permanecem inertes.
+
+Demo, PropertyForm, SelectField, edição cadastral, navegação N1, runtime,
+coordenador, modelos/comandos/lifecycle e backend aprovados permanecem intactos.
+Evidências e smoke automático em [testes de contrato](testes-contrato-api-rbac.md)
+e [smoke](smoke.md). D-4 continua em andamento; Android físico e integração final
+na `backend` são posteriores. Vínculos, transferência, offline administrativo,
+AsyncStorage administrativo, release, deploy e produção permanecem fora.
+
+Marcos fechados: D-3 `92bba62`, decimal `dab3ac4`, HTTP `27df733`,
+Titular/Localidades `37a8790` e formulários/navegação `e5db497` (N1 encerrado).
+
+Auditoria do status visual: **38/38 critérios e 33/33 probes independentes**;
+D-4 **340/340**. Inativação/reativação, motivos D10, recovery somente GET,
+business_rule_conflict seguro e version_conflict sem retry automático aprovados.
+F1/N1, edição cadastral sem status e Demo preservados. Evidências herdadas da
+implementação/auditoria em [testes de contrato](testes-contrato-api-rbac.md);
+suítes não reexecutadas neste fechamento exclusivamente documental/Git.
 
 ## MP-35D-4 — formulários HTTP de Propriedade e navegação mínima — 2026-09-14
 
 Implementados sobre `37a87909e10e50baa8b13201c1c7c5f8c86bd131`, na
 `feat/mp-35d`. **FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA —
-APROVADOS PARA COMMIT**. Fechamento Git autorizado após reauditoria de N1.
+APROVADOS PARA COMMIT** foi o parecer pré-commit após reauditoria de N1.
+Fechamento concluído na `feat/mp-35d` em `e5db497`, com hash remoto confirmado.
 D-3 fechada em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`
 e Titular/Localidades em `37a8790`, com F1/A1 encerrados nos cortes anteriores.
 
@@ -411,7 +452,7 @@ ou validação produtiva; este fechamento não libera produção ou release.
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; criação/edição e navegação mínima aprovados para commit após reauditoria de N1, sem novo Android físico ou release |
+| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status visual aprovado para commit, sem Android físico ou release |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
@@ -457,8 +498,7 @@ com D-3 fechada em `92bba62` e pré-requisito decimal em `dab3ac4`.
 O corte HTTP interno de Propriedades administrativas foi aprovado após F1 e
 fechado em `27df733`. Titular/Localidades internos estão implementados e
 foram fechados em `37a8790`, com A1 encerrado. Criação/edição e navegação mínima
-estão implementadas; N1 encerrado na reauditoria, corte aprovado para commit. Status visual, vínculos e
-validação física continuam posteriores.
+foram fechadas em `e5db497`, N1 encerrado. Status visual separado aprovado independentemente para commit. Vínculos e validação física continuam posteriores.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 
@@ -819,15 +859,14 @@ O pré-requisito decimal está fechado e enviado em `dab3ac4`; a integração HT
 administrativa de Propriedades foi aprovada independentemente, com F1 encerrado,
 e fechada em `27df733` na `feat/mp-35d`. Titular/Localidades internos foram
 fechados em `37a8790` após encerramento de A1. Formulários de criação/edição e
-navegação mínima estão aprovados para commit após reauditoria de N1; status visual, Android físico e integração
-final na `backend` são posteriores.
+navegação mínima foram fechados em `e5db497`. Status visual separado aprovado para commit; Android físico e integração final na `backend` posteriores.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. Vínculos, status visual e validação física D-4
-continuam fora do corte atual de formulários de criação/edição.
+links, assinatura e dispositivo. Status visual separado aprovado independentemente; vínculos e validação física
+D-4 permanecem posteriores.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da
