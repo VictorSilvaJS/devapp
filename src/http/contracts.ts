@@ -4,6 +4,32 @@ export type { CreateAdministrativePropertyPayload, PatchAdministrativePropertyPa
 export type HttpProfile = 'admin' | 'colaborador' | 'produtor';
 export type HttpUserStatus = 'pendente' | 'ativo' | 'inativo';
 export type PropertyStatus = 'ativa' | 'inativa';
+
+export interface LocalityUf {
+  readonly id: string;
+  readonly sigla: string;
+  readonly nome: string;
+}
+export interface LocalityMunicipality {
+  readonly id: string;
+  readonly nome: string;
+  readonly uf_id: string;
+}
+export interface LocalityUfCollection {
+  readonly versao_id: string;
+  readonly itens: readonly LocalityUf[];
+}
+export interface LocalityMunicipalityPage {
+  readonly versao_id: string;
+  readonly itens: readonly LocalityMunicipality[];
+  readonly paginacao: Readonly<{ proximo_cursor: string | null }>;
+}
+export interface LocalityMunicipalityFilters {
+  readonly uf_id: string;
+  readonly busca?: string;
+  readonly limite?: number;
+  readonly cursor?: string;
+}
 export type PropertyAccessType =
   | 'admin'
   | 'titular'

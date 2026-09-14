@@ -81,9 +81,11 @@ na auditoria independente, sem achado obrigatório ou evidência crítica penden
 O pré-requisito decimal foi fechado e enviado em `dab3ac4`. Em 2026-09-14,
 a integração HTTP administrativa de Propriedades foi implementada sobre esse
 commit; F1 da primeira auditoria foi reproduzido, corrigido e aprovado na
-reauditoria independente, sem achado obrigatório remanescente. O corte está
-autorizado para fechamento Git e oferece leitura, comandos,
-modelos e lifecycle internos, sem formulários, seletores ou navegação D-4.
+reauditoria independente, sem achado obrigatório remanescente. O corte foi
+fechado e enviado em `27df7335efd4ab352245c48f6b022da1d99f0987`, com hash remoto
+confirmado. A etapa seguinte implementa Titular e Localidades internamente,
+com A1 corrigido e encerrado na reauditoria independente, aprovado para commit,
+sem formulários ou navegação D-4.
 
 Estado formal da sequência administrativa:
 
@@ -93,11 +95,60 @@ Estado formal da sequência administrativa:
 - Confirmação pós-integração: aprovada.
 - MP-35D: em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`;
   pré-requisito decimal fechado e enviado em `dab3ac4`; integração HTTP
-  administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`.
-  Seletores, formulários e navegação D-4 ainda não implementados. A integração
+  administrativa de Propriedades fechada em `27df733` na `feat/mp-35d`.
+  Titular/Localidades internos aprovados independentemente para commit, com A1 encerrado.
+  Formulários e navegação D-4 ainda não implementados. A integração
   final da MP-35D na `backend` permanece posterior.
 
-## MP-35D-4 — integração HTTP administrativa de Propriedades — 2026-09-14
+## MP-35D-4 — Titular e Localidades internos — 2026-09-14
+
+Primeira auditoria: **CORREÇÕES OBRIGATÓRIAS**, somente A1. Retry concorrente
+após falha de paginação fazia refresh implícito e descartava páginas válidas.
+Reproduzido permanentemente em Titular e Municípios antes da mudança funcional:
+os 13 casos novos falharam e os 233 anteriores passaram. A correção focal faz
+`retry()` compartilhar a promise pendente da consulta antes de decidir por
+paginação/refresh, sem novo estado ou alteração de imports. Refresh explícito,
+nova busca, troca de UF e cancelamento continuam invalidando a operação antiga.
+D-4 passou **246/246** após a correção; evidências em [testes de contrato](testes-contrato-api-rbac.md).
+
+A reauditoria aprovou o corte para commit: A1 encerrado, nenhum achado novo
+ou obrigatório remanescente, 20/20 critérios focais e 42/42 probes independentes.
+Comprovou mesma promise, geração/páginas/seleção preservadas e, por consumidor,
+um GET com cursor e zero sem cursor. A mutação de sensibilidade preservou os
+233 anteriores e fez falhar as 13 regressões A1 quando a correção foi removida.
+Essas são evidências herdadas do auditor, não novas execuções deste fechamento.
+
+Implementados sobre `27df733`, sem commit/push desta etapa. O runtime fornece
+factories de `AdministrativeHolderController` e `AdministrativeLocalityController`.
+Titular reutiliza a instância administrativa de Usuários, filtra remotamente
+Produtores conforme o status inicial e relê o detalhe por `usuario_id` antes
+de produzir `{ produtor_id }`. Nunca substitui as duas identidades.
+Localidades consome somente os GETs existentes de UFs e Municípios; UFs vêm
+integrais, Municípios usam UF/busca/cursor e versão de catálogo coerente.
+
+Seleções ficam separadas das opções. Gerações e leases descartam respostas e
+callbacks antigos; próxima página é única por cursor, deduplicada e preserva
+páginas válidas se falhar. Cursor inválido ou versão divergente exige reinício.
+Troca de UF limpa o Município; inicialização explícita do detalhe preserva o
+Município autoritativo mesmo ausente das páginas, sem varredura ou GET por ID.
+O modelo de edição existente omite `municipio_id` do PATCH quando não mudou.
+
+Admin ativo é obrigatório. A fronteira administrativa de Usuários existente
+invalida os novos controllers por sessão/identidade e, conservadoramente, por
+nova geração de dados. Cancelamento descarta seleções, queries, páginas,
+cursores, erros, operações pendentes e listeners próprios antes de notificar;
+retomada usa instâncias novas. F1 e o algoritmo de `/me` permanecem preservados.
+Contratos e uso interno em [contrato MP-35](contrato-administracao-mp35.md);
+execuções próprias em [testes de contrato](testes-contrato-api-rbac.md).
+
+Estado deste snapshot anterior ao commit: **TITULAR E LOCALIDADES DA MP-35D-4
+— APROVADOS PARA COMMIT**. Fechamento Git autorizado somente na `feat/mp-35d`,
+com preservação funcional por hashes e confirmação do hash remoto após push.
+D-4 permanece em andamento; formulários, botões e
+navegação são posteriores. Sem backend alterado, Android físico, consulta à
+CI remota ou integração final na `backend` nesta etapa. Demo preservado.
+
+## MP-35D-4 — integração HTTP administrativa fechada — 2026-09-14
 
 `BackendApi` consome lista/detalhe administrativos completos e versionados e
 os três comandos existentes: criação, PATCH cadastral parcial e status separado.
@@ -136,14 +187,12 @@ A reauditoria focal aprovou F1 e o corte para commit, sem achado obrigatório
 remanescente. O auditor executou D-4 131/131 (35 contratos, 29 modelos,
 26 comandos, 36 lifecycle e 5 arquitetura), além das regressões e probes
 registrados em [testes de contrato](testes-contrato-api-rbac.md). Essas evidências
-não são novas execuções deste fechamento, que preserva código/testes/configuração.
+pertencem ao fechamento anterior, que preservou código/testes/configuração.
 
-Estado: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE PROPRIEDADES — APROVADA E EM
-FECHAMENTO NA feat/mp-35d**. D-4 permanece em andamento. Sem seletores,
-formulários, botões ou rotas visuais novos; Demo preservado. Vínculos e
-transferência de Titularidade continuam fora. Android físico não executado,
-CI remota não consultada, sem release ou integração na `backend`. Commit/push
-somente para `feat/mp-35d` estão autorizados; conclusão depende de confirmação remota.
+Estado do corte anterior: **FECHADO EM `27df733` NA feat/mp-35d**, com hash
+remoto confirmado. Naquele corte não houve seletores, formulários, botões ou
+rotas visuais novos. A etapa interna de seletores está descrita acima. D-4
+permanece em andamento, sem Android físico, release ou integração na `backend`.
 
 ## MP-35D-4 — pré-requisito de leitura decimal — 2026-09-11
 
@@ -293,7 +342,7 @@ ou validação produtiva; este fechamento não libera produção ou release.
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal fechado em `dab3ac4`; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`; D-4 sem seletores, formulários ou navegação, sem novo Android físico ou release |
+| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades aprovados para commit com A1 encerrado; formulários/navegação D-4 pendentes, sem novo Android físico ou release |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
@@ -336,10 +385,10 @@ Propriedades, vínculos e Localidades estão concluídos e integrados na MP-35C
 pelo commit `e6789bf`, com CI pós-push, auditoria independente e confirmação
 pós-integração aprovadas. D-1/D-2/D-3 estão concluídas na `feat/mp-35d`,
 com D-3 fechada em `92bba62` e pré-requisito decimal em `dab3ac4`.
-O corte HTTP interno de Propriedades administrativas está implementado e
-aprovado independentemente após correção de F1, em fechamento na `feat/mp-35d`.
-Seletores de Localidades/Titular, formulários,
-navegação D-4, vínculos e validação física continuam posteriores.
+O corte HTTP interno de Propriedades administrativas foi aprovado após F1 e
+fechado em `27df733`. Titular/Localidades internos estão implementados e
+foram aprovados independentemente para commit, com A1 encerrado. Formulários, navegação D-4, vínculos e
+validação física continuam posteriores.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
 
@@ -698,15 +747,15 @@ auditoria independente final para commit, sem achado obrigatório remanescente.
 MP-35D segue em andamento; a D-3 foi concluída e enviada em `92bba62`.
 O pré-requisito decimal está fechado e enviado em `dab3ac4`; a integração HTTP
 administrativa de Propriedades foi aprovada independentemente, com F1 encerrado,
-e está em fechamento na `feat/mp-35d`.
-Seletores, formulários, navegação e integração final na `backend` são posteriores.
+e fechada em `27df733` na `feat/mp-35d`. Titular/Localidades internos foram
+aprovados para commit após encerramento de A1. Formulários, navegação e integração final na `backend` são posteriores.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. Vínculos, seletores de Localidades/Titular,
-formulários, navegação e validação física D-4 continuam fora do corte atual.
+links, assinatura e dispositivo. Vínculos, formulários, navegação e validação
+física D-4 continuam fora do corte atual de Titular/Localidades internos.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da

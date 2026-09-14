@@ -7,7 +7,63 @@
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
 
-## MP-35D-4 — integração HTTP administrativa — 2026-09-14
+## MP-35D-4 — Titular/Localidades internos — 2026-09-14
+
+Smoke automatizado desta etapa sobre `27df733` + worktree, com runtime,
+sessão e repositório reais e transporte controlado nos testes permanentes:
+
+1. Titular: busca remota filtra Produtor e status conforme criação ativa/inativa;
+   candidato conserva identidades distintas, detalhe confirma o mesmo cadastro
+   e o modelo serializa somente `produtor_id` como `titular_id`. Zero resultados
+   e Produtor sem consulta a Propriedades são válidos. Mudança de status remove
+   confirmação; divergência no detalhe impede seleção pronta.
+2. Localidades: coleção das 27 UFs da fixture extraída do seed HTTP; Município
+   exige UF, omite busca vazia e normaliza NFC/trim. Paginação deduplicada e
+   única por cursor preserva seleção e páginas após falha; retry repete o GET.
+   Cursor inválido/cíclico e versão divergente exigem reinício pela primeira página.
+3. Deferreds BA/`ilh` → BA/`ita`, BA → SP e buscas/status do Titular, em ambos
+   os ordenamentos: sucesso, erro e paginação antigos não publicam nem alteram
+   loading/seleção. Callbacks antigos são recusados. UFs também cobrem refresh
+   fora de ordem e respostas tardias depois de invalidação de sessão/dispose.
+4. Município autoritativo da edição, ausente da primeira página, permanece
+   selecionado/exibível sem GET por ID nem varredura. PATCH só inclui ID se
+   alterado. Troca de UF limpa o conjunto municipal; seleção durante próxima
+   página é permitida e não é recalculada quando a página chega.
+5. 401/403 nas quatro leituras, Admin → Produtor/Colaborador, identidade,
+   logout, dispose e reconciliação: descarte próprio antes da notificação;
+   retomada cria instâncias novas e não ressuscita requests/callbacks antigos.
+   Dispose antes de start e cancelamento durante confirmação também cobertos.
+
+6. A1 da primeira auditoria: falha 503 na página 2 e retries concorrentes em
+   Titular/Município foram reproduzidos antes da correção. Os 13 testes novos
+   falharam; a correção compartilha a operação pendente antes de decidir retry.
+   Com e sem seleção, página 1/geração permanecem e página 2 é anexada uma vez.
+   Recovery que falha novamente permite retry posterior. Nova busca, UF,
+   refresh explícito, dispose e perda de autorização descartam recovery antiga;
+   após sucesso, retry tardio conserva a semântica anterior de refresh.
+   Probe focal: por consumidor, um GET com cursor e zero GETs sem cursor na
+   recuperação concorrente, com seleção preservada.
+
+`test:mp35d4`: **246/246**, sendo os 233 anteriores preservados e 13 regressões
+A1 novas (total: 58 Localidades e 57 Titular/sessão/arquitetura, além dos 131
+casos do corte HTTP anterior). Resultados próprios, falhas
+intermediárias e gates em [testes de contrato](testes-contrato-api-rbac.md).
+Reauditoria independente: A1 encerrado, nenhum achado obrigatório remanescente,
+20/20 critérios e 42/42 probes. Confirmou retries na mesma promise, geração/
+páginas/seleção preservadas e um GET com cursor/zero sem cursor. Mutação de
+sensibilidade: os 233 anteriores permanecem e as 13 regressões A1 falham sem
+a correção. D-4 246/246, D-3 106/106, D-2 85/85, D-1 55/55, typecheck e
+domain-compat passaram na reauditoria; não são novas execuções do fechamento.
+
+Estado: **TITULAR E LOCALIDADES DA MP-35D-4 — APROVADOS PARA COMMIT**.
+Fechamento Git autorizado na `feat/mp-35d`. D-3 fechada em `92bba62`, decimal em `dab3ac4` e integração HTTP
+administrativa em `27df733`. Formulários/navegação pendentes; sem Android físico
+nesta etapa, CI remota não consultada, backend inalterado e integração final
+na `backend` posterior. Este registro antecede o commit; conclusão do fechamento
+exige push e hash remoto confirmado. Sem nova UI/formulário de criação/edição,
+tela de status, navegação, release/deploy/produção; Demo preservado.
+
+## MP-35D-4 — integração HTTP administrativa anterior — 2026-09-14
 
 Smoke automatizado nesta rodada, sobre `dab3ac4` + worktree:
 
@@ -40,17 +96,18 @@ da ocorrência estão na mesma matriz.
 D-3 fechada em `92bba62`; pré-requisito decimal fechado e enviado em `dab3ac4`.
 Auditoria independente encontrou somente F1, reproduzido e corrigido;
 reauditoria focal aprovou F1 e a integração HTTP interna para commit, sem
-achado obrigatório remanescente. Estado: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE
-PROPRIEDADES — APROVADA E EM FECHAMENTO NA feat/mp-35d**.
+achado obrigatório remanescente. O fechamento posterior foi concluído em
+`27df733` na `feat/mp-35d`, com hash remoto confirmado.
 O auditor executou D-4 131/131, D-3 106/106, D-2 85/85, typecheck,
 domain-compat e probes focais. A composição D-4 é 35 contratos, 29 modelos,
 26 comandos, 36 lifecycle e 5 arquitetura; detalhes e a distinção dos dois
 probes exploratórios de 403 estão nos [testes de contrato](testes-contrato-api-rbac.md).
-Esses resultados são do auditor. Neste fechamento somente documental não se
-reexecutam suítes integrais; backend/PostgreSQL também não foram reexecutados
+Esses resultados são do auditor. Naquele fechamento somente documental não se
+reexecutaram suítes integrais; backend/PostgreSQL também não foram reexecutados
 na reauditoria porque permaneceram inalterados.
-Seletores, formulários e navegação D-4 ainda não implementados; vínculos e
-transferência fora. Android físico não executado nesta etapa; CI remota não
+Seletores não foram implementados naquele corte; a etapa interna posterior
+está descrita acima. Formulários, navegação, vínculos e transferência fora.
+Android físico não executado nessa etapa; CI remota não
 consultada; integração final na `backend` posterior. Nenhuma liberação produtiva.
 
 ## MP-35D-4 — smoke focal do pré-requisito decimal

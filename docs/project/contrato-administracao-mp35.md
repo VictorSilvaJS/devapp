@@ -2,7 +2,8 @@
 
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
 > MP-35D-3 concluída, auditada e enviada em 92bba62;
-> pré-requisito decimal fechado e enviado em dab3ac4; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na feat/mp-35d; MP-35D/D-4 em andamento`
+> decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
+> Titular/Localidades aprovados independentemente para commit, A1 encerrado; MP-35D/D-4 em andamento`
 >
 > Definido em: 2026-08-25
 >
@@ -29,15 +30,112 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal fechado em `dab3ac4`; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na `feat/mp-35d`; seletores, formulários, navegação D-4 e integração final na `backend` posteriores |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades aprovados para commit, A1 encerrado; formulários, navegação D-4 e integração final na `backend` posteriores |
+
+### Titular e Localidades internos — 2026-09-14
+
+Implementação sobre `27df733`, aprovada para commit na reauditoria após correção
+focal A1. A primeira auditoria exigiu somente corrigir retry concorrente que
+reiniciava a busca e descartava páginas válidas, reproduzido em ambos os
+consumidores antes da alteração funcional. A1 está encerrado e nenhum achado
+obrigatório permanece. Fechamento Git autorizado somente na `feat/mp-35d`.
+Não cria UI,
+rotas de navegação ou comandos de Propriedade. Factories internas no runtime:
+`administrativePropertySelectors.createHolder(status, limite?)` e
+`createLocalities(limite?)`. Construção não faz HTTP; `start()` inicia a lista
+de Titulares ou a coleção de UFs. `subscribe()` observa snapshots imutáveis.
+
+| Leitura | Porta reutilizada/adicionada | Regras |
+|---|---|---|
+| `GET /v1/usuarios` | `AdministrativeUserRepository.list` existente | `perfil=produtor`; `status=ativo` somente para criação ativa; busca/limite/cursor; sem filtro territorial, vínculo ou quantidade de Propriedades |
+| `GET /v1/usuarios/:usuario_id` | `AdministrativeUserRepository.getById` existente | detalhe autoritativo obrigatório em cada `prepareSelection()` |
+| `GET /v1/localidades/ufs` | `BackendApi.listLocalityUfs` | coleção integral de até 27, sem parâmetros/paginação artificial |
+| `GET /v1/localidades/municipios` | `BackendApi.listLocalityMunicipalities` | `uf_id` obrigatório, busca NFC + trim (vazia omitida), limite 1–100/padrão 50, cursor opaco de até 2.048 caracteres |
+
+Decoders de Localidades exigem envelopes/chaves exatos, nomes nos limites do
+backend, ID de UF com dois dígitos, Município com sete e prefixo da UF da
+consulta, sigla com duas letras maiúsculas, cursor string não vazio ou `null`.
+`versao_id` segue `ibge-localidades-AAAA-MM-DD`, conforme o contrato persistente;
+não é UUID nem campo editável de Propriedade. A primeira página registra a
+versão; próxima página divergente falha sem anexar dados. Busca municipal tem
+até 200 caracteres Unicode após normalização, sem regras do decimal.
+
+Titular conserva `{ usuario_id, produtor_id, nome, email, status }` separado
+das opções. `select`/`selectionCallback` aceitam somente candidatos da geração
+vigente. `prepareSelection()` relê o Usuário e exige mesmo ID, perfil Produtor,
+mesmo `produtor_id` canônico presente e estado elegível: ativo para Propriedade
+ativa; ativo, pendente ou inativo para inativa. Retorna somente `{ produtor_id }`
+ou `null` com estado de erro/invalidez. O modelo de criação existente converte
+`produtor_id` em `titular_id`; o comando backend conserva autoridade transacional.
+Cada chamada concluída exige nova releitura antes de outro futuro submit;
+chamadas simultâneas compartilham a releitura em voo. Busca não troca seleção.
+`setInitialStatus()` reinicia filtros/geração e remove confirmação; ao passar
+para ativa, candidato inelegível fica explicitamente inválido, sem substituição.
+Revalidação pode reconhecer habilitação posterior. Trocar/limpar seleção ou
+status invalida o detalhe anterior em voo.
+
+`setUf` usa opção remota válida, limpa seleção municipal e inicia primeira
+página. `initializeFromProperty(detail)` é a exceção explícita: valida pelo
+modelo administrativo de edição existente, copia somente o conjunto
+`{ municipio_id, municipio_nome, uf_id, uf_sigla }` e não executa GET.
+O chamador pode iniciar busca normalmente; Município atual ausente das páginas
+continua selecionado/exibível. `selectionInput()` entrega o conjunto coerente
+para criação/edição; somente `municipio_id` pode entrar na escrita. Aplicar a
+seleção ao modelo de edição existente não marca dirty quando o ID é o original.
+
+`search`, `refresh`, `retry` e `loadMore` são remotos. Nova busca reinicia cursor,
+páginas, erros e geração, preservando seleção compatível. Paginação mantém UF/
+busca, deduplica IDs, compartilha chamada concorrente e permite selecionar
+opção de página anterior. Falha posterior preserva páginas/seleção e permite
+retry do mesmo GET. Cursor inválido/cíclico ou contrato/versão incompatível na
+paginação expõe `nextPageFailure.restartRequired`: `refresh()` reinicia desde
+a primeira página, sem inventar cursor. Respostas/callbacks antigos não alteram
+dados, erros, loading ou seleção atuais.
+
+Após A1, `retry()` verifica primeiro a mesma promise pendente usada por
+`loadMore()`. `#load` já captura filtros (inclusive UF), geração e cursor;
+`reset`/`dispose` retiram a referência e revogam o lease. Assim, a limpeza
+transitória de `nextPageFailure` não transforma retries concorrentes em
+refresh, não avança geração e não apaga páginas/seleção. Não há fila, boolean
+paralelo ou retenção nova. Falha compartilhada reapresenta `nextPageFailure`
+e permite tentativa posterior. Após sucesso concluído, retry sem falha mantém
+a semântica anterior de refresh. `refresh()` explícito continua iniciando
+primeira página em nova geração mesmo durante recovery; busca/UF nova e
+cancelamento tornam a recuperação anterior inerte. Testes passaram 246/246.
+
+A reauditoria confirmou 20/20 critérios e 42/42 probes: mesma promise, nenhuma
+mudança de geração, páginas/seleção preservadas, um GET com cursor e zero sem
+cursor. As 13 regressões A1 falharam na mutação sem correção, mantendo os 233
+anteriores. A primeira auditoria também confirmou que o gate D-2 não foi
+enfraquecido: instância única, referência compartilhada e mesmo repositório/
+sessão/fronteira para Titular; treze mutações arquiteturais proibidas recusadas.
+Resultados herdados, sem reexecução das suítes neste fechamento documental.
+
+Os dois controllers usam leases da `AdministrativeUserDataBoundary` já
+conectada à sessão real. Admin ativo é obrigatório; 401/403, redução de perfil,
+identidade/logout e dispose cancelam definitivamente. Qualquer nova geração
+da fronteira de Usuários, inclusive reconciliação/D13, também cancela de forma
+conservadora; a factory cria outro controller quando há Admin válido. O código
+de `/me`, o coordenador idempotente e o lifecycle aprovado não mudam. F1 é
+preservado nos novos objetos: cancelamento anula referências próprias a
+seleções, queries, resultados, cursores, erros, promises pendentes e listeners
+antes da notificação terminal. Promises antigas podem terminar, mas não
+publicam; referências externas guardadas pelo consumidor não são mutadas.
+
+Sem persistência, Demo, catálogo local de runtime, consulta externa ao IBGE,
+GET municipal por ID ou mudança backend. Testes permanentes e resultados em
+[testes de contrato](testes-contrato-api-rbac.md). Formulários/navegação,
+Android físico e integração final na `backend` permanecem posteriores;
+CI remota não consultada. A aprovação autoriza commit/push somente deste corte
+na `feat/mp-35d`; não conclui D-4 nem libera produção.
 
 ### Integração HTTP administrativa de Propriedades — 2026-09-14
 
 Implementada na `feat/mp-35d`, sobre `dab3ac4`; auditoria independente encontrou
 F1, reproduzido e corrigido focalmente. A reauditoria aprovou a correção e a
 integração HTTP interna para commit, sem achado obrigatório remanescente.
-Estado: **INTEGRAÇÃO HTTP ADMINISTRATIVA DE PROPRIEDADES — APROVADA E EM
-FECHAMENTO NA feat/mp-35d**. Código e testes aprovados são preservados;
+Estado do corte anterior: **FECHADO EM `27df733` NA feat/mp-35d**, com hash
+remoto confirmado. Código e testes aprovados foram preservados no fechamento;
 resultados do auditor e limites estão nos [testes de contrato](testes-contrato-api-rbac.md).
 D-3 permanece fechada em `92bba62`; o pré-requisito decimal foi fechado e enviado
 em `dab3ac4`. Não há nova capacidade visual neste corte.
@@ -112,7 +210,8 @@ e desconhecido na escrita. Sem transferência de Titularidade, mudança de SQL,
 migration, serviço MP-35C ou RBAC. Teste HTTP explícito cobre essa distinção.
 
 Suíte própria e resultados em [testes de contrato](testes-contrato-api-rbac.md).
-Seletores, formulários, navegação, vínculos e transferência continuam fora.
+Seletores ficaram fora daquele corte; a etapa interna seguinte está descrita
+acima. Formulários, navegação, vínculos e transferência continuam fora.
 Android físico não executado; CI remota não consultada; integração final na
 `backend` é posterior. A aprovação independente cobre somente este corte HTTP
 interno e F1; não conclui toda a D-4 nem libera release ou produção.
@@ -614,8 +713,8 @@ integrada diretamente em `e6789bf`, com CI pós-push, auditoria independente e
 confirmação pós-integração aprovadas. Na MP-35D, os cortes D-1/D-2 estão
 concluídos na `feat/mp-35d`; D-3 foi fechada em `92bba62` e o pré-requisito
 decimal em `dab3ac4`. A integração HTTP administrativa de Propriedades está
-aprovada independentemente, com F1 encerrado, e em fechamento na `feat/mp-35d`;
-MP-35D/D-4 seguem em andamento.
+aprovada independentemente, com F1 encerrado, e fechada em `27df733`;
+Titular/Localidades foram aprovados para commit após A1. MP-35D/D-4 seguem em andamento.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de

@@ -58,6 +58,10 @@ async function fixture(profile = 'admin') {
       if (path.endsWith('/refresh')) return handlers.refresh?.(request) ?? failure(401, 'invalid_session');
       if (path.endsWith('/logout')) return { status: 204 };
       if (path.endsWith('/me')) return handlers.me?.(request) ?? { status: 200, body: identity() };
+      if (path === '/v1/usuarios' && handlers.users) return handlers.users(request);
+      if (path.startsWith('/v1/usuarios/') && handlers.user) return handlers.user(request);
+      if (path === '/v1/localidades/ufs' && handlers.ufs) return handlers.ufs(request);
+      if (path === '/v1/localidades/municipios' && handlers.municipalities) return handlers.municipalities(request);
       if (request.method === 'POST' || request.method === 'PATCH') {
         return handlers.mutation?.(request) ?? { status: request.method === 'POST' ? 201 : 200,
           body: receipt(request.method === 'POST' ? 'criado' : path.endsWith('/status') ? 'status_alterado' : 'atualizado') };

@@ -12,6 +12,9 @@ import { AdministrativeUserCommandService } from './administrativeUserCommands';
 import { AdministrativePropertyDataBoundary } from './administrativePropertyDataBoundary';
 import { AdministrativePropertyCommandService } from './administrativePropertyCommands';
 import { HttpAdministrativePropertyRepository } from './administrativePropertyRepository';
+import { AdministrativeHolderController } from './administrativeHolderController';
+import { AdministrativeLocalityController } from './administrativeLocalityController';
+import type { PropertyStatus } from './contracts';
 import type { HttpRuntimeConfig } from './config';
 import { FetchHttpTransport, type HttpTransport } from './httpTransport';
 import {
@@ -41,6 +44,10 @@ export interface HttpRuntime {
   readonly administrativePropertyData: AdministrativePropertyDataBoundary;
   readonly administrativeProperties: HttpAdministrativePropertyRepository;
   readonly administrativePropertyCommands: AdministrativePropertyCommandService;
+  readonly administrativePropertySelectors: {
+    createHolder(initialStatus: PropertyStatus, limit?: number): AdministrativeHolderController;
+    createLocalities(limit?: number): AdministrativeLocalityController;
+  };
   readonly notifications: NotificationRepository;
 }
 
@@ -95,6 +102,7 @@ export function createHttpRuntime(
   });
   const administrativeCommands = new AdministrativeCommandCoordinator({ session });
   const administrativeUserData = new AdministrativeUserDataBoundary();
+  const administrativeUsers = new HttpAdministrativeUserRepository(api, session, administrativeUserData);
   const administrativePropertyData = new AdministrativePropertyDataBoundary();
   const administrativeProperties = new HttpAdministrativePropertyRepository(api, session, administrativePropertyData);
   administrativeCommands.synchronizeSession(session.snapshot, session.epoch);
@@ -150,11 +158,12 @@ export function createHttpRuntime(
         return () => { administrativeUserData.invalidateReconciliation(lease); };
       },
     }),
-    administrativeUsers: new HttpAdministrativeUserRepository(
-      api,
-      session,
-      administrativeUserData,
-    ),
+    administrativeUsers,
+    administrativePropertySelectors: Object.freeze({
+      createHolder: (initialStatus: PropertyStatus, limit?: number) =>
+        new AdministrativeHolderController(administrativeUsers, session, administrativeUserData, initialStatus, limit),
+      createLocalities: (limit?: number) => new AdministrativeLocalityController(api, session, administrativeUserData, limit),
+    }),
     administrativeUserControllers:
       dependencies.administrativeUserControllerFactory ??
       DEFAULT_ADMINISTRATIVE_USER_CONTROLLER_FACTORY,

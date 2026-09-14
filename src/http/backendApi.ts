@@ -19,6 +19,9 @@ import type {
   ApiErrorDetail,
   ApiFailureCode,
   HttpSessionIdentity,
+  LocalityUfCollection,
+  LocalityMunicipalityPage,
+  LocalityMunicipalityFilters,
   NotificationDestination,
   NotificationDiscardResult,
   NotificationFilters,
@@ -45,6 +48,8 @@ import {
   decodeAdministrativeUserStatusChangedReceipt,
   decodeAdministrativeUserUpdatedReceipt,
   decodeApiError,
+  decodeLocalityUfs,
+  decodeLocalityMunicipalities,
   decodeNotificationDestination,
   decodeNotificationDiscardResult,
   decodeNotificationPage,
@@ -671,6 +676,34 @@ export class BackendApi {
       accessToken,
     });
     return decodeAdministrativeUserPage(response.body, validated.limit);
+  }
+
+  async listLocalityUfs(accessToken: string): Promise<LocalityUfCollection> {
+    const response = await this.#send({ method: 'GET', path: '/v1/localidades/ufs',
+      expectedStatus: 200, accessToken });
+    return decodeLocalityUfs(response.body);
+  }
+
+  async listLocalityMunicipalities(accessToken: string,
+    filters: LocalityMunicipalityFilters): Promise<LocalityMunicipalityPage> {
+    if (!filters || typeof filters !== 'object' || Array.isArray(filters) ||
+      Object.keys(filters).some(key => !['uf_id', 'busca', 'limite', 'cursor'].includes(key)) ||
+      typeof filters.uf_id !== 'string' || !/^[0-9]{2}(?![\s\S])/u.test(filters.uf_id)) {
+      throw new InvalidApiRequestError();
+    }
+    const limit = filters.limite === undefined ? 50 : filters.limite;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 ||
+      (filters.busca !== undefined && typeof filters.busca !== 'string') ||
+      (filters.cursor !== undefined && (typeof filters.cursor !== 'string' ||
+        filters.cursor.length === 0 || filters.cursor.length > 2_048))) throw new InvalidApiRequestError();
+    const search = filters.busca?.normalize('NFC').trim();
+    if (search && [...search].length > 200) throw new InvalidApiRequestError();
+    const query = new URLSearchParams({ uf_id: filters.uf_id, limite: String(limit) });
+    if (search) query.set('busca', search);
+    if (filters.cursor !== undefined) query.set('cursor', filters.cursor);
+    const response = await this.#send({ method: 'GET', path: `/v1/localidades/municipios?${query}`,
+      expectedStatus: 200, accessToken });
+    return decodeLocalityMunicipalities(response.body, filters.uf_id, limit);
   }
 
   async getAdministrativeUser(

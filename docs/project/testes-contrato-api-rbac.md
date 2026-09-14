@@ -3,12 +3,239 @@
 Status revisado em 2026-09-14:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
 concluída, auditada e enviada em 92bba62; MP-35D em andamento;
-pré-requisito decimal fechado e enviado em dab3ac4; integração HTTP administrativa de Propriedades aprovada independentemente e em fechamento na feat/mp-35d; D-4 em andamento`.
+decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
+Titular/Localidades aprovados independentemente para commit, A1 encerrado; D-4 em andamento`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
-## MP-35D-4 — aprovação independente e fechamento controlado — 2026-09-14
+## MP-35D-4 — aprovação independente e fechamento controlado de Titular/Localidades — 2026-09-14
+
+Parecer final: **APROVADO PARA COMMIT DE TITULAR E LOCALIDADES DA MP-35D-4**.
+A primeira auditoria encontrou somente A1; reprodução permanente em Titular e
+Municípios precedeu a correção focal. A reauditoria encerrou A1, sem achado
+novo ou obrigatório remanescente. Objeto aprovado: HEAD/origin em
+`27df7335efd4ab352245c48f6b022da1d99f0987`, 13 modificados, seis novos,
+index vazio e diff rastreado `+536/-71`. A auditoria preservou esse objeto.
+
+### Evidências herdadas, sem novas execuções neste fechamento
+
+| Etapa | Evidência |
+|---|---|
+| Implementação inicial | D-4 233/233; demais regressões e grafos/bundles registrados na seção histórica |
+| Primeira auditoria | Somente A1 obrigatório; gate D-2 preservado, incluindo treze mutações arquiteturais proibidas recusadas |
+| Correção A1 | 13 regressões falharam antes da mudança; depois D-4 246/246 e probe próprio com um GET com cursor/zero sem cursor por consumidor |
+| Reauditoria focal | A1 encerrado, 20/20 critérios, 42/42 probes independentes, nenhum achado obrigatório remanescente |
+| Suítes da reauditoria | typecheck e domain-compat passaram; D-4 246/246, D-3 106/106, D-2 85/85, D-1 55/55 |
+
+Composição D-4: **35 contratos + 29 modelos + 26 comandos + 36 lifecycle +
+5 arquitetura + 58 Localidades + 57 Titular/sessão/arquitetura = 246**.
+A mutação de sensibilidade da reauditoria manteve os 233 anteriores e fez
+falhar as 13 regressões A1 ao remover a correção.
+
+A1: a primeira recuperação limpava `nextPageFailure`; outro retry interpretava
+a ausência como refresh. `retry()` agora consulta primeiro `#pending`.
+A reauditoria confirmou mesma promise, geração/páginas/seleção preservadas,
+um GET com cursor e zero sem cursor, mantendo invalidação por nova busca/UF,
+dispose e perda de autorização. F1 permanece preservado.
+O gate D-2 comprova repositório único, referência compartilhada e Titular
+usando a mesma instância/sessão/fronteira; não foi alterado neste fechamento.
+
+### Manifesto de preservação funcional
+
+Lista derivada do diff real e dos não rastreados do Git antes da edição
+documental: **13 arquivos não documentais**. SHA-256 dos bytes do worktree:
+
+| Arquivo | SHA-256 de referência |
+|---|---|
+| `package.json` | `df23090c80931b815b26f12ec5725d916c2795b0f6c356bf1ca4a245215813b9` |
+| `src/http/backendApi.ts` | `045ebdd90243c167b8519426ca038f7d1bcceaca09b8547a00e1d0e641c7fc2b` |
+| `src/http/contracts.ts` | `efec5eb7e636c01196f77841f4ebc3586676c77733c24b30a5ea3726723618c5` |
+| `src/http/decoders.ts` | `2c0b74f5b6f483b513217468db4fd60a39787def8a1e995f12f1089a8adf8b19` |
+| `src/http/runtime.ts` | `f5c40ddf0e90aa5ab522855ddbaa105686e8504c2673673b80b688f0c3c3782f` |
+| `tests/fixtures/mp35d4.js` | `b7e56aafad962e77fd1c7f7fd2ea8c743f5c7150e5b2b4da1a548368e4e8e02d` |
+| `tests/mp35d2Architecture.test.js` | `c50a6c1f3f33ec9b93942567c4f45ee0796cc665f68b7483043bf61f9a76350f` |
+| `src/http/administrativeHolderController.ts` | `eb5b2071e8e2cb06e85adee38dbca855c018c4cbc9bec4bddb9b7b19dfe6ed80` |
+| `src/http/administrativeLocalityController.ts` | `c9e177990c2576de53dfd473c7fa2ea587ef3b7afe5e5627b2e8404bead12dfd` |
+| `src/http/administrativeSelectionController.ts` | `971856b36a75053ffdd9d5d463a1b31b5634e32eb604faf8a8c6776e2fe7cce8` |
+| `tests/fixtures/mp35d4Selectors.js` | `686f65446f31b37280b1b0352249e7147780e74b7605db1856e92ecfed32be0c` |
+| `tests/mp35d4Localities.test.js` | `59f6af7f9f1b9c6e612095dcae7c209d259d4c27718f2e246a220fb57ebc44c3` |
+| `tests/mp35d4Selectors.test.js` | `7e0399598538878221ade6587fa67d029e99fb7127d771d47af88e642d19a777` |
+
+Esses hashes são comparados após a edição documental, após staging e após
+commit/hooks. Qualquer divergência impede commit/push. Código, testes,
+configuração, imports e comportamento aprovados são preservados integralmente.
+Somente os seis documentos ativos do corte são editados neste fechamento.
+
+Estado deste registro anterior ao commit: **TITULAR E LOCALIDADES DA MP-35D-4
+— APROVADOS PARA COMMIT**. Fechamento autorizado: um commit, staging explícito
+dos 19 caminhos, push sem tags somente para `feat/mp-35d`, hash remoto igual
+ao local e worktree/index limpos. O relatório final registra a conclusão
+somente depois dessas verificações; não se antecipa confirmação remota.
+
+D-3 fechada em `92bba62`, decimal em `dab3ac4` e integração HTTP em `27df733`
+preservados. D-4 segue em andamento. Sem formulário de Nova Propriedade,
+edição ou tela de status; sem nova navegação, Android físico, CI remota
+consultada, backend/PostgreSQL reexecutado, integração final na `backend`,
+release/deploy/produção. Demo preservado e artefatos ignorados fora do commit.
+
+## MP-35D-4 — correção focal A1 de Titular/Localidades — 2026-09-14
+
+Registro histórico anterior à reauditoria, posteriormente aprovada acima.
+
+Primeira auditoria: **CORREÇÕES OBRIGATÓRIAS**, somente A1. Base preservada:
+`feat/mp-35d`, HEAD/origin em `27df7335efd4ab352245c48f6b022da1d99f0987`,
+13 modificados, seis novos, index vazio e diff rastreado `+407/-71`.
+Não houve commit/push nem alteração do gate D-2 aprovado.
+
+### Reprodução anterior à correção
+
+Foram acrescentados 13 casos permanentes nos dois arquivos de seletores,
+usando os controllers públicos, transporte capturado e deferreds, sem
+manipulação de campos internos. Com o controller funcional ainda idêntico ao
+auditado (SHA-256 `a5aec7368d29327a5476dc64f0c2960d2656c0bbedf58cc07844966d459978b4`),
+`npm.cmd run test:mp35d4` falhou: os 131 anteriores passaram e Localidades
+executou 58 casos, com 52 passando e os seis A1 falhando. O encadeamento parou
+ali; `node tests/mp35d4Selectors.test.js` executou os 57 casos restantes:
+50 passaram e os sete A1 falharam. Assim, os **233 anteriores passaram e os
+13 novos falharam semanticamente antes da correção**.
+
+Nos dois consumidores, o primeiro retry usou o cursor e limpou
+`nextPageFailure`; o retry concorrente caiu em `refresh()`, gerando um GET
+sem cursor onde a asserção exigia zero. No cenário simultâneo dos dois
+consumidores foram quatro GETs em vez de dois. A tentativa auxiliar com
+`node --test --test-name-pattern=A1` foi bloqueada pelo sandbox em `spawn EPERM`;
+a execução direta acima comprovou o erro sem depender desse subprocesso.
+
+### Correção e cobertura
+
+A única mudança funcional acrescenta a `retry()` a consulta prioritária de
+`#pending`, reutilizando a promise já usada por `loadMore()`. A operação
+captura query/filtros/UF, geração, cursor e lease em `#load`; reset/dispose
+retiram a referência e invalidam o contexto. Não foi criado estado paralelo,
+fila ou boolean. Refresh explícito continua reiniciando a primeira página;
+retry sem falha volta a significar refresh somente depois que não há operação
+pendente. Contratos, decoders, runtime, sessão e gate D-2 permanecem intactos
+em relação ao objeto auditado.
+
+As 13 regressões cobrem: recuperação concorrente bem-sucedida com e sem
+seleção em cada consumidor; falha repetida compartilhada com observação
+coerente e retry posterior; nova busca e refresh explícito durante recovery
+nos dois consumidores; troca BA → SP durante recovery; dispose e redução de
+perfil durante recovery de ambos, com retomada em instâncias novas.
+Verificam requests, geração, identidade da query/promise, páginas, seleção,
+dedup e avanço do cursor; mantêm também loadMore concorrente e retry após
+sucesso. Nenhuma rejeição não tratada foi observada.
+
+Composição atual: **35 contratos + 29 modelos + 26 comandos + 36 lifecycle +
+5 arquitetura + 58 Localidades + 57 Titular/sessão/arquitetura = 246/246**.
+O baseline 233 permanece preservado; os acréscimos são seis e sete casos nos
+respectivos arquivos, sem novo arquivo permanente ou alteração de package.
+
+### Probe focal e execuções próprias após A1
+
+Probe ignorado em `dist/a1-mp35d4-20260914/retry-probe.js`, sem apagar artefatos
+do auditor. Usa `Promise.all([retry(), retry()])` nos dois controllers reais:
+
+| Consumidor | GETs de recovery com cursor | GETs sem cursor | Resultado |
+|---|---:|---:|---|
+| Município BA | 1 | 0 | Ilhéus + Itabuna, seleção/geração/versão preservadas, cursor page-3 |
+| Titular | 1 | 0 | duas opções deduplicadas, candidato/geração preservados, cursor page-3 |
+
+| Comando executado | Resultado após correção |
+|---|---|
+| `npm.cmd run typecheck` | Passou |
+| `npm.cmd run test:mp35d4` | 246/246, sem falhas/skips |
+| `npm.cmd run test:mp35d3` | 106/106 |
+| `npm.cmd run test:mp35d2` | 85/85, gate aprovado não alterado |
+| `npm.cmd run test:mp35d1` | 55/55 |
+| `npm.cmd run test:domain-compat` | Passou |
+| `node dist/a1-mp35d4-20260914/retry-probe.js` | Ambos os consumidores passaram |
+
+Backend/PostgreSQL não executados: sem mudança nessas superfícies.
+Bundle/native graph não repetidos em A1: imports, runtime, package e composição
+não mudaram em relação ao objeto auditado. Os resultados históricos abaixo
+não são novas execuções desta correção.
+
+Estado: **A1 CORRIGIDO — TITULAR E LOCALIDADES AGUARDANDO REAUDITORIA
+INDEPENDENTE**. Não há aprovação do corte, conclusão da D-4 ou autorização
+para fechamento Git. D-3 em `92bba62`, decimal em `dab3ac4` e HTTP em `27df733`
+preservados; formulários/navegação e Android físico permanecem pendentes,
+CI remota não consultada e integração final na `backend` posterior.
+
+## MP-35D-4 — implementação inicial de Titular/Localidades — 2026-09-14
+
+Registro anterior à primeira auditoria, que posteriormente encontrou A1.
+Contagens, execuções e estado abaixo pertencem à implementação inicial;
+a correção e a aprovação posterior estão nas seções acima.
+
+Base conferida antes da edição: `feat/mp-35d`, HEAD e `origin/feat/mp-35d` em
+`27df7335efd4ab352245c48f6b022da1d99f0987`; worktree limpo, index vazio,
+diffs rastreado/cached vazios e `git diff --check` aprovado. Sem novo commit/push.
+Esta é execução própria da implementação, distinta das auditorias históricas abaixo.
+
+### Suíte permanente e cobertura
+
+`test:mp35d4` mantém **131 casos anteriores sem alterar seus cinco arquivos**:
+35 contratos + 29 modelos + 26 comandos + 36 lifecycle + 5 arquitetura.
+Acrescenta `mp35d4Localities.test.js` (**52**) e `mp35d4Selectors.test.js` (**50**),
+totalizando **233/233**, sem skips ou falhas. A fixture adicional usa runtime e
+SessionCoordinator reais, transporte controlado e as 27 UFs do seed backend
+existente somente nos testes. Não introduz catálogo local no aplicativo.
+
+Cobertura: IDs distintos de Usuário/Produtor; filtros ativa/inativa; detalhe
+autoritativo e divergências de ID/perfil/estado; mudança de status; vazios e
+rede/retry; envelopes e limites de Localidades; cursor opaco e NFC; paginação,
+dedup e seleção durante página em voo; versão divergente/cursor inválido e
+reinício; seleção municipal da edição fora das páginas e PATCH somente dirty.
+Deferreds cobrem ambos os ordenamentos BA/`ilh` → BA/`ita`, BA → SP, consulta
+UF → refresh e busca/status de Titular, com sucesso, erro, página e callback
+antigos. 401/403 nas quatro leituras, redução para Produtor/Colaborador,
+identidade, logout, dispose, nova geração e retomada verificam descarte F1 e
+inércia dos controllers antigos. Seletores não enviam comandos de Propriedade.
+
+### Execuções próprias desta etapa
+
+| Comando executado no Windows | Resultado |
+|---|---|
+| `npm.cmd run typecheck` | Passou após corrigir import do tipo existente `HttpUserStatus` |
+| `npm.cmd run test:mp35d4` | 233/233; 131 anteriores + 102 novos |
+| `npm.cmd run test:mp35d3` | 106/106 |
+| `npm.cmd run test:mp35d2` | 85/85 após ajustar a asserção da composição compartilhada |
+| `npm.cmd run test:mp35d1` | 55/55, pertinente às mudanças aditivas de BackendApi/contratos/decoders |
+| `npm.cmd run test:domain-compat` | Passou, incluindo MP-33C, MP-34 e convergência |
+| `npm.cmd run test:native-graph:mp33c` | Passou via Expo Autolinking após reexecução com permissão de subprocessos |
+| `npm.cmd run test:bundle:mp33c` | Passou isoladamente após domain-compat; HTTP/Demo exportados, grafo HTTP sem mock/AsyncStorage |
+
+Falhas intermediárias registradas: o primeiro typecheck detectou `UserStatus`
+inexistente; import corrigido para `HttpUserStatus`. Na primeira D-4, a asserção
+nova de autenticação tentou ler `headers` no request abstrato do transporte;
+corrigida para `accessToken`, conforme a porta existente. Todos os 131 casos
+anteriores já passavam. A D-2 detectou regex exigindo construção inline do
+repositório; a asserção foi atualizada para comprovar a única instância agora
+compartilhada com Titular. O novo teste comportamental também verifica identidade
+da instância reutilizada. Nenhuma falha funcional foi acomodada por relaxamento
+dos 131 testes anteriores. O grafo nativo inicialmente falhou com `spawnSync
+node.exe EPERM` no sandbox; o mesmo comando passou após permissão para executar
+os subprocessos locais do Expo.
+
+Conferência final: `git diff --check` passou e 81 links locais nos seis
+documentos ativos foram validados, sem destinos ausentes. O diff confirma
+backend, Demo, navegação, SessionCoordinator, coordenador idempotente,
+lifecycle F1, repositório de Usuários e modelos de Propriedade inalterados.
+Index vazio; artefatos ignorados de testes/bundles não pertencem à entrega.
+
+Backend/OpenAPI/SQL/migrations não foram alterados; testes backend/PostgreSQL
+não foram executados. Sem Android físico, consulta à CI remota ou integração
+final na `backend`. Formulários e navegação D-4 permanecem pendentes. Estado:
+**TITULAR/LOCALIDADES IMPLEMENTADOS INTERNAMENTE — AGUARDANDO AUDITORIA INDEPENDENTE**.
+
+## MP-35D-4 — aprovação independente e fechamento anterior — 2026-09-14
+
+Registro histórico do corte fechado em `27df733`, com hash remoto confirmado.
+As contagens e hashes abaixo documentam aquele objeto, não o novo worktree de
+Titular/Localidades. A autorização Git descrita abaixo pertence ao fechamento
+anterior e não autoriza commit/push da etapa atual.
 
 Parecer final recebido: **APROVADA PARA COMMIT DA INTEGRAÇÃO HTTP
 ADMINISTRATIVA DE PROPRIEDADES**. A primeira auditoria encontrou somente F1;

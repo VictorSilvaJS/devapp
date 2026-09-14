@@ -23,6 +23,9 @@ import type {
   HttpSessionIdentity,
   HttpUser,
   HttpUserStatus,
+  LocalityUf,
+  LocalityUfCollection,
+  LocalityMunicipalityPage,
   NotificationDestination,
   NotificationDiscardResult,
   NotificationPage,
@@ -742,6 +745,51 @@ export function decodePropertyPage(value: unknown): PropertyPage {
     itens: input.itens.map(decodeProperty),
     paginacao: { proximo_cursor: cursor as string | null },
   };
+}
+
+function localityCode(value: unknown, pattern: RegExp): string {
+  if (typeof value !== 'string' || !pattern.test(value)) throw new InvalidBackendResponseError();
+  return value;
+}
+function localityVersion(value: unknown): string {
+  return localityCode(value, /^ibge-localidades-[0-9]{4}-[0-9]{2}-[0-9]{2}(?![\s\S])/u);
+}
+export function decodeLocalityUf(value: unknown): LocalityUf {
+  const input = record(value);
+  exactKeys(input, ['id', 'sigla', 'nome']);
+  return Object.freeze({ id: localityCode(input.id, /^[0-9]{2}(?![\s\S])/u),
+    sigla: localityCode(input.sigla, /^[A-Z]{2}(?![\s\S])/u), nome: boundedString(input.nome, 100) });
+}
+export function decodeLocalityUfs(value: unknown): LocalityUfCollection {
+  const input = record(value);
+  exactKeys(input, ['versao_id', 'itens']);
+  if (!Array.isArray(input.itens) || input.itens.length === 0 || input.itens.length > 27) {
+    throw new InvalidBackendResponseError();
+  }
+  const items = Object.freeze(input.itens.map(decodeLocalityUf));
+  if (new Set(items.map(item => item.id)).size !== items.length ||
+    new Set(items.map(item => item.sigla)).size !== items.length) throw new InvalidBackendResponseError();
+  return Object.freeze({ versao_id: localityVersion(input.versao_id), itens: items });
+}
+export function decodeLocalityMunicipalities(value: unknown, expectedUf: string,
+  maximumItems = 100): LocalityMunicipalityPage {
+  localityCode(expectedUf, /^[0-9]{2}(?![\s\S])/u);
+  const input = record(value);
+  exactKeys(input, ['versao_id', 'itens', 'paginacao']);
+  if (!Number.isInteger(maximumItems) || maximumItems < 1 || maximumItems > 100 ||
+    !Array.isArray(input.itens) || input.itens.length > maximumItems) throw new InvalidBackendResponseError();
+  const items = Object.freeze(input.itens.map(value => {
+    const item = record(value); exactKeys(item, ['id', 'nome', 'uf_id']);
+    const id = localityCode(item.id, /^[0-9]{7}(?![\s\S])/u);
+    const uf = localityCode(item.uf_id, /^[0-9]{2}(?![\s\S])/u);
+    if (uf !== expectedUf || !id.startsWith(uf)) throw new InvalidBackendResponseError();
+    return Object.freeze({ id, nome: boundedString(item.nome, 200), uf_id: uf });
+  }));
+  const pagination = record(input.paginacao); exactKeys(pagination, ['proximo_cursor']);
+  const cursor = decodeOpaqueCursor(pagination.proximo_cursor);
+  if (items.length === 0 && cursor !== null) throw new InvalidBackendResponseError();
+  return Object.freeze({ versao_id: localityVersion(input.versao_id), itens: items,
+    paginacao: Object.freeze({ proximo_cursor: cursor }) });
 }
 
 export function decodeAdministrativePropertyPage(

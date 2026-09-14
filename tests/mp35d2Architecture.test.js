@@ -255,8 +255,11 @@ test('runtime compartilha uma única fronteira administrativa entre sessão, rep
   assert.match(runtime, /administrativeUserData\.synchronizePartition/);
   assert.match(
     runtime,
-    /administrativeUsers: new HttpAdministrativeUserRepository\([\s\S]*?administrativeUserData,/,
+    /const administrativeUsers = new HttpAdministrativeUserRepository\(api, session, administrativeUserData\)/,
   );
+  assert.equal([...runtime.matchAll(/new HttpAdministrativeUserRepository\(/g)].length, 1);
+  assert.match(runtime, /administrativeUsers,\s+administrativePropertySelectors:/);
+  assert.match(runtime, /new AdministrativeHolderController\(administrativeUsers, session, administrativeUserData,/);
   assert.match(runtime, /new AdministrativeUserListController\(repository, boundary\)/);
   assert.match(runtime, /new AdministrativeUserDetailController\(repository, boundary\)/);
   assert.match(runtime, /administrativeUserControllerFactory\?:/);

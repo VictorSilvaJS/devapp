@@ -22,23 +22,27 @@ O fechamento da D-3 foi concluído e enviado em `92bba62`. MP-35D segue em
 andamento, assim como D-4. O pré-requisito decimal foi fechado e enviado em
 `dab3ac4`. A integração HTTP administrativa de Propriedades está implementada
 e aprovada independentemente após reprodução, correção e reauditoria focal de F1,
-sem achado obrigatório remanescente. O corte está autorizado para fechamento Git.
+sem achado obrigatório remanescente; fechamento concluído em `27df733`, com
+hash remoto confirmado. Titular/Localidades internos foram implementados na
+etapa seguinte. A primeira auditoria encontrou somente A1, reproduzido em
+Titular/Municípios e corrigido focalmente. A reauditoria aprovou o corte para
+commit, encerrou A1 e não deixou achado obrigatório remanescente. Fechamento
+Git autorizado somente na `feat/mp-35d`, com confirmação do hash remoto.
 
-## MP-35D-4 — pendências após a integração HTTP administrativa
+## MP-35D-4 — pendências após Titular/Localidades internos
 
-- auditoria independente focal do alinhamento aditivo concluída, sem achado
-  obrigatório ou evidência crítica pendente;
-- reauditoria independente da integração HTTP administrativa concluída e
-  aprovada, incluindo F1; não resta achado obrigatório. Pendente somente o
-  fechamento Git autorizado na `feat/mp-35d`, com confirmação do hash remoto;
-- formulários de Propriedade, seletores de Titular/Localidades e navegação
-  correspondente: ainda não implementados nesta etapa;
-- a revisão documental/OpenAPI dos três comandos foi implementada sem remoção
-  de campos/tipos reconhecidos para produzir `422`; regressão explícita preserva
-  `400` estrutural e `422` semântico. A revisão pertence à auditoria deste corte;
+- concluir o fechamento Git autorizado de Titular/Localidades, preservando
+  os 13 arquivos não documentais e confirmando hash remoto; A1 e reauditoria
+  deixaram de ser pendências (20/20 critérios focais, 42/42 probes, D-4 246/246);
+- formulários visuais de Propriedade, componentes finais de seleção e navegação
+  correspondente: ainda não implementados, dependem de etapa própria;
 - validação funcional Android física da futura integração D-4 e integração
   final da MP-35D na branch `backend`, posteriores;
 - vínculos e transferência de Titularidade continuam fora desta entrega.
+
+As auditorias e os fechamentos do decimal e da integração HTTP anterior,
+incluindo F1, deixaram de ser pendências. O corte atual não altera backend,
+OpenAPI ou RBAC; não consultou CI remota nem executou Android físico.
 
 A representação já foi decidida: `area_total` numérico permanece e
 `area_total_decimal` textual é adicional, somente de leitura e autoritativo
