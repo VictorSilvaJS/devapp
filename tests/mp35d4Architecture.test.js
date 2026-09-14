@@ -31,10 +31,13 @@ test('grafo HTTP alcança D4 sem src/api, mock, seed Demo, storage de negócio o
     assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /AsyncStorage|mockV2DemoSeed|offlineQueue|fallbackToMock/);
   }
 });
-test('capacidade D4 ainda não é exposta em telas ou navegação', () => {
+test('capacidade visual D4 expõe somente criação e edição administrativas autorizadas', () => {
   const files = ['src/http/HttpNavigation.tsx', ...fs.readdirSync(path.join(root, 'src/http/screens'))
     .filter((file) => /\.tsx$/.test(file)).map((file) => `src/http/screens/${file}`)];
-  for (const file of files) assert.doesNotMatch(read(file), /administrativePropert|AdministrativeProperty(?:Create|Edit|Status)/);
+  for (const file of files) assert.doesNotMatch(read(file), /AdministrativeProperty(?:Status|Transfer|Links)/);
+  assert.match(read('src/http/HttpNavigation.tsx'), /propertyAccess.allowed \? <Stack.Group/);
+  assert.match(read('src/http/HttpNavigation.tsx'), /name="AdministrativePropertyCreate"/);
+  assert.match(read('src/http/HttpNavigation.tsx'), /name="AdministrativePropertyEdit"/);
 });
 test('Demo não recebe a nova administração HTTP e mantém sua composição', () => {
   const files = graph('src/entry/demo.tsx');

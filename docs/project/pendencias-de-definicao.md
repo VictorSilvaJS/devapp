@@ -27,18 +27,22 @@ hash remoto confirmado. Titular/Localidades internos foram implementados na
 etapa seguinte. A primeira auditoria encontrou somente A1, reproduzido em
 Titular/Municípios e corrigido focalmente. A reauditoria aprovou o corte para
 commit, encerrou A1 e não deixou achado obrigatório remanescente. Fechamento
-Git autorizado somente na `feat/mp-35d`, com confirmação do hash remoto.
+Git concluído em `37a8790`, somente na `feat/mp-35d`, com hash remoto confirmado.
 
-## MP-35D-4 — pendências após Titular/Localidades internos
+## MP-35D-4 — pendências após formulários HTTP de criação/edição
 
-- concluir o fechamento Git autorizado de Titular/Localidades, preservando
-  os 13 arquivos não documentais e confirmando hash remoto; A1 e reauditoria
-  deixaram de ser pendências (20/20 critérios focais, 42/42 probes, D-4 246/246);
-- formulários visuais de Propriedade, componentes finais de seleção e navegação
-  correspondente: ainda não implementados, dependem de etapa própria;
-- validação funcional Android física da futura integração D-4 e integração
-  final da MP-35D na branch `backend`, posteriores;
+N1 foi reproduzido, corrigido e aprovado na reauditoria independente: 20/20
+critérios e 14/14 probes. Nenhum achado obrigatório permanece. Formulários HTTP
+e navegação mínima estão aprovados para commit; fechamento Git autorizado.
+
+Permanecem pendentes:
+
+- fluxo visual de alteração de status de Propriedade existente, em corte próprio;
+- validação funcional Android física da D-4 e integração final da MP-35D na
+  branch `backend`, posteriores;
 - vínculos e transferência de Titularidade continuam fora desta entrega.
+
+A1 e o fechamento de Titular/Localidades deixaram de ser pendências.
 
 As auditorias e os fechamentos do decimal e da integração HTTP anterior,
 incluindo F1, deixaram de ser pendências. O corte atual não altera backend,

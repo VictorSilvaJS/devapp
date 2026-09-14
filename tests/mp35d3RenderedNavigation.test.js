@@ -991,7 +991,8 @@ for (const interruption of ['admin', 'produtor', 'dispose']) {
       assert.equal(context.calls.edit, 1, 'callback antigo não dispara PATCH');
       assert.strictEqual(context.runtime.administrativeUserData.current.mutation, publicationAfterInterruption,
         'resposta da identidade/tela anterior não publica dados');
-      assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 0);
+      assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, interruption === 'admin' ? 2 : 0,
+        'somente os dois observadores de capacidade de Propriedades permanecem na nova sessão Admin');
       if (renderer !== null) {
         assert.equal(currentRouteName(), 'Properties', 'resposta tardia não navega');
         assert.doesNotMatch(textContent(renderer), /Resposta antiga de recovery|Nome para reconciliação/);

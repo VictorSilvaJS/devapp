@@ -7,6 +7,83 @@
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
 
+Reauditoria independente dos formulários HTTP: **20/20 critérios e 14/14 probes
+aprovados**, incluindo estado reconciliado com versão GET superior ao recibo.
+N1 encerrado; criação/edição e navegação mínima aprovadas para commit. Evidência
+herdada, sem nova execução funcional neste fechamento documental/Git.
+
+## MP-35D-4 — smoke focal N1 — 2026-09-14
+
+Primeira auditoria: **CORREÇÕES OBRIGATÓRIAS**, somente N1. Regressão permanente
+com React Navigation real falhou antes da alteração funcional: um PATCH e um
+GET deixavam dois detalhes da mesma Propriedade, com keys diferentes; Voltar
+revelava o detalhe duplicado. Correção implementada e aprovada na reauditoria; N1 encerrado.
+
+| Entrada | Antes de salvar | Após reconciliação | Após Voltar |
+|---|---|---|---|
+| Detalhe existente | Main / Detail(A,k1) / Edit(A) | Main / Detail(A,k1) | Main |
+| Direta | Main / Edit(A) | Main / Detail(A,k2) | Main |
+
+O teste verifica routes, nomes, keys, IDs e índice ativo, além de um PATCH/um
+GET e Nome/Área/Município atualizados na mesma instância de detalhe, sem refetch
+compensatório. Cinco origens inválidas são cobertas: removida, nova key, outra
+Propriedade, outro nome de rota e rota intermediária. O fallback deixa um único
+detalhe A e preserva o histórico não relacionado.
+
+GET pós-recibo indisponível não navega; após duas falhas, o terceiro GET revela
+o detalhe original em uma transição. StrictMode, callback repetido, resposta
+antiga após retomada, Cancelar/Voltar e entrada direta também são cobertos.
+Criação mantém um detalhe com o ID reconciliado e uma transição. Version conflict
+continua coberto pela suíte existente, sem saída automática da edição.
+
+Rodada focal **7/7**; D-4 **296/296**, preservando os 289 anteriores e acrescentando
+sete regressões N1. Comandos e composição em [testes de contrato](testes-contrato-api-rbac.md).
+Demo e apresentação compartilhada preservados por hash; sem imports/dependências
+novos ou backend alterado durante N1. Fechamento Git agora autorizado.
+Bundles/grafos não exigem repetição por
+esta mudança exclusiva de navegação. Status visual, Android físico e integração
+final na `backend` continuam pendentes. D-4 não concluída nem aprovada.
+
+## MP-35D-4 — smoke dos formulários HTTP e navegação mínima — 2026-09-14
+
+Automação executada em `tests/mp35d4RenderedForms.test.js`, com componentes,
+React Navigation, runtime e fluxos reais; transporte e primitivas nativas
+controlados. Não é Android físico nem execução contra backend implantado.
+Base `37a8790`, Titular/Localidades já fechados; D-3 `92bba62`, decimal `dab3ac4`
+e HTTP administrativo `27df733` preservados. Sem staging, commit ou push.
+
+1. Admin abre **Nova Propriedade** pela lista existente e informa Nome.
+2. Busca e escolhe Titular por nome/e-mail; confirma e revalida o detalhe antes
+   do submit. O POST usa o Produtor confirmado, nunca a identidade do Usuário.
+3. Escolhe UF/Município remotos, informa área/cultura e salva; duplo toque envia
+   uma mutação. Recibo e GET autoritativo precedem a navegação para o detalhe.
+4. Abre **Editar Propriedade** pelo detalhe. Titular/status são somente leitura;
+   Município atual aparece mesmo fora da primeira página, sem varredura.
+5. Altera Nome/Área/Município e salva PATCH parcial. A releitura publica o detalhe
+   reconciliado, sem valores do draft antigo e com uma conclusão.
+6. POST e PATCH confirmados: primeiro GET falha; **Tentar atualizar** falha de
+   novo; terceiro GET funciona. Total por comando: uma mutação, três GETs,
+   nenhuma nova intenção e navegação somente após a última leitura.
+7. PATCH conflita: GET/rebase v2 e v3 mantêm Nome/Área/Município local e conflitos;
+   campos intocados adotam servidor. Salvar bloqueado até resolução explícita;
+   próximo PATCH usa a versão atual, sem repetição automática.
+8. Produtor/Colaborador não veem ações nem montam formulário por rota direta.
+   Perda de Admin durante POST/GET descarta dados e torna respostas inertes.
+   Após retomada, Cancelar/Voltar/submit antigos de A não alteram a nova tela B.
+9. StrictMode executa setup/cleanup/setup com nova instância, sem submit automático
+   nem assinatura residual. Retry concorrente A1 preserva páginas/seleções;
+   catálogo/cursor inválido permite reinício explícito; buscas não apagam draft.
+
+Resultado: D-4 **289/289** (246 anteriores, 28 novos de tela, 4 de arquitetura,
+11 D-2 reutilizados). D-3 106/106, D-2 85/85, D-1 55/55, typecheck,
+domain-compat, gates focados de navegação/foco/teclado, grafos nativos e bundles
+HTTP/Demo passaram. [Comandos, composição e falhas intermediárias](testes-contrato-api-rbac.md).
+
+**Snapshot anterior à auditoria que identificou N1**; correção focal descrita acima. Status visual de Propriedade existente,
+Android físico e integração final na `backend` permanecem pendentes. Nenhuma
+marcação de ATUAL-13 foi promovida a nova evidência física; não há fluxo de
+vínculos/transferência ou backend alterado neste corte.
+
 ## MP-35D-4 — Titular/Localidades internos — 2026-09-14
 
 Smoke automatizado desta etapa sobre `27df733` + worktree, com runtime,
@@ -57,7 +134,7 @@ domain-compat passaram na reauditoria; não são novas execuções do fechamento
 
 Estado: **TITULAR E LOCALIDADES DA MP-35D-4 — APROVADOS PARA COMMIT**.
 Fechamento Git autorizado na `feat/mp-35d`. D-3 fechada em `92bba62`, decimal em `dab3ac4` e integração HTTP
-administrativa em `27df733`. Formulários/navegação pendentes; sem Android físico
+administrativa em `27df733`. Naquele snapshot, formulários/navegação pendentes; sem Android físico
 nesta etapa, CI remota não consultada, backend inalterado e integração final
 na `backend` posterior. Este registro antecede o commit; conclusão do fechamento
 exige push e hash remoto confirmado. Sem nova UI/formulário de criação/edição,

@@ -459,6 +459,7 @@ function renderedFixture({
   commandFailure = null,
   userStatus = 'ativo',
   initialUrl = null,
+  additionalTransport = null,
 } = {}) {
   linkingControl.reset(initialUrl);
   let loginSequence = 0;
@@ -492,6 +493,10 @@ function renderedFixture({
   const transport = {
     async send(request) {
       const url = new URL(request.url);
+      if (additionalTransport) {
+        const response = additionalTransport(request);
+        if (response !== undefined) return response;
+      }
       const commandResponse = (kind, outcome, status) => {
         calls[kind] += 1;
         calls.administrativeHttp += 1;
@@ -840,7 +845,7 @@ test('React Navigation real registra Admin, abre detalhe e volta para a lista', 
   assert.equal(context.counters.list.created, 1);
   assert.equal(context.counters.list.subscriptions, 1);
   assert.equal(context.calls.list, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 1);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 3);
   assert.match(textContent(renderer), /Carregando Usuários/);
 
   await resolveListPage(context.pendingList[0]);
@@ -855,7 +860,7 @@ test('React Navigation real registra Admin, abre detalhe e volta para a lista', 
   assert.equal(context.counters.detail.created, 1);
   assert.equal(context.counters.detail.subscriptions, 1);
   assert.equal(context.calls.detail, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 2);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 4);
   assert.match(textContent(renderer), /DOC-RENDERIZADO/);
 
   await act(async () => { httpNavigationRef.goBack(); });
@@ -863,7 +868,7 @@ test('React Navigation real registra Admin, abre detalhe e volta para a lista', 
   await flush(2);
   assert.equal(context.counters.detail.disposed, 1);
   assert.equal(context.counters.detail.unsubscriptions, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 1);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 3);
   assert.match(textContent(renderer), /Usuário Renderizado/);
   assert.equal(context.calls.list, 1);
 
@@ -979,7 +984,7 @@ async function assertDirectProfileTransition(targetProfile, remountAdmin = false
   );
   assert.equal(context.counters.list.created, 1);
   assert.equal(context.counters.detail.created, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 2);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 4);
   assert.match(textContent(renderer), /DOC-RENDERIZADO/);
 
   const oldMainKey = mainRouteKey();
@@ -1100,7 +1105,7 @@ test('StrictMode monta e desmonta o estado real do React Navigation', async () =
   assert.equal(context.counters.list.created, 0);
   assert.equal(context.counters.detail.created, 0);
   assert.equal(context.calls.administrativeHttp, 0);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 0);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 2);
   await unmount(renderer);
   assert.equal(httpNavigationRef.isReady(), false);
   assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 0);
@@ -1136,7 +1141,7 @@ test('unmount real remove listeners e torna resposta administrativa tardia inert
   await navigateToUsers(renderer);
   assert.equal(context.calls.list, 1);
   assert.equal(context.counters.list.created, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 1);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 3);
 
   const controller = context.counters.list.instances[0];
   const listenerCallsBeforeUnmount = context.counters.list.listenerCalls;

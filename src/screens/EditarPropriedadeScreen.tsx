@@ -1,7 +1,7 @@
+import { PropertyFormLayout, PropertyCadastralFields } from '../components/PropertyForm';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
-import FormField from '../components/FormField';
 import FormFooter from '../components/FormFooter';
 import InfoBox from '../components/InfoBox';
 import MultiSelectField from '../components/MultiSelectField';
@@ -315,19 +314,16 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
   }
 
   return (
-    <View style={styles.container}>
-      <Header title="Editar Propriedade" showBack />
-      <ScrollView
-        ref={formValidation.scrollViewRef}
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onScroll={formValidation.onScroll}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        automaticallyAdjustKeyboardInsets
-      >
+    <PropertyFormLayout
+      focus={formValidation}
+      header={<Header title="Editar Propriedade" showBack />}
+      footer={<FormFooter
+        onCancel={() => navigation.goBack()}
+        onSubmit={handleSave}
+        submitLabel="Salvar alterações"
+        loading={saving}
+      />}
+    >
         <InfoBox
           title="Edição local v2"
           message="Os dados canônicos e os vínculos de Produtores autorizados e Colaboradores serão atualizados juntos. Município e UF identificam a localização, mas não concedem acesso."
@@ -377,40 +373,17 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
           />
         </SectionCard>
 
-        <SectionCard title="Propriedade" subtitle="Atualize a identificação cadastral da unidade operacional.">
-          <View ref={formValidation.registerField('propriedade')} collapsable={false}>
-            <FormField
-              ref={formValidation.registerFocusable('propriedade')}
-              label="Nome da Propriedade"
-              required
-              value={form.propriedade_nome}
-              onChangeText={(value) => {
-                handleChange('propriedade_nome', value);
-                setErrors((atual) => ({ ...atual, propriedade: null }));
-              }}
-              placeholder="Nome da propriedade"
-              error={errors.propriedade}
-            />
-          </View>
-          <View ref={formValidation.registerField('area_total')} collapsable={false}>
-            <FormField
-              ref={formValidation.registerFocusable('area_total')}
-              label="Área cadastral em hectares (opcional)"
-              value={form.area_total}
-              onChangeText={(value) => handleChange('area_total', value)}
-              placeholder="Ex: 500"
-              keyboardType="numeric"
-              error={errors.area_total}
-              helperText="A área cadastrada pode ser diferente da soma das áreas mapeadas dos Talhões."
-            />
-          </View>
-          <FormField
-            label="Cultura principal (opcional)"
-            value={form.cultura_principal}
-            onChangeText={(value) => handleChange('cultura_principal', value)}
-            placeholder="Ex: Soja"
-          />
-        </SectionCard>
+        <PropertyCadastralFields
+          nome={form.propriedade_nome} area={form.area_total} cultura={form.cultura_principal}
+          focus={formValidation} errors={errors}
+          onName={(value) => {
+            handleChange('propriedade_nome', value);
+            setErrors((atual) => ({ ...atual, propriedade: null }));
+          }}
+          onArea={(value) => handleChange('area_total', value)}
+          onCulture={(value) => handleChange('cultura_principal', value)}
+          subtitle="Atualize a identificação cadastral da unidade operacional."
+        />
 
         <SectionCard title="Localização" subtitle="Selecione Município e UF oficiais disponíveis no conjunto local.">
           <View ref={formValidation.registerField('uf')} collapsable={false}>
@@ -489,16 +462,7 @@ export default function EditarPropriedadeScreen({ route, navigation }) {
           />
         </SectionCard>
 
-        <View style={styles.footerSpace} />
-      </ScrollView>
-
-      <FormFooter
-        onCancel={() => navigation.goBack()}
-        onSubmit={handleSave}
-        submitLabel="Salvar alterações"
-        loading={saving}
-      />
-    </View>
+    </PropertyFormLayout>
   );
 }
 

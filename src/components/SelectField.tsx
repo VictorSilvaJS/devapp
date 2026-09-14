@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, inputStyles, modalStyles, semanticColors, spacing, typography } from '../theme';
+import FormField from './FormField';
 
 export type SelectFieldOption = {
   value: string;
@@ -18,7 +20,7 @@ export type SelectFieldOption = {
   description?: string;
 };
 
-type SelectFieldProps = {
+export type SelectFieldProps = {
   label: string;
   value: string;
   options: SelectFieldOption[];
@@ -29,6 +31,12 @@ type SelectFieldProps = {
   required?: boolean;
   disabled?: boolean;
   accessibilityLabel?: string;
+  selectedOption?: SelectFieldOption;
+  remote?: {
+    search?: string; onSearch?: (value: string) => void;
+    loading: boolean; loadingMore?: boolean; error?: string;
+    onRetry?: () => void; onLoadMore?: () => void;
+  };
 };
 
 export default function SelectField({
@@ -42,11 +50,13 @@ export default function SelectField({
   required = false,
   disabled = false,
   accessibilityLabel,
+  selectedOption,
+  remote,
 }: SelectFieldProps) {
   const [visible, setVisible] = useState(false);
   const selected = useMemo(
-    () => options.find((option) => option.value === value),
-    [options, value]
+    () => selectedOption?.value === value ? selectedOption : options.find((option) => option.value === value),
+    [options, value, selectedOption]
   );
 
   const close = () => setVisible(false);
@@ -106,8 +116,16 @@ export default function SelectField({
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            {remote?.onSearch ? <FormField label={`Buscar ${label}`} accessibilityLabel={`Buscar ${label}`}
+              value={remote.search ?? ''} onChangeText={remote.onSearch} disabled={disabled} /> : null}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
               <View style={styles.options}>
+                {remote?.loading ? <><ActivityIndicator color={colors.primary} /><Text>Carregando opções...</Text></> : null}
+                {remote && !remote.loading && options.length === 0 && !remote.error ? <Text>Nenhuma opção encontrada.</Text> : null}
+                {remote?.error ? <Text accessibilityLiveRegion="polite">{remote.error}</Text> : null}
+                {remote?.error && remote.onRetry ? <TouchableOpacity accessibilityRole="button"
+                  accessibilityLabel={`Tentar novamente ${label}`} style={styles.option} disabled={disabled}
+                  onPress={remote.onRetry}><Text>Tentar novamente</Text></TouchableOpacity> : null}
                 {options.map((option) => {
                   const active = option.value === value;
                   return (
@@ -115,10 +133,14 @@ export default function SelectField({
                       key={option.value || '__empty__'}
                       style={[styles.option, active ? styles.optionActive : null]}
                       onPress={() => {
+                        if (disabled) return;
                         onChange(option.value);
                         close();
                       }}
                       activeOpacity={0.76}
+                      disabled={disabled}
+                      accessibilityRole="button"
+                      accessibilityLabel={option.label}
                     >
                       <Ionicons
                         name={active ? 'checkmark-circle' : 'ellipse-outline'}
@@ -136,6 +158,10 @@ export default function SelectField({
                     </TouchableOpacity>
                   );
                 })}
+                {remote?.loadingMore ? <><ActivityIndicator color={colors.primary} /><Text>Carregando mais opções...</Text></> : null}
+                {remote?.onLoadMore ? <TouchableOpacity accessibilityRole="button" style={styles.option}
+                  accessibilityLabel={`Carregar mais ${label}`} disabled={disabled || remote.loadingMore}
+                  onPress={remote.onLoadMore}><Text>Carregar mais</Text></TouchableOpacity> : null}
               </View>
             </ScrollView>
           </Pressable>

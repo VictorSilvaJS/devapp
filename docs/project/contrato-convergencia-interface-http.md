@@ -59,6 +59,26 @@ Métricas de Propriedades permanecem ocultas porque a API ainda não possui
 agregado autorizado. Talhões, mapas, Visitas, Caderno, Materiais e Dashboard
 não aparecem como dados reais nem como botões ativos neste corte.
 
+## Corte visual administrativo MP-35D-4 — 2026-09-14
+
+Criação/edição de Propriedade e navegação mínima implementadas sobre `37a8790`,
+com N1 corrigido e aprovado na reauditoria independente. `PropertyFormLayout` e
+`PropertyCadastralFields` extraem o layout e campos aprovados do Demo;
+`SelectField` recebe capacidades opcionais de consulta remota, paginação,
+recuperação e seleção fora das opções carregadas. A apresentação permanece pura.
+Demo injeta suas ações locais; o container HTTP compõe modelos, seletores,
+lifecycle e boundary já fechados. Não houve alteração de bootstrap/storage Demo.
+Safe area inferior do formulário HTTP e foco/rolagem/teclado seguem os componentes
+existentes. Testes renderizados usam React Navigation real com primitivas nativas
+substituídas; não constituem validação Android física deste corte.
+A primeira auditoria encontrou somente N1: edição empilhava outro detalhe da
+mesma Propriedade. A correção fica na navegação HTTP: origem por key/identidade,
+retorno ao detalhe válido e destino canônico na entrada direta/origem inválida.
+A apresentação compartilhada, SelectField e o Demo foram preservados por hash.
+Reauditoria: 20/20 critérios, 14/14 probes; nenhum achado obrigatório remanescente.
+Formulários HTTP e navegação mínima aprovados para commit; fechamento Git autorizado.
+Status visual existente e integração final na `backend` permanecem posteriores.
+
 ## Obrigação Das Próximas Verticais
 
 Cada fase deve entregar backend e integração com a apresentação existente no

@@ -15,6 +15,8 @@ import { parseAccountActionLink } from './actionLinks';
 import { useHttpSession } from './HttpSessionContext';
 import { buildAdministrativeUserNavigationDefinition } from './administrativeUserNavigationDefinition';
 import { buildAdministrativeUserCommandNavigationDefinition } from './administrativeUserCommandNavigationDefinition';
+import { useAdministrativePropertyAccess } from './administrativePropertyFormAccess';
+import { HttpAdministrativePropertyCreateScreen, HttpAdministrativePropertyEditScreen } from './screens/HttpAdministrativePropertyFormScreens';
 import {
   HttpNotificationProvider,
   useHttpNotifications,
@@ -172,6 +174,7 @@ function ConfirmAdminSecondaryRecovery() {
 
 export function HttpNavigation() {
   const { status, snapshot, sessionEpoch, runtime } = useHttpSession();
+  const propertyAccess = useAdministrativePropertyAccess();
   const accountAction = useAccountAction();
   const setPendingAction = accountAction.setPending;
   const queuedTarget = React.useRef<string | null>(null);
@@ -288,6 +291,10 @@ export function HttpNavigation() {
           <Stack.Group navigationKey={identityKey}>
             <Stack.Screen name="Main" component={HttpTabs} options={{ headerShown: false }} />
             <Stack.Screen name="PropertyDetail" component={HttpPropertyDetailScreen} options={{ headerShown: false }} />
+            {propertyAccess.allowed ? <Stack.Group navigationKey={`property-admin:${propertyAccess.propertyState.authorizationGeneration}`}>
+              <Stack.Screen name="AdministrativePropertyCreate" component={HttpAdministrativePropertyCreateScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="AdministrativePropertyEdit" component={HttpAdministrativePropertyEditScreen} options={{ headerShown: false }} />
+            </Stack.Group> : null}
             {administrativeUsers.detail ? (
               <Stack.Screen
                 name={administrativeUsers.detail.name}

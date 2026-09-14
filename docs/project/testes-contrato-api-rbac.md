@@ -4,10 +4,216 @@ Status revisado em 2026-09-14:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
 concluída, auditada e enviada em 92bba62; MP-35D em andamento;
 decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-Titular/Localidades aprovados independentemente para commit, A1 encerrado; D-4 em andamento`.
+Titular/Localidades fechados em 37a8790; formulários HTTP aprovados para commit após reauditoria de N1; D-4 em andamento`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
+
+## MP-35D-4 — aprovação independente e fechamento controlado — 2026-09-14
+
+**FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA — APROVADOS PARA COMMIT**.
+Parecer independente final comunicado no fechamento: N1 corrigido e aprovado,
+nenhum achado obrigatório remanescente. Autorizados registro documental, staging
+explícito dos 25 caminhos, um commit e push somente para `feat/mp-35d`.
+A confirmação de commit/push e do hash remoto pertence ao relatório final do
+fechamento; este registro pré-commit não antecipa sucesso do envio nem CI remota.
+
+Evidências herdadas, sem nova execução das suítes neste fechamento:
+
+| Etapa | Resultado |
+|---|---|
+| Implementação anterior a N1 | D-4 289/289; demais testes, bundles e grafos aprovados |
+| Primeira auditoria | 33/34 critérios; único achado obrigatório N1 |
+| Correção N1 | Reprodução falhou antes da mudança; 7 regressões permanentes; D-4 296/296 |
+| Reauditoria independente | 20/20 critérios focais e 14/14 probes novos; N1 aprovado |
+| Suítes na reauditoria | D-4 296/296; D-3 106/106; D-2 85/85; D-1 55/55 |
+| Demais verificações na reauditoria | typecheck, domain-compat, propriedadeNavigationCompat e propriedadeRouteFlowCompat aprovados |
+
+A reauditoria demonstrou o detalhe reconciliado com versão GET superior à do
+recibo. A fonte exibida é a projeção autoritativa publicada pela boundary.
+D-4: 246 anteriores + 28 renderizados anteriores + 7 N1 + 4 arquitetura +
+11 D-2 importados = 296 executados. São 39 casos realmente novos no corte visual;
+os 11 D-2 são cobertura reutilizada. Os 14 probes são evidência independente,
+não novos casos permanentes acrescidos à suíte D-4.
+
+Preservação deste fechamento: 18 arquivos não documentais derivados de todos os
+caminhos modificados/novos do Git, com SHA-256 individual antes da documentação.
+A conferência após documentação, staging e commit é condição para prosseguir.
+Demo, SelectField, PropertyForm, telas, controllers, access, navegação, testes e
+configuração aprovados devem permanecer byte a byte idênticos. Somente os sete
+documentos já pertencentes ao corte recebem alterações. Verificações próprias:
+hashes, diff check, links locais, revisão documental, índice explícito e remoto.
+Não se repetem suítes integrais, backend/PostgreSQL, Android ou bundles/grafos.
+
+Marcos preservados: D-3 `92bba62`, decimal `dab3ac4`, HTTP administrativo
+`27df733` e Titular/Localidades `37a8790`. D-4 permanece em andamento.
+Status visual de ativar/inativar Propriedade, Android físico, integração final
+na `backend`, release, deploy e produção permanecem pendentes. Vínculos e
+transferência de Titularidade fora do corte; Demo sem backend; sem offline
+administrativo ou AsyncStorage administrativo. Nenhuma etapa posterior autorizada.
+
+## MP-35D-4 — correção focal N1 — 2026-09-14
+
+Primeira auditoria do corte visual: **CORREÇÕES OBRIGATÓRIAS**, somente
+**N1 — salvar edição duplica o detalhe da Propriedade na pilha**. Os outros
+33 critérios receberam PASSA na primeira auditoria (33/34). N1 foi encerrado
+na reauditoria posterior. Na entrada do fechamento, base e origin estavam em `37a87909e10e50baa8b13201c1c7c5f8c86bd131`,
+com 19 modificados/6 novos e index vazio; nenhum commit/push anterior deste corte.
+
+### Reprodução anterior à alteração funcional
+
+Foi acrescentada primeiro a regressão permanente `N1: detalhe → editar → salvar
+reutiliza a mesma key; Voltar alcança Main`, em
+`tests/mp35d4RenderedForms.test.js`, executada com React Navigation real por:
+
+`node --test-name-pattern='^N1:' tests/mp35d4RenderedForms.test.js`
+
+Resultado antes da correção: **1 teste, 0 passou, 1 falhou**. O teste confirmou
+um PATCH e um GET de reconciliação antes de comparar o estado real da pilha.
+A falha mostrou índice 2 em vez de 1 e dois `PropertyDetail` com o mesmo ID,
+mas keys distintas: `PropertyDetail-9G3oYjYo4psNB1NnBWMpl` e
+`PropertyDetail-X9jSak-JryUUEOUE-uN-s`. Os diagnósticos também registraram que
+Voltar deixava o primeiro detalhe ativo, em vez de retornar ao Main.
+Nenhuma alteração funcional precedeu essa execução vermelha.
+
+| Fluxo | Antes | Após salvar/reconciliar | Após Voltar |
+|---|---|---|---|
+| Defeito reproduzido | Main / Detail(A,k1) / Edit(A) | Main / Detail(A,k1) / Detail(A,k2) | Main / Detail(A,k1) |
+| Origem válida, corrigido | Main / Detail(A,k1) / Edit(A) | Main / Detail(A,k1) | Main |
+| Entrada direta, corrigido | Main / Edit(A) | Main / Detail(A,k2) | Main |
+
+### Correção e regressões permanentes
+
+`HttpPropertyScreens.tsx` passa origem interna com route key e ID da Propriedade.
+`HttpAdministrativePropertyFormScreens.tsx` distingue criação/edição na conclusão:
+origem imediatamente anterior com key, nome de rota e identidade correspondentes
+permite `goBack`, revelando a mesma instância de detalhe já atualizada pela
+boundary. Sem origem válida, `reset` conserva o histórico não relacionado,
+retira detalhes/edições da mesma Propriedade e termina com um detalhe canônico.
+São APIs já disponíveis no router instalado (`@react-navigation/routers` 6.1.9),
+sem dependência/import novo. Criação continua usando `replace`.
+
+As guardas de instância montada, rota atual e lifecycle foram preservadas;
+conclusão já consumida não realiza segunda navegação. Nenhum refetch compensatório,
+mutação extra ou mudança em conflito/rebase/recovery foi introduzido.
+
+Sete novos casos N1 cobrem pilha e Voltar, Nome/Área/Município no detalhe existente,
+entrada direta, GET pós-recibo com duas falhas e recovery, cinco origens inválidas
+(removida, nova key, outra identidade, outro nome e não adjacente), StrictMode com
+callback repetido e callback antigo após retomada, Cancelar/Voltar antes do submit.
+O smoke de criação existente passou a verificar também pilha, ID e uma transição.
+A rodada focal completa passou **7/7**. As primeiras asserções auxiliares dessa
+rodada foram alinhadas à estrutura do renderer: interpolação de Text com espaços
+e key do stack raiz distinta da aba filha Properties; não exigiram mudança funcional.
+
+Composição atual da D-4: **246 anteriores + 28 renderizados do corte visual +
+7 regressões N1 + 4 arquitetura + 11 D-2 importados = 296/296**. São 35 casos
+renderizados próprios e 4 de arquitetura novos no corte visual inteiro;
+os 11 D-2 importados não são novos. O arquivo renderizado executa 46 casos.
+
+### Validações herdadas da correção N1
+
+| Comando | Resultado |
+|---|---|
+| `npm run typecheck` | passou |
+| `npm run test:mp35d4` | 296/296 |
+| `npm run test:mp35d3` | 106/106 |
+| `npm run test:mp35d2` | 85/85 |
+| `npm run test:mp35d1` | 55/55 |
+| `npm run test:domain-compat` | passou integralmente, incluindo MP-33C 46/46, MP-34 35/35 e convergência 7/7 |
+| `node tests/propriedadeNavigationCompat.test.js` | passou, 4 casos |
+| `node tests/propriedadeRouteFlowCompat.test.js` | passou |
+
+Npm executado por `npm.cmd` no PowerShell. O baseline SHA-256 anterior a N1
+cobriu 732 arquivos rastreados/novos: somente dois arquivos HTTP, o teste
+renderizado e sete documentos ativos mudaram nesta correção. Demo,
+`PropertyForm`, `SelectField`, demais apresentações, seletores, decimal, modelos,
+idempotência, lifecycle, SessionCoordinator, boundary, BackendApi, runtime e
+backend preservados por hash. Configuração/imports/composição não mudaram;
+bundle/native graph não foram reexecutados. Nenhum teste backend adicional.
+Probes ignorados do auditor foram preservados.
+
+Estado: **FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA —
+APROVADOS PARA COMMIT**. N1 encerrado na reauditoria independente. D-3 `92bba62`, decimal `dab3ac4`, HTTP
+`27df733` e Titular/Localidades `37a8790` preservados. Status visual, Android
+físico e integração final na `backend` pendentes; fechamento Git autorizado.
+
+## MP-35D-4 — formulários HTTP e navegação mínima — execução anterior à auditoria N1
+
+Implementação sobre `37a87909e10e50baa8b13201c1c7c5f8c86bd131`, com worktree
+inicial limpo, index vazio e `origin/feat/mp-35d` no mesmo commit. Titular e
+Localidades foram fechados nesse commit; os registros abaixo sobre aprovação
+para commit são snapshots históricos. D-3 em `92bba62`, decimal em `dab3ac4`
+e HTTP administrativo em `27df733` preservados. Sem staging, commit ou push.
+
+### Execuções próprias deste corte
+
+| Comando | Resultado |
+|---|---|
+| `npm run typecheck` | passou |
+| `npm run test:mp35d4` | **289/289** |
+| `npm run test:mp35d3` | **106/106** |
+| `npm run test:mp35d2` | **85/85** |
+| `npm run test:mp35d1` | **55/55** |
+| `npm run test:domain-compat` | passou integralmente, incluindo MP-33C 46/46, MP-34 35/35 e convergência 7/7 |
+| `node tests/propriedadeNavigationCompat.test.js` | passou, 4 casos |
+| `node tests/propriedadeRouteFlowCompat.test.js` | passou |
+| `node tests/formValidationCompat.test.js` | passou, 3 casos |
+| `node tests/formInteractionCompat.test.js` | passou |
+| `npm run test:native-graph:mp33c` | grafos Android HTTP/Demo aprovados por Expo Autolinking |
+| `npm run test:bundle:mp33c` | exportações Android HTTP/Demo aprovadas; HTTP sem marcadores mock/AsyncStorage |
+
+Os comandos npm foram executados via `npm.cmd` no PowerShell, Node.js 22.20.0.
+Grafos/bundles precisaram executar subprocessos fora do sandbox; não representam
+APK de release, deploy, instalação ou smoke físico. Backend permaneceu intacto;
+PostgreSQL integral não foi reexecutado.
+
+Composição D-4: **35 contratos + 29 modelos + 26 comandos + 36 lifecycle +
+5 arquitetura + 58 Localidades + 57 Titular/sessão = 246 anteriores**;
+mais **28 cenários novos de tela + 4 gates novos de arquitetura + 11 cenários
+D-2 reutilizados = 289**. O arquivo renderizado executa 39 casos, incluindo
+explicitamente esses 11 herdados; eles não são apresentados como testes novos.
+Nenhum caso anterior foi removido. O gate que proibia toda UI D-4 foi atualizado
+para exigir somente criação/edição autorizadas e continuar proibindo status,
+vínculos e transferência visuais.
+
+`tests/mp35d4RenderedForms.test.js` usa as telas, apresentação compartilhada,
+NavigationContainer, native-stack, sessão, repositórios, seletores, modelos,
+coordenador e lifecycle reais. Apenas primitivas nativas e transporte são
+controlados. Cobre smoke de criação/edição, identidade Titular distinta do Usuário,
+confirmação/revalidação, buscas e paginação reais, retry A1, reinício explícito
+após cursor inválido, UF/Município stale, seleção inicial fora da página, decimal
+textual/limpeza/dirty, conflitos de Nome/Área/Município em v1→v2→v3, rebase sem
+conflito e GET de conflito indisponível.
+
+Para POST e PATCH confirmados, comprova uma mutação e três GETs, duas falhas
+seguidas de sucesso mais novo que o recibo e uma conclusão/navegação. Também
+cobre ausência de capacidades para Produtor/Colaborador, rotas diretas bloqueadas,
+links administrativos sem mapeamento público, 401/403, retomada após `/me`,
+callbacks Cancelar/Voltar/submit de A após abrir B, perda de Admin em POST/GET,
+StrictMode com setup/cleanup/setup e descarte de dados próprios, transporte
+ambíguo com mesma chave, e mensagens 400/422/404/conflito sem conteúdo interno.
+
+### Falhas intermediárias e correções
+
+- Os primeiros testes revelaram expectativas estáticas da composição anterior:
+  zero ações D-4, referências de formulário dentro das telas Demo e contagens
+  sem os dois observadores de capacidade de Propriedade. Os gates passaram a
+  verificar a extração e os totais exatos novos; zero residual após desmontagem
+  e zero assinatura administrativa para não-Admin continuam obrigatórios.
+- O harness novo inicialmente copiava getters por valor e usava um decimal de
+  seis casas, fora do domínio de quatro; as fixtures foram corrigidas, sem
+  flexibilizar decoders/normalização. As chaves são verificadas na porta de
+  transporte (`idempotencyKey`), antes da conversão para cabeçalhos.
+- Na revisão de integração, o controller visual foi ajustado para não restaurar
+  Município ao reler outros campos durante uma troca incompleta de UF, e a UI
+  distingue retry transitório de reinício explícito de catálogo/cursor inválido.
+  Ambos possuem regressão renderizada permanente.
+
+Estado ao concluir a implementação anterior à auditoria N1: **FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA IMPLEMENTADOS —
+AGUARDANDO AUDITORIA INDEPENDENTE**. D-4 não concluída; alteração visual de status,
+Android físico e integração final na `backend` pendentes. Sem backend alterado,
+release, publicação ou persistência de draft administrativo.
 
 ## MP-35D-4 — aprovação independente e fechamento controlado de Titular/Localidades — 2026-09-14
 

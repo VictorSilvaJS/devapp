@@ -3,7 +3,7 @@
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
 > MP-35D-3 concluída, auditada e enviada em 92bba62;
 > decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-> Titular/Localidades aprovados independentemente para commit, A1 encerrado; MP-35D/D-4 em andamento`
+> Titular/Localidades fechados em 37a8790; formulários HTTP aprovados para commit após reauditoria de N1; MP-35D/D-4 em andamento`
 >
 > Definido em: 2026-08-25
 >
@@ -30,7 +30,77 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades aprovados para commit, A1 encerrado; formulários, navegação D-4 e integração final na `backend` posteriores |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; criação/edição e navegação mínima aprovados para commit após reauditoria de N1; status visual, Android físico e integração final na `backend` posteriores |
+
+## MP-35D-4 — formulários HTTP de Propriedade e navegação mínima — 2026-09-14
+
+Implementados sobre `37a87909e10e50baa8b13201c1c7c5f8c86bd131`, na
+`feat/mp-35d`. **FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA —
+APROVADOS PARA COMMIT**. Fechamento Git autorizado após reauditoria de N1.
+D-3 fechada em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`
+e Titular/Localidades em `37a8790`, com F1/A1 encerrados nos cortes anteriores.
+
+Nova Propriedade e Editar Propriedade usam `PropertyFormLayout`,
+`PropertyCadastralFields`, `SelectField` e os componentes visuais aprovados do
+Demo. A apresentação recebe dados/ações; a composição Demo preserva suas
+regras, vínculos, armazenamento e capacidades locais. O container HTTP compõe
+os modelos, controllers de seleção e comandos existentes, sem backend alterado.
+
+A lista e o detalhe existentes oferecem somente as duas ações Admin ativo.
+As rotas administrativas são removidas quando a capacidade é perdida; cada
+montagem cria um controller novo, também no replay de efeitos de StrictMode.
+Cancelar, Voltar, submit e conclusão verificam instância, lifecycle e chave da
+rota. Logout/401/403 descartam o estado próprio e tornam callbacks antigos inertes.
+
+Na criação, busca/paginação de Titular e UF/Município são remotas e independentes.
+Titular exige confirmação e nova revalidação antes do POST; somente o
+`produtor_id` validado chega ao modelo. Status inicial ativa/inativa é exclusivo
+da criação. Na edição, Titular/status são informativos, Município atual vem do
+detalhe mesmo fora das páginas, e o modelo mantém baseline/draft/dirtyFields/
+conflitos. Área parte exclusivamente do decimal textual; omissão preserva,
+limpeza explícita envia `null` no PATCH e equivalência canônica remove dirty.
+
+Recibo confirmado bloqueia nova escrita. Falha posterior mostra confirmação e
+recuperação exclusivamente por `retryReconciliation()` (GET); conclusão/navegação
+acontecem uma vez após releitura válida, inclusive versão superior ao recibo.
+Rebases consecutivos preservam conflitos; Nome, Área e Município mostram valores
+do servidor/operador e exigem resolução explícita. Uma troca de UF ainda sem
+Município não é desfeita por releitura de campos intocados.
+
+D-4 permanece em andamento. Alteração visual de status existente, Android físico
+e integração final na `backend` continuam pendentes; vínculos e transferência
+não pertencem a este corte. Sem release, deploy, fila offline ou fallback Demo.
+Execuções próprias e smoke estão em [testes de contrato](testes-contrato-api-rbac.md)
+e [smoke](smoke.md).
+
+A reauditoria aprovou 20/20 critérios e 14/14 probes, incluindo detalhe
+reconciliado com versão GET superior ao recibo. Demo, SelectField e apresentação
+compartilhada preservados. Evidências herdadas e protocolo do fechamento em
+[testes de contrato](testes-contrato-api-rbac.md).
+
+### Correção focal N1 — navegação após edição
+
+A primeira auditoria independente encontrou somente **N1 — salvar edição
+duplicava o detalhe da Propriedade na pilha**; os outros 33 critérios receberam
+PASSA. A regressão permanente falhou antes da mudança funcional, após um PATCH
+e um GET de reconciliação: `Main → Detail(A,k1) → Detail(A,k2)`, com keys
+incluindo `k1 != k2`; Voltar revelava novamente `Detail(A,k1)`.
+
+Correção focal implementada e **aprovada na reauditoria independente**.
+N1 encerrado, sem achado obrigatório remanescente. O detalhe passa sua key e a identidade da Propriedade
+como origem interna da edição. Após reconciliação, a conclusão verifica essa
+origem contra a rota imediatamente anterior (key, nome e ID): se válida,
+fecha somente a edição e revela o mesmo detalhe, que já observa a projeção
+publicada pela boundary. Entrada direta/origem inválida termina em um detalhe
+canônico, retirando do histórico apenas detalhes/edições da mesma Propriedade
+e preservando rotas não relacionadas. Não usa `canGoBack()` como prova de origem.
+
+Criação conserva `replace`; falha de GET pós-recibo mantém a edição aberta.
+As guardas de instância, rota atual e lifecycle permanecem; uma conclusão
+consumida não navega novamente. Demo, apresentação compartilhada, seletores,
+modelos, comandos, lifecycle, sessão, boundary, runtime e backend não mudaram
+nesta correção. Detalhes dos testes e preservação em
+[testes de contrato](testes-contrato-api-rbac.md).
 
 ### Titular e Localidades internos — 2026-09-14
 
@@ -39,8 +109,8 @@ focal A1. A primeira auditoria exigiu somente corrigir retry concorrente que
 reiniciava a busca e descartava páginas válidas, reproduzido em ambos os
 consumidores antes da alteração funcional. A1 está encerrado e nenhum achado
 obrigatório permanece. Fechamento Git autorizado somente na `feat/mp-35d`.
-Não cria UI,
-rotas de navegação ou comandos de Propriedade. Factories internas no runtime:
+Fechado em `37a8790`. Esse corte interno não criou UI,
+rotas de navegação ou comandos de Propriedade; a composição visual atual está descrita acima. Factories internas no runtime:
 `administrativePropertySelectors.createHolder(status, limite?)` e
 `createLocalities(limite?)`. Construção não faz HTTP; `start()` inicia a lista
 de Titulares ou a coleção de UFs. `subscribe()` observa snapshots imutáveis.
@@ -124,7 +194,7 @@ publicam; referências externas guardadas pelo consumidor não são mutadas.
 
 Sem persistência, Demo, catálogo local de runtime, consulta externa ao IBGE,
 GET municipal por ID ou mudança backend. Testes permanentes e resultados em
-[testes de contrato](testes-contrato-api-rbac.md). Formulários/navegação,
+[testes de contrato](testes-contrato-api-rbac.md). O corte visual atual está descrito acima;
 Android físico e integração final na `backend` permanecem posteriores;
 CI remota não consultada. A aprovação autoriza commit/push somente deste corte
 na `feat/mp-35d`; não conclui D-4 nem libera produção.
@@ -211,7 +281,7 @@ migration, serviço MP-35C ou RBAC. Teste HTTP explícito cobre essa distinção
 
 Suíte própria e resultados em [testes de contrato](testes-contrato-api-rbac.md).
 Seletores ficaram fora daquele corte; a etapa interna seguinte está descrita
-acima. Formulários, navegação, vínculos e transferência continuam fora.
+acima. Vínculos e transferência continuam fora; o corte visual atual está descrito no início.
 Android físico não executado; CI remota não consultada; integração final na
 `backend` é posterior. A aprovação independente cobre somente este corte HTTP
 interno e F1; não conclui toda a D-4 nem libera release ou produção.

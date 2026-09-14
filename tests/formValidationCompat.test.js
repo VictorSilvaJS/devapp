@@ -63,7 +63,13 @@ test('formularios principais usam foco comum após validação inválida', () =>
     const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'screens', screen), 'utf8');
     assert.match(source, /useFormValidationFocus/);
     assert.match(source, /focusFirstError\((?:new|next)Errors\)/);
-    assert.match(source, /ref=\{formValidation\.scrollViewRef\}/);
+    if (['NovaPropriedadeScreen.tsx', 'EditarPropriedadeScreen.tsx'].includes(screen)) {
+      assert.match(source, /<PropertyFormLayout\s+focus=\{formValidation\}/);
+      assert.match(source, /<PropertyCadastralFields[\s\S]*?focus=\{formValidation\}/);
+      const shared = fs.readFileSync(path.join(__dirname, '..', 'src/components/PropertyForm.tsx'), 'utf8');
+      assert.match(shared, /ref=\{focus\.scrollViewRef\}/);
+      assert.match(shared, /ref=\{focus\.registerFocusable\('propriedade'\)\}/);
+    } else assert.match(source, /ref=\{formValidation\.scrollViewRef\}/);
   }
 });
 

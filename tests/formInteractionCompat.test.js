@@ -29,7 +29,10 @@ assert.match(validationHook, /keyboardDidShow/);
   'NovaPropriedadeScreen.tsx', 'EditarPropriedadeScreen.tsx', 'NovoUsuarioScreen.tsx',
   'PeriodoProdutivoFormScreen.tsx', 'CorrigirCadernoScreen.tsx', 'EditProfileScreen.tsx',
 ].forEach((screen) => {
-  const source = read(`src/screens/${screen}`);
+  const container = read(`src/screens/${screen}`);
+  const sharedPropertyForm = ['NovaPropriedadeScreen.tsx', 'EditarPropriedadeScreen.tsx'].includes(screen);
+  if (sharedPropertyForm) assert.match(container, /<PropertyFormLayout\s+focus=\{formValidation\}/);
+  const source = sharedPropertyForm ? read('src/components/PropertyForm.tsx') : container;
   assert.match(source, /keyboardShouldPersistTaps="handled"/, `${screen} deve preservar toques com teclado aberto`);
   assert.match(source, /keyboardDismissMode="on-drag"/, `${screen} deve permitir dispensar o teclado ao rolar`);
   assert.match(source, /automaticallyAdjustKeyboardInsets/, `${screen} deve ajustar o espaço útil ao teclado`);

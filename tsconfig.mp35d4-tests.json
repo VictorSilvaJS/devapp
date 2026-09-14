@@ -1,6 +1,8 @@
 {
   "extends": "./tsconfig.mp35d3-tests.json",
-  "compilerOptions": { "outDir": ".tmp-mp35d4" },
+  "compilerOptions": {
+    "outDir": ".tmp-mp35d4"
+  },
   "include": [
     "tests/mp33c-globals.d.ts",
     "src/http/runtime.ts",
@@ -8,6 +10,7 @@
     "src/http/administrativePropertyCommands.ts",
     "src/http/administrativePropertyCommandLifecycle.ts",
     "src/http/administrativePropertyDataBoundary.ts",
-    "src/http/administrativePropertyRepository.ts"
+    "src/http/administrativePropertyRepository.ts",
+    "src/http/administrativePropertyFormController.ts"
   ]
 }

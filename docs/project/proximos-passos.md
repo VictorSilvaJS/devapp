@@ -2,15 +2,15 @@
 
 > Atualizado em: 2026-09-14
 >
-> Tarefa atual: Titular/Localidades aprovados para commit; A1 encerrado na reauditoria; fechamento Git autorizado;
-> D-3 fechada em `92bba62`; pré-requisito decimal fechado e enviado em `dab3ac4`;
-> integração HTTP administrativa fechada em `27df733`; formulários e navegação D-4 pendentes
+> Tarefa atual: fechamento Git autorizado dos formulários HTTP e navegação mínima, com N1 aprovado;
+> D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
+> Titular/Localidades fechados em `37a8790`; status visual e Android físico pendentes
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
 > D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
 > `feat/mp-35d`; MP-35D-3 CONCLUÍDA; MP-35D EM ANDAMENTO;
-> PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; HTTP DE PROPRIEDADES FECHADO EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES APROVADOS PARA COMMIT; D-4 EM ANDAMENTO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
+> PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; HTTP DE PROPRIEDADES FECHADO EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; D-4 EM ANDAMENTO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
 
 ## Próximo passo delimitado da MP-35D-4
@@ -42,10 +42,14 @@ reiniciava a consulta e descartava páginas). Reproduzido em Titular/Municípios
 antes da alteração e corrigido no controller compartilhado; D-4 passou 246/246.
 A reauditoria aprovou A1 e o corte: nenhum achado obrigatório, 20/20 critérios
 e 42/42 probes; D-4 246/246 e sensibilidade das 13 regressões confirmadas.
-Próximo passo autorizado: registrar aprovação, conferir hashes/índice, criar
-um commit e enviar somente para `feat/mp-35d`, confirmando o hash remoto.
-Evidências em [testes de contrato](testes-contrato-api-rbac.md). Não avançar automaticamente
-para formulários/navegação. Vínculos e transferência permanecem fora.
+Titular/Localidades foram fechados em `37a8790`. A autorização seguinte delimitou
+formulários de criação/edição e navegação mínima. A primeira auditoria encontrou somente N1, duplicação do detalhe ao salvar edição.
+O achado foi reproduzido por regressão permanente antes da correção e corrigido
+focalmente; a reauditoria aprovou N1, sem achado obrigatório remanescente.
+O próximo passo autorizado é o fechamento Git: revisão, staging explícito,
+um commit e push somente para `feat/mp-35d`, com confirmação do hash remoto. Alteração visual de status exige o próximo corte próprio.
+Evidências em [testes de contrato](testes-contrato-api-rbac.md).
+Vínculos e transferência permanecem fora.
 Android físico não executado; CI remota não consultada. MP-35D/D-4 continuam em
 andamento; integração final na `backend` é posterior, sem renumeração de D-5/D-6/D-7.
 
@@ -284,7 +288,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES APROVADOS PARA COMMIT; FORMULÁRIOS, NAVEGAÇÃO E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; FORMULÁRIOS DE CRIAÇÃO/EDIÇÃO E NAVEGAÇÃO MÍNIMA APROVADOS PARA COMMIT APÓS REAUDITORIA DE N1; STATUS VISUAL, ANDROID FÍSICO E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |

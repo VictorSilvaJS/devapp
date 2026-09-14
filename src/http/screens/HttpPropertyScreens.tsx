@@ -1,4 +1,6 @@
 import React from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { canAdministerProperties, useAdministrativePropertyAccess } from '../administrativePropertyFormAccess';
 import {
   ActivityIndicator,
   FlatList,
@@ -32,6 +34,7 @@ import { HttpDetailHeader, HttpTabHeader } from '../HttpAppHeader';
 import { useHttpSession } from '../HttpSessionContext';
 import {
   HttpFeedback,
+  HttpButton,
   HttpField,
   controlledUiError,
 } from '../ui';
@@ -47,6 +50,8 @@ type StatusFilter = 'todas' | PropertyStatus;
 
 export function HttpPropertiesScreen({ navigation }: any) {
   const { runtime, snapshot } = useHttpSession();
+  const { allowed: administrative, propertyState } = useAdministrativePropertyAccess();
+  const administrativelyBlocked = snapshot?.usuario.perfil === 'admin' && !administrative;
   const [items, setItems] = React.useState<readonly PropertyProjection[]>([]);
   const [nextCursor, setNextCursor] = React.useState<string | null>(null);
   const [searchDraft, setSearchDraft] = React.useState('');
@@ -67,6 +72,10 @@ export function HttpPropertiesScreen({ navigation }: any) {
     activeFilters: PropertyFilters,
     mode: 'initial' | 'refresh' | 'more',
   ) => {
+    if (administrativelyBlocked) {
+      setItems([]); setNextCursor(null); setLoading(false); setRefreshing(false); setLoadingMore(false);
+      setError('O acesso administrativo precisa ser validado novamente.'); return;
+    }
     const append = mode === 'more';
     const generation = append
       ? requestGeneration.current
@@ -89,7 +98,8 @@ export function HttpPropertiesScreen({ navigation }: any) {
     setError(null);
 
     try {
-      const page = await runtime.properties.list(activeFilters);
+      const page = administrative ? await runtime.administrativeProperties.list(activeFilters)
+        : await runtime.properties.list(activeFilters);
       if (generation !== requestGeneration.current) return;
       setItems((current) => append ? [...current, ...page.itens] : page.itens);
       setNextCursor(page.paginacao.proximo_cursor);
@@ -106,11 +116,12 @@ export function HttpPropertiesScreen({ navigation }: any) {
         loadingMoreRef.current = false;
       }
     }
-  }, [runtime]);
+  }, [runtime, administrative, administrativelyBlocked]);
 
-  React.useEffect(() => {
+  useFocusEffect(React.useCallback(() => {
     void load(filters, 'initial');
-  }, [filters, load]);
+    return () => { requestGeneration.current += 1; };
+  }, [filters, load, administrative ? propertyState.generation : 0]));
 
   const applySearch = () => {
     const value = searchDraft.trim();
@@ -212,6 +223,9 @@ export function HttpPropertiesScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <HttpTabHeader title={title} navigation={navigation} />
+      {administrative ? <HttpButton title="Nova Propriedade" onPress={() => {
+        if (canAdministerProperties(runtime)) navigation.navigate('AdministrativePropertyCreate');
+      }} /> : null}
 
       <LinearGradient
         colors={[colors.white, colors.backgroundSoft]}
@@ -344,19 +358,29 @@ export function HttpPropertiesScreen({ navigation }: any) {
 }
 
 export function HttpPropertyDetailScreen({ route, navigation }: any) {
-  const { runtime } = useHttpSession();
-  const [property, setProperty] = React.useState<PropertyProjection | null>(null);
+  const { runtime, snapshot } = useHttpSession();
+  const { allowed: administrative, propertyState } = useAdministrativePropertyAccess();
+  const administrativelyBlocked = snapshot?.usuario.perfil === 'admin' && !administrative;
+  const [operationalProperty, setProperty] = React.useState<PropertyProjection | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const id = typeof route.params?.id === 'string' ? route.params.id : '';
+  const property = administrative ? propertyState.details[id] ?? null : administrativelyBlocked ? null : operationalProperty;
 
   React.useEffect(() => {
     let active = true;
+    if (administrativelyBlocked) {
+      setProperty(null); setLoading(false); setError('O acesso administrativo precisa ser validado novamente.');
+      return;
+    }
     setLoading(true);
     setError(null);
     setProperty(null);
-    void runtime.properties.getById(id).then((result) => {
-      if (active) setProperty(result);
+    const cached = administrative ? runtime.administrativePropertyData.current.details[id] : null;
+    const read = cached ? Promise.resolve(cached) : administrative
+      ? runtime.administrativeProperties.getById(id) : runtime.properties.getById(id);
+    void read.then((result) => {
+      if (active && !administrative) setProperty(result);
     }).catch((caught) => {
       if (active) {
         setProperty(null);
@@ -366,7 +390,7 @@ export function HttpPropertyDetailScreen({ route, navigation }: any) {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [id, runtime]);
+  }, [id, runtime, administrative, administrativelyBlocked]);
 
   return (
     <View style={styles.container}>
@@ -413,6 +437,12 @@ export function HttpPropertyDetailScreen({ route, navigation }: any) {
                   <DetailRow label="Status" value={property.status === 'ativa' ? 'Ativa' : 'Inativa'} />
                   <DetailRow label="Tipo de acesso" value={ACCESS_LABELS[property.tipo_acesso]} last />
                 </SectionCard>
+
+                {administrative ? <HttpButton title="Editar Propriedade" onPress={() => {
+                  if (canAdministerProperties(runtime)) navigation.navigate('AdministrativePropertyEdit', {
+                    id, origin: { routeKey: route.key, propertyId: id },
+                  });
+                }} /> : null}
 
                 <InfoBox message="Esta consulta usa dados reais e autorização do servidor. Talhões, mapas, Visitas e Caderno aparecerão nesta interface somente quando suas verticais HTTP estiverem conectadas." />
               </>

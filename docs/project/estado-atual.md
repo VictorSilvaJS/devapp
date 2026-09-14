@@ -84,8 +84,8 @@ commit; F1 da primeira auditoria foi reproduzido, corrigido e aprovado na
 reauditoria independente, sem achado obrigatório remanescente. O corte foi
 fechado e enviado em `27df7335efd4ab352245c48f6b022da1d99f0987`, com hash remoto
 confirmado. A etapa seguinte implementa Titular e Localidades internamente,
-com A1 corrigido e encerrado na reauditoria independente, aprovado para commit,
-sem formulários ou navegação D-4.
+com A1 corrigido e encerrado na reauditoria independente, fechada em `37a8790`.
+O corte visual seguinte entrega criação/edição e navegação mínima; N1 encerrado na reauditoria, corte aprovado para commit.
 
 Estado formal da sequência administrativa:
 
@@ -96,9 +96,79 @@ Estado formal da sequência administrativa:
 - MP-35D: em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`;
   pré-requisito decimal fechado e enviado em `dab3ac4`; integração HTTP
   administrativa de Propriedades fechada em `27df733` na `feat/mp-35d`.
-  Titular/Localidades internos aprovados independentemente para commit, com A1 encerrado.
-  Formulários e navegação D-4 ainda não implementados. A integração
+  Titular/Localidades internos fechados em `37a8790`, com A1 encerrado.
+  Formulários de criação/edição e navegação mínima implementados; N1 encerrado na reauditoria, corte aprovado para commit. A integração
   final da MP-35D na `backend` permanece posterior.
+
+## MP-35D-4 — formulários HTTP de Propriedade e navegação mínima — 2026-09-14
+
+Implementados sobre `37a87909e10e50baa8b13201c1c7c5f8c86bd131`, na
+`feat/mp-35d`. **FORMULÁRIOS HTTP DE PROPRIEDADE E NAVEGAÇÃO MÍNIMA —
+APROVADOS PARA COMMIT**. Fechamento Git autorizado após reauditoria de N1.
+D-3 fechada em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`
+e Titular/Localidades em `37a8790`, com F1/A1 encerrados nos cortes anteriores.
+
+Nova Propriedade e Editar Propriedade usam `PropertyFormLayout`,
+`PropertyCadastralFields`, `SelectField` e os componentes visuais aprovados do
+Demo. A apresentação recebe dados/ações; a composição Demo preserva suas
+regras, vínculos, armazenamento e capacidades locais. O container HTTP compõe
+os modelos, controllers de seleção e comandos existentes, sem backend alterado.
+
+A lista e o detalhe existentes oferecem somente as duas ações Admin ativo.
+As rotas administrativas são removidas quando a capacidade é perdida; cada
+montagem cria um controller novo, também no replay de efeitos de StrictMode.
+Cancelar, Voltar, submit e conclusão verificam instância, lifecycle e chave da
+rota. Logout/401/403 descartam o estado próprio e tornam callbacks antigos inertes.
+
+Na criação, busca/paginação de Titular e UF/Município são remotas e independentes.
+Titular exige confirmação e nova revalidação antes do POST; somente o
+`produtor_id` validado chega ao modelo. Status inicial ativa/inativa é exclusivo
+da criação. Na edição, Titular/status são informativos, Município atual vem do
+detalhe mesmo fora das páginas, e o modelo mantém baseline/draft/dirtyFields/
+conflitos. Área parte exclusivamente do decimal textual; omissão preserva,
+limpeza explícita envia `null` no PATCH e equivalência canônica remove dirty.
+
+Recibo confirmado bloqueia nova escrita. Falha posterior mostra confirmação e
+recuperação exclusivamente por `retryReconciliation()` (GET); conclusão/navegação
+acontecem uma vez após releitura válida, inclusive versão superior ao recibo.
+Rebases consecutivos preservam conflitos; Nome, Área e Município mostram valores
+do servidor/operador e exigem resolução explícita. Uma troca de UF ainda sem
+Município não é desfeita por releitura de campos intocados.
+
+D-4 permanece em andamento. Alteração visual de status existente, Android físico
+e integração final na `backend` continuam pendentes; vínculos e transferência
+não pertencem a este corte. Sem release, deploy, fila offline ou fallback Demo.
+Execuções próprias e smoke estão em [testes de contrato](testes-contrato-api-rbac.md)
+e [smoke](smoke.md).
+
+A reauditoria aprovou 20/20 critérios e 14/14 probes, incluindo detalhe
+reconciliado com versão GET superior ao recibo. Demo, SelectField e apresentação
+compartilhada preservados. Evidências herdadas e protocolo do fechamento em
+[testes de contrato](testes-contrato-api-rbac.md).
+
+### Correção focal N1 — navegação após edição
+
+A primeira auditoria independente encontrou somente **N1 — salvar edição
+duplicava o detalhe da Propriedade na pilha**; os outros 33 critérios receberam
+PASSA. A regressão permanente falhou antes da mudança funcional, após um PATCH
+e um GET de reconciliação: `Main → Detail(A,k1) → Detail(A,k2)`, com keys
+incluindo `k1 != k2`; Voltar revelava novamente `Detail(A,k1)`.
+
+Correção focal implementada e **aprovada na reauditoria independente**.
+N1 encerrado, sem achado obrigatório remanescente. O detalhe passa sua key e a identidade da Propriedade
+como origem interna da edição. Após reconciliação, a conclusão verifica essa
+origem contra a rota imediatamente anterior (key, nome e ID): se válida,
+fecha somente a edição e revela o mesmo detalhe, que já observa a projeção
+publicada pela boundary. Entrada direta/origem inválida termina em um detalhe
+canônico, retirando do histórico apenas detalhes/edições da mesma Propriedade
+e preservando rotas não relacionadas. Não usa `canGoBack()` como prova de origem.
+
+Criação conserva `replace`; falha de GET pós-recibo mantém a edição aberta.
+As guardas de instância, rota atual e lifecycle permanecem; uma conclusão
+consumida não navega novamente. Demo, apresentação compartilhada, seletores,
+modelos, comandos, lifecycle, sessão, boundary, runtime e backend não mudaram
+nesta correção. Detalhes dos testes e preservação em
+[testes de contrato](testes-contrato-api-rbac.md).
 
 ## MP-35D-4 — Titular e Localidades internos — 2026-09-14
 
@@ -118,7 +188,7 @@ um GET com cursor e zero sem cursor. A mutação de sensibilidade preservou os
 233 anteriores e fez falhar as 13 regressões A1 quando a correção foi removida.
 Essas são evidências herdadas do auditor, não novas execuções deste fechamento.
 
-Implementados sobre `27df733`, sem commit/push desta etapa. O runtime fornece
+Implementados sobre `27df733` e fechados em `37a8790`. O runtime fornece
 factories de `AdministrativeHolderController` e `AdministrativeLocalityController`.
 Titular reutiliza a instância administrativa de Usuários, filtra remotamente
 Produtores conforme o status inicial e relê o detalhe por `usuario_id` antes
@@ -144,8 +214,7 @@ execuções próprias em [testes de contrato](testes-contrato-api-rbac.md).
 Estado deste snapshot anterior ao commit: **TITULAR E LOCALIDADES DA MP-35D-4
 — APROVADOS PARA COMMIT**. Fechamento Git autorizado somente na `feat/mp-35d`,
 com preservação funcional por hashes e confirmação do hash remoto após push.
-D-4 permanece em andamento; formulários, botões e
-navegação são posteriores. Sem backend alterado, Android físico, consulta à
+Aquele snapshot foi fechado em `37a8790`; o corte visual atual está descrito acima. Sem backend alterado, Android físico, consulta à
 CI remota ou integração final na `backend` nesta etapa. Demo preservado.
 
 ## MP-35D-4 — integração HTTP administrativa fechada — 2026-09-14
@@ -342,7 +411,7 @@ ou validação produtiva; este fechamento não libera produção ou release.
 
 | Camada | Situação atual |
 |---|---|
-| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades aprovados para commit com A1 encerrado; formulários/navegação D-4 pendentes, sem novo Android físico ou release |
+| Aplicativo Android | Demo preservado; D-3 fechada em `92bba62`; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; criação/edição e navegação mínima aprovados para commit após reauditoria de N1, sem novo Android físico ou release |
 | Dados | Dataset local somente no Demo; HTTP sem seed produtivo e com fixtures manuais protegidas para development/QA |
 | Autenticação | Backend MP-33B e cliente HTTP com access em memória/refresh em SecureStore; fator único, sem MFA |
 | Autorização | Lista/detalhe operacional preservados; sete rotas integradas de administração de Propriedades, vínculos e Localidades são Admin-only e revalidadas no SQL |
@@ -387,7 +456,8 @@ pós-integração aprovadas. D-1/D-2/D-3 estão concluídas na `feat/mp-35d`,
 com D-3 fechada em `92bba62` e pré-requisito decimal em `dab3ac4`.
 O corte HTTP interno de Propriedades administrativas foi aprovado após F1 e
 fechado em `27df733`. Titular/Localidades internos estão implementados e
-foram aprovados independentemente para commit, com A1 encerrado. Formulários, navegação D-4, vínculos e
+foram fechados em `37a8790`, com A1 encerrado. Criação/edição e navegação mínima
+estão implementadas; N1 encerrado na reauditoria, corte aprovado para commit. Status visual, vínculos e
 validação física continuam posteriores.
 O segundo e-mail verificado do Administrador e a recuperação da MP-33B
 permanecem válidos.
@@ -748,14 +818,16 @@ MP-35D segue em andamento; a D-3 foi concluída e enviada em `92bba62`.
 O pré-requisito decimal está fechado e enviado em `dab3ac4`; a integração HTTP
 administrativa de Propriedades foi aprovada independentemente, com F1 encerrado,
 e fechada em `27df733` na `feat/mp-35d`. Titular/Localidades internos foram
-aprovados para commit após encerramento de A1. Formulários, navegação e integração final na `backend` são posteriores.
+fechados em `37a8790` após encerramento de A1. Formulários de criação/edição e
+navegação mínima estão aprovados para commit após reauditoria de N1; status visual, Android físico e integração
+final na `backend` são posteriores.
 Nenhuma dessas etapas implica liberação produtiva. Antes de produção,
 permanecem responsável,
 agendamento e alertas da purga, provisionamento da credencial/CA/segredo de
 manutenção, validação jurídica/de privacidade externa da retenção de 90 dias,
 observabilidade, backup/restauração e os portões de domínio, associação de
-links, assinatura e dispositivo. Vínculos, formulários, navegação e validação
-física D-4 continuam fora do corte atual de Titular/Localidades internos.
+links, assinatura e dispositivo. Vínculos, status visual e validação física D-4
+continuam fora do corte atual de formulários de criação/edição.
 
 Conclusão técnica não significa liberação produtiva. MFA, identidade assistida,
 SMTP/segredos, observabilidade, backup/restauração e validação externa da
