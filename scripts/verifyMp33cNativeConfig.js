@@ -11,6 +11,7 @@ fs.mkdirSync(path.join(temporaryProject, 'src', 'assets', 'images'), {
 for (const file of ['app.config.js', 'app.json', 'package.json']) {
   fs.copyFileSync(path.join(projectRoot, file), path.join(temporaryProject, file));
 }
+fs.cpSync(path.join(projectRoot, 'plugins'), path.join(temporaryProject, 'plugins'), { recursive: true });
 fs.copyFileSync(
   path.join(projectRoot, 'src', 'assets', 'images', 'app-icon.png'),
   path.join(temporaryProject, 'src', 'assets', 'images', 'app-icon.png'),
@@ -49,6 +50,29 @@ if (result.status !== 0) {
 }
 
 const androidRoot = path.join(temporaryProject, 'android');
+const privacyFiles = ['MainActivity.kt', 'MainApplication.kt', 'HttpPrivacyPackage.kt'].map(file =>
+  path.join(androidRoot, 'app/src/main/java/com/tcheagro/mobile', file));
+const firstGeneration = privacyFiles.map(file => fs.readFileSync(file, 'utf8'));
+const repeated = spawnSync(process.execPath, [expoCli, 'prebuild', '--platform', 'android', '--no-install'], {
+  cwd: temporaryProject,
+  env: { ...process.env, CI: '1', APP_VARIANT: 'http', EXPO_PUBLIC_APP_VARIANT: 'http',
+    EXPO_PUBLIC_API_BASE_URL: 'https://api.tcheagro.example',
+    EXPO_PUBLIC_AUTH_ACTION_BASE_URL: 'https://conta.tcheagro.example/acoes' },
+  shell: false, stdio: 'inherit',
+});
+if (repeated.error) throw repeated.error;
+if (repeated.status !== 0) throw new Error('Repeated HTTP prebuild failed.');
+privacyFiles.forEach((file, index) => {
+  if (fs.readFileSync(file, 'utf8') !== firstGeneration[index]) throw new Error(`Non-idempotent privacy generation: ${file}`);
+});
+if ((firstGeneration[0].match(/setRecentsScreenshotEnabled\(false\)/g) || []).length !== 1 ||
+    (firstGeneration[1].match(/add\(HttpPrivacyPackage\(\)\)/g) || []).length !== 1) {
+  throw new Error('HTTP privacy registration missing or duplicated.');
+}
+if (firstGeneration[2] !== fs.readFileSync(path.join(projectRoot, 'plugins/http-privacy/HttpPrivacyPackage.kt'), 'utf8')) {
+  throw new Error('Generated privacy source differs from its versioned source.');
+}
+process.stdout.write('HTTP privacy generation is repeatable; Activity, package and native source verified.\n');
 const manifest = fs.readFileSync(
   path.join(androidRoot, 'app', 'src', 'main', 'AndroidManifest.xml'),
   'utf8',

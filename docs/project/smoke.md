@@ -1,11 +1,189 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-09-14
+> Atualizado em: 2026-09-15
 >
-> Última execução física registrada: 2026-08-24
+> Última execução física registrada: 2026-09-18 (API 35, APK arm64 novo)
+> Última execução emulada registrada: 2026-09-18 (API 32, reauditoria F-01)
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## Bug 2 e F-01 — aprovação independente — 2026-09-18
+
+**APROVADO PARA COMMIT DA CORREÇÃO DO BUG 2 — PROTEÇÃO EM RECENTES.**
+O [parecer independente final](../../dist/reaudit-f01-20260918/relatorio-reauditoria.md)
+encerrou F-01 e não encontrou defeito impeditivo ou correção obrigatória
+remanescente deste corte. API 32 x86_64 emulada e TCL 8483A/API 35 físico
+passaram, este com o APK arm64 novo da fonte corrigida. A pendência de testar
+esse novo APK no TCL deixou de ser atual; permanece no registro histórico de 17/09.
+
+Cronologia preservada: smoke de 15/09 encontrou Bug 2; primeira correção
+passou na API 35; complemento API 32 revelou F-01; tentativa intermediária
+tratou apenas parte da causa e foi insuficiente; a correção final tratou a
+Window/decor e a cópia da flag antes do attach; a reauditoria de 18/09 aprovou
+API 32 e a regressão física API 35 do novo APK.
+
+| Evidência | Execução própria do auditor em 18/09 |
+| --- | --- |
+| Typecheck | Passou |
+| Privacidade | 25/25: 14 de privacidade e 11 herdados/importados no runner, todos executados nessa invocação |
+| Instrumentação Android | 12/12; controle negativo independente sensível à divergência Window/decor |
+| API 32 | Primeiras capturas/reaberturas de status, Titular, filtros e confirmação; ciclo aninhado e amostra de Recentes passaram |
+| TCL 8483A/API 35 | Sete superfícies A–G, screenshots autorizados, Recentes direto/Home → Recentes e retornos passaram no APK arm64 novo |
+| Camadas e sessão | Janela superior liberada sem liberar inferiores; descarte pendente, erro neutro, recuperação online e force-stop/reabertura aprovados |
+| Proveniência/preservação | Fontes, APKs instalados, bundles e objeto Git conferidos pelo auditor |
+
+Os dez gates completos do implementador, inclusive D-4 340/340 e demais
+suítes da seção de 17/09, são **históricos**. Não foram reexecutados pela
+reauditoria final nem por este fechamento documental/Git. Suítes sobrepostas
+não são somadas como cobertura única. Neste fechamento foram conferidos
+hashes, delta documental, links e Git; nenhum serviço Android/QA foi iniciado.
+
+Qualificações do parecer preservadas:
+
+- A instrumentação libera o mecanismo nativo diretamente; HTTP/provider foi
+  observado separadamente no app conectado.
+- O controle negativo parou na primeira assertion; comprova sensibilidade à
+  divergência Window/decor, sem alegar controle negativo independente da segunda causa.
+- A primeira confirmação teve diferença de maiúsculas no argumento textual
+  do probe. O auditor resolveu por inspeção do PNG/XML/flags, conservando o
+  `result.json` original reprovado. Não substituiu essa captura por outra.
+- O ensaio histórico com `clientAlreadyClosed=true` não comprova entrega de
+  callback HTTP tardio. Gerações antigas são sustentadas pelos testes nativos/JS.
+- Demais APIs/fabricantes, casting e análise quadro a quadro não foram
+  executados. Debug/Metro/QA não certificam release ou operação produtiva.
+
+Bugs 1 (teclado sobre Titular) e 3 (Demo/ExpoAsset), isolamento funcional
+completo Demo/HTTP, revalidação integrada final e fechamento da D-4,
+integração posterior na `backend` e release/deploy/produção seguem pendentes.
+O smoke original não foi promovido integralmente para aprovado. CI remota
+permanece não consultada. Esta aprovação técnica não declara commit/push realizados.
+
+## F-01 — FLAG_SECURE em Dialog — 2026-09-17
+
+Registro histórico da execução do implementador. As pendências abaixo refletem
+17/09; a reauditoria e a amostra física API 35 foram concluídas em 18/09, acima.
+
+Correção focal do achado da [auditoria complementar API 32](../../dist/audit-bug2-api32-20260917/relatorio-complementar.md),
+que emitiu **CORREÇÕES OBRIGATÓRIAS**. A [auditoria de 16/09](../../dist/audit-bug2-independent-20260916/relatorio-independente.md)
+passou na amostra física API 35, mas não aprovou o objeto integral por falta
+de execução API 24–32. Essa lacuna foi resolvida pelo AVD API 32 e revelou F-01.
+Os pareceres, APKs e capturas anteriores permanecem preservados.
+
+Antes da edição funcional, status e filtros reproduziram o defeito: conteúdo
+visível no display, Dialog superior com `FLAG_SECURE` e primeiro PNG SystemUI
+preto. A causa confirmada reúne atributos da `Window` divergentes do decor
+após cópia de `LayoutParams` e perda do registro da flag própria no intervalo
+entre criação e attach de Dialog RN. A correção usa a Window efetiva e mantém
+a propriedade dessa cópia; não muda sessão, timeout, negócios ou API 33+.
+
+Execução própria: AVD existente `Tche_Bug2_API32`, Android API 32, x86_64,
+imagem oficial revisão 2, APK HTTP debug novo, Metro e QA local preservado.
+
+| Reteste API 32 | Resultado |
+| --- | --- |
+| Status, Titular, filtros e confirmação | 3 aberturas por superfície; 12 primeiros PNGs SystemUI legíveis |
+| Activity e Dialogs inferiores | Protegidos antes das capturas; só a janela superior autorizada liberada |
+| Matriz A–G | Recentes direto e Home → Recentes protegidos nas sete superfícies; retorno autorizado |
+| Raiz → status → seletor → status → raiz | 3 ciclos; captura de retorno funciona e janelas descartadas não permanecem |
+| Regressão nativa permanente | 12 verificações em Activity/RN Dialog/WindowManager reais, incluindo geração antiga e flags externas |
+
+O [relatório focal A–K](../../dist/fix-f01-api32-20260917/relatorio-final.md)
+discrimina cada primeira captura, tentativas com pré-condição inválida,
+falhas intermediárias, pendência real de `/me`, descarte, erro/recuperação,
+orientação, force-stop, proveniência e preservação. Nenhuma captura falha foi
+substituída. O [roteiro permanente](http-privacy-android-regression.md) documenta
+o runner nativo e o probe SystemUI; a suíte JS sozinha não comprova WindowManager.
+
+Gates reexecutados sobre a fonte final: typecheck; privacidade **25/25**;
+D-4 **340/340**; D-3 **106/106**; D-2 **85/85**; D-1 **55/55**;
+domain-compat; configuração nativa; grafo nativo; bundles HTTP/Demo. Todos
+passaram. Há casos compartilhados: não somar os números como cobertura única.
+O teste nativo demonstrou falha antes e sucesso depois, além das telas reais.
+
+**API 35 física do código novo: pendente.** O TCL não estava conectado.
+O APK arm64 novo foi gerado da mesma fonte corrigida; a aprovação física de
+15–16/09 é histórica e não prova esse novo binário. Não foram executadas todas
+as APIs/fabricantes nem casting. O ambiente debug/Metro não certifica release.
+Backend/PostgreSQL integral não foi repetido, pois não houve alteração backend.
+
+**F-01 corrigido e validado na API 32; aguardando reauditoria independente.**
+Bugs 1 e 3, isolamento funcional completo do Demo, fechamento da D-4,
+integração final na `backend` e release permanecem pendentes. Sem staging,
+commit ou push nesta rodada.
+
+## MP-35D-4 — Bug 2 Recentes — 2026-09-15
+
+Registro histórico da rodada de 15/09; o complemento API 32 e a correção
+F-01 de 17/09 estão na seção acima. As limitações e o parecer abaixo refletem
+o momento daquela execução.
+
+O [smoke físico original](../../dist/smoke-mp35d4-android/relatorio-final.md)
+em `1874ff5690d95c1c01b999bcdfc63c249706cb38` foi **REPROVADO**:
+Bug 1, teclado cobrindo Titular; Bug 2, formulário HTTP exposto em Recentes;
+Bug 3, Demo não inicia por ExpoAsset. O diretório original foi preservado
+integralmente, com manifesto SHA-256 anterior à correção.
+
+Esta rodada trata **somente Bug 2**, em `feat/mp-35d`, HEAD acima + worktree,
+sem staging/commit/push. [Relatório focal A–K, APK, hashes e capturas](../../dist/fix-bug2-recents-20260915/relatorio-final.md).
+
+O defeito foi reproduzido novamente antes de alterar código: Recentes direto
+e Home → 2 s → Recentes exibiam o formulário preenchido. A proteção anterior
+dependia de `AppState.change` e de atualização React; não havia política
+nativa de snapshot nem cobertura própria de `Dialog`. O instante exato de
+captura do compositor não foi instrumentado. A solução gera política de
+Recentes na Activity HTTP e cobertura nativa por janela, com liberação
+vinculada à geração de foco e à política existente de sessão.
+
+Alvo físico: TCL 8483A, Android 15/API 35, 800×1280, 240 dpi, ARM64. Backend
+QA preservado, sem recriação de fixtures ou migrations. Formulários não
+enviados; propriedade QA existente permaneceu ativa, versão 6.
+
+| Superfície | Recentes direto | Home → aguardar → Recentes | Resultado observado |
+| --- | --- | --- | --- |
+| A. Nova preenchida | 3 | 3 | Neutra; rascunho preservado |
+| B. Editar autoritativa + alteração local | 3 | 3 | Neutra; alteração não enviada preservada |
+| C. Seletor Titular | 1 | 1 | Modal protegido; retorno funcional |
+| D. Status, Outro + detalhe sintético | 1 | 1 | Modal protegido; sem PATCH |
+| E. Detalhe autenticado | 1 | 1 | Neutra; retorno autorizado |
+| Complemento: Filtros / Confirmar saída | 1 cada | 1 cada | Janelas protegidas; canceladas sem ação |
+
+São **18 ciclos obrigatórios**, além de 4 complementares, com captura real
+do Android inspecionada visualmente. Nos ciclos diretos com teclado, o IME
+do sistema aparece sem os valores de negócio; a área HTTP fica coberta.
+Snapshots Home aparecem neutros em cinza. Screenshots no foreground funcionam.
+
+Controle de falha: o reverse da API foi direcionado temporariamente a um
+receptor local que não responde; o timeout original de 8 s foi preservado.
+A captura física durante `/me` pendente ficou coberta. Após a falha, a tela
+mostrou indisponibilidade; restaurar o reverse e tentar novamente recuperou
+o acesso. Ao desmontar o modal, o foco da raiz iniciou outra revalidação,
+também coberta. Não houve mutação de negócio nas transições.
+
+Force-stop/reabertura e desbloqueio passaram após reinício controlado do Metro,
+que inicialmente respondia `/status` mas não entregava o bundle. Nenhuma
+limpeza de dados/cache foi feita. Logcat após a instalação corrigida: zero
+fatal e zero ANR; avisos `ReactNoCrashSoftException` de foco antes do contexto
+React pronto permanecem registrados. O fatal anterior, de 14:06, pertence ao
+APK original iniciado sem Metro disponível e não foi apagado do relatório.
+
+Gates executados sequencialmente: `typecheck`; D-4 **340/340**; D-3 **106/106**;
+D-2 **85/85**; D-1 **55/55**; `test:domain-compat`; geração nativa repetida e
+idempotente; `test:native-graph:mp33c`; `test:bundle:mp33c`; build HTTP real.
+Suíte nova `test:privacy:mp35d4`: **25/25**, sendo 11 casos herdados do harness
+de navegação e 14 focados, incluindo pendência/erro/retorno, StrictMode,
+callbacks antigos, listeners, fronteira de 15 minutos e lock sem logout.
+As suítes compartilham casos; esses números não devem ser somados como testes
+únicos. Logs, falhas intermediárias de desenvolvimento/ambiente e reabertura
+final estão discriminados no relatório focal.
+
+Limitações: minSdk **24** mantido. O caminho API 24–32 com flag temporária
+por janela foi compilado/inspecionado, sem dispositivo ou imagem de emulador
+compatível disponível; a API 35 não comprova essas versões. Build debug
+depende do Metro e não é validação de release/loja. Configuração, grafos e
+bundles Demo foram preservados, mas seu isolamento funcional continua
+bloqueado pelo Bug 3. Bugs 1 e 3 permanecem abertos. **Bug 2 aguarda auditoria
+independente; MP-35D/D-4 continuam abertas.**
 
 ## MP-35D-4 — smoke automatizado do status visual — 2026-09-14
 

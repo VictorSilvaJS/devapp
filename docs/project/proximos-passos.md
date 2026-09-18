@@ -1,10 +1,11 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-14
+> Atualizado em: 2026-09-18
 >
-> Tarefa atual: fechamento Git autorizado do fluxo visual separado de status de Propriedade;
+> Corte atual: Bug 2/F-01 aprovado independentemente para fechamento controlado na feat/mp-35d;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
-> Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`; Android físico pendente
+> Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`, status em `1874ff5`;
+> F-01 encerrado em 18/09; API 32 e novo APK na API 35 aprovados; Bugs 1/3 e D-4 abertos
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
@@ -50,12 +51,21 @@ O fechamento dos formulários/navegação foi concluído em `e5db497`, com hash
 remoto confirmado. O corte seguinte implementou modal local de status no detalhe
 HTTP, separado da edição cadastral, com motivo/confirmar/recibo/GET e recovery.
 Auditoria independente: 38/38 critérios e 33/33 probes; nenhum achado obrigatório.
-Próximo passo autorizado: revisão, staging explícito, commit e push somente para
-`feat/mp-35d`, com confirmação do hash remoto. Android físico e integração final
-continuam posteriores; nenhuma nova funcionalidade autorizada.
+O status foi fechado em `1874ff5`. O smoke físico de 15/09 encontrou os Bugs
+1 (teclado/Titular), 2 (Recentes HTTP) e 3 (ExpoAsset no Demo). A correção do
+Bug 2 passou na amostra física API 35 de 15–16/09. A auditoria complementar
+API 32 de 17/09 reproduziu F-01 e emitiu correções obrigatórias. A correção
+focal F-01 trata a Window efetiva e a cópia antes do attach, após tentativa
+intermediária insuficiente. Em 18/09, a reauditoria aprovou o Bug 2 para commit,
+com F-01 encerrado, API 32 emulada e amostra física no TCL API 35 usando o APK
+arm64 novo. Nenhuma correção obrigatória remanesce deste Bug 2. O fechamento
+controlado é exclusivo da `feat/mp-35d`. A fila posterior mantém Bugs 1 e 3,
+isolamento funcional Demo/HTTP e revalidação integrada final da D-4 pendentes;
+não há autorização de implementação desses itens neste fechamento.
 Evidências em [testes de contrato](testes-contrato-api-rbac.md).
 Vínculos e transferência permanecem fora.
-Android físico não executado; CI remota não consultada. MP-35D/D-4 continuam em
+Ver [aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18) e suas limitações
+de APIs/fabricantes e build debug/Metro. CI remota não consultada. MP-35D/D-4 continuam em
 andamento; integração final na `backend` é posterior, sem renumeração de D-5/D-6/D-7.
 
 ## Ponto de partida

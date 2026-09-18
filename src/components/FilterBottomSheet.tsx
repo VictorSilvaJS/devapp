@@ -1,3 +1,4 @@
+import { VisualPrivacyBoundary } from './VisualPrivacyBoundary';
 import React, {
   ReactNode,
   useCallback,
@@ -277,6 +278,7 @@ export default function FilterBottomSheet({
       statusBarTranslucent
       onRequestClose={closeWithAnimation}
     >
+      <VisualPrivacyBoundary style={{ flex: 1 }}>
       <View style={styles.modalRoot} testID={testID}>
         <Pressable
           style={styles.backdrop}
@@ -363,6 +365,7 @@ export default function FilterBottomSheet({
           </View>
         </Animated.View>
       </View>
+      </VisualPrivacyBoundary>
     </Modal>
   );
 }

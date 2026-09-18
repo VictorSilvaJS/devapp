@@ -19,6 +19,7 @@ import {
 } from './sessionCoordinator';
 import { safeClientErrorMessage } from './errorMessages';
 import { colors, spacing, typography } from '../theme';
+import { VisualPrivacyBoundary, VisualPrivacyContext } from '../components/VisualPrivacyBoundary';
 
 const LOCK_AFTER_MS = 15 * 60 * 1_000;
 
@@ -81,6 +82,17 @@ export function HttpSessionProvider({
   const lastActivityAt = React.useRef(monotonicNow());
   const statusRef = React.useRef(status);
   const appStateGeneration = React.useRef(0);
+  const lifecycle = React.useRef<object | null>(null);
+  const returnFlight = React.useRef<{ generation: number; promise: Promise<void> } | null>(null);
+
+  React.useEffect(() => {
+    lifecycle.current = {};
+    return () => {
+      lifecycle.current = null;
+      appStateGeneration.current += 1;
+      returnFlight.current = null;
+    };
+  }, [runtime]);
 
   React.useEffect(() => {
     statusRef.current = status;
@@ -214,11 +226,58 @@ export function HttpSessionProvider({
     }
   }, [runtime]);
 
+  // UI return coordination only. SessionCoordinator retains authority and /me ordering.
+  // Native focus and AppState resume share the same return; neither releases an old cycle.
+  const validateReturn = React.useCallback((): Promise<void> => {
+    const generation = appStateGeneration.current;
+    if (returnFlight.current?.generation === generation) return returnFlight.current.promise;
+    const instance = lifecycle.current;
+    const epoch = runtime.session.epoch;
+    const current = () => instance !== null && lifecycle.current === instance &&
+      generation === appStateGeneration.current && AppState.currentState === 'active';
+    setPrivacyShield(true);
+    const promise = (async () => {
+      const startedAt = backgroundAt.current;
+      // Keep the original timestamp until the return is accepted, including concurrent focus.
+      if (startedAt !== null && runtime.session.snapshot !== null &&
+          monotonicNow() - startedAt >= LOCK_AFTER_MS) {
+        await logout();
+        if (current()) setMessage('Entre novamente após 15 minutos em segundo plano.');
+      } else if (runtime.session.snapshot !== null &&
+          statusRef.current !== 'locked' && statusRef.current !== 'booting') {
+        try {
+          const next = await runtime.session.revalidate();
+          if (!current() || runtime.session.epoch !== epoch) return;
+          setSnapshot(next);
+          setStatus('authenticated');
+          setMessage(null);
+        } catch (error) {
+          if (!current()) return;
+          if (runtime.session.epoch !== epoch && runtime.session.snapshot !== null) return;
+          setStatus(preservesUnavailableSession(error, runtime.session.snapshot) ||
+            (error instanceof ApiResponseError && error.status === 503) ? 'unavailable' : 'anonymous');
+          setMessage(controlledMessage(error));
+        }
+      }
+      if (current()) {
+        backgroundAt.current = null;
+        lastActivityAt.current = monotonicNow();
+        if (statusRef.current !== 'booting') setPrivacyShield(false);
+      }
+    })();
+    const flight = { generation, promise };
+    returnFlight.current = flight;
+    void promise.finally(() => {
+      if (returnFlight.current === flight) returnFlight.current = null;
+    }).catch(() => { /* Caller keeps the visual protection on unexpected failure. */ });
+    return promise;
+  }, [logout, runtime]);
+
   React.useEffect(() => {
     const handleAppState = (nextState: AppStateStatus) => {
-      const generation = appStateGeneration.current + 1;
-      appStateGeneration.current = generation;
       if (nextState !== 'active') {
+        appStateGeneration.current += 1;
+        returnFlight.current = null;
         setPrivacyShield(true);
         if (backgroundAt.current === null) {
           backgroundAt.current = monotonicNow();
@@ -226,52 +285,16 @@ export function HttpSessionProvider({
         return;
       }
 
-      const startedAt = backgroundAt.current;
-      backgroundAt.current = null;
-      if (startedAt === null) {
-        setPrivacyShield(false);
-        return;
-      }
-
-      const elapsed = Math.max(0, monotonicNow() - startedAt);
-      void (async () => {
-        if (runtime.session.snapshot !== null && elapsed >= LOCK_AFTER_MS) {
-          await logout();
-          setMessage('Entre novamente após 15 minutos em segundo plano.');
-        } else if (
-          runtime.session.snapshot !== null &&
-          statusRef.current !== 'locked'
-        ) {
-          try {
-            const next = await runtime.session.revalidate();
-            setSnapshot(next);
-            setStatus('authenticated');
-          } catch (error) {
-            if (
-              preservesUnavailableSession(error, runtime.session.snapshot) ||
-              (error instanceof ApiResponseError && error.status === 503)
-            ) {
-              setStatus('unavailable');
-              setMessage(controlledMessage(error));
-            } else {
-              setStatus('anonymous');
-              setMessage(controlledMessage(error));
-            }
-          }
-        }
-        if (
-          appStateGeneration.current === generation &&
-          AppState.currentState === 'active'
-        ) {
-          lastActivityAt.current = monotonicNow();
-          setPrivacyShield(false);
-        }
-      })();
+      void validateReturn().catch(() => { /* Stay covered until a valid return. */ });
     };
 
     const subscription = AppState.addEventListener('change', handleAppState);
-    return () => subscription.remove();
-  }, [logout, runtime]);
+    return () => {
+      subscription.remove();
+      appStateGeneration.current += 1;
+      returnFlight.current = null;
+    };
+  }, [validateReturn]);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -319,7 +342,8 @@ export function HttpSessionProvider({
 
   return (
     <HttpSessionContext.Provider value={value}>
-      <View style={styles.root} onTouchStart={markActivity}>
+      <VisualPrivacyContext.Provider value={{ covered: privacyShield, validateReturn }}>
+      <VisualPrivacyBoundary style={styles.root} onTouchStart={markActivity}>
         {children}
         {status === 'locked' && !privacyShield ? (
           <View
@@ -383,7 +407,8 @@ export function HttpSessionProvider({
             <Text style={styles.privacyMessage}>Conteúdo protegido</Text>
           </View>
         ) : null}
-      </View>
+      </VisualPrivacyBoundary>
+      </VisualPrivacyContext.Provider>
     </HttpSessionContext.Provider>
   );
 }

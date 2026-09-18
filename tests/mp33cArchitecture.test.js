@@ -95,7 +95,7 @@ test('configuração resolvida separa IDs, plugins e permissões', () => {
     assert.deepEqual(config.plugins, [[
       'expo-secure-store',
       { configureAndroidBackup: true },
-    ]]);
+      ], './plugins/withHttpPrivacy']);
     assert.deepEqual(config.android.permissions, []);
     for (const permission of [
       'android.permission.ACCESS_COARSE_LOCATION',

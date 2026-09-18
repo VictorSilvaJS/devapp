@@ -1,4 +1,5 @@
 import React from 'react';
+import { VisualPrivacyBoundary } from './VisualPrivacyBoundary';
 import { 
   View, 
   Text, 
@@ -74,6 +75,7 @@ export default function ConfirmDialog({
       animationType="fade"
       onRequestClose={onCancel}
     >
+      <VisualPrivacyBoundary style={{ flex: 1 }}>
       <Pressable 
         style={styles.overlay} 
         onPress={loading ? undefined : onCancel}
@@ -123,6 +125,7 @@ export default function ConfirmDialog({
           </View>
         </Pressable>
       </Pressable>
+      </VisualPrivacyBoundary>
     </Modal>
   );
 }

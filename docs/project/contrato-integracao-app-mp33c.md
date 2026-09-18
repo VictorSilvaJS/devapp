@@ -1,6 +1,6 @@
 # Contrato de Integração do Aplicativo — MP-33C
 
-> Revisão documental: 2026-08-21
+> Revisão documental: 2026-09-18
 >
 > Estado: INTEGRADA E VALIDADA TECNICAMENTE; NÃO LIBERADA PARA PRODUÇÃO
 
@@ -242,6 +242,64 @@ Depois, o cliente tenta a revogação remota em melhor esforço, sem usar
 A MP-33C não introduz PIN ou biometria. Uma evolução pode adotá-los para
 destravar sessão ainda válida, sem substituir autenticação e autorização do
 servidor.
+
+### Android HTTP — correção focal de Recentes (2026-09-15)
+
+O smoke físico da D-4 reprovou a proteção anterior: a camada React acionada
+por `AppState.change` não impediu a miniatura com o formulário. Modais React
+Native usam janelas `Dialog` separadas; a cobertura da Activity não basta.
+A correção no worktree sobre `1874ff5` distingue três responsabilidades:
+
+- Recentes: na API 33+, a Activity HTTP usa
+  `setRecentsScreenshotEnabled(false)` com guarda de versão. A representação
+  neutra do sistema é válida; o aplicativo continua em Recentes.
+- Perda de foco/background: `HttpPrivacyView` cobre nativamente a raiz HTTP e
+  cada janela pertinente de seletor, status, filtro e confirmação. A perda de
+  foco de uma janela também cobre seu conteúdo atrás de um modal.
+- Retorno: a geração nativa só é liberada depois da política do provider.
+  AppState e foco compartilham a revalidação pendente, preservando o
+  `SessionCoordinator`, seu epoch e a ordenação de `/me`. Respostas antigas
+  não liberam outra geração. Erros mostram indisponibilidade sem dados;
+  bloqueio local continua exigindo senha. Os tempos de 15 minutos não mudam.
+
+O plugin `plugins/withHttpPrivacy.js` gera a integração exclusivamente no
+pacote `com.tcheagro.mobile`; gerações repetidas devem manter uma única
+inscrição. O Demo não monta o componente nativo e mantém sua configuração.
+Não há dependência nova, aumento de minSdk, limpeza de rascunho para esconder
+miniatura, logout por Home nem proibição permanente de screenshots.
+
+O minSdk efetivo continua **24**. Na API 24–32, a cobertura aplica
+`FLAG_SECURE` temporário à janela que possui, removendo-o ao liberar o conteúdo
+autorizado, inclusive em Dialog que herdou a flag da Activity. Em 15–16/09,
+esse caminho ainda não havia sido executado por falta de alvo; a amostra
+física API 35 passou. Em 17/09, a auditoria complementar no AVD API 32
+reproduziu F-01: Dialog autorizado conservava a flag e seu primeiro PNG ficava
+preto. Os pareceres anteriores permanecem preservados.
+
+A correção F-01 trata a `Window` efetiva, identificada pelo decor da Activity
+ou do `ReactModalHostView`. Usa `Window.addFlags/clearFlags`, mantendo coerentes
+os atributos que o RN lê e os parâmetros do decor, mesmo quando o WindowManager
+substitui estes por uma cópia. O registro fraco de propriedade inclui a cópia
+da flag própria em Dialog recém-exibido ainda não anexado, antes de liberar a
+Activity. A liberação alcança somente a janela atual e a flag própria; flags
+externas e janelas inferiores continuam protegidas. O detach remove listener
+e registro próprios. Geração, foco, sessão, API 33+ e isolamento HTTP/Demo
+mantêm seus contratos.
+
+Há [regressão Android permanente](http-privacy-android-regression.md) com
+janelas RN reais, além da suíte JS. A pendência de API 35 do APK arm64 novo
+registrada em 17/09 foi encerrada na reauditoria independente de 18/09:
+API 32 x86_64 emulada e TCL 8483A/API 35 físico passaram com a fonte final.
+O parecer aprovou o Bug 2 para commit e encerrou F-01, sem correção obrigatória
+remanescente deste corte. Screenshots autorizados, proteção em Recentes,
+liberação apenas da janela superior, falha/recuperação e reabertura passaram.
+A instrumentação autoriza o nativo diretamente; o percurso HTTP/provider foi
+verificado separadamente no app. Casting, demais APIs/fabricantes e análise
+quadro a quadro não foram exercitados.
+
+Ver [aprovação e limites da evidência](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18).
+O Bug 3 impede aprovar isolamento funcional Demo/HTTP. Bugs 1 e 3, revalidação
+integrada final da D-4, integração na backend e release permanecem pendentes.
 
 ## Limite offline da MP-33C
 

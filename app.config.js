@@ -25,7 +25,7 @@ module.exports = () => {
 
   const expo = staticConfig.expo;
   const actionLink = configuredActionLink();
-  const plugins = [['expo-secure-store', { configureAndroidBackup: true }]];
+  const plugins = [['expo-secure-store', { configureAndroidBackup: true }], './plugins/withHttpPrivacy'];
 
   return {
     ...expo,

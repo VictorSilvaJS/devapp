@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, inputStyles, modalStyles, semanticColors, spacing, typography } from '../theme';
 import FormField from './FormField';
+import { VisualPrivacyBoundary } from './VisualPrivacyBoundary';
 
 export type SelectFieldOption = {
   value: string;
@@ -102,6 +103,7 @@ export default function SelectField({
       {!error && helperText ? <Text style={styles.helperText}>{helperText}</Text> : null}
 
       <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
+        <VisualPrivacyBoundary style={{ flex: 1 }}>
         <Pressable style={modalStyles.overlay as ViewStyle} onPress={close}>
           <Pressable style={styles.dialog} onPress={() => undefined}>
             <View style={styles.header}>
@@ -166,6 +168,7 @@ export default function SelectField({
             </ScrollView>
           </Pressable>
         </Pressable>
+        </VisualPrivacyBoundary>
       </Modal>
     </View>
   );

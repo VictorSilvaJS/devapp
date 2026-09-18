@@ -6,6 +6,7 @@ import FormField from '../../components/FormField';
 import InfoBox from '../../components/InfoBox';
 import SectionCard from '../../components/SectionCard';
 import SelectField from '../../components/SelectField';
+import { VisualPrivacyBoundary } from '../../components/VisualPrivacyBoundary';
 import { colors, spacing } from '../../theme';
 import { useHttpSession } from '../HttpSessionContext';
 import { canAdministerProperties } from '../administrativePropertyFormAccess';
@@ -75,6 +76,7 @@ function StatusDialog({ property, isCurrent, onClose }: { property: Administrati
   const confirmed = !!command?.mutationConfirmed;
   const disabled = !state?.active || state.busy || confirmed || state.review || command?.phase === 'ambiguous';
   return <Modal visible transparent={false} animationType="slide" onRequestClose={close}>
+    <VisualPrivacyBoundary style={{ flex: 1 }}>
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={{ padding: spacing.screen, gap: spacing.md }} keyboardShouldPersistTaps="handled">
         <Text accessibilityRole="header">{title}</Text>
@@ -114,5 +116,6 @@ function StatusDialog({ property, isCurrent, onClose }: { property: Administrati
         <HttpButton title={confirmed || state?.busy ? 'Fechar' : 'Cancelar'} variant="secondary" onPress={close} />
       </ScrollView>
     </SafeAreaView>
+    </VisualPrivacyBoundary>
   </Modal>;
 }

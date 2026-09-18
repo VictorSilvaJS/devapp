@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-14
+> Revisão documental: 2026-09-18
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -36,20 +36,35 @@ critérios e 14/14 probes. Nenhum achado obrigatório permanece. Formulários HT
 e navegação mínima foram fechados em `e5db497`, com hash remoto confirmado.
 
 Status visual aprovado independentemente: 38/38 critérios, 33/33 probes e
-nenhum achado obrigatório. Fechamento Git autorizado; auditoria deixou de ser
-pendência. F1/N1, edição cadastral sem status e Demo preservados.
+nenhum achado obrigatório, fechado em `1874ff5`. O smoke físico posterior,
+em 15/09, reprovou a D-4 com três bugs. A correção focal do Bug 2 de Recentes
+passou na amostra física API 35 de 15–16/09, mas a auditoria complementar API
+32 de 17/09 encontrou F-01. A reauditoria de 18/09 aprovou a correção completa
+do Bug 2 para commit, encerrou F-01 e não deixou correção obrigatória deste
+corte. API 32 x86_64 emulada e TCL 8483A/API 35 com o APK arm64 novo passaram.
+F1/N1 e a edição cadastral sem status permanecem preservados.
 
 Permanecem pendentes:
 
-- validação funcional Android física da D-4 e integração final da MP-35D na
-  branch `backend`, posteriores;
+- Bug 1: teclado cobrindo Titular; Bug 3: Demo não inicia por ExpoAsset.
+  Ambos continuam abertos e fora da correção de Recentes;
+- isolamento funcional Demo/HTTP bloqueado pelo Bug 3. Configuração, grafos e
+  bundles preservados não equivalem a aprovar o runtime Demo;
+- reaprovação do smoke físico geral da D-4 e integração final da MP-35D na
+  branch `backend`, posteriores. Ver [aprovação do Bug 2](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18);
+- release, deploy e produção, sem aprovação decorrente deste fechamento;
 - vínculos e transferência de Titularidade continuam fora desta entrega.
 
 A1 e o fechamento de Titular/Localidades deixaram de ser pendências.
 
 As auditorias e os fechamentos do decimal e da integração HTTP anterior,
-incluindo F1, deixaram de ser pendências. O corte atual não altera backend,
-OpenAPI ou RBAC; não consultou CI remota nem executou Android físico.
+incluindo F1, deixaram de ser pendências. Naquele corte anterior não houve
+Android físico nem consulta à CI remota. A correção F-01 atual também não
+altera backend, OpenAPI ou RBAC. O implementador executou API 32 emulada em
+17/09; a reauditoria executou API 32 e API 35 física em 18/09. As antigas
+pendências de reauditoria F-01 e novo APK no TCL foram encerradas. Demais
+APIs/fabricantes, casting e análise quadro a quadro não foram executados;
+esses limites não constituem novos achados impeditivos do corte aprovado.
 
 A representação já foi decidida: `area_total` numérico permanece e
 `area_total_decimal` textual é adicional, somente de leitura e autoritativo

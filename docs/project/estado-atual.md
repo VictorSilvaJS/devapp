@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-14
+> Revisão documental: 2026-09-18
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -86,7 +86,21 @@ fechado e enviado em `27df7335efd4ab352245c48f6b022da1d99f0987`, com hash remoto
 confirmado. A etapa seguinte implementa Titular e Localidades internamente,
 com A1 corrigido e encerrado na reauditoria independente, fechada em `37a8790`.
 Criação/edição e navegação mínima foram fechadas em `e5db497`, com N1 encerrado.
-O status visual separado foi aprovado independentemente para commit, sem achado obrigatório.
+O status visual separado foi fechado em `1874ff5`. O smoke Android físico de
+15/09 reprovou a D-4 com três bugs: teclado cobrindo Titular, formulário HTTP
+exposto em Recentes e Demo sem iniciar por ExpoAsset. O Bug 2 recebeu correção
+focal no worktree e revalidação física no TCL 8483A/API 35. A auditoria de
+16/09 aprovou a amostra API 35, mantendo a lacuna API 24–32. A auditoria
+complementar de 17/09 executou API 32 e exigiu correção de F-01, flag residual
+no primeiro screenshot de Dialog autorizado. A correção focal F-01 usa a
+Window efetiva e a cópia antes do attach, após uma tentativa intermediária
+insuficiente. A reauditoria independente de 18/09 aprovou o Bug 2 para commit,
+encerrou F-01 e não deixou correção obrigatória remanescente deste corte.
+Executou API 32 x86_64 emulada e TCL 8483A/API 35 físico com o APK arm64 novo:
+screenshots autorizados, proteção em Recentes, janelas inferiores, falha e
+recuperação da revalidação e reabertura passaram. Bugs 1 e 3 seguem abertos;
+o isolamento funcional Demo/HTTP continua bloqueado pelo Bug 3. Ver
+[aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18).
 
 Estado formal da sequência administrativa:
 
@@ -99,7 +113,9 @@ Estado formal da sequência administrativa:
   administrativa de Propriedades fechada em `27df733` na `feat/mp-35d`.
   Titular/Localidades internos fechados em `37a8790`, com A1 encerrado.
   Formulários/navegação fechados em `e5db497`, N1 encerrado; status visual separado
-  aprovado independentemente para commit. A integração
+  fechado em `1874ff5`; Bug 2 aprovado independentemente para commit em 18/09,
+  com F-01 encerrado e novo APK validado na API 35 física.
+  O smoke geral segue reprovado pelos Bugs 1 e 3. A integração
   final da MP-35D na `backend` permanece posterior.
 
 ## MP-35D-4 — fluxo visual separado de status — 2026-09-14

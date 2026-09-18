@@ -63,6 +63,20 @@ const PRODUCER_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const COLLABORATOR_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const FRAME = Object.freeze({ x: 0, y: 0, width: 400, height: 800 });
 const INSETS = Object.freeze({ top: 0, right: 0, bottom: 0, left: 0 });
+const appStateListeners = new Map();
+const appStateControl = {
+  currentState: 'active',
+  addEventListener(event, callback) {
+    const listeners = appStateListeners.get(event) ?? new Set();
+    listeners.add(callback); appStateListeners.set(event, listeners);
+    return { remove() { listeners.delete(callback); } };
+  },
+  emit(state) {
+    this.currentState = state;
+    for (const callback of [...(appStateListeners.get('change') ?? [])]) callback(state);
+  },
+  listenerCount() { return [...appStateListeners.values()].reduce((sum, listeners) => sum + listeners.size, 0); },
+};
 
 function deferred() {
   let resolve;
@@ -162,10 +176,7 @@ const nativeMock = {
     spring: animation,
     timing: animation,
   },
-  AppState: {
-    currentState: 'active',
-    addEventListener() { return { remove() {} }; },
-  },
+  AppState: appStateControl,
   Dimensions: {
     get: () => FRAME,
     addEventListener: () => ({ remove() {} }),
@@ -226,6 +237,7 @@ const nativeMock = {
   TextInput: host('TextInput'),
   TouchableOpacity: host('TouchableOpacity'),
   UIManager: { getViewManagerConfig: () => null },
+  requireNativeComponent: name => host(name),
   View: NativeView,
   findNodeHandle: () => null,
   useWindowDimensions: () => ({ ...FRAME, scale: 1, fontScale: 1 }),
@@ -1190,6 +1202,7 @@ test('deep-link administrativo é formalmente não aplicável ao produto atual',
 });
 
 module.exports = {
+  appStateControl,
   USER_ID,
   React,
   TestRenderer,
