@@ -121,7 +121,19 @@ encerrados, volume/configuração preservados e reverses próprios removidos.
 Código e hashes da correção permaneceram iguais. A correção do Bug 3 foi
 aprovada independentemente para commit; a rechecagem de 22/09/2026 encerrou
 AUD-B3-01, sem pendência técnica ou documental desse parecer. O fechamento
-Git está sendo realizado nesta etapa. Bug 1 e D-4 continuam abertos; integração
+Git foi concluído em `ac42443`. Em 22/09, a melhoria do Bug 1 em retrato recebeu
+parecer independente favorável à consolidação técnica: opções, busca, rolagem
+e seleção utilizáveis na amostra TCL, com código e testes auditados preservados.
+O complemento comprovou duas seleções ainda em paisagem após Pesquisar encerrar
+editor e teclado, sem Home/Recentes; seleção com teclado simultaneamente visível
+continua não atendida. No API 32, uso comprovado no display do AVD; screenshot
+SystemUI com IME preto, sem IME autorizado, causa e relação com o delta não
+determinadas. Não se classifica automaticamente como novo F-01. O usuário decidiu
+manter a proteção visual e o fundo opaco/verde atuais; avaliar a visualização do
+formulário atrás do modal exige tarefa futura com revisão de privacidade, pois
+muda o conteúdo visível, não apenas a tonalidade. Nenhuma nova implementação
+nesta consolidação. Bug 1 integral, aceite de produto das limitações e D-4 abertos.
+Ver [alcance e limitações do reteste](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22). Integração
 na `backend` e release não realizados. Ver
 [controle no QA novo](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21),
 [reteste físico do Bug 3](smoke.md#bug-3--reteste-físico-demo-e-pendência-qa--2026-09-21) e
@@ -139,16 +151,28 @@ Estado formal da sequência administrativa:
   Titular/Localidades internos fechados em `37a8790`, com A1 encerrado.
   Formulários/navegação fechados em `e5db497`, N1 encerrado; status visual separado
   fechado em `1874ff5`; Bug 2/F-01 fechado em `f0fa1f6`, com novo APK
-  validado na API 35 física. Bug 3 corrigido no worktree e validado no TCL em
+  validado na API 35 física. Bug 3 fechado em `ac42443` e validado no TCL em
   21/09. O controle HTTP autenticado e a passagem Demo → HTTP → Demo foram
   concluídos em 21/09/2026 no QA novo autorizado `mp35d4_bug3_validation_qa`.
   A auditoria independente de 22/09/2026 confirmou a suficiência técnica da
   correção do Bug 3, do gate e das evidências no escopo declarado. A rechecagem
   documental de 22/09 encerrou AUD-B3-01 e aprovou o corte para commit, sem
-  pendência técnica ou documental desse parecer. Fechamento Git em execução
-  nesta etapa. O Bug 1 do teclado, a revalidação integrada e o fechamento da
+  pendência técnica ou documental desse parecer. A melhoria do Bug 1 em retrato
+  tem parecer favorável à consolidação técnica. Duas execuções comprovaram
+  seleção ainda em paisagem após Pesquisar encerrar teclado/editor, sem Home ou
+  Recentes. Uso API 32 comprovado no display; captura SystemUI com IME preta,
+  sem causa ou relação causal com o delta determinadas. Proteção e fundo atuais
+  mantidos por decisão do usuário, sem nova alteração visual. Seleção simultânea
+  ao teclado em paisagem, captura API 32 com IME e aceite residual de produto
+  continuam abertos; Bug 1 integral não encerrado.
+  A revalidação integrada e o fechamento da
   D-4 continuam pendentes; integração na `backend` e release não realizados.
   O QA antigo não foi recuperado.
+
+O complemento preservou consulta, seleção, Nome, Área e Cultura nos dois ciclos
+funcionais e no retorno ao retrato. Após interrupção USB/revalidação posterior,
+o formulário já não estava aberto; não houve toque confirmado em Cancelar.
+A conclusão de preservação do rascunho não se estende àquela interrupção.
 
 ## MP-35D-4 — fluxo visual separado de status — 2026-09-14
 

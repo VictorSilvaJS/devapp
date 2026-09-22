@@ -193,6 +193,7 @@ const nativeMock = {
   },
   Image: host('Image'),
   Keyboard: {
+    metrics() { return undefined; },
     addListener() { return { remove() {} }; },
     dismiss() {},
   },

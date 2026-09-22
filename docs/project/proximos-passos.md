@@ -2,10 +2,10 @@
 
 > Atualizado em: 2026-09-22
 >
-> Corte atual: Bug 3 aprovado independentemente para commit; AUD-B3-01 encerrado em 22/09; fechamento Git em execução;
+> Corte atual: consolidação técnica da melhoria do Bug 1 em retrato, com parecer favorável e complemento físico de 22/09; sem nova implementação;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
 > Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`, status em `1874ff5`;
-> Bug 2/F-01 fechado em `f0fa1f6`; Bug 1 e D-4 abertos; sem pendência técnica ou documental do parecer do Bug 3
+> Bug 2/F-01 fechado em `f0fa1f6`; Bug 3 em `ac42443`; Bug 1 integral e D-4 abertos; limitações residuais sem aceite de produto
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
@@ -62,7 +62,7 @@ arm64 novo. Nenhuma correção obrigatória remanesce deste Bug 2, fechado e
 enviado em `f0fa1f6` na `feat/mp-35d`. O corte seguinte diagnosticou o Bug 3:
 o manifesto Demo vazio omitia dependências nativas aninhadas de Expo no
 autolinking. Correção focal e gate sensível ao estado anterior estão no
-worktree. Builds oficiais isolado/normal e fluxos locais passaram no AVD API 32.
+commit `ac42443`. Builds oficiais isolado/normal e fluxos locais passaram no AVD API 32.
 Em 21/09, o reteste físico no TCL confirmou o APK corrigido já instalado e
 validou login/assets, seletores/cancelamento, criação/edição sintética e
 persistência após duas partidas independentes. A configuração temporária de
@@ -77,12 +77,36 @@ nesse novo contexto; 35 e o recorte Demo de 37 já tinham passado.
 A auditoria independente aprovou o Bug 3 para commit, incluindo a mudança
 explícita de ambiente e os limites da observação. A rechecagem documental de
 22/09/2026 encerrou AUD-B3-01, sem pendência técnica ou documental desse parecer.
-O fechamento Git está sendo realizado nesta etapa. O QA antigo permaneceu parado e
+O fechamento Git foi concluído em `ac42443`. O QA antigo permaneceu parado e
 inalterado; recuperar seu acesso é pendência operacional separada, sem alegar
 continuidade de sessões, chaves ou massa de 15/09. Serviços novos encerrados,
 volume/configuração preservados. Bug 1, revalidação integrada e fechamento da D-4
 permanecem posteriores. Ver [controle no QA novo e limites](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21).
 Evidências em [testes de contrato](testes-contrato-api-rbac.md).
+
+O corte focal do Bug 1 em 22/09 reutilizou esse QA, sem recriar massa, e os APKs
+aprovados. O parecer independente é favorável à consolidação técnica do retrato:
+busca, opções, rolagem e seleção utilizáveis na amostra TCL; código e testes
+auditados preservados, sem nova implementação nesta etapa. O complemento físico
+comprovou duas execuções em paisagem: digitar Um → Pesquisar encerra editor e
+teclado → selecionar Produtor Um ainda em paisagem, sem Home/Recentes. Consulta,
+seleção, Nome, Área e Cultura foram preservados nos dois ciclos e no retorno ao
+retrato. A preservação não se estende à interrupção USB/revalidação posterior:
+o formulário já não estava aberto e não houve toque confirmado em Cancelar.
+
+Permanecem a seleção com teclado simultaneamente visível em paisagem e a captura
+SystemUI API 32 com IME (preta). O uso API 32 foi comprovado no display do AVD;
+sem IME, captura autorizada funcionou. Causa e relação causal com o delta não
+determinadas; não classificar automaticamente como novo F-01. A decisão de
+aceite de produto das limitações, revalidação integrada e decisão final da D-4
+continuam abertas; Bug 1 integral não encerrado.
+
+Por decisão do usuário, manter agora a proteção e o fundo opaco/verde atrás dos
+modais. Avaliar futuramente a visualização do formulário escurecido/transparente
+exige tarefa e revisão de privacidade de Recentes, background, retorno e estados
+não autorizados: muda conteúdo visível, não apenas cor. Não há autorização de
+implementação visual futura nesta consolidação.
+Ver [reteste focal e limites](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22).
 Vínculos e transferência permanecem fora.
 Ver [aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18) e suas limitações
 de APIs/fabricantes e build debug/Metro. CI remota não consultada. MP-35D/D-4 continuam em

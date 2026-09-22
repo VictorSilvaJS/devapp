@@ -47,7 +47,7 @@ F1/N1 e a edição cadastral sem status permanecem preservados.
 
 Bug 3 aprovado independentemente para commit. A rechecagem documental de
 22/09/2026 encerrou AUD-B3-01; nenhuma pendência técnica ou documental desse
-parecer permanece. O fechamento Git está sendo realizado nesta etapa.
+parecer permanece. O fechamento Git foi concluído em `ac42443`.
 
 - Causa de ExpoAsset confirmada no manifesto/autolinking Demo e
   correção aplicada no worktree em 18/09. O reteste de 21/09 confirmou no TCL
@@ -64,7 +64,24 @@ parecer permanece. O fechamento Git está sendo realizado nesta etapa.
 
 Permanecem pendentes:
 
-- Bug 1: teclado cobrindo Titular, sem alteração neste corte;
+- Bug 1 integral: melhoria em retrato com parecer favorável à consolidação
+  técnica, código/testes auditados preservados e sem nova implementação. Duas
+  execuções no TCL comprovaram seleção ainda em paisagem após Pesquisar encerrar
+  editor/teclado, sem Home/Recentes. Seleção com teclado simultaneamente visível
+  continua não atendida; decisão de aceite de produto da limitação permanece
+  aberta. Consulta, seleção, Nome, Área e Cultura preservados nos dois ciclos e
+  no retorno ao retrato; não estender à interrupção USB/revalidação posterior,
+  quando o formulário já não estava aberto e Cancelar não teve toque confirmado;
+- captura API 32 com IME: SystemUI continua preto; uso comprovado no display do
+  AVD e captura autorizada sem IME funcionou. Causa e relação causal com o delta
+  não determinadas. Não classificar automaticamente como novo F-01 nem aprovar
+  captura com teclado. Aceite de produto residual permanece aberto. Ver
+  [reteste focal](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22);
+- visualização do formulário atrás dos modais: intenção futura, sem implementação
+  autorizada. O usuário decidiu manter agora proteção e fundo opaco/verde. Uma
+  eventual mudança para formulário escurecido/transparente altera conteúdo
+  visível e exige revisão de privacidade em Recentes, background, retorno e
+  estados não autorizados; não é mera troca de tonalidade;
 - acesso ao QA antigo `mp35d4_android_qa`: pendência operacional separada,
   preservada, sem bloquear a evidência do controle realizado no QA adicional.
   Projeto/volume antigos permaneceram parados e inalterados; suas credenciais,

@@ -2,11 +2,92 @@
 
 > Atualizado em: 2026-09-22
 >
-> Última execução física registrada: 2026-09-21 (TCL API 35, Demo/HTTP Bug 3 em QA novo isolado)
-> Última execução emulada registrada: 2026-09-18 (API 32, correção Bug 3)
+> Última execução física registrada: 2026-09-22 (TCL API 35, complemento com duas execuções em paisagem após Pesquisar)
+> Última execução emulada registrada: 2026-09-22 (auditor, API 32: uso comprovado no display; captura com IME preta)
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## Bug 1 — correção parcial e reteste focal — 2026-09-22
+
+**MELHORIA EM RETRATO FAVORÁVEL À CONSOLIDAÇÃO TÉCNICA; BUG 1 INTEGRAL ABERTO.**
+O [parecer independente](../../dist/audit-bug1-partial-20260922/audit-findings.json)
+considerou código e testes adequados à consolidação do corte de retrato, com
+opções, busca, rolagem e seleção utilizáveis na amostra TCL. A consolidação
+preserva o conteúdo auditado sobre `ac42443`, sem nova implementação visual.
+Bug 2/F-01 permanece fechado em `f0fa1f6` e Bug 3 em `ac42443`; CI não consultada
+neste fechamento. O smoke reprovado de 15/09 segue como histórico. O parecer não
+constitui aceite de produto das limitações, encerramento integral do Bug 1,
+conclusão da D-4 ou release.
+
+O [complemento físico](../../dist/audit-bug1-partial-20260922/tcl-landscape-20260922/complemento.md)
+comprovou duas execuções no TCL: digitar Um → tocar PESQUISAR → editor e teclado
+encerrados → selecionar Produtor Um ainda em paisagem. Home/Recentes não foram
+necessários. Retorno ao retrato preservou consulta, seleção, Nome, Área e Cultura
+nos dois ciclos funcionais. Seleção simultânea ao teclado em paisagem continua
+não atendida; limitação residual e decisão de aceite de produto abertas.
+Após interrupção USB/revalidação posterior, o formulário já não estava aberto;
+não houve toque confirmado em Cancelar. Não se estende a conclusão de preservação
+do rascunho àquela interrupção.
+
+Na auditoria API 32, o uso foi comprovado pela observação do display do AVD;
+SystemUI com IME produziu screenshot preto, sem IME a captura autorizada funcionou.
+Causa e relação causal com o delta não determinadas, sem controle físico anterior.
+Não classificar automaticamente como novo F-01 nem declarar captura com teclado
+aprovada. Essa pendência é separada do uso do seletor.
+
+Decisão explícita do usuário: manter agora a proteção visual e o fundo opaco/verde
+atrás dos modais para não atrasar a entrega. Avaliar futuramente o formulário
+visível atrás, escurecido ou transparente, exige outra tarefa com revisão de
+Recentes, background, retorno e estados não autorizados. Muda conteúdo visível,
+não apenas tonalidade. Nenhuma mudança de cor, opacidade, hierarquia, foco,
+boundary, flags ou Kotlin nesta consolidação. A decisão não aceita as limitações
+residuais de paisagem ou captura API 32 como produto.
+
+Registro da implementação original abaixo, preservado como histórico; o parecer
+e o complemento acima atualizam seu alcance, sem transformar falhas em aprovação
+retroativa. As linhas de paisagem/API 32 da tabela descrevem aquela rodada.
+
+O problema original foi reproduzido no TCL 8483A/API 35, em retrato com Gboard:
+o Dialog permanecia com a altura inteira e centralizava a opção atrás do IME.
+O `SelectField` passou a medir sua área, aplicar somente a interseção com o
+teclado informado pelo React Native e manter busca e opções na região rolável.
+Taps tratados selecionam com um toque; rolagem não dispensa o teclado.
+A boundary continua dentro do Modal, envolvendo todo o conteúdo. Kotlin,
+FLAG_SECURE, backend, contratos, regras e dependências não foram alterados.
+
+| Amostra | Resultado observado |
+| --- | --- |
+| TCL retrato, três aberturas de Titular | Nome, e-mail e controle acima do teclado; seleção com um toque |
+| Outro campo com teclado antes do seletor | Abertura via foco Tab/Enter; Android ocultou o IME ao trocar de Dialog; busca refocada passou |
+| Fechar/reabrir teclado e seletor | Consulta, seleção e draft Nome/Área/Cultura preservados |
+| Município/BA | Rolagem com teclado aberto, seleção de Alagoinhas e busca/seleção de Salvador; cancelamento sem criar Propriedade |
+| Recentes/retorno TCL | Miniatura protegida; modal autorizado capturável após retorno |
+| Demo local | Titular local aberto, opção sintética selecionada e formulário cancelado; 74 Propriedades preservadas na amostra |
+| Paisagem TCL | **Falhou**: editor Gboard em tela cheia mesmo com `disableFullscreenUI`; métrica RN obsoleta/negativa; sem aprovação |
+| API 32 existente | Modal sem teclado capturado por SystemUI, Recentes protegido; captura com teclado preta/inconclusiva, sem promover XML a prova visual |
+
+`typecheck`, D-4 (356/356), privacidade (25/25), D-3 (106/106),
+`domain-compat`, `test:mp13`, `test:final-complements`, grafo nativo e bundles
+HTTP/Demo passaram na implementação, não neste fechamento. D-4 inclui 340 casos do runner anterior,
+11 navegações novamente herdadas e cinco testes novos. Não são 356 casos
+exclusivos. O controle negativo substituiu somente um artefato JS gerado pelo
+SelectField anterior: 15/16 passaram, a regressão de composição falhou;
+restaurado o artefato final, 16/16 passaram. Esses testes não simulam visibilidade
+Android nem resolvem a falha física de paisagem. O auditor executou seletor 16/16
+(cinco novos + 11 herdados), privacidade 25/25 e typecheck aprovado. O complemento
+registrou duas execuções físicas em paisagem. Todos esses resultados são herdados
+nesta consolidação; não foram repetidos testes, builds, QA, Metro, AVD ou ADB.
+
+QA `mp35d4_bug3_validation_qa` reutilizado com configuração DPAPI existente,
+sem migrations, fixtures, bootstrap, troca de senhas ou escrita de Propriedade.
+APKs aprovados reutilizados, sem build/reinstalação. Evidência de execução,
+sanity Demo, proveniência, tentativas inválidas, limpeza e limitações no
+[relatório A–I](../../dist/fix-bug1-keyboard-20260922/relatorio-final.md).
+O parecer favorável ao retrato e a continuidade após Pesquisar estão registrados
+acima. Seleção simultânea ao IME em paisagem, captura API 32 com IME, diagnóstico
+causal e aceite residual de produto permanecem abertos. Revalidação integrada
+e decisão final da D-4 pendentes; integração na `backend` e release posteriores.
 
 ## Bug 3 — aprovação independente — 2026-09-22
 
@@ -14,8 +95,8 @@ rodadas anteriores foram movidas para docs/archive.
 O parecer independente original confirmou sete critérios técnicos e apontou
 somente AUD-B3-01. O complemento do auditor fornecido pelo usuário na conversa
 encerrou esse achado na rechecagem documental de 22/09/2026, sem pendência
-técnica ou documental do parecer. O fechamento Git está sendo realizado nesta
-etapa; isso não registra push antecipadamente.
+técnica ou documental do parecer. O fechamento Git posterior foi concluído em
+`ac42443`, preservado como base da correção focal do Bug 1.
 
 O reteste físico Demo e o controle HTTP autenticado com Demo → HTTP → Demo
 foram concluídos em 21/09 no QA novo autorizado `mp35d4_bug3_validation_qa`.

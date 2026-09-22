@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, inputStyles, modalStyles, semanticColors, spacing, typography } from '../theme';
 import FormField from './FormField';
 import { VisualPrivacyBoundary } from './VisualPrivacyBoundary';
+import SelectFieldViewport from './SelectFieldViewport';
 
 export type SelectFieldOption = {
   value: string;
@@ -104,6 +105,7 @@ export default function SelectField({
 
       <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
         <VisualPrivacyBoundary style={{ flex: 1 }}>
+        <SelectFieldViewport>
         <Pressable style={modalStyles.overlay as ViewStyle} onPress={close}>
           <Pressable style={styles.dialog} onPress={() => undefined}>
             <View style={styles.header}>
@@ -118,9 +120,11 @@ export default function SelectField({
               </TouchableOpacity>
             </View>
 
-            {remote?.onSearch ? <FormField label={`Buscar ${label}`} accessibilityLabel={`Buscar ${label}`}
-              value={remote.search ?? ''} onChangeText={remote.onSearch} disabled={disabled} /> : null}
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+            <ScrollView style={styles.list} showsVerticalScrollIndicator
+              keyboardShouldPersistTaps="handled" keyboardDismissMode="none">
+              {remote?.onSearch ? <FormField label={`Buscar ${label}`} accessibilityLabel={`Buscar ${label}`}
+                value={remote.search ?? ''} onChangeText={remote.onSearch} disabled={disabled}
+                disableFullscreenUI returnKeyType="search" /> : null}
               <View style={styles.options}>
                 {remote?.loading ? <><ActivityIndicator color={colors.primary} /><Text>Carregando opções...</Text></> : null}
                 {remote && !remote.loading && options.length === 0 && !remote.error ? <Text>Nenhuma opção encontrada.</Text> : null}
@@ -168,6 +172,7 @@ export default function SelectField({
             </ScrollView>
           </Pressable>
         </Pressable>
+        </SelectFieldViewport>
         </VisualPrivacyBoundary>
       </Modal>
     </View>
@@ -175,6 +180,7 @@ export default function SelectField({
 }
 
 const styles = StyleSheet.create({
+  list: { flexShrink: 1, minHeight: 0 },
   container: {
     ...inputStyles.container,
   },
