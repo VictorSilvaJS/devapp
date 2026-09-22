@@ -1,7 +1,13 @@
 {
   "name": "tche-agro-demo-entry",
+  "version": "1.0.0",
   "private": true,
   "main": "index.js",
+  "dependencies": {
+    "expo": "~56.0.18",
+    "react": "19.2.3",
+    "react-native": "0.85.3"
+  },
   "expo": {
     "autolinking": {
       "searchPaths": ["../node_modules"]

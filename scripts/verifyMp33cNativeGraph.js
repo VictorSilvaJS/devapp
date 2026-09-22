@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 
@@ -53,6 +54,23 @@ function androidNativePackages(root) {
     'react-native-config',
     'android',
   );
+  // The Expo entrypoint imports these modules from Expo's own dependency tree.
+  // A flat searchPaths scan can find Expo while missing its nested dependencies.
+  const expoRoot = path.dirname(require.resolve('expo/package.json', { paths: [root] }));
+  for (const [packageName, classifier] of [
+    ['expo-asset', 'expo.modules.asset.AssetModule'],
+    ['expo-constants', 'expo.modules.constants.ConstantsModule'],
+  ]) {
+    const manifest = require.resolve(`${packageName}/package.json`, { paths: [expoRoot] });
+    const expectedRoot = fs.realpathSync(path.dirname(manifest));
+    const linked = expo.modules.find(module => module.packageName === packageName);
+    assert.ok(linked, `${packageName} ausente do autolinking de ${root}`);
+    assert.equal(linked.packageVersion, JSON.parse(fs.readFileSync(manifest, 'utf8')).version);
+    assert.ok(linked.projects.some(project =>
+      fs.realpathSync(path.dirname(project.sourceDir)) === expectedRoot &&
+      project.modules.some(module => module.classifier === classifier)),
+    `${packageName}: autolinking deve registrar o módulo resolvido pelo JavaScript de ${root}`);
+  }
   return new Set([
     ...expo.modules.map((module) => module.packageName),
     ...Object.keys(reactNative.dependencies ?? {}),
@@ -71,6 +89,9 @@ const forbiddenInHttp = [
   'react-native-webview',
 ];
 const requiredInHttp = [
+  'expo-asset',
+  'expo-constants',
+  'expo-modules-core',
   'expo-secure-store',
   'expo-linear-gradient',
   'react-native-gesture-handler',
@@ -80,6 +101,21 @@ const requiredInHttp = [
 
 const httpPackages = androidNativePackages(projectRoot);
 const demoPackages = androidNativePackages(demoRoot);
+
+// Demo consumes the physical installation and lockfile of its parent project.
+// Keep prebuild from filling an empty manifest with template defaults.
+const workspaceManifest = require('../package.json');
+const demoManifest = require('../demo/package.json');
+const lock = require('../package-lock.json');
+for (const packageName of ['expo', 'react', 'react-native']) {
+  assert.equal(demoManifest.dependencies?.[packageName], workspaceManifest.dependencies[packageName],
+    `${packageName}: Demo e raiz devem declarar a mesma versão`);
+  const resolved = require.resolve(`${packageName}/package.json`, { paths: [demoRoot] });
+  assert.equal(fs.realpathSync(resolved), fs.realpathSync(require.resolve(`${packageName}/package.json`, { paths: [projectRoot] })),
+    `${packageName}: Demo deve consumir a instalação da raiz`);
+  assert.equal(JSON.parse(fs.readFileSync(resolved, 'utf8')).version, lock.packages[`node_modules/${packageName}`].version,
+    `${packageName}: instalação deve corresponder ao lockfile da raiz`);
+}
 
 for (const packageName of forbiddenInHttp) {
   assert.equal(
@@ -98,6 +134,14 @@ for (const packageName of requiredInHttp) {
     httpPackages.has(packageName),
     true,
     `${packageName} é obrigatório no aplicativo HTTP`,
+  );
+}
+
+for (const packageName of ['expo-asset', 'expo-constants', 'expo-modules-core']) {
+  assert.equal(
+    demoPackages.has(packageName),
+    true,
+    `${packageName} é obrigatório na inicialização do Demo`,
   );
 }
 

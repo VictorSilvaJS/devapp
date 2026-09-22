@@ -1,11 +1,11 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-18
+> Atualizado em: 2026-09-22
 >
-> Corte atual: Bug 2/F-01 aprovado independentemente para fechamento controlado na feat/mp-35d;
+> Corte atual: Bug 3 aprovado independentemente para commit; AUD-B3-01 encerrado em 22/09; fechamento Git em execução;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
 > Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`, status em `1874ff5`;
-> F-01 encerrado em 18/09; API 32 e novo APK na API 35 aprovados; Bugs 1/3 e D-4 abertos
+> Bug 2/F-01 fechado em `f0fa1f6`; Bug 1 e D-4 abertos; sem pendência técnica ou documental do parecer do Bug 3
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
@@ -58,10 +58,30 @@ API 32 de 17/09 reproduziu F-01 e emitiu correções obrigatórias. A correção
 focal F-01 trata a Window efetiva e a cópia antes do attach, após tentativa
 intermediária insuficiente. Em 18/09, a reauditoria aprovou o Bug 2 para commit,
 com F-01 encerrado, API 32 emulada e amostra física no TCL API 35 usando o APK
-arm64 novo. Nenhuma correção obrigatória remanesce deste Bug 2. O fechamento
-controlado é exclusivo da `feat/mp-35d`. A fila posterior mantém Bugs 1 e 3,
-isolamento funcional Demo/HTTP e revalidação integrada final da D-4 pendentes;
-não há autorização de implementação desses itens neste fechamento.
+arm64 novo. Nenhuma correção obrigatória remanesce deste Bug 2, fechado e
+enviado em `f0fa1f6` na `feat/mp-35d`. O corte seguinte diagnosticou o Bug 3:
+o manifesto Demo vazio omitia dependências nativas aninhadas de Expo no
+autolinking. Correção focal e gate sensível ao estado anterior estão no
+worktree. Builds oficiais isolado/normal e fluxos locais passaram no AVD API 32.
+Em 21/09, o reteste físico no TCL confirmou o APK corrigido já instalado e
+validou login/assets, seletores/cancelamento, criação/edição sintética e
+persistência após duas partidas independentes. A configuração temporária de
+tela voltou a `0`; código, dependências e testes permaneceram idênticos.
+Por autorização posterior de 21/09, foi provisionado o novo QA isolado
+`mp35d4_bug3_validation_qa`, projeto `mp35d4-bug3-validation-20260921`, com
+migrations/massa oficiais e Admin sintético próprio. Configuração DPAPI fora
+do repositório passou em duas partidas da API sem reset. O TCL concluiu HTTP
+autenticado, lista/detalhe, busca positiva e ausência do sintético Demo,
+Demo → HTTP → Demo e amostra raiz/modal de privacidade. Critério 36 passou
+nesse novo contexto; 35 e o recorte Demo de 37 já tinham passado.
+A auditoria independente aprovou o Bug 3 para commit, incluindo a mudança
+explícita de ambiente e os limites da observação. A rechecagem documental de
+22/09/2026 encerrou AUD-B3-01, sem pendência técnica ou documental desse parecer.
+O fechamento Git está sendo realizado nesta etapa. O QA antigo permaneceu parado e
+inalterado; recuperar seu acesso é pendência operacional separada, sem alegar
+continuidade de sessões, chaves ou massa de 15/09. Serviços novos encerrados,
+volume/configuração preservados. Bug 1, revalidação integrada e fechamento da D-4
+permanecem posteriores. Ver [controle no QA novo e limites](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21).
 Evidências em [testes de contrato](testes-contrato-api-rbac.md).
 Vínculos e transferência permanecem fora.
 Ver [aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18) e suas limitações

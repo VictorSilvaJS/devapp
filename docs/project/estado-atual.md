@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-18
+> Revisão documental: 2026-09-22
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -98,8 +98,33 @@ insuficiente. A reauditoria independente de 18/09 aprovou o Bug 2 para commit,
 encerrou F-01 e não deixou correção obrigatória remanescente deste corte.
 Executou API 32 x86_64 emulada e TCL 8483A/API 35 físico com o APK arm64 novo:
 screenshots autorizados, proteção em Recentes, janelas inferiores, falha e
-recuperação da revalidação e reabertura passaram. Bugs 1 e 3 seguem abertos;
-o isolamento funcional Demo/HTTP continua bloqueado pelo Bug 3. Ver
+recuperação da revalidação e reabertura passaram. Bug 2/F-01 foi fechado e
+enviado em `f0fa1f6`. Em 18/09, o diagnóstico do Bug 3 confirmou que o
+manifesto Demo sem dependências impedia descobrir os módulos nativos
+aninhados de Expo. A correção declara Expo/React/React Native nas versões da
+raiz e reforça o gate de autolinking, sem atualizar o lockfile. Builds oficiais
+na cópia isolada e na árvore normal passaram; login, assets, criação, edição
+e persistência passaram no AVD API 32. Em 21/09, o TCL API 35 confirmou o
+APK arm64 corrigido já instalado, sem novo build ou reinstalação. Login,
+assets, seletores/cancelamento, criação/edição sintética e persistência após
+duas partidas independentes passaram fisicamente. A opção temporária de tela
+foi restaurada e conferida em `0`. Por autorização expressa posterior em 21/09,
+o controle HTTP autenticado e Demo → HTTP → Demo passou no novo QA isolado
+`mp35d4_bug3_validation_qa`, projeto `mp35d4-bug3-validation-20260921`, com
+massa oficial e Admin sintético próprios. Lista/detalhe, busca positiva,
+ausência do sintético Demo no escopo HTTP e preservação do dataset Demo passaram.
+A amostra HTTP raiz/modal passou em captura autorizada, Home/Recentes e retorno.
+Configuração DPAPI fora do repositório foi reutilizada em duas partidas da API,
+sem reset. O QA antigo permaneceu parado e inalterado; seu acesso não foi
+recuperado e passa a ser pendência operacional separada. Serviços novos foram
+encerrados, volume/configuração preservados e reverses próprios removidos.
+Código e hashes da correção permaneceram iguais. A correção do Bug 3 foi
+aprovada independentemente para commit; a rechecagem de 22/09/2026 encerrou
+AUD-B3-01, sem pendência técnica ou documental desse parecer. O fechamento
+Git está sendo realizado nesta etapa. Bug 1 e D-4 continuam abertos; integração
+na `backend` e release não realizados. Ver
+[controle no QA novo](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21),
+[reteste físico do Bug 3](smoke.md#bug-3--reteste-físico-demo-e-pendência-qa--2026-09-21) e
 [aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18).
 
 Estado formal da sequência administrativa:
@@ -113,10 +138,17 @@ Estado formal da sequência administrativa:
   administrativa de Propriedades fechada em `27df733` na `feat/mp-35d`.
   Titular/Localidades internos fechados em `37a8790`, com A1 encerrado.
   Formulários/navegação fechados em `e5db497`, N1 encerrado; status visual separado
-  fechado em `1874ff5`; Bug 2 aprovado independentemente para commit em 18/09,
-  com F-01 encerrado e novo APK validado na API 35 física.
-  O smoke geral segue reprovado pelos Bugs 1 e 3. A integração
-  final da MP-35D na `backend` permanece posterior.
+  fechado em `1874ff5`; Bug 2/F-01 fechado em `f0fa1f6`, com novo APK
+  validado na API 35 física. Bug 3 corrigido no worktree e validado no TCL em
+  21/09. O controle HTTP autenticado e a passagem Demo → HTTP → Demo foram
+  concluídos em 21/09/2026 no QA novo autorizado `mp35d4_bug3_validation_qa`.
+  A auditoria independente de 22/09/2026 confirmou a suficiência técnica da
+  correção do Bug 3, do gate e das evidências no escopo declarado. A rechecagem
+  documental de 22/09 encerrou AUD-B3-01 e aprovou o corte para commit, sem
+  pendência técnica ou documental desse parecer. Fechamento Git em execução
+  nesta etapa. O Bug 1 do teclado, a revalidação integrada e o fechamento da
+  D-4 continuam pendentes; integração na `backend` e release não realizados.
+  O QA antigo não foi recuperado.
 
 ## MP-35D-4 — fluxo visual separado de status — 2026-09-14
 

@@ -1,12 +1,197 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-09-15
+> Atualizado em: 2026-09-22
 >
-> Última execução física registrada: 2026-09-18 (API 35, APK arm64 novo)
-> Última execução emulada registrada: 2026-09-18 (API 32, reauditoria F-01)
+> Última execução física registrada: 2026-09-21 (TCL API 35, Demo/HTTP Bug 3 em QA novo isolado)
+> Última execução emulada registrada: 2026-09-18 (API 32, correção Bug 3)
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## Bug 3 — aprovação independente — 2026-09-22
+
+**APROVADO PARA COMMIT DA CORREÇÃO DO BUG 3 — DEMO/EXPOASSET.**
+O parecer independente original confirmou sete critérios técnicos e apontou
+somente AUD-B3-01. O complemento do auditor fornecido pelo usuário na conversa
+encerrou esse achado na rechecagem documental de 22/09/2026, sem pendência
+técnica ou documental do parecer. O fechamento Git está sendo realizado nesta
+etapa; isso não registra push antecipadamente.
+
+O reteste físico Demo e o controle HTTP autenticado com Demo → HTTP → Demo
+foram concluídos em 21/09 no QA novo autorizado `mp35d4_bug3_validation_qa`.
+O auditor conferiu as evidências fornecidas de builds e execução física;
+executou seus quatro gates (typecheck, native-graph, bundle e domain-compat)
+e o controle negativo do autolinking. Não repetiu builds ou testes físicos.
+D-4 340/340 e privacidade 25/25 são resultados herdados, não execuções deste
+fechamento, que se limita a documentação, hashes e verificações Git.
+
+A aprovação cobre as amostras, fluxos e intervalos observados, não comparação
+integral da base nem captura universal de tráfego. Bug 2/F-01 permanece fechado
+em `f0fa1f6`. Bug 1 do teclado, revalidação integrada e fechamento da D-4
+continuam pendentes. Integração na `backend` e release não realizados; QA antigo
+não recuperado. Os registros históricos abaixo, incluindo o smoke reprovado,
+permanecem preservados.
+
+## Bug 3 — controle HTTP em QA novo isolado — 2026-09-21
+
+Registro histórico de 21/09; a aprovação posterior está registrada acima.
+
+**CONTROLE HTTP AUTENTICADO E DEMO→HTTP→DEMO CONCLUÍDO EM QA NOVO ISOLADO —
+BUG 3 AGUARDANDO AUDITORIA INDEPENDENTE.**
+
+Autorização expressa substituiu a recuperação do acesso antigo por um QA
+adicional: projeto `mp35d4-bug3-validation-20260921`, banco
+`mp35d4_bug3_validation_qa`, volume próprio. PostgreSQL/PostGIS e Mailpit usam
+as imagens oficiais existentes, somente em loopback; API em 3103, banco em
+5543, SMTP em 1125 e Mailpit em 8125. O QA antigo `mp35d4-smoke-20260915` /
+`mp35d4_android_qa` ficou parado e inalterado, assim como `backend/.env.local`.
+Não houve teste sobre massa/sessões históricas ou recuperação de chaves antigas.
+
+Dez migrations, fixture oficial com três Propriedades e bootstrap/convite/aceite
+do Admin `[QA BUG3] Admin Validacao 20260921` passaram. API usa `bug3_runtime`,
+membro de `tche_agro_runtime`, sem superusuário, criação de banco/role,
+associação a plataforma/worker ou UPDATE direto de Propriedades. Configuração
+durável em `%LOCALAPPDATA%\TcheAgro\qa\bug3-validation-20260921\config.dpapi`,
+cifrada por DPAPI CurrentUser e com ACL de usuário atual/SYSTEM. Duas partidas
+da API pela mesma configuração passaram em readiness/login/lista/detalhe;
+a segunda não executou migrations, fixtures, bootstrap ou troca de segredos.
+
+| Controle físico no TCL API 35 | Resultado |
+| --- | --- |
+| Demo antes | `QA-BUG3-20260921-TCL-EDITADA` presente; 74 Propriedades e dataset anterior preservados |
+| HTTP novo | Admin sintético autenticado, lista das três Propriedades e detalhe da Ativa, com acesso administrativo |
+| `/v1/auth/me` físico | Respostas 200 na revalidação após Home/Recentes, distintas das chamadas auxiliares |
+| Busca positiva | `Propriedade Ativa` aplicada na interface, retornando `[QA] Propriedade Ativa` |
+| Ausência do sintético Demo | Busca exata `QA-BUG3-20260921-TCL`, sem status/UF/Município, retornou vazia; confirmação auxiliar no servidor com cursor seguinte nulo |
+| Demo após | Mesmo sintético editado e totais 74/39/3/75/74/7; sem nova criação/edição e sem substituição pela massa HTTP |
+| Privacidade HTTP | Raiz e modal de filtros capturáveis quando autorizados; miniatura HTTP oculta em Recentes; retorno com revalidação 200, sem mutação de Propriedade |
+
+Nos intervalos Demo 17:51:49–17:55:48 e 18:05:54–18:07:26 UTC, a API nova
+continuou disponível e não registrou requisições; nenhum cliente auxiliar foi
+executado nesses intervalos. Bundle Demo real continua sem transporte/entry
+HTTP; bundle HTTP real usa `src/entry/http.tsx`, sem seed Demo. Inspector
+conectado não capturou os requests HTTP positivos e não foi usado como prova
+autossuficiente de ausência de tráfego. Observação por logs da API alvo e
+composição executada, não captura universal de pacotes.
+
+APKs aprovados reutilizados, hashes conferidos; nenhum build, reinstalação,
+mudança de código/dependência ou repetição dos dez gates. A primeira abertura
+antecipou a disponibilidade do Metro; a passagem foi executada após carregamento.
+Capturas transitórias e buscas incompletas não foram promovidas a resultado.
+Dispensar teclado continua contorno do Bug 1, sem correção. Evidências, limites,
+partida/parada e hashes no [relatório A–J](../../dist/validate-bug3-newqa-20260921/relatorio-final.md).
+
+Serviços novos encerrados, volume/configuração preservados; nenhum listener
+próprio remanescente. Reverses próprios removidos e `stay_on_while_plugged_in=0`
+confirmado. Critério 36 passou neste QA novo; auditoria independente pendente.
+Acesso ao QA antigo é pendência operacional separada. Bug 2/F-01 permanece
+fechado; Bug 1 e D-4 abertos. Sem staging, commit, push, integração ou release.
+
+## Bug 3 — reteste físico Demo e pendência QA — 2026-09-21
+
+Registro da rodada anterior à autorização do QA adicional. O bloqueio de acesso
+abaixo não foi resolvido no ambiente antigo; o controle posterior está acima.
+
+**DEMO VALIDADO FISICAMENTE; CONTROLE HTTP AUTENTICADO/ISOLAMENTO COMPLETO
+BLOQUEADOS PELO ACESSO QA. BUG 3 NÃO ENCERRADO.**
+Continuação sobre `f0fa1f6` + a mesma correção de 18/09. Nenhuma mudança de
+código, teste, dependência ou configuração da correção. Os dois hashes não
+documentais e o lockfile foram preservados; 611 arquivos não documentais
+coincidem com a cópia física que produziu o APK corrigido. Evidência e limites
+no [relatório A–G](../../dist/validate-bug3-physical-20260921/relatorio-final.md).
+
+O TCL 8483A/API 35, arm64-v8a, foi identificado e a opção
+`stay_on_while_plugged_in` restaurada de `2` para `0`, com leitura posterior.
+Uma interrupção USB durante a leitura do APK foi resolvida por reconexão
+manual do usuário, antes de qualquer instalação. A leitura do hash no aparelho
+confirmou que `demo-isolated-1.apk` já estava instalado: SHA-256
+`3910c1193bfbaedf51321cc6185f10a10b4274e6f9dd8de5ef5900a3fca8dfc6`,
+`com.tcheagro.mobile.demo` 1.0.0(1), arm64-v8a. Nenhum novo build/reinstall.
+
+| Matriz executada no TCL | Resultado desta rodada |
+| --- | --- |
+| Login demonstrativo e assets | Logout somente da sessão Demo, tela de login e acesso Admin pela interface passaram; logo e ícones visíveis; ExpoAsset/Constants acessíveis ao JS |
+| Seletores e cancelar | Titular QA ativo, UF e Município locais passaram; cancelamento manteve 73 Propriedades |
+| Criar/editar | Novo registro `QA-BUG3-20260921-TCL`, editado para `QA-BUG3-20260921-TCL-EDITADA`; somente esse registro foi editado |
+| Persistência física | Duas partidas independentes por force-stop/start; busca final recuperou o nome editado, Titular e Cláudia/MT |
+| Dataset anterior | 73 → 74 Propriedades; 39 Produtores, 3 Colaboradores, 75 Visitas, 74 registros de Caderno e 7 materiais mantidos; 37 Titulares e área total 1.313,46 ha mantidos na amostra. Não é comparação integral da base |
+| Composição executada | Metro `demo/` em 8083; bundle `index.js` → `src/entry/demo.tsx`, SHA-256 igual ao testado no AVD em 18/09 |
+| Chamadas Demo de negócio | Inspector entre 13:15:20 e 13:27:20 UTC, cobrindo login local, seletores, cancelar, criar e editar: nenhuma solicitação observada; bundle sem FetchHttpTransport/entrypoint HTTP/endpoints de autenticação. Não é captura universal de tráfego nativo |
+| Inicialização/logs | Sem erro impeditivo observado; logcat sanitizado disponível para as duas partidas finais, com PIDs distintos |
+
+Dispensar o teclado foi somente contorno; Bug 1 não foi corrigido. Registro
+criado diretamente no TCL, sem importar o overlay AVD de 18/09. Apps e dados
+anteriores preservados; nenhuma limpeza de armazenamento ou desinstalação.
+
+HTTP instalado corresponde ao artefato aprovado Bug 2/F-01, hash `0f95c287…`
+integral no relatório. Os serviços QA `mp35d4-smoke-20260915` estão parados;
+o `.env.local` conhecido aponta a `tche_agro_local_qa`, outro banco. O caminho
+da configuração atual foi solicitado e não recebido. Nenhum runner de resume,
+reset, recuperação, bootstrap, fixture, migration ou SQL foi executado.
+HTTP autenticado, lista/detalhe/busca do sintético, passagem Demo → HTTP → Demo
+e amostra de privacidade raiz/modal **não foram executados nesta continuação**.
+O controle emulado parcial de 18/09 permanece histórico, sem promovê-lo a físico.
+
+Critério **35 passou no TCL**; **37 passou no recorte de inicialização Demo**;
+**36 e controle HTTP permanecem pendentes**. Os dez gates de 18/09 não foram
+repetidos porque seus insumos não mudaram; hashes, proveniência, execução,
+links e diff foram verificados nesta rodada. Auditoria independente do Bug 3
+pendente. Smoke original preservado; Bug 2/F-01 fechado em `f0fa1f6`, Bug 1 e
+D-4 abertos. Sem staging, commit, push, release ou consulta à CI remota.
+
+## Bug 3 — correção focal com validação emulada — 2026-09-18
+
+Esta seção registra o alcance de 18/09; o reteste físico posterior está acima.
+
+**CAUSA CONFIRMADA E CORREÇÃO VALIDADA NO AVD; RETESTE FÍSICO PENDENTE.**
+Base `feat/mp-35d`, `f0fa1f6f29590078db8749472e65028c5143f5c9`, inicialmente
+limpa. Bug 2/F-01 está fechado nesse commit; política HTTP preservada.
+O [relatório A–K](../../dist/fix-bug3-demo-expoasset-20260918/relatorio-final.md)
+contém experimentos, comandos, hashes, capturas e limites desta rodada.
+
+O APK Demo original, preservado e idêntico ao smoke de 15/09, reproduziu
+`ExponentConstants` ausente e `Cannot find native module 'ExpoAsset'` no TCL
+com Metro Demo correto. Seu DEX não contém AssetModule/ConstantsModule.
+`demo/package.json` não declarava dependências: `searchPaths` descobria Expo
+na raiz, mas não percorria `node_modules/expo/node_modules`. Expo carregava os
+JavaScripts de asset/constants, ausentes do APK. O erro posterior de registro
+de `main` era consequência; o registro da aplicação não foi alterado.
+
+A correção declara `expo ~56.0.18`, `react 19.2.3` e `react-native 0.85.3`
+no Demo, usando a instalação e o lockfile existentes da raiz. O gate
+`test:native-graph:mp33c` agora exige asset/constants/core nas duas variantes e
+confere caminho, versão e classe de registro de asset/constants com a resolução
+JavaScript de Expo. Também verifica a coerência do manifesto Demo com a raiz e
+o lock. O gate anterior passava com o defeito; o novo falhou no controle negativo.
+Não houve atualização de SDK, alteração de exclusões ou de script oficial.
+
+| Verificação desta rodada | Resultado e alcance |
+| --- | --- |
+| Geração isolada + build oficial | Passou em cópia física com a mesma topologia; arm64 e x86_64 gerados, módulos registrados; instalação arm64 no TCL não confirmada após desconexão |
+| Build oficial na árvore normal | Passou reaproveitando o Android existente; APK x86_64 instalado in-place no AVD; assets/constants acessíveis ao JS no AVD |
+| Login, logo/ícones e acesso Demo | Passou no AVD API 32 |
+| Nova Propriedade, Titular/UF/Município e cancelar | Passou no AVD; dispensar teclado foi somente contorno do Bug 1 |
+| Criar/editar e reabrir | Propriedade sintética `QA-BUG3-20260918-AVD-EDITADA` persistiu; 73 → 74 Propriedades, demais contadores preservados na amostra |
+| Partidas independentes | AVD abriu após force-stop e após rebuild in-place; retorno HTTP → Demo preservou a sessão e o dataset local observado |
+| Demo → HTTP → Demo | Parcial no AVD: pacotes/entrypoints distintos, HTTP sem acesso Demo e retorno ao dataset Demo; autenticação/lista/detalhe HTTP e isolamento completo pendentes |
+| Ausência de API no fluxo local Demo | Inspector sem solicitações no intervalo 19:12:24–19:19:16 UTC de seletores/criação/edição; bundle/grafo sem transporte HTTP de negócio. Não é prova de tráfego nativo universal nem do login anterior ao intervalo |
+| Gates reexecutados | typecheck, domain-compat, D-4 340/340, privacidade 25/25, native-config, native-graph, bundles, MP13, MP15 e final-complements passaram |
+
+O AVD API 32 foi aberto com disco original somente leitura e sem salvar snapshot;
+suas evidências são complementares. O TCL API 35 desconectou durante a instalação
+do primeiro APK corrigido e não voltou: **não há validação física nova da correção**.
+O QA documentado estava desligado e suas credenciais atuais não estavam disponíveis;
+nenhum volume, fixture, migration ou credencial foi alterado. O controle HTTP usou
+o APK preservado, pois manifesto raiz, lock, geração e política HTTP não mudaram.
+Recentes/screenshot raiz/modal HTTP não foram reexecutados nesta rodada. D-1/D-2/D-3
+e instrumentação nativa de privacidade não foram reexecutados: nenhuma dependência,
+harness ou composição desses cortes foi alterada; os gates JS pertinentes passaram.
+
+Critérios **35 (sanity físico Demo), 37 (inicialização física/logs) e 36
+(isolamento funcional)** continuam pendentes de nova aprovação; a reprovação
+original não foi apagada. Bug 3 aguarda reteste físico, controle HTTP completo
+e auditoria independente. Bug 1, revalidação integrada e fechamento D-4 seguem
+pendentes. CI remota não consultada; sem staging, commit, push ou release.
 
 ## Bug 2 e F-01 — aprovação independente — 2026-09-18
 

@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-18
+> Revisão documental: 2026-09-22
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -42,15 +42,36 @@ passou na amostra física API 35 de 15–16/09, mas a auditoria complementar API
 32 de 17/09 encontrou F-01. A reauditoria de 18/09 aprovou a correção completa
 do Bug 2 para commit, encerrou F-01 e não deixou correção obrigatória deste
 corte. API 32 x86_64 emulada e TCL 8483A/API 35 com o APK arm64 novo passaram.
+Bug 2/F-01 foi fechado e enviado em `f0fa1f6`.
 F1/N1 e a edição cadastral sem status permanecem preservados.
+
+Bug 3 aprovado independentemente para commit. A rechecagem documental de
+22/09/2026 encerrou AUD-B3-01; nenhuma pendência técnica ou documental desse
+parecer permanece. O fechamento Git está sendo realizado nesta etapa.
+
+- Causa de ExpoAsset confirmada no manifesto/autolinking Demo e
+  correção aplicada no worktree em 18/09. O reteste de 21/09 confirmou no TCL
+  API 35 o APK arm64 corrigido, login, assets, seletores, criação/edição sintética
+  e persistência após duas partidas independentes. A configuração temporária
+  de tela foi restaurada a `0`. Reteste Demo e restauração deixaram de ser
+  pendências;
+- o controle
+  HTTP autenticado, busca positiva/ausência do sintético Demo, passagem física
+  Demo → HTTP → Demo e amostra de privacidade raiz/modal foram concluídos em
+  21/09 no novo QA isolado autorizado `mp35d4_bug3_validation_qa`, com massa e
+  Admin próprios. Não são teste da massa histórica nem continuidade de sessões
+  do QA antigo. Ver [controle no QA novo](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21).
 
 Permanecem pendentes:
 
-- Bug 1: teclado cobrindo Titular; Bug 3: Demo não inicia por ExpoAsset.
-  Ambos continuam abertos e fora da correção de Recentes;
-- isolamento funcional Demo/HTTP bloqueado pelo Bug 3. Configuração, grafos e
-  bundles preservados não equivalem a aprovar o runtime Demo;
-- reaprovação do smoke físico geral da D-4 e integração final da MP-35D na
+- Bug 1: teclado cobrindo Titular, sem alteração neste corte;
+- acesso ao QA antigo `mp35d4_android_qa`: pendência operacional separada,
+  preservada, sem bloquear a evidência do controle realizado no QA adicional.
+  Projeto/volume antigos permaneceram parados e inalterados; suas credenciais,
+  chaves e outbox não foram recuperadas. O `.env.local` de outro banco não foi
+  usado nem alterado. O novo QA tem configuração protegida reutilizável fora
+  do repositório, com partida/parada sem reaplicar massa ou trocar segredos;
+- revalidação integrada e fechamento da D-4, e integração final da MP-35D na
   branch `backend`, posteriores. Ver [aprovação do Bug 2](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18);
 - release, deploy e produção, sem aprovação decorrente deste fechamento;
 - vínculos e transferência de Titularidade continuam fora desta entrega.
