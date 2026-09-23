@@ -3,11 +3,11 @@
 > Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
 > MP-35D-3 concluída, auditada e enviada em 92bba62;
 > decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-> Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status visual aprovado independentemente para commit; MP-35D/D-4 em andamento`
+> Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status fechado em 1874ff5; D-4 concluída no escopo validado em fea8ec3, com aceite residual temporário de 23/09; MP-35D em andamento`
 >
 > Definido em: 2026-08-25
 >
-> Revisão: 2026-09-14
+> Revisão: 2026-09-23
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
@@ -30,7 +30,26 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status visual aprovado independentemente para commit; Android físico e integração final na `backend` posteriores |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status fechado em `1874ff5`; D-4 concluída no escopo validado em `fea8ec3`, após percurso físico e aceite residual temporário de 23/09; demais cortes e integração final na `backend` posteriores |
+
+## MP-35D-4 — estado da etapa — 2026-09-23
+
+MP-35D-4 concluída no escopo funcional validado, com limitações residuais
+temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
+validado na revisão `fea8ec3`. Integração na `backend` e release não
+autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
+não conclui todo o aplicativo, iOS ou o processo de publicação.
+
+O aceite residual de 23/09 decorre da decisão do usuário na conversa de condução
+do projeto, posterior ao percurso integrado no TCL API 35. Combina auditorias
+dos cortes anteriores, revalidação integrada e aceite delimitado; não constitui
+nova auditoria independente global. Bug 2/F-01 fechado em `f0fa1f6`, Bug 3 em
+`ac42443` e melhoria parcial do Bug 1 em retrato consolidada em `fea8ec3`.
+Paisagem e captura API 32 com IME continuam pendentes de tratamento posterior,
+temporariamente aceitas apenas para fechar D-4. Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
+
+As seções datadas anteriores abaixo preservam o estado e as evidências de cada
+corte à época; suas pendências de validação/aceite da D-4 não são o estado atual.
 
 ## MP-35D-4 — fluxo visual de status — 2026-09-14
 
@@ -825,7 +844,10 @@ confirmação pós-integração aprovadas. Na MP-35D, os cortes D-1/D-2 estão
 concluídos na `feat/mp-35d`; D-3 foi fechada em `92bba62` e o pré-requisito
 decimal em `dab3ac4`. A integração HTTP administrativa de Propriedades está
 aprovada independentemente, com F1 encerrado, e fechada em `27df733`;
-Titular/Localidades foram aprovados para commit após A1. MP-35D/D-4 seguem em andamento.
+Titular/Localidades fechados em `37a8790` após A1. D-4 concluída no escopo
+funcional validado em `fea8ec3`, com aceite residual temporário de 23/09, nos
+limites descritos no início. MP-35D segue em andamento; integração e release
+não autorizados por esse fechamento.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de

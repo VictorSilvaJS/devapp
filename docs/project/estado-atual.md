@@ -1,6 +1,6 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-22
+> Revisão documental: 2026-09-23
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
@@ -132,7 +132,17 @@ determinadas. Não se classifica automaticamente como novo F-01. O usuário deci
 manter a proteção visual e o fundo opaco/verde atuais; avaliar a visualização do
 formulário atrás do modal exige tarefa futura com revisão de privacidade, pois
 muda o conteúdo visível, não apenas a tonalidade. Nenhuma nova implementação
-nesta consolidação. Bug 1 integral, aceite de produto das limitações e D-4 abertos.
+na consolidação do retrato, fechada em `fea8ec3`. Em 23/09, o percurso
+integrado principal passou em dez frentes físicas no TCL API 35. Por decisão do
+usuário na conversa de condução do projeto, posterior ao teste, paisagem por
+Pesquisar e captura SystemUI API 32 com IME foram temporariamente aceitas para
+fechar a etapa, mantendo tratamento posterior pendente e Bug 1 integral aberto.
+MP-35D-4 concluída no escopo funcional validado, com limitações residuais
+temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
+validado na revisão `fea8ec3`. Integração na `backend` e release não
+autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
+não conclui todo o aplicativo, iOS ou o processo de publicação.
+Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
 Ver [alcance e limitações do reteste](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22). Integração
 na `backend` e release não realizados. Ver
 [controle no QA novo](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21),
@@ -163,16 +173,22 @@ Estado formal da sequência administrativa:
   Recentes. Uso API 32 comprovado no display; captura SystemUI com IME preta,
   sem causa ou relação causal com o delta determinadas. Proteção e fundo atuais
   mantidos por decisão do usuário, sem nova alteração visual. Seleção simultânea
-  ao teclado em paisagem, captura API 32 com IME e aceite residual de produto
-  continuam abertos; Bug 1 integral não encerrado.
-  A revalidação integrada e o fechamento da
-  D-4 continuam pendentes; integração na `backend` e release não realizados.
+  ao teclado em paisagem e captura API 32 com IME continuam pendentes de
+  tratamento, temporariamente aceitas em 23/09 pela decisão do usuário na
+  conversa de condução do projeto, somente para fechar esta etapa.
+  Bug 1 integral não encerrado; melhoria do retrato consolidada em `fea8ec3`.
+  D-4 concluída no escopo funcional validado nessa revisão, após revalidação
+  integrada e aceite residual posterior. Integração na `backend` e release
+  não autorizados por este fechamento; MP-35D permanece em andamento.
   O QA antigo não foi recuperado.
 
 O complemento preservou consulta, seleção, Nome, Área e Cultura nos dois ciclos
 funcionais e no retorno ao retrato. Após interrupção USB/revalidação posterior,
 o formulário já não estava aberto; não houve toque confirmado em Cancelar.
 A conclusão de preservação do rascunho não se estende àquela interrupção.
+
+As seções datadas anteriores abaixo preservam o estado de cada corte à época;
+o estado formal vigente é o de 23/09 descrito acima.
 
 ## MP-35D-4 — fluxo visual separado de status — 2026-09-14
 

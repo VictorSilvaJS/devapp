@@ -59,6 +59,25 @@ Métricas de Propriedades permanecem ocultas porque a API ainda não possui
 agregado autorizado. Talhões, mapas, Visitas, Caderno, Materiais e Dashboard
 não aparecem como dados reais nem como botões ativos neste corte.
 
+## MP-35D-4 — estado da etapa — 2026-09-23
+
+MP-35D-4 concluída no escopo funcional validado, com limitações residuais
+temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
+validado na revisão `fea8ec3`. Integração na `backend` e release não
+autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
+não conclui todo o aplicativo, iOS ou o processo de publicação.
+
+O aceite residual de 23/09 decorre da decisão do usuário na conversa de condução
+do projeto, posterior ao percurso integrado no TCL API 35. Combina auditorias
+dos cortes anteriores, revalidação integrada e aceite delimitado; não constitui
+nova auditoria independente global. Bug 2/F-01 fechado em `f0fa1f6`, Bug 3 em
+`ac42443` e melhoria parcial do Bug 1 em retrato consolidada em `fea8ec3`.
+Paisagem e captura API 32 com IME continuam pendentes de tratamento posterior,
+temporariamente aceitas apenas para fechar D-4. Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
+
+As seções datadas anteriores abaixo preservam o estado e as evidências de cada
+corte à época; suas pendências de validação/aceite da D-4 não são o estado atual.
+
 ## Status visual separado da MP-35D-4 — 2026-09-14
 
 Sobre `e5db497`, o detalhe HTTP agora oferece modal local de ativar/inativar,

@@ -1,12 +1,98 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-09-22
+> Atualizado em: 2026-09-23
 >
-> Última execução física registrada: 2026-09-22 (TCL API 35, complemento com duas execuções em paisagem após Pesquisar)
+> Última execução física registrada: 2026-09-23 (TCL 8483A, Android 15/API 35; dez frentes do percurso integrado focal)
 > Última execução emulada registrada: 2026-09-22 (auditor, API 32: uso comprovado no display; captura com IME preta)
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## MP-35D-4 — fechamento com aceite residual — 2026-09-23
+
+MP-35D-4 concluída no escopo funcional validado, com limitações residuais
+temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
+validado na revisão `fea8ec3`. Integração na `backend` e release não
+autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
+não conclui todo o aplicativo, iOS ou o processo de publicação.
+
+Em 23/09/2026, por decisão do usuário na conversa de condução do projeto,
+o contorno de paisagem por Pesquisar e a limitação de captura SystemUI na API 32
+com teclado aberto foram temporariamente aceitos para fechar esta etapa.
+Após esclarecimento de que os resíduos não estavam integralmente corrigidos e
+de que não havia liberação do aplicativo, o usuário confirmou a continuidade.
+Esta síntese registra a decisão posterior à revalidação; não é citação literal,
+assinatura digital, aprovação externa de gestores ou novo parecer independente
+global da D-4. O aceite não autoriza merge, distribuição ou uso produtivo.
+
+### Escopo e proveniência
+
+O [relatório integrado de 23/09](../../dist/revalidate-mp35d4-integrated-20260923-resumed/relatorio-final.md)
+registra dez frentes aprovadas fisicamente no TCL 8483A, Android 15/API 35,
+QA `mp35d4_bug3_validation_qa`, sobre `fea8ec3`:
+
+| Frente | Alcance executado |
+|---|---|
+| 1. Login e leitura administrativa | Admin, lista e detalhe HTTP autorizados |
+| 2. Criação, Titular e Localidades | Busca/seleção com teclado aberto em retrato, confirmação remota, UF/Município e criação única |
+| 3. Edição e navegação N1 | Área decimal, PATCH parcial, Titular bloqueado/status informativo e um Voltar para a lista |
+| 4. Inativação e filtros | Cancelamento sem comando; depois motivo/confirmar, recibo e filtros Ativas/Inativas |
+| 5. Reativação | Mesmo registro, comando separado e retorno à origem com filtro preservado |
+| 6. Recentes e retorno | Proteção na raiz e no modal, revalidação e zero mutações por foco/background |
+| 7. Indisponibilidade e recuperação | API efetivamente parada, bloqueio sem fallback Demo e recuperação após restauração |
+| 8. Reabertura e persistência | Force-stop sem limpar dados, autenticação normal e releitura dos dados finais |
+| 9. Restrições por perfil | Produtor/Colaborador sem ações administrativas na lista/detalhe autorizado; não é matriz completa de RBAC/deep links |
+| 10. Recibos e ausência de duplicação | Quatro mutações aceitas e quatro releituras autoritativas, versões 1→2→3→4 |
+
+Uma criação, uma edição e duas mudanças de status foram aceitas, sem duplicação
+observada. Registro final: `[QA D4 INTEGRADO] 20260923-1054-EDITADO`, ativo,
+versão 4. O cancelamento anterior à inativação não foi contado como mutação.
+A captura 28 sem conteúdo útil foi excluída da prova; reabertura/persistência
+se apoiam na imagem posterior, navegação e GET v4 descritos no relatório.
+
+Foi reutilizado o APK debug nativo anteriormente aprovado, com JavaScript da
+revisão `fea8ec3` servido pelo Metro. Não houve novo build em `fea8ec3`, APK
+de release, teste de loja ou validação produtiva.
+
+Na preparação, sobre o mesmo HEAD e os mesmos hashes, passaram typecheck,
+D-4 356/356 execuções e privacidade 25/25 execuções. A retomada física não
+repetiu essas suítes; este fechamento documental também não as repete.
+D-4 356 = 340 anteriores + 5 novos do seletor + 11 herdados novamente.
+Privacidade também contém herança/sobreposição; as suítes não são somadas como
+casos exclusivos. Demais gates, builds, instrumentação Android, Demo/isolamento
+e cenários concorrentes continuam evidências históricas/automatizadas nos seus
+alcances. Não houve conversão da matriz original em 42/42 critérios físicos.
+
+### Correções, resíduos e decisões posteriores
+
+Bug 2/F-01 está encerrado em `f0fa1f6`; Bug 3/Demo/ExpoAsset em `ac42443`.
+A [consolidação do retrato](../../dist/close-bug1-portrait-20260922/relatorio-final.md)
+fechou a melhoria parcial do Bug 1 em `fea8ec3`, sem corrigir integralmente a
+interação com teclado. Os registros existentes continuam rastreáveis:
+
+- Bug 1/paisagem: seleção com teclado simultaneamente visível não atendida no
+  TCL. Contorno comprovado: digitar → tocar Pesquisar → teclado/editor
+  encerrados → selecionar ainda em paisagem. Duas execuções preservaram
+  consulta, seleção, Nome, Área e Cultura, sem Home/Recentes. Correção/refinamento
+  posterior pendente; aceitação temporária restrita ao fechamento D-4.
+- Captura API 32 com IME: seletor visível e utilizável no display do emulador,
+  mas PNG do SystemUI preto; captura sem IME funcionou na amostra. Causa e relação
+  causal com o delta indeterminadas. Investigação/correção posterior pendente;
+  aceitação temporária restrita à etapa. Não é automaticamente novo F-01, tela
+  preta para o usuário ou comprovação universal de screenshots.
+
+Manter a proteção e o fundo opaco/verde atuais. Mostrar o formulário atrás,
+escurecido/transparente, permanece intenção para tarefa separada com revisão de
+privacidade; não é alteração autorizada agora. Prazo e responsável pela correção
+dos resíduos: a definir. O planejamento da versão de entrega deve considerá-los;
+o aceite da etapa não substitui a decisão específica de release.
+
+Os relatórios originais permanecem inalterados. O relatório integrado ainda
+registra aceite/fechamento pendentes porque antecede a decisão acima. As seções
+datadas abaixo são registros históricos dos respectivos cortes, sem reclassificar
+retroativamente achados, testes ou aprovações. O QA antigo não foi recuperado.
+Neste fechamento, somente revisão documental, links/âncoras, diff e hashes;
+sem testes, builds, smoke, QA, Metro, ADB ou emulador. CI não consultada.
 
 ## Bug 1 — correção parcial e reteste focal — 2026-09-22
 

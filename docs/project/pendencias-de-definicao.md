@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-22
+> Revisão documental: 2026-09-23
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -19,7 +19,8 @@ confirmação pós-integração foi aprovada. MP-35D-1/2 foram concluídas na
 `feat/mp-35d`; MP-35D-3 recebeu correções obrigatórias, implementadas e aprovadas
 na auditoria independente final para commit, sem achado obrigatório remanescente.
 O fechamento da D-3 foi concluído e enviado em `92bba62`. MP-35D segue em
-andamento, assim como D-4. O pré-requisito decimal foi fechado e enviado em
+andamento; D-4 concluída no escopo funcional validado em `fea8ec3`, com aceite
+residual temporário em 23/09. O pré-requisito decimal foi fechado e enviado em
 `dab3ac4`. A integração HTTP administrativa de Propriedades está implementada
 e aprovada independentemente após reprodução, correção e reauditoria focal de F1,
 sem achado obrigatório remanescente; fechamento concluído em `27df733`, com
@@ -30,6 +31,21 @@ commit, encerrou A1 e não deixou achado obrigatório remanescente. Fechamento
 Git concluído em `37a8790`, somente na `feat/mp-35d`, com hash remoto confirmado.
 
 ## MP-35D-4 — pendências após formulários HTTP de criação/edição
+
+Em 23/09/2026, por decisão do usuário na conversa de condução do projeto,
+o contorno de paisagem por Pesquisar e a limitação de captura SystemUI na API 32
+com teclado aberto foram temporariamente aceitos para fechar esta etapa.
+Após esclarecimento de que os resíduos não estavam integralmente corrigidos e
+de que não havia liberação do aplicativo, o usuário confirmou a continuidade.
+Esta síntese registra a decisão posterior à revalidação; não é citação literal,
+assinatura digital, aprovação externa de gestores ou novo parecer independente
+global da D-4. O aceite não autoriza merge, distribuição ou uso produtivo.
+
+O percurso integrado principal passou em 23/09 sobre `fea8ec3`; D-4 está
+concluída nesse escopo, mantendo os resíduos abaixo abertos para tratamento.
+Eles deixam de impedir somente este fechamento de desenvolvimento. Prazos e
+responsáveis pelas correções: a definir. A versão de entrega deve considerá-los;
+o aceite desta etapa não substitui decisão específica de release. Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
 
 N1 foi reproduzido, corrigido e aprovado na reauditoria independente: 20/20
 critérios e 14/14 probes. Nenhum achado obrigatório permanece. Formulários HTTP
@@ -64,18 +80,20 @@ parecer permanece. O fechamento Git foi concluído em `ac42443`.
 
 Permanecem pendentes:
 
-- Bug 1 integral: melhoria em retrato com parecer favorável à consolidação
-  técnica, código/testes auditados preservados e sem nova implementação. Duas
+- Bug 1 integral: melhoria em retrato consolidada em `fea8ec3`, com parecer
+  favorável e código/testes auditados preservados. Duas
   execuções no TCL comprovaram seleção ainda em paisagem após Pesquisar encerrar
   editor/teclado, sem Home/Recentes. Seleção com teclado simultaneamente visível
-  continua não atendida; decisão de aceite de produto da limitação permanece
-  aberta. Consulta, seleção, Nome, Área e Cultura preservados nos dois ciclos e
-  no retorno ao retrato; não estender à interrupção USB/revalidação posterior,
+  continua não atendida; contorno temporariamente aceito apenas para fechar D-4,
+  com correção/refinamento posterior pendente. Consulta, seleção, Nome, Área e
+  Cultura preservados nos dois ciclos e no retorno ao retrato; não estender à
+  interrupção USB/revalidação posterior,
   quando o formulário já não estava aberto e Cancelar não teve toque confirmado;
 - captura API 32 com IME: SystemUI continua preto; uso comprovado no display do
   AVD e captura autorizada sem IME funcionou. Causa e relação causal com o delta
   não determinadas. Não classificar automaticamente como novo F-01 nem aprovar
-  captura com teclado. Aceite de produto residual permanece aberto. Ver
+  captura com teclado. Temporariamente aceita para a etapa; investigação/correção
+  posterior pendente. O PNG preto não significa tela preta no display. Ver
   [reteste focal](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22);
 - visualização do formulário atrás dos modais: intenção futura, sem implementação
   autorizada. O usuário decidiu manter agora proteção e fundo opaco/verde. Uma
@@ -88,8 +106,9 @@ Permanecem pendentes:
   chaves e outbox não foram recuperadas. O `.env.local` de outro banco não foi
   usado nem alterado. O novo QA tem configuração protegida reutilizável fora
   do repositório, com partida/parada sem reaplicar massa ou trocar segredos;
-- revalidação integrada e fechamento da D-4, e integração final da MP-35D na
-  branch `backend`, posteriores. Ver [aprovação do Bug 2](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18);
+- continuidade da MP-35D e sua integração final na branch `backend`, posteriores
+  e não autorizadas aqui. Revalidação integrada e fechamento da D-4 deixaram de
+  ser pendências, nos limites do aceite de 23/09. Ver [aprovação do Bug 2](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18);
 - release, deploy e produção, sem aprovação decorrente deste fechamento;
 - vínculos e transferência de Titularidade continuam fora desta entrega.
 

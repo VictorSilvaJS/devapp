@@ -1,20 +1,45 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-22
+> Atualizado em: 2026-09-23
 >
-> Corte atual: consolidação técnica da melhoria do Bug 1 em retrato, com parecer favorável e complemento físico de 22/09; sem nova implementação;
+> Corte atual: fechamento documental da D-4 no escopo validado em `fea8ec3`, após revalidação integrada e aceite residual temporário de 23/09;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
 > Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`, status em `1874ff5`;
-> Bug 2/F-01 fechado em `f0fa1f6`; Bug 3 em `ac42443`; Bug 1 integral e D-4 abertos; limitações residuais sem aceite de produto
+> Bug 2/F-01 fechado em `f0fa1f6`; Bug 3 em `ac42443`; Bug 1 integral aberto, retrato consolidado em `fea8ec3`; resíduos aceitos temporariamente apenas para a etapa
 >
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
 > D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
 > `feat/mp-35d`; MP-35D-3 CONCLUÍDA; MP-35D EM ANDAMENTO;
-> PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; HTTP DE PROPRIEDADES FECHADO EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; D-4 EM ANDAMENTO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
+> PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; HTTP DE PROPRIEDADES FECHADO EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; D-4 CONCLUÍDA NO ESCOPO VALIDADO, COM ACEITE RESIDUAL TEMPORÁRIO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
 
 ## Próximo passo delimitado da MP-35D-4
+
+MP-35D-4 concluída no escopo funcional validado, com limitações residuais
+temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
+validado na revisão `fea8ec3`. Integração na `backend` e release não
+autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
+não conclui todo o aplicativo, iOS ou o processo de publicação.
+
+O aceite de 23/09 é decisão do usuário na conversa de condução do projeto,
+posterior à revalidação integrada. Paisagem por Pesquisar e captura API 32 com
+IME deixam de impedir apenas o fechamento da etapa; correção/refinamento e
+investigação posteriores permanecem rastreados em
+[pendências ativas](pendencias-de-definicao.md). Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
+
+A próxima etapa é retomar o planejamento dos cortes restantes da MP-35D,
+preservando a sequência D-5/D-6/D-7 já referida neste plano. O núcleo ativo não
+detalha aqui o escopo de cada um desses cortes; delimitá-lo exige condução
+própria, sem inventar conteúdo ou renumeração. Não há repetição do mesmo smoke
+como próxima ação automática. Integração final na `backend` continua posterior.
+Este fechamento não inicia esses cortes, vínculos, transferência ou release.
+
+### Histórico dos cortes até 22/09
+
+Os parágrafos desta subseção registram o estado existente em cada execução;
+pendências de revalidação/aceite ali descritas foram sucedidas pelo estado de
+23/09 acima. Os resíduos técnicos continuam abertos.
 
 O parecer independente aprovou para commit somente o pré-requisito decimal,
 sobre `92bba628f43719216a28f73bec81348a0c3a4643` + worktree + snapshot novo,
@@ -109,8 +134,9 @@ implementação visual futura nesta consolidação.
 Ver [reteste focal e limites](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22).
 Vínculos e transferência permanecem fora.
 Ver [aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18) e suas limitações
-de APIs/fabricantes e build debug/Metro. CI remota não consultada. MP-35D/D-4 continuam em
-andamento; integração final na `backend` é posterior, sem renumeração de D-5/D-6/D-7.
+de APIs/fabricantes e build debug/Metro. CI remota não consultada. Até 22/09, MP-35D/D-4 continuavam em
+andamento. Em 23/09, somente D-4 foi concluída no alcance acima; integração final
+na `backend` permanece posterior, sem renumeração de D-5/D-6/D-7.
 
 ## Ponto de partida
 
@@ -347,7 +373,7 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; FORMULÁRIOS/NAVEGAÇÃO FECHADOS EM `e5db497`; STATUS VISUAL APROVADO INDEPENDENTEMENTE PARA COMMIT; ANDROID FÍSICO E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; FORMULÁRIOS/NAVEGAÇÃO FECHADOS EM `e5db497`; STATUS FECHADO EM `1874ff5`; D-4 CONCLUÍDA NO ESCOPO VALIDADO EM `fea8ec3`, COM PERCURSO FÍSICO E ACEITE RESIDUAL TEMPORÁRIO EM 23/09; DEMAIS CORTES E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
 | 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
