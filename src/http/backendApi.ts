@@ -1,9 +1,13 @@
 import {
+  validateUserPropertyDelta, validateUserPropertyFilters,
+} from './administrativeUserPropertyModels';
+import {
   validateCreateAdministrativePropertyPayload,
   validatePatchAdministrativePropertyPayload,
   validateChangeAdministrativePropertyStatusPayload,
 } from './administrativePropertyModels';
 import type {
+  AdministrativeUserPropertyFilters,
   AdministrativePropertyPage,
   AdministrativePropertyProjection,
   AdministrativePropertyReceipt,
@@ -37,6 +41,7 @@ import type {
   TokenResponse,
 } from './contracts';
 import {
+  decodeAdministrativeUserPropertyPage, decodeAdministrativeUserPropertyReceipt,
   decodeAcceptedResponse,
   decodeAdministrativeUserDetail,
   decodeAdministrativeProperty,
@@ -676,6 +681,25 @@ export class BackendApi {
       accessToken,
     });
     return decodeAdministrativeUserPage(response.body, validated.limit);
+  }
+
+  async listAdministrativeUserProperties(accessToken: string, userId: string, filters: AdministrativeUserPropertyFilters = {}) {
+    if (!isCanonicalUuidV4(userId)) throw new InvalidApiRequestError();
+    const validated = validateUserPropertyFilters(filters);
+    const query = new URLSearchParams();
+    for (const [key, value] of Object.entries(validated)) query.set(key, String(value));
+    const response = await this.#send({ method: 'GET', path: `/v1/usuarios/${userId}/propriedades?${query}`,
+      accessToken, expectedStatus: 200 });
+    return decodeAdministrativeUserPropertyPage(response.body, userId, validated.limite);
+  }
+
+  async changeAdministrativeUserProperties(accessToken: string, userId: string, idempotencyKey: string, value: unknown) {
+    if (!isCanonicalUuidV4(userId)) throw new InvalidApiRequestError();
+    this.#assertPropertyIdempotencyKey(idempotencyKey);
+    const body = validateUserPropertyDelta(value);
+    const response = await this.#send({ method: 'PATCH', path: `/v1/usuarios/${userId}/propriedades`,
+      accessToken, idempotencyKey, body, expectedStatus: 200 });
+    return decodeAdministrativeUserPropertyReceipt(response.body, userId, body.versao);
   }
 
   async listLocalityUfs(accessToken: string): Promise<LocalityUfCollection> {

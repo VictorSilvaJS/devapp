@@ -1,6 +1,6 @@
 # Pendências Ativas
 
-> Revisão documental: 2026-09-23
+> Revisão documental: 2026-09-24
 
 Não existe decisão arquitetural pendente dentro dos cortes da MP-33C, da MP-34
 e da MP-35A. MP-33A/B/C, MP-34 e MP-35A/B/C estão concluídas
@@ -29,6 +29,28 @@ etapa seguinte. A primeira auditoria encontrou somente A1, reproduzido em
 Titular/Municípios e corrigido focalmente. A reauditoria aprovou o corte para
 commit, encerrou A1 e não deixou achado obrigatório remanescente. Fechamento
 Git concluído em `37a8790`, somente na `feat/mp-35d`, com hash remoto confirmado.
+
+## MP-35D — continuidade após fechamento da D-5
+
+A gestão HTTP de vínculos por Usuário foi implementada no worktree sobre
+`d6e77e4`, por nova decisão de escopo do usuário. A associação à D-5 não é
+definição histórica recuperada. D-6/D-7 continuam sem conteúdo atribuído.
+MP-35D permanece em andamento. D-5 está concluída tecnicamente no escopo
+validado: a primeira auditoria encontrou somente F01, encerrado pela reauditoria,
+e a validação real/Android de 24/09 passou. Fechamento Git autorizado nesta etapa.
+
+- Delimitar os próximos cortes em tarefa própria, sem atribuir conteúdo a D-6/D-7
+  neste fechamento; integração final e release continuam posteriores.
+- A leitura de vínculos não fornece `produtores.status`; a interface conserva
+  essa limitação ao informar acesso efetivo. O cursor também não fixa snapshot
+  entre requisições; versões de Usuário diferentes exigem recarga explícita.
+
+F01, persistência, revogação real e Android deixaram de ser pendências da D-5
+no [alcance executado](smoke.md#mp-35d-5--validação-real-e-fechamento--2026-09-24).
+Isso não comprova produção, cobertura universal de aparelhos ou concorrência
+extensa. Paginação e histórico de mudança de perfil conservam evidência
+automatizada; não foram recriados no QA. A massa sintética fica preservada,
+sem nova mutação no fechamento e sem repetição automática da validação.
 
 ## MP-35D-4 — pendências após formulários HTTP de criação/edição
 
@@ -110,7 +132,8 @@ Permanecem pendentes:
   e não autorizadas aqui. Revalidação integrada e fechamento da D-4 deixaram de
   ser pendências, nos limites do aceite de 23/09. Ver [aprovação do Bug 2](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18);
 - release, deploy e produção, sem aprovação decorrente deste fechamento;
-- vínculos e transferência de Titularidade continuam fora desta entrega.
+- vínculos permanecem fora do fechamento da D-4 e agora integram o corte D-5
+  acima; transferência de Titularidade continua fora de ambos.
 
 A1 e o fechamento de Titular/Localidades deixaram de ser pendências.
 

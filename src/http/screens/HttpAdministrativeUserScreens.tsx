@@ -1,4 +1,5 @@
 import React from 'react';
+import { HttpUserPropertyLinksAction } from './HttpUserPropertyLinksAction';
 import {
   ActivityIndicator,
   FlatList,
@@ -621,6 +622,7 @@ function HttpAdministrativeUserDetailAdminSurface({
           </ScrollView>
         </LinearGradient>
       ) : null}
+      <HttpUserPropertyLinksAction userId={id} available={!!user && !loading && !failure} />
     </View>
   );
 }

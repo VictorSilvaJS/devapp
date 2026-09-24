@@ -1,6 +1,6 @@
 # Testes De Contrato/API Para RBAC
 
-Status revisado em 2026-09-23:
+Status revisado em 2026-09-24:
 `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
 concluída, auditada e enviada em 92bba62; MP-35D em andamento;
 decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
@@ -8,6 +8,195 @@ Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
+
+## MP-35D-5 — fechamento controlado — 2026-09-24
+
+**D-5 concluída tecnicamente no escopo validado.** A
+[primeira auditoria](../../dist/audit-mp35d5-independent-20260923-1436/parecer.md)
+encontrou somente F01. Após a correção, a
+[reauditoria focal](../../dist/reaudit-mp35d5-f01-20260923-01/parecer-complementar.md)
+encerrou F01 e aprovou tecnicamente o corte para validação; o
+[relatório real/Android de 24/09](../../dist/validate-mp35d5-real-20260924-01/relatorio-final.md)
+completou as provas pendentes no alcance declarado. O pedido posterior do
+usuário autoriza o fechamento documental e Git controlado, sem exigir ou
+inventar novo parecer independente integral.
+
+| Evidência herdada | Origem e resultado |
+|---|---|
+| Aprovação F01 | Reauditoria: histórico inativo válido aceito, preservando decoder, identidade/versão, ativos, Admin e Titularidade |
+| `typecheck` e D-5 | Reauditoria: exit 0 e 117/117 = 41 contratos/modelos + 45 controller/lifecycle + 20 UI próprias + 11 D-2 herdadas; 106 casos próprios D-5 |
+| Probe original e controles | Reauditoria: probe original aprovado e controles complementares; não são novos casos permanentes exclusivos |
+| Demais gates | Mantêm a origem documentada nas rodadas anteriores; não executados neste fechamento |
+| Validação real | Três PATCHs pela UI do TCL, três mutações aceitas, sem duplicação; adicionar/remover/reativar, recibo e duas releituras |
+| D13 e acesso | Nas três alterações: sessão anterior válida, access e refresh depois recusados, mesmo Admin preservado; novo login, vazio após remoção e acesso restaurado após reativação |
+| Android/persistência | Teclado em retrato, seleção/desfazer, motivo, Cancelar, Recentes/retorno e nova partida passaram na amostra |
+
+Os 24 hashes da entrada coincidiram com reauditoria e validação. Nesta etapa
+somente os sete documentos são atualizados; os 17 arquivos não documentais
+devem permanecer idênticos antes/depois da documentação, staging e commit.
+Verificações próprias do fechamento: caminhos explícitos, hashes, revisão de
+diff/índice/blobs, links/âncoras e `git diff --check`, sem repetir gates, build,
+QA, Metro, ADB ou smoke. Cópias dos documentos e evidências Git ficam em
+`dist/close-mp35d5-20260924-01/`; resultado de commit/push é registrado ali ao
+final, sem antecipar sucesso do envio ou fazer segundo commit documental.
+
+Detalhes da amostra, preparação e exclusões estão no
+[smoke datado](smoke.md#mp-35d-5--validação-real-e-fechamento--2026-09-24).
+MP-35D continua em andamento; D-6/D-7 sem escopo atribuído. Sem integração na
+`backend`, deploy ou liberação de release.
+
+## MP-35D-5 — correção focal F01 — 2026-09-23
+
+**Registro histórico da correção, anterior à reauditoria e à validação real.**
+As pendências e contagens abaixo descrevem aquela rodada; o estado atual é o
+fechamento de 24/09 acima.
+
+A [primeira auditoria independente](../../dist/audit-mp35d5-independent-20260923-1436/parecer.md)
+encontrou somente **F01 — histórico inativo válido bloqueia a gestão de acessos**.
+Os demais mecanismos passaram no alcance do parecer. A correção está
+implementada, **aguardando reauditoria focal**, sem aprovação ou encerramento
+da D-5. Persistência, revogação real e Android continuam não executados.
+
+Entrada preservada: `feat/mp-35d`, HEAD `d6e77e4`, index vazio, 15 modificados
+e nove novos; diff rastreado `+403/-19`, novos `+988/0` separados. Cópias e
+SHA-256 dos 24 caminhos, logs próprios e delta focal estão em
+`dist/fix-mp35d5-f01-20260923-01/`. O parecer reprovado, probes e logs anteriores
+foram preservados; não se confundem com a evidência desta correção.
+
+Após recompilar as saídas reais D-5 e navegação, antes da alteração funcional:
+
+- O probe original `finding-F01.expected-behavior.js` falhou com exit 1,
+  `error !== editing`.
+- A regressão permanente principal no controller falhou com a mesma diferença.
+- A regressão permanente de UI falhou: histórico ausente e mensagem sanitizada
+  “O serviço retornou uma resposta incompatível”.
+
+O único código funcional alterado foi `#assertRelations` no controller. A
+restrição tipo/perfil agora distingue **estado do vínculo**, sem depender de
+conta ou Propriedade ativas. Titularidade continua em ramo próprio, restrita
+a Produtor, com estrutura/nulos validados pelo decoder. Histórico direto
+inativo é preservado; vínculo ativo mantém a compatibilidade com o perfil;
+Admin pode consultar histórico, mas continua sem comandos de vínculo.
+Identidade, organização, versões, decoder e contratos de escrita não mudaram.
+
+Fundamentação somente por leitura: migration 000001, restrição condicionada a
+`vinculo.status = 'ativo'`; teste de migrations “vínculo inativo permanece como
+histórico após mudança estrutural”; `mapRelation` e consulta MP-35C; rotas e
+comando da migration 000009. Este último reativa somente registro inativo do
+tipo derivado atual ou cria nova linha desse tipo, preservando histórico de
+outro tipo. A UI usa `adicionar` com ID de Propriedade, versão do Usuário e
+motivo, sem enviar tipo. Nenhuma mudança de perfil foi implementada ou executada.
+
+| Combinação | Leitura e restrição comprovadas |
+|---|---|
+| Colaborador + `usuario_autorizado/inativo` | Aceita, com conta ativa ou inativa e Propriedade ativa ou inativa |
+| Produtor + `colaborador/inativo` | Aceita com cadastro de Produtor válido; Titularidade continua somente leitura |
+| Admin + qualquer dos dois tipos diretos inativos | Histórico visível; nenhum comando de adição/reativação/remoção habilitado |
+| Direto ativo incompatível com perfil | Recusado, inclusive com conta/Propriedade inativas |
+| Titularidade em Admin/Colaborador ou histórico estruturalmente inválido | Recusado; status nulo não é exceção de histórico direto |
+
+As 21 regressões acrescentadas são **16 de controller + cinco de UI**. Cobrem
+carga inicial, tipos originais e metadata preservados, ausência de escrita
+automática, coleção mista com alteração legítima independente, página posterior
+com seleção conservada após falha/retry, reconciliação com histórico e recovery
+somente GET, restrições negativas e confirmação explícita do payload atual.
+A simulação da escrita no cenário de tipo histórico diferente retorna uma nova
+linha do tipo atual e conserva a antiga inativa, seguindo o SQL existente.
+
+| Execução desta rodada, Node `v22.20.0` | Resultado |
+|---|---|
+| `npm run typecheck` | exit 0 |
+| `npm run test:mp35d5` | **117/117**: 41 contratos/modelos + 45 controller/lifecycle + 20 UI próprias + 11 D-2 herdadas; 106 casos próprios D-5 |
+| Probe esperado original do auditor, sem alteração das assertions | **1/1, exit 0** após recompilação |
+| `npm run test:domain-compat` | exit 0, runner integral |
+
+Não somar reexecuções, probe equivalente e casos herdados como cobertura única
+adicional. A rodada final passou sem erro ambiental. Não foram repetidos D-2/D-3
+isolados, privacidade, bundles/grafos, builds ou instrumentação: seus módulos,
+imports/composição e harness compartilhado permaneceram inalterados. Os casos
+D-2 herdados e as regressões D-5 de privacidade, 403 incidental e callbacks
+antigos continuaram passando no runner focal. Nenhum PostgreSQL integral, QA,
+Metro, ADB ou emulador foi iniciado; sem dados persistentes ou credenciais alterados.
+
+Reauditoria focal de F01 e [validação real](smoke.md#mp-35d-5--roteiro-focal-pendente--2026-09-23)
+permanecem pendentes. Sem staging, commit, push, merge ou release.
+
+## MP-35D-5 — validação automatizada — 2026-09-23
+
+Evidência da implementação **anterior à primeira auditoria e à correção F01**.
+As contagens e o estado da execução original abaixo foram preservados; a rodada
+atual e a pendência de reauditoria estão na seção F01 acima.
+
+Gestão HTTP de vínculos por Usuário implementada sobre
+`d6e77e4a6f4fd738a528b1b2cec701ad0d6818ea`, na `feat/mp-35d`, por nova decisão
+de escopo do usuário. **Aguardando auditoria independente e validação focal**.
+D-4 permanece fechada em `d6e77e4` no alcance original; D-6/D-7 sem conteúdo
+atribuído nesta tarefa. Backend/migrations/RBAC e Demo preservados.
+
+Execução local com Node `v22.20.0` (major 22 previsto no repositório), sem
+atualização de SDK, dependências ou CLI. Gates com saídas temporárias
+compartilhadas foram executados sequencialmente sobre o código final.
+
+| Comando | Resultado e contagem |
+|---|---|
+| `npm run typecheck` | passou |
+| `npm run test:mp35d5` | 96 execuções: 41 contratos/modelos + 29 controller/lifecycle + 15 UI novas + 11 D-2 herdadas; **85 casos novos**, todos aprovados |
+| `npm run test:domain-compat` | passou integralmente, incluindo MP-33C, MP-34 e convergência; saída mista com 725 linhas `ok -` e 88 casos TAP, sem tratar essas linhas como um novo total de casos únicos |
+| `npm run test:mp35d2` | 85/85 |
+| `npm run test:mp35d3` | 106/106, incluindo 11 D-2 herdados |
+| `npm run test:mp35d4` | 356/356, incluindo 11 D-2 herdados; nenhum caso D-5 incorporado ao runner D-4 |
+| `npm run test:privacy:mp35d4` | 25/25, incluindo 11 D-2 herdados |
+| `npm run test:native-graph:mp33c` | grafos Android HTTP/Demo aprovados por Expo Autolinking |
+| `npm run test:bundle:mp33c` | bundles Android HTTP/Demo exportados; HTTP sem marcadores mock/AsyncStorage, Demo preservado |
+
+Não somar as linhas como casos únicos globais: os 11 testes do harness de
+navegação D-2 são reexecutados por diferentes runners. Os 15 casos de UI D-5
+usam `NavigationContainer`/native-stack reais sob react-test-renderer, componentes
+nativos simulados e transporte controlado. Não são teste Android físico.
+
+Cobertura nova: envelopes e identidade, versão do Usuário versus versão do
+vínculo, filtros/cursor, Titularidade e Admin somente leitura, indicação de
+acesso efetivo, delta explícito e desfazer, limite de 100 IDs, duplicação e
+sobreposição, motivo/NFC, adição/reativação/remoção, ausência de PATCH sem delta,
+paginação com falha/retry, busca antiga e 403 obsoleto, duplo submit, replay
+ambíguo com chave/corpo/versão conservados, recibo inválido, reconciliação por
+coleção + cadastro, versão posterior e itens fora da primeira página, conflitos
+com nova decisão, conta alvo mantida ativa, sessão do Admin preservada,
+401/403/logout/troca de perfil/identidade/dispose e callbacks antigos.
+UI cobre detalhe/key preservados, modal opaco, boundary de privacidade aguardando
+revalidação, foco antigo inerte, StrictMode, Cancelar e perda de autorização.
+
+Falhas encontradas durante a execução e tratadas:
+
+- O primeiro harness D-5 copiava um getter de sessão como valor e usava `profile`
+  em vez de `initialProfile`; passou a preservar o getter e o parâmetro real.
+  A simulação de 401 passou a responder também à renovação da sessão. Comparações
+  de ausência usam booleanos, evitando serializar uma árvore de renderização
+  inteira em falhas. A interrupção anterior por memória não foi reproduzida
+  nas execuções finais, que terminaram normalmente.
+- A nova ação acrescenta um observador de autorização no detalhe. Duas asserções
+  herdadas foram ajustadas de quatro para cinco assinaturas, mantendo os testes
+  de zero assinaturas após descarte/troca de perfil. O teste estático D-2 passou
+  a examinar especificamente seus dois leitores, sem incluir comandos vizinhos
+  de cortes posteriores. Regressões reexecutadas e aprovadas.
+- Um 403 após publicação incidental podia descartar o controller local sem
+  fechar o modal. A superfície agora fecha a instância descartada e há teste
+  permanente de reabertura sem efeito de callbacks antigos.
+- O autolinking encontrou `spawnSync ... EPERM` dentro da sandbox. Autolinking
+  e exportação foram executados com a permissão necessária aos subprocessos,
+  pelos mesmos scripts do projeto, e passaram. Não houve deploy ou instalação.
+
+O exemplo API-RBAC-VINC-03 abaixo agora inclui o `motivo` já obrigatório no
+contrato. Não foi alterada regra backend. A inspeção dos testes históricos da
+MP-35C não representa nova execução PostgreSQL; nenhum QA persistente foi
+mutado. Persistência real, revogação D13, novo login/acesso/coleção vazia e
+teclado/Recentes no aparelho ficam no
+[roteiro focal pendente](smoke.md#mp-35d-5--roteiro-focal-pendente--2026-09-23).
+
+`git diff --check` passou; 102 referências locais (arquivos e âncoras) conferidas,
+sem link inválido nos documentos alterados.
+Logs e bundles são saídas locais ignoradas, fora do conjunto de arquivos para
+commit futuro. Não houve staging, commit, push, merge ou release.
 
 ## MP-35D-4 — estado da etapa — 2026-09-23
 
@@ -1189,7 +1378,7 @@ negada sobre recurso conhecido e dentro do escopo usa `403`.
 |---|---|---|---|---|---|---|---|---|
 | API-RBAC-VINC-01 | Admin lista Propriedades vinculadas ao usuario | Admin | Usuario existe | `GET /v1/usuarios/:id/propriedades` | Nao se aplica | `200 OK` | Admin consulta vinculos diretos | MP-35C |
 | API-RBAC-VINC-02 | Produtor tenta listar vinculos de outro usuario | Produtor | Sem permissao administrativa | `GET /v1/usuarios/:id/propriedades` | Nao se aplica | `403 Forbidden` | Produtor não administra vínculos | MP-35C |
-| API-RBAC-VINC-03 | Admin aplica delta de vínculos | Admin | Payload valido | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": ["UUID da Propriedade"], "remover": [] }` | `200 OK` | Backend deriva o tipo pelo perfil; delta persistente, versionado e auditável | Automatizado localmente na MP-35C |
+| API-RBAC-VINC-03 | Admin aplica delta de vínculos | Admin | Payload valido | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": ["UUID da Propriedade"], "remover": [], "motivo": "mudanca_responsabilidade" }` | `200 OK` | Backend deriva o tipo pelo perfil; delta persistente, versionado e auditável | Automatizado localmente na MP-35C |
 | API-RBAC-VINC-04 | Delta com vínculo duplicado | Admin | Payload duplica vínculo ativo | `PATCH /v1/usuarios/:id/propriedades` | Delta com duplicidade | `409 Conflict` | Duplicidade retorna conflito | MP-35C |
 | API-RBAC-VINC-05 | Payload invalido de vinculo | Admin | Falta `propriedade_id` | `PATCH /v1/usuarios/:id/propriedades` | `{ "versao": 2, "adicionar": [{}], "remover": [] }` | `400 Bad Request` | Payload invalido e recusado | MP-35C |
 | API-RBAC-VINC-06 | Admin filtra Propriedades para atribuicao | Admin | Propriedades cadastradas | `GET /v1/propriedades` | `municipio` e/ou `uf` | `200 OK` | Localizacao auxilia selecao, sem conceder acesso | Automatizado backend/API |

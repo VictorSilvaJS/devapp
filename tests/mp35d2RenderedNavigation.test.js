@@ -873,7 +873,8 @@ test('React Navigation real registra Admin, abre detalhe e volta para a lista', 
   assert.equal(context.counters.detail.created, 1);
   assert.equal(context.counters.detail.subscriptions, 1);
   assert.equal(context.calls.detail, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 4);
+  // D-5 adds one authorization observer for the local property-access action.
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 5);
   assert.match(textContent(renderer), /DOC-RENDERIZADO/);
 
   await act(async () => { httpNavigationRef.goBack(); });
@@ -997,7 +998,7 @@ async function assertDirectProfileTransition(targetProfile, remountAdmin = false
   );
   assert.equal(context.counters.list.created, 1);
   assert.equal(context.counters.detail.created, 1);
-  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 4);
+  assert.equal(context.runtime.administrativeUserData.activeSubscriptionCount, 5);
   assert.match(textContent(renderer), /DOC-RENDERIZADO/);
 
   const oldMainKey = mainRouteKey();

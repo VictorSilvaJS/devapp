@@ -1,5 +1,8 @@
 import { normalizeAdministrativeAreaTotal } from './administrativeArea';
 import type {
+  AdministrativeUserPropertyPage,
+  AdministrativeUserPropertyRelation,
+  AdministrativeUserPropertyReceipt,
   AcceptedResponse,
   AdministrativePropertyProjection,
   AdministrativePropertyPage,
@@ -39,6 +42,52 @@ import type {
   RestrictedTokenResponse,
   TokenResponse,
 } from './contracts';
+
+export function decodeAdministrativeUserPropertyPage(value: unknown, userId: string, limit = 50): AdministrativeUserPropertyPage {
+  const page = record(value);
+  exactKeys(page, ['usuario_id', 'versao', 'itens', 'paginacao']);
+  if (uuidV4(page.usuario_id) !== userId || !Array.isArray(page.itens) || page.itens.length > limit) throw new InvalidBackendResponseError();
+  const ids = new Set<string>();
+  const items = page.itens.map((value): AdministrativeUserPropertyRelation => {
+    const item = record(value);
+    exactKeys(item, ['id', 'propriedade_id', 'propriedade_nome', 'propriedade_status', 'origem_acesso',
+      'tipo_vinculo', 'status_vinculo', 'editavel', 'versao_vinculo', 'motivo', 'criado_em', 'atualizado_em']);
+    const id = uuidV4(item.id);
+    if (ids.has(id)) throw new InvalidBackendResponseError();
+    ids.add(id);
+    const origin = oneOf(item.origem_acesso, ['titularidade', 'vinculo_direto'] as const);
+    const type = oneOf(item.tipo_vinculo, ['titular', 'usuario_autorizado', 'colaborador'] as const);
+    const status = item.status_vinculo === null ? null : oneOf(item.status_vinculo, ['ativo', 'inativo'] as const);
+    const version = item.versao_vinculo === null ? null : positiveInteger(item.versao_vinculo);
+    let reason = null;
+    if (item.motivo !== null) {
+      const input = record(item.motivo); exactKeys(input, ['codigo', 'detalhe']);
+      // Historical projected reasons may retain their original detail text.
+      reason = Object.freeze({ codigo: requiredString(input.codigo), detalhe: input.detalhe === null ? null : requiredString(input.detalhe) });
+    }
+    const created = item.criado_em === null ? null : decodeTimestamp(item.criado_em);
+    const updated = item.atualizado_em === null ? null : decodeTimestamp(item.atualizado_em);
+    const propertyId = uuidV4(item.propriedade_id);
+    if (origin === 'titularidade'
+      ? type !== 'titular' || item.editavel !== false || status !== null || version !== null || reason !== null || created !== null || updated !== null || id !== propertyId
+      : type === 'titular' || item.editavel !== true || status === null || version === null || created === null || updated === null) throw new InvalidBackendResponseError();
+    return Object.freeze({ id, propriedade_id: propertyId, propriedade_nome: boundedString(item.propriedade_nome, 200),
+      propriedade_status: oneOf(item.propriedade_status, ['ativa', 'inativa'] as const), origem_acesso: origin,
+      tipo_vinculo: type, status_vinculo: status, editavel: item.editavel as boolean, versao_vinculo: version,
+      motivo: reason, criado_em: created, atualizado_em: updated });
+  });
+  const pagination = record(page.paginacao); exactKeys(pagination, ['proximo_cursor']);
+  const cursor = pagination.proximo_cursor === null ? null : requiredString(pagination.proximo_cursor);
+  if (cursor !== null && (cursor.length > 2048 || items.length === 0)) throw new InvalidBackendResponseError();
+  return Object.freeze({ usuario_id: userId, versao: positiveInteger(page.versao), itens: Object.freeze(items),
+    paginacao: Object.freeze({ proximo_cursor: cursor }) });
+}
+
+export function decodeAdministrativeUserPropertyReceipt(value: unknown, userId: string, baseVersion: number): AdministrativeUserPropertyReceipt {
+  const receipt = decodeAdministrativeReceipt(value);
+  if (receipt.resultado !== 'vinculos_alterados' || receipt.recurso_id !== userId || receipt.versao <= baseVersion) throw new InvalidBackendResponseError();
+  return receipt;
+}
 
 export class InvalidBackendResponseError extends Error {
   constructor() {

@@ -1,10 +1,49 @@
 # Estado Atual do Projeto
 
-> Revisão documental: 2026-09-23
+> Revisão documental: 2026-09-24
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
+## Corte atual — MP-35D-5 — 2026-09-23
+
+A gestão HTTP de vínculos por Usuário está implementada no worktree da
+`feat/mp-35d`, sobre `d6e77e4`, **concluída tecnicamente no escopo validado em
+24/09/2026**, com fechamento Git autorizado nesta etapa. Esta associação à D-5
+é uma nova decisão de continuidade do usuário,
+não uma definição histórica recuperada. D-6 e D-7 continuam sem conteúdo
+atribuído nesta tarefa; não se confundem com as decisões arquiteturais D1–D13.
+
+O detalhe administrativo de Usuário abre uma superfície local para consultar
+Titularidades e vínculos, buscar Propriedades, selecionar um delta explícito,
+informar motivo e confirmar adição, reativação ou remoção. O cliente reutiliza
+os endpoints da MP-35C, sessão, idempotência e controles administrativos.
+Backend, migrations, RBAC e Demo não receberam alterações funcionais.
+
+A primeira auditoria independente encontrou somente F01: a validação mobile
+rejeitava históricos diretos inativos cujo tipo diferia do perfil atual, embora
+o backend já os admitisse. A correção focal separa leitura histórica de vínculo
+ativo e comando atual, preservando o registro original. A reauditoria de 23/09
+encerrou F01 e aprovou tecnicamente o corte para validação focal. Em 24/09,
+adicionar/remover/reativar pela UI, revogação real D13, novo login e acesso,
+coleção vazia, teclado/Recentes e persistência passaram no alcance registrado.
+O pedido posterior do usuário autoriza este fechamento, um commit e envio
+somente à feature. Não constitui nova auditoria independente integral.
+Ver [aprovação e evidências](testes-contrato-api-rbac.md#mp-35d-5--fechamento-controlado--2026-09-24).
+
+D-4 permanece fechada documentalmente em `d6e77e4`, no alcance funcional de
+`fea8ec3`, com os resíduos temporariamente aceitos preservados. MP-35D segue em
+andamento. Este fechamento altera somente documentação; preserva o objeto
+funcional auditado e validado, sem repetir testes ou operar o QA. Resultado
+Git registrado ao final em relatório ignorado, sem antecipar sucesso do push.
+Ver [contrato da D-5](contrato-administracao-mp35.md#mp-35d-5--gestão-http-de-vínculos-por-usuário--2026-09-23)
+e [resultado físico e limites](smoke.md#mp-35d-5--validação-real-e-fechamento--2026-09-24).
+
 ## Resumo executivo
+
+MP-35D-5 concluída no alcance técnico e real/Android validado em 24/09:
+primeira auditoria, correção F01, reauditoria favorável e validação focal
+consolidam o fechamento autorizado na feature. MP-35D permanece em andamento,
+sem integração na `backend` ou liberação de release.
 
 O projeto é um aplicativo Android em React Native com Expo SDK 56. O frontend
 está funcional como MVP local e demonstrável, com dados persistidos no
@@ -180,7 +219,11 @@ Estado formal da sequência administrativa:
   D-4 concluída no escopo funcional validado nessa revisão, após revalidação
   integrada e aceite residual posterior. Integração na `backend` e release
   não autorizados por este fechamento; MP-35D permanece em andamento.
-  O QA antigo não foi recuperado.
+  O QA antigo não foi recuperado. D-4 fechada documentalmente em `d6e77e4`;
+  D-5 concluída tecnicamente no escopo validado: F01 encerrado na reauditoria,
+  validação real/Android de 24/09 concluída e fechamento Git autorizado nesta
+  etapa. D-6/D-7 continuam sem conteúdo atribuído. A decisão de escopo está
+  registrada no início deste documento.
 
 O complemento preservou consulta, seleção, Nome, Área e Cultura nos dois ciclos
 funcionais e no retorno ao retrato. Após interrupção USB/revalidação posterior,

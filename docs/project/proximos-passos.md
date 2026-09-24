@@ -1,8 +1,9 @@
 # Próximos Passos
 
-> Atualizado em: 2026-09-23
+> Atualizado em: 2026-09-24
 >
-> Corte atual: fechamento documental da D-4 no escopo validado em `fea8ec3`, após revalidação integrada e aceite residual temporário de 23/09;
+> Corte atual: MP-35D-5 concluída no escopo validado, F01 encerrado e validação real/Android de 24/09 concluída; fechamento Git autorizado nesta etapa;
+> D-4 fechada documentalmente em `d6e77e4`, no escopo validado em `fea8ec3`, após revalidação integrada e aceite residual temporário de 23/09;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
 > Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`, status em `1874ff5`;
 > Bug 2/F-01 fechado em `f0fa1f6`; Bug 3 em `ac42443`; Bug 1 integral aberto, retrato consolidado em `fea8ec3`; resíduos aceitos temporariamente apenas para a etapa
@@ -14,7 +15,24 @@
 > PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; HTTP DE PROPRIEDADES FECHADO EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; D-4 CONCLUÍDA NO ESCOPO VALIDADO, COM ACEITE RESIDUAL TEMPORÁRIO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
 
-## Próximo passo delimitado da MP-35D-4
+## Próximo passo delimitado da MP-35D-5
+
+A decisão atual do usuário associa D-5 à gestão HTTP de vínculos por Usuário.
+É uma atribuição nova, não recuperação do escopo histórico de D-5/D-6/D-7.
+D-6 e D-7 permanecem sem conteúdo atribuído nesta tarefa.
+
+O fluxo foi aprovado tecnicamente após encerramento de F01 na reauditoria.
+A validação real/Android de 24/09 no QA `mp35d4_bug3_validation_qa` passou no
+[alcance registrado](smoke.md#mp-35d-5--validação-real-e-fechamento--2026-09-24).
+O usuário autorizou o fechamento documental e Git controlado na feature.
+Depois desse fechamento, o próximo passo é delimitar a continuidade da MP-35D
+em tarefa própria, mantendo D-6/D-7 sem escopo atribuído aqui. Não repetir
+automaticamente a validação concluída nem preparar nova massa. Backend/Demo
+preservados; transferência
+de Titularidade, novas notificações, exclusão, offline administrativo, MP-36,
+integração na `backend` e release continuam fora do corte.
+
+## Fechamento preservado da MP-35D-4
 
 MP-35D-4 concluída no escopo funcional validado, com limitações residuais
 temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
@@ -28,12 +46,9 @@ IME deixam de impedir apenas o fechamento da etapa; correção/refinamento e
 investigação posteriores permanecem rastreados em
 [pendências ativas](pendencias-de-definicao.md). Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
 
-A próxima etapa é retomar o planejamento dos cortes restantes da MP-35D,
-preservando a sequência D-5/D-6/D-7 já referida neste plano. O núcleo ativo não
-detalha aqui o escopo de cada um desses cortes; delimitá-lo exige condução
-própria, sem inventar conteúdo ou renumeração. Não há repetição do mesmo smoke
-como próxima ação automática. Integração final na `backend` continua posterior.
-Este fechamento não inicia esses cortes, vínculos, transferência ou release.
+O fechamento documental foi consolidado em `d6e77e4`. A continuidade da D-5
+acima decorre de decisão posterior específica; não foi autorizada implicitamente
+pelo aceite residual da D-4. Integração final na `backend` continua posterior.
 
 ### Histórico dos cortes até 22/09
 

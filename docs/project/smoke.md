@@ -1,12 +1,111 @@
 # Smoke Funcional Ativo
 
-> Atualizado em: 2026-09-23
+> Atualizado em: 2026-09-24
 >
-> Última execução física registrada: 2026-09-23 (TCL 8483A, Android 15/API 35; dez frentes do percurso integrado focal)
+> Última execução física registrada: 2026-09-24 (TCL 8483A, Android 15/API 35; validação focal real da D-5)
 > Última execução emulada registrada: 2026-09-22 (auditor, API 32: uso comprovado no display; captura com IME preta)
 
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
+
+## MP-35D-5 — validação real e fechamento — 2026-09-24
+
+**Validação focal real e Android concluída; D-5 concluída tecnicamente no
+escopo validado, com fechamento Git autorizado nesta etapa.** O
+[relatório físico](../../dist/validate-mp35d5-real-20260924-01/relatorio-final.md)
+complementa a [reauditoria favorável que encerrou F01](../../dist/reaudit-mp35d5-f01-20260923-01/parecer-complementar.md)
+e a [primeira auditoria](../../dist/audit-mp35d5-independent-20260923-1436/parecer.md).
+A autorização Git vem do pedido posterior do usuário, não do relatório físico.
+Nenhuma falha funcional nova foi reproduzida no alcance executado. Não se trata
+de nova auditoria independente integral ou aprovação produtiva.
+
+| Frente | Resultado de 24/09 |
+|---|---|
+| Adicionar, remover, reativar | Três PATCHs pela UI do TCL, três mutações aceitas, sem duplicação; recibo seguido de GETs da coleção e cadastro |
+| Versões | Usuário alvo v2 → v3 → v4 → v5; vínculo criado ativo v1 → inativo v2 → mesmo ID ativo v3; Propriedade ativa v1, cadastro preservado |
+| D13 nas três alterações | Sessão auxiliar independente válida imediatamente antes; access anterior recusado com `invalid_session`, depois refresh corrente recusado; mesma sessão do Admin continuou autorizada |
+| Novo login após remoção | Conta ativa, lista operacional sem filtros vazia, detalhe 404; coleção vazia também observada no TCL |
+| Novo login após reativação | Acesso operacional restaurado pela API e observado no TCL |
+| Interação | Teclado em retrato, seleção/desfazer, motivo, Cancelar sem escrita, navegação, Recentes e retorno passaram na nova superfície |
+| Persistência | Estado confirmado após nova partida da API e do aplicativo, sem limpar armazenamento |
+
+A prova D13 não usou logout prévio do alvo auxiliar, expiração, consumo prévio
+de refresh ou revogação manual. Acesso após a primeira adição foi consultado
+pela API auxiliar; não é apresentado como observação física. A coleção vazia
+após remoção e o acesso restaurado após reativação foram observados também no TCL.
+
+Preparação separada das três mutações: um Colaborador sintético, um aceite de
+convite e uma Propriedade sintética no QA existente `mp35d4_bug3_validation_qa`.
+A criação da Propriedade incrementou o Usuário Titular de referência de v4 para
+v5 e acrescentou sua Titularidade derivada: efeito normal autorizado, sem quarta
+prova empírica D13. As quatro Propriedades anteriores e os demais registros
+comparados permaneceram preservados no alcance relatado. A massa sintética
+permanece para retomada; não é alterada ou excluída por este fechamento.
+
+Proveniência: TCL API 35 com APK debug nativo anteriormente aprovado e JavaScript
+de HEAD `d6e77e4` + worktree D-5/F01 servido pelo Metro. Sem novo build ou APK de
+release. Os 24 arquivos funcionais/documentais de entrada conservaram seus hashes
+entre reauditoria e validação. Neste fechamento são alterados apenas documentos;
+não há nova operação de QA, Docker, Metro, ADB, emulador ou leitura de credenciais.
+
+Paginação e F01 com mudança histórica de perfil mantêm prova técnica/automatizada;
+não foram recriados fisicamente no QA. A amostra não comprova cobertura universal
+de aparelhos, screenshots, concorrência extensa ou produção. D-4 permanece
+fechada em `d6e77e4` no alcance aceito, com resíduos de paisagem/captura API 32
+rastreados e proteção/fundo opaco mantidos. MP-35D continua em andamento;
+D-6/D-7 sem escopo atribuído. Integração na `backend` e release não autorizados.
+
+O roteiro abaixo permanece reutilizável, com sua âncora e configuração originais.
+Não repetir automaticamente a mesma validação ou a criação de massa.
+
+## MP-35D-5 — roteiro focal pendente — 2026-09-23
+
+**Planejamento histórico de 23/09, executado no alcance do resultado de 24/09
+acima.** O título/âncora e as pendências originais são preservados como registro,
+não como estado atual nem próxima execução automática.
+
+**Planejado, não executado.** Gestão HTTP de vínculos por Usuário implementada,
+aguardando reauditoria focal de F01 e validação real. A primeira auditoria
+encontrou somente a rejeição mobile de histórico inativo já admitido pelo
+backend, corrigida com regressões automatizadas. Persistência, revogação real
+e Android continuam não executados para D-5. D-4 continua fechada em `d6e77e4`, com
+aceite residual no alcance original. Esta etapa não repete seu smoke integral.
+
+Reutilizar `mp35d4_bug3_validation_qa` quando for executada a validação. Usar
+somente massa sintética adequada e distinta dos registros de evidência anterior;
+não criar outro QA, recuperar o antigo, redefinir credenciais ou alterar dados
+reais. A seleção da massa deve identificar um Usuário sem Titularidades e sem
+outros acessos efetivos para a prova de coleção vazia. Não preparar/mutar essa
+massa durante a implementação. Registrar o estado anterior e posterior sem
+segredos e sem reutilizar evidências automatizadas como prova física.
+
+1. Com Admin ativo, abrir o detalhe de Usuário sintético e **Acessos a
+   Propriedades**. Conferir Titularidade somente leitura, vínculos ativos/inativos,
+   busca/paginação e distinção entre vínculo cadastrado e acesso efetivo.
+2. Preparar uma sessão válida do Usuário alvo. No Admin, buscar Propriedade
+   sintética ativa, adicionar vínculo, informar motivo, revisar e confirmar.
+   Conferir recibo/releitura, permanência no detalhe sem duplicação e sessão
+   do Admin preservada. Observar a revogação da sessão anterior do alvo na
+   próxima chamada autenticada, conforme D13, inclusive para ampliação.
+3. Autenticar o alvo normalmente e conferir o acesso operacional concedido.
+   Não usar a listagem administrativa como única prova da autorização real.
+4. No Admin, remover o vínculo/último acesso da massa apropriada, com motivo
+   e confirmação. Verificar revogação da sessão do alvo. Novo login deve funcionar
+   e retornar coleção operacional vazia quando não restar Titularidade/outro
+   acesso; a conta não deve ser inativada automaticamente. A consulta administrativa
+   pode continuar mostrando vínculo inativo. Reativar com `adicionar` e conferir
+   o mesmo ciclo quando houver massa adequada.
+5. Conferir Cancelar antes do envio sem escrita, retorno ao detalhe, reabertura
+   limpa, busca e seleção com teclado, seletor de motivo e rolagem no aparelho.
+   Conferir Home/Recentes/retorno no novo modal e no seletor interno, mantendo
+   proteção e fundo opaco. Não declarar corrigidos os resíduos de paisagem/API 32.
+6. Registrar o resultado de cada frente e as limitações; encerrar apenas os
+   serviços/reverses próprios iniciados para a rodada e preservar o QA existente.
+
+Pendentes: reauditoria focal F01, persistência e revogação reais, Android físico
+e comportamento nativo da nova superfície. O transporte controlado dos
+[testes](testes-contrato-api-rbac.md#mp-35d-5--validação-automatizada--2026-09-23)
+não substitui essas evidências. Não houve conexão/mutação desse QA nesta tarefa.
 
 ## MP-35D-4 — fechamento com aceite residual — 2026-09-23
 

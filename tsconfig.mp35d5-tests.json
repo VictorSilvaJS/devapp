@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.mp35d4-tests.json",
+  "compilerOptions": { "outDir": ".tmp-mp35d5" },
+  "include": [
+    "tests/mp33c-globals.d.ts",
+    "src/http/runtime.ts",
+    "src/http/administrativeUserPropertyController.ts"
+  ]
+}

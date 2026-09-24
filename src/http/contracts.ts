@@ -179,6 +179,42 @@ export interface AdministrativePropertyProjection extends PropertyProjection {
   readonly atualizado_em: string;
 }
 
+export interface AdministrativeUserPropertyRelation {
+  readonly id: string;
+  readonly propriedade_id: string;
+  readonly propriedade_nome: string;
+  readonly propriedade_status: PropertyStatus;
+  readonly origem_acesso: 'titularidade' | 'vinculo_direto';
+  readonly tipo_vinculo: 'titular' | 'usuario_autorizado' | 'colaborador';
+  readonly status_vinculo: 'ativo' | 'inativo' | null;
+  readonly editavel: boolean;
+  readonly versao_vinculo: number | null;
+  readonly motivo: Readonly<{ codigo: string; detalhe: string | null }> | null;
+  readonly criado_em: string | null;
+  readonly atualizado_em: string | null;
+}
+export interface AdministrativeUserPropertyPage {
+  readonly usuario_id: string;
+  readonly versao: number;
+  readonly itens: readonly AdministrativeUserPropertyRelation[];
+  readonly paginacao: Readonly<{ proximo_cursor: string | null }>;
+}
+export interface AdministrativeUserPropertyFilters {
+  readonly busca?: string;
+  readonly tipo_acesso?: AdministrativeUserPropertyRelation['tipo_vinculo'];
+  readonly status_vinculo?: 'ativo' | 'inativo';
+  readonly limite?: number;
+  readonly cursor?: string;
+}
+export interface AdministrativeUserPropertyDelta {
+  readonly versao: number;
+  readonly adicionar: readonly string[];
+  readonly remover: readonly string[];
+  readonly motivo: AdministrativeReasonCode;
+  readonly motivo_detalhe?: string;
+}
+export type AdministrativeUserPropertyReceipt = Extract<AdministrativeReceipt, { resultado: 'vinculos_alterados' }>;
+
 export interface AdministrativePropertyPage {
   readonly itens: readonly AdministrativePropertyProjection[];
   readonly paginacao: Readonly<{ proximo_cursor: string | null }>;

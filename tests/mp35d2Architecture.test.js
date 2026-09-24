@@ -144,10 +144,13 @@ test('aba e detalhe só são registrados para Admin e as duas superfícies guard
 
 test('vertical D-2 materializa somente GET de lista e detalhe', () => {
   const api = source('src/http/backendApi.ts');
-  const start = api.indexOf('  async listAdministrativeUsers(');
-  const end = api.indexOf('\n  async listNotifications(', start);
-  const vertical = api.slice(start, end);
-  assert.ok(start >= 0 && end > start);
+  // Inspect only the two D-2 readers; later administrative cuts add other methods.
+  const vertical = ['listAdministrativeUsers', 'getAdministrativeUser'].map(name => {
+    const start = api.indexOf(`  async ${name}(`);
+    const end = api.indexOf('\n  async ', start + 1);
+    assert.ok(start >= 0 && end > start);
+    return api.slice(start, end);
+  }).join('\n');
   assert.match(vertical, /method: 'GET'/);
   assert.match(vertical, /path: `\/v1\/usuarios\$\{/);
   assert.match(vertical, /path: `\/v1\/usuarios\/\$\{encodeURIComponent\(userId\)\}`/);

@@ -1,9 +1,30 @@
 # Decisões Consolidadas
 
-> Revisão documental: 2026-08-25
+> Revisão documental: 2026-09-24
 
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
+
+## Continuidade da MP-35D — decisão de 2026-09-23
+
+Por pedido explícito do usuário, **MP-35D-5 passa a designar a gestão HTTP de
+vínculos por Usuário**. A associação é nova: o levantamento anterior não
+localizou definição histórica dos conteúdos de D-5/D-6/D-7. D-6 e D-7 são
+preservados sem atribuição de conteúdo. A numeração dos cortes não altera as
+decisões arquiteturais D1–D13.
+
+O corte inclui contratos mobile, leitura, delta, interface e testes usando o
+backend existente. A primeira auditoria encontrou somente F01; a reauditoria
+encerrou o achado e a validação focal real/Android foi concluída em 24/09.
+Por pedido explícito posterior, o usuário autorizou concluir tecnicamente o
+corte no alcance validado e executar fechamento controlado: documentação,
+índice explícito, um commit e envio somente à `feat/mp-35d`. Esta autorização
+não inclui integração na `backend` ou release. Não cria regra de negócio nem
+novo parecer independente integral. D-4 permanece fechada
+em `d6e77e4`, com aceite residual limitado ao alcance original. Backend,
+migrations, RBAC e Demo são preservados. Transferência de Titularidade,
+notificações novas, exclusão, offline administrativo, refatoração geral e MP-36
+permanecem fora do corte. Ver [contrato](contrato-administracao-mp35.md#mp-35d-5--gestão-http-de-vínculos-por-usuário--2026-09-23).
 
 ## Produto e domínio
 

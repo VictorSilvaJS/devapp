@@ -5,9 +5,11 @@
 > decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
 > Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status fechado em 1874ff5; D-4 concluída no escopo validado em fea8ec3, com aceite residual temporário de 23/09; MP-35D em andamento`
 >
+> Corte atual: D-5 concluída no escopo validado, F01 encerrado e validação real/Android de 24/09 concluída; fechamento Git autorizado nesta etapa. D-4 fechada documentalmente em `d6e77e4`.
+>
 > Definido em: 2026-08-25
 >
-> Revisão: 2026-09-23
+> Revisão: 2026-09-24
 >
 > Integração da MP-35A: 2026-08-26, commit `a51389e`, CI pós-push aprovada
 >
@@ -30,7 +32,113 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status fechado em `1874ff5`; D-4 concluída no escopo validado em `fea8ec3`, após percurso físico e aceite residual temporário de 23/09; demais cortes e integração final na `backend` posteriores |
+| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status fechado em `1874ff5`; D-4 concluída no escopo validado em `fea8ec3`, após percurso físico e aceite residual temporário de 23/09, com fechamento documental em `d6e77e4`; D-5 concluída no escopo validado em 24/09, F01 encerrado e validação real/Android concluída; fechamento Git autorizado nesta etapa; D-6/D-7 sem conteúdo atribuído nesta tarefa; integração final na `backend` posterior |
+
+## MP-35D-5 — gestão HTTP de vínculos por Usuário — 2026-09-23
+
+Atribuição nova de escopo por decisão do usuário; não é definição histórica
+recuperada. D-6/D-7 permanecem sem conteúdo atribuído. A primeira auditoria
+independente encontrou somente F01; a reauditoria encerrou o achado e aprovou
+tecnicamente a D-5 para validação focal. A validação real/Android de 24/09
+concluiu o percurso no alcance registrado, e o usuário autorizou o fechamento
+controlado na feature. Backend, migrations, RBAC e Demo preservados.
+
+O objeto funcional da reauditoria permaneceu idêntico na validação e neste
+fechamento documental. `typecheck` e D-5 117/117 pertencem à reauditoria;
+os demais gates conservam sua origem histórica. Não houve repetição de testes
+neste fechamento. Os três PATCHs reais de adicionar/remover/reativar foram
+confirmados pela UI, com D13, releituras e persistência. Ver
+[resultado e limites](smoke.md#mp-35d-5--validação-real-e-fechamento--2026-09-24).
+
+O contrato efetivamente consumido está em
+[rotas MP-35C](../../backend/src/administration/mp35c-routes.ts),
+[serviço](../../backend/src/administration/mp35c-service.ts),
+[repositório](../../backend/src/administration/postgres-mp35c-repository.ts) e
+[migration 000009](../../backend/migrations/000009-administracao-propriedades-vinculos-mp35c.sql),
+inspecionados sem alteração.
+
+| Operação | Contrato usado pelo cliente |
+|---|---|
+| `GET /v1/usuarios/:id/propriedades` | Admin ativo; `{usuario_id, versao, itens, paginacao:{proximo_cursor}}`; `versao` pertence ao Usuário |
+| Filtros | `busca` até 200 caracteres; `tipo_acesso=titular/usuario_autorizado/colaborador`; `status_vinculo=ativo/inativo`; `limite` de 1 a 100, padrão 50; `cursor` até 2048 caracteres |
+| Item | `id`, `propriedade_id`, `propriedade_nome`, `propriedade_status`, `origem_acesso`, `tipo_vinculo`, `status_vinculo`, `editavel`, `versao_vinculo`, `motivo`, `criado_em`, `atualizado_em` |
+| Titularidade | Derivada, `id=propriedade_id`, `tipo_vinculo=titular`, `editavel=false`; status/versão do vínculo, motivo e timestamps nulos |
+| Vínculo direto | `editavel=true`, estado ativo/inativo, versão e timestamps; motivo nulo ou `{codigo,detalhe}` |
+| `PATCH /v1/usuarios/:id/propriedades` | `Idempotency-Key`; obrigatórios `versao`, `adicionar`, `remover`, `motivo`; `motivo_detalhe` opcional, obrigatório para `outro`, até 300 caracteres NFC |
+| Delta | Até 100 IDs somados, sem repetição/sobreposição; reativação usa `adicionar`; sem `tipo_vinculo`, exclusão física ou substituição da coleção |
+| Recibo | `{resultado:"vinculos_alterados", recurso_tipo:"vinculo", recurso_id:usuario_id, versao}`; versão superior à base do Usuário |
+
+Cada GET usa uma transação `REPEATABLE READ` própria. O cursor vincula Usuário,
+filtros e ordenação, mas **não fixa uma versão/snapshot entre páginas**. O
+cliente recusa mesclar versões de Usuário diferentes e exige recarga explícita,
+sem loop automático. A versão do Usuário não versiona alterações independentes
+do nome/status da Propriedade. A consulta não promete snapshot global contínuo.
+Filtro de status exclui Titularidades, cujo `status_vinculo` é nulo.
+
+Admin alvo tem acesso global e não recebe vínculo direto. O backend deriva
+`usuario_autorizado` para Produtor e `colaborador` para Colaborador. Titularidade
+é somente leitura e não pode ser removida/transferida pelo delta; adicionar
+vínculo do próprio Titular é recusado. Município/UF não concedem acesso.
+Usuário, Propriedade e vínculo inativos são distinguidos visualmente. O GET não
+expõe `produtores.status`; um vínculo direto ativo de Produtor não é apresentado
+como garantia de acesso efetivo. A autorização final continua no servidor.
+
+**Histórico inativo (F01):** a compatibilidade tipo/perfil vale para vínculos
+diretos ativos. O backend já admite e retorna históricos diretos inativos de
+tipo diferente do perfil atual, inclusive para Admin. O controller agora
+preserva esses itens na carga, paginação e reconciliação, sem reescrever tipo,
+ocultar registros ou convertê-los em acesso efetivo. A distinção usa o estado
+do vínculo, independentemente dos estados da conta e da Propriedade. Titularidade
+segue separada: perfil Produtor, somente leitura e campos nulos validados pelo
+decoder. Estrutura, identidade, organização e versões continuam verificadas.
+
+Consultar histórico não habilita comando para Admin. Nos demais perfis, qualquer
+adição/reativação exige seleção, motivo e confirmação e envia somente o delta
+por `propriedade_id`, sem tipo. A função existente da migration 000009 reativa
+uma linha inativa **do tipo derivado atual**, se houver; senão cria outra linha
+desse tipo, mantendo o histórico anterior. Permanecem as recusas de Admin,
+Propriedade inexistente, vínculo atual duplicado e próprio Titular, entre as
+demais regras vigentes. Não há promessa de reativar qualquer registro histórico
+em qualquer estado, nem mudança de perfil implementada. Isso corrige a leitura
+mobile; não constitui nova decisão de negócio ou mudança no contrato de escrita.
+Ver [correção e regressões](testes-contrato-api-rbac.md#mp-35d-5--correção-focal-f01--2026-09-23).
+
+A entrada **Acessos a Propriedades** fica no detalhe administrativo existente.
+Abre modal local opaco sob `VisualPrivacyBoundary`, com consulta, filtros,
+paginação, busca remota de Propriedades, seleção explícita, desfazer, motivo e
+confirmação. Não cria rota, aba ou deep link. O controller mantém baseline
+conhecido e Maps de adições/remoções; item ausente de página/filtro não vira
+remoção. Delta vazio não confirma nem cria comando. Seletores e proteção de
+teclado/privacidade existentes são reutilizados.
+
+O transporte, sessão e coordenador de comandos existentes executam o PATCH.
+`AdministrativeUserCommandLifecycle` e `AdministrativeSelectionQuery` são
+reutilizados; o controller de vínculos controla apenas a instância local.
+Duplo confirmar compartilha o envio. Resultado ambíguo conserva corpo, versão
+e chave; recibo inválido não confirma a mutação. Erros 400/422, 401/403,
+404 e 409 recebem tratamento seguro; conflito de versão/negócio relê e exige
+nova decisão, sem PATCH automático com versão substituída.
+
+Após recibo válido, o cliente invalida as projeções administrativas pertinentes
+e relê **a coleção de vínculos e o cadastro do Usuário**. Identidade, organização
+e versões devem corresponder, com versão igual ou posterior à do recibo.
+Versão posterior prevalece, sem exigir os itens alterados na primeira página.
+Falha de reconciliação preserva a confirmação e permite somente novos GETs;
+conclusão ocorre uma vez. Fechar não desfaz comando aceito. O detalhe de origem
+e sua chave de navegação permanecem; callbacks antigos não fecham outra instância.
+Perda de sessão/Admin, troca de identidade e dispose descartam os dados locais.
+
+Pela D13 e pela função persistente já existente, toda alteração efetiva de
+vínculo revoga as sessões **do Usuário alvo**, inclusive adição/reativação.
+O cliente informa o efeito, sem revogar localmente a sessão do Admin ou chamar
+endpoint novo. Remover o último acesso não inativa a conta: novo login continua
+possível, com coleção operacional vazia se não houver Titularidade/outro acesso.
+
+Ver [testes automatizados](testes-contrato-api-rbac.md#mp-35d-5--validação-automatizada--2026-09-23)
+e [roteiro físico reutilizável, executado em 24/09](smoke.md#mp-35d-5--roteiro-focal-pendente--2026-09-23).
+D-4 permanece fechada em `d6e77e4`, com resíduos aceitos no alcance original.
+MP-35D em andamento; transferência, novas notificações, exclusão, offline,
+MP-36, merge e release fora deste corte.
 
 ## MP-35D-4 — estado da etapa — 2026-09-23
 
