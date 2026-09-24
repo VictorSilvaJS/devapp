@@ -4,7 +4,37 @@
 >
 > Última rodada funcional completa registrada: 2026-08-07
 
-## Corte atual — MP-35D-5 — 2026-09-23
+## Corte atual — MP-35D integrada e gates na CI — 2026-09-24
+
+MP-35D concluída no escopo administrativo contratado e integrada na `backend`
+em `82cef2f319deb92eade77cdf9f78edcd46fb2fa9`, árvore
+`de74b063c0348d96a2516663422b7ae06b1d005d`, por avanço direto dos 15 commits
+existentes. D-6 designa a consolidação técnica final; D-7, a integração
+controlada e a confirmação pós-integração. Essa associação é decisão nova de
+continuidade do usuário, não definição histórica recuperada nem alteração de
+D1–D13.
+
+A [CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864),
+evento push na `backend` nesse commit, passou nos jobs Aplicativo (Node 22),
+Backend sem Docker (Node 24) e PostgreSQL/PostGIS (Node 24). Append-only ficou
+`skipped` pela condição de pull request; a D-6 verificou as dez migrations
+contra `7c5256e4e6ad753b73dc149fc3a1691cda89d44d`, sem banco.
+
+A #45 não executou D-1 a D-5 nem privacidade. Neste ajuste, o workflow inclui
+os seis scripts existentes em passos sequenciais do job Aplicativo, após
+domain-compat e antes de bundles/grafo/prebuild. A validação local e a
+confirmação remota do novo commit têm origens separadas em
+[testes de contrato](testes-contrato-api-rbac.md#mp-35d--gates-na-ci-após-integração--2026-09-24).
+
+D-5/F01 encerrada e validação real/Android preservada. D-4 permanece fechada
+com os resíduos temporariamente aceitos, proteção e fundo opaco atuais.
+Não houve deploy, distribuição ou liberação produtiva. O próximo trabalho
+funcional é MP-36 — Caderno conectado, não iniciado neste ajuste.
+
+## Histórico do fechamento — MP-35D-5 — 2026-09-23
+
+O relato abaixo preserva o alcance e a autorização daquela etapa; o estado
+vigente é a integração de 24/09 descrita acima.
 
 A gestão HTTP de vínculos por Usuário está implementada no worktree da
 `feat/mp-35d`, sobre `d6e77e4`, **concluída tecnicamente no escopo validado em
@@ -40,10 +70,12 @@ e [resultado físico e limites](smoke.md#mp-35d-5--validação-real-e-fechamento
 
 ## Resumo executivo
 
-MP-35D-5 concluída no alcance técnico e real/Android validado em 24/09:
-primeira auditoria, correção F01, reauditoria favorável e validação focal
-consolidam o fechamento autorizado na feature. MP-35D permanece em andamento,
-sem integração na `backend` ou liberação de release.
+MP-35D concluída no escopo administrativo contratado e integrada na `backend`
+em `82cef2f`, com consolidação D-6 e CI pós-integração D-7 (#45) aprovadas.
+D-5/F01 e a validação real/Android estão encerradas no alcance registrado;
+os resíduos D-4 e os portões de release permanecem. Os seis gates adicionais
+estão configurados nesta revisão; a #45 não os executou. Próxima vertical:
+MP-36 — Caderno conectado.
 
 O projeto é um aplicativo Android em React Native com Expo SDK 56. O frontend
 está funcional como MVP local e demonstrável, com dados persistidos no
@@ -178,12 +210,12 @@ Pesquisar e captura SystemUI API 32 com IME foram temporariamente aceitas para
 fechar a etapa, mantendo tratamento posterior pendente e Bug 1 integral aberto.
 MP-35D-4 concluída no escopo funcional validado, com limitações residuais
 temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
-validado na revisão `fea8ec3`. Integração na `backend` e release não
-autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
-não conclui todo o aplicativo, iOS ou o processo de publicação.
+validado na revisão `fea8ec3`. Naquele fechamento, integração na `backend` e
+release não estavam autorizados, e MP-35D permanecia em andamento. A integração
+posterior D-7 não conclui todo o aplicativo, iOS ou o processo de publicação.
 Ver [fechamento e alcance da D-4](smoke.md#mp-35d-4--fechamento-com-aceite-residual--2026-09-23).
-Ver [alcance e limitações do reteste](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22). Integração
-na `backend` e release não realizados. Ver
+Ver [alcance e limitações do reteste](smoke.md#bug-1--correção-parcial-e-reteste-focal--2026-09-22). Naquele reteste,
+integração na `backend` e release não foram realizados. Ver
 [controle no QA novo](smoke.md#bug-3--controle-http-em-qa-novo-isolado--2026-09-21),
 [reteste físico do Bug 3](smoke.md#bug-3--reteste-físico-demo-e-pendência-qa--2026-09-21) e
 [aprovação independente](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18).
@@ -194,7 +226,8 @@ Estado formal da sequência administrativa:
 - MP-35B: integrada.
 - MP-35C: concluída, auditada independentemente e integrada.
 - Confirmação pós-integração: aprovada.
-- MP-35D: em andamento; D-1/D-2/D-3 concluídas na `feat/mp-35d`;
+- MP-35D: concluída no escopo contratado e integrada em `82cef2f`;
+  D-6 consolidada; D-7 e CI #45 aprovadas. D-1/D-2/D-3 concluídas na feature;
   pré-requisito decimal fechado e enviado em `dab3ac4`; integração HTTP
   administrativa de Propriedades fechada em `27df733` na `feat/mp-35d`.
   Titular/Localidades internos fechados em `37a8790`, com A1 encerrado.
@@ -217,13 +250,13 @@ Estado formal da sequência administrativa:
   conversa de condução do projeto, somente para fechar esta etapa.
   Bug 1 integral não encerrado; melhoria do retrato consolidada em `fea8ec3`.
   D-4 concluída no escopo funcional validado nessa revisão, após revalidação
-  integrada e aceite residual posterior. Integração na `backend` e release
-  não autorizados por este fechamento; MP-35D permanece em andamento.
+  integrada e aceite residual posterior. O fechamento D-4 não autorizava
+  integração ou release; a integração foi autorizada e executada na D-7.
   O QA antigo não foi recuperado. D-4 fechada documentalmente em `d6e77e4`;
   D-5 concluída tecnicamente no escopo validado: F01 encerrado na reauditoria,
-  validação real/Android de 24/09 concluída e fechamento Git autorizado nesta
-  etapa. D-6/D-7 continuam sem conteúdo atribuído. A decisão de escopo está
-  registrada no início deste documento.
+  validação real/Android de 24/09 concluída e fechamento Git em `82cef2f`.
+  A associação vigente D-6/D-7 está registrada no início deste documento.
+  Release e uso produtivo continuam sem liberação.
 
 O complemento preservou consulta, seleção, Nome, Área e Cultura nos dois ciclos
 funcionais e no retorno ao retrato. Após interrupção USB/revalidação posterior,
@@ -231,7 +264,7 @@ o formulário já não estava aberto; não houve toque confirmado em Cancelar.
 A conclusão de preservação do rascunho não se estende àquela interrupção.
 
 As seções datadas anteriores abaixo preservam o estado de cada corte à época;
-o estado formal vigente é o de 23/09 descrito acima.
+o estado formal vigente é o de 24/09 descrito acima.
 
 ## MP-35D-4 — fluxo visual separado de status — 2026-09-14
 

@@ -1,15 +1,59 @@
 # Testes De Contrato/API Para RBAC
 
 Status revisado em 2026-09-24:
-`MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d; MP-35D-3
-concluída, auditada e enviada em 92bba62; MP-35D em andamento;
-decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status fechado em 1874ff5; D-4 concluída no escopo validado em fea8ec3, com aceite residual temporário de 23/09`.
+`MP-35A/B/C/D integradas; MP-35D concluída no escopo contratado em 82cef2f;
+D-6 consolidada; D-7 e CI #45 aprovadas; D-5/F01 encerrada e validação
+real/Android preservada; resíduos temporariamente aceitos da D-4 mantidos`.
 Este documento
 define a matriz baseada em `contrato-api-rbac.md`, nas decisões consolidadas e
 em D1-D13, distinguindo o corte já executável das linhas planejadas.
 
+## MP-35D — gates na CI após integração — 2026-09-24
+
+A D-6 consolidou o candidato e a D-7 o integrou por avanço direto na backend
+em `82cef2f319deb92eade77cdf9f78edcd46fb2fa9`. Essa associação é decisão nova
+de continuidade do usuário, não definição histórica recuperada. A
+[CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864),
+evento push, aprovou Aplicativo (Node 22), Backend sem Docker (Node 24) e
+PostgreSQL/PostGIS (Node 24). Append-only foi `skipped` pela condição de PR;
+a prova suplementar D-6 verificou as dez migrations contra
+`7c5256e4e6ad753b73dc149fc3a1691cda89d44d`, sem executar banco.
+
+A #45 **não executou** os seis scripts abaixo. Neste ajuste,
+[ci.yml](../../.github/workflows/ci.yml) passa a chamá-los em passos individuais
+sequenciais do job Aplicativo, depois de domain-compat e antes de bundles,
+grafo e prebuild. Os pretests npm continuam automáticos; D-2 limpa a saída
+de navegação recompilada e compartilhada por D-2/D-3/D-4/D-5/privacidade.
+Não há paralelismo entre eles, condição opcional ou tolerância a falha.
+
+Execução **local própria deste ajuste**, uma vez por comando, Node 22.20.0,
+dependências existentes conferidas contra o lockfile, em 24/09:
+
+| Ordem | Comando | Resultado local |
+|---:|---|---|
+| 1 | `npm run test:mp35d1` | 55/55; exit 0 |
+| 2 | `npm run test:mp35d2` | 85/85; exit 0 |
+| 3 | `npm run test:mp35d3` | 106/106; exit 0 |
+| 4 | `npm run test:mp35d4` | 356/356; exit 0 |
+| 5 | `npm run test:mp35d5` | 117/117; exit 0 |
+| 6 | `npm run test:privacy:mp35d4` | 25/25; exit 0 |
+
+Zero falhas, skips ou cancelamentos nos seis comandos. Há herança/sobreposição
+entre runners: não somar como casos únicos. D-5 contém 106 casos próprios e
+11 herdados D-2. Logs e contagens TAP em
+`dist/postintegration-mp35d-20260924-01/`. O hash do novo commit, push e
+resultado da sua própria CI serão registrados no relatório final ignorado;
+esta revisão documental não antecipa aprovação remota.
+
+Eventos, jobs, Node 22/24, instalações, caches, permissões, passos anteriores
+e isolamento PostgreSQL permanecem. Avisos de runtime das Actions e Ubuntu
+ficam em manutenção separada. D-5/F01 e provas reais/Android preservadas;
+resíduos D-4 temporariamente aceitos, sem novo smoke, deploy ou release.
+
 ## MP-35D-5 — fechamento controlado — 2026-09-24
+
+Registro histórico do fechamento na feature, anterior à consolidação e à
+integração acima; as restrições daquela autorização permanecem documentadas.
 
 **D-5 concluída tecnicamente no escopo validado.** A
 [primeira auditoria](../../dist/audit-mp35d5-independent-20260923-1436/parecer.md)

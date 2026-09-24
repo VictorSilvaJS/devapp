@@ -8,7 +8,32 @@
 Este arquivo contém somente o roteiro ainda útil. Evidências detalhadas e
 rodadas anteriores foram movidas para docs/archive.
 
+## MP-35D — estado após consolidação e integração — 2026-09-24
+
+MP-35D concluída no escopo administrativo contratado e integrada na backend
+em `82cef2f319deb92eade77cdf9f78edcd46fb2fa9`. Por nova decisão de continuidade
+do usuário, D-6 = consolidação técnica final e D-7 = integração controlada e
+confirmação pós-integração; não é definição histórica recuperada. A
+[CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864)
+de push na backend passou nos três jobs; append-only foi `skipped` pela
+condição de PR, com verificação suplementar D-6 contra o target anterior.
+
+A #45 não executou D-1 a D-5 ou privacidade. Neste ajuste, esses seis scripts
+passam a integrar a CI sequencialmente; a execução local própria e a
+confirmação remota do novo commit são distinguidas nos
+[testes de contrato](testes-contrato-api-rbac.md#mp-35d--gates-na-ci-após-integração--2026-09-24).
+Não houve novo smoke físico, QA, Metro, ADB ou emulador.
+
+D-5/F01 encerrada e validação real/Android abaixo preservada. D-4 continua
+fechada com resíduos temporariamente aceitos de paisagem/teclado e captura
+SystemUI API 32 com IME. Proteção e fundo opaco mantidos. Não há deploy,
+distribuição ou liberação produtiva. Próxima vertical funcional: MP-36 —
+Caderno conectado, não iniciada neste ajuste.
+
 ## MP-35D-5 — validação real e fechamento — 2026-09-24
+
+Registro do alcance físico e do fechamento na feature, anterior à D-6/D-7;
+o estado atual de integração é o descrito acima.
 
 **Validação focal real e Android concluída; D-5 concluída tecnicamente no
 escopo validado, com fechamento Git autorizado nesta etapa.** O

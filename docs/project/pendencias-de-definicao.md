@@ -18,9 +18,10 @@ reauditoria independente e CI pós-push aprovadas. A MP-35C entrou no commit
 confirmação pós-integração foi aprovada. MP-35D-1/2 foram concluídas na
 `feat/mp-35d`; MP-35D-3 recebeu correções obrigatórias, implementadas e aprovadas
 na auditoria independente final para commit, sem achado obrigatório remanescente.
-O fechamento da D-3 foi concluído e enviado em `92bba62`. MP-35D segue em
-andamento; D-4 concluída no escopo funcional validado em `fea8ec3`, com aceite
-residual temporário em 23/09. O pré-requisito decimal foi fechado e enviado em
+O fechamento da D-3 foi concluído e enviado em `92bba62`. MP-35D está concluída
+no escopo contratado e integrada em `82cef2f`; D-4 concluída no escopo
+funcional validado em `fea8ec3`, com aceite residual temporário em 23/09.
+O pré-requisito decimal foi fechado e enviado em
 `dab3ac4`. A integração HTTP administrativa de Propriedades está implementada
 e aprovada independentemente após reprodução, correção e reauditoria focal de F1,
 sem achado obrigatório remanescente; fechamento concluído em `27df733`, com
@@ -30,17 +31,25 @@ Titular/Municípios e corrigido focalmente. A reauditoria aprovou o corte para
 commit, encerrou A1 e não deixou achado obrigatório remanescente. Fechamento
 Git concluído em `37a8790`, somente na `feat/mp-35d`, com hash remoto confirmado.
 
-## MP-35D — continuidade após fechamento da D-5
+## MP-35D — limites preservados após integração
 
 A gestão HTTP de vínculos por Usuário foi implementada no worktree sobre
 `d6e77e4`, por nova decisão de escopo do usuário. A associação à D-5 não é
-definição histórica recuperada. D-6/D-7 continuam sem conteúdo atribuído.
-MP-35D permanece em andamento. D-5 está concluída tecnicamente no escopo
+definição histórica recuperada. Por decisão posterior de continuidade do
+usuário, D-6 = consolidação técnica final e D-7 = integração controlada e
+confirmação pós-integração. Ambas concluídas, com MP-35D integrada na `backend`
+em `82cef2f319deb92eade77cdf9f78edcd46fb2fa9` e
+[CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864)
+de push aprovada nos três jobs. Append-only foi `skipped`, com verificação
+suplementar D-6. D-5 está concluída tecnicamente no escopo
 validado: a primeira auditoria encontrou somente F01, encerrado pela reauditoria,
-e a validação real/Android de 24/09 passou. Fechamento Git autorizado nesta etapa.
+e a validação real/Android de 24/09 passou; fechamento Git em `82cef2f`.
 
-- Delimitar os próximos cortes em tarefa própria, sem atribuir conteúdo a D-6/D-7
-  neste fechamento; integração final e release continuam posteriores.
+- Integração final deixou de ser pendência; release continua sem liberação.
+  A #45 não executou D-1 a D-5 e privacidade. Os seis scripts passam a estar
+  configurados no workflow neste ajuste, com comprovação local e remota
+  separadas em [testes de contrato](testes-contrato-api-rbac.md#mp-35d--gates-na-ci-após-integração--2026-09-24).
+  O próximo trabalho funcional é MP-36 — Caderno conectado, não iniciado aqui.
 - A leitura de vínculos não fornece `produtores.status`; a interface conserva
   essa limitação ao informar acesso efetivo. O cursor também não fixa snapshot
   entre requisições; versões de Usuário diferentes exigem recarga explícita.
@@ -128,9 +137,6 @@ Permanecem pendentes:
   chaves e outbox não foram recuperadas. O `.env.local` de outro banco não foi
   usado nem alterado. O novo QA tem configuração protegida reutilizável fora
   do repositório, com partida/parada sem reaplicar massa ou trocar segredos;
-- continuidade da MP-35D e sua integração final na branch `backend`, posteriores
-  e não autorizadas aqui. Revalidação integrada e fechamento da D-4 deixaram de
-  ser pendências, nos limites do aceite de 23/09. Ver [aprovação do Bug 2](smoke.md#bug-2-e-f-01--aprovação-independente--2026-09-18);
 - release, deploy e produção, sem aprovação decorrente deste fechamento;
 - vínculos permanecem fora do fechamento da D-4 e agora integram o corte D-5
   acima; transferência de Titularidade continua fora de ambos.
@@ -224,8 +230,9 @@ pendente, preservando e verificando todas as correções anteriores.
 
 A reauditoria e o fechamento da D-3 deixaram de ser pendências; a D-3 foi enviada
 em `92bba62`. A autorização posterior delimitou a D-4 ao pré-requisito decimal
-descrito acima. Demais fluxos D-4 e integração final na `backend` permanecem
-posteriores. Não houve smoke Android físico, build de release ou validação
+descrito acima. Naquele corte, demais fluxos D-4 e integração final na
+`backend` eram posteriores; foram concluídos nos limites registrados acima.
+Não houve naquele fechamento smoke Android físico, build de release ou validação
 produtiva; o fechamento não libera produção/release nem reabre D1-D13.
 
 ## Implementação por fase
@@ -235,9 +242,9 @@ produtiva; o fechamento não libera produção/release nem reabre D1-D13.
 - antes de qualquer downgrade posterior à MP-35B, tratar explicitamente os
   convites `ativar_usuario`; o esquema pré-MP-35A não representa esse modo e não
   autoriza reescrita ou exclusão silenciosa;
-- preservar D-3 fechada em `92bba62`, decimal fechado em `dab3ac4` e aprovação
-  independente da integração HTTP administrativa de Propriedades, incluindo F1.
-  Seletores, formulários, navegação e integração final na `backend` são posteriores;
+- preservar a MP-35D integrada em `82cef2f`, os fechamentos e auditorias de seus
+  cortes, D-5/F01 encerrada e os resíduos temporariamente aceitos da D-4;
+- conectar o Caderno na MP-36 em tarefa própria;
 - implementar offline seguro em fase própria, com cache cifrado, segregação por
   identidade e invalidação de escopo;
 - definir e executar observabilidade, backup, restauração e gestão de segredos;
@@ -366,6 +373,11 @@ Antes da distribuição produtiva, fechar:
 
 ## Manutenção técnica separada
 
+- avaliar os avisos não fatais da CI #45 sobre runtime interno Node 20 de
+  `actions/checkout@v4` e `actions/setup-node@v4`, e futura imagem de
+  `ubuntu-latest`. Versões das Actions, runs-on e Node 22/24 do produto ficam
+  preservados neste ajuste; sem opt-out ou supressão dos avisos. Não são novos
+  bugs do aplicativo;
 - aplicar patches gerais do Expo em tarefa controlada;
 - tratar deprecações do Gradle;
 - revisar dependências e permissões Android;

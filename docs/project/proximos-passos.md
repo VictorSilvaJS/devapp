@@ -2,7 +2,7 @@
 
 > Atualizado em: 2026-09-24
 >
-> Corte atual: MP-35D-5 concluída no escopo validado, F01 encerrado e validação real/Android de 24/09 concluída; fechamento Git autorizado nesta etapa;
+> Corte atual: MP-35D concluída no escopo administrativo contratado e integrada na backend em `82cef2f`; D-6 consolidada, D-7 e CI #45 aprovadas; ajuste focal de registro e seis gates na CI;
 > D-4 fechada documentalmente em `d6e77e4`, no escopo validado em `fea8ec3`, após revalidação integrada e aceite residual temporário de 23/09;
 > D-3 em `92bba62`, decimal em `dab3ac4`, HTTP administrativo em `27df733`,
 > Titular/Localidades em `37a8790`, formulários/navegação em `e5db497`, status em `1874ff5`;
@@ -11,34 +11,39 @@
 > Estado: MP-33A, MP-33B, MP-33C E MP-34 INTEGRADAS; CONVERGÊNCIA VISUAL
 > INTEGRADA DIRETAMENTE EM `e47bb02`, COM TRÊS JOBS DA CI PÓS-PUSH APROVADOS;
 > D1-D13 APROVADAS; MP-35A/B/C INTEGRADAS; MP-35D-1/2 CONCLUÍDAS NA
-> `feat/mp-35d`; MP-35D-3 CONCLUÍDA; MP-35D EM ANDAMENTO;
+> `feat/mp-35d`; MP-35D CONCLUÍDA E INTEGRADA EM `82cef2f`; D-5/F01 ENCERRADA;
 > PRÉ-REQUISITO DECIMAL D-4 FECHADO EM `dab3ac4`; F1 APROVADO NA REAUDITORIA; HTTP DE PROPRIEDADES FECHADO EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; D-4 CONCLUÍDA NO ESCOPO VALIDADO, COM ACEITE RESIDUAL TEMPORÁRIO; SEM TAG, DEPLOY, RELEASE OU PUBLICAÇÃO; PORTÕES
 > PRODUTIVOS PENDENTES
 
-## Próximo passo delimitado da MP-35D-5
+## Próximo trabalho funcional — MP-36 — Caderno conectado
 
-A decisão atual do usuário associa D-5 à gestão HTTP de vínculos por Usuário.
-É uma atribuição nova, não recuperação do escopo histórico de D-5/D-6/D-7.
-D-6 e D-7 permanecem sem conteúdo atribuído nesta tarefa.
+A MP-35D foi consolidada na D-6 e integrada na D-7 à `backend` em
+`82cef2f319deb92eade77cdf9f78edcd46fb2fa9`. Essa associação D-6/D-7 decorre
+da nova decisão de continuidade do usuário, não de definição histórica.
+A [CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864)
+de push na backend passou nos três jobs; append-only foi `skipped`, com
+verificação suplementar D-6. Ela não executou os seis gates administrativos/
+privacidade, agora configurados sequencialmente no job Aplicativo.
+O resultado remoto do próprio ajuste deve ser conferido no relatório final,
+sem atribuí-lo antecipadamente à #45.
 
-O fluxo foi aprovado tecnicamente após encerramento de F01 na reauditoria.
-A validação real/Android de 24/09 no QA `mp35d4_bug3_validation_qa` passou no
+O próximo trabalho funcional previsto é conectar o Caderno com persistência,
+auditoria, imutabilidade, concorrência e RBAC conforme o
+[ciclo de vida vigente](ciclo-vida-caderno.md), reutilizando a apresentação
+aprovada. MP-36 não foi iniciada aqui. As demais verticais continuam na fila.
+
+D-5/F01 e a validação real/Android de 24/09 estão encerradas no
 [alcance registrado](smoke.md#mp-35d-5--validação-real-e-fechamento--2026-09-24).
-O usuário autorizou o fechamento documental e Git controlado na feature.
-Depois desse fechamento, o próximo passo é delimitar a continuidade da MP-35D
-em tarefa própria, mantendo D-6/D-7 sem escopo atribuído aqui. Não repetir
-automaticamente a validação concluída nem preparar nova massa. Backend/Demo
-preservados; transferência
-de Titularidade, novas notificações, exclusão, offline administrativo, MP-36,
-integração na `backend` e release continuam fora do corte.
+Não repetir automaticamente o smoke ou criar massa. Resíduos D-4, proteção e
+fundo opaco mantidos. Sem deploy, distribuição ou liberação produtiva.
 
 ## Fechamento preservado da MP-35D-4
 
 MP-35D-4 concluída no escopo funcional validado, com limitações residuais
 temporariamente aceitas para esta etapa de desenvolvimento. Código funcional
-validado na revisão `fea8ec3`. Integração na `backend` e release não
-autorizados por este fechamento. MP-35D permanece em andamento; o fechamento
-não conclui todo o aplicativo, iOS ou o processo de publicação.
+validado na revisão `fea8ec3`. Aquele fechamento não autorizava integração
+na `backend` ou release. A integração foi posteriormente executada na D-7;
+ela não conclui todo o aplicativo, iOS ou o processo de publicação.
 
 O aceite de 23/09 é decisão do usuário na conversa de condução do projeto,
 posterior à revalidação integrada. Paisagem por Pesquisar e captura API 32 com
@@ -48,7 +53,7 @@ investigação posteriores permanecem rastreados em
 
 O fechamento documental foi consolidado em `d6e77e4`. A continuidade da D-5
 acima decorre de decisão posterior específica; não foi autorizada implicitamente
-pelo aceite residual da D-4. Integração final na `backend` continua posterior.
+pelo aceite residual da D-4. A integração final foi autorizada na D-7.
 
 ### Histórico dos cortes até 22/09
 
@@ -388,8 +393,8 @@ Esse estado não autoriza tag, deploy, release ou publicação por si só.
 | 35A | MP-35A | Contratos, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `a51389e`; CI PÓS-PUSH APROVADA; PORTÕES PRODUTIVOS PENDENTES |
 | 35B | MP-35B | Administração HTTP de Usuários e convites | CONCLUÍDA E INTEGRADA DIRETAMENTE EM `60144c2`; REAUDITORIA INDEPENDENTE E CI PÓS-PUSH APROVADAS; PORTÕES PRODUTIVOS PENDENTES |
 | 35C | MP-35C | Propriedades, vínculos e Localidades no backend | CONCLUÍDA, AUDITADA INDEPENDENTEMENTE E INTEGRADA DIRETAMENTE EM `e6789bf`; CI PÓS-PUSH E CONFIRMAÇÃO PÓS-INTEGRAÇÃO APROVADAS |
-| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | EM ANDAMENTO; D-3 FECHADA EM `92bba62`; DECIMAL EM `dab3ac4`; HTTP DE PROPRIEDADES EM `27df733`; A1 ENCERRADO, TITULAR/LOCALIDADES FECHADOS EM `37a8790`; FORMULÁRIOS/NAVEGAÇÃO FECHADOS EM `e5db497`; STATUS FECHADO EM `1874ff5`; D-4 CONCLUÍDA NO ESCOPO VALIDADO EM `fea8ec3`, COM PERCURSO FÍSICO E ACEITE RESIDUAL TEMPORÁRIO EM 23/09; DEMAIS CORTES E INTEGRAÇÃO FINAL NA `backend` POSTERIORES |
-| 36 | MP-36 | Caderno auditável, imutável e concorrente | BACKLOG |
+| 35D | MP-35D | Integração das telas administrativas existentes e teste físico | CONCLUÍDA NO ESCOPO CONTRATADO E INTEGRADA EM `82cef2f`; D-6 CONSOLIDADA; D-7 E CI #45 APROVADAS; D-5/F01 ENCERRADA; RESÍDUOS D-4 PRESERVADOS; SEM RELEASE |
+| 36 | MP-36 | Caderno auditável, imutável e concorrente | PRÓXIMO TRABALHO FUNCIONAL; NÃO INICIADO |
 | 37 | MP-37 | Versionamento produtivo do GeoJSON | BACKLOG |
 | 38 | MP-38 | Teste real de localização em campo | BLOQUEADO POR CAMPO |
 | 39 | MP-39 | Regressão histórica de GeoJSON | BACKLOG |
@@ -491,7 +496,8 @@ O fechamento formal da MP-35C está concluído. A D-3 recebeu o parecer
 As correções e regressões anteriores foram preservadas e verificadas pelo
 auditor independente, incluindo os 106 testes D-3. O fechamento controlado
 mantém código e testes aprovados, com registro documental da aprovação.
-MP-35D permanece em andamento; sua integração final na `backend` será posterior.
+Naquele fechamento, MP-35D permanecia em andamento; a integração foi
+posteriormente concluída na D-7, conforme o estado vigente acima.
 Naquele fechamento, a MP-35D-4 dependia de autorização própria e não havia sido iniciada. Não houve smoke
 Android físico, build de release ou validação produtiva; produção/release não
 estão liberados por este fechamento.
@@ -515,8 +521,8 @@ como portão próprio.
 A migration `000010` foi integrada na `backend` em `7c5256e` e incorporada à
 `feat/mp-35d` em `963eb0f`. O contrato final está alinhado com a correlação já
 implementada no aplicativo. O fix backend não aguarda integração; as correções
-focais do aplicativo MP-35D-3 estão aprovadas na auditoria independente final
-para commit. A integração final da MP-35D na `backend` permanece posterior.
+focais do aplicativo MP-35D-3 foram aprovadas e fechadas em `92bba62`.
+A integração final da MP-35D na `backend` foi concluída em `82cef2f` na D-7.
 Antes de aplicar a migration em banco persistente, permanece
 obrigatório o preflight de recibos retidos descrito no
 [README do backend](../../backend/README.md). MP-35D-4 continua fora deste

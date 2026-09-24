@@ -1,11 +1,11 @@
 # Contrato de Administração da MP-35
 
-> Status: `MP-35A/B/C integradas; MP-35D-1/2 concluídas na feat/mp-35d;
-> MP-35D-3 concluída, auditada e enviada em 92bba62;
-> decimal fechado em dab3ac4; HTTP administrativo de Propriedades fechado em 27df733;
-> Titular/Localidades fechados em 37a8790; formulários/navegação fechados em e5db497; status fechado em 1874ff5; D-4 concluída no escopo validado em fea8ec3, com aceite residual temporário de 23/09; MP-35D em andamento`
+> Status: `MP-35A/B/C/D integradas; MP-35D concluída no escopo administrativo
+> contratado e integrada na backend em 82cef2f; D-6 consolidada; D-7 e CI #45
+> aprovadas; D-5/F01 encerrada; resíduos temporariamente aceitos da D-4 mantidos`
 >
-> Corte atual: D-5 concluída no escopo validado, F01 encerrado e validação real/Android de 24/09 concluída; fechamento Git autorizado nesta etapa. D-4 fechada documentalmente em `d6e77e4`.
+> Corte atual: registro pós-integração e inclusão dos seis gates existentes na CI,
+> sem alteração funcional ou liberação de release.
 >
 > Definido em: 2026-08-25
 >
@@ -32,7 +32,30 @@
 | MP-35A | contratos, migrations append-only, constraints, versões, catálogos, snapshot IBGE e idempotência persistente | concluída e integrada diretamente em `a51389e`; CI pós-push aprovada |
 | MP-35B | administração HTTP de Usuários e convites | concluída e integrada diretamente em `60144c2`; reauditoria independente e CI pós-push aprovadas |
 | MP-35C | Propriedades, vínculos e Localidades no backend | concluída, auditada independentemente e integrada diretamente em `e6789bf`; CI pós-push e confirmação pós-integração aprovadas |
-| MP-35D | integração das telas administrativas existentes e validação física | em andamento; D-1/D-2/D-3 concluídas; decimal em `dab3ac4`; HTTP administrativo de Propriedades em `27df733`; Titular/Localidades fechados em `37a8790`; formulários/navegação fechados em `e5db497`; status fechado em `1874ff5`; D-4 concluída no escopo validado em `fea8ec3`, após percurso físico e aceite residual temporário de 23/09, com fechamento documental em `d6e77e4`; D-5 concluída no escopo validado em 24/09, F01 encerrado e validação real/Android concluída; fechamento Git autorizado nesta etapa; D-6/D-7 sem conteúdo atribuído nesta tarefa; integração final na `backend` posterior |
+| MP-35D | integração das telas administrativas existentes e validação física | concluída no escopo contratado e integrada em `82cef2f`; D-6 consolidada; D-7 e CI #45 aprovadas; D-5/F01 encerrada e validação real/Android preservada; D-4 fechada com resíduos temporariamente aceitos; sem release |
+
+## MP-35D — consolidação e integração — 2026-09-24
+
+Por nova decisão de continuidade do usuário, D-6 = consolidação técnica final
+e D-7 = integração controlada e confirmação pós-integração. Essa associação
+não recupera definição histórica nem altera D1–D13. D-6 concluída; os 15 commits
+existentes foram integrados na D-7 por avanço direto para
+`82cef2f319deb92eade77cdf9f78edcd46fb2fa9`, sem novo commit e com árvore
+`de74b063c0348d96a2516663422b7ae06b1d005d`.
+
+A [CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864)
+de push na backend passou nos três jobs. Append-only foi `skipped` pela
+condição de PR, com verificação suplementar D-6 das dez migrations contra
+`7c5256e4e6ad753b73dc149fc3a1691cda89d44d`, sem banco. A #45 não executou
+D-1 a D-5 e privacidade. Os seis scripts passam a integrar o job Aplicativo
+nesta revisão; resultados locais e nova confirmação remota permanecem
+separados em [testes de contrato](testes-contrato-api-rbac.md#mp-35d--gates-na-ci-após-integração--2026-09-24).
+
+D-5/F01 encerrada; validação real/Android, resíduos D-4, proteção e fundo
+opaco preservados. Sem deploy, distribuição ou liberação produtiva.
+MP-36 — Caderno conectado é o próximo trabalho funcional, não iniciado aqui.
+As seções datadas dos cortes abaixo preservam seus contratos e o alcance
+histórico das respectivas autorizações; não substituem este estado vigente.
 
 ## MP-35D-5 — gestão HTTP de vínculos por Usuário — 2026-09-23
 
@@ -954,8 +977,8 @@ decimal em `dab3ac4`. A integração HTTP administrativa de Propriedades está
 aprovada independentemente, com F1 encerrado, e fechada em `27df733`;
 Titular/Localidades fechados em `37a8790` após A1. D-4 concluída no escopo
 funcional validado em `fea8ec3`, com aceite residual temporário de 23/09, nos
-limites descritos no início. MP-35D segue em andamento; integração e release
-não autorizados por esse fechamento.
+limites descritos no início. A integração final da MP-35D foi concluída na
+D-7 em `82cef2f`, com CI #45 aprovada. Release permanece sem liberação.
 
 - as quatro operações estreitas validam o tipo JSON original, presença,
   nulabilidade e formato de cada entrada antes de contexto, reserva de

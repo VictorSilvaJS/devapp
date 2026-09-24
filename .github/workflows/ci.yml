@@ -33,6 +33,24 @@ jobs:
       - name: Contratos de dominio do aplicativo
         run: npm run test:domain-compat
 
+      - name: MP-35D-1 - Contratos e coordenacao administrativa
+        run: npm run test:mp35d1
+
+      - name: MP-35D-2 - Consulta administrativa de Usuarios
+        run: npm run test:mp35d2
+
+      - name: MP-35D-3 - Comandos administrativos de Usuarios
+        run: npm run test:mp35d3
+
+      - name: MP-35D-4 - Administracao de Propriedades
+        run: npm run test:mp35d4
+
+      - name: MP-35D-5 - Vinculos por Usuario
+        run: npm run test:mp35d5
+
+      - name: MP-35D-4 - Privacidade visual HTTP
+        run: npm run test:privacy:mp35d4
+
       - name: Separacao real dos bundles HTTP e Demo
         run: npm run test:bundle:mp33c
 

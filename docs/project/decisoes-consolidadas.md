@@ -5,7 +5,30 @@
 Este arquivo contém somente decisões vigentes. A cronologia detalhada das
 decisões 1 a 38 foi preservada no snapshot arquivado.
 
+## Consolidação e integração da MP-35D — decisão de 2026-09-24
+
+Por decisão explícita de continuidade do usuário, D-6 designa a consolidação
+técnica final e D-7 designa a integração controlada e a confirmação da CI
+pós-integração. A associação é nova, não recuperada de definição histórica;
+não altera as decisões arquiteturais D1–D13 nem acrescenta funcionalidade.
+
+D-6 concluída; D-7 integrou os 15 commits existentes na `backend` em
+`82cef2f319deb92eade77cdf9f78edcd46fb2fa9`, sem novo commit. A
+[CI #45, run 36001708864](https://github.com/VictorSilvaJS/devapp/actions/runs/36001708864)
+de push da backend passou nos três jobs. Append-only ficou `skipped`, com
+verificação suplementar D-6 contra o target anterior. A #45 não chamou os
+seis gates administrativos/privacidade; sua inclusão sequencial no job
+Aplicativo e este registro documental compõem o ajuste focal posterior.
+
+MP-35D está concluída no escopo administrativo contratado. D-5/F01 encerrada,
+validação real/Android e resíduos temporariamente aceitos da D-4 preservados,
+incluindo proteção e fundo opaco atuais. Não há liberação de deploy,
+distribuição ou produção. MP-36 — Caderno conectado é o próximo trabalho
+funcional e não é iniciado neste ajuste.
+
 ## Continuidade da MP-35D — decisão de 2026-09-23
+
+Registro da autorização daquela etapa, sucedido pela decisão de 24/09 acima.
 
 Por pedido explícito do usuário, **MP-35D-5 passa a designar a gestão HTTP de
 vínculos por Usuário**. A associação é nova: o levantamento anterior não
@@ -424,8 +447,9 @@ operacional; não aprova substituir diretamente o tipo legado. Não há prazo de
 retirada: eventual remoção exige decisão própria de compatibilidade. A
 implementação deste pré-requisito foi aprovada para commit na auditoria
 independente, sem achado obrigatório remanescente, com compatibilidade do leitor
-anterior comprovada. MP-35D/D-4 continuam em andamento; os demais fluxos exigem
-próxima autorização. Este fechamento não altera D1-D13.
+anterior comprovada. Naquele fechamento, MP-35D/D-4 continuavam em andamento
+e os demais fluxos exigiam próxima autorização. O estado integrado atual está
+registrado no início; este fechamento não altera D1-D13.
 
 As quatro mutações compartilham um executor que decodifica e valida
 integralmente o retorno SQL antes do `COMMIT`; resposta incompatível exige
